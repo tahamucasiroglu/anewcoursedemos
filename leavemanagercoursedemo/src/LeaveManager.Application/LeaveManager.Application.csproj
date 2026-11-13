@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\LeaveManager.Domain\LeaveManager.Domain.csproj" />
+  </ItemGroup>
+</Project>

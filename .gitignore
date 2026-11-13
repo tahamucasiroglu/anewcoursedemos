@@ -1,0 +1,70 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Claude Code personal settings (shared settings.json IS committed after init)
+.claude/settings.local.json
+
+# .NET build output
+bin/
+obj/
+TestResults/
+*.user
+
+# Runtime SQLite database (spec 0001: never in the repo)
+**/App_Data/*.db*
+
+Source/
+
+# Üretilen görseller ve diğer proje dışı çıktılar (22 Eyl 2026). Büyük ikili dosya, depoya girmez.
+Outputs/
+
+# ── Derleme çıktıları ─────────────────────────────────────────────────────
+bin/
+obj/
+.vs/
+*.user
+
+# ── Claude Code ───────────────────────────────────────────────────────────
+# 7 Kas 2026 (geliştirici): .claude TAMAMEN depoda (memory, settings, rules) — format sonrası
+# Claude hafızası kayboldu, bir daha olmasın. Yalnız geçici git worktree'leri dışarıda.
+.claude/worktrees/
+
+# ── İşletim sistemi / düzenleyici artıkları ───────────────────────────────
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Sürümlü EXE arşivi (9 Eki 2026) — yerelde kalır, depoda yalnız Dagitim/Prototip/"TMAutoClip (Prototip).exe"
+Dagitim/Prototip/surumler/
+
+# Craft kaynak klonları (11 Eki 2026) — upstream tam klonları, yerel takip; değişiklik satırı git içinde harici/craft-yamalar/
+/harici/craft/
+# Yamalı Craft yerel derleme paketleri ve doğrulanmış resmî zip'ler (3 Kas 2026) — betikler/craft-yamali-derle.ps1; özetler harici/craft-yamalar/yamali-derlemeler.json
+/harici/craft-derleme/
+
+# dotnet test --logger trx çıktıları
+TestResults/
+
+
+# Canlı EXE (14 Eki 2026) — DevTools publish-desktop buraya üretir; dış depoya girmez, klasör .gitkeep ile durur.
+Dagitim/Canli/*
+!Dagitim/Canli/.gitkeep
+
+# Özel bilgiler (27 Eki 2026) — parola, e-posta vb. git dışı .env dosyasında; belgeler yalnız anahtar adını anar.
+.env
+.env.*
+
+# Geliştiricinin yerel ekran görüntüsü (kişisel bilgi içeriyor)
+Promtlar/Prototip/Prototip2_Duzeltmeler/
+

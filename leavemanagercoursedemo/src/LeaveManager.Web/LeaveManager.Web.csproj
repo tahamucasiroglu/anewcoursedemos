@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\LeaveManager.Application\LeaveManager.Application.csproj" />
+    <ProjectReference Include="..\LeaveManager.Infrastructure\LeaveManager.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="LeaveManager.Web.Tests" />
+  </ItemGroup>
+</Project>

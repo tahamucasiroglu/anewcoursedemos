@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LeaveManager.Application\LeaveManager.Application.csproj" />
+    <ProjectReference Include="..\LeaveManager.Domain\LeaveManager.Domain.csproj" />
+  </ItemGroup>
+</Project>
