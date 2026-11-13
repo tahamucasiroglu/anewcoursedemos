@@ -1,0 +1,1 @@
+cd /d "%~dp0" && claude -r --chrome --dangerously-skip-permissions
