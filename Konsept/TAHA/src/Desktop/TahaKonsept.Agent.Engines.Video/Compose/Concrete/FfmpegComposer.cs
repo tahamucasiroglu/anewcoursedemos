@@ -99,7 +99,7 @@ public sealed class FfmpegComposer : ComposerBase
             $"[0:v]{string.Join(',', chain)}[base];color=c={ProgressBarColor}:s={width}x{bar}:r={fps},format=rgba[bar];[base][bar]overlay=x=-w+w*t/{duration}:y=0:shortest=1:eval=frame{FinalVideoLabel}");
     }
 
-    /// <summary>Bir sahnenin normalize filtre zinciri (boyut, en-boy koruyarak siyah pad, fps, piksel biçimi, gerekirse son kare uzatma).</summary>
+    /// <summary>Bir sahnenin normalize filtre zinciri (boyut, sınırlı aralık + BT.709, en-boy koruyarak siyah pad, fps, piksel biçimi, gerekirse son kare uzatma).</summary>
     /// <param name="width">Genişlik.</param>
     /// <param name="height">Yükseklik.</param>
     /// <param name="fps">Kare hızı.</param>
@@ -108,7 +108,9 @@ public sealed class FfmpegComposer : ComposerBase
     public static string BuildNormalizeFilter(int width, int height, int fps, double padSec)
     {
         var sb = new StringBuilder();
-        sb.Append(CultureInfo.InvariantCulture, $"scale={width}:{height}:force_original_aspect_ratio=decrease,");
+        // Remotion/Revideo JPEG karelerinden gelen tam aralık (pc, yuvj420p) bazı oynatıcılarda/platformlarda soluk ya da patlak görünür:
+        // her sahne sınırlı aralığa (tv) ve BT.709 matrisine çevrilir, böylece son dosya her motorda standart yuv420p olur.
+        sb.Append(CultureInfo.InvariantCulture, $"scale={width}:{height}:force_original_aspect_ratio=decrease:out_range=tv:out_color_matrix=bt709,");
         sb.Append(CultureInfo.InvariantCulture, $"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps={fps},format=yuv420p");
         if (padSec > 0)
         {
@@ -196,6 +198,7 @@ public sealed class FfmpegComposer : ComposerBase
             "-t", Seconds(target),
             "-r", request.Fps.ToString(CultureInfo.InvariantCulture),
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
+            "-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
             "-video_track_timescale", "90000",
             output,
         };
@@ -251,6 +254,7 @@ public sealed class FfmpegComposer : ComposerBase
         else
         {
             args.AddRange(["-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", request.Fps.ToString(CultureInfo.InvariantCulture)]);
+            args.AddRange(["-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709"]);
         }
 
         args.AddRange(["-t", Seconds(total), "-movflags", "+faststart", request.OutputPath]);

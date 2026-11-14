@@ -102,6 +102,38 @@ public sealed class FfmpegComposerIntegrationTests
         (await OrangeBarWidth(output, 1.0, 320, dir)).ShouldBe(160, 16);
     }
 
+    /// <summary>
+    /// Remotion/Revideo gibi JPEG karelerinden gelen tam aralıklı (yuvj420p, pc) sahne: son dosya standart sınırlı aralıklı
+    /// yuv420p (tv, BT.709) olur — hem çubuk/altyazı yeniden kodlamasında hem de her şey kapalıyken (kopyalama) yolunda.
+    /// </summary>
+    /// <param name="overlays">true = altyazı + çubuk açık (son geçiş yeniden kodlar), false = hepsi kapalı (kopyalama).</param>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Compose_FullRangeScene_ProducesLimitedRangeYuv420p(bool overlays)
+    {
+        Assert.SkipUnless(TestEnvironment.HasFfmpeg, "ffmpeg bulunamadı.");
+        var ct = TestContext.Current.CancellationToken;
+        var dir = TestEnvironment.NewTempDir("compose-range");
+        var a = Path.Combine(dir, "jpeg-range.mp4");
+        var ffmpeg = _tools.Find(ToolKind.Ffmpeg)!;
+        var make = new List<string>
+        {
+            "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=1",
+            "-vf", "scale=out_range=pc,format=yuvj420p", "-c:v", "libx264", "-preset", "ultrafast", "-color_range", "pc", a,
+        };
+        (await _runner.RunAsync(new ProcessSpec(ffmpeg, make), null, ct)).Succeeded.ShouldBeTrue();
+        (await Probe(a, "stream=pix_fmt", "v:0")).ShouldBe("yuvj420p");
+        var output = Path.Combine(dir, "range.mp4");
+        var captions = new List<CaptionWord> { new("Merhaba", 0, 500) };
+        var request = new ComposeRequest(dir, [a], [1.0], null, captions, BurnSubtitles: overlays, ShowProgressBar: overlays, 320, 240, 30, output);
+
+        var result = await CreateComposer().ComposeAsync(request, null, ct);
+
+        result.IsSuccess.ShouldBeTrue(result.IsFailure ? result.Error.Message : string.Empty);
+        (await Probe(output, "stream=pix_fmt,color_range,color_space", "v:0")).ShouldBe("yuv420p,tv,bt709");
+    }
+
     /// <summary>Eksik sahne dosyası anlaşılır hata döner.</summary>
     [Fact]
     public async Task Compose_MissingScene_ReturnsNotFound()

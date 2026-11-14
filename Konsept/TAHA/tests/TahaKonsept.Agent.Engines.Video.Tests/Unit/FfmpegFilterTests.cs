@@ -56,4 +56,14 @@ public sealed class FfmpegFilterTests
         FfmpegComposer.BuildNormalizeFilter(1080, 1920, 30, 0).ShouldNotContain("tpad");
         FfmpegComposer.BuildNormalizeFilter(1080, 1920, 30, 1.25).ShouldEndWith("tpad=stop_mode=clone:stop_duration=1.25");
     }
+
+    /// <summary>Normalize zinciri tam aralıklı (yuvj420p) girdiyi sınırlı aralığa ve BT.709 matrisine çevirir.</summary>
+    [Fact]
+    public void BuildNormalizeFilter_ConvertsToLimitedRangeBt709()
+    {
+        var filter = FfmpegComposer.BuildNormalizeFilter(1080, 1920, 30, 0);
+        filter.ShouldContain("out_range=tv");
+        filter.ShouldContain("out_color_matrix=bt709");
+        filter.ShouldContain("format=yuv420p");
+    }
 }
