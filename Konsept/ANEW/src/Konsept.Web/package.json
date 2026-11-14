@@ -1,0 +1,14 @@
+{
+  "name": "konsept-web",
+  "private": true,
+  "type": "module",
+  "description": "ANEW Konsept Web — tarayıcı JS testleri (Vitest + jsdom) ve jQuery kaynağı.",
+  "scripts": {
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "jquery": "3.7.1",
+    "jsdom": "31.0.1",
+    "vitest": "5.1.0"
+  }
+}

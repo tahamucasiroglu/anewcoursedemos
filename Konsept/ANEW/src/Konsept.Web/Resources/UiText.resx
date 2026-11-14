@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arayüz metinleri (yalnızca Türkçe; ileride başka diller ayrı resx dosyalarıyla eklenir). -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppName" xml:space="preserve"><value>ANEW Konsept</value></data>
+  <data name="MonthlySpend" xml:space="preserve"><value>Bu ay: —</value></data>
+  <data name="MonthlySpendLabel" xml:space="preserve"><value>Aylık harcama</value></data>
+  <data name="NavLabel" xml:space="preserve"><value>Sayfalar</value></data>
+  <data name="NavConcepts" xml:space="preserve"><value>Konseptler</value></data>
+  <data name="NavConceptToVideo" xml:space="preserve"><value>Konseptten Video</value></data>
+  <data name="NavProduced" xml:space="preserve"><value>Üretilenler</value></data>
+  <data name="NavDeleted" xml:space="preserve"><value>Silinenler</value></data>
+  <data name="NavPublishing" xml:space="preserve"><value>Yayınlama</value></data>
+  <data name="ProfileSelect" xml:space="preserve"><value>Profil seçimi</value></data>
+  <data name="EditProfile" xml:space="preserve"><value>Profili düzenle</value></data>
+  <data name="NewProfile" xml:space="preserve"><value>Yeni profil</value></data>
+  <data name="ReportError" xml:space="preserve"><value>Hata bildir</value></data>
+  <data name="Settings" xml:space="preserve"><value>Ayarlar</value></data>
+  <data name="ThemeToggle" xml:space="preserve"><value>Açık/koyu temayı değiştir</value></data>
+  <data name="ComingSoon" xml:space="preserve"><value>Yakında</value></data>
+  <data name="EmptyConcepts" xml:space="preserve"><value>Henüz konsept yok.</value></data>
+  <data name="EmptyConceptToVideo" xml:space="preserve"><value>Henüz videoya hazır konsept yok.</value></data>
+  <data name="EmptyProduced" xml:space="preserve"><value>Henüz üretilmiş video yok.</value></data>
+  <data name="EmptyDeleted" xml:space="preserve"><value>Silinen bir şey yok.</value></data>
+  <data name="PublishingComingSoon" xml:space="preserve"><value>Çok yakında sizlerleyiz</value></data>
+  <data name="ErrorPage" xml:space="preserve"><value>Beklenmeyen bir hata oluştu. Lütfen biraz sonra tekrar deneyin.</value></data>
+  <data name="Journal" xml:space="preserve"><value>Günlük</value></data>
+  <data name="JournalEmpty" xml:space="preserve"><value>Henüz kayıt yok</value></data>
+  <data name="StatusLabel" xml:space="preserve"><value>Sistem durumu</value></data>
+  <data name="StatusLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="StatusApiOk" xml:space="preserve"><value>API ✓</value></data>
+  <data name="StatusApiDown" xml:space="preserve"><value>API erişilemiyor</value></data>
+  <data name="StatusDbOk" xml:space="preserve"><value>DB ✓</value></data>
+  <data name="StatusDbDown" xml:space="preserve"><value>DB erişilemiyor</value></data>
+  <data name="StatusAgentConnected" xml:space="preserve"><value>Ajan bağlı</value></data>
+  <data name="StatusAgentDisconnected" xml:space="preserve"><value>Ajan bağlı değil</value></data>
+  <data name="AgentTest" xml:space="preserve"><value>Ajanı test et</value></data>
+  <data name="AgentTestSending" xml:space="preserve"><value>Gönderiliyor…</value></data>
+  <data name="AgentTestFailed" xml:space="preserve"><value>Ajana ulaşılamadı</value></data>
+</root>

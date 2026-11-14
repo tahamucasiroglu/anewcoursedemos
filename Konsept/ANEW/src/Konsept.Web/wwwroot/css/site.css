@@ -1,0 +1,300 @@
+/* ANEW Konsept — turuncu/kahve "kahve dükkânı" teması (ilk_promt.txt). K-7: renkler YALNIZCA aşağıdaki
+   iki değişken bloğunda tanımlanır; geri kalan her kural var(--color-…) kullanır. Kontrast: her iki temada
+   metin/arka plan WCAG AA (≥ 4.5:1). */
+
+:root {
+  --color-bg: #fff4e6;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7e6d0;
+  --color-text: #4a2c1d;
+  --color-text-muted: #6b4a38;
+  --color-border: #e2c9a8;
+  --color-accent: #9a4a12;
+  --color-primary: #b85a1a;
+  --color-on-primary: #ffffff;
+  --color-error: #b3261e;
+  --color-warning: #8a5a00;
+  --color-success: #2e6b2f;
+  --color-tooltip-bg: #4a2c1d;
+  --color-tooltip-text: #fff4e6;
+  --color-focus: #e8772e;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #1e1410;
+  --color-surface: #2b1d16;
+  --color-surface-alt: #3a281e;
+  --color-text: #f3e6d8;
+  --color-text-muted: #d4bfa9;
+  --color-border: #5a4030;
+  --color-accent: #f0a060;
+  --color-primary: #e8772e;
+  --color-on-primary: #1e1410;
+  --color-error: #ff8a80;
+  --color-warning: #f2c14e;
+  --color-success: #8fd48f;
+  --color-tooltip-bg: #f3e6d8;
+  --color-tooltip-text: #1e1410;
+  --color-focus: #f0a060;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Üst bar: logo + ad · aylık harcama · sayfalar · sağda kontroller (tasarım: source/konseptler sayfası tasarımı.png) */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.topbar__spend {
+  padding: 0.25rem 0.6rem;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.topbar__nav {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.topbar__link {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.topbar__link:hover {
+  background: var(--color-surface-alt);
+}
+
+.topbar__link[aria-current="page"] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.topbar__profile {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.icon-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Pasif kontroller: tıklanınca bir şey olmaz; fareyle üzerine gelince ve klavye odağında "Yakında" ipucu. */
+.passive {
+  position: relative;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.passive[data-tooltip]:hover::after,
+.passive[data-tooltip]:focus-visible::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--color-tooltip-bg);
+  color: var(--color-tooltip-text);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Tema düğmesi: açık modda ay (koyuya geç), koyu modda güneş (açığa geç). */
+.theme-toggle__sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle__sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle__moon {
+  display: none;
+}
+
+.page {
+  flex: 1;
+  padding: 1.5rem 1rem;
+}
+
+.page__title {
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+}
+
+.empty-state {
+  padding: 2rem;
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.empty-state--announce {
+  color: var(--color-accent);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* Alt şerit: Günlük · sistem durumu · Ajanı test et */
+.bottombar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.35rem 1rem;
+  background: var(--color-surface-alt);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.journal {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.journal__label {
+  font-weight: 600;
+}
+
+.journal[data-level="warning"] .journal__text {
+  color: var(--color-warning);
+}
+
+.journal[data-level="error"] .journal__text {
+  color: var(--color-error);
+}
+
+.status {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.status__item[data-state="ok"] {
+  color: var(--color-success);
+}
+
+.status__item[data-state="error"] {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.status__item[data-state="off"] {
+  color: var(--color-warning);
+}
+
+.agent-test {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agent-test__button {
+  padding: 0.2rem 0.6rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.agent-test__button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.agent-test__result[data-state="error"] {
+  color: var(--color-error);
+}
+
+.agent-test__result[data-state="ok"] {
+  color: var(--color-success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

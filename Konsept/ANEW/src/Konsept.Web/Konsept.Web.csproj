@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Ön yüz (BFF): Razor sayfaları ve $.ajax uçları; veritabanına ve modüllere dokunmaz, yalnızca ApiClient (Y-5). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Web.ApiClient\Konsept.Web.ApiClient.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Arayüz metinleri yalnızca resx'te (ileride çoklu dil). Derlemede tipli UiText sınıfı üretilir. -->
+    <EmbeddedResource Update="Resources\UiText.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)UiText.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Konsept.Web.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>UiText</StronglyTypedClassName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- JS test araçları yayına girmez. -->
+    <Content Remove="node_modules\**;package.json;package-lock.json;vitest.config.mjs" />
+    <None Remove="node_modules\**" />
+    <Content Update="wwwroot\js\__tests__\**" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+</Project>

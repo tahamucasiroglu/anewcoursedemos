@@ -1,0 +1,93 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var path = Context.Request.Path.Value ?? "/";
+    var pages = new (string Href, string Text)[]
+    {
+        ("/", UiText.NavConcepts),
+        ("/konseptten-video", UiText.NavConceptToVideo),
+        ("/uretilenler", UiText.NavProduced),
+        ("/silinenler", UiText.NavDeleted),
+        ("/yayinlama", UiText.NavPublishing),
+    };
+}
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+    <title>@ViewData["Title"] · @UiText.AppName</title>
+    <link rel="icon" type="image/svg+xml" href="~/img/logo-placeholder.svg" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__brand">
+            <img class="topbar__logo" src="~/img/logo-placeholder.svg" alt="" width="28" height="28" />
+            <span class="topbar__name">@UiText.AppName</span>
+        </div>
+        <span class="topbar__spend passive" role="button" tabindex="0" aria-disabled="true"
+              aria-label="@UiText.MonthlySpendLabel" data-tooltip="@UiText.ComingSoon">@UiText.MonthlySpend</span>
+        <nav class="topbar__nav" aria-label="@UiText.NavLabel">
+            @foreach (var item in pages)
+            {
+                <a class="topbar__link" href="@item.Href" aria-current="@(item.Href == path ? "page" : null)">@item.Text</a>
+            }
+        </nav>
+        <div class="topbar__actions">
+            <button type="button" class="topbar__profile passive" aria-disabled="true"
+                    aria-label="@UiText.ProfileSelect" data-tooltip="@UiText.ComingSoon">@UiText.ProfileSelect ▾</button>
+            <button type="button" class="icon-button passive" aria-disabled="true"
+                    aria-label="@UiText.EditProfile" data-tooltip="@UiText.ComingSoon">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" /></svg>
+            </button>
+            <button type="button" class="icon-button passive" aria-disabled="true"
+                    aria-label="@UiText.NewProfile" data-tooltip="@UiText.ComingSoon">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+            <button type="button" class="icon-button passive" aria-disabled="true"
+                    aria-label="@UiText.ReportError" data-tooltip="@UiText.ComingSoon">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4zM12 10v4M12 17v1" /></svg>
+            </button>
+            <button type="button" class="icon-button passive" aria-disabled="true"
+                    aria-label="@UiText.Settings" data-tooltip="@UiText.ComingSoon">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" /></svg>
+            </button>
+            <button type="button" id="theme-toggle" class="icon-button theme-toggle" aria-label="@UiText.ThemeToggle">
+                <svg class="theme-toggle__sun" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" /></svg>
+                <svg class="theme-toggle__moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11z" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <main id="main" class="page">
+        @RenderBody()
+    </main>
+
+    <footer class="bottombar">
+        <div class="journal" id="journal" data-level="info">
+            <span class="journal__label">@UiText.Journal:</span>
+            <span class="journal__text" id="journal-text">@UiText.JournalEmpty</span>
+        </div>
+        <div class="status" id="system-status" role="status" aria-live="polite" aria-label="@UiText.StatusLabel"
+             data-text-loading="@UiText.StatusLoading" data-text-api-ok="@UiText.StatusApiOk"
+             data-text-api-down="@UiText.StatusApiDown" data-text-db-ok="@UiText.StatusDbOk"
+             data-text-db-down="@UiText.StatusDbDown" data-text-agent-connected="@UiText.StatusAgentConnected"
+             data-text-agent-disconnected="@UiText.StatusAgentDisconnected" data-text-journal-empty="@UiText.JournalEmpty">
+            <span class="status__item" id="status-version"></span>
+            <span class="status__item" id="status-api" data-state="loading">@UiText.StatusLoading</span>
+            <span class="status__item" id="status-db" data-state="loading"></span>
+            <span class="status__item" id="status-agent" data-state="loading"></span>
+        </div>
+        <div class="agent-test">
+            <button type="button" id="agent-test-button" class="agent-test__button"
+                    data-text-sending="@UiText.AgentTestSending" data-text-failed="@UiText.AgentTestFailed">@UiText.AgentTest</button>
+            <span id="agent-test-result" class="agent-test__result" role="status" aria-live="polite"></span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script type="module" src="~/js/main.js" asp-append-version="true"></script>
+</body>
+</html>
