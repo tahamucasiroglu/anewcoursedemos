@@ -1,7 +1,7 @@
 <Project>
   <!-- Tek ürün versiyonu (Web, Api, Ajan ortak) — docs/conventions.md, Versioning. -->
   <PropertyGroup>
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
