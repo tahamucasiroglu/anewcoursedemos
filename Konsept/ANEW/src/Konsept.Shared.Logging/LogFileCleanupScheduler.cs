@@ -35,5 +35,9 @@ public sealed class LogFileCleanupScheduler(ILogFileJanitor janitor, string dire
         {
             // Klasöre o an erişilemiyor — ertesi gün yeniden denenir; log yazımı etkilenmez.
         }
+        catch (UnauthorizedAccessException)
+        {
+            // Klasör izni bozuk — zamanlayıcı geri çağrısında yakalanmayan istisna süreci düşürürdü (review L-3).
+        }
     }
 }
