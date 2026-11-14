@@ -28,6 +28,12 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
     /// <summary>Kayıt sayfasının görünümü.</summary>
     public const string RegisterView = "Kayit";
 
+    /// <summary>Çıkış tamamlanamazsa gösterilen hata sayfası.</summary>
+    public const string ErrorView = "~/Views/Pages/Hata.cshtml";
+
+    /// <summary>Hata sayfasına özel mesajı taşıyan ViewData anahtarı.</summary>
+    public const string ErrorMessageKey = "ErrorMessage";
+
     /// <summary>Kilit saatinin gösterildiği saat dilimi.</summary>
     public const string DisplayTimeZone = "Europe/Istanbul";
 
@@ -79,9 +85,16 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
         if (!string.IsNullOrEmpty(access))
         {
             var result = await Api.LogoutAsync(access, cancellationToken).ConfigureAwait(false);
-            if (!result.IsSuccess)
+
+            // Api oturumları iptal edemediyse çıkış başarılı gibi gösterilmez (Req 15, review R1-4): oturum kalır, genel hata ve
+            // korelasyon numarası gösterilir. Oturum Api'de zaten düşmüşse (401) yerel cookie de silinir.
+            if (!result.IsSuccess && result.Error!.Type != ErrorType.Unauthorized)
             {
-                LogLogoutFailed(Logger, result.Error!.Code, controller.HttpContext.TraceIdentifier);
+                var correlation = controller.HttpContext.TraceIdentifier;
+                LogLogoutFailed(Logger, result.Error.Code, correlation);
+                controller.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                controller.ViewData[ErrorMessageKey] = string.Format(CultureInfo.CurrentCulture, UiText.ServiceUnavailable, correlation);
+                return controller.View(ErrorView);
             }
         }
 
@@ -165,6 +178,6 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
     [LoggerMessage(EventId = 3001, Level = LogLevel.Warning, Message = "Kimlik işlemi tamamlanamadı: {Code} (korelasyon {Correlation})")]
     private static partial void LogAuthUnavailable(ILogger logger, string code, string correlation);
 
-    [LoggerMessage(EventId = 3002, Level = LogLevel.Warning, Message = "Api çıkışı başarısız: {Code} (korelasyon {Correlation}); cookie yine silindi")]
+    [LoggerMessage(EventId = 3002, Level = LogLevel.Warning, Message = "Api çıkışı başarısız: {Code} (korelasyon {Correlation}); oturum korundu")]
     private static partial void LogLogoutFailed(ILogger logger, string code, string correlation);
 }

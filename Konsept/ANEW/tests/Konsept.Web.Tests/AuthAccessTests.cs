@@ -154,6 +154,32 @@ public sealed class AuthAccessTests
         loginPage.QuerySelector(".auth__notice")!.TextContent.ShouldBe("Oturumunuz sona erdi");
     }
 
+    /// <summary>
+    /// Api oturumları iptal edemezse çıkış başarılı gibi gösterilmez: oturum (cookie) kalır, korelasyon numaralı genel hata
+    /// gösterilir (Req 15).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Logout_ApiFails_KeepsSessionShowsErrorWithCorrelation()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        factory.Api.LogoutAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Result<int>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable));
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        var page = await WebFactory.GetDocumentAsync(client, "/", ct);
+        var token = page.QuerySelector("form.user-menu__logout input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
+        using var logout = await client.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct);
+        var errorPage = await WebFactory.ParseAsync(await logout.Content.ReadAsStringAsync(ct), ct);
+        using var next = await client.GetAsync(new Uri("/", UriKind.Relative), ct);
+
+        logout.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        errorPage.QuerySelector("[role=alert]")!.TextContent.ShouldStartWith("Şu an işleminizi yapamıyoruz (hata no: ");
+        logout.Headers.Contains("Set-Cookie").ShouldBeFalse();
+        next.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
     /// <summary>Çıkış Api'de tüm oturumları kapatır, cookie'yi siler ve giriş sayfasına götürür; sonraki sayfa girişe gider.</summary>
     /// <returns>Görev.</returns>
     [Fact]

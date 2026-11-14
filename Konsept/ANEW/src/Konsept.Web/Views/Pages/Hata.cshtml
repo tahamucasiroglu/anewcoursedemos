@@ -1,4 +1,5 @@
 @{
     ViewData["Title"] = UiText.AppName;
+    var message = ViewData["ErrorMessage"] as string ?? UiText.ErrorPage;
 }
-<p class="empty-state">@UiText.ErrorPage</p>
+<p class="empty-state" role="alert">@message</p>
