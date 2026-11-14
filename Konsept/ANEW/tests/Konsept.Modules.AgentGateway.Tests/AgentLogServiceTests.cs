@@ -1,3 +1,4 @@
+using Konsept.Modules.AgentGateway.Application.Base;
 using Konsept.Modules.AgentGateway.Application.Concrete;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Konsept.Modules.AgentGateway.Domain.Entities;
@@ -43,6 +44,26 @@ public sealed class AgentLogServiceTests
         // Önce kırpılsaydı 4000. karakterde "sk-proj-A" kalır (gövde 6 < 8, desen yakalamaz) ve sızardı.
         _written[1].Message.ShouldNotContain("sk-proj");
         _written[1].Message.ShouldEndWith("sk-…zz9");
+    }
+
+    /// <summary>
+    /// 8000 karakterden uzun mesajda kaba kesim noktasına denk gelen key'in yarım parçası son mesajda kalmaz; maskeleme
+    /// metni kısaltsa bile (review round 3, L-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Report_KeyCutAtCoarseLimit_PartialKeyDropped()
+    {
+        var service = new AgentLogService(_registry, new AgentLogQuota(), _time, _writer);
+        var keys = string.Join(' ', Enumerable.Repeat("sk-proj-ABCDEFGHIJKLMNOPQRSTUV", 300));
+        var prefix = keys[..7980].PadRight(7993, 'x') + " ";
+        var message = prefix + "sk-REALSECRETKEY1234567890 son";
+
+        (await service.ReportAsync("conn-1", new AgentLogSummary(4, _time.GetUtcNow(), message, "0.2.0"), TestContext.Current.CancellationToken)).ShouldBeTrue();
+
+        AgentLogServiceBase.CoarseCut(message).Length.ShouldBeLessThanOrEqualTo(AgentLogServiceBase.MaxMessageLength * 2);
+        _written.Single().Message.ShouldNotContain("sk-REA");
+        _written.Single().Message.ShouldNotContain("REALSECRET");
     }
 
     /// <summary>Dakikada 60'tan fazla özet sessizce düşer; yeni dakikada yeniden kabul edilir.</summary>

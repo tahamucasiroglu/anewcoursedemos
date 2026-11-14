@@ -31,9 +31,25 @@ public sealed class MaskingEnricher : ILogEventEnricher
         ScalarValue { Value: string text } => Replace(value, SecretMasker.MaskField(name, text)),
         ScalarValue { Value: null } => value,
         ScalarValue scalar when SecretMasker.IsSecretField(name) => new ScalarValue(SecretMasker.MaskField(name, scalar.Value.ToString())),
+
+        // Gizli ad altındaki iç içe değer (ör. {@ApiKey} → { Value = … }, {Passwords} listesi) tümüyle maskelenir (hunt).
+        StructureValue or SequenceValue or DictionaryValue when SecretMasker.IsSecretField(name) => MaskAllUnder(name, value),
         StructureValue structure => MaskStructure(structure),
         SequenceValue sequence => MaskSequence(name, sequence),
         DictionaryValue dictionary => MaskDictionary(dictionary),
+        _ => value,
+    };
+
+    private static LogEventPropertyValue MaskAllUnder(string secretName, LogEventPropertyValue value) => value switch
+    {
+        ScalarValue { Value: null } => value,
+        ScalarValue scalar => new ScalarValue(SecretMasker.MaskField(secretName, scalar.Value.ToString())),
+        StructureValue structure => new StructureValue(
+            [.. structure.Properties.Select(p => new LogEventProperty(p.Name, MaskAllUnder(secretName, p.Value)))],
+            structure.TypeTag),
+        SequenceValue sequence => new SequenceValue([.. sequence.Elements.Select(e => MaskAllUnder(secretName, e))]),
+        DictionaryValue dictionary => new DictionaryValue(
+            [.. dictionary.Elements.Select(e => new KeyValuePair<ScalarValue, LogEventPropertyValue>(e.Key, MaskAllUnder(secretName, e.Value)))]),
         _ => value,
     };
 

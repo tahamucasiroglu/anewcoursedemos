@@ -133,6 +133,38 @@ public sealed class KonseptLoggingTests
         }
     }
 
+    /// <summary>
+    /// Gizli ad altındaki iç içe değerler (<c>{@ApiKey}</c> → <c>Value</c>, <c>{@Credential}</c>), çoğul adlı listeler
+    /// (<c>{Passwords}</c>) ve <c>KeyValuePair</c> listeleri dosyada düz metin görünmez (fix-3, hunt pipeline bulguları).
+    /// </summary>
+    [Fact]
+    public void Masking_NestedUnderSecretNameAndPairs_NeverPlainInFile()
+    {
+        var dir = Directory.CreateTempSubdirectory("anewconcept-log-");
+        try
+        {
+            using (var logger = new LoggerConfiguration().WithKonseptEnrichment(LogSources.Api).WriteToKonseptFile(dir.FullName, "api").CreateLogger())
+            {
+                logger.Information("Got {@ApiKey}", new { Kind = "openai", Value = "abcdefghijklmnop-nested" });
+                logger.Information("Pairing {@Credential}", new { Id = 1, Value = "cred-secret-1" });
+                logger.Information("Hashes {Passwords}", new[] { "pw-one-x", "pw-two-x" });
+                logger.Information("KV {Pairs}", new List<KeyValuePair<string, string>> { new("Password", "p-val-kvlist") });
+            }
+
+            var text = File.ReadAllText(Directory.GetFiles(dir.FullName).Single());
+            foreach (var secret in new[] { "abcdefghijklmnop-nested", "cred-secret-1", "pw-one-x", "pw-two-x", "p-val-kvlist" })
+            {
+                text.ShouldNotContain(secret);
+            }
+
+            text.ShouldContain("Got {");
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
     /// <summary>Log dosyası yalnızca verilen klasöre yazılır, başka yerde dosya oluşmaz (AC-5).</summary>
     [Fact]
     public void LogDirectory_OnlyConfiguredFolder_NoFilesElsewhere()

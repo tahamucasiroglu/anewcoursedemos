@@ -34,8 +34,7 @@ public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, Age
         // Önce kaba sınır (maskeleme maliyeti sınırlı kalsın, review round 2 L-1), sonra maskele, sonra kesin kırp:
         // kesilen bir key desen eşiğinin altına düşüp parça sızdırmasın (round 1 L-2). Kaba sınırda kesilen parça
         // kesin kırpmada atılır.
-        var raw = summary.Message ?? string.Empty;
-        var masked = SecretMasker.Mask(raw.Length > MaxMessageLength * 2 ? raw[..(MaxMessageLength * 2)] : raw);
+        var masked = SecretMasker.Mask(CoarseCut(summary.Message ?? string.Empty));
         var message = masked.Length > MaxMessageLength ? masked[..MaxMessageLength] : masked;
         var entry = new TechnicalLogEntry(
             summary.OccurredAt,
@@ -45,6 +44,28 @@ public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, Age
             AgentVersion: string.IsNullOrWhiteSpace(summary.AgentVersion) ? session.AgentVersion : summary.AgentVersion);
         await WriteAsync(entry, cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <summary>
+    /// Kaba sınır: <see cref="MaxMessageLength"/> × 2'den uzun mesaj kesilir ve kesim noktasındaki yarım parça (son
+    /// boşluğa kadar, en fazla 64 karakter; boşluk yoksa son 64 karakter) atılır — yarım key desen eşiğinin altında kalıp
+    /// sızmasın (review round 3, L-1).
+    /// </summary>
+    /// <param name="raw">Ham mesaj.</param>
+    /// <returns>Kesilmiş mesaj.</returns>
+    public static string CoarseCut(string raw)
+    {
+        ArgumentNullException.ThrowIfNull(raw);
+        const int Limit = MaxMessageLength * 2;
+        const int Tail = 64;
+        if (raw.Length <= Limit)
+        {
+            return raw;
+        }
+
+        var cut = raw[..Limit];
+        var space = cut.LastIndexOfAny([' ', '\t', '\r', '\n'], Limit - 1, Tail);
+        return space > 0 ? cut[..space] : cut[..(Limit - Tail)];
     }
 
     /// <summary>Kaydı teknik loga yazar.</summary>

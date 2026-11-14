@@ -15,12 +15,24 @@ public static partial class SecretMasker
     /// <summary>JWT biçimli token'ın yerine yazılan metin.</summary>
     public const string JwtPlaceholder = "[jwt]";
 
+    /// <summary>Maskelenecek en uzun metin; daha uzunu önce kırpılır.</summary>
+    public const int MaxInputLength = 64 * 1024;
+
+    /// <summary>Kırpılan metnin sonuna eklenen işaret.</summary>
+    public const string TruncatedMarker = "…[kırpıldı]";
+
     private const string Ellipsis = "…";
 
-    private static readonly string[] KnownKeyPrefixes = ["sk-ant-", "sk-or-", "sk-"];
+    private static readonly string[] KnownKeyPrefixes = ["sk-ant-", "sk-or-", "sk-", "AIza"];
 
     private static readonly string[] HiddenFieldSuffixes =
-        ["password", "passwd", "secret", "token", "pairingcode", "servicekey", "privatekey", "credential", "credentials"];
+    [
+        "password", "passwords", "passwd", "secret", "secrets", "token", "pairingcode", "servicekey", "privatekey",
+        "credential", "credentials", "secretkey", "accesskey", "signingkey", "accountkey", "authorization", "cookie",
+        "passphrase", "pwd",
+    ];
+
+    private static readonly string[] HiddenFieldStems = ["sifre", "şifre", "parola"];
 
     /// <summary>Serbest metindeki bilinen gizli bilgi biçimlerini maskeler.</summary>
     /// <param name="text">Metin (hata mesajı, kullanıcı metni, log satırı).</param>
@@ -32,10 +44,20 @@ public static partial class SecretMasker
             return text ?? string.Empty;
         }
 
+        // Üst sınır: maskeleme maliyeti sınırlı kalsın (review round 3, M-1); fazlası atılır, işaretlenir.
+        // Kesim noktası son boşluğa çekilir (en fazla 256 karakter): yarım token/URL sızmasın (hunt r2).
+        if (text.Length > MaxInputLength)
+        {
+            var cut = text.LastIndexOfAny([' ', '\t', '\r', '\n'], MaxInputLength - 1, 256);
+            text = string.Concat(text.AsSpan(0, cut > 0 ? cut : MaxInputLength - 256), TruncatedMarker);
+        }
+
         var result = JwtPattern().Replace(text, JwtPlaceholder);
         result = BearerPattern().Replace(result, m => m.Groups["token"].Value == JwtPlaceholder ? m.Value : $"{m.Groups["scheme"].Value} {Hidden}");
+        result = MaskUrlUserInfo(result);
         result = ApiKeyPattern().Replace(result, m => MaskApiKey(m.Value));
-        result = KeyValuePattern().Replace(result, MaskKeyValue);
+        result = GoogleApiKeyPattern().Replace(result, m => MaskApiKey(m.Value));
+        result = SecretKeyValueScanner.Mask(result);
         return result;
     }
 
@@ -79,64 +101,117 @@ public static partial class SecretMasker
         return body < 8 ? Hidden : string.Concat(prefix, Ellipsis, key.AsSpan(key.Length - 3));
     }
 
-    private static bool IsApiKeyField(string name) => name.EndsWith("apikey", StringComparison.Ordinal);
+    /// <summary>Değer zaten maskelenmiş bir API key mi (<c>sk-…xyz</c>, <c>…xyz</c>).</summary>
+    /// <param name="value">Değer.</param>
+    /// <returns>Maskeliyse <c>true</c>.</returns>
+    internal static bool IsMaskedApiKey(string value) => AlreadyMaskedKey().IsMatch(value);
+
+    /// <summary>Alan adını karşılaştırma için sadeleştirir (<c>_</c>/<c>-</c> atılır, küçük harf).</summary>
+    /// <param name="fieldName">Alan adı.</param>
+    /// <returns>Sade ad.</returns>
+    internal static string NormalizeFieldName(string? fieldName) => Normalize(fieldName);
+
+    /// <summary>Sade ad bir API key alanı mı.</summary>
+    /// <param name="name">Sade ad.</param>
+    /// <returns>API key alanıysa <c>true</c>.</returns>
+    internal static bool IsApiKeyFieldName(string name) => IsApiKeyField(name);
+
+    /// <summary>Sade ad tamamen gizlenen bir alan mı (şifre, token, sır…).</summary>
+    /// <param name="name">Sade ad.</param>
+    /// <returns>Gizliyse <c>true</c>.</returns>
+    internal static bool IsHiddenFieldName(string name) => IsHiddenField(name);
+
+    /// <summary>Sade ad bir bağlantı dizesi alanı mı.</summary>
+    /// <param name="name">Sade ad.</param>
+    /// <returns>Bağlantı dizesiyse <c>true</c>.</returns>
+    internal static bool IsConnectionStringFieldName(string name) => IsConnectionStringField(name);
+
+    private static bool IsApiKeyField(string name) =>
+        name.EndsWith("apikey", StringComparison.Ordinal) || name.EndsWith("apikeys", StringComparison.Ordinal);
 
     private static bool IsConnectionStringField(string name) => name.EndsWith("connectionstring", StringComparison.Ordinal);
 
     private static bool IsHiddenField(string name) =>
-        name == "pwd" || HiddenFieldSuffixes.Any(s => name.EndsWith(s, StringComparison.Ordinal));
+        HiddenFieldSuffixes.Any(s => name.EndsWith(s, StringComparison.Ordinal))
+        || name.StartsWith("password", StringComparison.Ordinal) // password_confirmation, passwordHash…
+        || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
 
     private static string Normalize(string? fieldName) =>
         fieldName is null
             ? string.Empty
             : fieldName.Replace("_", string.Empty, StringComparison.Ordinal)
                 .Replace("-", string.Empty, StringComparison.Ordinal)
-                .ToLowerInvariant();
+                .Replace('İ', 'i') // Türkçe büyük İ: "ŞİFRE" → "şifre" (invariant küçültme İ'yi değiştirmez).
+                .ToLowerInvariant()
+                .Replace("̇", string.Empty, StringComparison.Ordinal);
 
-    [GeneratedRegex(@"\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?:(?<=\\u[0-9A-Fa-f]{4})|(?<!(?<!\\)[A-Za-z0-9_]))eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*", RegexOptions.CultureInvariant)]
     private static partial Regex JwtPattern();
 
-    [GeneratedRegex(@"(?<scheme>\bBearer)\s+(?<token>[A-Za-z0-9._~+/=\-\[\]]{8,})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?<scheme>\bBearer)[ \t]+(?<token>[^\s""',;]+)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex BearerPattern();
 
     /// <summary>
-    /// Serbest metindeki gizli <c>anahtar=değer</c> / <c>anahtar: değer</c> çiftlerinin değerini maskeler (review round 1
-    /// M-1, round 2 M-1/L-1): kayıt <c>ToString</c> (<c>NewPassword = x y }</c>), JSON (<c>"password":"x"</c>, kaçışlı
-    /// tırnak, iç içe değer), YAML (<c>password: x</c>), bağlantı dizesi (<c>Password=ab,cd;</c> — yalnızca <c>;</c>
-    /// bitirir), sorgu dizesi (<c>access_token=x&amp;</c>), <c>:=</c>, kapanmamış tırnak. Desen yalnızca gizli anahtar
-    /// soneklerini eşler (metin doğrusal taranır); son karar alan tablosuyla aynıdır (<see cref="IsSecretField"/>).
-    /// Tırnaksız değer alanın sonuna kadar gider: <c>;</c>, satır sonu, sonraki <c>, Ad =</c>, <c> }</c> ya da <c>&amp;ad=</c>.
+    /// URL'deki kullanıcı bilgisinin şifresini maskeler: <c>postgres://user:pw@host</c> → <c>postgres://user:***@host</c>;
+    /// yalnızca token varsa (<c>https://TOKEN@host</c>) tamamı (hunt: URI biçimli bağlantı dizeleri, git uzak adresleri).
+    /// Her <c>://</c> için en fazla 512 karakter taranır.
     /// </summary>
-    /// <param name="match">Eşleşme.</param>
-    /// <returns>Değeri maskelenmiş eşleşme metni.</returns>
-    private static string MaskKeyValue(Match match)
+    /// <param name="text">Metin.</param>
+    /// <returns>Maskelenmiş metin.</returns>
+    private static string MaskUrlUserInfo(string text)
     {
-        var name = Normalize(match.Groups["key"].Value);
-        var value = match.Groups["val"];
-        if (!(IsApiKeyField(name) || IsHiddenField(name)) || value.Length == 0)
+        var index = text.IndexOf("://", StringComparison.Ordinal);
+        if (index < 0)
         {
-            return match.Value;
+            return text;
         }
 
-        // Önceki adımda maskelenmiş key (sk-…xyz) olduğu gibi kalır; "…" içeren ama bu biçimde olmayan değer maskelenir.
-        var masked = !IsApiKeyField(name) || value.Value == Hidden
-            ? Hidden
-            : AlreadyMaskedKey().IsMatch(value.Value) ? value.Value : MaskApiKey(value.Value);
+        var output = new System.Text.StringBuilder(text.Length);
+        var copied = 0;
+        while (index >= 0)
+        {
+            var start = index + 3;
+            var limit = Math.Min(text.Length, start + 512);
+            var hardEnd = start;
+            var softEnd = -1;
+            while (hardEnd < limit && text[hardEnd] is not (' ' or '\t' or '\r' or '\n' or '"' or '\'' or '<' or '>' or ',' or ';'))
+            {
+                if (softEnd < 0 && text[hardEnd] is ('/' or '?' or '#'))
+                {
+                    softEnd = hardEnd;
+                }
 
-        var start = value.Index - match.Index;
-        return string.Concat(match.Value.AsSpan(0, start), masked, match.Value.AsSpan(start + value.Length));
+                hardEnd++;
+            }
+
+            // Şifrede '/', '?', '#' olabilir (amqp://guest:gu#S3CRET@rabbit): ilk ayraçtan önce ':' varsa yetki
+            // bölümü sert sınıra kadar uzatılır; fazla maskeleme güvenli taraftır (hunt r2).
+            var firstColon = text.IndexOf(':', start, hardEnd - start);
+            var end = softEnd >= 0 && !(firstColon >= 0 && firstColon < softEnd) ? softEnd : hardEnd;
+            var at = text.LastIndexOf('@', end - 1, end - start);
+            if (at > start)
+            {
+                var colon = text.IndexOf(':', start, at - start);
+                var secretStart = colon >= 0 ? colon + 1 : start;
+                if (at > secretStart)
+                {
+                    output.Append(text, copied, secretStart - copied).Append(Hidden);
+                    copied = at;
+                }
+            }
+
+            index = end < text.Length ? text.IndexOf("://", end, StringComparison.Ordinal) : -1;
+        }
+
+        return copied == 0 ? text : output.Append(text, copied, text.Length - copied).ToString();
     }
 
-    [GeneratedRegex(@"^(?:sk-(?:ant-|or-)?)?…[A-Za-z0-9_\-]{3}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?:sk-(?:ant-|or-)?|AIza)?…[A-Za-z0-9_\-]{3}$", RegexOptions.CultureInvariant)]
     private static partial Regex AlreadyMaskedKey();
 
-    [GeneratedRegex(@"(?<![A-Za-z0-9])sk-[A-Za-z0-9_\-]{8,}", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?:(?<=\\u[0-9A-Fa-f]{4})|(?<!(?<!\\)[A-Za-z0-9]))sk-[A-Za-z0-9_\-]{8,}", RegexOptions.CultureInvariant)]
     private static partial Regex ApiKeyPattern();
 
-    [GeneratedRegex(
-        @"(?<![\w\-])(?<key>(?:[A-Za-z][\w\-]*?)?(?:pass[_\-]*w(?:or)?d|pwd|secret|token|pairing[_\-]*code|service[_\-]*key|private[_\-]*key|credentials?|api[_\-]*key))(?![\w\-])[""']?\s*(?::=|=|:)\s*"
-        + @"(?:""(?<val>(?:\\.|[^""\\\r\n])*)""|'(?<val>(?:\\.|[^'\\\r\n])*)'|[""'](?<val>[^\r\n]*)|(?<val>[\{\[][^\r\n]*)"
-        + @"|(?<val>(?:(?!;|\r|\n|,\s*[""']?[A-Za-z][\w\-]*[""']?\s*(?::=|=|:)|\s+\}|\}\s*(?:$|[,;\r\n])|&[A-Za-z][\w\-]*=|\s*$).)+))",
-        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
-    private static partial Regex KeyValuePattern();
+    [GeneratedRegex(@"(?:(?<=\\u[0-9A-Fa-f]{4})|(?<!(?<!\\)[A-Za-z0-9_\-]))AIza[0-9A-Za-z_\-]{35}", RegexOptions.CultureInvariant)]
+    private static partial Regex GoogleApiKeyPattern();
 }
