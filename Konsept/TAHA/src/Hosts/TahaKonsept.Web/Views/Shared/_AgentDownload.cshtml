@@ -11,7 +11,14 @@
             Windows için indir
         </a>
         <div class="tk-download-meta">
-            <span class="tk-badge is-accent">@(Model.Version is null ? "Sürüm bilinmiyor" : "Sürüm " + Model.Version)</span>
+            @if (Model.Version is null)
+            {
+                <span class="tk-badge is-accent">Sürüm bilinmiyor</span>
+            }
+            else
+            {
+                <span class="tk-badge is-accent">Sürüm @Model.Version</span>
+            }
             <span class="tk-badge">@Model.SizeText</span>
             @if (Model.PublishedAtUtc is { } published)
             {

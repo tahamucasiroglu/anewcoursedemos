@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Web (MVC, BFF) testleri: Başlangıç kontrol listesi, masaüstü programı sürüm/boyut okuma, kurulum yönlendirmesi,
+       sayfa/uç entegrasyonu (WebApplicationFactory; API gerekmez, servisler sahte). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Web.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Hosts\TahaKonsept.Web\TahaKonsept.Web.csproj" />
+  </ItemGroup>
+
+</Project>

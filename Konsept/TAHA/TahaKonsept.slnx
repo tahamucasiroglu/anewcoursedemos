@@ -86,5 +86,6 @@
     <Project Path="tests/TahaKonsept.Modules.Profiles.Tests/TahaKonsept.Modules.Profiles.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Providers.Tests/TahaKonsept.Modules.Providers.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Concepts.Tests/TahaKonsept.Modules.Concepts.Tests.csproj" />
+    <Project Path="tests/TahaKonsept.Web.Tests/TahaKonsept.Web.Tests.csproj" />
   </Folder>
 </Solution>
