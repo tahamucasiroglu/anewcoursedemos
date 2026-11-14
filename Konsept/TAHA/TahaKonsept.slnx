@@ -19,7 +19,9 @@
     <Project Path="src/Hosts/TahaKonsept.Api/TahaKonsept.Api.csproj" />
     <Project Path="src/Hosts/TahaKonsept.Web/TahaKonsept.Web.csproj" />
   </Folder>
-  <Folder Name="/src/Desktop/" />
+  <Folder Name="/src/Desktop/">
+    <Project Path="src/Desktop/TahaKonsept.Agent.Abstractions/TahaKonsept.Agent.Abstractions.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TahaKonsept.ArchitectureTests/TahaKonsept.ArchitectureTests.csproj" />
     <Project Path="tests/TahaKonsept.IntegrationTests/TahaKonsept.IntegrationTests.csproj" />

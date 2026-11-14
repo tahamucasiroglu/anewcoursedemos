@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Abstractions</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Domain\TahaKonsept.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
