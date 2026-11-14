@@ -36,6 +36,8 @@ powershell -ExecutionPolicy Bypass -File deploy\publish-pi.ps1 -Source Head
 # Son yayın çıktısını yeniden paketle/kur (derlemeden):
 powershell -ExecutionPolicy Bypass -File deploy\publish-pi.ps1 -SkipPublish
 ```
+Ajan indirmeleri (`wwwroot/downloads/*`: Setup.exe, .nupkg, releases/assets json — gitignore'da) her zaman **çalışma klasöründen** web çıktısına kopyalanır (`-Source Head` dahil); doğrulamada Setup.exe de kontrol edilir.
+
 Parametreler: `-SshHost tmpi`, `-PiAddress 192.168.1.102`, `-SkipVerify`.
 
 Adımlar: `VERSION` okunur → `dotnet publish -c Release -r linux-arm64 --self-contained` (Api + Web; ayrı `--artifacts-path deploy/.out/build`, geliştirme `bin/obj`'una dokunmaz) → `deploy/.out/last/{api,web,pi}` → `tahakonsept-<sürüm>.tar.gz` (~93 MB) → `scp tmpi:/tmp` → `sudo bash install-release.sh <sürüm> <klasör>`:
@@ -87,5 +89,6 @@ ssh tmpi sudo systemctl restart tahakonsept-api
 |---|---|---|---|
 | 2026-11-14 05:46 | `0.1.0-20261114-054614` | HEAD `e392960` (F0 host'ları; modüller henüz yok) | Kuruldu. `api/health` → `{"status":"ok","version":"0.1.0","environment":"Pi","database":"ready"}`; Web `/` → 302 `/Account/Login` (200 sonrası). |
 | 2026-11-14 05:47 | `0.1.0-20261114-054659` | aynı çıktı (`-SkipPublish`) | Kuruldu (sürüm dönüşü testi). `rollback.sh` → 054614 ve geri 054659 denendi, ikisi de sağlıklı. **Etkin: 054659.** |
+| 2026-11-14 07:58 | `0.2.0-20261114-075813` | HEAD `f6b047c` (dalga 2: Concepts + Production modülleri, yeni sayfalar; ajan indirmeleri çalışma klasöründen eklendi) | Kuruldu. `api/health` → `ok`, `0.2.0`, `database: ready`; Web `/` → 302 `/Account/Login`; `/downloads/TahaKonsept.Agent-win-Setup.exe` → 200. **Etkin: 075813.** |
 
 Bilinen: çalışma klasöründen yayın denemesi o an başka bir ajanın yarım `Shared.Contracts` değişikliği (`ImagePromptItem` yok) yüzünden derlenmedi → `-Source Head` eklendi. Web'in çağırdığı `api/identity/setup/status` Identity modülü gelene kadar 404 döner (beklenen).
