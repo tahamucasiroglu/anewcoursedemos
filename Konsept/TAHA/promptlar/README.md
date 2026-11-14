@@ -15,3 +15,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0009 | 2026-11-14 11:35 | İkon promptu nerede | [0009_2026-11-14_1135_ikon-promptu-nerede.md](0009_2026-11-14_1135_ikon-promptu-nerede.md) |
 | 0010 | 2026-11-14 11:46 | İkon eklendi, kullanıma alındı | [0010_2026-11-14_1146_ikon-eklendi.md](0010_2026-11-14_1146_ikon-eklendi.md) |
 | 0011 | 2026-11-14 13:31 | Yöntem testindeki ajan takılı mı | [0011_2026-11-14_1331_ajan-takili-mi.md](0011_2026-11-14_1331_ajan-takili-mi.md) |
+| 0012 | 2026-11-14 13:40 | Önce GPU | [0012_2026-11-14_1340_once-gpu.md](0012_2026-11-14_1340_once-gpu.md) |
