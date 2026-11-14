@@ -103,6 +103,48 @@ public sealed class VideoEngineRenderTests
         await RenderAndAssertAsync(engine, RevideoScene, 2.0, validate: true);
     }
 
+    /// <summary>
+    /// Revideo: kart (layout Rect) içindeki kaydırılan metin Montserrat 900 ile iki satıra düşer; kart iki satırı da kapsamalıdır.
+    /// Eskiden yazı tipi yüklenmeden düzen yedek yazı tipiyle hesaplanıyor, kart tek satır boyunda kalıp ikinci satır dışarı taşıyordu.
+    /// Kartın sol iç boşluğundan (x=100) ikinci satır hizasında (y=1125) piksel okunur: kart beyazı olmalı, koyu arka plan değil.
+    /// </summary>
+    [Fact]
+    public async Task Revideo_LayoutCardGrowsForWrappedSecondLine()
+    {
+        Assert.SkipUnless(TestEnvironment.CanRunEngines, "node/ffmpeg/.tools-dev yok ya da motor testleri kapalı.");
+        var ct = TestContext.Current.CancellationToken;
+        const string code = """
+            import { makeScene2D, Txt, Rect } from '@revideo/2d';
+            import { waitFor } from '@revideo/core';
+
+            export default makeScene2D('scene', function* (view) {
+              view.add(<Rect width={1080} height={1920} fill={'#101010'} />);
+              view.add(
+                <Rect layout padding={[36, 44]} radius={28} fill={'#ffffff'} width={920} y={62}>
+                  <Txt text={"II. Mehmed · 21 yaşında"} fontFamily={'Montserrat'} fontWeight={900} fontSize={76} lineHeight={86}
+                       fill={'#000000'} textWrap={true} width={832} />
+                </Rect>,
+              );
+              yield* waitFor(1);
+            });
+            """;
+        var engine = new RevideoVideoEngine(Paths(), Tools, Runner, Probe, new DefaultSceneCodeGuard(), NullLogger<RevideoVideoEngine>.Instance);
+        (await engine.EnsureReadyAsync(null, ct)).IsSuccess.ShouldBeTrue();
+        var dir = TestEnvironment.NewTempDir("revideo-layout");
+        var request = new SceneRenderRequest(dir, 0, code, 1080, 1920, 30, 1, [], Path.Combine(dir, "scene-000.mp4"));
+
+        var result = await engine.RenderSceneAsync(request, null, ct);
+
+        result.IsSuccess.ShouldBeTrue(result.IsFailure ? result.Error.Message : string.Empty);
+        var raw = Path.Combine(dir, "pixel.rgb");
+        var ffmpeg = Tools.Find(TahaKonsept.Agent.Abstractions.Tools.ToolKind.Ffmpeg)!;
+        var args = new List<string> { "-v", "error", "-y", "-ss", "0.5", "-i", result.Value.VideoPath, "-frames:v", "1", "-vf", "crop=1:1:100:1125,format=rgb24", "-f", "rawvideo", "-pix_fmt", "rgb24", raw };
+        (await Runner.RunAsync(new TahaKonsept.Agent.Abstractions.Processes.ProcessSpec(ffmpeg, args), null, ct)).Succeeded.ShouldBeTrue();
+        var pixel = await File.ReadAllBytesAsync(raw, ct);
+        pixel.Length.ShouldBe(3);
+        ((pixel[0] + pixel[1] + pixel[2]) / 3).ShouldBeGreaterThan(200, $"kart ikinci satırı kapsamıyor (rgb {pixel[0]},{pixel[1]},{pixel[2]})");
+    }
+
     /// <summary>HyperFrames lint, kök kompozisyonu olmayan kodu LLM'e açıklanabilir hatayla reddeder.</summary>
     [Fact]
     public async Task HyperFrames_ValidateRejectsBrokenComposition()

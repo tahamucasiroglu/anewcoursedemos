@@ -156,11 +156,24 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
         return Task.FromResult(Result.Success());
     }
 
-    private static string BuildProject(int width, int height, int fps) =>
+    /// <summary>
+    /// Revideo proje modülü (<c>src/project.ts</c>). Paketlenen yazı tiplerinin tüm ağırlıkları sahne kurulmadan önce yüklenir
+    /// (üst düzey <c>await document.fonts.load</c>): aksi halde düzen (layout) yedek yazı tipinin ölçüleriyle hesaplanıp önbelleğe
+    /// alınıyor, yazı tipi sonradan gelince kart içindeki kaydırılmış ikinci satır kartın dışına taşıyordu.
+    /// </summary>
+    /// <param name="width">Genişlik.</param>
+    /// <param name="height">Yükseklik.</param>
+    /// <param name="fps">Kare hızı.</param>
+    /// <returns>TypeScript kaynak metni.</returns>
+    public static string BuildProject(int width, int height, int fps) =>
         string.Create(CultureInfo.InvariantCulture, $$"""
             import { makeProject } from '@revideo/core';
             import './tk-fonts.css';
             import scene from './scene?scene';
+
+            const tkFaces: string[] = [{{BuildFontLoadList()}}];
+            await Promise.all(tkFaces.map((face) => document.fonts.load(face, 'AaĞğİıŞşÇçÖöÜüÂâ').catch(() => [])));
+            await document.fonts.ready;
 
             export default makeProject({
               scenes: [scene],
@@ -168,6 +181,10 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
             });
 
             """);
+
+    private static string BuildFontLoadList() =>
+        string.Join(", ", BundledFontCatalog.Fonts.SelectMany(f => f.Weights.Select(w =>
+            string.Create(CultureInfo.InvariantCulture, $"'{w} 64px \"{f.Family}\"'"))));
 
     private const string RenderScript = """
         import { renderVideo } from '@revideo/renderer';
