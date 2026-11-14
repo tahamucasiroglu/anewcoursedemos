@@ -57,6 +57,7 @@ public sealed class PromptRenderingTests
             TargetDurationSec = 60,
             FactGrounding = true,
             Format = VideoFormat.Vertical,
+            WordsPerSecond = 2.4,
         };
         var pair = factory.Concept(context, new ConceptBrief { Title = "Kerkoporta", Hook = "Tek kapı açıktı." });
 

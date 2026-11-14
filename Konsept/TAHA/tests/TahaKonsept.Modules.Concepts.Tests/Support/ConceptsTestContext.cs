@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using TahaKonsept.BuildingBlocks.Application.Abstract;
 using TahaKonsept.BuildingBlocks.Domain.Results;
+using TahaKonsept.Modules.Concepts.Application.Abstract;
 using TahaKonsept.Modules.Concepts.Application.Concrete;
 using TahaKonsept.Modules.Concepts.Application.Llm;
 using TahaKonsept.Modules.Concepts.Domain.Entities;
@@ -62,7 +63,8 @@ public sealed class ConceptsTestContext : IDisposable
         Normalizer = new TurkishTopicNormalizer();
         Memory = new TopicMemory(MemoryRepository, Normalizer);
         Prompts = new ConceptPromptFactory(new EmbeddedPromptLibrary(), new PromptTemplateRenderer());
-        Contexts = new ConceptContextProvider(SettingsRepository, Profiles, new ProfilePromptBuilder());
+        Pace = Substitute.For<INarrationPaceSource>();
+        Contexts = new ConceptContextProvider(SettingsRepository, Profiles, new ProfilePromptBuilder(), Pace);
         Generator = new ConceptGenerator(Gateway, Prompts);
         Topics = new TopicGenerator(Gateway, Prompts, Memory, Normalizer);
         Analyzer = new WordRepetitionAnalyzer();
@@ -71,6 +73,9 @@ public sealed class ConceptsTestContext : IDisposable
         Queue = new ChannelConceptJobQueue();
         Candidates = new InMemoryRevisionCandidateStore(Clock);
     }
+
+    /// <summary>Anlatım hızı portu (varsayılan: bilgi yok → dil sabiti).</summary>
+    public INarrationPaceSource Pace { get; }
 
     /// <summary>Test kullanıcısı.</summary>
     public Guid UserId { get; } = Guid.CreateVersion7();
@@ -81,8 +86,8 @@ public sealed class ConceptsTestContext : IDisposable
     /// <summary>Oturum kullanıcısı.</summary>
     public ICurrentUser CurrentUser { get; }
 
-    /// <summary>Aktif profil.</summary>
-    public ProfileDto Profile { get; }
+    /// <summary>Aktif profil (testler değiştirebilir).</summary>
+    public ProfileDto Profile { get; set; }
 
     /// <summary>Profil okuyucu.</summary>
     public IProfileReader Profiles { get; }

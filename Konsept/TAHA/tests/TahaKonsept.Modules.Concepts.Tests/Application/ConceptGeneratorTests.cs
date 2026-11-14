@@ -2,6 +2,7 @@ using Shouldly;
 using TahaKonsept.BuildingBlocks.Domain.Results;
 using TahaKonsept.Modules.Concepts.Application.Llm;
 using TahaKonsept.Modules.Concepts.Application.Models;
+using TahaKonsept.Modules.Concepts.Domain.Constants;
 using TahaKonsept.Modules.Concepts.Domain.Errors;
 using TahaKonsept.Modules.Concepts.Tests.Support;
 using TahaKonsept.Shared.Contracts.Concepts;
@@ -29,7 +30,7 @@ public sealed class ConceptGeneratorTests : IDisposable
         var doc = result.Value.Document;
         doc.Scenes.Count.ShouldBe(3);
         doc.Scenes.Select(s => s.Index).ShouldBe([0, 1, 2]);
-        doc.Scenes[1].DurationHintSec.ShouldBe(Math.Round(10 / 2.4, 1));
+        doc.Scenes[1].DurationHintSec.ShouldBe(Math.Round(10 / ConceptLimits.TurkishWordsPerSecond, 1));
         doc.Sources.Count.ShouldBe(1);
         doc.Tags.ShouldBe(["bizans", "tarih"]);
         doc.Pronunciations.Select(p => p.Written).ShouldBe(["Constantine"]);

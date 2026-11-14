@@ -84,42 +84,42 @@
     "key": "gpt-4o-mini-tts", "platform": "openai", "providerModelId": "gpt-4o-mini-tts-2025-12-15", "displayName": "OpenAI gpt-4o-mini-tts",
     "capability": "Speech", "runsOn": "Server",
     "pricing": { "inputPerMTok": 0.60, "outputPerMTok": 12.00, "perMinute": 0.015 },
-    "languageLabel": "Çok dilli", "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.2, "defaultFor": [],
     "notes": "Türkçede zayıf (Dolphy 55.1/100). Dakika fiyatı tahmin. Kelime zaman damgası yok."
   },
   {
     "key": "elevenlabs-v4", "platform": "elevenlabs", "providerModelId": "eleven_v4", "displayName": "ElevenLabs v4",
     "capability": "Speech", "runsOn": "Server",
     "pricing": { "perKChars": 0.08 },
-    "languageLabel": "Çok dilli", "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.2, "defaultFor": [],
     "notes": "Türkçe Dolphy 90.0. Fiyat ve model kimliği resmi sayfadan doğrulanmadı. /with-timestamps ile kelime zamanları."
   },
   {
     "key": "elevenlabs-v4-turbo", "platform": "elevenlabs", "providerModelId": "eleven_v4_turbo", "displayName": "ElevenLabs v4 Turbo",
     "capability": "Speech", "runsOn": "Server",
     "pricing": { "perKChars": 0.04 },
-    "languageLabel": "Çok dilli", "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.2, "defaultFor": [],
     "notes": "Timestamp'li online ses adayı. Fiyat ve model kimliği doğrulanmadı."
   },
   {
     "key": "gemini-3.8-flash-tts", "platform": "google", "providerModelId": "gemini-3.8-flash-tts-preview", "displayName": "Gemini 3.8 Flash TTS",
     "capability": "Speech", "runsOn": "Server",
     "pricing": { "inputPerMTok": 0.50, "outputPerMTok": 9.00 },
-    "languageLabel": "Çok dilli", "defaultFor": ["speech-online"],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.2, "defaultFor": ["speech-online"],
     "notes": "Online ses varsayılanı (Türkçe Dolphy 89.8). Önizleme; 2027-01-01'den itibaren $1.00 / $18 (1M token). Kelime zaman damgası yok."
   },
   {
     "key": "azure-neural", "platform": "azure-speech", "providerModelId": "neural", "displayName": "Azure Neural TTS",
     "capability": "Speech", "runsOn": "Server",
     "pricing": { "perKChars": 0.016 },
-    "languageLabel": "Çok dilli", "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.2, "defaultFor": [],
     "notes": "~$15-16 / 1M karakter, ayda 0.5M karakter ücretsiz. WordBoundary ile kelime zamanları. tr-TR ses adları doğrulanmadı."
   },
   {
     "key": "cartesia-sonic-3.6", "platform": "cartesia", "providerModelId": "sonic-3.6", "displayName": "Cartesia Sonic 3.6",
     "capability": "Speech", "runsOn": "Server",
     "pricing": { },
-    "languageLabel": "Çok dilli", "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.2, "defaultFor": [],
     "notes": "Türkçe Dolphy 92.9 (1.). Fiyat ve timestamp desteği doğrulanmadı."
   },
 
@@ -204,85 +204,85 @@
   {
     "key": "supertonic-3", "platform": "local", "providerModelId": "supertonic-3", "displayName": "Supertonic 3",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": null, "defaultFor": ["speech-local"],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 1.7, "minVramMb": null, "defaultFor": ["speech-local"],
     "notes": "Yerel ses varsayılanı. ONNX Runtime, doğrudan C# (Python yok), CPU'da çalışır. 31 dil, Türkçe WER 1.72 (1.). Kod MIT, model OpenRAIL-M; repo 2026-09-09'da arşivlendi."
   },
   {
     "key": "chatterbox-multilingual", "platform": "local", "providerModelId": "chatterbox-multilingual-v3", "displayName": "Chatterbox Multilingual",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": 4096, "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.0, "minVramMb": 4096, "defaultFor": [],
     "notes": "Ses klonlama. ~3.5-4 GB VRAM, gömülü Python 3.11 + torch CUDA. MIT, Perth watermark. Ağustos 2026'dan beri bakım yok."
   },
   {
     "key": "ema-lightning", "platform": "local", "providerModelId": "ema-lightning", "displayName": "EMA Lightning",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Sadece Türkçe", "wordsPerSecond": 2.0, "minVramMb": null, "defaultFor": [],
     "notes": "En iyi açık Türkçe model (Dolphy 70.8). 34 MB, CPU ~6x gerçek zaman. Apache-2.0, tek ses. Sentetik ses bildirimi istenir."
   },
   {
     "key": "ahenk", "platform": "local", "providerModelId": "ahenk", "displayName": "Ahenk",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Sadece Türkçe", "wordsPerSecond": 2.0, "minVramMb": null, "defaultFor": [],
     "notes": "2B parametre, GPU gerekir (VRAM doğrulanmadı). Ağırlık CC BY 4.0 (atıf)."
   },
   {
     "key": "ahenk-cep", "platform": "local", "providerModelId": "ahenk-cep", "displayName": "Ahenk Cep",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Sadece Türkçe", "wordsPerSecond": 2.0, "minVramMb": null, "defaultFor": [],
     "notes": "8.6M parametre, CPU. CC BY 4.0 (atıf)."
   },
   {
     "key": "trendyol-tts", "platform": "local", "providerModelId": "trendyol-tts", "displayName": "Trendyol-TTS",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Sadece Türkçe", "wordsPerSecond": 2.0, "minVramMb": null, "defaultFor": [],
     "notes": "Deneysel. ~2B parametre, GPU (VRAM doğrulanmadı). Kalite zayıf, lisans belirsiz."
   },
   {
     "key": "xtts-v2", "platform": "local", "providerModelId": "xtts-v2", "displayName": "XTTS-v2",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": 4096, "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.0, "minVramMb": 4096, "defaultFor": [],
     "notes": "Ses klonlama. 2-4 GB VRAM. Türkçe zayıf. CPML lisansı (kişisel kullanım)."
   },
   {
     "key": "f5-tts-tr", "platform": "local", "providerModelId": "f5-tts-tr", "displayName": "F5-TTS Türkçe",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": 3072, "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.0, "minVramMb": 3072, "defaultFor": [],
     "notes": "~3 GB VRAM. Türkçe zayıf. CC-BY-NC (kişisel kullanım)."
   },
   {
     "key": "piper-tr", "platform": "local", "providerModelId": "piper-tr_TR", "displayName": "Piper tr_TR",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Sadece Türkçe", "wordsPerSecond": 2.1, "minVramMb": null, "defaultFor": [],
     "notes": "CPU, çok hızlı ama robotik. Ses CC BY-NC-SA."
   },
   {
     "key": "mms-tts-tr", "platform": "local", "providerModelId": "facebook/mms-tts-tur", "displayName": "MMS-TTS-tr",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Sadece Türkçe", "wordsPerSecond": 1.9, "minVramMb": null, "defaultFor": [],
     "notes": "CPU, orta kalite. CC-BY-NC."
   },
   {
     "key": "omnivoice", "platform": "local", "providerModelId": "omnivoice", "displayName": "OmniVoice",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.0, "minVramMb": null, "defaultFor": [],
     "notes": "Hafif model (VRAM doğrulanmadı). Ağırlık lisansı belirsiz (CC-BY-NC olabilir)."
   },
   {
     "key": "voxcpm2", "platform": "local", "providerModelId": "voxcpm2", "displayName": "VoxCPM2",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": 8192, "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.0, "minVramMb": 8192, "defaultFor": [],
     "notes": "Türkçe WER 2.50. ~8 GB VRAM, 6 GB'a sığmaz. Apache-2.0."
   },
   {
     "key": "fish-s2-pro", "platform": "local", "providerModelId": "fish-s2-pro", "displayName": "Fish S2 Pro",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Çok dilli", "minVramMb": 12288, "defaultFor": [],
+    "languageLabel": "Çok dilli", "wordsPerSecond": 2.0, "minVramMb": 12288, "defaultFor": [],
     "notes": "12-24 GB VRAM. Araştırma lisansı (kişisel kullanım)."
   },
   {
     "key": "kokoro", "platform": "local", "providerModelId": "kokoro-82m", "displayName": "Kokoro-82M",
     "capability": "Speech", "runsOn": "Agent", "pricing": { },
-    "languageLabel": "Türkçe yok", "minVramMb": null, "defaultFor": [],
+    "languageLabel": "Türkçe yok", "wordsPerSecond": 2.2, "minVramMb": null, "defaultFor": [],
     "notes": "CPU, Apache-2.0. Türkçe yok (İngilizce vb. için)."
   },
 

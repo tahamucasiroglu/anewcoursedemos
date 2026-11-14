@@ -13,6 +13,8 @@ namespace TahaKonsept.Modules.Production.Application.Base;
 /// <summary>
 /// <see cref="IJobFinalizer"/> ortak davranışı: sahneleri (plan + Normalize yazılış/okunuş + gerçek süreler), aşama maliyet/zaman dökümünü kurar,
 /// <see cref="Video"/> kaydını ekler, işi ve sıra öğesini tamamlar, online artefaktları siler ve işlem günlüğüne "Video hazırlandı" yazar.
+/// Sesli videoda gerçek konuşma hızını (yazılış kelimesi / seslendirme süresi) ses modeli + ses için kaydeder (<see cref="ISpeechRateService"/>;
+/// Speech aşaması tamamen yeniden kullanıldıysa aynı ses iki kez sayılmasın diye atlanır; hata videoyu bozmaz, yalnız uyarı yazılır).
 /// </summary>
 public abstract class JobFinalizerBase : IJobFinalizer
 {
@@ -22,6 +24,7 @@ public abstract class JobFinalizerBase : IJobFinalizer
     private readonly IProductionActivity _activity;
     private readonly IClock _clock;
     private readonly ILogger _logger;
+    private readonly ISpeechRateService _rates;
 
     /// <summary>Oluşturur.</summary>
     /// <param name="videos">Video deposu.</param>
@@ -30,8 +33,10 @@ public abstract class JobFinalizerBase : IJobFinalizer
     /// <param name="activity">İşlem günlüğü.</param>
     /// <param name="clock">Saat.</param>
     /// <param name="logger">Günlük.</param>
-    protected JobFinalizerBase(IVideoRepository videos, IQueueItemRepository items, IArtifactStore artifacts, IProductionActivity activity, IClock clock, ILogger logger)
+    /// <param name="rates">Konuşma hızı servisi.</param>
+    protected JobFinalizerBase(IVideoRepository videos, IQueueItemRepository items, IArtifactStore artifacts, IProductionActivity activity, IClock clock, ILogger logger, ISpeechRateService rates)
     {
+        _rates = rates ?? throw new ArgumentNullException(nameof(rates));
         _videos = videos ?? throw new ArgumentNullException(nameof(videos));
         _items = items ?? throw new ArgumentNullException(nameof(items));
         _artifacts = artifacts ?? throw new ArgumentNullException(nameof(artifacts));
@@ -103,6 +108,45 @@ public abstract class JobFinalizerBase : IJobFinalizer
 
         _logger.LogInformation("Video hazırlandı: {Title} (video {VideoId}, {Duration} sn, ${Cost})", job.Title, video.Id, video.DurationSec, video.TotalCostUsd);
         await _activity.VideoReadyAsync(job, video, cancellationToken);
+        await RecordSpeechRateAsync(job, context, cancellationToken);
         return video;
+    }
+
+    /// <summary>Gerçek konuşma hızını kaydeder (kendini ayarlama).</summary>
+    /// <param name="job">İş.</param>
+    /// <param name="context">Bağlam.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    protected virtual async Task RecordSpeechRateAsync(Job job, PipelineContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        ArgumentNullException.ThrowIfNull(context);
+        var speech = context.Outputs.OutputOf<SpeechOutput>(PipelineStage.Speech);
+        var speechRuns = job.Runs.Where(r => r.Stage == PipelineStage.Speech).ToList();
+        if (speech is null || speech.Silent || context.Settings.SpeechMode == MediaMode.Off || (speechRuns.Count > 0 && speechRuns.All(r => r.Reused)))
+        {
+            return;
+        }
+
+        var seconds = speech.TotalDurationSec > 0 ? speech.TotalDurationSec : speech.Scenes.Sum(s => s.DurationSec);
+        var words = context.Outputs.ScenePlan.Scenes.Sum(s => NarrationWords.Count(s.Narration));
+        try
+        {
+            var average = await _rates.RecordAsync(job.UserId, context.Settings, context.Language, words, seconds, cancellationToken);
+            if (average is { } avg)
+            {
+                _logger.LogInformation(
+                    "Konuşma hızı ölçüldü: {Model}/{Voice} {Words} kelime / {Seconds} sn → ortalama {Average} kelime/sn (1.0×)",
+                    context.Settings.SpeechModelKey,
+                    context.Settings.VoiceId ?? "varsayılan",
+                    words,
+                    Math.Round(seconds, 2),
+                    avg);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Konuşma hızı ölçümü kaydedilemedi (iş {JobId})", job.Id);
+        }
     }
 }

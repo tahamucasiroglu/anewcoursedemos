@@ -42,6 +42,14 @@ public interface IProductionActivity
     /// <returns>Sonuç.</returns>
     Task VideoReadyAsync(Job job, Video video, CancellationToken cancellationToken);
 
+    /// <summary>Genel uyarı satırı (sarı).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="message">Mesaj.</param>
+    /// <param name="details">Ayrıntı (JSON'a yazılır; null olabilir).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sonuç.</returns>
+    Task WarningAsync(Guid userId, string message, object? details, CancellationToken cancellationToken);
+
     /// <summary>Genel bilgi satırı.</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="message">Mesaj.</param>

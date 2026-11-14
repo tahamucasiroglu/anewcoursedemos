@@ -10,5 +10,6 @@ namespace TahaKonsept.Modules.Concepts.Application.Concrete;
 /// <param name="settings">Ayar deposu.</param>
 /// <param name="profiles">Profil okuyucu.</param>
 /// <param name="promptBuilder">Profil prompt kurucu.</param>
-public sealed class ConceptContextProvider(IConceptSettingsRepository settings, IProfileReader profiles, IProfilePromptBuilder promptBuilder)
-    : ConceptContextProviderBase(settings, profiles, promptBuilder);
+/// <param name="pace">Ses modeline göre anlatım hızı portu.</param>
+public sealed class ConceptContextProvider(IConceptSettingsRepository settings, IProfileReader profiles, IProfilePromptBuilder promptBuilder, INarrationPaceSource pace)
+    : ConceptContextProviderBase(settings, profiles, promptBuilder, pace);

@@ -7,7 +7,7 @@ namespace TahaKonsept.Modules.Production.Infrastructure.Persistence.Concrete;
 
 /// <summary>
 /// Production modülünün DbContext'i (şema <c>production</c>). Tablolar: ayarlar, sıra durumu, sıra öğeleri, işler + aşama çalıştırmaları,
-/// videolar, okunuş sözlüğü. Yapılandırmalar aynı derlemeden otomatik uygulanır.
+/// videolar, okunuş sözlüğü, ölçülmüş konuşma hızları. Yapılandırmalar aynı derlemeden otomatik uygulanır.
 /// </summary>
 /// <param name="options">EF seçenekleri.</param>
 /// <param name="clock">Saat.</param>
@@ -40,4 +40,7 @@ public sealed class ProductionDbContext(DbContextOptions<ProductionDbContext> op
 
     /// <summary>Okunuş sözlüğü.</summary>
     public DbSet<Pronunciation> Pronunciations => Set<Pronunciation>();
+
+    /// <summary>Ölçülmüş konuşma hızları (ses modeli + ses başına).</summary>
+    public DbSet<SpeechRateStat> SpeechRates => Set<SpeechRateStat>();
 }

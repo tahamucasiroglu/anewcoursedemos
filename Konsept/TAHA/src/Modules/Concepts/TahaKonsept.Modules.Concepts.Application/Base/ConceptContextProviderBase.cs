@@ -13,7 +13,8 @@ namespace TahaKonsept.Modules.Concepts.Application.Base;
 /// <summary>
 /// <see cref="IConceptContextProvider"/> ortak davranışı: ayarlar (yoksa varsayılan) + profil (verilen, bulunamazsa aktif) →
 /// bağlam. Etkin ton/izleyici/anlatım = ayar ?? profil varsayılanı. Gerçek bilgi = ayar ?? <see cref="IsFactHeavy"/>
-/// (profil şablon anahtarı / adı / içeriğinde <see cref="FactKeywords"/> geçiyor mu). Türkçe için 2,4 kelime/sn.
+/// (profil şablon anahtarı / adı / içeriğinde <see cref="FactKeywords"/> geçiyor mu). Anlatım hızı = <see cref="Pace"/>
+/// (kullanıcının üretimde seçtiği ses modeli; ölçülmüş hız varsa o) ?? dil sabiti (<see cref="ConceptLimits"/>).
 /// </summary>
 public abstract class ConceptContextProviderBase : IConceptContextProvider
 {
@@ -29,8 +30,10 @@ public abstract class ConceptContextProviderBase : IConceptContextProvider
     /// <param name="settings">Ayar deposu.</param>
     /// <param name="profiles">Profil okuyucu.</param>
     /// <param name="promptBuilder">Profil prompt kurucu.</param>
-    protected ConceptContextProviderBase(IConceptSettingsRepository settings, IProfileReader profiles, IProfilePromptBuilder promptBuilder)
+    /// <param name="pace">Ses modeline göre anlatım hızı portu.</param>
+    protected ConceptContextProviderBase(IConceptSettingsRepository settings, IProfileReader profiles, IProfilePromptBuilder promptBuilder, INarrationPaceSource pace)
     {
+        Pace = pace ?? throw new ArgumentNullException(nameof(pace));
         Settings = settings ?? throw new ArgumentNullException(nameof(settings));
         Profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
         PromptBuilder = promptBuilder ?? throw new ArgumentNullException(nameof(promptBuilder));
@@ -44,6 +47,9 @@ public abstract class ConceptContextProviderBase : IConceptContextProvider
 
     /// <summary>Profil prompt kurucu.</summary>
     protected IProfilePromptBuilder PromptBuilder { get; }
+
+    /// <summary>Anlatım hızı portu.</summary>
+    protected INarrationPaceSource Pace { get; }
 
     /// <summary>Gerçek bilgi gerektiren alan anahtar kelimeleri (küçük harf).</summary>
     protected virtual IReadOnlyList<string> FactKeywords => DefaultFactKeywords;
@@ -69,6 +75,7 @@ public abstract class ConceptContextProviderBase : IConceptContextProvider
         }
 
         var language = string.IsNullOrWhiteSpace(profile.Language) ? "tr" : profile.Language.Trim().ToLowerInvariant();
+        var wordsPerSecond = await Pace.GetWordsPerSecondAsync(userId, language, cancellationToken) ?? FallbackWordsPerSecond(language);
         return new ConceptGenerationContext
         {
             UserId = userId,
@@ -82,9 +89,15 @@ public abstract class ConceptContextProviderBase : IConceptContextProvider
             Audience = preferences.Audience ?? profile.DefaultAudience ?? string.Empty,
             NarrativeStyle = preferences.NarrativeStyle ?? profile.DefaultNarrativeStyle ?? string.Empty,
             FactGrounding = preferences.FactGrounding ?? IsFactHeavy(profile),
-            WordsPerSecond = language.StartsWith("tr", StringComparison.Ordinal) ? ConceptLimits.TurkishWordsPerSecond : ConceptLimits.DefaultWordsPerSecond,
+            WordsPerSecond = wordsPerSecond,
         };
     }
+
+    /// <summary>Port bilgi vermezse dil sabiti.</summary>
+    /// <param name="language">Dil.</param>
+    /// <returns>Kelime/sn.</returns>
+    public static double FallbackWordsPerSecond(string language) =>
+        language.StartsWith("tr", StringComparison.Ordinal) ? ConceptLimits.TurkishWordsPerSecond : ConceptLimits.DefaultWordsPerSecond;
 
     /// <summary>Profil gerçek bilgi gerektiren bir alanda mı.</summary>
     /// <param name="profile">Profil.</param>

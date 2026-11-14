@@ -54,8 +54,11 @@ public static class ConceptLimits
     /// <summary>Varsayılan kelime denetimi modeli.</summary>
     public const string DefaultWordCheckModelKey = "claude-haiku-5-5";
 
-    /// <summary>Türkçe seslendirme hızı (kelime / saniye) — anlatım uzunluğu bu değerle hedef süreye göre boyutlandırılır.</summary>
-    public const double TurkishWordsPerSecond = 2.4;
+    /// <summary>
+    /// Türkçe seslendirme hızı yedeği (kelime / saniye) — üretim tarafı seçili ses modelinin hızını vermezse anlatım uzunluğu
+    /// bu değerle boyutlandırılır. (Eski 2,4 değeri Supertonic 3'te videoları ~%40 uzun çıkarıyordu; ölçüm ~1,7.)
+    /// </summary>
+    public const double TurkishWordsPerSecond = 2.0;
 
     /// <summary>Diğer diller için varsayılan seslendirme hızı (kelime / saniye).</summary>
     public const double DefaultWordsPerSecond = 2.6;

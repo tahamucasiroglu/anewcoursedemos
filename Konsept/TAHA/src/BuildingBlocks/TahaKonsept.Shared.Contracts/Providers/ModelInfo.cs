@@ -42,6 +42,12 @@ public sealed record ModelInfo
     /// <summary>Yerel modeller için asgari VRAM (MB; null = CPU'da çalışır / bilinmiyor).</summary>
     public int? MinVramMb { get; init; }
 
+    /// <summary>
+    /// Ses modelleri: Türkçe anlatımda varsayılan konuşma hızı (kelime/sn, 1.0× hızda). Konsept uzunluğu ve sahne planı bununla
+    /// boyutlandırılır; üretilen videolardan ölçülen gerçek hız (Production) varsa o tercih edilir. null = bilinmiyor (genel varsayılan).
+    /// </summary>
+    public double? WordsPerSecond { get; init; }
+
     /// <summary>Sunucu tarafı web araması destekleniyor mu (gerçek bilgi / fact-sheet için).</summary>
     public bool SupportsWebSearch { get; init; }
 

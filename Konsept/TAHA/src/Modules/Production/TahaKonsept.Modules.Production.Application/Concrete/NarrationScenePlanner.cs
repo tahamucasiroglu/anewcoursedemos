@@ -1,4 +1,5 @@
 using TahaKonsept.Modules.Production.Application.Base;
+using TahaKonsept.Modules.Production.Application.Common;
 
 namespace TahaKonsept.Modules.Production.Application.Concrete;
 
@@ -19,7 +20,7 @@ public sealed class NarrationScenePlanner : ScenePlannerBase
     /// <returns>Süre (sn).</returns>
     protected override double EstimateDurationSec(string narration)
     {
-        var words = narration.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+        var words = NarrationWords.Count(narration);
         return words == 0 ? 0 : (words / WordsPerSecond) + PaddingSec;
     }
 }

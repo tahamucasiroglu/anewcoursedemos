@@ -128,6 +128,15 @@ public abstract class ProductionActivityBase : IProductionActivity
             cancellationToken);
     }
 
+    /// <summary>Genel uyarı.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="message">Mesaj.</param>
+    /// <param name="details">Ayrıntı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    public Task WarningAsync(Guid userId, string message, object? details, CancellationToken cancellationToken) =>
+        _logger.WarningAsync(ActivitySources.Production, message, details, userId, cancellationToken);
+
     /// <summary>Genel bilgi.</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="message">Mesaj.</param>

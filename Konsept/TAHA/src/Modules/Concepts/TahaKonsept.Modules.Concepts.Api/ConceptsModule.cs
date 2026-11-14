@@ -45,6 +45,7 @@ public sealed class ConceptsModule : ModuleBase
         services.AddSingleton<IConceptJobQueue, ChannelConceptJobQueue>();
         services.AddSingleton<IConceptJobTracker, InMemoryConceptJobTracker>();
 
+        services.TryAddScoped<INarrationPaceSource, DefaultNarrationPaceSource>();
         services.AddScoped<IConceptContextProvider, ConceptContextProvider>();
         services.AddScoped<ITopicMemory, TopicMemory>();
         services.AddScoped<ITopicGenerator, TopicGenerator>();

@@ -46,6 +46,7 @@ public sealed class ProductionTestHarness : IAsyncDisposable
         services.AddSingleton<IConceptSource>(Concepts);
         services.AddSingleton<IActivityLogger>(Activity);
         services.AddSingleton(Substitute.For<IProfileReader>());
+        services.AddSingleton(Catalog);
         _root = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }
 
@@ -75,6 +76,9 @@ public sealed class ProductionTestHarness : IAsyncDisposable
 
     /// <summary>İşlem günlüğü.</summary>
     public RecordingActivityLogger Activity { get; } = new();
+
+    /// <summary>Model kataloğu (varsayılan: hiçbir model bulunmaz → yerel/online varsayılan hız).</summary>
+    public IModelCatalog Catalog { get; } = Substitute.For<IModelCatalog>();
 
     /// <summary>Yeni kapsamda çalıştırır.</summary>
     /// <typeparam name="T">Sonuç türü.</typeparam>

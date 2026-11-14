@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TahaKonsept.BuildingBlocks.Infrastructure.Persistence;
 using TahaKonsept.Modules.Agents.Application.Abstract;
+using TahaKonsept.Modules.Concepts.Application.Abstract;
 using TahaKonsept.Modules.Diagnostics.Application.Abstract;
 using TahaKonsept.Modules.Production.Application.Abstract;
 using TahaKonsept.Modules.Production.Application.Concrete;
@@ -22,7 +23,8 @@ namespace TahaKonsept.Modules.Production.Infrastructure.DependencyInjection;
 /// Production modülü DI kaydı.
 /// <list type="bullet">
 /// <item><see cref="AddProductionModule"/>: <see cref="ProductionDbContext"/> (şema <c>production</c>) + <see cref="AddProductionCore"/> + Concepts adaptörü
-/// (<see cref="ConceptsConceptSource"/>, <c>Replace</c> ile yedeğin yerine) + orkestratör BackgroundService.</item>
+/// (<see cref="ConceptsConceptSource"/>, <c>Replace</c> ile yedeğin yerine) + Concepts anlatım hızı portu (<see cref="ProductionNarrationPaceSource"/>,
+/// <c>Replace</c>: konsept uzunluğu seçili ses modelinin hızıyla) + orkestratör BackgroundService.</item>
 /// <item><see cref="AddProductionCore"/> (testler de kullanır; DbContext hariç): depolar, servisler, aşama işleyicileri (11), hash/plan/planlayıcı,
 /// iş fabrikası/ilerletici/bitirici, orkestratör adımı, sinyal ve kilit (singleton), yazım kılavuzları, okunuş normalizasyonu
 /// (<c>AddSpeechTextNormalization</c>), <c>IAgentStageEventHandler</c> (Agents'ın no-op varsayılanının yerine — <c>Replace</c>),
@@ -41,6 +43,7 @@ public static class ProductionServiceCollectionExtensions
         services.AddModuleDbContext<ProductionDbContext>(configuration, ProductionDbContext.SchemaName);
         services.AddProductionCore();
         services.Replace(ServiceDescriptor.Scoped<IConceptSource, ConceptsConceptSource>());
+        services.Replace(ServiceDescriptor.Scoped<INarrationPaceSource, ProductionNarrationPaceSource>());
         services.AddHostedService<ProductionOrchestratorService>();
         return services;
     }
@@ -59,6 +62,8 @@ public static class ProductionServiceCollectionExtensions
         services.AddScoped<IJobRepository, JobRepository>();
         services.AddScoped<IVideoRepository, VideoRepository>();
         services.AddScoped<IPronunciationRepository, PronunciationRepository>();
+        services.AddScoped<ISpeechRateStatRepository, SpeechRateStatRepository>();
+        services.AddScoped<ISpeechRateService, SpeechRateService>();
 
         services.AddSingleton<IStageInputHasher, Sha256StageInputHasher>();
         services.AddSingleton<IScenePlanner, NarrationScenePlanner>();

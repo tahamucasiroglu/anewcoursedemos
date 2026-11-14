@@ -26,6 +26,15 @@ public static class ProductionLimits
     /// <summary>Sahne kodu ajan doğrulamasında reddedilirse LLM'e hata ile yeniden yazdırma hakkı.</summary>
     public const int MaxSceneRepairAttempts = 1;
 
+    /// <summary>Model/ses anahtarı azami uzunluğu (konuşma hızı ölçümleri).</summary>
+    public const int ModelKeyMaxLength = 200;
+
+    /// <summary>Konuşma hızı ölçümünde tutulan en fazla örnek ağırlığı (daha eskiler giderek etkisini yitirir).</summary>
+    public const int MaxSpeechRateSamples = 20;
+
+    /// <summary>Seslendirme tahmini profil hedefini bu oranın üstünde aşarsa işlem günlüğüne uyarı yazılır (0,15 = %15).</summary>
+    public const double SpeechOverrunTolerance = 0.15;
+
     /// <summary>Metni kırpar (boşlukları temizler, azami uzunluğa keser).</summary>
     /// <param name="value">Metin.</param>
     /// <param name="max">Azami uzunluk.</param>

@@ -364,6 +364,64 @@ namespace TahaKonsept.Modules.Production.Infrastructure.Persistence.Migrations
                     b.ToTable("queue_items", "production");
                 });
 
+            modelBuilder.Entity("TahaKonsept.Modules.Production.Domain.Entities.SpeechRateStat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("language");
+
+                    b.Property<double>("SampleWeight")
+                        .HasColumnType("double precision")
+                        .HasColumnName("sample_weight");
+
+                    b.Property<string>("SpeechModelKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("speech_model_key");
+
+                    b.Property<double>("TotalSeconds")
+                        .HasColumnType("double precision")
+                        .HasColumnName("total_seconds");
+
+                    b.Property<double>("TotalWords")
+                        .HasColumnType("double precision")
+                        .HasColumnName("total_words");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("VoiceKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("voice_key");
+
+                    b.HasKey("Id")
+                        .HasName("pk_speech_rate_stats");
+
+                    b.HasIndex("UserId", "SpeechModelKey", "VoiceKey", "Language")
+                        .IsUnique()
+                        .HasDatabaseName("ix_speech_rate_stats_user_id_speech_model_key_voice_key_langua");
+
+                    b.ToTable("speech_rate_stats", "production");
+                });
+
             modelBuilder.Entity("TahaKonsept.Modules.Production.Domain.Entities.StageRun", b =>
                 {
                     b.Property<Guid>("Id")
