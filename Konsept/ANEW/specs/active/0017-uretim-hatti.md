@@ -1,6 +1,7 @@
 # Spec 0017 — Üretim hattı
 
-- Status: Approved
+- Status: Draft
+- Revision: R1 2026-11-14 — GPU hızlandırma (tahamucasiroglu: "gpu da çalışabilecek bir model gpu yerine cpu da çalışıyorsa … bu bir hatadır"); Req 14a ve AC-31 eklendi; yeniden onay bekliyor
 - Mode: lite
 - Plan: `specs/plans/0017-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
@@ -73,6 +74,12 @@ maliyeti kaydediliyor. Bilinçli olarak yapılmayanlar: LLM kodunun çalıştı�
 14. Ajan bağlıysa iş başlamadan, hiçbir online çağrı yapılmadan önce ajandan gerekli araçların (Node, FFmpeg,
     Chromium, seçili yerel modeller — kurulumu 0009) varlığı sorulur; eksikse iş "Ajan kurulumu eksik: <araç>"
     açıklamasıyla Hata olur ve harcama kaydı oluşmaz.
+14a. **Yerel aşamalar GPU'da.** Yerel görsel, yerel ses (Supertonic, Chatterbox) ve birleştirmedeki video
+    kodlaması, ekran kartı destekliyorsa (0009 Req 8) GPU'da çalışır. Ekran kartı desteklerken bir yerel aşama
+    GPU'yu kullanamazsa (CUDA hatası, sağlayıcı yüklenemedi) aşama CPU'ya düşmez: iş "Ekran kartı
+    kullanılamadı: <model>" açıklamasıyla Hata olur, olay loga Error seviyesinde yazılır ve Hatayı bildir
+    (0022) kullanılabilir. VRAM yetmezse ajan önce boştaki diğer modelleri bellekten boşaltıp aşamayı bir kez
+    yeniden dener; yine yetmezse aynı Hata. Aşama kaydı hangi aygıtta çalıştığını tutar.
 15. Ajan çevrimdışıyken online aşamalar yine çalışır; iş ilk yerel aşamaya gelince **Ajan bekleniyor**
     durumunda kalır, sayfada "Ajan bağlı değil" uyarısı görünür (BR-11) ve sıradaki bir sonraki iş ajan gelene
     kadar başlamaz. Ajan yeniden bağlanınca iş kendiliğinden devam eder; ajan bir yerel aşamanın ortasında
@@ -211,6 +218,7 @@ maliyeti kaydediliyor. Bilinçli olarak yapılmayanlar: LLM kodunun çalıştı�
 - [ ] AC-28 — Yerel video akışı açılırken, oynatılırken ve reddedilirken üretilen hiçbir log, hata mesajı, hata bildirimi ya da olay kaydı video akış token'ını düz metin içermez (kasıtlı bozma ile kanıtlanır; mekanizma 0008'de).
 - [ ] AC-29 — Tamamlanan bir videonun sürüm kaydı konsept metninin üretim anındaki kopyasını, kullanılan modelleri ve video motorunu, altyazı/ilerleme çubuğu seçimini, AI ses beyanı bilgisini ve başlangıç–bitiş saatini içerir; konsept metni (0015) ya da profil ayarları sonradan değiştirilince kayıt değişmez.
 - [ ] AC-30 — Bir iş eski ajanda render aşamasındayken kullanıcı yeni bir ajan eşleştirir (0012 Req 6): eski ajanın oturumu düşer, iş *Ajan bekleniyor* olur ve eski ajana bu andan sonra hiçbir komut gitmez; yeni ajan bağlanınca iş kendiliğinden render aşamasından devam eder, analiz ve video kodu yeniden çalışmaz (stub sağlayıcının online çağrı sayısı artmaz) ve iş *Tamamlandı* olur (Req 23, Req 15 ile aynı mekanizma).
+- [ ] AC-31 — GPU destekli makinede (sahte ajan aygıt bilgisiyle ve geliştirici makinesinde gerçek RTX 3060 ile) yerel görsel, yerel ses ve kodlama aşamalarının kaydı aygıt olarak GPU'yu gösterir; aşama GPU'yu kullanamaz hale getirilince (kasıtlı bozma: CUDA sağlayıcısı yüklenemez) iş CPU'da devam etmez, "Ekran kartı kullanılamadı: <model>" ile Hata olur ve log Error içerir; VRAM yetersizliğinde boştaki modeller boşaltılıp tek yeniden deneme yapılır, ikinci başarısızlıkta aynı Hata (Req 14a).
 
 ## Definition of Done
 - [ ] Every acceptance criterion mapped to proof (test or reproducible observation)

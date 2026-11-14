@@ -1,6 +1,7 @@
 # Spec 0009 — ajan-ilk-kurulum
 
-- Status: Approved
+- Status: Draft
+- Revision: R1 2026-11-14 — GPU hızlandırma (tahamucasiroglu: "gpu da çalışabilecek bir model gpu yerine cpu da çalışıyorsa … bu bir hatadır"); Req 2, 8, 8a, 17 ve AC-9, AC-24, AC-25 değişti; yeniden onay bekliyor
 - Mode: lite
 - Plan: `specs/plans/0009-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
@@ -34,10 +35,13 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
    - **Zorunlu çekirdek** (işaretli, kaldırılamaz): Node.js 26 LTS (sabit sürüm); FFmpeg (LGPL build);
      headless Chromium (chrome-headless-shell, sabit sürüm); HyperFrames (tam sürüm sabit — bugün 0.9.43 —
      telemetrisi kurulumda kapatılır); Supertonic 3 ONNX ağırlıkları (yerel Türkçe TTS; ajanın içinde çalışır,
-     Python gerektirmez).
+     Python gerektirmez; ekran kartı destekliyorsa GPU'da, Req 8a); **GPU çalışma zamanı** — yalnızca NVIDIA
+     kartta: NVIDIA'nın resmi yeniden dağıtılabilir CUDA 12 çalışma zamanı ve cuDNN 9 dosyaları (Supertonic'in
+     ONNX Runtime CUDA sağlayıcısı ve `sd-server` CUDA paketi bunları kullanır); diğer kartlarda indirme
+     gerekmez (ONNX Runtime DirectML ajanla gelir).
    - **İsteğe bağlı** (varsayılan işaretsiz; kurulum ekranında ya da sonradan "Kurulum ve bileşenler"den
-     eklenir): **Ses klonlama** — uv + izole Python ortamı + Chatterbox Multilingual V3 (ayrı yardımcı süreç);
-     **Yerel görsel** — stable-diffusion.cpp `sd-server` (ekran kartına uygun paket, Req 8) + Z-Image-Turbo GGUF;
+     eklenir): **Ses klonlama** — uv + izole Python ortamı + Chatterbox Multilingual V3 (ayrı yardımcı süreç; NVIDIA kartta PyTorch'un CUDA derlemesi kurulur, varsayılan CPU derlemesi değil — Req 8);
+     **Yerel görsel** — stable-diffusion.cpp `sd-server` (ekran kartına uygun paket, Req 8; CUDA paketinin `cudart` eki dahil) + Z-Image-Turbo GGUF;
      **İkinci yerel görsel** — FLUX.2 klein 4B (yerel görsel paketini gerektirir); **Remotion** — varsayılan
      kapalı, satırda lisans notu (K-2).
    - Kurulmayanlar: Ollama (E-4), OpenAI TTS'e özel hiçbir bileşen. Video motoru/TTS/görsel motorunun üretimde
@@ -64,10 +68,29 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
 7. **Mevcut araçlar kullanılmaz.** Bilgisayarda Node/Python/FFmpeg/Chromium zaten kuruluysa ajan onları
    kullanmaz; her zaman kendi sabit sürümlerini anewconcept kurulum yerine kurar ve yalnızca onları çalıştırır
    (H-4 katmanları belirli sürümlere bağlıdır; kullanıcının güncellemesi ajanı bozmaz).
-8. **Ekran kartı tespiti.** Ajan ekran kartını ve VRAM'i tespit edip kurulum ekranında gösterir ("Ekran kartı:
-   <ad>, <N> GB"). Yerel görsel paketi buna göre seçilir: NVIDIA → CUDA paketi, diğer ekran kartları → Vulkan
-   paketi, uygun kart yoksa CPU paketi. VRAM 6 GB'ın altındaysa Yerel görsel ve Ses klonlama seçeneklerinin
-   yanında "Ekran kartı belleği düşük; yavaş çalışabilir" uyarısı görünür (seçim engellenmez).
+8. **Ekran kartı tespiti ve GPU paketleri.** Ajan ekran kartını, VRAM'i ve (NVIDIA'da) sürücü sürümünü tespit
+   edip kurulum ekranında gösterir ("Ekran kartı: <ad>, <N> GB"). GPU'da çalışabilen her bileşen ekran kartına
+   uygun paketle kurulur:
+
+   | Bileşen | NVIDIA | Diğer kart (AMD/Intel) | Uygun kart yok |
+   |---|---|---|---|
+   | Supertonic 3 (ONNX) | ONNX Runtime CUDA + CUDA 12/cuDNN 9 | ONNX Runtime DirectML | CPU |
+   | Yerel görsel `sd-server` (Z-Image-Turbo, FLUX.2 klein) | `win-cuda12` + `cudart` | `win-vulkan` | `win-cpu` |
+   | Chatterbox (PyTorch) | PyTorch CUDA derlemesi (kartın mimarisine uygun; ör. RTX 30 → CUDA 12.x) | CPU derlemesi (*) | CPU derlemesi |
+   | Video kodlama (FFmpeg) | NVENC | AMF / QSV | yazılım kodlayıcı |
+
+   (*) AMD/Intel'de Windows için kararlı bir PyTorch GPU derlemesi yok; satırda "Bu ekran kartında Ses klonlama
+   CPU'da çalışır; yavaş olabilir" görünür. Ekran kartı bunu desteklemediği için bu durum hata sayılmaz.
+   NVIDIA sürücüsü CUDA 12 için gereken en düşük sürümün altındaysa ekranda "NVIDIA sürücünüz eski; ekran kartı
+   kullanılamaz — sürücüyü güncelleyin" görünür ve GPU paketli bileşenlerin kurulumu başlamaz (sürücü
+   güncellemesi yönetici izni ister, ajan bunu yapmaz — Req 6). VRAM 6 GB'ın altındaysa Yerel görsel ve Ses
+   klonlama seçeneklerinin yanında "Ekran kartı belleği düşük; yavaş çalışabilir" uyarısı görünür (seçim
+   engellenmez).
+8a. **GPU varken CPU'ya düşmek hatadır.** Ekran kartı bir bileşeni destekliyorsa (Req 8 tablosu) o bileşen
+   GPU'da çalışır; CPU'ya sessizce düşmek yasaktır. Ajan her bileşenin hangi aygıtta çalıştığını (GPU adı ya da
+   CPU) "Kurulum ve bileşenler" ekranında satırında gösterir ve yerel loga yazar. GPU desteklenirken bileşen
+   GPU'yu kullanamıyorsa (sağlayıcı yüklenemedi, CUDA hatası, yanlış paket) bileşen "Hata — Ekran kartı
+   kullanılamıyor" olur; Tekrar dene / Hatayı bildir geçerlidir.
 9. **Video klasörü.** Videoların duracağı klasör kurulum yerinden ayrıdır ve ilk kurulum ekranında
    değiştirilebilir; varsayılan: kullanıcının Videolar klasörü altında `anewconcept`.
 10. **Ön kontrol.** **Kurulumu başlat** etkin olmadan önce internet bağlantısı ve disk alanı denetlenir. Gereken
@@ -97,7 +120,9 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
     ("Kuruluyor: %NN"). **Hayır** → pencere açık kalır. Kurulum sürerken tray'den "Çıkış" kurulumu güvenli
     durdurur: yarım bileşenin dosyaları silinir, tamamlananlar korunur; sonraki açılışta Req 15 uygulanır.
 17. **Hazır denetimi.** Tüm seçili bileşenler Kuruldu olunca ajan her çekirdek araçla küçük bir örnek komut
-    çalıştırır (sürüm sorgusu ve kısa bir deneme) ve sonuç olumluysa "Hazır" gösterir; olumsuzsa "Ajan kurulumu
+    çalıştırır (sürüm sorgusu ve kısa bir deneme); GPU destekli her bileşen için denemenin gerçekten GPU'da
+    çalıştığını doğrular (Supertonic: etkin ONNX sağlayıcısı CUDA/DirectML; Chatterbox: PyTorch GPU'yu görüyor;
+    `sd-server`: CUDA/Vulkan arka ucu; FFmpeg: donanım kodlayıcıyla kısa bir kodlama). Sonuç olumluysa "Hazır" gösterir; olumsuzsa "Ajan kurulumu
     eksik: <araç>" sebebiyle ilgili bileşen Hata durumuna düşer (Tekrar dene / Hatayı bildir geçerlidir).
 18. **Tamamlanma.** "Kurulum tamamlandı · Hazır" görünür. Ajan henüz eşleştirilmemişse cihaz eşleştirme adımına
     geçer (0012); eşleştirilmişse kurulum ekranı kapanır ve ajan tray'de çalışmaya devam eder.
@@ -179,7 +204,7 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
 - [ ] AC-6 — Beklenen SHA-256 ile uyuşmayan (kasıtlı bozulmuş) bir bileşen dosyası kurulmaz; satır "Hata — Dosya doğrulanamadı" gösterir; bozma kaldırılınca **Tekrar dene** bileşeni kurar.
 - [ ] AC-7 — Kurulumdan önce makinede farklı sürümde Node ve Python (araç yolunda) ile "Konsept" adlı bir program/klasör varken, kurulumdan sonra bunların dosyaları, sürümleri ve kullanıcı/sistem ortam ayarları (araç yolu dahil) değişmemiştir; ajanın bileşenleri yalnızca `%LOCALAPPDATA%\anewconcept` altında bulunur ve ajan çalışırken araç yolundaki Node/Python'u değil kendi kopyalarını çalıştırır.
 - [ ] AC-8 — Kurulum hiçbir adımda Windows yönetici izni (UAC) istemeden tamamlanır; oluşan klasör, kısayol, başlangıç kaydı ve kaldırma kaydının teknik adı `anewconcept`, görünen adı "ANEW Konsept"tir.
-- [ ] AC-9 — Kurulum ekranı tespit edilen ekran kartı adını ve VRAM'i gösterir; Yerel görsel seçildiğinde NVIDIA'da CUDA, diğer kartta Vulkan, uygun kart yoksa CPU paketi indirilir (sahte donanım bilgisiyle üç durum test edilir); VRAM 6 GB'ın altındayken Yerel görsel ve Ses klonlama yanında "Ekran kartı belleği düşük; yavaş çalışabilir" uyarısı görünür ve seçim engellenmez.
+- [ ] AC-9 — Kurulum ekranı tespit edilen ekran kartı adını ve VRAM'i gösterir; Req 8 tablosundaki her bileşen için NVIDIA'da CUDA/NVENC, diğer kartta DirectML/Vulkan/AMF-QSV, uygun kart yoksa CPU paketi seçilip indirilir (sahte donanım bilgisiyle üç durum her bileşen için test edilir; NVIDIA'da Chatterbox için CUDA PyTorch derlemesi istenir, CPU derlemesi istenmez; CUDA çalışma zamanı ve cuDNN yalnızca NVIDIA'da indirilir); VRAM 6 GB'ın altındayken Yerel görsel ve Ses klonlama yanında "Ekran kartı belleği düşük; yavaş çalışabilir" uyarısı görünür ve seçim engellenmez.
 - [ ] AC-10 — Video klasörü ilk kurulum ekranında varsayılan olarak Videolar\anewconcept gösterilir, değiştirilebilir ve seçilen klasör kurulumdan sonra ajan tarafından kullanılır; kurulum yeriyle aynı klasör olamaz.
 - [ ] AC-11 — İnternet yokken ya da boş alan (seçili bileşenlerin indirme + açılmış boyutu × 1,2) değerinden azken **Kurulumu başlat** pasiftir ve sebep metni ile "Gereken: X GB, Boş: Y GB" görünür; isteğe bağlı seçim değişince değerler güncellenir; kurulum sürerken internet koparsa işlenen bileşen (otomatik denemelerden sonra) "Hata — İnternet bağlantısı koptu" olur, tamamlanmış bileşenler Kuruldu kalır.
 - [ ] AC-12 — Başarısız bir indirme için ajan en fazla 2 otomatik yeniden deneme yapar (her deneme akan satırlarda ve logda görünür); resmi kaynak erişilemezken Pi'de aynası olan bileşen (Supertonic) aynadan kurulur; aynası olmayan bileşen 3. başarısızlıktan sonra Hata olur.
@@ -194,6 +219,8 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
 - [ ] AC-21 — Tray menüsünde "Kurulum ve bileşenler" bulunur; açılan ekran kurulu bileşenleri durumuyla gösterir; kurulmamış bir isteğe bağlı bileşen işaretlenip başlatılınca yalnızca o bileşen (ön kontrol, lisans onayı ve doğrulamayla) kurulur; 0001'deki "Siteye git" ve "Çıkış" davranışı değişmez; 0012'deki tıklanamayan oturum durumu satırı menünün en başında kalır ve durumu doğru göstermeye devam eder (0012 AC-15 bu öğe eklenmişken de geçer).
 - [ ] AC-22 — Kurulum başlangıcı, her bileşenin kuruluşu, her otomatik yeniden deneme, her hata, her doğrulama başarısızlığı, Onarılmalı ve Hazır olayları yerel teknik loga uygun seviyede (Information/Warning/Error) yazılır; log dosyalarında şifre, token ya da API key geçmez.
 - [ ] AC-23 — Kurulum ekranındaki tüm kontroller klavyeyle kullanılabilir ve erişilebilir ada sahiptir; bileşen durumları metin olarak okunur (yalnızca renk değil); kontrast açık ve koyu temada WCAG AA; tema Windows uygulama temasını izler; palet sitenin turuncu/kahve paletidir; tüm metinler Türkçe ve kaynak dosyasından gelir.
+- [ ] AC-24 — GPU varken CPU'ya düşme yok (Req 8a, kasıtlı bozma ile): NVIDIA kartlı makinede Hazır denetimi Supertonic, Chatterbox (seçiliyse), `sd-server` (seçiliyse) ve FFmpeg kodlamasının GPU'da çalıştığını doğrular ve "Kurulum ve bileşenler" ekranı her satırda aygıtı (GPU adı) gösterir; GPU dosyaları kasıtlı silinince (ör. cuDNN) ya da Chatterbox'a CPU derlemesi kurulunca bileşen CPU'da sessizce çalışmaz, "Hata — Ekran kartı kullanılamıyor" olur ve olay loga Error seviyesinde yazılır. Geliştirici makinesinde (RTX 3060 Laptop, 6 GB) gerçek donanımla da gözlenir.
+- [ ] AC-25 — NVIDIA sürücüsü CUDA 12 için gereken en düşük sürümün altındayken (sahte sürücü sürümüyle) ekran "NVIDIA sürücünüz eski; ekran kartı kullanılamaz — sürücüyü güncelleyin" gösterir ve GPU paketli bileşenlerin kurulumu başlamaz; AMD/Intel kartta Ses klonlama satırı "Bu ekran kartında Ses klonlama CPU'da çalışır; yavaş olabilir" gösterir ve bu durum hata sayılmaz.
 
 ## Definition of Done
 - [ ] Every acceptance criterion mapped to proof (test or reproducible observation)
