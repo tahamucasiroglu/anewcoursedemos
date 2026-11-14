@@ -139,7 +139,17 @@ Notlar:
 | Yöntem | Sonuç | Süre (video / seslendirme) | Render (iş başı → son) | Not |
 |---|---|---|---|---|
 | HyperFrames + Supertonic 3 + görsel kapalı + altyazı + çubuk | ✅ | 31,27 / 31,24 sn | 80,2 sn (SceneRender 62,6 · Speech 7,4 · Compose 9,6) | whisper small kelime geri çağırma 0,865 |
-| Remotion + Supertonic 3 + görsel kapalı (duman testi) | ✅ | 31,27 / 31,24 sn | 90,1 sn | çıktı pix_fmt `yuvj420p` (HyperFrames'te `yuv420p`) |
-| Revideo + Supertonic 3 + görsel kapalı (duman testi) | ✅ | 31,27 / 31,24 sn | 40,4 sn | — |
+| Remotion + Supertonic 3 + görsel kapalı + altyazı + çubuk | ✅ (düzeltmeyle) | 31,27 / 31,24 sn | 91,4 sn (SceneRender 71,5 · Speech 8,3 · Compose 10,6) | whisper 0,865; çıktı artık `yuv420p` tv/bt709 |
+| Revideo + Supertonic 3 + görsel kapalı + altyazı + çubuk | ✅ (düzeltmeyle) | 31,27 / 31,24 sn | 53,3 sn (SceneRender 24,5 · Speech 10,2 · Compose 17,4) | whisper 0,865; ölü proxy ağ engeli doğrulandı |
 
 Bu turda düzeltilen hata: HyperFrames lint, görsel kullanan her sahneyi `missing_local_asset` ile reddediyordu, çünkü doğrulama klasörüne yalnız `index.html` yazılıyordu. Artık görseller doğrulama klasörünün `assets/` klasörüne de kopyalanıyor. Entegrasyon testi: `HyperFrames_ValidateAcceptsSceneWithImageAsset`.
+
+### Remotion ve Revideo turu (14 Kas 2026)
+
+İkisi de `--new-concept` ile, gerçek boru hattından geçti; tüm denetimler geçti (ffprobe, 4 kare, volumedetect, 5 okunuş, whisper). Bulunan ve düzeltilen hatalar:
+
+- **Renk aralığı:** Remotion/Revideo sahneleri JPEG karelerinden gelen tam aralıkta (`yuvj420p`, `pc`) çıkıyor, birleştirici bunu son videoya taşıyordu. Bazı oynatıcı ve platformlar bu dosyaları soluk ya da patlak gösterebilir. Normalize adımı artık sınırlı aralığa (`out_range=tv`) ve BT.709'a çeviriyor, çıktılar tv/bt709 etiketleniyor. Her motorda son dosya `yuv420p` oluyor. Testler: `Compose_FullRangeScene_ProducesLimitedRangeYuv420p` (yeniden kodlama ve kopyalama yolu), `BuildNormalizeFilter_ConvertsToLimitedRangeBt709`.
+- **Revideo yazı tipi yarışı:** düzen (layout), yazı tipi yüklenmeden yedek yazı tipinin ölçüleriyle hesaplanıp önbelleğe alınıyordu. Montserrat 900 ile iki satıra kayan kart metninin ikinci satırı kartın dışına taşıyordu (sahne 3 "yaşında", sahne 4 "bile"). `project.ts` artık paketli tüm yazı tipi ağırlıklarını sahneden önce yüklüyor (`document.fonts.load`; Remotion'daki `delayRender` önyüklemesinin karşılığı). Test: `Revideo_LayoutCardGrowsForWrappedSecondLine`. Kartın iç boşluğundan piksel okuyor; düzeltme olmadan rgb 16,16,16 ile başarısız oluyor.
+- **Penceresiz ajan kapanışı:** `stack.cjs stop` sırasında ajan `AgentHubConnection type only implements IAsyncDisposable` ile çöküyordu. Servis kapsayıcısı artık `DisposeAsync` ile kapatılıyor; kapanış temiz.
+
+**Revideo ölü proxy doğrulaması:** render betiği kaynaktaki `RenderScript` ile birebir çalıştırıldı. Sahne, makinenin LAN adresindeki (192.168.1.100:7399) yerel bir HTTP sunucusuna `fetch` ve `Image` isteği, example.com'a da `fetch` gönderdi. `--proxy-server=http://127.0.0.1:9` ile sunucuya hiç istek düşmedi, dış istek `EXTERNAL-BLOCKED` oldu ve render yine mp4 üretti. Bayraklar kaldırılınca (kontrol) istekler sunucuya ulaştı ve dış istek geçti. Kayıt: `tests/e2e/out/kurgu30/revideo_supertonic3_img-off/proxy-probe-hits.txt`. Gerçek boru hattındaki Revideo render'ı da bu betikle başarılı.
