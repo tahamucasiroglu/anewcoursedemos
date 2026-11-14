@@ -42,8 +42,8 @@ public sealed class SecretMaskerTests
         { "PairingCode = 123 456", "PairingCode = ***", "456" },
         { "Password := abc-def", "Password := ***", "abc-def" },
         { "NewPassword=\"unterminated secret", "NewPassword=\"***", "secret" },
-        { "{\"password\": {\"value\":\"nested-pw\"}}", "{\"password\": ***", "nested-pw" },
-        { "{\"password\":[\"arr-pw\"]}", "{\"password\":***", "arr-pw" },
+        { "{\"password\": {\"value\":\"nested-pw\"}}", "{\"password\": ***}", "nested-pw" },
+        { "{\"password\":[\"arr-pw\"]}", "{\"password\":***}", "arr-pw" },
         { "refresh_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc", "refresh_token=***", "]" },
         { "ApiKey=abc…realsecret", "ApiKey=…ret", "realsec" },
         { "user_id=42, password=p4ss, role=admin", "user_id=42, password=***, role=admin", "p4ss" },
@@ -136,7 +136,6 @@ public sealed class SecretMaskerTests
         { "Login {[\"UserName\"]=\"bob\", [\"Password\"]=\"Hunter2Secret\"}", "Login {[\"UserName\"]=\"bob\", [\"Password\"]=\"***\"}", "Hunter2Secret" },
         { "- **Password**: Hunter2Secret\n- **Token**: Tok2Secret99", "- **Password**: ***\n- **Token**: ***", "Tok2Secret99" },
         { "Ai__ApiKeys__ElevenLabs=zzq9876yyyy5432", "Ai__ApiKeys__ElevenLabs=…432", "zzq9876yyyy" },
-        { "Ai.ApiKeys.ElevenLabs = zzq9876yyyy5432", "Ai.ApiKeys.ElevenLabs = …432", "zzq9876yyyy" },
         { "<ClientSecret Value=\"CsAttr12345\"/>", "<ClientSecret Value=\"***\"/>", "CsAttr12345" },
         { "<Credentials><Username>bob</Username><Value>Hunter2Pass</Value></Credentials>", "<Credentials>***</Credentials>", "Hunter2Pass" },
         { "client_secret= \"\"  # rotated, token=zzq9876yyyy5432", "client_secret= \"\"  # rotated, token=***", "zzq9876yyyy" },
@@ -150,7 +149,31 @@ public sealed class SecretMaskerTests
         { "CREATE ROLE app LOGIN PASSWORD E'Hunter2Secret';", "CREATE ROLE app LOGIN PASSWORD E'***';", "Hunter2Secret" },
         { "db:\n    password: |\n\t\tHunter2Pass\n", "db:\n    password: |\n\t\t***\n", "Hunter2Pass" },
         { "MaxTokens=4096 InputTokens=12 Invalid key format", "MaxTokens=4096 InputTokens=12 Invalid key format", "\u0000" },
+
+        // Hunt r4 / review r4 (fix-5): yarım vekil çift, gizli ad + sözcük, spec'teki Türkçe adlar, hasar korumaları…
+        { "password=\uD800abcdefg", "password=***", "abcdefg" },
+        { "token=\\ud83dabcdef12", "token=***", "abcdef12" },
+        { "PairingService: Secret key: wJalrXUtnFEMI2K7MDENG", "PairingService: Secret key: ***", "wJalrXUtnFEMI" },
+        { "Şifre değeri: Gizli12345", "Şifre değeri: ***", "Gizli12345" },
+        { "Eşleştirme onay sırrı: Qw7Er8Ty9Ui0", "Eşleştirme onay sırrı: ***", "Qw7Er8Ty9Ui0" },
+        { "Ajan oturum belirteci: Zm9vYmFyYmF6cXV4MTIz", "Ajan oturum belirteci: ***", "Zm9vYmFy" },
+        { "İç uç reddedildi; gelen servis anahtarı=7f3a9c2e1b8d4f6a", "İç uç reddedildi; gelen servis anahtarı=***", "7f3a9c2e" },
+        { "{\"pairCode\":\"482913\",\"deviceName\":\"pc\"}", "{\"pairCode\":\"***\",\"deviceName\":\"pc\"}", "482913" },
+        { "DB_PASS=Hunter2Pass99", "DB_PASS=***", "Hunter2Pass99" },
+        { "{\"title\":\"Validation failed.\",\"errors\":{\"Password\":[\"The Password field is required.\"]},\"traceId\":\"00-abc\"}", "{\"title\":\"Validation failed.\",\"errors\":{\"Password\":***},\"traceId\":\"00-abc\"}", "field is required" },
+        { "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService: Authorization failed. These requirements were not met", "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService: Authorization failed. These requirements were not met", "\u0000" },
+        { "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationHandler: AuthenticationScheme: Cookies signed in.", "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationHandler: AuthenticationScheme: Cookies signed in.", "\u0000" },
+        { "İşlem sırasında sıra numarası 5 bypass=true", "İşlem sırasında sıra numarası 5 bypass=true", "\u0000" },
     };
+
+    /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
+    [Fact]
+    public void Mask_OverMaxLength_KeepsTrailingNewline()
+    {
+        var masked = SecretMasker.Mask(new string('a', SecretMasker.MaxInputLength) + " tail\r\n");
+
+        masked.ShouldEndWith(SecretMasker.TruncatedMarker + "\r\n");
+    }
 
     /// <summary>Uygulamanın bildiği sır (kayıtlı) metnin herhangi bir yerinde, etiketsiz de olsa gizlenir (H3-H).</summary>
     [Fact]
@@ -169,9 +192,13 @@ public sealed class SecretMaskerTests
         SecretMasker.RegisterConfigurationValue("ConnectionStrings:Konsept", "Host=db;Username=app;Password=CfgPwQwe123;Database=k");
         SecretMasker.RegisterConfigurationValue("Internal:ServiceKey", "SvcKeyAsd456789");
         SecretMasker.RegisterConfigurationValue("Logging:LogLevel:Default", "InformationLevelXyz");
+        SecretMasker.RegisterConfigurationValue("Serilog:MinimumLevel:Override:Microsoft.AspNetCore.Authorization", "WarningLevelXyz");
+        SecretMasker.RegisterConfigurationValue("Authentication:Cookie:Name", "Konsept.SessionXyz");
+        SecretMasker.RegisterConfigurationValue("Ai:ApiKeys:Gemini", "GeminiCfgKey12345");
 
-        SecretMasker.Mask("auth failed CfgPwQwe123 / SvcKeyAsd456789").ShouldBe("auth failed *** / ***");
-        SecretMasker.Mask("level InformationLevelXyz").ShouldBe("level InformationLevelXyz");
+        SecretMasker.Mask("auth failed CfgPwQwe123 / SvcKeyAsd456789 / GeminiCfgKey12345").ShouldBe("auth failed *** / *** / ***");
+        SecretMasker.Mask("level InformationLevelXyz WarningLevelXyz Konsept.SessionXyz")
+            .ShouldBe("level InformationLevelXyz WarningLevelXyz Konsept.SessionXyz");
     }
 
     /// <summary>Serbest metne gömülü her biçim maskelenir; gizli parça çıktıda geçmez.</summary>

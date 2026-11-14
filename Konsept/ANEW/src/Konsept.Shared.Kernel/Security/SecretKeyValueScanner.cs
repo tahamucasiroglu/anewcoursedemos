@@ -94,27 +94,38 @@ internal static class SecretKeyValueScanner
 
         if (!TryReadSeparator(text, keyEnd, out var valueStart, out var urlEncoded))
         {
-            return MaskWithoutSeparator(text, keyStart, keyEnd, apiKey, output);
+            // Gizli ad + tek sözcük + ayırıcı: "Secret key: x", "Token value: x", "Şifre değeri: x" (hunt r4).
+            var word = SkipWord(text, keyEnd);
+            if (word < 0 || !TryReadSeparator(text, word, out valueStart, out urlEncoded))
+            {
+                return MaskWithoutSeparator(text, keyStart, keyEnd, apiKey, output);
+            }
         }
 
-        var (start, end, after) = ReadValue(text, valueStart, ConnectionStringContext(text, keyStart), urlEncoded);
         var lineEndOfValue = LineEnd(text, valueStart);
         var unquoted = QuoteLength(text, valueStart) == 0 && valueStart < text.Length && text[valueStart] is not ('{' or '[');
+        int start, end, after;
+        if (unquoted && apiKey)
+        {
+            // API key boşluk içermez: tırnaksız değer ilk boşlukta (ya da ayraçta) biter, tarama sonrasında sürer
+            // (H3-A); satır sonuna kadar okunmaz (hunt r4, perf).
+            start = end = valueStart;
+            while (end < text.Length && !char.IsWhiteSpace(text[end]) && text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')'))
+            {
+                end++;
+            }
+
+            after = end;
+        }
+        else
+        {
+            (start, end, after) = ReadValue(text, valueStart, ConnectionStringContext(text, keyStart), urlEncoded);
+        }
+
         if (unquoted && end > start && IsCookieKey(text, keyStart, keyEnd))
         {
             // Cookie/Set-Cookie: başlık değeri satır sonuna kadar — "a=1; session=…" ikinci çerez açıkta kalmasın (H3-B).
             end = after = Trim(text, start, lineEndOfValue);
-        }
-        else if (unquoted && apiKey && end > start)
-        {
-            // API key boşluk içermez: tırnaksız değer ilk boşlukta biter, tarama sonrasında sürer (H3-A).
-            var tokenEnd = start;
-            while (tokenEnd < end && !char.IsWhiteSpace(text[tokenEnd]))
-            {
-                tokenEnd++;
-            }
-
-            end = after = tokenEnd;
         }
 
         if (end > start && IsBlockIndicator(text, start, lineEndOfValue))
@@ -175,6 +186,23 @@ internal static class SecretKeyValueScanner
 
         pairEnd = end;
         return true;
+    }
+
+    /// <summary>Konumda tek boşluk + en fazla 24 harflik bir sözcük varsa sözcüğün sonu; yoksa -1.</summary>
+    private static int SkipWord(string text, int pos)
+    {
+        if (pos + 1 >= text.Length || text[pos] != ' ' || !char.IsLetter(text[pos + 1]))
+        {
+            return -1;
+        }
+
+        var end = pos + 1;
+        while (end < text.Length && char.IsLetter(text[end]) && end - pos <= 24)
+        {
+            end++;
+        }
+
+        return end < text.Length && char.IsLetter(text[end]) ? -1 : end;
     }
 
     private static bool IsCookieKey(string text, int keyStart, int keyEnd) =>
@@ -328,7 +356,7 @@ internal static class SecretKeyValueScanner
         if (string.CompareOrdinal(text, contentStart, CData, 0, CData.Length) == 0)
         {
             var cdataEnd = text.IndexOf("]]>", contentStart, StringComparison.Ordinal);
-            end = cdataEnd < 0 ? text.Length : cdataEnd + 3;
+            end = cdataEnd < 0 ? LineEnd(text, contentStart) : cdataEnd + 3; // Kapanmamış CDATA: satır sonu (hunt r4, perf).
             return true;
         }
 
@@ -378,6 +406,12 @@ internal static class SecretKeyValueScanner
         var lineStart = keyStart == 0 ? 0 : text.LastIndexOfAny(['\r', '\n'], keyStart - 1) + 1;
         var keyIndent = Columns(text, lineStart);
         var p = NextLineStart(text, from);
+        if (p < output.IndentedUntil)
+        {
+            // Bu satırlar bir önceki tetikleyicide zaten tarandı (hunt r4, perf: tekrar eden "pwd:\"\"#").
+            return from;
+        }
+
         var last = from;
         while (p < text.Length)
         {
@@ -400,6 +434,7 @@ internal static class SecretKeyValueScanner
             p = NextLineStart(text, end);
         }
 
+        output.IndentedUntil = Math.Max(output.IndentedUntil, p);
         return last;
     }
 
@@ -460,6 +495,12 @@ internal static class SecretKeyValueScanner
     private static bool IsSecretKey(string text, int keyStart, int keyEnd, out bool apiKey)
     {
         apiKey = false;
+        if (keyEnd - keyStart < 3)
+        {
+            // Kısa ad kendisi gizli olamaz; yalnızca yolu (Ai:ApiKeys:0) gizli olabilir (hunt r4, perf).
+            return keyStart > 0 && text[keyStart - 1] == ':' && PathHasSecretSegment(text, keyStart, out apiKey);
+        }
+
         var name = SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]);
         if (name.Length == 0 || SecretMasker.IsConnectionStringFieldName(name))
         {
@@ -502,7 +543,8 @@ internal static class SecretKeyValueScanner
     {
         apiKey = false;
         var q = keyStart - 1;
-        for (var depth = 0; depth < 8 && q > 0 && text[q] is ':' or '.'; depth++)
+        // Yalnızca ':' — '.' ad alanlarını (Microsoft.AspNetCore.Authorization.…: mesaj) gizli yol sanıyordu (hunt r4, hasar).
+        for (var depth = 0; depth < 8 && q > 0 && text[q] == ':'; depth++)
         {
             var segEnd = q;
             q--;
@@ -511,11 +553,18 @@ internal static class SecretKeyValueScanner
                 q--;
             }
 
-            var name = SecretMasker.NormalizeFieldName(text[(q + 1)..segEnd]);
-            if (name.Length == 0)
+            if (segEnd - q - 1 < 3)
             {
-                return false;
+                // Gizli ad en az 3 harf: "1c:2e:…" gibi kısa bölümler normalleştirilmeden geçilir (hunt r4, perf).
+                if (segEnd - q - 1 == 0)
+                {
+                    return false;
+                }
+
+                continue;
             }
+
+            var name = SecretMasker.NormalizeFieldName(text[(q + 1)..segEnd]);
 
             if (SecretMasker.IsApiKeyFieldName(name) || SecretMasker.IsHiddenFieldName(name))
             {
@@ -716,8 +765,10 @@ internal static class SecretKeyValueScanner
 
         if (text[pos] is '{' or '[')
         {
+            // Satırda eşleşen kapanışa kadar (tek satırlık JSON'da sonraki alanlar korunsun, hunt r4); yoksa satır sonu.
             var lineEnd = LineEnd(text, pos);
-            return (pos, lineEnd, lineEnd);
+            var close = MatchingBracket(text, pos, lineEnd);
+            return close < 0 ? (pos, lineEnd, lineEnd) : (pos, close + 1, close + 1);
         }
 
         var end = pos;
@@ -728,6 +779,45 @@ internal static class SecretKeyValueScanner
 
         var trimmed = Trim(text, pos, end);
         return (pos, trimmed, trimmed);
+    }
+
+    /// <summary>Tırnak içini atlayarak <paramref name="open"/>'daki ayracın satırdaki eşini bulur; yoksa -1.</summary>
+    private static int MatchingBracket(string text, int open, int lineEnd)
+    {
+        var depth = 0;
+        var quote = '\0';
+        for (var p = open; p < lineEnd; p++)
+        {
+            var c = text[p];
+            if (quote != '\0')
+            {
+                if (c == '\\')
+                {
+                    p++;
+                }
+                else if (c == quote)
+                {
+                    quote = '\0';
+                }
+
+                continue;
+            }
+
+            if (c == '"')
+            {
+                quote = c;
+            }
+            else if (c is '{' or '[')
+            {
+                depth++;
+            }
+            else if (c is '}' or ']' && --depth == 0)
+            {
+                return p;
+            }
+        }
+
+        return -1;
     }
 
     private static int Trim(string text, int start, int end)

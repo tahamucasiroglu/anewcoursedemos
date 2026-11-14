@@ -75,6 +75,37 @@ public sealed class WebLoggingTests : IClassFixture<WebFactory>
         }
     }
 
+    /// <summary>
+    /// Web'in kendi servis anahtarı açılışta bilinen sır olarak kaydedilir: mesajda etiketsiz geçse de ne dosyada ne
+    /// API'ye iletilen kayıtta açık görünür (review r4, L-3).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task WebLog_ConfiguredServiceKeyInMessage_NeverWritten()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var forwarded = new List<ForwardedLogRequest>();
+        _factory.Api.ForwardLogsAsync(Arg.Do<IReadOnlyList<ForwardedLogRequest>>(l => { lock (forwarded) { forwarded.AddRange(l); } }), Arg.Any<CancellationToken>())
+            .Returns(call => Result<int>.Success(call.Arg<IReadOnlyList<ForwardedLogRequest>>().Count));
+        using var client = _factory.CreateClient();
+        var marker = Guid.NewGuid().ToString("N");
+        var logger = _factory.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Konsept.Web.Tests.KnownSecretMarker");
+
+#pragma warning disable CA1848, CA2254 // Test: anahtar düz metin olarak mesajda.
+        logger.LogWarning($"uyarı {marker} retry with {WebFactory.ServiceKey} failed");
+#pragma warning restore CA1848, CA2254
+
+        await Eventually(() => { lock (forwarded) { return forwarded.Any(f => f.Message.Contains(marker, StringComparison.Ordinal)); } }, ct);
+        await Eventually(() => _factory.ReadLogText().Contains($"uyarı {marker}", StringComparison.Ordinal), ct);
+
+        lock (forwarded)
+        {
+            forwarded.Where(f => f.Message.Contains(marker, StringComparison.Ordinal)).ShouldAllBe(f => !f.Message.Contains(WebFactory.ServiceKey));
+        }
+
+        _factory.ReadLogText().ShouldNotContain(WebFactory.ServiceKey);
+    }
+
     /// <summary>Yalnızca Warning+ ve dışlanmamış kategoriler iletilir (HTTP ve API istemcisinin kendi logları döngü yapmasın).</summary>
     /// <param name="level">Seviye.</param>
     /// <param name="category">Kategori.</param>

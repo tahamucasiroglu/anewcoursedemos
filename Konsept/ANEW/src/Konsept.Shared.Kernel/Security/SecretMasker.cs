@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -45,16 +44,25 @@ public static partial class SecretMasker
     [
         "password", "passwords", "passwd", "secret", "secrets", "token", "pairingcode", "servicekey", "privatekey",
         "credential", "credentials", "secretkey", "accesskey", "signingkey", "accountkey", "authorization", "cookie",
-        "passphrase", "pwd", "refreshtokens", "accesstokens", "idtokens", "authtokens", "bearertokens",
+        "passphrase", "pwd", "refreshtokens", "accesstokens", "idtokens", "authtokens", "bearertokens", "paircode",
+        "pairingpin", "encryptionkey", "masterkey", "clientkey", "apisecret",
     ];
 
+    // Türkçe kökler (ad içinde geçerse): spec 0008/0012'deki adlar — şifre, parola, onay sırrı, oturum/yenileme
+    // belirteci, API/erişim/gizli/servis anahtarı, eşleştirme kodu. "sır" tek başına değil ("sıra", "sırasında").
     private static readonly string[] HiddenFieldStems =
     [
-        "sifre", "şifre", "parola", "apianahtar", "erişimanahtar", "erisimanahtar", "gizlianahtar", "erişimbelirte",
-        "erisimbelirte", "eşleştirmekod", "eslestirmekod",
+        "sifre", "şifre", "parola", "apianahtar", "erişimanahtar", "erisimanahtar", "gizlianahtar", "servisanahtar",
+        "hizmetanahtar", "erişimbelirte", "erisimbelirte", "belirteç", "belirteci", "belirtecin", "sırrı", "sirri",
+        "onaysır", "onaysir", "eşleştirmekod", "eslestirmekod",
     ];
 
-    private static readonly ConcurrentDictionary<string, byte> KnownSecrets = new(StringComparer.Ordinal);
+    private static readonly Lock KnownSecretsLock = new();
+
+    private static readonly HashSet<string> KnownSecrets = new(StringComparer.Ordinal);
+
+    // Her Mask çağrısında kilitsiz okunan anlık görüntü: bilinen sırların önceden hesaplanmış biçimleri (review r4, I-2).
+    private static volatile string[][] _knownSecretForms = [];
 
     /// <summary>Serbest metindeki bilinen gizli bilgi biçimlerini maskeler.</summary>
     /// <param name="text">Metin (hata mesajı, kullanıcı metni, log satırı).</param>
@@ -66,11 +74,28 @@ public static partial class SecretMasker
             return text ?? string.Empty;
         }
 
+        try
+        {
+            return MaskAll(text);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Kapalı hata: beklenmeyen bir durumda metin açık yazılmaz (review r4, M-1).
+            return MaskFailed;
+        }
+    }
+
+    /// <summary>Maskeleme beklenmedik biçimde başarısız olursa metin yerine yazılan işaret.</summary>
+    public const string MaskFailed = "[maskelenemedi]";
+
+    private static string MaskAll(string text)
+    {
         // Üst sınır: maskeleme maliyeti sınırlı kalsın (review round 3, M-1); fazlası atılır, işaretlenir. Kesim yarım
-        // token/URL bırakmayacak bir ayraca çekilir (hunt r2/r3).
+        // token/URL bırakmayacak bir ayraca çekilir (hunt r2/r3); satır sonu korunur (review r4, L-1).
         if (text.Length > MaxInputLength)
         {
-            text = string.Concat(text.AsSpan(0, SafeCutIndex(text, MaxInputLength)), TruncatedMarker);
+            var newline = text.EndsWith("\r\n", StringComparison.Ordinal) ? "\r\n" : text.EndsWith('\n') ? "\n" : string.Empty;
+            text = string.Concat(text.AsSpan(0, SafeCutIndex(text, MaxInputLength)), TruncatedMarker, newline);
         }
 
         var secrets = new SecretValueSet();
@@ -89,9 +114,12 @@ public static partial class SecretMasker
         }
 
         result = secrets.ApplyTo(result);
-        foreach (var known in KnownSecrets.Keys)
+        foreach (var forms in _knownSecretForms)
         {
-            result = SecretValueSet.ReplaceAllForms(result, known, Hidden);
+            foreach (var form in forms)
+            {
+                result = result.Replace(form, Hidden, StringComparison.Ordinal);
+            }
         }
 
         return result;
@@ -105,12 +133,20 @@ public static partial class SecretMasker
     public static void RegisterKnownSecret(string? value)
     {
         value = value?.Trim();
-        if (value is null || value.Length < SecretValueSet.MinLength || KnownSecrets.Count >= MaxKnownSecrets)
+        if (value is null || value.Length < SecretValueSet.MinLength)
         {
             return;
         }
 
-        KnownSecrets.TryAdd(value, 0);
+        lock (KnownSecretsLock)
+        {
+            if (KnownSecrets.Count >= MaxKnownSecrets || !KnownSecrets.Add(value))
+            {
+                return;
+            }
+
+            _knownSecretForms = [.. _knownSecretForms, SecretValueSet.Forms(value)];
+        }
     }
 
     /// <summary>
@@ -126,7 +162,14 @@ public static partial class SecretMasker
             return;
         }
 
+        // Log ayarları (Serilog:…:Override:Microsoft.AspNetCore.Authorization = Warning) ve ad alanı biçimli bölümler sır
+        // değildir; yalnızca yaprak ya da hemen üstü gizli adsa kaydedilir (review r4, L-2).
         var segments = key.Split(':', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0 || segments[0] is "Logging" or "Serilog" || segments.Any(s => s.Contains('.', StringComparison.Ordinal)))
+        {
+            return;
+        }
+
         if (segments.Any(s => IsConnectionStringField(Normalize(s)) || Normalize(s) == "connectionstrings"))
         {
             var secrets = new SecretValueSet();
@@ -139,7 +182,8 @@ public static partial class SecretMasker
             return;
         }
 
-        if (segments.Any(IsSecretField))
+        var parent = segments.Length > 1 ? segments[^2] : string.Empty;
+        if (IsSecretField(segments[^1]) || (Normalize(parent).EndsWith('s') && IsSecretField(parent))) // Ai:ApiKeys:Gemini, Passwords:Admin
         {
             RegisterKnownSecret(value);
         }
@@ -354,7 +398,8 @@ public static partial class SecretMasker
 
     private static bool IsHiddenField(string name) =>
         NameForms(name).Any(n => HiddenFieldSuffixes.Any(s => n.EndsWith(s, StringComparison.Ordinal))
-            || n.StartsWith("password", StringComparison.Ordinal)) // password_confirmation, passwordHash…
+            || n.StartsWith("password", StringComparison.Ordinal) // password_confirmation, passwordHash…
+            || (n.EndsWith("pass", StringComparison.Ordinal) && !n.EndsWith("bypass", StringComparison.Ordinal) && !n.EndsWith("compass", StringComparison.Ordinal))) // DB_PASS
         || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
 
     /// <summary>Adın karşılaştırılan biçimleri: kendisi, sondaki sıra numarası atılmış, çoğul eki atılmış (<c>token_0</c>, <c>tokens</c>, <c>apiKey2</c>).</summary>

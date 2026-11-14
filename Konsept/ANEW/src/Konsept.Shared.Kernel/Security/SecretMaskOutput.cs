@@ -25,8 +25,14 @@ internal sealed class SecretMaskOutput(string text, SecretValueSet? secrets = nu
         }
 
         _ranges.Add((start, end, replacement));
-        secrets?.Add(text[start..end], replacement);
+        if (end - start <= SecretValueSet.MaxLength)
+        {
+            secrets?.Add(text[start..end], replacement);
+        }
     }
+
+    /// <summary>Gets or sets girintili satır maskelemesinin ulaştığı konum (aynı satırlar tekrar taranmasın).</summary>
+    public int IndentedUntil { get; set; }
 
     /// <summary>Sonucu üretir.</summary>
     /// <returns>Maskelenmiş metin.</returns>

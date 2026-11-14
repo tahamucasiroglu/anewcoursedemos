@@ -14,6 +14,9 @@ namespace Konsept.Web.Tests.Support;
 /// </summary>
 public sealed class WebFactory : WebApplicationFactory<Program>
 {
+    /// <summary>Testteki servis anahtarı (bilinen sır olarak kaydedilmeli; logda hiçbir biçimde geçmez).</summary>
+    public const string ServiceKey = "web-test-service-key-0008";
+
     /// <summary>Gets sahte API istemcisi.</summary>
     public IKonseptApiClient Api { get; } = Substitute.For<IKonseptApiClient>();
 
@@ -51,6 +54,7 @@ public sealed class WebFactory : WebApplicationFactory<Program>
         ArgumentNullException.ThrowIfNull(builder);
         builder.UseSetting("Api:BaseUrl", "http://api.invalid/");
         builder.UseSetting("Logging:Directory", LogDirectory);
+        builder.UseSetting("Internal:ServiceKey", ServiceKey);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IKonseptApiClient>();

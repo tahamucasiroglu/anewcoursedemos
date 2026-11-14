@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 namespace Konsept.Shared.Kernel.Security;
@@ -12,6 +13,9 @@ internal sealed class SecretValueSet
     /// <summary>Kaydedilecek en kısa değer; daha kısası metnin geneline uygulanmaz (yanlış eşleşme).</summary>
     public const int MinLength = 6;
 
+    /// <summary>Kaydedilecek en uzun değer; daha uzunu (ör. kapanmamış blok) zaten yerinde maskelidir.</summary>
+    public const int MaxLength = 1024;
+
     private const int MaxValues = 256;
 
     private readonly Dictionary<string, string> _values = new(StringComparer.Ordinal);
@@ -25,7 +29,7 @@ internal sealed class SecretValueSet
     public void Add(string value, string replacement)
     {
         value = value.Trim();
-        if (value.Length < MinLength || _values.Count >= MaxValues || value == replacement
+        if (value.Length < MinLength || value.Length > MaxLength || _values.Count >= MaxValues || value == replacement
             || value.Contains(SecretMasker.Hidden, StringComparison.Ordinal)
             || value.Contains(SecretMasker.JwtPlaceholder, StringComparison.Ordinal)
             || value.Contains('…', StringComparison.Ordinal))
@@ -43,32 +47,60 @@ internal sealed class SecretValueSet
     {
         foreach (var (value, replacement) in _values.OrderByDescending(v => v.Key.Length))
         {
-            text = ReplaceAllForms(text, value, replacement);
+            foreach (var form in Forms(value))
+            {
+                text = text.Replace(form, replacement, StringComparison.Ordinal);
+            }
         }
 
         return text;
     }
 
-    /// <summary>Değeri ham, URL kodlu ve JSON kaçışlı biçimleriyle metinden siler.</summary>
-    /// <param name="text">Metin.</param>
+    /// <summary>
+    /// Değerin metinde aranacak biçimleri: ham, URL kodlu (büyük ve küçük harfli onaltılık), JSON kaçışlı. Geçersiz
+    /// UTF-16 (yarım vekil çift) içeren değerin kodlu biçimi hesaplanmaz (review r4, M-1: istisna atmasın).
+    /// </summary>
     /// <param name="value">Değer.</param>
-    /// <param name="replacement">Yerine yazılan metin.</param>
-    /// <returns>Yeni metin.</returns>
-    public static string ReplaceAllForms(string text, string value, string replacement)
+    /// <returns>Farklı biçimler.</returns>
+    public static string[] Forms(string value)
     {
-        text = text.Replace(value, replacement, StringComparison.Ordinal);
+        if (!IsValidUtf16(value))
+        {
+            return [value];
+        }
+
         var url = Uri.EscapeDataString(value);
-        if (url != value)
+        return [.. new HashSet<string>(StringComparer.Ordinal) { value, url, LowerHex(url), JsonEncodedText.Encode(value).Value }];
+    }
+
+    private static bool IsValidUtf16(string value)
+    {
+        var span = value.AsSpan();
+        while (!span.IsEmpty)
         {
-            text = text.Replace(url, replacement, StringComparison.OrdinalIgnoreCase);
+            if (Rune.DecodeFromUtf16(span, out _, out var consumed) != System.Buffers.OperationStatus.Done)
+            {
+                return false;
+            }
+
+            span = span[consumed..];
         }
 
-        var json = JsonEncodedText.Encode(value).Value;
-        if (json != value)
+        return true;
+    }
+
+    private static string LowerHex(string url)
+    {
+        var chars = url.ToCharArray();
+        for (var i = 0; i + 2 < chars.Length; i++)
         {
-            text = text.Replace(json, replacement, StringComparison.Ordinal);
+            if (chars[i] == '%')
+            {
+                chars[i + 1] = char.ToLowerInvariant(chars[i + 1]);
+                chars[i + 2] = char.ToLowerInvariant(chars[i + 2]);
+            }
         }
 
-        return text;
+        return new string(chars);
     }
 }
