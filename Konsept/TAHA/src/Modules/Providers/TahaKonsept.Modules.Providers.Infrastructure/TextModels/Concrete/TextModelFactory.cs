@@ -43,6 +43,7 @@ public sealed class TextModelFactory : TextModelFactoryBase
             ProviderPlatforms.OpenRouter => new OpenRouterTextModel(model, credential, dependencies, http),
             ProviderPlatforms.Zai => new GlmTextModel(model, credential, dependencies, http),
             ProviderPlatforms.Moonshot => new KimiTextModel(model, credential, dependencies, http),
+            ProviderPlatforms.LocalOpenAi => new LocalOpenAiTextModel(model, credential, dependencies, http),
             _ => null,
         };
     }

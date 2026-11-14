@@ -20,6 +20,7 @@ public sealed class ProviderApiKeyConfiguration : IEntityTypeConfiguration<Provi
         builder.Property(x => x.ProtectedKey).HasMaxLength(2048).IsRequired();
         builder.Property(x => x.Last4).HasMaxLength(8).IsRequired();
         builder.Property(x => x.Region).HasMaxLength(60);
+        builder.Property(x => x.ProtectedBaseUrl).HasMaxLength(2048);
         builder.HasIndex(x => new { x.UserId, x.Platform }).IsUnique();
     }
 }

@@ -47,7 +47,22 @@ public abstract class ApiKeyVaultBase : IApiKeyVault
                 $"{descriptor.DisplayName} anahtarı çözülemedi (ana anahtar değişmiş olabilir). Anahtarı yeniden girin.");
         }
 
-        return new ProviderCredential(descriptor.Platform, plain, entity.Region);
+        string? baseUrl = null;
+        if (entity.ProtectedBaseUrl is not null && !Protector.TryUnprotect(entity.ProtectedBaseUrl, out baseUrl))
+        {
+            return Error.Failure(
+                ProviderErrorCodes.KeyCorrupt,
+                $"{descriptor.DisplayName} kök adresi çözülemedi (ana anahtar değişmiş olabilir). Yeniden girin.");
+        }
+
+        if (descriptor.RequiresBaseUrl && string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return Error.Validation(
+                ProviderErrorCodes.KeyMissing,
+                $"{descriptor.DisplayName} için kök adres girilmemiş. Ayarlar → API anahtarları bölümünden ekleyin.");
+        }
+
+        return new ProviderCredential(descriptor.Platform, plain, entity.Region) { BaseUrl = baseUrl };
     }
 
     /// <summary>Kaydı okur (izlenmeyen).</summary>

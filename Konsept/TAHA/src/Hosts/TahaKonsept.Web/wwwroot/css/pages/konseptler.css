@@ -85,3 +85,6 @@
     .kp-topic-row { flex-wrap: wrap; }
     .kp-model-row { grid-template-columns: 1fr; }
 }
+
+/* Geçiş modeli (Yerel LLM / OpenRouter) model adı kutusu */
+.kp-pt-input { margin-top: 6px; }

@@ -30,6 +30,9 @@ public sealed class ProviderApiKey : AggregateRoot, IHasUser, IAuditable
     /// <summary>Bölge (yalnızca Azure Speech).</summary>
     public string? Region { get; private set; }
 
+    /// <summary>Şifreli kök adres (yalnızca Yerel LLM; <c>ISecretProtector.Protect</c> çıktısı).</summary>
+    public string? ProtectedBaseUrl { get; private set; }
+
     /// <summary>Son test sonucu (test edilmediyse null).</summary>
     public bool? LastTestSucceeded { get; private set; }
 
@@ -48,11 +51,12 @@ public sealed class ProviderApiKey : AggregateRoot, IHasUser, IAuditable
     /// <param name="protectedKey">Şifreli anahtar.</param>
     /// <param name="last4">Son 4 hane.</param>
     /// <param name="region">Bölge (opsiyonel).</param>
-    public static ProviderApiKey Create(Guid userId, string platform, string protectedKey, string last4, string? region)
+    /// <param name="protectedBaseUrl">Şifreli kök adres (opsiyonel; Yerel LLM).</param>
+    public static ProviderApiKey Create(Guid userId, string platform, string protectedKey, string last4, string? region, string? protectedBaseUrl = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(platform);
         var entity = new ProviderApiKey { UserId = userId, Platform = platform };
-        entity.Replace(protectedKey, last4, region);
+        entity.Replace(protectedKey, last4, region, protectedBaseUrl);
         return entity;
     }
 
@@ -60,12 +64,14 @@ public sealed class ProviderApiKey : AggregateRoot, IHasUser, IAuditable
     /// <param name="protectedKey">Yeni şifreli anahtar.</param>
     /// <param name="last4">Son 4 hane.</param>
     /// <param name="region">Bölge (opsiyonel).</param>
-    public void Replace(string protectedKey, string last4, string? region)
+    /// <param name="protectedBaseUrl">Şifreli kök adres (opsiyonel; Yerel LLM).</param>
+    public void Replace(string protectedKey, string last4, string? region, string? protectedBaseUrl = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(protectedKey);
         ProtectedKey = protectedKey;
         Last4 = last4 ?? string.Empty;
         Region = string.IsNullOrWhiteSpace(region) ? null : region.Trim();
+        ProtectedBaseUrl = string.IsNullOrWhiteSpace(protectedBaseUrl) ? null : protectedBaseUrl;
         LastTestSucceeded = null;
         LastTestedAtUtc = null;
     }

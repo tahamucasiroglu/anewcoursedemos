@@ -56,6 +56,14 @@
     "notes": "Model kimliği istekte verilir: openrouter:<sağlayıcı/model> (ör. openrouter:anthropic/claude-sonnet-5.5). Maliyet yanıttaki usage.cost alanından."
   },
   {
+    "key": "local-openai", "platform": "local-openai", "providerModelId": "", "displayName": "Yerel LLM (OpenAI uyumlu)",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 0, "outputPerMTok": 0, "cacheReadPerMTok": 0, "cacheWritePerMTok": 0 },
+    "maxOutputTokens": null, "effortLevels": [], "defaultEffort": null,
+    "languageLabel": "Modele bağlı", "supportsWebSearch": false, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "Model adı istekte verilir: local-openai:<model> (ör. local-openai:qwen3:8b). Kök adres Ayarlar → API anahtarları → Yerel LLM satırından. Ücretsiz."
+  },
+  {
     "key": "glm-5.3", "platform": "zai", "providerModelId": "glm-5.3", "displayName": "GLM-5.3",
     "capability": "Text", "runsOn": "Server",
     "pricing": { "inputPerMTok": 1.40, "outputPerMTok": 4.40 },

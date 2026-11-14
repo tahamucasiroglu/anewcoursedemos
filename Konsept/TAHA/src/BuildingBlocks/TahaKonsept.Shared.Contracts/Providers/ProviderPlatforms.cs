@@ -42,6 +42,9 @@ public static class ProviderPlatforms
     /// <summary>Replicate (online görsel).</summary>
     public const string Replicate = "replicate";
 
+    /// <summary>Yerel LLM sunucusu, OpenAI uyumlu (Ollama / LM Studio / llama.cpp server); kök adres kullanıcıdan, anahtar isteğe bağlı.</summary>
+    public const string LocalOpenAi = "local-openai";
+
     /// <summary>Masaüstü ajanında çalışan yerel TTS/görsel modelleri (anahtar gerekmez).</summary>
     public const string Local = "local";
 
@@ -51,6 +54,6 @@ public static class ProviderPlatforms
     /// <summary>Anahtar tutulabilen tüm online platformlar (Ayarlar sırası).</summary>
     public static IReadOnlyList<string> Online { get; } =
     [
-        Anthropic, OpenAi, OpenRouter, Zai, Moonshot, Google, ElevenLabs, AzureSpeech, Cartesia, Fal, Bfl, Replicate,
+        Anthropic, OpenAi, OpenRouter, Zai, Moonshot, Google, ElevenLabs, AzureSpeech, Cartesia, Fal, Bfl, Replicate, LocalOpenAi,
     ];
 }

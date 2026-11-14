@@ -271,6 +271,11 @@ namespace TahaKonsept.Modules.Providers.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(40)")
                         .HasColumnName("platform");
 
+                    b.Property<string>("ProtectedBaseUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("protected_base_url");
+
                     b.Property<string>("ProtectedKey")
                         .IsRequired()
                         .HasMaxLength(2048)

@@ -126,3 +126,6 @@
     .tk-produced-player { border-left: 0; border-top: 2px dashed var(--tk-border-strong); }
     .kv-qactions .tk-mini-btn { width: 30px; height: 30px; }
 }
+
+/* Geçiş modeli (Yerel LLM / OpenRouter) model adı kutusu */
+.kv-pt-input { margin-top: 8px; max-width: 360px; }

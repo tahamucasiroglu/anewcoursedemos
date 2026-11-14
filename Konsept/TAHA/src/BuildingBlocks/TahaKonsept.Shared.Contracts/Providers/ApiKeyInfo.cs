@@ -18,6 +18,15 @@ public sealed record ApiKeyInfo
     /// <summary>Bölge alanı gerekiyor mu (Azure Speech).</summary>
     public bool RequiresRegion { get; init; }
 
+    /// <summary>Kök adres (Base URL) alanı gerekiyor mu (Yerel LLM).</summary>
+    public bool RequiresBaseUrl { get; init; }
+
+    /// <summary>Anahtar isteğe bağlı mı (Yerel LLM: çoğu yerel sunucu anahtar istemez).</summary>
+    public bool KeyOptional { get; init; }
+
+    /// <summary>Kayıtlı kök adres (Yerel LLM, ör. <c>http://localhost:11434/v1</c>; kayıtlı değilse null).</summary>
+    public string? BaseUrl { get; init; }
+
     /// <summary>Anahtar kayıtlı mı.</summary>
     public bool Configured { get; init; }
 

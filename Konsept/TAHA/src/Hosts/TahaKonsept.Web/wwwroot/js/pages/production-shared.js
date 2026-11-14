@@ -43,6 +43,8 @@
     /* ---------------- Küçük yardımcılar ---------------- */
     function str(v) { return v === null || v === undefined ? '' : String(v); }
     function lower(v) { return str(v).toLowerCase(); }
+    /** Model kimliği kullanıcıdan gelen geçiş kayıtları → kutu ipucu. */
+    var PASSTHROUGH = { 'openrouter': 'OpenRouter model kimliği (ör. anthropic/claude-sonnet-5.5)', 'local-openai': 'Yerel model adı (ör. qwen3:8b)' };
     function isSameId(a, b) { return lower(a) === lower(b) && str(a) !== ''; }
 
     /** Enum değerini metne çevirir (API metin gönderir; sayı gelirse sıradan bulur). */
@@ -90,7 +92,17 @@
         return list;
     }
 
+    /** Geçiş kaydı tabanı (openrouter / local-openai) — anahtar "taban:kimlik" biçimindeyse taban, değilse null. */
+    function passthroughOf(key) {
+        var k = str(key);
+        var hit = null;
+        $.each(PASSTHROUGH, function (base) { if (k.indexOf(base + ':') === 0 && k.length > base.length + 1) { hit = base; } });
+        return hit;
+    }
+
     function findModel(models, key) {
+        var base = passthroughOf(key);
+        if (base) { key = base; }
         var list = (models || []).concat(FALLBACK_ENGINES);
         for (var i = 0; i < list.length; i++) { if (isSameId(list[i].key, key)) { return list[i]; } }
         return null;
@@ -99,6 +111,8 @@
     function modelName(models, key, fallback) {
         if (!key) { return fallback || 'Seçilmedi'; }
         var m = findModel(models, key);
+        var base = passthroughOf(key);
+        if (m && base) { return (m.displayName || m.key).replace(' (geçiş)', '') + ': ' + str(key).slice(base.length + 1); }
         return m ? (m.displayName || m.key) : key;
     }
 
@@ -197,7 +211,8 @@
         var u = U();
         var $el = $('<div></div>');
         var list = modelsOf(ctx.models, 'Text');
-        $el.html(radioList('code', list, s.codeModelKey, ctx.agentVramMb) +
+        var ptBase = passthroughOf(s.codeModelKey);
+        $el.html(radioList('code', list, ptBase || s.codeModelKey, ctx.agentVramMb) +
             '<div class="tk-field" style="margin-top:14px"><label for="kv-effort">Efor (yüksek efor = daha iyi kod, daha çok token)</label>' +
             '<select class="tk-select" id="kv-effort" name="effort"></select></div>');
         function fillEfforts() {
@@ -212,12 +227,32 @@
                 return '<option value="' + e[0] + '"' + (e[0] === current ? ' selected' : '') + '>' + u.escape(e[1]) + '</option>';
             }).join(''));
         }
+        /* Geçiş kayıtlarına (Yerel LLM / OpenRouter) model adı kutusu: seçiliyken görünür. */
+        $el.find('input[name=code]').each(function () {
+            var base = $(this).val();
+            if (!PASSTHROUGH[base]) { return; }
+            $(this).closest('.tk-list-item').find('.tk-list-main').append('<input type="text" class="tk-input kv-pt-input" data-pt="' + u.escape(base) + '" maxlength="190" spellcheck="false" autocomplete="off" placeholder="' +
+                u.escape(PASSTHROUGH[base]) + '" aria-label="Model adı" value="' + u.escape(ptBase === base ? str(s.codeModelKey).slice(base.length + 1) : '') + '" />');
+        });
+        function togglePt() {
+            var checked = $el.find('input[name=code]:checked').val();
+            $el.find('[data-pt]').each(function () { $(this).prop('hidden', $(this).attr('data-pt') !== checked); });
+        }
+        $el.on('click', '[data-pt]', function (e) { e.stopPropagation(); });
         bindRadioHighlight($el);
-        $el.on('change', 'input[name=code]', fillEfforts);
+        $el.on('change', 'input[name=code]', function () { fillEfforts(); togglePt(); });
         fillEfforts();
+        togglePt();
         return {
             $el: $el,
-            read: function () { return { codeModelKey: $el.find('input[name=code]:checked').val() || s.codeModelKey, codeEffort: $el.find('[name=effort]').val() || null }; }
+            read: function () {
+                var v = $el.find('input[name=code]:checked').val();
+                if (v && PASSTHROUGH[v]) {
+                    var id = $.trim($el.find('[data-pt="' + v + '"]').val());
+                    v = id ? v + ':' + id : null;
+                }
+                return { codeModelKey: v || s.codeModelKey, codeEffort: $el.find('[name=effort]').val() || null };
+            }
         };
     }
 

@@ -11,7 +11,7 @@ namespace TahaKonsept.Modules.Providers.Infrastructure.KeyTesting.Concrete;
 /// <summary>
 /// Platform başına ücretsiz doğrulama çağrıları: Anthropic model listesi (resmi SDK), OpenAI / Moonshot / Z.ai <c>GET models</c>,
 /// OpenRouter <c>GET key</c>, ElevenLabs <c>GET user</c>, Gemini <c>GET models</c>, Azure Speech <c>issueToken</c>,
-/// Cartesia <c>GET voices</c>, fal <c>GET models</c>, BFL <c>GET credits</c>, Replicate <c>GET account</c>.
+/// Cartesia <c>GET voices</c>, fal <c>GET models</c>, BFL <c>GET credits</c>, Replicate <c>GET account</c>, Yerel LLM <c>GET {kök}/models</c>.
 /// </summary>
 public sealed class HttpApiKeyTester : ApiKeyTesterBase
 {
@@ -61,6 +61,7 @@ public sealed class HttpApiKeyTester : ApiKeyTesterBase
             ProviderPlatforms.Fal => FalRequest(key),
             ProviderPlatforms.Bfl => WithHeader(HttpMethod.Get, "https://api.bfl.ai/v1/credits", "x-key", key),
             ProviderPlatforms.AzureSpeech => AzureRequest(key, credential.Region),
+            ProviderPlatforms.LocalOpenAi => LocalOpenAiRequest(credential.BaseUrl, key),
             _ => null,
         };
     }
@@ -103,6 +104,20 @@ public sealed class HttpApiKeyTester : ApiKeyTesterBase
         var request = new HttpRequestMessage(HttpMethod.Get, "https://api.fal.ai/v1/models?limit=1");
         request.Headers.Authorization = new AuthenticationHeaderValue("Key", key);
         return request;
+    }
+
+    /// <summary>Yerel LLM isteği: <c>GET {kök}/models</c>; anahtar varsa Bearer (kök adres yoksa null).</summary>
+    /// <param name="baseUrl">Kök adres.</param>
+    /// <param name="key">Anahtar (boş olabilir).</param>
+    private static HttpRequestMessage? LocalOpenAiRequest(string? baseUrl, string key)
+    {
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return null;
+        }
+
+        var url = baseUrl.TrimEnd('/') + "/models";
+        return string.IsNullOrEmpty(key) ? new HttpRequestMessage(HttpMethod.Get, url) : Bearer(url, key);
     }
 
     /// <summary>Azure Speech jeton isteği (bölge gerekir).</summary>

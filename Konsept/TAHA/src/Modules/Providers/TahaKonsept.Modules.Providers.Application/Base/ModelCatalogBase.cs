@@ -5,12 +5,22 @@ using TahaKonsept.Shared.Contracts.Providers;
 namespace TahaKonsept.Modules.Providers.Application.Base;
 
 /// <summary>
-/// Katalog sorgu davranışı (bulma, süzme, OpenRouter geçiş kimliği). Somut sınıf yalnızca kayıtları yükler (<see cref="All"/>).
+/// Katalog sorgu davranışı (bulma, süzme, geçiş kimlikleri: <c>openrouter:&lt;id&gt;</c> ve <c>local-openai:&lt;model&gt;</c>). Somut sınıf yalnızca kayıtları yükler (<see cref="All"/>).
 /// </summary>
 public abstract class ModelCatalogBase : IModelCatalog
 {
     /// <summary>OpenRouter geçiş kimliği öneki (<c>openrouter:&lt;sağlayıcı/model&gt;</c>).</summary>
     public const string OpenRouterPrefix = "openrouter:";
+
+    /// <summary>Yerel LLM (OpenAI uyumlu) geçiş kimliği öneki (<c>local-openai:&lt;model adı&gt;</c>, ör. <c>local-openai:qwen3:8b</c>).</summary>
+    public const string LocalOpenAiPrefix = "local-openai:";
+
+    /// <summary>Geçiş öneki → katalogdaki geçiş kaydının platformu.</summary>
+    private static readonly (string Prefix, string Platform)[] Passthroughs =
+    [
+        (OpenRouterPrefix, ProviderPlatforms.OpenRouter),
+        (LocalOpenAiPrefix, ProviderPlatforms.LocalOpenAi),
+    ];
 
     /// <inheritdoc />
     public abstract IReadOnlyList<ModelInfo> All { get; }
@@ -24,12 +34,16 @@ public abstract class ModelCatalogBase : IModelCatalog
         }
 
         var key = modelKey.Trim();
-        if (key.StartsWith(OpenRouterPrefix, StringComparison.OrdinalIgnoreCase) && key.Length > OpenRouterPrefix.Length)
+        foreach (var (prefix, platform) in Passthroughs)
         {
-            var passthrough = All.FirstOrDefault(m => m.Platform == ProviderPlatforms.OpenRouter);
-            return passthrough is null
-                ? null
-                : passthrough with { Key = OpenRouterPrefix + key[OpenRouterPrefix.Length..], ProviderModelId = key[OpenRouterPrefix.Length..] };
+            if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && key.Length > prefix.Length)
+            {
+                var id = key[prefix.Length..].Trim();
+                var passthrough = All.FirstOrDefault(m => m.Platform == platform && string.IsNullOrEmpty(m.ProviderModelId));
+                return passthrough is null || id.Length == 0
+                    ? null
+                    : passthrough with { Key = prefix + id, ProviderModelId = id };
+            }
         }
 
         return All.FirstOrDefault(m => string.Equals(m.Key, key, StringComparison.OrdinalIgnoreCase));

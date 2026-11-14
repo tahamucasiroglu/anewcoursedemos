@@ -11,7 +11,7 @@ using TahaKonsept.Shared.Contracts.Providers;
 namespace TahaKonsept.Modules.Providers.Infrastructure.TextModels.Base;
 
 /// <summary>
-/// OpenAI Chat Completions uyumlu sağlayıcıların ortak tabanı (OpenAI, OpenRouter, GLM, Kimi). <c>POST {BaseUri}chat/completions</c>,
+/// OpenAI Chat Completions uyumlu sağlayıcıların ortak tabanı (OpenAI, OpenRouter, GLM, Kimi, Yerel LLM). <c>POST {BaseUri}chat/completions</c>,
 /// Bearer anahtar, <c>response_format</c> (json_schema strict ya da json_object + şema talimatı), <c>reasoning_effort</c>,
 /// akışta SSE (<c>stream_options.include_usage</c>) ve <c>usage</c> → <see cref="CallUsage"/> (önbellek token'ları ayrılır,
 /// <c>usage.cost</c> varsa sağlayıcı maliyeti). Platform farkları sanal üyelerle (<see cref="ApplyEffort"/>, <see cref="ApplyWebSearch"/>…).
@@ -50,7 +50,7 @@ public abstract class OpenAiCompatibleTextModelBase : TextModelBase
         {
             Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"),
         };
-        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Credential.ApiKey);
+        ApplyAuthorization(message);
         if (request.Stream)
         {
             message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -76,6 +76,14 @@ public abstract class OpenAiCompatibleTextModelBase : TextModelBase
         {
             return Error.Failure(ProviderErrorCodes.BadRequest, $"{PlatformDisplayName} yanıtı çözülemedi: {ex.Message}");
         }
+    }
+
+    /// <summary>Yetki başlığını ekler (varsayılan <c>Authorization: Bearer &lt;anahtar&gt;</c>).</summary>
+    /// <param name="message">İstek.</param>
+    protected virtual void ApplyAuthorization(HttpRequestMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Credential.ApiKey);
     }
 
     /// <summary>İstek gövdesini kurar.</summary>

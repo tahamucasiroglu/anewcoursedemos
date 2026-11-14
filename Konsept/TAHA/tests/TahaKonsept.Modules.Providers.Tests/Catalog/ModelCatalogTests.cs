@@ -54,7 +54,7 @@ public sealed class ModelCatalogTests
     public void Text_models_have_prices()
     {
         var text = TestFixtures.Catalog.All.Where(m => m.Capability == ModelCapability.Text).ToList();
-        text.Count.ShouldBe(9);
+        text.Count.ShouldBe(10);
         foreach (var model in text.Where(m => m.Platform != ProviderPlatforms.OpenRouter))
         {
             model.Pricing.InputPerMTok.ShouldNotBeNull(model.Key);

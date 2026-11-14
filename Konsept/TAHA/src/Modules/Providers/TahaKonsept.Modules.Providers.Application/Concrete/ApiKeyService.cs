@@ -65,25 +65,39 @@ public sealed class ApiKeyService : ProvidersServiceBase, IApiKeyService
             return Error.Validation(ProviderErrorCodes.UnknownPlatform, $"Bilinmeyen platform: {request.Platform}");
         }
 
-        var apiKey = request.ApiKey.Trim();
+        var apiKey = (request.ApiKey ?? string.Empty).Trim();
         var region = descriptor.RequiresRegion ? request.Region?.Trim().ToLowerInvariant() : null;
         if (descriptor.RequiresRegion && string.IsNullOrWhiteSpace(region))
         {
             return Error.Validation(ProviderErrorCodes.InvalidRequest, $"{descriptor.DisplayName} için bölge gerekli (ör. westeurope).");
         }
 
+        var baseUrl = descriptor.RequiresBaseUrl ? BaseUrlNormalizer.Normalize(request.BaseUrl) : null;
+        if (descriptor.RequiresBaseUrl && baseUrl is null)
+        {
+            return Error.Validation(ProviderErrorCodes.InvalidRequest, $"{descriptor.DisplayName} için geçerli bir kök adres gerekli (ör. http://localhost:11434/v1).");
+        }
+
+        if (apiKey.Length == 0 && !descriptor.KeyOptional)
+        {
+            return Error.Validation(ProviderErrorCodes.InvalidRequest, "Anahtar gerekli.");
+        }
+
         var userId = _currentUser.GetRequiredUserId();
-        var protectedKey = _protector.Protect(apiKey);
-        var last4 = apiKey.Length <= 4 ? apiKey : apiKey[^4..];
         var entity = await _keys.FindAsync(userId, descriptor.Platform, ct);
+
+        // Anahtarı isteğe bağlı platformda boş anahtar = kayıtlı anahtarı koru (yalnız kök adres değişiyor).
+        var protectedKey = apiKey.Length == 0 && entity is not null ? entity.ProtectedKey : _protector.Protect(apiKey);
+        var last4 = apiKey.Length == 0 && entity is not null ? entity.Last4 : (apiKey.Length <= 4 ? apiKey : apiKey[^4..]);
+        var protectedBaseUrl = baseUrl is null ? null : _protector.Protect(baseUrl);
         if (entity is null)
         {
-            entity = ProviderApiKey.Create(userId, descriptor.Platform, protectedKey, last4, region);
+            entity = ProviderApiKey.Create(userId, descriptor.Platform, protectedKey, last4, region, protectedBaseUrl);
             await _keys.AddAsync(entity, ct);
         }
         else
         {
-            entity.Replace(protectedKey, last4, region);
+            entity.Replace(protectedKey, last4, region, protectedBaseUrl);
         }
 
         await _keys.UnitOfWork.SaveChangesAsync(ct);
@@ -134,14 +148,17 @@ public sealed class ApiKeyService : ProvidersServiceBase, IApiKeyService
     /// <summary>Satır DTO'su oluşturur.</summary>
     /// <param name="descriptor">Platform tanımı.</param>
     /// <param name="entity">Kayıt (yoksa null).</param>
-    private static ApiKeyInfo ToInfo(PlatformDescriptor descriptor, ProviderApiKey? entity) => new()
+    private ApiKeyInfo ToInfo(PlatformDescriptor descriptor, ProviderApiKey? entity) => new()
     {
         Platform = descriptor.Platform,
         DisplayName = descriptor.DisplayName,
         Description = descriptor.Description,
         RequiresRegion = descriptor.RequiresRegion,
+        RequiresBaseUrl = descriptor.RequiresBaseUrl,
+        KeyOptional = descriptor.KeyOptional,
+        BaseUrl = entity?.ProtectedBaseUrl is { } pb && _protector.TryUnprotect(pb, out var plainBase) ? plainBase : null,
         Configured = entity is not null,
-        Last4 = entity?.Last4,
+        Last4 = string.IsNullOrEmpty(entity?.Last4) ? null : entity.Last4,
         Region = entity?.Region,
         UpdatedAtUtc = entity?.UpdatedAtUtc,
         LastTestSucceeded = entity?.LastTestSucceeded,

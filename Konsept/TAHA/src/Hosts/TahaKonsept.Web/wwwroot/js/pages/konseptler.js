@@ -29,8 +29,24 @@
     function words(text) { var m = String(text || '').match(/[^\s]+/g); return m ? m.length : 0; }
     function secs(text) { return Math.max(0, Math.round(words(text) / WPS * 10) / 10); }
     function fmtSec(s) { s = Math.round(s || 0); return s >= 60 ? Math.floor(s / 60) + ' dk ' + (s % 60) + ' sn' : s + ' sn'; }
-    function model(key) { return $.grep(state.models, function (m) { return m.key === key; })[0] || null; }
-    function modelName(key) { var m = model(key); return m ? m.displayName : (key || 'Seçilmedi'); }
+    /* Geçiş kayıtları: model kimliği kullanıcıdan (openrouter:<id>, local-openai:<model adı>). */
+    var PASSTHROUGH = { 'openrouter': 'OpenRouter model kimliği yaz…', 'local-openai': 'Yerel model adı yaz… (Yerel LLM)' };
+    var PT_PLACEHOLDER = { 'openrouter': 'ör. anthropic/claude-sonnet-5.5', 'local-openai': 'Yerel model adı (ör. qwen3:8b)' };
+    function passthroughOf(key) {
+        var hit = null;
+        $.each(PASSTHROUGH, function (base) { if (key && key.indexOf(base + ':') === 0 && key.length > base.length + 1) { hit = base; } });
+        return hit;
+    }
+    function model(key) {
+        var base = passthroughOf(key);
+        return $.grep(state.models, function (m) { return m.key === (base || key); })[0] || null;
+    }
+    function modelName(key) {
+        var m = model(key);
+        var base = passthroughOf(key);
+        if (m && base) { return m.displayName + ': ' + key.slice(base.length + 1); }
+        return m ? m.displayName : (key || 'Seçilmedi');
+    }
     function enc(id) { return encodeURIComponent(id); }
 
     /* ================================================================ Ayarlar + modeller */
@@ -67,6 +83,7 @@
         if (!m || !m.pricing) { return ''; }
         var p = m.pricing;
         if (p.inputPerMTok === null || p.inputPerMTok === undefined) { return p.providerReportsCost ? 'Fiyat sağlayıcıdan' : ''; }
+        if (Number(p.inputPerMTok) === 0 && Number(p.outputPerMTok) === 0) { return 'Ücretsiz (yerel)'; }
         return '1M token: $' + p.inputPerMTok + ' giriş / $' + p.outputPerMTok + ' çıkış' + (m.supportsWebSearch ? ' · web araması' : '');
     }
 
@@ -78,7 +95,10 @@
         $.each(groups, function (platform, list) {
             html += '<optgroup label="' + U.escape(platform) + '">';
             $.each(list, function (_, m) {
-                if (m.key === 'openrouter') { return; }
+                if (PASSTHROUGH[m.key]) {
+                    html += '<option value="__pt:' + U.escape(m.key) + '"' + (passthroughOf(selected) === m.key ? ' selected' : '') + '>' + U.escape(PASSTHROUGH[m.key]) + '</option>';
+                    return;
+                }
                 html += '<option value="' + U.escape(m.key) + '"' + (m.key === selected ? ' selected' : '') + '>' +
                     U.escape(m.displayName + (m.languageLabel ? ' (' + m.languageLabel + ')' : '')) + '</option>';
             });
@@ -86,6 +106,23 @@
         });
         if (selected && !model(selected)) { html = '<option value="' + U.escape(selected) + '" selected>' + U.escape(selected) + '</option>' + html; }
         return html;
+    }
+
+    /** Geçiş seçeneği için model adı kutusu (seçili değilse gizli). */
+    function passthroughInput(name, selected) {
+        var base = passthroughOf(selected);
+        return '<input type="text" class="tk-input kp-pt-input" data-pt-for="' + name + '" maxlength="190" spellcheck="false" autocomplete="off"' +
+            ' value="' + U.escape(base ? selected.slice(base.length + 1) : '') + '"' + (base ? '' : ' hidden') + ' aria-label="Model adı" />';
+    }
+
+    /** Seçimi okur: geçiş seçeneğinde önek + yazılan ad (boşsa önceki değer). */
+    function readModel($body, name, fallback) {
+        var v = $body.find('[name=' + name + ']').val();
+        if (v && v.indexOf('__pt:') === 0) {
+            var id = $.trim($body.find('[data-pt-for=' + name + ']').val());
+            return id ? v.slice(5) + ':' + id : fallback;
+        }
+        return v || fallback;
     }
 
     function effortOptions(modelKey, selected) {
@@ -104,18 +141,26 @@
             '<div>' +
             '<div class="tk-field"><label for="km-concept">Konsept üretimi</label><div class="kp-model-row">' +
             '<select class="tk-select" id="km-concept" name="conceptModelKey">' + modelOptions(s.conceptModelKey) + '</select>' +
-            '<select class="tk-select" name="conceptEffort" title="Efor (düşünme derinliği)"></select></div>' +
+            '<select class="tk-select" name="conceptEffort" title="Efor (düşünme derinliği)"></select></div>' + passthroughInput('conceptModelKey', s.conceptModelKey) +
             '<span class="tk-hint">Tam konsepti (sahneler, ekran metni, seslendirme, görsel istemi) yazan model. <span class="kp-model-price" data-price="conceptModelKey"></span></span></div>' +
-            '<div class="tk-field"><label for="km-topic">Konu önerisi</label><select class="tk-select" id="km-topic" name="topicModelKey">' + modelOptions(s.topicModelKey) + '</select>' +
+            '<div class="tk-field"><label for="km-topic">Konu önerisi</label><select class="tk-select" id="km-topic" name="topicModelKey">' + modelOptions(s.topicModelKey) + '</select>' + passthroughInput('topicModelKey', s.topicModelKey) +
             '<span class="tk-hint">Yalnız başlık önerir; ucuz ve hızlı bir model yeterli. <span class="kp-model-price" data-price="topicModelKey"></span></span></div>' +
-            '<div class="tk-field"><label for="km-word">Kelime tekrar denetimi</label><select class="tk-select" id="km-word" name="wordCheckModelKey">' + modelOptions(s.wordCheckModelKey) + '</select>' +
+            '<div class="tk-field"><label for="km-word">Kelime tekrar denetimi</label><select class="tk-select" id="km-word" name="wordCheckModelKey">' + modelOptions(s.wordCheckModelKey) + '</select>' + passthroughInput('wordCheckModelKey', s.wordCheckModelKey) +
             '<span class="tk-hint">Önce ücretsiz yerel analiz; yalnız tekrar bulunursa ilgili sahneler bu modelle yeniden yazılır. <span class="kp-model-price" data-price="wordCheckModelKey"></span></span></div>' +
             '</div>');
         function refresh() {
             var key = $b.find('[name=conceptModelKey]').val();
             var current = $b.find('[name=conceptEffort]').val() || s.conceptEffort;
             $b.find('[name=conceptEffort]').html(effortOptions(key, current));
-            $b.find('[data-price]').each(function () { $(this).text(priceText(model($b.find('[name=' + $(this).attr('data-price') + ']').val()))); });
+            $b.find('[data-pt-for]').each(function () {
+                var v = $b.find('[name=' + $(this).attr('data-pt-for') + ']').val() || '';
+                var on = v.indexOf('__pt:') === 0;
+                $(this).prop('hidden', !on).attr('placeholder', on ? PT_PLACEHOLDER[v.slice(5)] || 'Model adı' : '');
+            });
+            $b.find('[data-price]').each(function () {
+                var v = $b.find('[name=' + $(this).attr('data-price') + ']').val() || '';
+                $(this).text(priceText(model(v.indexOf('__pt:') === 0 ? v.slice(5) : v)));
+            });
         }
         $b.on('change', 'select', refresh);
         refresh();
@@ -123,10 +168,10 @@
             title: 'Modeller', body: $b, hint: 'Pencereyi kapatınca kaydedilir.',
             onClose: function ($body) {
                 return saveSettings({
-                    conceptModelKey: $body.find('[name=conceptModelKey]').val() || s.conceptModelKey,
+                    conceptModelKey: readModel($body, 'conceptModelKey', s.conceptModelKey),
                     conceptEffort: $body.find('[name=conceptEffort]').val() || null,
-                    topicModelKey: $body.find('[name=topicModelKey]').val() || s.topicModelKey,
-                    wordCheckModelKey: $body.find('[name=wordCheckModelKey]').val() || s.wordCheckModelKey
+                    topicModelKey: readModel($body, 'topicModelKey', s.topicModelKey),
+                    wordCheckModelKey: readModel($body, 'wordCheckModelKey', s.wordCheckModelKey)
                 });
             }
         });

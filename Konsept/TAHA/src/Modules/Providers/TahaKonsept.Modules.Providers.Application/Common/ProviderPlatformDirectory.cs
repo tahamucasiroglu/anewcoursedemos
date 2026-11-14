@@ -24,6 +24,13 @@ public static class ProviderPlatformDirectory
         new(ProviderPlatforms.Fal, "fal.ai", "Online görsel (Z-Image Turbo, FLUX.2 Flash)", false),
         new(ProviderPlatforms.Bfl, "Black Forest Labs", "FLUX.3 Klein görsel", false),
         new(ProviderPlatforms.Replicate, "Replicate", "Online görsel (FLUX schnell)", false),
+        new(
+            ProviderPlatforms.LocalOpenAi,
+            "Yerel LLM (OpenAI uyumlu)",
+            "Ollama / LM Studio / llama.cpp server; kök adres gerekir (ör. http://localhost:11434/v1), anahtar isteğe bağlı. Model: local-openai:<model adı>",
+            false,
+            RequiresBaseUrl: true,
+            KeyOptional: true),
     ];
 
     /// <summary>Platformu bulur (büyük/küçük harf duyarsız).</summary>

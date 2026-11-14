@@ -2,7 +2,8 @@
  * TK.settingsProviders — Ayarlar sayfasının sağlayıcı bölümleri: API anahtarları (sunucudan gelen platform listesi; kaydet,
  * değiştir, sil, test et; yalnızca son 4 hane; Azure Speech için bölge alanı) ve bütçe limiti (aylık limit, uyarı eşiği,
  * aşınca yeni üretimi durdur) + bu ayın harcaması (platform kırılımı). MVC uçları: /Ayarlar/{ApiAnahtarlari, ApiAnahtari,
- * ApiAnahtariSil/{platform}, ApiAnahtariTest/{platform}, Butce}, /Harcama/Aylik. Tek modül (IIFE).
+ * ApiAnahtariSil/{platform}, ApiAnahtariTest/{platform}, Butce}. Yerel LLM satırında kök adres
+ * alanı (zorunlu) ve isteğe bağlı anahtar vardır, /Harcama/Aylik. Tek modül (IIFE).
  */
 (function (window, $) {
     'use strict';
@@ -22,7 +23,8 @@
         { platform: 'cartesia', displayName: 'Cartesia', description: 'Online ses' },
         { platform: 'fal', displayName: 'fal.ai', description: 'Online görsel' },
         { platform: 'bfl', displayName: 'Black Forest Labs', description: 'FLUX görsel' },
-        { platform: 'replicate', displayName: 'Replicate', description: 'Online görsel' }
+        { platform: 'replicate', displayName: 'Replicate', description: 'Online görsel' },
+        { platform: 'local-openai', displayName: 'Yerel LLM (OpenAI uyumlu)', description: 'Ollama / LM Studio / llama.cpp server', requiresBaseUrl: true, keyOptional: true }
     ];
 
     var names = {};
@@ -30,10 +32,11 @@
     /* ---------------- API anahtarları ---------------- */
     function statusBadge(k) {
         if (!k.configured) { return '<span class="tk-badge">Yok</span>'; }
-        var html = '<span class="tk-badge is-success">' + U.icon('check', 'tk-ic-sm') + ' ••••' + U.escape(k.last4 || '') + '</span>';
+        var html = '<span class="tk-badge is-success">' + U.icon('check', 'tk-ic-sm') + (k.last4 ? ' ••••' + U.escape(k.last4) : ' Kayıtlı') + '</span>';
         if (k.lastTestSucceeded === true) { html += ' <span class="tk-badge is-success" title="' + U.escape(U.dateTime(k.lastTestedAtUtc)) + '">Test: geçerli</span>'; }
         if (k.lastTestSucceeded === false) { html += ' <span class="tk-badge is-danger" title="' + U.escape(U.dateTime(k.lastTestedAtUtc)) + '">Test: başarısız</span>'; }
         if (k.region) { html += '<div class="tk-hint">Bölge: ' + U.escape(k.region) + '</div>'; }
+        if (k.baseUrl) { html += '<div class="tk-hint" title="Kök adres">' + U.escape(k.baseUrl) + '</div>'; }
         return html;
     }
 
@@ -44,8 +47,10 @@
             names[k.platform] = k.displayName || k.platform;
             html += '<tr data-platform="' + U.escape(k.platform) + '"><td><strong>' + U.escape(k.displayName || k.platform) + '</strong><div class="tk-hint">' + U.escape(k.description || '') + '</div></td>' +
                 '<td>' + statusBadge(k) + '</td>' +
-                '<td><div class="tk-row"><input type="password" class="tk-input tk-grow" data-field="key" autocomplete="off" spellcheck="false" placeholder="' +
-                (k.configured ? 'Değiştirmek için yeni anahtar' : 'Anahtarı yapıştırın') + '" aria-label="' + U.escape(k.displayName) + ' anahtarı" />' +
+                '<td><div class="tk-row tk-wrap">' +
+                (k.requiresBaseUrl ? '<input type="url" class="tk-input tk-grow" data-field="baseUrl" maxlength="300" spellcheck="false" placeholder="Kök adres (http://localhost:11434/v1)" value="' + U.escape(k.baseUrl || '') + '" aria-label="Kök adres (Base URL)" />' : '') +
+                '<input type="password" class="tk-input tk-grow" data-field="key" autocomplete="off" spellcheck="false" placeholder="' +
+                (k.keyOptional ? (k.configured && k.last4 ? 'Anahtar kayıtlı (boş = koru)' : 'Anahtar (isteğe bağlı)') : (k.configured ? 'Değiştirmek için yeni anahtar' : 'Anahtarı yapıştırın')) + '" aria-label="' + U.escape(k.displayName) + ' anahtarı" />' +
                 (k.requiresRegion ? '<input type="text" class="tk-input" data-field="region" style="width:140px" maxlength="40" placeholder="Bölge (westeurope)" value="' + U.escape(k.region || '') + '" aria-label="Bölge" />' : '') +
                 '</div></td>' +
                 '<td style="text-align:right;white-space:nowrap"><button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="save">Kaydet</button>' +
@@ -64,9 +69,19 @@
 
     function saveKey($btn, $tr, platform) {
         var key = $.trim($tr.find('[data-field=key]').val());
-        if (key.length < 8 || /\s/.test(key)) { TK.toast.warning('Geçerli bir anahtar girin (en az 8 karakter, boşluksuz).'); $tr.find('[data-field=key]').trigger('focus'); return; }
+        var $base = $tr.find('[data-field=baseUrl]');
+        var optional = !!$base.length;
+        if (optional ? /\s/.test(key) : (key.length < 8 || /\s/.test(key))) {
+            TK.toast.warning(optional ? 'Anahtar boşluk içeremez.' : 'Geçerli bir anahtar girin (en az 8 karakter, boşluksuz).');
+            $tr.find('[data-field=key]').trigger('focus');
+            return;
+        }
         var $region = $tr.find('[data-field=region]');
         var body = { platform: platform, apiKey: key };
+        if (optional) {
+            body.baseUrl = $.trim($base.val());
+            if (!/^https?:\/\/\S+$/i.test(body.baseUrl)) { TK.toast.warning('Kök adres gerekli (ör. http://localhost:11434/v1).'); $base.trigger('focus'); return; }
+        }
         if ($region.length) {
             body.region = $.trim($region.val());
             if (!body.region) { TK.toast.warning('Bölge gerekli (ör. westeurope).'); $region.trigger('focus'); return; }
