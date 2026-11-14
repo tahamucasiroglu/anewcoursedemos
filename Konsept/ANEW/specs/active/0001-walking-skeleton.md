@@ -76,7 +76,7 @@ video üretimi, kurulum ekranı, admin paneli — hepsi aşağıdaki yol haritas
 - [ ] AC-1 — Ana sayfa açıldığında üst bar Requirements 1'deki tüm öğeleri tasarımdaki sırayla gösterir; sayfa bağlantılarının her biri kendi sayfasını açar ve o sayfa boş durum metnini gösterir; Yayınlama "Çok yakında sizlerleyiz" gösterir.
 - [ ] AC-2 — Tema düğmesi açık↔koyu geçiş yapar; sayfa yenilendiğinde son seçim korunur; hiç seçim yoksa açık mod gelir; renkler yalnızca tema değişkenlerinden gelir (K-7).
 - [ ] AC-3 — Pasif kontroller (profil seçimi, kalem, artı, hata bildir, ayarlar) tıklanınca hiçbir eylem yapmaz ve "Yakında" ipucu verir; tüm kontroller klavyeyle erişilebilir ve erişilebilir ada sahiptir.
-- [ ] AC-4 — Durum alanı versiyonu `0.1.0` olarak ve API/DB/ajan durumlarını gösterir; API kapalıyken "API erişilemiyor", DB kapalıyken "DB erişilemiyor" hata durumu görünür; tüm istekler Web controller'ı üzerinden `$.ajax` ile gider (`fetch` yok, K-6).
+- [ ] AC-4 — Durum alanı tek ürün versiyonunu (bu spec'te `0.1.0`; sabit metin değil, ürünün versiyon kaynağından okunur) ve API/DB/ajan durumlarını gösterir; API kapalıyken "API erişilemiyor", DB kapalıyken "DB erişilemiyor" hata durumu görünür; tüm istekler Web controller'ı üzerinden `$.ajax` ile gider (`fetch` yok, K-6).
 - [ ] AC-5 — Ajan başlatılınca tray'de durur; "Siteye git" siteyi varsayılan tarayıcıda açar; "Çıkış" uygulamayı kapatır; pencere kapatmak uygulamayı kapatmaz.
 - [ ] AC-6 — Ajan çalışırken site en geç 10 sn içinde "Ajan bağlı" gösterir; ajan kapanınca en geç 10 sn içinde "Ajan bağlı değil"e döner; API yeniden başlatılınca ajan kendiliğinden yeniden bağlanır.
 - [ ] AC-7 — "Ajanı test et": ajan bağlıyken ajanın versiyonu ve makine adı ekranda görünür; ajan bağlı değilken "Ajan bağlı değil", cevap 10 sn'de gelmezse "Zaman aşımı" hatası görünür.
@@ -94,6 +94,10 @@ Bu bölüm spec onaylanınca kaldırılır; kararlar yukarıya işlenir.
   3. AC-8 Günlük şeridi bu spec'te yalnızca son olayı gösterir; geçmiş liste 0008'de — öneri: böyle.
   4. AC-10 "mevcut Pi uygulamaları etkilenmez" kanıtı: kurulum öncesi/sonrası diğer servislerin
      `systemctl is-active` ve port listesi karşılaştırması — öneri: böyle.
+  5. Logo/ikon: ikon henüz yok (B-6, sabah üretilecek). Öneri: bu spec'te üst barda, favicon'da ve tray'de
+     yer tutucu ikon; gerçek ikon `source/`a gelince aynı yerlere konur (küçük değişiklik, trivial akış).
+  6. "Ajanı indir": geliştirici dışındaki kullanıcılar ajanı nereden edinecek? Öneri: bu spec'te yok (ajanı
+     geliştirici build'den çalıştırır); indirme bağlantısı 0009'un ilk dilimine (kurulum) alınır.
 
 ## Definition of Done
 - [ ] Every acceptance criterion mapped to proof (test or reproducible observation)
