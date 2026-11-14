@@ -1,4 +1,5 @@
 using Shouldly;
+using TahaKonsept.Modules.Agents.Domain.Errors;
 using TahaKonsept.Modules.Agents.Tests.Support;
 using TahaKonsept.Shared.Contracts.Agent.Pairing;
 using Xunit;
@@ -60,6 +61,42 @@ public sealed class DevicePairingServiceTests : IDisposable
         var again = await service.PollTokenAsync(new DeviceTokenRequest { DeviceCode = start.DeviceCode }, Ct);
         again.Error.Code.ShouldBe(DeviceTokenErrorCodes.ExpiredToken);
         _h.Tokens.Issued.Count.ShouldBe(1);
+    }
+
+    /// <summary>Onaylı isteği aynı anda iki yoklama tüketmeye çalışırsa yalnız biri token alır (ikinci aile oluşmaz).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Concurrent_polls_issue_tokens_once()
+    {
+        var service = _h.CreatePairingService();
+        var (other, otherPairings) = _h.CreateIsolatedPairingService();
+        var start = await StartAsync();
+        (await service.ApproveAsync(new DeviceApproveRequest { UserCode = start.UserCode }, Ct)).IsSuccess.ShouldBeTrue();
+        (await otherPairings.FindByDeviceCodeHashAsync(_h.Codes.HashDeviceCode(start.DeviceCode), Ct)).ShouldNotBeNull();
+
+        _h.Clock.Advance(TimeSpan.FromSeconds(6));
+        var first = await service.PollTokenAsync(new DeviceTokenRequest { DeviceCode = start.DeviceCode }, Ct);
+        var second = await other.PollTokenAsync(new DeviceTokenRequest { DeviceCode = start.DeviceCode }, Ct);
+
+        first.IsSuccess.ShouldBeTrue();
+        second.Error.Code.ShouldBe(DeviceTokenErrorCodes.ExpiredToken);
+        _h.Tokens.Issued.Count.ShouldBe(1);
+    }
+
+    /// <summary>Açık bekleyen eşleme sınırı dolunca yeni istek reddedilir (anonim uç DB'yi dolduramaz).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Open_pairing_cap_rejects_new_start()
+    {
+        _h.Options.MaxOpenPairings = 2;
+        var service = _h.CreatePairingService();
+        await StartAsync();
+        await StartAsync();
+
+        var third = await service.StartAsync(new DeviceStartRequest { MachineName = "X", AgentVersion = "0.3.0" }, Ct);
+
+        third.Error.ShouldBe(AgentErrors.TooManyOpenPairings);
+        (await _h.Pairings.CountAsync(null, Ct)).ShouldBe(2);
     }
 
     /// <summary>Aralıktan sık yoklama "slow_down" döner.</summary>

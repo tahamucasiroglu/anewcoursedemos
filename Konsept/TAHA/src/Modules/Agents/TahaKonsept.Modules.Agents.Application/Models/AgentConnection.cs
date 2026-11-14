@@ -27,6 +27,12 @@ public sealed class AgentConnection
     /// <summary>SignalR bağlantı kimliği.</summary>
     public string ConnectionId { get; }
 
+    /// <summary>Token'daki refresh ailesi (<c>tfam</c>); cihaz bu aileyle sunucu tarafında bulunur (istemcinin bildirdiği ada güvenilmez).</summary>
+    public Guid? TokenFamilyId { get; init; }
+
+    /// <summary>Token'daki istemci türü (<c>client</c> claim'i; ajan için <c>agent</c>).</summary>
+    public string? ClientType { get; init; }
+
     /// <summary>Kullanıcı kimliği.</summary>
     public Guid UserId { get; }
 

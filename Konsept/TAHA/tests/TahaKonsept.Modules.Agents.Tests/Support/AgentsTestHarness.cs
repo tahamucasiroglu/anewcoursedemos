@@ -12,13 +12,16 @@ namespace TahaKonsept.Modules.Agents.Tests.Support;
 /// </summary>
 public sealed class AgentsTestHarness : IDisposable
 {
+    private readonly DbContextOptions<AgentsDbContext> _options;
+    private readonly List<AgentsDbContext> _extraContexts = [];
+
     /// <summary>Kurar.</summary>
     public AgentsTestHarness()
     {
-        var options = new DbContextOptionsBuilder<AgentsDbContext>()
+        _options = new DbContextOptionsBuilder<AgentsDbContext>()
             .UseInMemoryDatabase("agents-" + Guid.NewGuid().ToString("N"))
             .Options;
-        Db = new AgentsDbContext(options, Clock);
+        Db = new AgentsDbContext(_options, Clock);
         Devices = new AgentDeviceRepository(Db);
         Pairings = new DevicePairingRepository(Db);
         User.UserId = UserId;
@@ -65,6 +68,16 @@ public sealed class AgentsTestHarness : IDisposable
     public DevicePairingService CreatePairingService() =>
         new(Pairings, Devices, Codes, Tokens, new StaticVerificationUrlProvider(), User, Options, Clock);
 
+    /// <summary>Aynı veritabanında ayrı DbContext'li ikinci eşleme servisi (eşzamanlı istek benzetimi).</summary>
+    /// <returns>Servis ve onun eşleme deposu.</returns>
+    public (DevicePairingService Service, DevicePairingRepository Pairings) CreateIsolatedPairingService()
+    {
+        var db = new AgentsDbContext(_options, Clock);
+        _extraContexts.Add(db);
+        var pairings = new DevicePairingRepository(db);
+        return (new(pairings, new AgentDeviceRepository(db), Codes, Tokens, new StaticVerificationUrlProvider(), User, Options, Clock), pairings);
+    }
+
     /// <summary>Hub servisi.</summary>
     /// <returns>Servis.</returns>
     public AgentHubService CreateHubService() =>
@@ -82,5 +95,13 @@ public sealed class AgentsTestHarness : IDisposable
         new(Devices, Tracker, Tokens, new AgentSessionRevoker(Devices, Tracker, Clock), User, Clock);
 
     /// <summary>Kaynakları bırakır.</summary>
-    public void Dispose() => Db.Dispose();
+    public void Dispose()
+    {
+        foreach (var extra in _extraContexts)
+        {
+            extra.Dispose();
+        }
+
+        Db.Dispose();
+    }
 }

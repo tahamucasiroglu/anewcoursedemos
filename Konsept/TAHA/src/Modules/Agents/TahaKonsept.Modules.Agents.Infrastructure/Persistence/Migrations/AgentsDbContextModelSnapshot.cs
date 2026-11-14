@@ -165,6 +165,7 @@ namespace TahaKonsept.Modules.Agents.Infrastructure.Persistence.Migrations
                         .HasColumnName("machine_name");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")

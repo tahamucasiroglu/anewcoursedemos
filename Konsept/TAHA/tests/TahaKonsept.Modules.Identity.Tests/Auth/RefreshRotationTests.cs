@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Shouldly;
 using TahaKonsept.BuildingBlocks.Application.Security;
@@ -80,6 +81,31 @@ public sealed class RefreshRotationTests
         host.Clock.Advance(TimeSpan.FromDays(host.JwtOptions.RefreshTokenDays + 1));
 
         (await Refresh(host, first.RefreshToken)).Error.ShouldBe(IdentityErrors.InvalidRefreshToken);
+    }
+
+    /// <summary>
+    /// Aynı token eşzamanlı iki kez döndürülürse (ikisi de iptal edilmemiş görür) yalnız biri kaydedilir; diğeri tekrar kullanım sayılır
+    /// ve aile (kazananın yeni token'ı dahil) iptal edilir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Concurrent_rotation_of_same_token_is_detected_as_reuse()
+    {
+        await using var host = new IdentityTestHost();
+        var (first, _) = await host.SetupAdminAsync();
+
+        var outcome = await host.RunAsync<IServiceProvider, (Result<TokenResponse> Winner, Result<TokenResponse> Loser)>(async sp =>
+        {
+            var hash = sp.GetRequiredService<IRefreshTokenGenerator>().Hash(first.RefreshToken);
+            (await sp.GetRequiredService<IRefreshTokenRepository>().FindByHashAsync(hash)).ShouldNotBeNull();
+            var winner = await Refresh(host, first.RefreshToken);
+            var loser = await sp.GetRequiredService<IAuthService>().RefreshAsync(new RefreshRequest { RefreshToken = first.RefreshToken });
+            return (winner, loser);
+        });
+
+        outcome.Winner.IsSuccess.ShouldBeTrue();
+        outcome.Loser.Error.ShouldBe(IdentityErrors.RefreshTokenReuse);
+        (await Refresh(host, outcome.Winner.Value.RefreshToken)).IsFailure.ShouldBeTrue();
     }
 
     /// <summary>Bilinmeyen token reddedilir.</summary>

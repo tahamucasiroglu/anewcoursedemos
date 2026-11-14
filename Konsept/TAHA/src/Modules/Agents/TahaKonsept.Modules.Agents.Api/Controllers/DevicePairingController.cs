@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TahaKonsept.Modules.Agents.Api.Controllers.Base;
+using TahaKonsept.Modules.Agents.Api.RateLimiting;
 using TahaKonsept.Modules.Agents.Application.Abstract;
 using TahaKonsept.Shared.Contracts.Agent.Pairing;
 
@@ -9,7 +11,7 @@ namespace TahaKonsept.Modules.Agents.Api.Controllers;
 /// <summary>
 /// Cihaz eşleme (RFC 8628 benzeri): <c>POST api/agents/device/start</c> ve <c>POST api/agents/device/token</c> anonim (ajan),
 /// <c>POST api/agents/device/approve</c> ve <c>POST api/agents/device/deny</c> oturumlu (web). Yoklama hataları 400 + <c>code</c>
-/// (<c>DeviceTokenErrorCodes</c>).
+/// (<c>DeviceTokenErrorCodes</c>). Anonim uçlar IP başına sınırlıdır (<see cref="AgentsRateLimitPolicies"/>; aşılınca 429).
 /// </summary>
 [Route("api/agents/device")]
 public sealed class DevicePairingController : AgentsControllerBase
@@ -28,6 +30,7 @@ public sealed class DevicePairingController : AgentsControllerBase
     /// <param name="ct">İptal belirteci.</param>
     /// <returns><c>DeviceStartResponse</c>.</returns>
     [AllowAnonymous]
+    [EnableRateLimiting(AgentsRateLimitPolicies.PairingStart)]
     [HttpPost("start")]
     public async Task<IActionResult> Start([FromBody] DeviceStartRequest request, CancellationToken ct) =>
         ToActionResult(await _service.StartAsync(request, ct));
@@ -37,6 +40,7 @@ public sealed class DevicePairingController : AgentsControllerBase
     /// <param name="ct">İptal belirteci.</param>
     /// <returns><c>TokenResponse</c> ya da 400 (bekleniyor/yavaşla/süre doldu/reddedildi).</returns>
     [AllowAnonymous]
+    [EnableRateLimiting(AgentsRateLimitPolicies.PairingToken)]
     [HttpPost("token")]
     public async Task<IActionResult> Token([FromBody] DeviceTokenRequest request, CancellationToken ct) =>
         ToActionResult(await _service.PollTokenAsync(request, ct));

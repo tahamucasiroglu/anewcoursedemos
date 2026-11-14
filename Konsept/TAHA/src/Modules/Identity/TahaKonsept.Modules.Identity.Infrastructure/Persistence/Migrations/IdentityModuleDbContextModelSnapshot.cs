@@ -324,6 +324,7 @@ namespace TahaKonsept.Modules.Identity.Infrastructure.Persistence.Migrations
                         .HasColumnName("revocation_reason");
 
                     b.Property<DateTimeOffset?>("RevokedAtUtc")
+                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoked_at_utc");
 

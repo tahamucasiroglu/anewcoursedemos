@@ -9,7 +9,7 @@ namespace TahaKonsept.Modules.Agents.Infrastructure.Security.Concrete;
 /// <summary>
 /// Identity köprüsü: token'ı Identity'nin <see cref="ITokenIssuer"/>'ı ile <see cref="TokenClientKind.Agent"/> türünde (yeni refresh ailesi)
 /// üretir; eşleme kaldırılınca <see cref="ITokenRevoker.RevokeFamilyAsync"/> ile aileyi iptal eder.
-/// Not: Identity token'ı <c>agent_device_id</c> claim'i taşımaz; hub ajanı Hello'daki bilgisayar adıyla eşler.
+/// Not: Identity token'ı <c>agent_device_id</c> claim'i taşımaz; hub cihazı token ailesiyle (<c>tfam</c>; eşlemede cihaza yazılır, yenilemede korunur) bulur.
 /// </summary>
 public sealed class IdentityAgentTokenIssuer : AgentTokenIssuerBase
 {

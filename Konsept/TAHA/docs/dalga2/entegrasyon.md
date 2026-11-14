@@ -10,7 +10,7 @@ Dalga 2 parçaları (providers-media, normalize, concepts, production-core, desk
 - **Medya / normalizasyon:** Production `IMediaGateway`'i (Providers, singleton) `ImagesStageHandler`, `SpeechStageHandler`, `PronunciationService`'te kullanıyor; `AddProductionCore` → `AddSpeechTextNormalization()` çağrılıyor (doğrulandı).
 - **Web:** `.nupkg` için statik dosya içerik türü eşlemesi (`WebApplicationExtensions.UseTahaWeb`) — ajan güncellemeleri `/downloads/*.nupkg` indirebilir.
 - **Yayın betiği:** `deploy/publish-pi.ps1` artık çalışma klasöründeki `wwwroot/downloads/*` (gitignore'daki Setup.exe, .nupkg, releases/assets json, RELEASES) dosyalarını web çıktısına kopyalıyor (`-Source Head` ile de) ve doğrulamada Setup.exe'yi kontrol ediyor.
-- **Identity `agent_device_id` (dalga 1 boşluk 5):** YAPILMADI. `ITokenIssuer.IssueAsync(userId, kind)` imzası ek claim almıyor ve refresh token döndürmede (`RotateAsync`) claim'i yeniden üretmek için cihaz kimliğinin refresh token kaydında saklanması gerekir (Identity şeması + migration). Küçük değişiklik değil; hub bilgisayar adıyla eşlemeye devam ediyor.
+- **Identity `agent_device_id` (dalga 1 boşluk 5):** YAPILMADI. `ITokenIssuer.IssueAsync(userId, kind)` imzası ek claim almıyor ve refresh token döndürmede (`RotateAsync`) claim'i yeniden üretmek için cihaz kimliğinin refresh token kaydında saklanması gerekir (Identity şeması + migration). Küçük değişiklik değil. **Güncelleme (inceleme düzeltmesi):** hub artık cihazı token ailesiyle (`tfam` → `AgentDevice.TokenFamilyId`) bulur, `client`≠`agent` token'ı reddeder; Hello'daki bilgisayar adı kimlik için kullanılmaz.
 - **Sürüm:** `VERSION` 0.1.0 → **0.2.0**. `docs/WEB-KABUK.md`'ye dalga 2 MVC eylemleri eklendi.
 
 ## Derleme / test

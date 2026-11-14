@@ -12,6 +12,9 @@ public sealed class AgentsOptions
     /// <summary>Eşleme kodunun geçerlilik süresi (saniye).</summary>
     public int PairingLifetimeSeconds { get; set; } = 600;
 
+    /// <summary>Aynı anda süresi dolmamış bekleyen eşleme isteği üst sınırı (anonim başlatma ucunun DB'yi doldurmasını önler).</summary>
+    public int MaxOpenPairings { get; set; } = 50;
+
     /// <summary>Ajanın token yoklama aralığı (saniye).</summary>
     public int PollIntervalSeconds { get; set; } = 5;
 

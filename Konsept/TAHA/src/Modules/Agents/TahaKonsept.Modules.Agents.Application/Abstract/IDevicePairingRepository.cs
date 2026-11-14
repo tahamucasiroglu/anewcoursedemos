@@ -28,6 +28,14 @@ public interface IDevicePairingRepository : IRepository<DevicePairing>
     /// <returns>Kullanılıyorsa <c>true</c>.</returns>
     Task<bool> IsUserCodeInUseAsync(string userCode, DateTimeOffset now, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Kaydeder; <c>Status</c> eşzamanlılık belirteci olduğundan aynı onaylı isteği iki yoklama aynı anda tüketmeye çalışırsa yalnız biri yazılır,
+    /// diğerinde hiçbir şey yazılmaz, izlenen değişiklikler atılır ve <c>false</c> döner.
+    /// </summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kaydedildiyse <c>true</c>.</returns>
+    Task<bool> TrySaveChangesAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Süresi belirli bir andan önce dolmuş istekleri silinmek üzere işaretler (temizlik; kalıcılaşması için <c>SaveChangesAsync</c>).</summary>
     /// <param name="before">Bu andan önce süresi dolanlar.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

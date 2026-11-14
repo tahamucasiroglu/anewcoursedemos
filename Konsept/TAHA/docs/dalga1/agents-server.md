@@ -8,7 +8,7 @@ The Agents module server side is built, registered in the API, and committed. My
 
 **Two departures from the brief:**
 - Identity's `ITokenIssuer`, `ITokenRevoker` and `ISessionRevocationNotifier` already existed, so there is no placeholder token interface to wire later. `IAgentTokenIssuer` is implemented by `IdentityAgentTokenIssuer`, which issues with `TokenClientKind.Agent` and revokes by token family. `AgentSessionRevocationNotifier` is registered with `TryAddEnumerable`. As a result, `Agents.Infrastructure` references `Identity.Application`; the architecture rules allow that.
-- Identity's tokens do not carry an `agent_device_id` claim. The hub therefore matches the agent by user plus the machine name sent in `Hello`; the claim is used when present. If Identity adds `AgentClaimTypes.AgentDeviceId` to agent tokens, the claim path is used.
+- Identity's tokens do not carry an `agent_device_id` claim. The hub finds the device server-side by the token family (`tfam`, written to the device at pairing and kept across refresh rotation); the claim is used when present. Tokens whose `client` claim is not `agent` are rejected, and the machine name sent in `Hello` is never used to pick a device (review fix 14 Nov 2026).
 
 **API routes** (exactly the strings the Web controller already calls, plus two extras):
 

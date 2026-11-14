@@ -18,6 +18,23 @@ public sealed class DevicePairingRepository : Repository<DevicePairing>, IDevice
     {
     }
 
+    /// <summary>Kaydeder; eşzamanlılık çakışmasında değişiklikleri atıp <c>false</c> döner.</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kaydedildiyse <c>true</c>.</returns>
+    public async Task<bool> TrySaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await Context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            Context.ChangeTracker.Clear();
+            return false;
+        }
+    }
+
     /// <summary>Cihaz kodu hash'ine göre.</summary>
     /// <param name="deviceCodeHash">Hash.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

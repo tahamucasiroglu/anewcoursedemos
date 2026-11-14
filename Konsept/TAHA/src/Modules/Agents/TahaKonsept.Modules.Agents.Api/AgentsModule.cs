@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using TahaKonsept.BuildingBlocks.Api.Modules.Base;
 using TahaKonsept.Modules.Agents.Api.Hubs;
 using TahaKonsept.Modules.Agents.Api.Hubs.Concrete;
+using TahaKonsept.Modules.Agents.Api.RateLimiting;
 using TahaKonsept.Modules.Agents.Api.Security.Concrete;
 using TahaKonsept.Modules.Agents.Application.Abstract;
 using TahaKonsept.Modules.Agents.Infrastructure.DependencyInjection;
@@ -16,7 +17,7 @@ namespace TahaKonsept.Modules.Agents.Api;
 
 /// <summary>
 /// Agents modülü kaydı: altyapı/uygulama servisleri (<c>AddAgentsModule</c>), SignalR istemci vekili, doğrulama adresi sağlayıcı,
-/// hub eşlemesi (<c>/hubs/agent</c>) ve <see cref="AgentsDbContext"/> migration'ı. ApiModules listesinde Identity ve Production'dan sonra gelmelidir
+/// anonim eşleme uçlarının IP başına istek sınırları (<see cref="AgentsRateLimitPolicies"/>; host <c>UseRateLimiter</c> çağırır), hub eşlemesi (<c>/hubs/agent</c>) ve <see cref="AgentsDbContext"/> migration'ı. ApiModules listesinde Identity ve Production'dan sonra gelmelidir
 /// (onların <c>IAgentStageEventHandler</c>/<c>IAgentLogSink</c> kayıtları TryAdd varsayılanlarından önce yapılsın).
 /// </summary>
 public sealed class AgentsModule : ModuleBase
@@ -33,6 +34,7 @@ public sealed class AgentsModule : ModuleBase
         services.AddAgentsModule(configuration);
         services.TryAddSingleton<IAgentClientProvider, SignalRAgentClientProvider>();
         services.TryAddScoped<IVerificationUrlProvider, HttpVerificationUrlProvider>();
+        services.AddRateLimiter(AgentsRateLimitPolicies.Register);
     }
 
     /// <summary>Migration'ları uygular.</summary>

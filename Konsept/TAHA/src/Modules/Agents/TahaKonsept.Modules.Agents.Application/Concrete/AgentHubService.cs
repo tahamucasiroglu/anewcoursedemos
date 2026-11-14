@@ -10,8 +10,9 @@ using TahaKonsept.Shared.Contracts.Agent;
 namespace TahaKonsept.Modules.Agents.Application.Concrete;
 
 /// <summary>
-/// Ajan hub mantığı. Bağlantıda cihaz claim'i varsa sahiplik/iptal kontrolü yapar ve çevrimiçi işaretler; Hello'da cihazı
-/// (claim yoksa kullanıcı + bilgisayar adıyla) bulur, ağ/yetenek bilgisini yazar (akış anahtarı <see cref="ISecretProtector"/> ile şifreli),
+/// Ajan hub mantığı. Bağlantıda yalnız ajan token'ını (<c>client</c>=<c>agent</c>) kabul eder; cihazı token'daki cihaz claim'i ya da token ailesiyle
+/// (eşlemede cihaza yazılan <c>TokenFamilyId</c>) bulur, sahiplik/iptal kontrolü yapar ve çevrimiçi işaretler — cihazı bulunamayan bağlantı reddedilir.
+/// Hello yalnız bağlantının cihazına uygulanır (istemcinin bildirdiği bilgisayar adıyla başka cihaza bağlanılamaz); ağ/yetenek bilgisini yazar (akış anahtarı <see cref="ISecretProtector"/> ile şifreli),
 /// bellekteki bağlantıya düz anahtarı koyar. Heartbeat son görülmeyi en fazla <see cref="AgentsOptions.LastSeenWriteIntervalSeconds"/> aralıkla yazar.
 /// Aşama olayları <see cref="IAgentStageEventHandler"/>'a, günlükler <see cref="IAgentLogSink"/>'e, önizleme sonuçları <see cref="ISpeechPreviewCorrelator"/>'a gider.
 /// </summary>
@@ -58,6 +59,10 @@ public sealed class AgentHubService : AgentsServiceBase, IAgentHubService
     public static Error DeviceRevokedError { get; } =
         Error.Forbidden("agents.device_revoked", "Bu bilgisayarın eşlemesi kaldırılmış. Masaüstü programında yeniden eşleyin.");
 
+    /// <summary>Ajan olmayan token ile bağlanma hatası.</summary>
+    public static Error NotAgentClientError { get; } =
+        Error.Forbidden("agents.not_agent_client", "Bu bağlantı yalnız masaüstü programı içindir.");
+
     /// <summary>Bağlantı kayıtlı değil hatası.</summary>
     public static Error ConnectionUnknownError { get; } =
         Error.Failure("agents.connection_unknown", "Bağlantı kaydı bulunamadı.");
@@ -74,20 +79,26 @@ public sealed class AgentHubService : AgentsServiceBase, IAgentHubService
             return UnauthorizedError;
         }
 
-        if (connection.DeviceId is { } deviceId)
+        if (!string.Equals(connection.ClientType, AgentClaimTypes.AgentClientValue, StringComparison.Ordinal))
         {
-            var device = await FindOwnedActiveAsync(connection.UserId, deviceId, cancellationToken);
-            if (device is null)
-            {
-                return DeviceRevokedError;
-            }
-
-            var now = Now;
-            device.MarkOnline(now);
-            await _devices.UnitOfWork.SaveChangesAsync(cancellationToken);
-            connection.LastPersistedAtUtc = now;
+            return NotAgentClientError;
         }
 
+        var device = connection.DeviceId is { } deviceId
+            ? await FindOwnedActiveAsync(connection.UserId, deviceId, cancellationToken)
+            : connection.TokenFamilyId is { } family
+                ? await _devices.FindActiveByTokenFamilyAsync(connection.UserId, family, cancellationToken)
+                : null;
+        if (device is null)
+        {
+            return DeviceRevokedError;
+        }
+
+        var now = Now;
+        device.MarkOnline(now);
+        await _devices.UnitOfWork.SaveChangesAsync(cancellationToken);
+        connection.DeviceId = device.Id;
+        connection.LastPersistedAtUtc = now;
         _tracker.Add(connection);
         return Result.Success();
     }
@@ -131,7 +142,7 @@ public sealed class AgentHubService : AgentsServiceBase, IAgentHubService
 
         var device = connection.DeviceId is { } deviceId
             ? await FindOwnedActiveAsync(connection.UserId, deviceId, cancellationToken)
-            : await _devices.FindActiveByMachineAsync(connection.UserId, hello.MachineName, cancellationToken);
+            : null;
         if (device is null)
         {
             return DeviceRevokedError;

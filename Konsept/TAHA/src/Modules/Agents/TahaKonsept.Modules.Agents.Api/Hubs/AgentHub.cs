@@ -12,7 +12,8 @@ namespace TahaKonsept.Modules.Agents.Api.Hubs;
 
 /// <summary>
 /// Masaüstü programının bağlandığı SignalR hub'ı (<c>/hubs/agent</c>, JWT <c>access_token</c> sorgusu, <c>[Authorize]</c>).
-/// Ajan, token'daki <c>agent_device_id</c> claim'i ya da <c>Hello</c>'daki bilgisayar adıyla tanınır. Tüm mantık
+/// Ajan, token'daki <c>agent_device_id</c> claim'i ya da token ailesi (<c>tfam</c>, eşlemede cihaza yazılır) ile sunucu tarafında tanınır;
+/// <c>client</c>=<c>agent</c> olmayan (ör. web oturumu) token'lar reddedilir. <c>Hello</c>'daki bilgisayar adı kimlik için kullanılmaz. Tüm mantık
 /// <see cref="IAgentHubService"/>'tedir; hub yalnızca bağlamı kurar, hatada bağlantıyı keser.
 /// Sunucu → ajan çağrıları <see cref="IAgentClient"/>, ajan → sunucu metotları <see cref="IAgentHub"/>.
 /// </summary>
@@ -44,7 +45,11 @@ public sealed partial class AgentHub : Hub<IAgentClient>, IAgentHub
             ReadGuid(context.User, CustomClaimTypes.UserId) ?? Guid.Empty,
             ReadGuid(context.User, AgentClaimTypes.AgentDeviceId),
             _clock.UtcNow,
-            context.Abort);
+            context.Abort)
+        {
+            TokenFamilyId = ReadGuid(context.User, CustomClaimTypes.TokenFamily),
+            ClientType = context.User?.FindFirst(CustomClaimTypes.ClientType)?.Value,
+        };
         var result = await _service.ConnectedAsync(connection, context.ConnectionAborted);
         if (result.IsFailure)
         {

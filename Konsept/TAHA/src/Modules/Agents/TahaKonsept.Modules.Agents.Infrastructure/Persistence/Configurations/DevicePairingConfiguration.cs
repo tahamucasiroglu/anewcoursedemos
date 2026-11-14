@@ -6,7 +6,7 @@ namespace TahaKonsept.Modules.Agents.Infrastructure.Persistence.Configurations;
 
 /// <summary>
 /// <see cref="DevicePairing"/> tablo eşlemesi (<c>agents.device_pairings</c>): cihaz kodu hash'i benzersiz, kullanıcı kodu indeksli,
-/// durum metin olarak.
+/// durum metin olarak ve eşzamanlılık belirteci (onaylı istek yalnız bir kez tüketilir).
 /// </summary>
 public sealed class DevicePairingConfiguration : IEntityTypeConfiguration<DevicePairing>
 {
@@ -22,7 +22,7 @@ public sealed class DevicePairingConfiguration : IEntityTypeConfiguration<Device
         builder.Property(x => x.UserCode).HasMaxLength(16).IsRequired();
         builder.Property(x => x.MachineName).HasMaxLength(128).IsRequired();
         builder.Property(x => x.AgentVersion).HasMaxLength(64).IsRequired();
-        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsConcurrencyToken();
         builder.HasIndex(x => x.DeviceCodeHash).IsUnique();
         builder.HasIndex(x => x.UserCode);
         builder.HasIndex(x => x.ExpiresAtUtc);

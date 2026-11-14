@@ -1,4 +1,5 @@
 using Shouldly;
+using TahaKonsept.Modules.Agents.Application.Concrete;
 using TahaKonsept.Modules.Agents.Application.Models;
 using TahaKonsept.Modules.Agents.Domain.Entities;
 using TahaKonsept.Modules.Agents.Domain.Errors;
@@ -31,15 +32,18 @@ public sealed class AgentGatewayAndHubTests : IDisposable
         gateway.GetVideoUrl(_h.UserId, Guid.NewGuid()).Error.ShouldBe(AgentErrors.AgentOffline);
     }
 
-    /// <summary>Hello öncesi adres bilinmiyor; Hello sonrası video adresi kurulur, anahtar DB'de şifreli saklanır.</summary>
+    /// <summary>Cihaz token ailesiyle bulunur; Hello öncesi adres bilinmiyor, sonrası video adresi kurulur, anahtar DB'de şifreli saklanır.</summary>
     /// <returns>Görev.</returns>
     [Fact]
-    public async Task Hello_by_machine_name_enables_video_url()
+    public async Task Device_found_by_token_family_and_hello_enables_video_url()
     {
         var device = await SeedDeviceAsync();
+        var family = Guid.NewGuid();
+        device.AssignTokenFamily(family);
+        await _h.Db.SaveChangesAsync(Ct);
         var hub = _h.CreateHubService();
         var gateway = _h.CreateGateway();
-        (await hub.ConnectedAsync(Connection("c1", deviceId: null), Ct)).IsSuccess.ShouldBeTrue();
+        (await hub.ConnectedAsync(Connection("c1", deviceId: null, family), Ct)).IsSuccess.ShouldBeTrue();
 
         gateway.GetVideoUrl(_h.UserId, Guid.NewGuid()).Error.ShouldBe(AgentErrors.AgentAddressUnknown);
 
@@ -134,6 +138,42 @@ public sealed class AgentGatewayAndHubTests : IDisposable
         _h.Tracker.Get("c9").ShouldBeNull();
     }
 
+    /// <summary>Web oturumu token'ı ya da cihazı bulunamayan (ailesi eşleşmeyen / claim'siz) ajan bağlantısı reddedilir.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Non_agent_or_unknown_device_connection_is_rejected()
+    {
+        var device = await SeedDeviceAsync();
+        device.AssignTokenFamily(Guid.NewGuid());
+        await _h.Db.SaveChangesAsync(Ct);
+        var hub = _h.CreateHubService();
+
+        (await hub.ConnectedAsync(WebConnection("w1", device.Id), Ct)).Error.ShouldBe(AgentHubService.NotAgentClientError);
+        (await hub.ConnectedAsync(Connection("a1", deviceId: null), Ct)).Error.ShouldBe(AgentHubService.DeviceRevokedError);
+        (await hub.ConnectedAsync(Connection("a2", deviceId: null, Guid.NewGuid()), Ct)).Error.ShouldBe(AgentHubService.DeviceRevokedError);
+        _h.Tracker.Get("w1").ShouldBeNull();
+        _h.Tracker.Get("a1").ShouldBeNull();
+        _h.Tracker.Get("a2").ShouldBeNull();
+    }
+
+    /// <summary>Hello'daki bilgisayar adı başka cihaza bağlanmayı sağlamaz: bağlantı kendi cihazında kalır, diğer cihaz değişmez.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Hello_machine_name_cannot_take_over_other_device()
+    {
+        var mine = await SeedDeviceAsync();
+        var other = AgentDevice.Pair(_h.UserId, "OTHER-PC", "0.3.0", _h.Clock.UtcNow);
+        await _h.Devices.AddAsync(other, Ct);
+        await _h.Db.SaveChangesAsync(Ct);
+        var hub = _h.CreateHubService();
+        (await hub.ConnectedAsync(Connection("c1", mine.Id), Ct)).IsSuccess.ShouldBeTrue();
+
+        (await hub.HelloAsync(Call("c1"), Hello() with { MachineName = "OTHER-PC", LanIpAddress = "10.0.0.66" }, Ct)).IsSuccess.ShouldBeTrue();
+
+        _h.Tracker.Get("c1")!.DeviceId.ShouldBe(mine.Id);
+        (await _h.Devices.GetByIdAsync(other.Id, Ct))!.LanAddress.ShouldBeNull();
+    }
+
     /// <summary>Son bağlantı kopunca cihaz çevrimdışı işaretlenir.</summary>
     /// <returns>Görev.</returns>
     [Fact]
@@ -156,7 +196,7 @@ public sealed class AgentGatewayAndHubTests : IDisposable
         var device = await SeedDeviceAsync();
         device.AssignTokenFamily(Guid.NewGuid());
         await _h.Db.SaveChangesAsync(Ct);
-        await _h.CreateHubService().ConnectedAsync(new AgentConnection("c1", _h.UserId, device.Id, _h.Clock.UtcNow, () => aborted = true), Ct);
+        await _h.CreateHubService().ConnectedAsync(new AgentConnection("c1", _h.UserId, device.Id, _h.Clock.UtcNow, () => aborted = true) { ClientType = AgentClaimTypes.AgentClientValue }, Ct);
         var service = _h.CreateDeviceService();
 
         (await service.ListAsync(Ct)).Value.Single().IsOnline.ShouldBeTrue();
@@ -183,8 +223,11 @@ public sealed class AgentGatewayAndHubTests : IDisposable
 
     private AgentCallContext Call(string connectionId) => new(connectionId, _h.UserId, null);
 
-    private AgentConnection Connection(string connectionId, Guid? deviceId) =>
-        new(connectionId, _h.UserId, deviceId, _h.Clock.UtcNow, () => { });
+    private AgentConnection Connection(string connectionId, Guid? deviceId, Guid? tokenFamilyId = null) =>
+        new(connectionId, _h.UserId, deviceId, _h.Clock.UtcNow, () => { }) { ClientType = AgentClaimTypes.AgentClientValue, TokenFamilyId = tokenFamilyId };
+
+    private AgentConnection WebConnection(string connectionId, Guid? deviceId) =>
+        new(connectionId, _h.UserId, deviceId, _h.Clock.UtcNow, () => { }) { ClientType = "web" };
 
     private async Task<AgentDevice> SeedDeviceAsync()
     {

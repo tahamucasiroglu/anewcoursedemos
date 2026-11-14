@@ -85,15 +85,7 @@ public sealed class TokenService : TokenServiceBase
         if (current.IsRevoked)
         {
             // Kullanılmış ya da iptal edilmiş token tekrar geldi: aile ele geçirilmiş say, hepsini iptal et.
-            var revoked = RevokeTokens(await RefreshTokens.ListUnrevokedByFamilyAsync(current.FamilyId, ct), TokenRevocationReason.ReuseDetected);
-            await UnitOfWork.SaveChangesAsync(ct);
-            Logger.LogWarning(
-                "Refresh token tekrar kullanımı tespit edildi: kullanıcı {UserId}, aile {FamilyId}, iptal edilen {Count}",
-                current.UserId,
-                current.FamilyId,
-                revoked);
-            await NotifyFamilyRevokedAsync(current.UserId, current.FamilyId, ct);
-            return IdentityErrors.RefreshTokenReuse;
+            return await RevokeReusedFamilyAsync(current.UserId, current.FamilyId, ct);
         }
 
         if (!current.IsActive(Now))
@@ -111,8 +103,31 @@ public sealed class TokenService : TokenServiceBase
 
         var (next, response) = await CreatePairAsync(user, current.FamilyId, current.Kind, ct);
         current.Revoke(Now, TokenRevocationReason.Rotated, next.Id);
-        await UnitOfWork.SaveChangesAsync(ct);
+        if (!await UnitOfWork.TrySaveChangesAsync(ct))
+        {
+            // Aynı token eşzamanlı ikinci kez döndürüldü (RevokedAtUtc eşzamanlılık belirteci): biri kaydetti, bu istek tekrar kullanım sayılır.
+            return await RevokeReusedFamilyAsync(current.UserId, current.FamilyId, ct);
+        }
+
         return response;
+    }
+
+    /// <summary>Tekrar kullanılan token'ın ailesini tamamen iptal eder, uyarı yazar, oturumlara bildirir.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="familyId">Aile.</param>
+    /// <param name="ct">İptal belirteci.</param>
+    /// <returns><see cref="IdentityErrors.RefreshTokenReuse"/>.</returns>
+    private async Task<Result<TokenResponse>> RevokeReusedFamilyAsync(Guid userId, Guid familyId, CancellationToken ct)
+    {
+        var revoked = RevokeTokens(await RefreshTokens.ListUnrevokedByFamilyAsync(familyId, ct), TokenRevocationReason.ReuseDetected);
+        await UnitOfWork.SaveChangesAsync(ct);
+        Logger.LogWarning(
+            "Refresh token tekrar kullanımı tespit edildi: kullanıcı {UserId}, aile {FamilyId}, iptal edilen {Count}",
+            userId,
+            familyId,
+            revoked);
+        await NotifyFamilyRevokedAsync(userId, familyId, ct);
+        return IdentityErrors.RefreshTokenReuse;
     }
 
     /// <inheritdoc />

@@ -27,6 +27,10 @@ public static class AgentErrors
     public static readonly Error InvalidDeviceCode =
         Error.Validation("agents.device.expired_token", "Cihaz kodu geçersiz. Eşlemeyi yeniden başlatın.");
 
+    /// <summary>Aynı anda açık bekleyen eşleme isteği sınırı aşıldı.</summary>
+    public static readonly Error TooManyOpenPairings =
+        Error.Conflict("agents.device.too_many_open", "Çok fazla bekleyen eşleme isteği var. Birkaç dakika sonra yeniden deneyin.");
+
     /// <summary>Kullanıcı kodu bulunamadı.</summary>
     public static readonly Error UserCodeNotFound =
         Error.NotFound("agents.device.user_code_not_found", "Bu kodla bekleyen bir eşleme isteği yok. Masaüstü programındaki kodu kontrol edin.");

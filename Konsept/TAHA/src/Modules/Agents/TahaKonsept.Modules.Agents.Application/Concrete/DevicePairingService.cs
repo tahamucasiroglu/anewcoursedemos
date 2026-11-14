@@ -67,6 +67,12 @@ public sealed class DevicePairingService : AgentsServiceBase, IDevicePairingServ
         ArgumentNullException.ThrowIfNull(request);
         var now = Now;
         await _pairings.DeleteExpiredAsync(now.AddHours(-1), cancellationToken);
+        var open = await _pairings.CountAsync(p => p.Status == DevicePairingStatus.Pending && p.ExpiresAtUtc > now, cancellationToken);
+        if (open >= Math.Max(1, _options.MaxOpenPairings))
+        {
+            await _pairings.UnitOfWork.SaveChangesAsync(cancellationToken);
+            return AgentErrors.TooManyOpenPairings;
+        }
 
         var userCode = await CreateUniqueUserCodeAsync(now, cancellationToken);
         var deviceCode = _codes.CreateDeviceCode();
@@ -118,7 +124,8 @@ public sealed class DevicePairingService : AgentsServiceBase, IDevicePairingServ
         var outcome = pairing.Poll(now);
         if (outcome != PairingPollOutcome.Approved)
         {
-            await _pairings.UnitOfWork.SaveChangesAsync(cancellationToken);
+            // Yalnız son yoklama anı yazılır; aynı anda onay/tüketim yazıldıysa çakışma önemsizdir (ajan yeniden yoklar).
+            await _pairings.TrySaveChangesAsync(cancellationToken);
             return outcome switch
             {
                 PairingPollOutcome.Pending => AgentErrors.AuthorizationPending,
@@ -139,16 +146,23 @@ public sealed class DevicePairingService : AgentsServiceBase, IDevicePairingServ
             device.Repair(pairing.AgentVersion, now);
         }
 
-        var tokens = await _tokenIssuer.IssueAsync(new AgentTokenRequest(pairing.UserId, device.Id, device.MachineName), cancellationToken);
-        if (tokens.IsFailure)
-        {
-            return tokens.Error;
-        }
-
+        // Önce tüket (Status eşzamanlılık belirteci): aynı cihaz koduyla eşzamanlı ikinci yoklama burada kaybeder ve token almaz;
+        // böylece hiçbir cihaza bağlı olmayan, iptal edilemeyen ikinci bir token ailesi oluşmaz.
         var consumed = pairing.Consume(device.Id, now);
         if (consumed.IsFailure)
         {
             return consumed.Error;
+        }
+
+        if (!await _pairings.TrySaveChangesAsync(cancellationToken))
+        {
+            return AgentErrors.ExpiredToken;
+        }
+
+        var tokens = await _tokenIssuer.IssueAsync(new AgentTokenRequest(pairing.UserId, device.Id, device.MachineName), cancellationToken);
+        if (tokens.IsFailure)
+        {
+            return tokens.Error;
         }
 
         var previousFamily = device.AssignTokenFamily(tokens.Value.TokenFamilyId);

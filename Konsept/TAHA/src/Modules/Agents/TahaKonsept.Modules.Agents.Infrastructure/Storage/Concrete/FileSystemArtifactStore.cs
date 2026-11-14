@@ -11,7 +11,8 @@ namespace TahaKonsept.Modules.Agents.Infrastructure.Storage.Concrete;
 
 /// <summary>
 /// Dosya sistemi artefakt deposu: dosyalar <c>App_Data/artifacts/{jobId:N}/{artifactId:N}{ext}</c>, kayıtlar <c>agents.stored_artifacts</c>.
-/// Silmede dosya + kayıt kaldırılır, boşalan iş klasörü temizlenir. Scoped.
+/// Silmede önce kayıt, kayıt başarılıysa dosya kaldırılır; boşalan iş klasörü yalnız işin artefaktları toplu silinince temizlenir
+/// (tek artefakt onayı aynı işin o an yazılan dosyasının klasörünü silmesin; yazma klasörü kaybolursa bir kez yeniden dener). Scoped.
 /// </summary>
 public sealed class FileSystemArtifactStore : ArtifactStoreBase
 {
@@ -53,11 +54,8 @@ public sealed class FileSystemArtifactStore : ArtifactStoreBase
         var id = Guid.CreateVersion7();
         var jobFolder = jobId.ToString("N");
         var fileName = id.ToString("N") + SafeExtension(name);
-        var directory = AppData.EnsureDirectory(RootFolderName, jobFolder);
-        var path = Path.Combine(directory, fileName);
-
         long size;
-        await using (var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+        await using (var file = CreateFile(jobFolder, fileName))
         {
             await content.CopyToAsync(file, cancellationToken);
             size = file.Length;
@@ -113,10 +111,11 @@ public sealed class FileSystemArtifactStore : ArtifactStoreBase
             return AgentErrors.ArtifactNotFound;
         }
 
-        DeleteFile(artifact);
+        // Önce kayıt silinir, sonra dosya: kayıt başarısız olursa DB satırı eksik dosyayı göstermez. Boş iş klasörü burada silinmez
+        // (aynı işin başka artefaktı o an yazılıyor olabilir); klasörü işin tüm artefaktlarını silen DeleteJobArtifactsAsync temizler.
         _artifacts.Remove(artifact);
         await _artifacts.UnitOfWork.SaveChangesAsync(cancellationToken);
-        DeleteJobFolderIfEmpty(artifact.JobId);
+        DeleteFile(artifact);
         return Result.Success();
     }
 
@@ -130,7 +129,6 @@ public sealed class FileSystemArtifactStore : ArtifactStoreBase
         var artifacts = await _artifacts.ListByJobAsync(userId, jobId, cancellationToken);
         foreach (var artifact in artifacts)
         {
-            DeleteFile(artifact);
             _artifacts.Remove(artifact);
         }
 
@@ -139,8 +137,30 @@ public sealed class FileSystemArtifactStore : ArtifactStoreBase
             await _artifacts.UnitOfWork.SaveChangesAsync(cancellationToken);
         }
 
+        foreach (var artifact in artifacts)
+        {
+            DeleteFile(artifact);
+        }
+
         DeleteJobFolderIfEmpty(jobId);
         return artifacts.Count;
+    }
+
+    private FileStream CreateFile(string jobFolder, string fileName)
+    {
+        // Klasör, dosya açılmadan hemen önce oluşturulur; arada başka bir temizlik silerse bir kez yeniden oluşturulup denenir.
+        for (var attempt = 0; ; attempt++)
+        {
+            var path = Path.Combine(AppData.EnsureDirectory(RootFolderName, jobFolder), fileName);
+            try
+            {
+                return new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+            }
+            catch (DirectoryNotFoundException) when (attempt == 0)
+            {
+                // Klasör EnsureDirectory ile açılış arasında silindi: döngü yeniden oluşturup bir kez daha dener.
+            }
+        }
     }
 
     private void DeleteFile(StoredArtifact artifact)
@@ -155,9 +175,16 @@ public sealed class FileSystemArtifactStore : ArtifactStoreBase
     private void DeleteJobFolderIfEmpty(Guid jobId)
     {
         var folder = AppData.GetPath(RootFolderName, jobId.ToString("N"));
-        if (Directory.Exists(folder) && !Directory.EnumerateFileSystemEntries(folder).Any())
+        try
         {
-            Directory.Delete(folder);
+            if (Directory.Exists(folder) && !Directory.EnumerateFileSystemEntries(folder).Any())
+            {
+                Directory.Delete(folder);
+            }
+        }
+        catch (IOException)
+        {
+            // Bu arada klasöre yeni dosya yazıldı (boş değil) ya da başka işlem sildi: klasör kalsın.
         }
     }
 }

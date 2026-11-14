@@ -27,6 +27,23 @@ public class IdentityModuleDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     /// <summary>Refresh token'lar.</summary>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    /// <summary>Kaydeder; eşzamanlılık çakışmasında izlenen değişiklikleri atıp <c>false</c> döner.</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kaydedildiyse <c>true</c>.</returns>
+    public async Task<bool> TrySaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            ChangeTracker.Clear();
+            return false;
+        }
+    }
+
     /// <summary>Identity modelini kurar, şemayı ve tablo adlarını ayarlar, bu derlemedeki yapılandırmaları uygular.</summary>
     /// <param name="builder">Model oluşturucu.</param>
     protected override void OnModelCreating(ModelBuilder builder)
