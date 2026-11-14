@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TahaKonsept.Modules.Production.Application\TahaKonsept.Modules.Production.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Concepts\TahaKonsept.Modules.Concepts.Application\TahaKonsept.Modules.Concepts.Application.csproj" />
     <ProjectReference Include="..\..\..\Desktop\TahaKonsept.Agent.Engines.Video\TahaKonsept.Agent.Engines.Video.csproj" />
   </ItemGroup>
 

@@ -11,6 +11,7 @@ using TahaKonsept.Modules.Production.Application.Models;
 using TahaKonsept.Modules.Production.Application.Validators;
 using TahaKonsept.Modules.Production.Infrastructure.Guides.Concrete;
 using TahaKonsept.Modules.Production.Infrastructure.Hosting;
+using TahaKonsept.Modules.Production.Infrastructure.Integration.Concrete;
 using TahaKonsept.Modules.Production.Infrastructure.Persistence.Concrete;
 using TahaKonsept.Modules.Production.Normalization.DependencyInjection;
 using TahaKonsept.Shared.Contracts.Production;
@@ -20,7 +21,8 @@ namespace TahaKonsept.Modules.Production.Infrastructure.DependencyInjection;
 /// <summary>
 /// Production modülü DI kaydı.
 /// <list type="bullet">
-/// <item><see cref="AddProductionModule"/>: <see cref="ProductionDbContext"/> (şema <c>production</c>) + <see cref="AddProductionCore"/> + orkestratör BackgroundService.</item>
+/// <item><see cref="AddProductionModule"/>: <see cref="ProductionDbContext"/> (şema <c>production</c>) + <see cref="AddProductionCore"/> + Concepts adaptörü
+/// (<see cref="ConceptsConceptSource"/>, <c>Replace</c> ile yedeğin yerine) + orkestratör BackgroundService.</item>
 /// <item><see cref="AddProductionCore"/> (testler de kullanır; DbContext hariç): depolar, servisler, aşama işleyicileri (11), hash/plan/planlayıcı,
 /// iş fabrikası/ilerletici/bitirici, orkestratör adımı, sinyal ve kilit (singleton), yazım kılavuzları, okunuş normalizasyonu
 /// (<c>AddSpeechTextNormalization</c>), <c>IAgentStageEventHandler</c> (Agents'ın no-op varsayılanının yerine — <c>Replace</c>),
@@ -38,6 +40,7 @@ public static class ProductionServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         services.AddModuleDbContext<ProductionDbContext>(configuration, ProductionDbContext.SchemaName);
         services.AddProductionCore();
+        services.Replace(ServiceDescriptor.Scoped<IConceptSource, ConceptsConceptSource>());
         services.AddHostedService<ProductionOrchestratorService>();
         return services;
     }
