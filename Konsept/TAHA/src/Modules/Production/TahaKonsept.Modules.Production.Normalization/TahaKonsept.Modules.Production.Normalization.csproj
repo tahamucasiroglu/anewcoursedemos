@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Production modülü: seslendirme metni normalizasyonu (yazılış → okunuş). Saf kütüphane, altyapı bağımlılığı yok. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Normalization</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

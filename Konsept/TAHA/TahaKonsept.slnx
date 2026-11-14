@@ -21,6 +21,9 @@
     <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Infrastructure/TahaKonsept.Modules.Identity.Infrastructure.csproj" />
     <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Api/TahaKonsept.Modules.Identity.Api.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Production/">
+    <Project Path="src/Modules/Production/TahaKonsept.Modules.Production.Normalization/TahaKonsept.Modules.Production.Normalization.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Profiles/">
     <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Domain/TahaKonsept.Modules.Profiles.Domain.csproj" />
     <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Application/TahaKonsept.Modules.Profiles.Application.csproj" />
