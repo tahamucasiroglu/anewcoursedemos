@@ -14,7 +14,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete;
 /// Supertonic 3 (Supertone, kod MIT / model OpenRAIL-M; HF <c>Supertone/supertonic-3</c>, depo 2026-09-09'da arşivlendi).
 /// Varsayılan yerel motor: Python'suz, doğrudan C# + ONNX Runtime. 31 dil, Türkçe dahil. "Önce GPU": oturumlar DirectML ile
 /// (yüksek performanslı GPU) açılır; DirectML eklenemez/açılamazsa ya da ilk çalıştırmada DirectML hatası olursa CPU ile yeniden yüklenir
-/// ve düşüş <c>Warning</c> olarak loglanır (<see cref="ExecutionProvider"/>).
+/// ve düşüş <c>Warning</c> olarak loglanır (<see cref="ExecutionProvider"/>). <see cref="ReleaseAsync"/>: Speech aşaması bitince DirectML
+/// oturumu kapanır (~0,5 GB VRAM sonraki işin yerel görsel aşamasına kalır; Python GPU motorlarıyla aynı kural), CPU oturumu sıcak kalır.
 /// Model ~400 MB, <c>ModelsDir/supertonic-3/{onnx,voice_styles}</c> altına indirilir. Sesler: F1–F5 (kadın), M1–M5 (erkek);
 /// <c>VoiceId</c> bir .json yolu da olabilir (Voice Builder stili). Hız: istek hızı × 1.05 (resmi varsayılan).
 /// </summary>
@@ -45,6 +46,7 @@ public sealed class SupertonicSpeechEngine : SpeechEngineBase, IDisposable
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Dictionary<string, SupertonicVoiceStyle> _styles = new(StringComparer.OrdinalIgnoreCase);
     private SupertonicSynthesizer? _synthesizer;
+    private bool _disposed;
 
     /// <summary>Motoru kurar.</summary>
     /// <param name="services">Ortak bağımlılıklar.</param>
@@ -99,9 +101,44 @@ public sealed class SupertonicSpeechEngine : SpeechEngineBase, IDisposable
         return await DownloadHuggingFaceFilesAsync(Repository, RequiredFiles.ToArray(), progress, ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// DirectML (GPU) oturumu açıksa kapatır: model VRAM'de kalıp sonraki işin Images aşamasındaki sd.cpp'nin belleğini daraltmasın
+    /// (e2e: Supertonic açıkken FLUX.2 4B'de boş VRAM 5,3 GB'tan 4,6 GB'a indi, toplam tepe 5,7/6 GB). CPU oturumu sıcak kalır.
+    /// Sonraki istek oturumu yeniden açar (~1–3 sn).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    public override async Task ReleaseAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_synthesizer?.ExecutionProvider == OnnxExecutionProvider.DirectMl)
+            {
+                _synthesizer.Dispose();
+                _synthesizer = null;
+                Logger.LogInformation("Supertonic 3: DirectML oturumu kapatıldı (VRAM serbest)");
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         _synthesizer?.Dispose();
         _synthesizer = null;
         _gate.Dispose();

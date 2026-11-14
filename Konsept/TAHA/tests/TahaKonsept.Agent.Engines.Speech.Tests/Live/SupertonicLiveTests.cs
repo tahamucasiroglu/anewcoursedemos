@@ -2,6 +2,7 @@ using Shouldly;
 using TahaKonsept.Agent.Abstractions.Speech;
 using TahaKonsept.Agent.Engines.Speech.Audio;
 using TahaKonsept.Agent.Engines.Speech.Concrete;
+using TahaKonsept.Agent.Engines.Speech.Onnx;
 using TahaKonsept.Agent.Engines.Speech.Tests.Support;
 using Xunit;
 
@@ -45,6 +46,41 @@ public sealed class SupertonicLiveTests
         var female = await engine.SynthesizeAsync(new SpeechRequest(TurkishSentence, "tr", "F1", null, 1.2, Path.Combine(outDir, "supertonic-tr-F1-fast.wav")), ct);
         female.IsSuccess.ShouldBeTrue(female.Error.Message);
         female.Value.DurationSec.ShouldBeLessThan(result.Value.DurationSec);
+    }
+
+    /// <summary>
+    /// ReleaseAsync DirectML (GPU) oturumunu kapatır, sonraki sentez oturumu yeniden açar; CPU oturumu sıcak kalır.
+    /// GPU tarafı yalnız NVIDIA'lı makinede denetlenir.
+    /// </summary>
+    [Fact]
+    public async Task Release_closes_gpu_session_and_keeps_cpu_session()
+    {
+        var modelDir = Path.Combine(TestEnvironment.LiveModelsDir, "supertonic-3", "onnx");
+        Assert.SkipUnless(File.Exists(Path.Combine(modelDir, "vector_estimator.onnx")), "Supertonic modeli .tools-dev/speech/models altında yok.");
+        var ct = TestContext.Current.CancellationToken;
+        var services = TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("st-release"), TestEnvironment.LiveModelsDir));
+        var outDir = TestEnvironment.NewTempDir("st-release-out");
+        using (var setup = new SupertonicSpeechEngine(services))
+        {
+            (await setup.EnsureReadyAsync(null, ct)).IsSuccess.ShouldBeTrue();
+        }
+
+        using var cpu = new SupertonicSpeechEngine(services) { PreferGpu = false };
+        (await cpu.SynthesizeAsync(new SpeechRequest("Merhaba.", "tr", "M1", null, 1.0, Path.Combine(outDir, "cpu.wav")), ct)).IsSuccess.ShouldBeTrue();
+        await cpu.ReleaseAsync();
+        cpu.ExecutionProvider.ShouldBe(OnnxExecutionProvider.Cpu);
+
+        using var gpu = new SupertonicSpeechEngine(services);
+        (await gpu.SynthesizeAsync(new SpeechRequest("Merhaba.", "tr", "M1", null, 1.0, Path.Combine(outDir, "gpu-1.wav")), ct)).IsSuccess.ShouldBeTrue();
+        if (gpu.ExecutionProvider != OnnxExecutionProvider.DirectMl)
+        {
+            Assert.Skip("DirectML kullanılamadı (GPU yok).");
+        }
+
+        await gpu.ReleaseAsync();
+        gpu.ExecutionProvider.ShouldBeNull();
+        (await gpu.SynthesizeAsync(new SpeechRequest("Merhaba.", "tr", "M1", null, 1.0, Path.Combine(outDir, "gpu-2.wav")), ct)).IsSuccess.ShouldBeTrue();
+        gpu.ExecutionProvider.ShouldBe(OnnxExecutionProvider.DirectMl);
     }
 
     private static double RootMeanSquare(string path)
