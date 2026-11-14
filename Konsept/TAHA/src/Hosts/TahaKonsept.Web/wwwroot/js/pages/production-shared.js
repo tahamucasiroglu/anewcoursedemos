@@ -286,7 +286,7 @@
             var picked = findModel(ctx.models, key);
             var noTurkish = picked && picked.languageLabel === 'Türkçe yok'
                 ? '<div class="tk-alert is-danger" style="margin-top:12px" role="alert"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg><div>' +
-                  u.escape((picked.displayName || picked.key) + ' Türkçe seslendiremez. Türkçe videolarda ses aşaması hata verir; Türkçe destekli bir model seçin (ör. Supertonic 3, Piper, Ahenk).') + '</div></div>'
+                  u.escape((picked.displayName || picked.key) + ' Türkçe seslendiremez. Türkçe videolarda ses aşaması hata verir; Türkçe destekli bir model seçin (ör. Supertonic 3, Piper, Ahenk Cep).') + '</div></div>'
                 : '';
             var speedHtml = '<div class="tk-field" style="margin-top:12px"><label for="kv-speed">Konuşma hızı</label><div class="kv-speed">' +
                 '<input type="range" id="kv-speed" name="speed" min="0.5" max="2" step="0.05" value="' + current.speed + '" />' +

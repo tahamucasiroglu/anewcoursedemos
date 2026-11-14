@@ -100,7 +100,9 @@ function request(method, url, body, opts) {
   });
 }
 async function api(method, url, body) {
-  const r = await request(method, url, body);
+  let r = await request(method, url, body);
+  // Erişim belirteci kısa ömürlü (~15 dk); uzun üretimlerde (soğuk GPU kurulumu) süresi dolar → bir kez yeniden giriş yapıp tekrar dene.
+  if (r.status === 401 && token) { await login(); r = await request(method, url, body); }
   if (r.status >= 400) { throw new Error(`${method} ${url} → ${r.status} ${r.text.slice(0, 400)}`); }
   return r.json;
 }

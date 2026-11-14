@@ -89,8 +89,8 @@ public sealed class SpeechStageExecutor : StageExecutorBase<SpeechStagePayload>
         ArgumentNullException.ThrowIfNull(engine);
         var turkish = string.IsNullOrWhiteSpace(language) || language.Trim().StartsWith("tr", StringComparison.OrdinalIgnoreCase);
         var message = turkish
-            ? engine.DisplayName + " Türkçe seslendiremez (" + engine.LanguageLabel + "). Ses ayarlarından Türkçe destekli bir model seçin (ör. Supertonic 3, Piper, Ahenk)."
-            : engine.DisplayName + " '" + language + "' dilini desteklemiyor (" + engine.LanguageLabel + "). Ses ayarlarından bu dili destekleyen bir model seçin.";
+            ? engine.DisplayName + " Türkçe seslendiremez; dil desteği: " + engine.LanguageLabel + ". Ses ayarlarından Türkçe destekli bir model seçin (ör. Supertonic 3, Piper, Ahenk Cep)."
+            : engine.DisplayName + " '" + language + "' dilini desteklemiyor; dil desteği: " + engine.LanguageLabel + ". Ses ayarlarından bu dili destekleyen bir model seçin.";
         return Error.Validation("speech.unsupported_language", message);
     }
 
