@@ -234,6 +234,36 @@ public sealed class AuthAccessTests
         AssertLoginRedirectWithSessionEnded(nextPage, "/silinenler");
     }
 
+    /// <summary>
+    /// Erişim token'ı dolmuşken refresh geçici olarak başarısız olursa (Api erişilemiyor) oturum düşürülmez: dolmuş token'la
+    /// oturum sorgusu yapılmaz, sayfa açılır, Ajax "API erişilemiyor" durumunu alır (oturum bitti değil), cookie silinmez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task RefreshTransientFailure_ExpiredToken_KeepsSession()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        factory.Api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Result<AuthSessionResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable));
+        factory.Api.GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Result<CurrentUserResponse>.Failure(new("api.error", "jwt süresi doldu", ErrorType.Unauthorized)));
+        factory.Api.GetSystemStatusAsync(Arg.Any<CancellationToken>()).Returns(Result<SystemStatusResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable));
+        time.Advance(TimeSpan.FromMinutes(20));
+        factory.Api.ClearReceivedCalls();
+
+        using var page = await client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+        using var ajax = await SendAjaxAsync(client, HttpMethod.Get, "/system/status", ct);
+        var body = await ajax.Content.ReadFromJsonAsync<JsonElement>(ct);
+
+        page.StatusCode.ShouldBe(HttpStatusCode.OK);
+        page.Headers.Contains("Set-Cookie").ShouldBeFalse();
+        ajax.StatusCode.ShouldBe(HttpStatusCode.OK);
+        body.GetProperty("apiAvailable").GetBoolean().ShouldBeFalse();
+        await factory.Api.DidNotReceive().GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
     /// <summary>Düşmüş oturumla gönderilen POST (ör. <c>/cikis</c>) girişe dönüş adresi olmadan gider; yalnızca GET dönüş adresi olur.</summary>
     /// <returns>Görev.</returns>
     [Fact]

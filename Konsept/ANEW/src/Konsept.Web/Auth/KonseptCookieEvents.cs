@@ -101,6 +101,13 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
                 await RejectAsync(context).ConfigureAwait(false);
                 return;
             }
+            else if (IsExpired(context.Properties.GetTokenValue(ExpiresAtName)))
+            {
+                // Refresh geçici olarak başarısız (Api erişilemiyor) ve saklı token zaten dolmuş (review R2-2): dolmuş JWT ile
+                // oturum sorgusu 401 alıp oturumu yanlışlıkla düşürürdü. Oturum korunur, istek Api token'ı olmadan sürer
+                // (sayfa "API erişilemiyor" gösterir); sonraki istek yeniden refresh dener.
+                return;
+            }
         }
 
         var session = await api.GetSessionAsync(access, http.RequestAborted).ConfigureAwait(false);
@@ -142,6 +149,10 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
         context.RejectPrincipal();
         await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
     }
+
+    private bool IsExpired(string? expiresAt) =>
+        !DateTimeOffset.TryParse(expiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expires)
+        || expires <= timeProvider.GetUtcNow();
 
     private bool ExpiresSoon(string? expiresAt) =>
         !DateTimeOffset.TryParse(expiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expires)
