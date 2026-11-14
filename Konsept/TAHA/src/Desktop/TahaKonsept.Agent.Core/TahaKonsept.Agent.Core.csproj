@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Masaüstü ajanının UI'sız çekirdeği: yollar, araç bulucu, süreç çalıştırıcı, ayarlar, token deposu (DPAPI),
+    API istemcisi, cihaz eşleme, SignalR bağlantısı, yetenek algılama, aşama yürütücüleri, iş çalıştırıcı,
+    yerel video sunucusu (Kestrel, 7120), video dizini ve ön gereksinim kurulumu.
+    Avalonia uygulaması tek satırla bağlar: services.AddAgentCore(options) + IAgentHost.StartAsync/StopAsync.
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Agent.Abstractions\TahaKonsept.Agent.Abstractions.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Agent.Core.Tests" />
+  </ItemGroup>
+
+</Project>

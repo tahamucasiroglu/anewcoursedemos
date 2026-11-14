@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Ajan çekirdeği birim testleri: süreç çalıştırıcı, yollar, Range çözümü/video sunucusu, aşama dağıtımı, eşleme durumları. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Core.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Desktop\TahaKonsept.Agent.Core\TahaKonsept.Agent.Core.csproj" />
+  </ItemGroup>
+
+</Project>
