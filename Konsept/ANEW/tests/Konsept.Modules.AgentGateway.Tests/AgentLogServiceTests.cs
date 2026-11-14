@@ -39,6 +39,10 @@ public sealed class AgentLogServiceTests
         _written[0].Message.ShouldBe(string.Empty);
         _written[1].Message.Length.ShouldBeLessThanOrEqualTo(4000);
         _written[1].Message.ShouldNotContain("ABCDEFG");
+
+        // Önce kırpılsaydı 4000. karakterde "sk-proj-A" kalır (gövde 6 < 8, desen yakalamaz) ve sızardı.
+        _written[1].Message.ShouldNotContain("sk-proj");
+        _written[1].Message.ShouldEndWith("sk-…zz9");
     }
 
     /// <summary>Dakikada 60'tan fazla özet sessizce düşer; yeni dakikada yeniden kabul edilir.</summary>

@@ -31,8 +31,11 @@ public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, Age
             return false;
         }
 
-        // Önce maskele, sonra kırp: kesilen bir key desen eşiğinin altına düşüp parça sızdırmasın (review L-2).
-        var masked = SecretMasker.Mask(summary.Message ?? string.Empty);
+        // Önce kaba sınır (maskeleme maliyeti sınırlı kalsın, review round 2 L-1), sonra maskele, sonra kesin kırp:
+        // kesilen bir key desen eşiğinin altına düşüp parça sızdırmasın (round 1 L-2). Kaba sınırda kesilen parça
+        // kesin kırpmada atılır.
+        var raw = summary.Message ?? string.Empty;
+        var masked = SecretMasker.Mask(raw.Length > MaxMessageLength * 2 ? raw[..(MaxMessageLength * 2)] : raw);
         var message = masked.Length > MaxMessageLength ? masked[..MaxMessageLength] : masked;
         var entry = new TechnicalLogEntry(
             summary.OccurredAt,
