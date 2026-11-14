@@ -1,7 +1,7 @@
 # Spec 0009 — ajan-ilk-kurulum
 
-- Status: Draft
-- Revision: R1 2026-11-14 — GPU hızlandırma (tahamucasiroglu: "gpu da çalışabilecek bir model gpu yerine cpu da çalışıyorsa … bu bir hatadır"); Req 2, 8, 8a, 17 ve AC-9, AC-24, AC-25 değişti; yeniden onay bekliyor
+- Status: Approved
+- Revision: R1 2026-11-14 — GPU hızlandırma (tahamucasiroglu: "gpu da çalışabilecek bir model gpu yerine cpu da çalışıyorsa … bu bir hatadır"); Req 2, 8, 8a, 17 ve AC-9, AC-24, AC-25 değişti; onay: tahamucasiroglu 2026-11-14 "onaylıyorum devam et"
 - Mode: lite
 - Plan: `specs/plans/0009-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

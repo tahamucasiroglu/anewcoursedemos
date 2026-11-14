@@ -1,7 +1,7 @@
 # Spec 0017 — Üretim hattı
 
-- Status: Draft
-- Revision: R1 2026-11-14 — GPU hızlandırma (tahamucasiroglu: "gpu da çalışabilecek bir model gpu yerine cpu da çalışıyorsa … bu bir hatadır"); Req 14a ve AC-31 eklendi; yeniden onay bekliyor
+- Status: Approved
+- Revision: R1 2026-11-14 — GPU hızlandırma (tahamucasiroglu: "gpu da çalışabilecek bir model gpu yerine cpu da çalışıyorsa … bu bir hatadır"); Req 14a ve AC-31 eklendi; onay: tahamucasiroglu 2026-11-14 "onaylıyorum devam et"
 - Mode: lite
 - Plan: `specs/plans/0017-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
