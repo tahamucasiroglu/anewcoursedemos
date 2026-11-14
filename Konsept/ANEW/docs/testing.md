@@ -1,6 +1,6 @@
 # Testing
 
-> **Template — filled during bootstrap.**
+> Bootstrap sırasında 2026-11-14'te dolduruldu (kaynak: `Promtlar/0010`, `0011`). ANEW kural bölümleri olduğu gibi korunmuştur.
 
 ## The contract
 - Every acceptance criterion maps to at least one test (criterion ↔ test map lives in the plan).
@@ -8,11 +8,67 @@
 - The whole suite runs inside `scripts/check` — one command, everywhere.
 
 ## Frameworks & layout
-<!-- Test framework(s), where tests live, naming pattern. -->
+| İş | Araç | Not |
+|---|---|---|
+| Test çatısı | **xUnit v3** | Paralel çalışır. |
+| Assert | **Shouldly** | MIT. FluentAssertions v8 ticari lisans → kabul edilmez. |
+| Mock | **NSubstitute** | Interface tabanlı mimariye (K-2) uyar. |
+| API ve MVC entegrasyon | **WebApplicationFactory** + **AngleSharp** | Süreç içi gerçek HTTP akışı; Razor çıktısı HTML üzerinden doğrulanır. |
+| Veritabanı entegrasyon | **Testcontainers (PostgreSQL 18)** | Her çalıştırma temiz, gerçek bir PostgreSQL ile başlar. Docker gerektirir. |
+| Mimari testleri | **ArchUnitNET** | Y-1…Y-8, K-1 (iç içe tip), K-2, K-4. |
+| Ajan arayüzü | **Avalonia.Headless.XUnit** | Avalonia ekranları pencere açmadan. |
+| Web JS (tema, modallar, `api.js` Ajax sarmalayıcı) | **Vitest + jsdom** | Tarayıcı açmadan. |
+
+**Yerleşim**
+- .NET testleri `tests/` altında, modül başına ayrı proje: `tests/Konsept.Modules.Concepts.Tests`
+  gibi; mimari testleri tek projede: `tests/Konsept.ArchitectureTests`.
+- JS testleri Web projesinin içinde: `wwwroot/js/__tests__/`.
+- Test adları: `Method_State_Expected` (ör. `GenerateTopics_CountAbove100_ReturnsValidationError`).
+- Coverage yüzdesi hedefi yok; kanıt, plandaki kriter ↔ test eşlemesidir.
+
+**İki hız (`check --fast` / full)**
+| Profil | İçerik |
+|---|---|
+| **fast** | derleme + birim testleri + architecture testleri + format ve lint + `fetch(`/`style="` aramaları + Vitest |
+| **full** (fast'e ek) | PostgreSQL entegrasyon testleri (Testcontainers) + API/MVC entegrasyon testleri (WebApplicationFactory) + ajan render entegrasyonu (FFmpeg/Node gerektirir) |
+
+- Fast/full ayrımı "Two speeds" kural 4'e göre bir **seçiciyle** (xUnit trait/kategori filtresi ve
+  tersi) yapılır, proje listesiyle değil. Seçicinin adı walking skeleton planında belirlenir.
+- `scripts/check.conf` içinde `requires integration: docker info` (ve `dotnet --version`,
+  `node --version` gibi) satırları bulunur. **Docker şu an kurulu değil**; kurulum walking skeleton
+  PLAN gate'inden önce yapılacak → `specs/backlog.md` (`Source: bootstrap 2026-11-14`). Kurulana kadar
+  full profil bu makinede çalışamaz ve `scripts/doctor` bunu gösterir.
+
+**Belirlenimcilik (bu stack'te nasıl)**
+- **Saat:** üretim kodu `DateTime.Now`/`UtcNow` yerine `TimeProvider` kullanır; testlerde
+  `FakeTimeProvider` ile saat sabitlenir.
+- **Kültür / dil:** testlerde **`tr-TR` sabit** (`CultureInfo.CurrentCulture` ve `CurrentUICulture`).
+  Bilinçli: Türkçe I/İ tuzağını testler yakalasın. Saat dilimi de sabittir.
+- **Rastgelelik:** sabit seed.
+- **Animasyon:** test modunda kapalı — test aracında `prefers-reduced-motion` + uygulamadaki test
+  bayrağı (iki yerde birden).
+- **Online LLM'ler:** testlerde **asla gerçek çağrı yapılmaz**; sağlayıcılar stub ile değiştirilir
+  (H-3: testler para harcamaz). Gerçek sağlayıcı denemeleri yalnızca elle başlatılan, check dışındaki
+  smoke testlerle yapılır; bunlar Test layers kural 3 gereği **asla kanıt sayılmaz**.
+- **Veri:** her entegrasyon çalıştırması Testcontainers ile temiz bir veritabanıyla başlar
+  (Resource hygiene kural 5); container çalıştırma sonunda kapatılır (kural 1).
 
 ## What must be tested
-<!-- e.g. every business rule (BR-n), every boundary/forbidden dependency; the e2e journeys and
-     budget, if the project has e2e at all (Test layers). -->
+- **Her iş kuralı (BR-1…BR-16)** en az bir testle (`docs/domain.md`).
+- **BR-9** (pipeline'da neyin yeniden üretileceği): **tablo tabanlı test** — her değişiklik türü ×
+  etkilenen aşamalar (ses → seslendirme + birleştirme, altyazı açıksa render da; video motoru → video
+  kodu + render + birleştirme, ses korunur; konsept metni → her şey).
+- **Her yasak bağımlılık ve yapısal kural** (Y-1…Y-8, K-1, K-2, K-4): `Konsept.ArchitectureTests`
+  içinde ArchUnitNET ile.
+- **Hassas alanlar (H-1…H-4):** her kabul kriteri, kod kasıtlı olarak bozulup testin kırmızıya
+  döndüğü gösterilerek kanıtlanır (lite modda da).
+- **Maliyet kaydı** (her online çağrının token + maliyeti, BR-12) ve **token limitlerinin model
+  kataloğundan okunması**.
+- **UI kriterleri** bileşen seviyesinde: Razor HTML çıktısı AngleSharp ile, JS davranışı Vitest ile,
+  Avalonia ekranları headless testlerle; ekran görüntüsünü agent alır, insan SHIP'te değerlendirir
+  (Evidence for UI criteria).
+- **e2e:** yok — **bütçe 0** (0 yolculuk, 0 dakika). İleride kritik bir yolculuk yalnızca tarayıcıda
+  kanıtlanabilirse, o gün bütçesiyle birlikte (ör. Playwright, 1–2 yolculuk) ayrı kararla eklenir.
 
 ## Test layers
 1. **The cheapest test that proves the criterion.** Unit first, then component or integration

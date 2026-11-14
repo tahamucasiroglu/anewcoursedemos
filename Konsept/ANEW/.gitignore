@@ -14,3 +14,7 @@ Thumbs.db
 
 # Claude Code personal settings (shared settings.json IS committed after init)
 .claude/settings.local.json
+
+# Proje kaynak klasörü (ilk_promt.txt: görseller, ikon, videolar). Repo kökündeki .gitignore
+# "Source/" satırı Windows'ta (core.ignorecase) bu klasörü de dışlıyordu; burada geri alınıyor.
+!source/
