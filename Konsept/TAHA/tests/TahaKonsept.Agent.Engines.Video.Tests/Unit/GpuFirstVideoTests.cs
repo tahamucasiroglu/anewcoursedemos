@@ -137,10 +137,10 @@ public sealed class GpuFirstVideoTests
         RemotionVideoEngine.GpuArguments(true).ShouldBe(["--gl=angle", "--hardware-acceleration=if-possible"]);
         RemotionVideoEngine.GpuArguments(false).ShouldContain("--gl=swangle");
 
-        RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--use-angle=d3d11");
+        RevideoVideoEngine.ChromeGpuArguments(true).ShouldNotContain(a => a.StartsWith("--use-angle", StringComparison.Ordinal) || a.StartsWith("--use-gl", StringComparison.Ordinal));
         RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--enable-gpu-rasterization");
         RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--ignore-gpu-blocklist");
-        RevideoVideoEngine.ChromeGpuArguments(false).ShouldContain("--use-angle=swiftshader");
+        RevideoVideoEngine.ChromeGpuArguments(false).ShouldBe(["--disable-gpu"]);
         RevideoVideoEngine.ChromeGpuArguments(true).ShouldNotContain(a => a.Contains("proxy", StringComparison.Ordinal));
     }
 

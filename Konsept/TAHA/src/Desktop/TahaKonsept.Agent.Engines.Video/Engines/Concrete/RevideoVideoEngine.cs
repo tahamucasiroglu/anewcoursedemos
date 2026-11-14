@@ -137,15 +137,16 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
 
     /// <summary>
     /// Chrome GPU bayrakları ("Önce GPU"; render.mjs bunları ağ yasağı bayraklarına ekler, ağ yasağı her iki kipte de aynen kalır).
-    /// GPU: ANGLE/D3D11 donanım GL + GPU rasterleştirme + GPU kara listesini yok sayma (WebGL GPU'suz makinede SwiftShader'a
-    /// düşebilsin diye <c>--enable-unsafe-swiftshader</c>). CPU yedeği: ANGLE/SwiftShader. Kodlama Revideo'nun kendi ffmpeg'inde
+    /// GPU: GPU rasterleştirme + GPU kara listesini yok sayma. Windows'ta headless Chrome zaten ANGLE/D3D11 ile ekran kartını kullanır
+    /// (ölçüm: WebGL renderer = RTX 3060, D3D11). <c>--use-gl</c>/<c>--use-angle</c> bayrakları Revideo'da sessiz ses dosyası süresini
+    /// bozuyor ("Invalid duration specification for t: N/A"), bu yüzden eklenmez. CPU yedeği: <c>--disable-gpu</c>. Kodlama Revideo'nun kendi ffmpeg'inde
     /// sabit yazılım kodlayıcıyla yapılır (0.11 API'si kodlayıcı seçtirmez); ara dosya birleştiricide NVENC ile yeniden kodlanır.
     /// </summary>
     /// <param name="useGpu">GPU açık mı.</param>
     /// <returns>Chrome bayrakları.</returns>
     public static IReadOnlyList<string> ChromeGpuArguments(bool useGpu) => useGpu
-        ? ["--use-gl=angle", "--use-angle=d3d11", "--enable-gpu-rasterization", "--ignore-gpu-blocklist", "--enable-unsafe-swiftshader"]
-        : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+        ? ["--enable-gpu-rasterization", "--ignore-gpu-blocklist"]
+        : ["--disable-gpu"];
 
     /// <inheritdoc />
     protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request, bool useGpu)
