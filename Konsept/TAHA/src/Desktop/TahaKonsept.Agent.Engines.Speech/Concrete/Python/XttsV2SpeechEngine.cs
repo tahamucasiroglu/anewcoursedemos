@@ -5,11 +5,13 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 /// <summary>
 /// XTTS-v2 (Coqui; bakımı süren idiap çatalı, pip <c>coqui-tts</c>; model <c>tts_models/multilingual/multi-dataset/xtts_v2</c>,
 /// HF <c>coqui/XTTS-v2</c>). Lisans CPML (ticari değil). Referans sesle klonlama, 17 dil (Türkçe dahil, kalite zayıf), 2–4 GB VRAM.
-/// Referans yoksa yerleşik konuşmacılardan biri (<see cref="Voices"/>) kullanılır.
+/// Referans yoksa yerleşik konuşmacılardan biri (<see cref="Voices"/>) kullanılır. <c>six</c> ayrıca kurulur: coqui-tts 0.28.0
+/// <c>TTS/tts/utils/text/punctuation.py</c> içinde <c>import six</c> yapar ama bağımlılık olarak bildirmez (yoksa yükleme
+/// "No module named 'six'" ile düşer).
 /// </summary>
 public sealed class XttsV2SpeechEngine : PythonSpeechEngineBase
 {
-    private static readonly string[] Packages = ["torch==2.8.0", "torchaudio==2.8.0", "coqui-tts==0.28.0"];
+    private static readonly string[] Packages = ["torch==2.8.0", "torchaudio==2.8.0", "coqui-tts==0.28.0", "six"];
 
     private static readonly string[] Codes =
         ["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "hu", "ko", "hi"];

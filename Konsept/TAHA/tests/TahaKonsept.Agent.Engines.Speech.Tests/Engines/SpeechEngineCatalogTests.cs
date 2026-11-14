@@ -194,6 +194,15 @@ public sealed class SpeechEngineCatalogTests
         chatterbox.Requirements.ShouldContain("setuptools<81");
     }
 
+    /// <summary>XTTS-v2 ortamı six kurar: coqui-tts 0.28.0 import eder ama bildirmez (e2e'de "No module named 'six'").</summary>
+    [Fact]
+    public void Xtts_requirements_include_six()
+    {
+        using var xtts = new XttsV2SpeechEngine(TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("xtts"))));
+
+        xtts.Requirements.ShouldContain("six");
+    }
+
     /// <summary>Kokoro Türkçe desteklemez (etiket "Türkçe yok"); Türkçe destekli motorlar tr-TR'yi kabul eder.</summary>
     [Fact]
     public void Kokoro_is_labelled_without_turkish()
