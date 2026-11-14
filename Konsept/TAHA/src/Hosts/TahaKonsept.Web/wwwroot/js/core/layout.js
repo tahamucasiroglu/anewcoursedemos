@@ -14,8 +14,12 @@
             var $badge = $('#tk-spend');
             $badge.find('strong').text(TK.util.money(total));
             var limit = data && data.limitUsd ? Number(data.limitUsd) : 0;
-            $badge.toggleClass('is-over', limit > 0 && Number(total) >= limit);
-            $badge.attr('title', limit > 0 ? 'Bu ayki harcama / limit: ' + TK.util.money(total) + ' / ' + TK.util.money(limit) : 'Bu ayki toplam harcama (LLM + ses + görsel)');
+            var over = data && data.exceeded !== undefined ? !!data.exceeded : (limit > 0 && Number(total) >= limit);
+            $badge.toggleClass('is-over', over);
+            var title = limit > 0 ? 'Bu ayki harcama / limit: ' + TK.util.money(total) + ' / ' + TK.util.money(limit) : 'Bu ayki toplam harcama (LLM + ses + görsel)';
+            if (over) { title += data && data.stopOnExceed === false ? ' — limit aşıldı (yalnızca uyarı)' : ' — limit aşıldı, yeni üretim durduruldu'; }
+            else if (data && data.warning) { title += ' — uyarı eşiğine ulaşıldı'; }
+            $badge.attr('title', title);
         });
     }
 

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Providers modülü altyapı katmanı: ProvidersDbContext (şema "providers"), gömülü model kataloğu (Catalog/catalog.json),
+       Anthropic (resmi SDK) ve OpenAI-uyumlu (OpenAI, OpenRouter, GLM, Kimi) metin modelleri, anahtar testi. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Providers.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Providers.Application\TahaKonsept.Modules.Providers.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Anthropic" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Catalog\catalog.json" LogicalName="TahaKonsept.Providers.catalog.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Providers.Tests" />
+  </ItemGroup>
+
+</Project>

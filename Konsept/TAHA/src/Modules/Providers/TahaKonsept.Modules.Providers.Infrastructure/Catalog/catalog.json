@@ -1,0 +1,342 @@
+[
+  {
+    "key": "claude-opus-5-5", "platform": "anthropic", "providerModelId": "claude-opus-5-5", "displayName": "Claude Opus 5.5",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 4.00, "outputPerMTok": 20.00, "cacheReadPerMTok": 0.20, "cacheWritePerMTok": 5.00, "webSearchPer1K": 10.00 },
+    "maxOutputTokens": 128000, "effortLevels": ["Low", "Medium", "High", "XHigh", "Max"], "defaultEffort": "High",
+    "languageLabel": "Çok dilli", "supportsWebSearch": true, "supportsStructuredOutput": true, "defaultFor": ["scene-code"],
+    "notes": "Video kodu varsayılanı (sahne başına, akış, max_tokens 64000). Thinking kapatılamaz; API efor varsayılanı medium olduğu için açıkça gönderilir."
+  },
+  {
+    "key": "claude-sonnet-5-5", "platform": "anthropic", "providerModelId": "claude-sonnet-5-5", "displayName": "Claude Sonnet 5.5",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 2.00, "outputPerMTok": 10.00, "cacheReadPerMTok": 0.10, "cacheWritePerMTok": 2.50, "webSearchPer1K": 10.00 },
+    "maxOutputTokens": 128000, "effortLevels": ["Low", "Medium", "High", "XHigh", "Max"], "defaultEffort": "Medium",
+    "languageLabel": "Çok dilli", "supportsWebSearch": true, "supportsStructuredOutput": true, "defaultFor": ["concept"],
+    "notes": "Konsept üretimi varsayılanı (efor medium, structured output, web_search)."
+  },
+  {
+    "key": "claude-haiku-5-5", "platform": "anthropic", "providerModelId": "claude-haiku-5-5", "displayName": "Claude Haiku 5.5",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 0.10, "outputPerMTok": 0.50, "cacheReadPerMTok": 0.01, "cacheWritePerMTok": 0.125, "longContextThresholdTokens": 100000, "longContextInputPerMTok": 0.50, "longContextOutputPerMTok": 2.50, "webSearchPer1K": 10.00 },
+    "maxOutputTokens": 128000, "effortLevels": ["Low", "Medium", "High", "XHigh", "Max"], "defaultEffort": "Low",
+    "languageLabel": "Çok dilli", "supportsWebSearch": true, "supportsStructuredOutput": true, "defaultFor": ["topics", "fact-sheet"],
+    "notes": "Konu önerisi / fact-sheet. 100K token üstü prompt 5 kat pahalı: prompt 100K altında tutulmalı."
+  },
+  {
+    "key": "claude-fable-5-2", "platform": "anthropic", "providerModelId": "claude-fable-5-2", "displayName": "Claude Fable 5.2",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 8.00, "outputPerMTok": 40.00, "cacheReadPerMTok": 0.20, "cacheWritePerMTok": 10.00, "webSearchPer1K": 10.00 },
+    "maxOutputTokens": 128000, "effortLevels": ["Low", "Medium", "High", "XHigh", "Max"], "defaultEffort": "High",
+    "languageLabel": "Çok dilli", "supportsWebSearch": true, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "En yetenekli model; karmaşık kod için aday, henüz değerlendirilmedi."
+  },
+  {
+    "key": "gpt-6.1-sol", "platform": "openai", "providerModelId": "gpt-6.1-sol", "displayName": "GPT-6.1 Sol",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 2.00, "outputPerMTok": 10.00, "cacheReadPerMTok": null, "longContextThresholdTokens": 272000, "longContextInputPerMTok": 4.00 },
+    "maxOutputTokens": 128000, "effortLevels": ["Low", "Medium", "High", "XHigh"], "defaultEffort": "Medium",
+    "languageLabel": "Çok dilli", "supportsWebSearch": false, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "272K token üstü giriş 2 kat. Önbellek fiyatı doğrulanmadı."
+  },
+  {
+    "key": "gpt-6-luna", "platform": "openai", "providerModelId": "gpt-6-luna", "displayName": "GPT-6 Luna",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 0.10, "outputPerMTok": 0.50 },
+    "maxOutputTokens": null, "effortLevels": ["Low", "Medium", "High"], "defaultEffort": "Low",
+    "languageLabel": "Çok dilli", "supportsWebSearch": false, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "Ucuz model; çıkış sınırı doğrulanmadı."
+  },
+  {
+    "key": "openrouter", "platform": "openrouter", "providerModelId": "", "displayName": "OpenRouter (geçiş)",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "providerReportsCost": true },
+    "maxOutputTokens": null, "effortLevels": ["Low", "Medium", "High"], "defaultEffort": null,
+    "languageLabel": "Çok dilli", "supportsWebSearch": true, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "Model kimliği istekte verilir: openrouter:<sağlayıcı/model> (ör. openrouter:anthropic/claude-sonnet-5.5). Maliyet yanıttaki usage.cost alanından."
+  },
+  {
+    "key": "glm-5.3", "platform": "zai", "providerModelId": "glm-5.3", "displayName": "GLM-5.3",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 1.40, "outputPerMTok": 4.40 },
+    "maxOutputTokens": 128000, "effortLevels": ["Low", "Medium", "High", "Max"], "defaultEffort": "High",
+    "languageLabel": "Çok dilli", "supportsWebSearch": true, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "reasoning_effort sağlayıcı varsayılanı max; her istekte açıkça gönderilir. Yapılandırılmış çıktı json_object + şema talimatı (json_schema doğrulanmadı)."
+  },
+  {
+    "key": "kimi-k3", "platform": "moonshot", "providerModelId": "kimi-k3", "displayName": "Kimi K3",
+    "capability": "Text", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 3.00, "outputPerMTok": 15.00 },
+    "maxOutputTokens": 128000, "effortLevels": [], "defaultEffort": null,
+    "languageLabel": "Çok dilli", "supportsWebSearch": false, "supportsStructuredOutput": true, "defaultFor": [],
+    "notes": "Fiyat 3. taraf kaynaktan (doğrulanmadı). Kimi K2.x kullanılmaz (emekliye ayrılıyor)."
+  },
+
+  {
+    "key": "gpt-4o-mini-tts", "platform": "openai", "providerModelId": "gpt-4o-mini-tts-2025-12-15", "displayName": "OpenAI gpt-4o-mini-tts",
+    "capability": "Speech", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 0.60, "outputPerMTok": 12.00, "perMinute": 0.015 },
+    "languageLabel": "Çok dilli", "defaultFor": [],
+    "notes": "Türkçede zayıf (Dolphy 55.1/100). Dakika fiyatı tahmin. Kelime zaman damgası yok."
+  },
+  {
+    "key": "elevenlabs-v4", "platform": "elevenlabs", "providerModelId": "eleven_v4", "displayName": "ElevenLabs v4",
+    "capability": "Speech", "runsOn": "Server",
+    "pricing": { "perKChars": 0.08 },
+    "languageLabel": "Çok dilli", "defaultFor": [],
+    "notes": "Türkçe Dolphy 90.0. Fiyat ve model kimliği resmi sayfadan doğrulanmadı. /with-timestamps ile kelime zamanları."
+  },
+  {
+    "key": "elevenlabs-v4-turbo", "platform": "elevenlabs", "providerModelId": "eleven_v4_turbo", "displayName": "ElevenLabs v4 Turbo",
+    "capability": "Speech", "runsOn": "Server",
+    "pricing": { "perKChars": 0.04 },
+    "languageLabel": "Çok dilli", "defaultFor": [],
+    "notes": "Timestamp'li online ses adayı. Fiyat ve model kimliği doğrulanmadı."
+  },
+  {
+    "key": "gemini-3.8-flash-tts", "platform": "google", "providerModelId": "gemini-3.8-flash-tts-preview", "displayName": "Gemini 3.8 Flash TTS",
+    "capability": "Speech", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 0.50, "outputPerMTok": 9.00 },
+    "languageLabel": "Çok dilli", "defaultFor": ["speech-online"],
+    "notes": "Online ses varsayılanı (Türkçe Dolphy 89.8). Önizleme; 2027-01-01'den itibaren $1.00 / $18 (1M token). Kelime zaman damgası yok."
+  },
+  {
+    "key": "azure-neural", "platform": "azure-speech", "providerModelId": "neural", "displayName": "Azure Neural TTS",
+    "capability": "Speech", "runsOn": "Server",
+    "pricing": { "perKChars": 0.016 },
+    "languageLabel": "Çok dilli", "defaultFor": [],
+    "notes": "~$15-16 / 1M karakter, ayda 0.5M karakter ücretsiz. WordBoundary ile kelime zamanları. tr-TR ses adları doğrulanmadı."
+  },
+  {
+    "key": "cartesia-sonic-3.6", "platform": "cartesia", "providerModelId": "sonic-3.6", "displayName": "Cartesia Sonic 3.6",
+    "capability": "Speech", "runsOn": "Server",
+    "pricing": { },
+    "languageLabel": "Çok dilli", "defaultFor": [],
+    "notes": "Türkçe Dolphy 92.9 (1.). Fiyat ve timestamp desteği doğrulanmadı."
+  },
+
+  {
+    "key": "gemini-nano-banana-2.1", "platform": "google", "providerModelId": "gemini-nano-banana-2.1", "displayName": "Nano Banana 2.1",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.0336 },
+    "defaultFor": ["image-online"],
+    "notes": "Online görsel varsayılanı. 1K $0.0336, 2K $0.0504, 4K $0.113; batch yarı fiyat."
+  },
+  {
+    "key": "gemini-3.1-flash-lite-image", "platform": "google", "providerModelId": "gemini-3.1-flash-lite-image", "displayName": "Gemini 3.1 Flash Lite Image",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.0336 },
+    "defaultFor": [],
+    "notes": "gemini-2.5-flash-image'in resmi geçiş hedefi. Batch $0.0168."
+  },
+  {
+    "key": "gemini-3-pro-image", "platform": "google", "providerModelId": "gemini-3-pro-image", "displayName": "Gemini 3 Pro Image",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.134 },
+    "defaultFor": [],
+    "notes": "Kalite odaklı. 1K/2K $0.134, 4K $0.24."
+  },
+  {
+    "key": "gpt-image-2", "platform": "openai", "providerModelId": "gpt-image-2", "displayName": "gpt-image-2",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "inputPerMTok": 5.00, "outputPerMTok": 30.00, "perImage": 0.053 },
+    "defaultFor": [],
+    "notes": "Resmi fiyat token bazlı ($5 metin, $8 görüntü girdi, $30 görüntü çıktı / 1M). Görsel başı ~$0.006 / $0.053 / $0.211 doğrulanmadı."
+  },
+  {
+    "key": "gpt-image-1-mini", "platform": "openai", "providerModelId": "gpt-image-1-mini", "displayName": "gpt-image-1-mini",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": null },
+    "defaultFor": [],
+    "notes": "Ucuz; görsel başı ~$0.005-0.036 (kaliteye göre, doğrulanmadı)."
+  },
+  {
+    "key": "fal-z-image-turbo", "platform": "fal", "providerModelId": "fal-ai/z-image/turbo", "displayName": "fal Z-Image Turbo",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.01 },
+    "defaultFor": [],
+    "notes": "En ucuz toplu online görsel: $0.005/MP (~$0.01 / 1080×1920)."
+  },
+  {
+    "key": "fal-flux-2-flash", "platform": "fal", "providerModelId": "fal-ai/flux-2/flash", "displayName": "fal FLUX.2 Flash",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.01 },
+    "defaultFor": [],
+    "notes": "$0.005/MP (~$0.01 / 1080×1920). Yedek."
+  },
+  {
+    "key": "bfl-flux-3-image-klein", "platform": "bfl", "providerModelId": "flux-3-image-klein", "displayName": "BFL FLUX.3 Image Klein",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.009 },
+    "defaultFor": [],
+    "notes": "\"$0.009'dan başlayan\" fiyat; çözünürlüğe göre artar (doğrulanmadı)."
+  },
+  {
+    "key": "glm-image", "platform": "zai", "providerModelId": "glm-image", "displayName": "GLM-Image",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.015 },
+    "defaultFor": [],
+    "notes": "Z.ai ekosistemi. Lisans doğrulanmadı."
+  },
+  {
+    "key": "cogview-4", "platform": "zai", "providerModelId": "cogview-4", "displayName": "CogView-4",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.01 },
+    "defaultFor": [],
+    "notes": "Z.ai ekosistemi."
+  },
+  {
+    "key": "replicate-flux-schnell", "platform": "replicate", "providerModelId": "black-forest-labs/flux-schnell", "displayName": "Replicate FLUX schnell",
+    "capability": "Image", "runsOn": "Server",
+    "pricing": { "perImage": 0.003 },
+    "defaultFor": [],
+    "notes": "Düşük öncelik; Replicate fiyatları doğrulanmadı."
+  },
+
+  {
+    "key": "supertonic-3", "platform": "local", "providerModelId": "supertonic-3", "displayName": "Supertonic 3",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": null, "defaultFor": ["speech-local"],
+    "notes": "Yerel ses varsayılanı. ONNX Runtime, doğrudan C# (Python yok), CPU'da çalışır. 31 dil, Türkçe WER 1.72 (1.). Kod MIT, model OpenRAIL-M; repo 2026-09-09'da arşivlendi."
+  },
+  {
+    "key": "chatterbox-multilingual", "platform": "local", "providerModelId": "chatterbox-multilingual-v3", "displayName": "Chatterbox Multilingual",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": 4096, "defaultFor": [],
+    "notes": "Ses klonlama. ~3.5-4 GB VRAM, gömülü Python 3.11 + torch CUDA. MIT, Perth watermark. Ağustos 2026'dan beri bakım yok."
+  },
+  {
+    "key": "ema-lightning", "platform": "local", "providerModelId": "ema-lightning", "displayName": "EMA Lightning",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "notes": "En iyi açık Türkçe model (Dolphy 70.8). 34 MB, CPU ~6x gerçek zaman. Apache-2.0, tek ses. Sentetik ses bildirimi istenir."
+  },
+  {
+    "key": "ahenk", "platform": "local", "providerModelId": "ahenk", "displayName": "Ahenk",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "notes": "2B parametre, GPU gerekir (VRAM doğrulanmadı). Ağırlık CC BY 4.0 (atıf)."
+  },
+  {
+    "key": "ahenk-cep", "platform": "local", "providerModelId": "ahenk-cep", "displayName": "Ahenk Cep",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "notes": "8.6M parametre, CPU. CC BY 4.0 (atıf)."
+  },
+  {
+    "key": "trendyol-tts", "platform": "local", "providerModelId": "trendyol-tts", "displayName": "Trendyol-TTS",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "notes": "Deneysel. ~2B parametre, GPU (VRAM doğrulanmadı). Kalite zayıf, lisans belirsiz."
+  },
+  {
+    "key": "xtts-v2", "platform": "local", "providerModelId": "xtts-v2", "displayName": "XTTS-v2",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": 4096, "defaultFor": [],
+    "notes": "Ses klonlama. 2-4 GB VRAM. Türkçe zayıf. CPML lisansı (kişisel kullanım)."
+  },
+  {
+    "key": "f5-tts-tr", "platform": "local", "providerModelId": "f5-tts-tr", "displayName": "F5-TTS Türkçe",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": 3072, "defaultFor": [],
+    "notes": "~3 GB VRAM. Türkçe zayıf. CC-BY-NC (kişisel kullanım)."
+  },
+  {
+    "key": "piper-tr", "platform": "local", "providerModelId": "piper-tr_TR", "displayName": "Piper tr_TR",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "notes": "CPU, çok hızlı ama robotik. Ses CC BY-NC-SA."
+  },
+  {
+    "key": "mms-tts-tr", "platform": "local", "providerModelId": "facebook/mms-tts-tur", "displayName": "MMS-TTS-tr",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Sadece Türkçe", "minVramMb": null, "defaultFor": [],
+    "notes": "CPU, orta kalite. CC-BY-NC."
+  },
+  {
+    "key": "omnivoice", "platform": "local", "providerModelId": "omnivoice", "displayName": "OmniVoice",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": null, "defaultFor": [],
+    "notes": "Hafif model (VRAM doğrulanmadı). Ağırlık lisansı belirsiz (CC-BY-NC olabilir)."
+  },
+  {
+    "key": "voxcpm2", "platform": "local", "providerModelId": "voxcpm2", "displayName": "VoxCPM2",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": 8192, "defaultFor": [],
+    "notes": "Türkçe WER 2.50. ~8 GB VRAM, 6 GB'a sığmaz. Apache-2.0."
+  },
+  {
+    "key": "fish-s2-pro", "platform": "local", "providerModelId": "fish-s2-pro", "displayName": "Fish S2 Pro",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Çok dilli", "minVramMb": 12288, "defaultFor": [],
+    "notes": "12-24 GB VRAM. Araştırma lisansı (kişisel kullanım)."
+  },
+  {
+    "key": "kokoro", "platform": "local", "providerModelId": "kokoro-82m", "displayName": "Kokoro-82M",
+    "capability": "Speech", "runsOn": "Agent", "pricing": { },
+    "languageLabel": "Türkçe yok", "minVramMb": null, "defaultFor": [],
+    "notes": "CPU, Apache-2.0. Türkçe yok (İngilizce vb. için)."
+  },
+
+  {
+    "key": "z-image-turbo", "platform": "local", "providerModelId": "z-image-turbo-gguf-q4_0", "displayName": "Z-Image Turbo",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 4096, "defaultFor": ["image-local"],
+    "notes": "Yerel görsel varsayılanı. stable-diffusion.cpp, GGUF Q4_0 3.68 GB; 6 GB'ta --offload-to-cpu --diffusion-fa --vae-tiling. Apache-2.0. ~20-60 sn (doğrulanmadı)."
+  },
+  {
+    "key": "flux2-klein-4b", "platform": "local", "providerModelId": "flux2-klein-4b-gguf-q4_k_m", "displayName": "FLUX.2 klein 4B",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 4096, "defaultFor": [],
+    "notes": "Edit/referans görsel. GGUF Q4_K_M ~2.6 GB, 4 adım. Apache-2.0. RTX 3060 Ti'de ~15-30 sn (doğrulanmadı)."
+  },
+  {
+    "key": "flux2-klein-9b", "platform": "local", "providerModelId": "flux2-klein-9b", "displayName": "FLUX.2 klein 9B",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 8192, "defaultFor": [],
+    "notes": "6 GB'ta zor. Non-Commercial lisans (kişisel kullanım)."
+  },
+  {
+    "key": "flux3-klein", "platform": "local", "providerModelId": "flux3-image-klein", "displayName": "FLUX.3 Image Klein",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 8192, "defaultFor": [],
+    "notes": "Resmi asgari INT8 8 GB. FLUX Kommunity lisansı."
+  },
+  {
+    "key": "sd35-medium", "platform": "local", "providerModelId": "sd3.5-medium", "displayName": "SD3.5 Medium",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 6144, "defaultFor": [],
+    "notes": "6 GB'ta belki. Stability Community lisansı."
+  },
+  {
+    "key": "sdxl-lightning", "platform": "local", "providerModelId": "sdxl-lightning", "displayName": "SDXL-Lightning",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 4096, "defaultFor": [],
+    "notes": "4 GB ve altı için yedek. OpenRAIL++ (doğrulanmadı)."
+  },
+  {
+    "key": "qwen-image", "platform": "local", "providerModelId": "qwen-image-2.1", "displayName": "Qwen-Image",
+    "capability": "Image", "runsOn": "Agent", "pricing": { },
+    "minVramMb": 12288, "defaultFor": [],
+    "notes": "12-16 GB VRAM. Araştırma lisansı (kişisel kullanım)."
+  },
+
+  {
+    "key": "hyperframes", "platform": "engine", "providerModelId": "hyperframes@0.9.43", "displayName": "HyperFrames",
+    "capability": "VideoEngine", "runsOn": "Agent", "pricing": { },
+    "defaultFor": ["video-engine"],
+    "notes": "Varsayılan video motoru. HTML + CSS + GSAP, Apache-2.0. Sürüm sabit (0.9.43), site üzerinden güncellenir. Telemetri kapatılır."
+  },
+  {
+    "key": "remotion", "platform": "engine", "providerModelId": "remotion@4.0.543", "displayName": "Remotion",
+    "capability": "VideoEngine", "runsOn": "Agent", "pricing": { },
+    "defaultFor": [],
+    "notes": "Remotion License: 3 kişiye kadar ücretsiz; aksi halde Automators $0.01/render, aylık en az $100."
+  },
+  {
+    "key": "revideo", "platform": "engine", "providerModelId": "revideo@0.11.0", "displayName": "Revideo",
+    "capability": "VideoEngine", "runsOn": "Agent", "pricing": { },
+    "defaultFor": [],
+    "notes": "Deneysel. MIT. Temmuz 2026'dan beri commit yok."
+  }
+]

@@ -1,48 +1,13 @@
 /**
- * TK.ayarlar — Ayarlar sayfası: API anahtarları (ekle/değiştir/sil; maskeli gösterim), okunuş sözlüğü (ekle, sil, dinle),
- * önerileri sıfırla, tema, bütçe limiti. Masaüstü programı bölümü ayrı modüldedir: settings-agent.js (TK.settingsAgent).
- * Bölüm menüsü kaydırmayla senkron. MVC uçları: /Ayarlar/{ApiAnahtarlari, ApiAnahtari, ApiAnahtariSil, Sozluk, SozlukSil,
- * SozlukDinle, OnerileriSifirla, Butce}. Tek modül (IIFE).
+ * TK.ayarlar — Ayarlar sayfası: okunuş sözlüğü (ekle, sil, dinle), önerileri sıfırla, tema. Bölüm menüsü kaydırmayla senkron.
+ * Ayrı modüller: settings-agent.js (TK.settingsAgent, masaüstü programı), settings-providers.js (TK.settingsProviders,
+ * API anahtarları + bütçe limiti + bu ayın harcaması). MVC uçları: /Ayarlar/{Sozluk, SozlukSil, SozlukDinle, OnerileriSifirla}.
+ * Tek modül (IIFE).
  */
 (function (window, $) {
     'use strict';
     var TK = window.TK = window.TK || {};
     var U = null;
-
-    var PLATFORMS = [
-        ['Anthropic', 'Anthropic (Claude)', 'Konsept, video kodu, konu önerisi'],
-        ['OpenAI', 'OpenAI', 'LLM, gpt-image, gpt-4o-mini-tts'],
-        ['OpenRouter', 'OpenRouter', 'Çok sağlayıcılı LLM'],
-        ['GLM', 'Zhipu GLM', 'LLM, GLM-Image / CogView'],
-        ['Kimi', 'Moonshot Kimi', 'LLM'],
-        ['Google', 'Google Gemini', 'Nano Banana, Gemini TTS'],
-        ['ElevenLabs', 'ElevenLabs', 'Online ses'],
-        ['Azure', 'Azure Speech', 'Neural TTS'],
-        ['Cartesia', 'Cartesia', 'Online ses'],
-        ['Fal', 'fal.ai', 'Online görsel'],
-        ['BFL', 'Black Forest Labs', 'FLUX görsel'],
-        ['Replicate', 'Replicate', 'Online görsel']
-    ];
-
-    /* ---------------- API anahtarları ---------------- */
-    function renderKeys(saved) {
-        var map = {};
-        $.each(saved || [], function (_, k) { map[String(k.platform || k.platformName).toLowerCase()] = k; });
-        var html = '<table class="tk-table"><thead><tr><th>Sağlayıcı</th><th>Durum</th><th style="width:46%">Anahtar</th><th></th></tr></thead><tbody>';
-        $.each(PLATFORMS, function (_, p) {
-            var k = map[p[0].toLowerCase()];
-            html += '<tr data-platform="' + p[0] + '"><td><strong>' + U.escape(p[1]) + '</strong><div class="tk-hint">' + U.escape(p[2]) + '</div></td>' +
-                '<td>' + (k ? '<span class="tk-badge is-success">' + U.icon('check', 'tk-ic-sm') + ' ••••' + U.escape(k.last4 || k.mask || '') + '</span>' : '<span class="tk-badge">Yok</span>') + '</td>' +
-                '<td><input type="password" class="tk-input" autocomplete="off" spellcheck="false" placeholder="' + (k ? 'Değiştirmek için yeni anahtar' : 'Anahtarı yapıştırın') + '" aria-label="' + U.escape(p[1]) + ' anahtarı" /></td>' +
-                '<td style="text-align:right;white-space:nowrap"><button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="save">Kaydet</button>' +
-                (k ? ' <button type="button" class="tk-mini-btn is-danger" data-act="delete" title="Sil" aria-label="Sil">' + U.icon('trash') + '</button>' : '') + '</td></tr>';
-        });
-        $('#st-keys').html(html + '</tbody></table>');
-    }
-
-    function loadKeys() {
-        TK.api.get('/Ayarlar/ApiAnahtarlari', null, { silent: true }).done(function (d) { renderKeys(U.items(d)); }).fail(function () { renderKeys([]); });
-    }
 
     /* ---------------- Okunuş sözlüğü ---------------- */
     function renderDict(items) {
@@ -73,15 +38,6 @@
         });
     }
 
-    /* ---------------- Bütçe ---------------- */
-    function loadBudget() {
-        TK.api.get('/Ayarlar/Butce', null, { silent: true }).done(function (b) {
-            if (!b) { return; }
-            $('#st-budget').val(b.monthlyLimitUsd || '');
-            $('#st-budget-form [name=stopOnExceed]').prop('checked', b.stopOnExceed !== false);
-        });
-    }
-
     function syncNav() {
         var $links = $('.tk-settings-nav a');
         var top = $(window).scrollTop() + 120;
@@ -91,24 +47,6 @@
     }
 
     function bind() {
-        $('#st-keys').on('click', '[data-act]', function () {
-            var $tr = $(this).closest('tr');
-            var platform = $tr.attr('data-platform');
-            if ($(this).attr('data-act') === 'delete') {
-                TK.modal.confirm('Anahtarı sil', platform + ' anahtarı silinecek; bu sağlayıcının modelleri kullanılamaz.', 'Sil').done(function () {
-                    TK.api.del('/Ayarlar/ApiAnahtariSil/' + encodeURIComponent(platform)).done(function () { TK.toast.info('Anahtar silindi.'); loadKeys(); });
-                });
-                return;
-            }
-            var key = $.trim($tr.find('input').val());
-            if (key.length < 8) { TK.toast.warning('Geçerli bir anahtar girin.'); $tr.find('input').trigger('focus'); return; }
-            U.busy($(this), TK.api.put('/Ayarlar/ApiAnahtari', { platform: platform, apiKey: key })).done(function () {
-                TK.toast.success(platform + ' anahtarı kaydedildi.');
-                loadKeys();
-                if (TK.layout) { TK.layout.refreshSpend(); }
-            });
-        });
-
         $('#st-dict-form').on('submit', function (e) {
             e.preventDefault();
             var written = $.trim($(this).find('[name=written]').val());
@@ -143,27 +81,15 @@
         $('input[name=theme]').on('change', function () { TK.theme.set($(this).val()); });
         document.addEventListener('tk:theme', function (e) { if (e.detail) { $('input[name=theme][value="' + e.detail.preference + '"]').prop('checked', true); } });
 
-        $('#st-budget-form').on('submit', function (e) {
-            e.preventDefault();
-            var limit = parseFloat($('#st-budget').val());
-            U.busy($(this).find('[type=submit]'), TK.api.put('/Ayarlar/Butce', {
-                monthlyLimitUsd: isNaN(limit) || limit < 0 ? 0 : limit,
-                stopOnExceed: $(this).find('[name=stopOnExceed]').is(':checked')
-            })).done(function () { TK.toast.success('Bütçe limiti kaydedildi.'); if (TK.layout) { TK.layout.refreshSpend(); } });
-        });
-
         $(window).on('scroll', syncNav);
     }
 
     function init() {
         if (!$('#tk-ayarlar').length) { return; }
         U = TK.util;
-        $('#st-keys').html('<div style="padding:16px">' + U.skeleton(4) + '</div>');
         $('#st-dict').html(U.skeleton(2));
         bind();
-        loadKeys();
         loadDict();
-        loadBudget();
         if (window.location.hash) { syncNav(); }
     }
 

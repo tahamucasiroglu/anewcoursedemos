@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\Modules\Diagnostics\TahaKonsept.Modules.Diagnostics.Api\TahaKonsept.Modules.Diagnostics.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\TahaKonsept.Modules.Identity.Api\TahaKonsept.Modules.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Profiles\TahaKonsept.Modules.Profiles.Api\TahaKonsept.Modules.Profiles.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Providers\TahaKonsept.Modules.Providers.Api\TahaKonsept.Modules.Providers.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Providers modülü uygulama katmanı: IProviderGateway (diğer modüllerin kullandığı genel arayüz), IModelCatalog, IBudgetGuard,
+       metin/görsel/ses model sözleşmeleri ve ortak base sınıfları, anahtar/kullanım/bütçe servisleri. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Providers.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Providers.Domain\TahaKonsept.Modules.Providers.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Providers.Tests" />
+  </ItemGroup>
+
+</Project>

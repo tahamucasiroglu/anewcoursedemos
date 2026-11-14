@@ -128,11 +128,14 @@
                     <form id="st-budget-form" class="tk-row" autocomplete="off">
                         <label class="tk-label" for="st-budget">Aylık limit ($)</label>
                         <input class="tk-input" id="st-budget" name="monthlyLimitUsd" type="number" min="0" step="0.5" placeholder="0 = limitsiz" style="width:160px" />
+                        <label class="tk-label" for="st-budget-warn">Uyarı eşiği (%)</label>
+                        <input class="tk-input" id="st-budget-warn" name="warnAtPercent" type="number" min="1" max="100" step="1" value="80" style="width:90px" />
                         <label class="tk-switch"><input type="checkbox" name="stopOnExceed" checked /><span class="tk-switch-track"></span> Aşınca üretimi durdur</label>
                         <button type="submit" class="tk-btn tk-btn-primary">
                             <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Kaydet
                         </button>
                     </form>
+                    <div id="st-usage" style="margin-top:14px"></div>
                 </div>
             </section>
         </div>
@@ -142,4 +145,5 @@
 @section Scripts {
     <script src="~/js/pages/ayarlar.js" asp-append-version="true"></script>
     <script src="~/js/pages/settings-agent.js" asp-append-version="true"></script>
+    <script src="~/js/pages/settings-providers.js" asp-append-version="true"></script>
 }

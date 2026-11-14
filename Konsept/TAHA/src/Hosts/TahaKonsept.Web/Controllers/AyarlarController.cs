@@ -7,7 +7,7 @@ namespace TahaKonsept.Web.Controllers;
 /// <summary>
 /// Ayarlar sayfası ve Ajax uçları. Bölümler: API anahtarları, Okunuş sözlüğü, Masaüstü programı eşleme, Önerileri sıfırla,
 /// Tema, Bütçe limiti. Beklenen API rotaları:
-/// <c>GET|PUT api/providers/keys</c>, <c>DELETE api/providers/keys/{platform}</c>,
+/// <c>GET|PUT api/providers/keys</c>, <c>DELETE api/providers/keys/{platform}</c>, <c>POST api/providers/keys/{platform}/test</c>,
 /// <c>GET|POST api/production/pronunciations</c>, <c>DELETE api/production/pronunciations/{id}</c>,
 /// <c>POST api/production/pronunciations/preview</c>, <c>POST api/concepts/topic-memory/reset</c>,
 /// <c>GET|PUT api/providers/budget</c>, <c>PUT api/identity/me/preferences</c>,
@@ -45,6 +45,13 @@ public sealed class AyarlarController : WebControllerBase
     [HttpDelete]
     public Task<IActionResult> ApiAnahtariSil(string id, CancellationToken ct) =>
         ProxyAsync(c => c.DeleteAsync<JsonElement>($"api/providers/keys/{Seg(id)}", ct));
+
+    /// <summary>API anahtarını ücretsiz bir çağrıyla doğrular (<c>{ platform, success, message, statusCode, durationMs }</c>).</summary>
+    /// <param name="id">Platform adı.</param>
+    /// <param name="ct">İptal belirteci.</param>
+    [HttpPost]
+    public Task<IActionResult> ApiAnahtariTest(string id, CancellationToken ct) =>
+        ProxyAsync(c => c.PostAsync<object, JsonElement>($"api/providers/keys/{Seg(id)}/test", new { }, ct));
 
     /// <summary>Okunuş sözlüğü (yazılış → okunuş).</summary>
     /// <param name="ct">İptal belirteci.</param>

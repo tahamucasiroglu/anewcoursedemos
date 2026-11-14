@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Providers modülü birim testleri: istek biçimleri (sahte HttpMessageHandler), usage → maliyet, JSON onarımı, anahtar şifreleme, katalog. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Providers.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Providers\TahaKonsept.Modules.Providers.Infrastructure\TahaKonsept.Modules.Providers.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

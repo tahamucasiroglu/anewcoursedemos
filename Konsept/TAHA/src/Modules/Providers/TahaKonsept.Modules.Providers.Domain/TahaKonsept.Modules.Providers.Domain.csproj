@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Providers modülü domain katmanı: API anahtarı, çağrı günlüğü (CallLog), sürümlü fiyat (ModelPrice), bütçe ayarı. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Providers.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Domain\TahaKonsept.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
