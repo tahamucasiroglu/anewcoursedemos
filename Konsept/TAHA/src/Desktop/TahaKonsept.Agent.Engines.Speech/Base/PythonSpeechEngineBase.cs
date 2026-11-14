@@ -16,7 +16,7 @@ namespace TahaKonsept.Agent.Engines.Speech.Base;
 /// Python tabanlı ses motorlarının tabanı. Kurulum (<see cref="EnsureReadyAsync"/>): <c>uv</c> yoksa önce <c>IToolProvisioner</c> ile kurulur
 /// (kullanıcı kurulum ekranına gitmeden), sonra <c>uv</c> ile motor başına venv
 /// (<c>PythonEnvsDir/&lt;Key&gt;/.venv</c>, Python <see cref="PythonVersion"/>; uv'nin yönettiği Python <c>ToolsDir/uv-python</c> altına iner),
-/// sabitlenmiş <see cref="Requirements"/> kurulumu (GPU motorlarında <see cref="TorchIndexUrl"/> CUDA tekerlek dizini), başarıda
+/// sabitlenmiş <see cref="Requirements"/> kurulumu (uv geçici Windows dosya kilidine takılırsa — <see cref="IsTransientFileLock"/> — iki kez yeniden dener; GPU motorlarında <see cref="TorchIndexUrl"/> CUDA tekerlek dizini), başarıda
 /// gereksinim parmak izini <c>.taha-installed</c> dosyasına yazar (<see cref="IsInstalled"/> bunu karşılaştırır).
 /// Çalışma: <c>PythonWorkers/tts_worker.py</c> uzun ömürlü süreç olarak açılır, ilk istekte <c>load</c> (adapter <see cref="AdapterName"/>,
 /// <see cref="ModelId"/>, <see cref="Device"/>, <see cref="LoadOptions"/>), her istekte <c>synth</c>. İşçi çökerse sonraki istekte yeniden başlar.
@@ -32,6 +32,9 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
 
     /// <summary>CUDA 12.8 PyTorch tekerlek dizini (torch 2.7+ için).</summary>
     protected const string TorchCu128Index = "https://download.pytorch.org/whl/cu128";
+
+    private static readonly TimeSpan[] UvLockRetryDelays = [TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(10)];
+    private static readonly string[] FileLockMarkers = ["os error 5)", "os error 32)", "Access is denied", "Erişim engellendi", "being used by another process"];
 
     private readonly SemaphoreSlim _workerGate = new(1, 1);
     private ITtsWorkerClient? _worker;
@@ -97,6 +100,12 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
         }
     }
+
+    /// <summary>uv çıktısı geçici bir Windows dosya kilidini mi anlatıyor (erişim engellendi / paylaşım ihlali; yeniden denemeye değer).</summary>
+    /// <param name="output">uv stderr + stdout.</param>
+    /// <returns>Geçici kilitse <c>true</c>.</returns>
+    public static bool IsTransientFileLock(string? output) =>
+        !string.IsNullOrEmpty(output) && FileLockMarkers.Any(m => output.Contains(m, StringComparison.OrdinalIgnoreCase));
 
     /// <inheritdoc />
     public override bool IsInstalled()
@@ -371,16 +380,37 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
         CancellationToken ct)
     {
         Logger.LogInformation("uv {Args}", string.Join(' ', arguments));
-        var result = await Services.Processes.RunAsync(
-            new ProcessSpec(uv, arguments, EnvironmentDir, environment, timeout),
-            line =>
-            {
-                if (!string.IsNullOrWhiteSpace(line))
+        ProcessResult result;
+        var attempt = 0;
+        while (true)
+        {
+            result = await Services.Processes.RunAsync(
+                new ProcessSpec(uv, arguments, EnvironmentDir, environment, timeout),
+                line =>
                 {
-                    progress?.Report(new EngineSetupProgress($"{DisplayName}: {line.Trim()}", percent));
-                }
-            },
-            ct).ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        progress?.Report(new EngineSetupProgress($"{DisplayName}: {line.Trim()}", percent));
+                    }
+                },
+                ct).ConfigureAwait(false);
+            if (result.Succeeded || result.TimedOut || attempt >= UvLockRetryDelays.Length ||
+                !IsTransientFileLock(result.StandardError + "\n" + result.StandardOutput))
+            {
+                break;
+            }
+
+            // Windows'ta yeni açılan klasörü virüs tarayıcı / dizin oluşturucu kısa süre kilitleyebilir (uv: "failed to rename … os error 5").
+            Logger.LogWarning(
+                "uv geçici dosya kilidine takıldı; {Delay} sn sonra yeniden denenecek ({Attempt}/{Max})",
+                UvLockRetryDelays[attempt].TotalSeconds,
+                attempt + 1,
+                UvLockRetryDelays.Length);
+            progress?.Report(new EngineSetupProgress($"{DisplayName}: dosya kilidi, yeniden deneniyor", percent));
+            await Task.Delay(UvLockRetryDelays[attempt], ct).ConfigureAwait(false);
+            attempt++;
+        }
+
         if (result.Succeeded)
         {
             return Result.Success();

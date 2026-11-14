@@ -3,6 +3,7 @@ using NSubstitute;
 using Shouldly;
 using TahaKonsept.Agent.Abstractions.Engines;
 using TahaKonsept.Agent.Abstractions.Paths.Abstract;
+using TahaKonsept.Agent.Abstractions.Processes;
 using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 using TahaKonsept.Agent.Abstractions.Speech;
 using TahaKonsept.Agent.Abstractions.Speech.Abstract;
@@ -135,6 +136,27 @@ public sealed class SpeechEngineCatalogTests
         result.IsFailure.ShouldBeTrue();
         result.Error.Code.ShouldBe("test.uv_install");
         await provisioner.Received(1).EnsureAsync(ToolKind.Uv, Arg.Any<IProgress<EngineSetupProgress>?>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>uv geçici Windows dosya kilidine takılırsa (os error 5) kurulum yeniden denenir; kalıcı hatada denenmez.</summary>
+    [Fact]
+    public async Task EnsureReady_retries_uv_on_transient_file_lock()
+    {
+        var calls = 0;
+        var processes = Substitute.For<IProcessRunner>();
+        processes.RunAsync(Arg.Any<ProcessSpec>(), Arg.Any<Action<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(++calls == 1
+                ? new ProcessResult(2, string.Empty, "error: Failed to copy to: C:\\x\\cpython | cause: failed to rename file: Erişim engellendi. (os error 5)", TimeSpan.Zero, false)
+                : new ProcessResult(0, string.Empty, string.Empty, TimeSpan.Zero, false)));
+        var services = TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("uvlock")), "uv.exe", processes);
+        await using var engine = new DummyPythonSpeechEngine(services);
+
+        var result = await engine.EnsureReadyAsync(null, TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue();
+        calls.ShouldBe(2);
+        PythonSpeechEngineBase.IsTransientFileLock("error: No matching distribution found for piper-tts").ShouldBeFalse();
+        PythonSpeechEngineBase.IsTransientFileLock("The process cannot access the file because it is being used by another process. (os error 32)").ShouldBeTrue();
     }
 
     /// <summary>Hugging Face adresi doğru üretilir (yol parçaları kaçışlı).</summary>
