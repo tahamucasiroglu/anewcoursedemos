@@ -35,6 +35,7 @@ public sealed class StageExecutorDispatcherTests : IDisposable
     private readonly ISpeechEngine _speech = Substitute.For<ISpeechEngine>();
     private readonly IVideoEngine _video = Substitute.For<IVideoEngine>();
     private readonly IAligner _aligner = Substitute.For<IAligner>();
+    private readonly IImageFitter _fitter = Substitute.For<IImageFitter>();
     private readonly StageExecutorDispatcher _dispatcher;
 
     /// <summary>Sahte motorları ve dağıtıcıyı kurar.</summary>
@@ -50,6 +51,8 @@ public sealed class StageExecutorDispatcherTests : IDisposable
             File.WriteAllBytes(request.OutputPath, [1, 2, 3, 4]);
             return Task.FromResult(Result.Success(new ImageOutput(request.OutputPath)));
         });
+
+        _fitter.FitAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(Result.Success(true)));
 
         _speech.Key.Returns("supertonic-3");
         _speech.DisplayName.Returns("Supertonic");
@@ -70,7 +73,7 @@ public sealed class StageExecutorDispatcherTests : IDisposable
 
         _dispatcher = new StageExecutorDispatcher(
         [
-            new ImagesStageExecutor([_image]),
+            new ImagesStageExecutor([_image], _fitter),
             new SpeechStageExecutor([_speech], new WavAudioConcatenator(Substitute.For<IMediaProbe>())),
             new SceneRenderStageExecutor([_video]),
             new AlignStageExecutor([_aligner]),
@@ -138,6 +141,46 @@ public sealed class StageExecutorDispatcherTests : IDisposable
 
         third.IsSuccess.ShouldBeTrue();
         await _image.Received(4).GenerateAsync(Arg.Any<ImageRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Her üretilen görsel, kontrol noktasına alınmadan önce isteğin tam boyutuna getirilir (sd.cpp 1080 → 1088 yuvarlaması).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Images_FitsEachGeneratedImageToRequestedSize()
+    {
+        var payload = new ImagesStagePayload
+        {
+            ModelKey = "z-image-turbo",
+            Width = 1080,
+            Height = 1920,
+            Items = [new ImagePromptItem { SceneIndex = 0, Name = "scene-0-1.png", Prompt = "kale", Seed = 1 }],
+        };
+
+        var result = await _dispatcher.DispatchAsync(Context(PipelineStage.Images, payload, "hash-fit"), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue();
+        await _fitter.Received(1).FitAsync(Arg.Is<string>(p => p.Contains("scene-0-1", StringComparison.Ordinal)), 1080, 1920, Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Boyut uydurma başarısızsa aşama hata döner, yarım görsel kontrol noktasına girmez.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Images_FitFailure_FailsStage()
+    {
+        _fitter.FitAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result.Failure<bool>(Error.Failure("agent.image_fit_failed", "olmadı"))));
+        var payload = new ImagesStagePayload
+        {
+            ModelKey = "z-image-turbo",
+            Width = 1080,
+            Height = 1920,
+            Items = [new ImagePromptItem { SceneIndex = 0, Name = "scene-0-1.png", Prompt = "kale", Seed = 1 }],
+        };
+
+        var result = await _dispatcher.DispatchAsync(Context(PipelineStage.Images, payload, "hash-fit-fail"), TestContext.Current.CancellationToken);
+
+        result.Error.Code.ShouldBe("agent.image_fit_failed");
+        File.Exists(Path.Combine(_temp.Path, "images", "scene-0-1.png")).ShouldBeFalse();
     }
 
     /// <summary>Modeli destekleyen motor yoksa <c>agent.engine_not_found</c>.</summary>

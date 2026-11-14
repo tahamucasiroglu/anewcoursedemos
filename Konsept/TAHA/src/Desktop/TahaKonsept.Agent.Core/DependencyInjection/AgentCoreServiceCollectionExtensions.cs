@@ -95,6 +95,7 @@ public static class AgentCoreServiceCollectionExtensions
         services.AddSingleton<IAgentClient, AgentCommandHandler>();
 
         services.AddSingleton<IMediaProbe, FfmpegMediaProbe>();
+        services.AddSingleton<IImageFitter, FfmpegImageFitter>();
         services.AddSingleton<IAudioConcatenator, WavAudioConcatenator>();
         services.AddSingleton<IShellLauncher, WindowsShellLauncher>();
         services.AddSingleton<IVideoIndex, VideoIndex>();

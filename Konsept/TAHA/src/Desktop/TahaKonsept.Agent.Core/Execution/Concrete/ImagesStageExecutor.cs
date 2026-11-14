@@ -1,6 +1,7 @@
 using TahaKonsept.Agent.Abstractions.Image;
 using TahaKonsept.Agent.Abstractions.Image.Abstract;
 using TahaKonsept.Agent.Core.Execution.Base;
+using TahaKonsept.Agent.Core.Media.Abstract;
 using TahaKonsept.BuildingBlocks.Domain.Results;
 using TahaKonsept.Shared.Contracts.Agent;
 using TahaKonsept.Shared.Contracts.Agent.Payloads;
@@ -10,17 +11,21 @@ namespace TahaKonsept.Agent.Core.Execution.Concrete;
 
 /// <summary>
 /// <c>Images</c> aşaması: modeli destekleyen <see cref="IImageEngine"/>'i seçer (gerekirse kurar) ve her öğeyi
-/// <c>images/&lt;ad&gt;</c> olarak üretir; var olan görseller atlanır.
+/// <c>images/&lt;ad&gt;</c> olarak üretir; var olan görseller atlanır. Motor boyutu modelin hizasına yuvarlarsa
+/// (ör. sd.cpp FLUX.2: 1080 → 1088) görsel <see cref="IImageFitter"/> ile isteğin tam boyutuna getirilir (kapla + ortadan kırp).
 /// </summary>
 public sealed class ImagesStageExecutor : StageExecutorBase<ImagesStagePayload>
 {
     private readonly IEnumerable<IImageEngine> _engines;
+    private readonly IImageFitter _fitter;
 
     /// <summary>Oluşturur.</summary>
     /// <param name="engines">Görsel motorları.</param>
-    public ImagesStageExecutor(IEnumerable<IImageEngine> engines)
+    /// <param name="fitter">Görseli istenen tam boyuta getiren yardımcı.</param>
+    public ImagesStageExecutor(IEnumerable<IImageEngine> engines, IImageFitter fitter)
     {
         _engines = engines;
+        _fitter = fitter ?? throw new ArgumentNullException(nameof(fitter));
     }
 
     /// <inheritdoc />
@@ -70,7 +75,13 @@ public sealed class ImagesStageExecutor : StageExecutorBase<ImagesStagePayload>
                 var result = await engine.GenerateAsync(
                     new ImageRequest(payload.ModelKey, item.Prompt, payload.NegativePrompt, payload.Width, payload.Height, item.Seed, payload.Steps, partial),
                     ct);
-                return result.Map(o => o.ImagePath);
+                if (result.IsFailure)
+                {
+                    return Result.Failure<string>(result.Error);
+                }
+
+                var fitted = await _fitter.FitAsync(result.Value.ImagePath, payload.Width, payload.Height, ct);
+                return fitted.IsFailure ? Result.Failure<string>(fitted.Error) : Result.Success(result.Value.ImagePath);
             });
             if (produced.IsFailure)
             {
