@@ -69,6 +69,14 @@ internal static class SecretKeyValueScanner
                 keyEnd = pairEnd;
             }
 
+            if (PrecededByQualifier(text, i))
+            {
+                // "Invalid password: user 42, attempts 2" olay açıklamasıdır: yalnızca tek parça değer gizlenir
+                // ("Invalid password: hunter2"); düzyazı korunur, içindeki anahtarlar ayrıca taranır (hunt r9, hasar).
+                i = Math.Max(keyEnd, MaskSingleTokenValue(text, keyEnd, apiKey, output));
+                continue;
+            }
+
             i = Math.Max(keyEnd, MaskPair(text, i, keyEnd, apiKey, output));
         }
 
@@ -104,7 +112,7 @@ internal static class SecretKeyValueScanner
 
         var lineEndOfValue = LineEnd(text, valueStart);
         var unquoted = QuoteLength(text, valueStart) == 0 && valueStart < text.Length && text[valueStart] is not ('{' or '[');
-        if (unquoted && (IsPathContinuation(text, valueStart, apiKey) || IsSqlParameter(text, keyStart, keyEnd, valueStart)))
+        if (unquoted && (IsPathContinuation(text, keyStart, valueStart, apiKey) || IsSqlParameter(text, keyStart, keyEnd, valueStart)))
         {
             // Ai:ApiKeys:OpenRouter yolu (sağlayıcı adı değer değildir; sonraki bölüm yol kuralıyla okunur) ve
             // EF SQL'deki "Token" = @__token_0 parametre adı (hunt r5, hasar).
@@ -207,8 +215,8 @@ internal static class SecretKeyValueScanner
         return end > 0 && ValueWords.Contains(text[(pos + 1)..end]) ? end : -1;
     }
 
-    /// <summary>API key adından sonra boşluksuz <c>:</c> ve yalnızca harften oluşan bir yol bölümü mü (<c>ApiKeys:OpenRouter</c>).</summary>
-    private static bool IsPathContinuation(string text, int valueStart, bool apiKey)
+    /// <summary>Gizli addan sonra boşluksuz <c>:</c> ve yalnızca harften oluşan bir yapılandırma yolu bölümü mü (<c>ApiKeys:OpenRouter</c>).</summary>
+    private static bool IsPathContinuation(string text, int keyStart, int valueStart, bool apiKey)
     {
         if (valueStart == 0 || text[valueStart - 1] != ':' || !char.IsLetter(text[valueStart]))
         {
@@ -227,9 +235,10 @@ internal static class SecretKeyValueScanner
             return false;
         }
 
-        // API key adı: harf-yalnız bölüm yol sayılır (Ai:ApiKeys:OpenRouter). Diğer gizli adlar: yalnızca büyük harfle
-        // başlayan ve ardından yeni bir yol ayırıcısı/tırnak gelen bölüm (Identity:Password:RequiredLength') (hunt r8).
-        return apiKey || (char.IsUpper(text[valueStart]) && p < text.Length && text[p] is ':' or '=' or '\'' or '"');
+        // API key adı: harf-yalnız bölüm yol sayılır (Ai:ApiKeys:OpenRouter). Diğer gizli adlar: yalnızca anahtarın kendisi
+        // de bir yol bölümüyse ve büyük harfli bölümü yeni bir ayırıcı/tırnak izliyorsa (Identity:Password:RequiredLength',
+        // hunt r8); "password:Welcome\"" maskelenir (review r8, L-1).
+        return apiKey || (keyStart > 0 && text[keyStart - 1] == ':' && char.IsUpper(text[valueStart]) && p < text.Length && text[p] is ':' or '=' or '\'' or '"');
     }
 
     /// <summary>
@@ -323,10 +332,64 @@ internal static class SecretKeyValueScanner
         SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]).EndsWith("cookie", StringComparison.Ordinal);
 
     /// <summary>Ayırıcısız biçimler: CLI bayrağı <c>--password değer</c> ve SQL <c>PASSWORD 'değer'</c>.</summary>
+    /// <summary>Anahtardan hemen önce (tek boşluk) bir hata niteleyicisi var mı: "Invalid", "Wrong", "Hatalı", "Yanlış"…</summary>
+    private static bool PrecededByQualifier(string text, int keyStart)
+    {
+        if (keyStart < 2 || text[keyStart - 1] != ' ' || !char.IsLetter(text[keyStart - 2]))
+        {
+            return false;
+        }
+
+        var wordStart = keyStart - 2;
+        while (wordStart > 0 && char.IsLetter(text[wordStart - 1]) && keyStart - wordStart <= 16)
+        {
+            wordStart--;
+        }
+
+        return (wordStart == 0 || !char.IsLetterOrDigit(text[wordStart - 1])) && Qualifiers.Contains(text[wordStart..(keyStart - 1)]);
+    }
+
+    private static readonly HashSet<string> Qualifiers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "invalid", "wrong", "incorrect", "failed", "empty", "weak", "expired", "missing", "revoked", "bad", "unknown",
+        "rejected", "geçersiz", "hatalı", "yanlış", "eksik", "boş", "zayıf",
+    };
+
+    /// <summary>Ayırıcıdan sonraki değer satırda tek parçaysa (ardında yalnızca noktalama) gizler; değilse taramayı değerde sürdürür.</summary>
+    private static int MaskSingleTokenValue(string text, int keyEnd, bool apiKey, SecretMaskOutput output)
+    {
+        if (!TryReadSeparator(text, keyEnd, out var valueStart, out _))
+        {
+            return keyEnd;
+        }
+
+        var end = valueStart;
+        while (end < text.Length && !char.IsWhiteSpace(text[end]))
+        {
+            end++;
+        }
+
+        var tokenEnd = end;
+        while (tokenEnd > valueStart && text[tokenEnd - 1] is '.' or ',' or ';' or ')')
+        {
+            tokenEnd--;
+        }
+
+        return tokenEnd > valueStart && RestOfLineBlank(text, end, LineEnd(text, end))
+            ? Emit(text, valueStart, tokenEnd, apiKey, output)
+            : valueStart;
+    }
+
     private static int MaskWithoutSeparator(string text, int keyStart, int keyEnd, bool apiKey, SecretMaskOutput output)
     {
         var p = SkipInlineSpace(text, keyEnd);
         if (p == keyEnd || p >= text.Length)
+        {
+            return keyEnd;
+        }
+
+        // 'cookie ".AspNetCore.Antiforgery…"' çerez adıdır, değer değil (hunt r9, hasar).
+        if (IsCookieKey(text, keyStart, keyEnd))
         {
             return keyEnd;
         }
@@ -891,7 +954,8 @@ internal static class SecretKeyValueScanner
         // Bağlantı dizesinde alıntı en fazla 256 karakter aranır: "Pwd={a;" tekrarında karesel süre olmasın (hunt r8, perf).
         var bracketScanEnd = connectionString ? Math.Min(bracketLineEnd, pos + 256) : bracketLineEnd;
         var bracketClose = bracketLineEnd > pos ? MatchingBracket(text, pos, bracketScanEnd) : -1;
-        var quotedByBracket = bracketClose >= 0 && (bracketClose + 1 >= bracketLineEnd || text[bracketClose + 1] == ';');
+        var quotedByBracket = bracketClose >= 0
+            && (bracketClose + 1 >= bracketLineEnd || char.IsWhiteSpace(text[bracketClose + 1]) || text[bracketClose + 1] is ';' or '"' or '\'');
         if (text[pos] is '{' or '[' && (!connectionString || quotedByBracket))
         {
             var lineEnd = bracketLineEnd;
@@ -1038,7 +1102,8 @@ internal static class SecretKeyValueScanner
 
         if (connectionString)
         {
-            return c == ';';
+            // ';' yalnızca ardından yeni bir "Ad=" (ya da metin/boşluk sonu) geliyorsa biter: Password=Hunter;2024 tümüyle gizli (hunt r9).
+            return c == ';' && (p + 1 >= text.Length || char.IsWhiteSpace(text[p + 1]) || text[p + 1] is '"' or '\'' || LooksLikeKeySeparator(text, p + 1, allowColon: false));
         }
 
         if (urlEncoded)

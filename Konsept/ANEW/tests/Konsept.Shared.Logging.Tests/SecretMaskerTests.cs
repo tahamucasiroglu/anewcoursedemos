@@ -208,6 +208,17 @@ public sealed class SecretMaskerTests
         { "pid=1234 sid=1234 tty=pts/0 cmd=dotnet Konsept.Api.dll", "pid=1234 sid=1234 tty=pts/0 cmd=dotnet Konsept.Api.dll", "\u0000" },
         { "sessionTokens=q8Zr3kLmN0pQ2sT4vW", "sessionTokens=***", "q8Zr3kLmN0pQ" },
         { "Failed to convert configuration value 'abc' at 'Identity:Password:RequiredLength' to type 'System.Int32'.", "Failed to convert configuration value 'abc' at 'Identity:Password:RequiredLength' to type 'System.Int32'.", "\u0000" },
+
+        // Review r8 / hunt r9 (fix-10): yol istisnası daraltıldı; ayraç alıntısı; hata niteleyicisi; ';' içeren şifre; çerez adı.
+        { "{\"detail\":\"password:Welcome\"}", "{\"detail\":\"password:***}", "Welcome" },
+        { "'Password:Summer'", "'Password:***", "Summer" },
+        { "{\"ConnectionStrings\":{\"Default\":\"Host=db;Password={Pa;ss1234}\"}}", "{\"ConnectionStrings\":{\"Default\":\"Host=db;Password=***\"}}", "ss1234" },
+        { "Invalid password: user 42, remaining attempts 2.", "Invalid password: user 42, remaining attempts 2.", "\u0000" },
+        { "Hatalı şifre: kullanıcı 42, kalan hak 1", "Hatalı şifre: kullanıcı 42, kalan hak 1", "\u0000" },
+        { "Invalid service key: agent 7 rejected from 192.168.1.40", "Invalid service key: agent 7 rejected from 192.168.1.40", "\u0000" },
+        { "Invalid password: hunter2.", "Invalid password: ***.", "hunter2" },
+        { "Password=Hunter;2024", "Password=***", "2024" },
+        { "The required antiforgery cookie \".AspNetCore.Antiforgery.abc\" is not present.", "The required antiforgery cookie \".AspNetCore.Antiforgery.abc\" is not present.", "\u0000" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
