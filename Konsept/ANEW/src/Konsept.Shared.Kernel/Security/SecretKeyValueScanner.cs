@@ -123,7 +123,7 @@ internal static class SecretKeyValueScanner
             var query = !apiKey;
             start = end = valueStart;
             while (end < text.Length && !char.IsWhiteSpace(text[end])
-                && (query ? text[end] is not ('&' or '#') : text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')')))
+                && (query ? text[end] is not ('&' or '#' or '"' or '<' or '>') : text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')')))
             {
                 end++;
             }
@@ -339,7 +339,7 @@ internal static class SecretKeyValueScanner
         }
 
         // 'cookie ".AspNetCore.Antiforgery…"' çerez adıdır, değer değil (hunt r9); --cookie ve cookie "x" gizlenir (review r9, M-2).
-        if (text[keyStart] != '-' && IsCookieKey(text, keyStart, keyEnd) && p + 1 < text.Length && text[p] == '"' && text[p + 1] == '.')
+        if (text[keyStart] != '-' && IsCookieKey(text, keyStart, keyEnd) && p + 1 < text.Length && text[p] is '"' or '\'' && text[p + 1] == '.')
         {
             return keyEnd;
         }
@@ -929,6 +929,20 @@ internal static class SecretKeyValueScanner
             return close < 0 ? (pos, lineEnd, lineEnd) : (pos, close + 1, close + 1);
         }
 
+        if (text[pos] is '{' or '[' && !connectionString && bracketClose >= 0)
+        {
+            // Kapanış değeri bitirmiyor ("{Blue,Sky:2024}!", "{Hunter}2024", "{redacted}."): ayraç ve hemen ardındaki
+            // boşluksuz kuyruk birlikte gizlenir; içteki ayırıcılarda durulmaz, sonraki düzyazı korunur (hunt r13).
+            var tail = bracketClose + 1;
+            while (tail < bracketLineEnd && !char.IsWhiteSpace(text[tail])
+                && !(text[tail] is ',' or ';' && tail + 1 < bracketLineEnd && text[tail + 1] == ' '))
+            {
+                tail++;
+            }
+
+            return (pos, tail, tail);
+        }
+
         var end = pos;
         while (end < text.Length && !IsValueEnd(text, end, pos, connectionString, urlEncoded))
         {
@@ -1080,7 +1094,7 @@ internal static class SecretKeyValueScanner
         return c switch
         {
             ';' => LooksLikeKeySeparator(text, p + 1, allowColon: false),
-            ',' => LooksLikeKeySeparator(text, p + 1, allowColon: true),
+            ',' => p + 1 < text.Length && text[p + 1] == ' ' && LooksLikeKeySeparator(text, p + 1, allowColon: true), // ", Ad =" (kayıt/Serilog); ",ad=" şifrenin içinde olabilir (hunt r13)
             '&' => LooksLikeKeySeparator(text, p + 1, allowColon: false),
             '}' => p > valueStart && (p + 1 == text.Length || text[p + 1] is ',' or ';' or ' ' or '\t' or '\r' or '\n' or '}' or ']' or ')'),
             _ => false,

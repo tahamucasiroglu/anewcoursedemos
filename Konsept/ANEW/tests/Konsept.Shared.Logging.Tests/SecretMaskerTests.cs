@@ -247,6 +247,14 @@ public sealed class SecretMaskerTests
         { "GET /cb?password=Pa,ss123 HTTP/1.1", "GET /cb?password=*** HTTP/1.1", "ss123" },
         { "RegisterCommand { Name = Ali, Password = {Hunter}2024 }", "RegisterCommand { Name = Ali, Password = *** }", "2024" },
         { "Login: email=ali@x.com, password=[Hunter]2024, ip=192.168.1.20", "Login: email=ali@x.com, password=***, ip=192.168.1.20", "2024" },
+
+        // Review r12 / hunt r13 (fix-14): sorgu değeri tırnakta biter; ayraç + kuyruk; ",ad=" şifrede; tek tırnaklı çerez adı.
+        { "{\"url\":\"/cb?token=abc123def\",\"user\":\"ali\",\"status\":401}", "{\"url\":\"/cb?token=***\",\"user\":\"ali\",\"status\":401}", "abc123def" },
+        { "Password = {Blue,Sky:2024}!", "Password = ***", "Sky:2024" },
+        { "Password: {redacted}. Login failed for user bob from 10.0.0.5", "Password: *** Login failed for user bob from 10.0.0.5", "\u0000" },
+        { "password=Pa55,w0rd=Q!zSecret user=42", "password=***", "Q!zSecret" },
+        { "Login: Email = ali@example.com, Password = Ab,cd=Ef12345, Remember = False", "Login: Email = ali@example.com, Password = ***, Remember = False", "Ef12345" },
+        { "The cookie '.AspNetCore.Cookies' has set 'SameSite=None' and must also set 'Secure'.", "The cookie '.AspNetCore.Cookies' has set 'SameSite=None' and must also set 'Secure'.", "\u0000" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
