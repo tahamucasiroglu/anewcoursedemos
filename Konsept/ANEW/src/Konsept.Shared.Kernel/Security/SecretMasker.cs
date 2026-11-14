@@ -44,7 +44,7 @@ public static partial class SecretMasker
     [
         "password", "passwords", "passwd", "secret", "secrets", "token", "pairingcode", "servicekey", "privatekey",
         "credential", "credentials", "secretkey", "accesskey", "signingkey", "accountkey", "authorization", "cookie",
-        "passphrase", "pwd", "refreshtokens", "accesstokens", "idtokens", "authtokens", "bearertokens", "paircode",
+        "passphrase", "pwd", "refreshtokens", "accesstokens", "idtokens", "authtokens", "bearertokens", "sessiontokens", "paircode",
         "pairingpin", "encryptionkey", "masterkey", "clientkey", "apisecret", "sessionid", "sessionkey",
     ];
 
@@ -405,7 +405,7 @@ public static partial class SecretMasker
         || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
 
     private static readonly HashSet<string> PassNames =
-        new(StringComparer.Ordinal) { "sid", "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
+        new(StringComparer.Ordinal) { "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
 
     /// <summary>Yalnızca harften (ve isteğe bağlı sondaki '=') oluşan, 15 karakterden kısa sözcük: token değil.</summary>
     private static bool IsPlainWord(string token)

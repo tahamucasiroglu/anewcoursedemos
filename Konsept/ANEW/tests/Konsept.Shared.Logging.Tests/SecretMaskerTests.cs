@@ -200,6 +200,14 @@ public sealed class SecretMaskerTests
         { "PasswordHashFormatException: unsupported version byte 0x02", "PasswordHashFormatException: unsupported version byte 0x02", "\u0000" },
         { "Session created for user 42: SessionId=Zk9xPq2Lm8Rt4Vw6", "Session created for user 42: SessionId=***", "Zk9xPq2Lm8Rt" },
         { "Oturum anahtarı: Zk9xPq2Lm8Rt", "Oturum anahtarı: ***", "Zk9xPq2Lm8Rt" },
+
+        // Review r7 / hunt r8 (fix-9): istisnalar yalnızca kendi biçimlerinde; sid sıradan ad; yapılandırma yolu.
+        { "Ai:ApiKeys:GeminiService=Zx9vQ2mL8pKr4aBc", "Ai:ApiKeys:GeminiService=…aBc", "Zx9vQ2mL8pKr" },
+        { "PasswordResult=Hunter2Secret99", "PasswordResult=***", "Hunter2Secret99" },
+        { "{\"Password\": @dmin2024, \"User\": \"ali\"}", "{\"Password\": ***, \"User\": \"ali\"}", "dmin2024" },
+        { "pid=1234 sid=1234 tty=pts/0 cmd=dotnet Konsept.Api.dll", "pid=1234 sid=1234 tty=pts/0 cmd=dotnet Konsept.Api.dll", "\u0000" },
+        { "sessionTokens=q8Zr3kLmN0pQ2sT4vW", "sessionTokens=***", "q8Zr3kLmN0pQ" },
+        { "Failed to convert configuration value 'abc' at 'Identity:Password:RequiredLength' to type 'System.Int32'.", "Failed to convert configuration value 'abc' at 'Identity:Password:RequiredLength' to type 'System.Int32'.", "\u0000" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
@@ -299,6 +307,8 @@ public sealed class SecretMaskerTests
     [InlineData("eyJ-")]
     [InlineData("\\u0022password\\u0022:\\u0022x ")]
     [InlineData("%22token%22%3A%22")]
+    [InlineData("Pwd={a;")]
+    [InlineData("Host=x;Password={a;")]
     public void Mask_LargeAdversarialInput_StaysFast(string unit)
     {
         var text = string.Concat(Enumerable.Repeat(unit, (32 * 1024) / unit.Length));

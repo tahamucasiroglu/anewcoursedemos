@@ -210,7 +210,7 @@ internal static class SecretKeyValueScanner
     /// <summary>API key adından sonra boşluksuz <c>:</c> ve yalnızca harften oluşan bir yol bölümü mü (<c>ApiKeys:OpenRouter</c>).</summary>
     private static bool IsPathContinuation(string text, int valueStart, bool apiKey)
     {
-        if (!apiKey || valueStart == 0 || text[valueStart - 1] != ':' || !char.IsLetter(text[valueStart]))
+        if (valueStart == 0 || text[valueStart - 1] != ':' || !char.IsLetter(text[valueStart]))
         {
             return false;
         }
@@ -222,7 +222,14 @@ internal static class SecretKeyValueScanner
         }
 
         // Sağlayıcı adları kısadır; 20+ harflik değer yol bölümü sayılmaz (review r5, I-1).
-        return p - valueStart < 20 && (p == text.Length || !IsKeyChar(text[p]));
+        if (p - valueStart >= 20 || (p < text.Length && IsKeyChar(text[p])))
+        {
+            return false;
+        }
+
+        // API key adı: harf-yalnız bölüm yol sayılır (Ai:ApiKeys:OpenRouter). Diğer gizli adlar: yalnızca büyük harfle
+        // başlayan ve ardından yeni bir yol ayırıcısı/tırnak gelen bölüm (Identity:Password:RequiredLength') (hunt r8).
+        return apiKey || (char.IsUpper(text[valueStart]) && p < text.Length && text[p] is ':' or '=' or '\'' or '"');
     }
 
     /// <summary>
@@ -237,8 +244,10 @@ internal static class SecretKeyValueScanner
             return false;
         }
 
-        // Ad: EF ≤9 @__token_0, EF 10 @token, ADO @p0 — koruma tırnaklı SQL tanımlayıcısı şartıdır (review r6, L-3).
-        if (!(char.IsLetter(text[valueStart + 1]) || text[valueStart + 1] == '_'))
+        // Ad: EF ≤9 @__token_0, EF 10 @token, ADO @p0 — koruma tırnaklı SQL tanımlayıcısı + "=" karşılaştırmasıdır
+        // (review r6, L-3; r7, L-1: {"Password": @dmin2024} JSON'u ':' ile gelir ve maskelenir).
+        var sep = SkipInlineSpace(text, keyEnd + 1);
+        if (sep >= text.Length || text[sep] != '=' || !(char.IsLetter(text[valueStart + 1]) || text[valueStart + 1] == '_'))
         {
             return false;
         }
@@ -259,7 +268,9 @@ internal static class SecretKeyValueScanner
     /// </summary>
     private static bool IsDescriptiveName(string text, int keyStart, int keyEnd)
     {
-        if (!char.IsUpper(text[keyStart]))
+        // Yalnızca "Ad: metin" biçiminde (istisna başlığı, kategori, Identity hatası); "PasswordResult=x" ve
+        // "Ai:ApiKeys:GeminiService=x" maskelenmeye devam eder (review r7, L-2; hunt r8).
+        if (!char.IsUpper(text[keyStart]) || keyEnd + 1 >= text.Length || text[keyEnd] != ':' || text[keyEnd + 1] != ' ')
         {
             return false;
         }
@@ -877,7 +888,9 @@ internal static class SecretKeyValueScanner
         // Bağlantı dizesinde ayraç yalnızca kapanıştan sonra ';' ya da satır sonu geliyorsa alıntıdır
         // (Pwd={p@ss;w0rd}; ve {"pwd":"a;b"}); değilse sıradan karakterdir (Password={abc}def123; → ';'e kadar) (hunt r6/r7).
         var bracketLineEnd = text[pos] is '{' or '[' ? LineEnd(text, pos) : pos;
-        var bracketClose = bracketLineEnd > pos ? MatchingBracket(text, pos, bracketLineEnd) : -1;
+        // Bağlantı dizesinde alıntı en fazla 256 karakter aranır: "Pwd={a;" tekrarında karesel süre olmasın (hunt r8, perf).
+        var bracketScanEnd = connectionString ? Math.Min(bracketLineEnd, pos + 256) : bracketLineEnd;
+        var bracketClose = bracketLineEnd > pos ? MatchingBracket(text, pos, bracketScanEnd) : -1;
         var quotedByBracket = bracketClose >= 0 && (bracketClose + 1 >= bracketLineEnd || text[bracketClose + 1] == ';');
         if (text[pos] is '{' or '[' && (!connectionString || quotedByBracket))
         {
