@@ -30,7 +30,7 @@ yalnızca `localhost`'tan erişilebilen, kısa ömürlü token'lı yerel akış�
 Kazandırdıkları:
 - API key'ler Pi'den hiç çıkmıyor; şifreleme (ASP.NET Data Protection), maskeleme ve erişim tek
   noktada (H-2). Y-7'nin bağımlılık yarısı ve Y-8'in key yarısı architecture testiyle, Y-8'in
-  sandbox maddesi yöntem seçilince H-4 testleriyle zorlanıyor (B-5).
+  sandbox maddesi yöntem seçilince H-4 testleriyle zorlanıyor (Karar 5 (`raporlar/b5-video-pipeline-arastirmasi`)).
 - Maliyet kaydı, yeniden deneme sınırı (yalnızca 429/5xx, en fazla 2 kez) ve token limitleri tek
   modülde (H-3); BR-12 harcama gösterimi tek kaynaktan besleniyor.
 - Kullanıcının PC'si kapalıyken de konu önerisi ve konsept üretilebiliyor; yalnızca render için

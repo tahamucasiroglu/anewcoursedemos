@@ -33,14 +33,14 @@
 | Doğrulama | **FluentValidation** | Generic validation filter ile (K-4). |
 | Loglama | **Serilog** (dosya + DB sink) | Yerel log rotasyonu 1 hafta. |
 | Sunucu | **Raspberry Pi 5**, `linux-arm64` | |
-| Kullanıcı PC araçları | **Node.js LTS + FFmpeg + headless Chromium**, **Ollama**, izole **Python** ortamı | Ajan kendi klasörüne, çakışmasız kurar. |
+| Kullanıcı PC araçları | **Node.js LTS + FFmpeg + headless Chromium**; izole **Python** ortamı yalnızca isteğe bağlı "Ses klonlama" bileşeninde (Chatterbox, 0009) | Ajan kendi klasörüne, çakışmasız kurar. Ollama kurulmaz (E-4, 0009). |
 
 - Tüm NuGet versiyonları sabittir ve merkezi olarak `Directory.Packages.props` içinde tutulur.
 - Yeni paket = plan aşamasında gerekçesiyle öneri + insan onayı; lisans/bakım/açık kontrolü
   `docs/security.md` → Dependencies bölümüne göre.
-- Açık (ertelenen): video motoru alternatifleri, yerel model çalıştırma yöntemi (Python / ONNX /
-  ComfyUI) ve render sandbox yöntemi → `raporlar/` altında araştırma raporu, `specs/backlog.md`.
-  Temel stack bu rapordan etkilenmez.
+- Video motoru, yerel model çalıştırma yöntemi ve render sandbox yöntemi Karar 5
+  (`raporlar/b5-video-pipeline-arastirmasi`) ile belirlendi; uygulaması 0009, 0017 ve 0018'de.
+  Temel stack bu karardan etkilenmez.
 
 ## Naming
 - Interface `I` önekiyle, abstract base sınıf `Base` sonekiyle: `ITtsEngine` → `TtsEngineBase` →

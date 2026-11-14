@@ -1,6 +1,6 @@
 # Architecture
 
-> Bootstrap sırasında 2026-11-14'te dolduruldu (kaynak: `Promtlar/0007`–`0009`). Burada karar verilmiş mimari anlatılır, hedef değil.
+> Bootstrap sırasında 2026-11-14'te dolduruldu (kaynak: `Promtlar/0007`–`0009`); aynı gün spec bölme sonrası onaylanan kararlarla güncellendi. Burada karar verilmiş mimari anlatılır, hedef değil.
 > Agents read this file before planning; vague answers here become vague code.
 
 ## System overview
@@ -28,12 +28,14 @@ Konsept.Api içindeki 7 modül:
 | **Identity** | Login, kayıt, roller ve yetkiler, ban, oturumlar, ajan cihaz eşleştirme | Kullanıcı, rol, yetki, oturum, cihaz |
 | **Profiles** | Kanal profilleri ve hazır şablonlar | Profil, şablon |
 | **Concepts** | Konu önerisi, konsept üretimi ve düzenleme döngüsü, onay (BR-16) | Konu önerisi, konsept, sahne, revizyon |
-| **AiGateway** | Sağlayıcı ve model kataloğu, kullanıcının şifreli API key'leri, tüm online model çağrıları, maliyet kaydı (BR-12) | Sağlayıcı, model, API key, model seçimleri, harcama |
+| **AiGateway** | Sağlayıcı ve model kataloğu, kullanıcının şifreli API key'leri, tüm online model çağrıları (key doğrulama çağrısı dahil), maliyet kaydı (BR-12) | Sağlayıcı, model, API key, model seçimleri, harcama |
 | **Production** | Üretim sırası, işler, aşamalar, pipeline yönetimi, videolar ve sürümleri | Kuyruk, iş, aşama, aşama çıktısı, video, video sürümü |
 | **AgentGateway** | Ajanla bağlantı: SignalR hub, ajanın çevrimiçi durumu, komut gönderme, dosya alışverişi | Ajan bağlantısı, komut kaydı |
 | **Monitoring** | Günlük akışı, hata bildirimleri, teknik loglar, admin istatistikleri | Günlük, hata bildirimi, log |
 
 - **Silinenler (Trash) modül değildir.** Konsept ve video kendi modüllerinde "silindi" durumuna geçer; Silinenler sayfası Concepts ve Production'ın `Contracts` arayüzlerinden derlenir.
+- **Model kataloğu** sistemle gelen sürümlenmiş seed verisidir (0004). Online girişler: metin modelleri, online görsel olarak yalnızca OpenAI gpt-image (0004) ve online ses olarak ElevenLabs (0017). Yerel girişler (0006 Req 18): yerel görsel modelleri (Z-Image-Turbo, FLUX.2 klein 4B), yerel ses modelleri (Supertonic 3, Chatterbox Multilingual V3) ve video motorları (HyperFrames, Remotion) katalogda "yerel" olarak tanımlıdır (türleri sırasıyla "görsel", "ses" ve "video motoru"; "ses" ve "video motoru" türleri 0006 Req 18'de eklenir); API key gerektirmez, birim fiyat taşımaz ve AiGateway üzerinden çağrılmaz, ajanda çalışır. Katalogda Ollama/yerel LLM girişi yoktur (E-4). Ajanın bildirdiği kurulu isteğe bağlı bileşenler kullanıcı başına saklanır ve yalnızca Remotion'un listelenmesini ve yeni profilin görsel varsayılanını belirler (0006 Req 19).
+- **İlk admin** Identity tarafından Pi'deki bir ortam ayarında verilen tek bir e-posta adresiyle belirlenir (gizli bilgi değil; kayıtta ve API açılışında eşleşen hesap admin rolü alır; ayar boşsa hiçbir hesap admin olmaz). Başka yol yoktur (0011 Req 5). Ayarın adı plan aşamasında belirlenir.
 - **Admin paneli modül değildir.** Veriyi Monitoring ve Identity'nin `Contracts` arayüzlerinden okur; üretim istatistikleri (ör. toplam klip sayısı) için Production `Contracts`'ı da okuyabilir. Tam kaynak listesi admin paneli spec'inde netleşir (düşük öncelik).
 
 Diğer uygulamalar:
@@ -41,7 +43,7 @@ Diğer uygulamalar:
 | Component | Single responsibility | Owns |
 |---|---|---|
 | **Konsept.Web** | Razor sayfaları, `$.ajax` uçları, oturum cookie'si (BFF); her şeyi API'ye sorar | Yalnızca şifreli HttpOnly cookie içindeki token'lar; veri yok |
-| **Konsept.Agent** | Yerel kurulum (Node.js LTS, FFmpeg, headless Chromium, Ollama, izole Python), render, yerel ses/görsel modelleri, dosya işlemleri, localhost video akışı | Yerel video dosyaları ve aşama çıktıları, kendi refresh token'ı |
+| **Konsept.Agent** | Yerel kurulum (Node.js LTS, FFmpeg, headless Chromium; izole Python yalnızca isteğe bağlı "Ses klonlama" bileşeninde — 0009; Ollama kurulmaz, E-4), render, yerel ses/görsel modelleri, dosya işlemleri, localhost video akışı | Yerel video dosyaları ve aşama çıktıları, kendi refresh token'ı |
 
 ### Layer / project structure
 Proje sayısında **sabit bir kural yok; gerektiği kadar proje** açılır. Değişmeyen şey katman ayrımı ve Y-1…Y-8'dir; bunları proje sayısı değil **architecture testleri (ArchUnitNET, `Konsept.ArchitectureTests`)** korur. Bir modülün katmanları:
@@ -64,9 +66,10 @@ Katmanların hangi projelere bölüneceği plan aşamasında ihtiyaca göre beli
 5. **Online LLM çağrıları:** yalnızca Pi'deki AiGateway üzerinden; ajan online sağlayıcıya doğrudan gitmez.
 6. **Tarayıcı → Ajan:** yalnızca video oynatma için, ajanın localhost-only, kısa ömürlü token'lı akış ucu.
 7. **Veritabanı:** tek PostgreSQL 17; **her modülün kendi şeması ve kendi `DbContext`'i** var. Şemalar arası foreign key ya da join yok. Arka plan kuyruğu da PostgreSQL üzerinde.
+8. **Kimlik gerektirmeyen uçlar (default-deny istisnaları, 0002 Req 11):** giriş, kayıt ve API'nin **sağlık kontrolü** ucu. Sağlık kontrolü yalnızca API'nin ve veritabanının ayakta olup olmadığını ve sürümü döndürür; ajan durumu dahil kullanıcıya ait hiçbir bilgi içermez; deploy betikleri bu ucu kullanır. Ajanın sunucu bağlantısı 0002'de geçici olarak kimliksizdir; 0012 bu istisnayı kaldırır ve yerine eşleştirme istisnalarını koyar.
 
 ## Forbidden dependencies (make them testable)
-Referans kuralları `Konsept.ArchitectureTests` (ArchUnitNET) ile otomatik doğrulanır: Y-1…Y-6, Y-7'nin bağımlılık yarısı (LLM HTTP istemcilerine ve Data Protection çözücüsüne yalnızca AiGateway referans verir) ve Y-8'in "ajan API key sözleşmelerine referans vermez" yarısı. Y-8'in sandbox maddesi, yöntem seçilince H-4 testleriyle (kasıtlı bozma kanıtı) doğrulanır (`specs/backlog.md` B-5). Architecture testleri `scripts/check` içinde (`[fast]`) çalışır; adım greenfield olduğu için `scripts/check.conf`'ta şimdilik yorum satırıdır, walking skeleton ile etkinleşir.
+Referans kuralları `Konsept.ArchitectureTests` (ArchUnitNET) ile otomatik doğrulanır: Y-1…Y-6, Y-7'nin bağımlılık yarısı (LLM HTTP istemcilerine ve Data Protection çözücüsüne yalnızca AiGateway referans verir) ve Y-8'in "ajan API key sözleşmelerine referans vermez" yarısı. Y-8'in sandbox maddesi H-4 testleriyle (kasıtlı bozma kanıtı) doğrulanır; yalıtım yöntemi Karar 5 ile seçildi ve 0018'de tanımlı. Architecture testleri `scripts/check` içinde (`[fast]`) çalışır; adım greenfield olduğu için `scripts/check.conf`'ta şimdilik yorum satırıdır, walking skeleton ile etkinleşir.
 
 - **Y-1:** Bir modül, başka bir modülün yalnızca `Contracts` katmanına referans verebilir.
 - **Y-2:** `Domain` katmanı, `Shared.Kernel` dışında hiçbir şeye bağımlı olamaz (EF Core, ASP.NET yasak).
@@ -85,4 +88,4 @@ Referans kuralları `Konsept.ArchitectureTests` (ArchUnitNET) ile otomatik doğr
 - Redis/RabbitMQ gibi ayrı kuyruk/önbellek servisleri.
 - Tarayıcıda SignalR (polling kullanılır).
 - İnternete açılma (HTTPS + reverse proxy), e-posta doğrulaması → `specs/backlog.md`.
-- Ertelenen araştırma: video motoru alternatifleri, yerel model çalıştırma yöntemi (Python/ONNX/ComfyUI) ve render sandbox yöntemi → `raporlar/` altında rapor, `specs/backlog.md`. Temel stack bu rapora göre değişmez.
+- Video motoru alternatifleri, yerel model çalıştırma yöntemi ve render sandbox yöntemi araştırması teslim edildi (`raporlar/b5-video-pipeline-arastirmasi`); kararlar (Karar 5) spec'lere işlendi (0006, 0009, 0017, 0018). Temel stack bu rapora göre değişmez.
