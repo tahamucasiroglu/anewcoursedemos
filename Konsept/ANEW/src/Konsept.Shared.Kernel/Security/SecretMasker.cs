@@ -401,10 +401,10 @@ public static partial class SecretMasker
     private static bool IsHiddenField(string name) =>
         NameForms(name).Any(n => HiddenFieldSuffixes.Any(s => n.EndsWith(s, StringComparison.Ordinal))
             || n.StartsWith("password", StringComparison.Ordinal) // password_confirmation, passwordHash…
-            || PassNames.Contains(n)) // DB_PASS, SMTP_PASS — genel "pass" eki firstPass/classPass'i de yakalıyordu (hunt r5)
+            || ExactHiddenNames.Contains(n)) // DB_PASS, SMTP_PASS — genel "pass" eki firstPass/classPass'i de yakalıyordu (hunt r5)
         || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
 
-    private static readonly HashSet<string> PassNames =
+    private static readonly HashSet<string> ExactHiddenNames =
         new(StringComparer.Ordinal) { "oturum", "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
 
     /// <summary>Yalnızca harften (ve isteğe bağlı sondaki '=') oluşan, 15 karakterden kısa sözcük: token değil.</summary>
