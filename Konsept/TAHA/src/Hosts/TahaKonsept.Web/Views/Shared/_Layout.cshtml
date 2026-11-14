@@ -15,6 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="@tokens.RequestToken" />
     <meta name="csrf-header" content="@tokens.HeaderName" />
+    <meta name="app-version" content="@TahaKonsept.BuildingBlocks.Application.Common.AppVersion.Of(typeof(TahaKonsept.Web.Controllers.Base.WebControllerBase).Assembly)" />
     <meta name="color-scheme" content="light dark" />
     <title>@(ViewData["Title"] is string t ? t + " · " : string.Empty)Taha Konsept</title>
     <link rel="icon" type="image/svg+xml" href="~/img/logo.svg" />
@@ -23,6 +24,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" />
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/diagnostics.css" asp-append-version="true" />
     <script src="~/js/core/theme.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Head", required: false)
 </head>
@@ -126,6 +128,7 @@
     <script src="~/js/core/poll.js" asp-append-version="true"></script>
     <script src="~/js/core/modal.js" asp-append-version="true"></script>
     <script src="~/js/core/profile.js" asp-append-version="true"></script>
+    <script src="~/js/core/error-report.js" asp-append-version="true"></script>
     <script src="~/js/core/layout.js" asp-append-version="true"></script>
     <script src="~/js/core/journal.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

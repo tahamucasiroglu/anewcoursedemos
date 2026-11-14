@@ -5,63 +5,163 @@
     <div class="tk-page-head">
         <div>
             <h1>Yönetim paneli</h1>
-            <p>Üretim istatistikleri, harcamalar, hata bildirimleri ve son aktiviteler.</p>
+            <p>Üretim istatistikleri, harcamalar, kullanıcılar, hata bildirimleri ve etkinlik günlüğü.</p>
         </div>
         <div class="tk-page-actions">
+            <span class="tk-hint" id="ad-generated"></span>
             <button type="button" class="tk-btn tk-btn-secondary" id="ad-refresh">
                 <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-refresh"></use></svg> Yenile
             </button>
         </div>
     </div>
 
-    <div class="tk-stats">
-        <div class="tk-stat"><div class="tk-stat-label">Toplam klip</div><div class="tk-stat-value" id="ad-clips">—</div><div class="tk-stat-sub">Tüm zamanlar</div></div>
-        <div class="tk-stat"><div class="tk-stat-label">Konsept</div><div class="tk-stat-value" id="ad-concepts">—</div><div class="tk-stat-sub">Üretilen + onaylı</div></div>
-        <div class="tk-stat"><div class="tk-stat-label">Bu ay harcama</div><div class="tk-stat-value" id="ad-spend">—</div><div class="tk-stat-sub">LLM + ses + görsel</div></div>
-        <div class="tk-stat"><div class="tk-stat-label">Hata bildirimi</div><div class="tk-stat-value" id="ad-errors">—</div><div class="tk-stat-sub">Açık bildirimler</div></div>
+    <div class="tk-tabs" role="tablist" aria-label="Yönetim bölümleri">
+        <button type="button" class="tk-tab is-active" role="tab" data-tab="genel" aria-selected="true">
+            <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-chart"></use></svg> Genel bakış
+        </button>
+        <button type="button" class="tk-tab" role="tab" data-tab="kullanicilar" aria-selected="false">
+            <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-user"></use></svg> Kullanıcılar
+        </button>
+        <button type="button" class="tk-tab" role="tab" data-tab="hatalar" aria-selected="false">
+            <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-bug"></use></svg> Hata bildirimleri
+            <span class="tk-badge is-danger" id="ad-open-badge" hidden></span>
+        </button>
+        <button type="button" class="tk-tab" role="tab" data-tab="gunluk" aria-selected="false">
+            <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-list"></use></svg> Etkinlik günlüğü
+        </button>
     </div>
 
-    <div class="tk-admin-grid">
+    @* ---------------------------------------------------------------- Genel bakış *@
+    <section class="tk-tab-panel is-active" data-panel="genel" role="tabpanel">
+        <div class="tk-stats tk-ad-stats">
+            <div class="tk-stat"><span class="tk-stat-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-user"></use></svg></span>
+                <div class="tk-stat-label">Kullanıcı</div><div class="tk-stat-value" id="ad-users">—</div><div class="tk-stat-sub">Kayıtlı hesap</div></div>
+            <div class="tk-stat"><span class="tk-stat-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bulb"></use></svg></span>
+                <div class="tk-stat-label">Konsept</div><div class="tk-stat-value" id="ad-concepts">—</div><div class="tk-stat-sub">Tüm zamanlar</div></div>
+            <div class="tk-stat"><span class="tk-stat-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg></span>
+                <div class="tk-stat-label">Video</div><div class="tk-stat-value" id="ad-videos">—</div><div class="tk-stat-sub" id="ad-videos-sub">Tüm zamanlar</div></div>
+            <div class="tk-stat"><span class="tk-stat-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg></span>
+                <div class="tk-stat-label">Bu ay harcama</div><div class="tk-stat-value" id="ad-spend">—</div><div class="tk-stat-sub">LLM + ses + görsel</div></div>
+            <div class="tk-stat" id="ad-errors-tile"><span class="tk-stat-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bug"></use></svg></span>
+                <div class="tk-stat-label">Açık bildirim</div><div class="tk-stat-value" id="ad-errors">—</div><div class="tk-stat-sub">Çözülmemiş hata bildirimi</div></div>
+        </div>
+
+        <div class="tk-ad-charts">
+            <section class="tk-card">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg></span>
+                        <div><h2>Günlük üretilen video</h2><small class="tk-muted">Son 30 gün · toplam <span id="ad-videos-30">0</span></small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body"><div class="tk-chart-box"><canvas id="ad-chart-videos" role="img" aria-label="Son 30 günde günlük üretilen video sayısı"></canvas></div></div>
+            </section>
+            <section class="tk-card">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-list"></use></svg></span>
+                        <div><h2>Günlük kayıtları seviyeye göre</h2><small class="tk-muted">Son 30 gün · toplam <span id="ad-activity-30">0</span></small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body">
+                    <div class="tk-chart-box is-round"><canvas id="ad-chart-levels" role="img" aria-label="Son 30 günde seviyeye göre günlük kaydı sayıları"></canvas></div>
+                    <div class="tk-ad-legend" id="ad-levels-legend"></div>
+                </div>
+            </section>
+            <section class="tk-card tk-ad-wide">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg></span>
+                        <div><h2>Günlük harcama</h2><small class="tk-muted">Son 30 gün ($) · toplam <span id="ad-spend-30">$0.00</span></small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body"><div class="tk-chart-box"><canvas id="ad-chart-spend" role="img" aria-label="Son 30 günde günlük harcama, dolar"></canvas></div></div>
+            </section>
+        </div>
+        <div class="tk-alert is-warning" id="ad-failed" hidden>
+            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg>
+            <span></span>
+        </div>
+    </section>
+
+    @* ---------------------------------------------------------------- Kullanıcılar *@
+    <section class="tk-tab-panel" data-panel="kullanicilar" role="tabpanel">
         <section class="tk-card">
             <header class="tk-card-head">
                 <div class="tk-card-title">
-                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-chart"></use></svg></span>
-                    <div><h2>Günlük üretilen klip</h2><small class="tk-muted">Son 30 gün</small></div>
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-user"></use></svg></span>
+                    <div><h2>Kullanıcılar</h2><small class="tk-muted">Yasaklanan kullanıcının tüm oturumları kapatılır</small></div>
                 </div>
             </header>
-            <div class="tk-card-body"><div class="tk-chart-box"><canvas id="ad-chart-daily" role="img" aria-label="Son 30 günde günlük üretilen klip sayısı"></canvas></div></div>
+            <div class="tk-card-body is-flush tk-ad-table-wrap" id="ad-users-list"></div>
         </section>
-        <section class="tk-card">
-            <header class="tk-card-head">
-                <div class="tk-card-title">
-                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg></span>
-                    <div><h2>Sağlayıcıya göre harcama</h2><small class="tk-muted">Bu ay ($)</small></div>
-                </div>
-            </header>
-            <div class="tk-card-body"><div class="tk-chart-box"><canvas id="ad-chart-provider" role="img" aria-label="Bu ay sağlayıcıya göre harcama"></canvas></div></div>
-        </section>
-    </div>
+    </section>
 
-    <div class="tk-admin-grid">
+    @* ---------------------------------------------------------------- Hata bildirimleri *@
+    <section class="tk-tab-panel" data-panel="hatalar" role="tabpanel">
         <section class="tk-card">
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bug"></use></svg></span>
-                    <div><h2>Hata bildirimleri</h2></div>
+                    <div><h2>Hata bildirimleri</h2><small class="tk-muted">Web, masaüstü ajanı ve kurulum ekranından gelenler</small></div>
+                </div>
+                <div class="tk-ad-filters">
+                    <label class="tk-sr-only" for="ad-report-status">Durum</label>
+                    <select class="tk-select" id="ad-report-status">
+                        <option value="">Tüm durumlar</option>
+                        <option value="New" selected>Yeni</option>
+                        <option value="Seen">Görüldü</option>
+                        <option value="Resolved">Çözüldü</option>
+                    </select>
                 </div>
             </header>
-            <div class="tk-card-body is-flush" id="ad-reports"></div>
+            <div class="tk-card-body is-flush tk-ad-table-wrap" id="ad-reports"></div>
+            <div class="tk-ad-pager" id="ad-reports-pager" hidden></div>
         </section>
+    </section>
+
+    @* ---------------------------------------------------------------- Etkinlik günlüğü *@
+    <section class="tk-tab-panel" data-panel="gunluk" role="tabpanel">
         <section class="tk-card">
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-list"></use></svg></span>
-                    <div><h2>Son aktiviteler</h2></div>
+                    <div><h2>Etkinlik günlüğü</h2><small class="tk-muted">Kalıcı kayıtlar · gün Türkiye saatine göre</small></div>
                 </div>
+                <form class="tk-ad-filters" id="ad-log-filters" autocomplete="off">
+                    <label class="tk-sr-only" for="ad-log-day">Gün</label>
+                    <input type="date" class="tk-input" id="ad-log-day" />
+                    <label class="tk-sr-only" for="ad-log-level">Seviye</label>
+                    <select class="tk-select" id="ad-log-level">
+                        <option value="">Tüm seviyeler</option>
+                        <option value="Information">Bilgi</option>
+                        <option value="Warning">Uyarı</option>
+                        <option value="Error">Hata</option>
+                        <option value="Critical">Kritik</option>
+                    </select>
+                    <label class="tk-sr-only" for="ad-log-source">Kaynak</label>
+                    <select class="tk-select" id="ad-log-source">
+                        <option value="">Tüm kaynaklar</option>
+                        <option value="Web">Web</option>
+                        <option value="Api">API</option>
+                        <option value="Agent">Ajan</option>
+                        <option value="Installer">Kurulum</option>
+                        <option value="Production">Üretim</option>
+                        <option value="Concepts">Konseptler</option>
+                        <option value="Identity">Kimlik</option>
+                        <option value="Providers">Sağlayıcılar</option>
+                        <option value="Diagnostics">Tanılama</option>
+                        <option value="System">Sistem</option>
+                    </select>
+                    <label class="tk-sr-only" for="ad-log-search">Mesajda ara</label>
+                    <input type="search" class="tk-input" id="ad-log-search" placeholder="Mesajda ara…" />
+                    <button type="button" class="tk-btn tk-btn-ghost tk-btn-sm" id="ad-log-clear">Temizle</button>
+                </form>
             </header>
-            <div class="tk-card-body" id="ad-activities"></div>
+            <div class="tk-card-body is-flush tk-ad-table-wrap" id="ad-logs"></div>
+            <div class="tk-ad-pager" id="ad-logs-pager" hidden></div>
         </section>
-    </div>
+    </section>
 </div>
 
 @section Scripts {

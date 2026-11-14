@@ -5,8 +5,9 @@ using TahaKonsept.Web.Controllers.Base;
 namespace TahaKonsept.Web.Controllers;
 
 /// <summary>
-/// Üst bardaki "Hata bildir" penceresinin gönderim ucu. Beklenen API rotası:
-/// <c>POST api/diagnostics/error-reports</c> (<c>{ title, description, includeLogs, page, userAgent }</c>) → yönetim paneli.
+/// Üst bardaki "Hata bildir" penceresinin gönderim ucu. API rotası: <c>POST api/diagnostics/error-reports</c>
+/// (<c>{ source: "Web", message, details, pageUrl, userAgent, appVersion }</c>) → yönetim paneli "Hata bildirimleri".
+/// Pencere: <c>wwwroot/js/core/error-report.js</c> (TK.errorReport).
 /// </summary>
 public sealed class HataBildirController : WebControllerBase
 {

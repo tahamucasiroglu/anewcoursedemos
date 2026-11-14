@@ -1,6 +1,6 @@
 /**
  * TK.layout — üst barın davranışları: aylık harcama rozeti (/Harcama/Aylik, 60 sn'de bir), profil seçimi
- * (/Profil/Liste, /Profil/Sec/{id}), açılır menüler, mobil menü, "Hata bildir" penceresi (/HataBildir/Gonder), çıkış.
+ * (/Profil/Liste, /Profil/Sec/{id}), açılır menüler, mobil menü, "Hata bildir" düğmesi (pencere: TK.errorReport), çıkış.
  * Aktif profil değişince document üzerinde 'tk:profile' olayı tetiklenir. Tek modül (IIFE).
  */
 (function (window, $) {
@@ -48,27 +48,9 @@
         });
     }
 
+    /** "Hata bildir" penceresi TK.errorReport'ta (js/core/error-report.js, Diagnostics). */
     function openBugReport() {
-        var $body = $(
-            '<div>' +
-            '<div class="tk-field"><label for="tk-bug-title">Kısa başlık</label><input id="tk-bug-title" class="tk-input" maxlength="160" placeholder="Ör. Konu önerisi boş liste döndü" /></div>' +
-            '<div class="tk-field"><label for="tk-bug-desc">Ne oldu?</label><textarea id="tk-bug-desc" class="tk-textarea" rows="5" maxlength="4000" placeholder="Ne yapıyordunuz, ne bekliyordunuz, ne oldu?"></textarea></div>' +
-            '<label class="tk-check"><input type="checkbox" id="tk-bug-logs" checked /> Son günlük kayıtlarını ekle</label>' +
-            '</div>');
-        var $send = $('<button type="button" class="tk-btn tk-btn-primary"></button>').html(TK.util.icon('send') + ' Gönder');
-        var h = TK.modal.open({ title: 'Hata bildir', body: $body, footer: $send, hint: 'Bildirim yönetici paneline düşer.' });
-        $send.on('click', function () {
-            var title = $.trim($('#tk-bug-title').val());
-            var desc = $.trim($('#tk-bug-desc').val());
-            if (!title || !desc) { TK.toast.warning('Başlık ve açıklama gerekli.'); return; }
-            TK.util.busy($send, TK.api.post('/HataBildir/Gonder', {
-                title: title, description: desc, includeLogs: $('#tk-bug-logs').is(':checked'),
-                page: window.location.pathname, userAgent: window.navigator.userAgent
-            })).done(function () {
-                TK.toast.success('Teşekkürler, bildiriminiz alındı.');
-                h.close(true);
-            });
-        });
+        TK.errorReport.open();
     }
 
     function bindDropdowns() {

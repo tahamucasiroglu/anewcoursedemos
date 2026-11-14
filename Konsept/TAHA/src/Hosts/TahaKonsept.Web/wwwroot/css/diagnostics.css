@@ -1,0 +1,86 @@
+/*
+ * Diagnostics arayüzü: Günlük paneli ayrıntıları, "Hata bildir" penceresi, yönetim paneli (sekme, filtre, tablo, seviye renkleri).
+ * Yalnızca theme.css değişkenlerini kullanır (açık/koyu tema otomatik).
+ */
+
+/* ------------------------------------------------------------ Günlük paneli */
+.tk-journal-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    padding: 6px 10px 8px; border-bottom: 1px solid var(--tk-divider); margin-bottom: 2px; font-size: .84rem;
+}
+.tk-log .tk-badge { margin-left: 4px; font-size: .68rem; padding: 1px 7px; vertical-align: 1px; }
+.tk-log-details { margin-top: 4px; }
+.tk-log-details summary { cursor: pointer; color: var(--tk-text-muted); font-size: .76rem; font-weight: 700; }
+.tk-log-details pre, .tk-ad-pre {
+    margin: 6px 0 2px; padding: 8px 10px; max-height: 220px; overflow: auto;
+    background: var(--tk-surface-2); border: 1px solid var(--tk-divider); border-radius: 8px;
+    font-family: var(--tk-font-mono); font-size: .74rem; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--tk-text-soft);
+}
+.tk-journal-count .tk-badge { margin-right: 4px; }
+
+/* ------------------------------------------------------------ Hata bildir penceresi */
+.tk-report-meta {
+    display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 14px 0 0; padding: 10px 12px;
+    background: var(--tk-surface-2); border: 1px dashed var(--tk-border-strong); border-radius: 11px; font-size: .8rem;
+}
+.tk-report-meta dt { color: var(--tk-text-muted); font-weight: 800; }
+.tk-report-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; color: var(--tk-text-soft); }
+
+/* ------------------------------------------------------------ Yönetim paneli */
+#tk-admin { display: flex; flex-direction: column; gap: 16px; }
+#tk-admin .tk-tabs { align-self: flex-start; flex-wrap: wrap; }
+#tk-admin .tk-tab { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
+#tk-admin .tk-tab .tk-badge { padding: 0 7px; }
+#tk-admin .tk-tab-panel { padding-top: 0; }
+#tk-admin .tk-tab-panel.is-active { display: flex; flex-direction: column; gap: 16px; }
+
+.tk-ad-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tk-stat-icon {
+    float: right; width: 34px; height: 34px; border-radius: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tk-accent-soft); color: var(--tk-accent);
+}
+.tk-stat.is-alert .tk-stat-icon { background: var(--tk-danger-soft); color: var(--tk-danger); }
+.tk-stat.is-alert .tk-stat-value { color: var(--tk-danger); }
+
+.tk-ad-charts { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; }
+.tk-ad-charts .tk-chart-box { height: 280px; }
+.tk-ad-charts .tk-chart-box.is-round { height: 240px; }
+.tk-ad-wide { grid-column: 1 / -1; }
+.tk-ad-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 10px; font-size: .8rem; color: var(--tk-text-soft); }
+.tk-ad-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.tk-ad-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.tk-ad-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tk-ad-filters .tk-input, .tk-ad-filters .tk-select { width: auto; padding: 7px 10px; font-size: .86rem; }
+.tk-ad-filters .tk-input[type="search"] { min-width: 200px; }
+
+.tk-ad-table td { vertical-align: top; }
+.tk-ad-table .tk-ad-time { white-space: nowrap; font-family: var(--tk-font-mono); font-size: .78rem; color: var(--tk-text-muted); }
+.tk-ad-table .tk-ad-msg { min-width: 240px; overflow-wrap: anywhere; }
+.tk-ad-table .tk-ad-actions { text-align: right; white-space: nowrap; }
+.tk-ad-table .tk-select { width: auto; padding: 5px 8px; font-size: .82rem; }
+.tk-ad-sub { display: block; margin-top: 3px; font-size: .78rem; color: var(--tk-text-muted); overflow-wrap: anywhere; }
+.tk-ad-user { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.tk-ad-row-muted td { opacity: .62; }
+
+.tk-level { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.tk-level::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.tk-level.is-info { color: var(--tk-info); }
+.tk-level.is-warning { color: var(--tk-warning); }
+.tk-level.is-error, .tk-level.is-critical { color: var(--tk-danger); }
+
+.tk-ad-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--tk-divider); font-size: .84rem; color: var(--tk-text-muted); }
+.tk-ad-pager .tk-row { gap: 6px; }
+
+@media (max-width: 1180px) {
+    .tk-ad-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .tk-ad-charts { grid-template-columns: 1fr; }
+    .tk-ad-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tk-ad-table-wrap { overflow-x: auto; }
+}
+@media (max-width: 520px) {
+    .tk-ad-stats { grid-template-columns: 1fr; }
+}
