@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Monitoring use-case'leri; Infrastructure'a referans vermez (Y-3). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Domain\Konsept.Modules.Monitoring.Domain.csproj" />
+  </ItemGroup>
+</Project>

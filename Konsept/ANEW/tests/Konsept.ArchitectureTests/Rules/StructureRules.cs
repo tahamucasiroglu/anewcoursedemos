@@ -34,7 +34,7 @@ public static partial class StructureRules
             var inConcrete = HasSegment(type.Namespace, "Concrete");
             if (inConcrete)
             {
-                if (!BaseChain(type).Any(b => b.Name.EndsWith("Base", StringComparison.Ordinal) && HasSegment(b.Namespace, "Base")))
+                if (!BaseChain(type).Any(b => PlainName(b).EndsWith("Base", StringComparison.Ordinal) && HasSegment(b.Namespace, "Base")))
                 {
                     violations.Add($"{type.FullName}: Base altındaki bir …Base sınıfından türemiyor");
                 }
@@ -96,6 +96,12 @@ public static partial class StructureRules
         {
             yield return current;
         }
+    }
+
+    private static string PlainName(Type type)
+    {
+        var tick = type.Name.IndexOf('`', StringComparison.Ordinal);
+        return tick < 0 ? type.Name : type.Name[..tick];
     }
 
     private static bool HasSegment(string? ns, string segment) =>

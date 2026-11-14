@@ -1,20 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
   <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Shouldly" />
     <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.ArchitectureTests.Fixtures\Konsept.ArchitectureTests.Fixtures.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Monitoring.Domain\Konsept.Modules.Monitoring.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Monitoring.Application\Konsept.Modules.Monitoring.Application.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Monitoring.Infrastructure\Konsept.Modules.Monitoring.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Monitoring modülünün başka modüllere açık tek yüzeyi (Y-1). -->
+</Project>

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Monitoring iş kuralları; yalnızca Shared.Kernel'e bağımlı (Y-2). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>

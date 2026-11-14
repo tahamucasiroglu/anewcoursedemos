@@ -67,3 +67,8 @@ dotnet_naming_style.underscore_camel.capitalization = camel_case
 # Test projelerinde Method_State_Expected adları (CA1707) serbest.
 [tests/**.cs]
 dotnet_diagnostic.CA1707.severity = none
+
+# EF Core migration dosyaları araç tarafından üretilir.
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none

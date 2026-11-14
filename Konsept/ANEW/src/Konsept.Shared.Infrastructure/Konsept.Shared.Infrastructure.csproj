@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Ortak altyapı: EF temeli, Result → HTTP çevirisi, doğrulama filtresi, versiyon, loglama. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>
