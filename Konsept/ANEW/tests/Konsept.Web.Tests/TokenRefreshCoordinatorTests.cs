@@ -41,4 +41,23 @@ public sealed class TokenRefreshCoordinatorTests
         second.Value.RefreshToken.ShouldBe("knr_new");
         await api.Received(1).RefreshAsync("knr_old", Arg.Any<CancellationToken>());
     }
+
+    /// <summary>Biten her uçuşun kilidi bırakılır; çok sayıda farklı token sözlüğü büyütmez.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Refresh_ManyTokens_GatesPruned()
+    {
+        var api = Substitute.For<IKonseptApiClient>();
+        api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Result<AuthSessionResponse>.Success(new AuthSessionResponse("jwt", DateTimeOffset.UtcNow.AddMinutes(15), "knr_x", Guid.NewGuid(), "A")));
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var coordinator = new TokenRefreshCoordinator(cache);
+
+        for (var i = 0; i < 50; i++)
+        {
+            await coordinator.RefreshAsync(api, $"knr_{i}", TestContext.Current.CancellationToken);
+        }
+
+        coordinator.ActiveGateCount.ShouldBe(0);
+    }
 }

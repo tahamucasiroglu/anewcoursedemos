@@ -58,8 +58,14 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
         finally
         {
             gate.Release();
+
+            // Kilit yalnızca uçuş süresince yaşar (review R1-3): sonuç paylaşıldığı için sonradan gelen önbellekten okur.
+            _gates.TryRemove(new KeyValuePair<string, SemaphoreSlim>(key, gate));
         }
     }
+
+    /// <summary>Gets uçuştaki refresh kilidi sayısı (bitmiş uçuşların kilitleri tutulmaz).</summary>
+    public int ActiveGateCount => _gates.Count;
 
     /// <summary>Paylaşılan sonucu okur.</summary>
     /// <param name="key">Eski token'ın hash'i.</param>
