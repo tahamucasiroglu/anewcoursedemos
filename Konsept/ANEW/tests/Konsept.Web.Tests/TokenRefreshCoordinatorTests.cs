@@ -42,6 +42,56 @@ public sealed class TokenRefreshCoordinatorTests
         await api.Received(1).RefreshAsync("knr_old", Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Lider geçici hatayla düşer, kuyruktaki çağıran dönüşü yaparken yeni bir çağıran gelir: ikinci eşzamanlı dönüş başlamaz
+    /// (eski token Api'de 401 verirdi), iki çağıran da yeni çifti alır ve önbellekte başarı kalır (review R2-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Refresh_TransientLeaderFailure_NoSecondRotation_SuccessWins()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var api = Substitute.For<IKonseptApiClient>();
+        var leaderGo = new TaskCompletionSource();
+        var secondStarted = new TaskCompletionSource();
+        var secondGo = new TaskCompletionSource();
+        var pair = new AuthSessionResponse("jwt-new", DateTimeOffset.UtcNow.AddMinutes(15), "knr_new", Guid.NewGuid(), "A");
+        var calls = 0;
+        api.RefreshAsync("knr_old", Arg.Any<CancellationToken>()).Returns(async _ =>
+        {
+            switch (Interlocked.Increment(ref calls))
+            {
+                case 1:
+                    await leaderGo.Task;
+                    return Result<AuthSessionResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable);
+                case 2:
+                    secondStarted.SetResult();
+                    await secondGo.Task;
+                    return Result<AuthSessionResponse>.Success(pair);
+                default:
+                    return Result<AuthSessionResponse>.Failure(new("identity.session_invalid", "x", Konsept.Shared.Kernel.Enums.ErrorType.Unauthorized));
+            }
+        });
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var coordinator = new TokenRefreshCoordinator(cache);
+
+        var leader = coordinator.RefreshAsync(api, "knr_old", ct);
+        var queued = coordinator.RefreshAsync(api, "knr_old", ct);
+        leaderGo.SetResult();
+        (await leader).IsSuccess.ShouldBeFalse();
+        await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(10), ct);
+        var late = coordinator.RefreshAsync(api, "knr_old", ct);
+        secondGo.SetResult();
+        var queuedResult = await queued;
+        var lateResult = await late;
+        var cached = await coordinator.RefreshAsync(api, "knr_old", ct);
+
+        queuedResult.Value.RefreshToken.ShouldBe("knr_new");
+        lateResult.IsSuccess.ShouldBeTrue();
+        cached.Value.RefreshToken.ShouldBe("knr_new");
+        calls.ShouldBe(2);
+    }
+
     /// <summary>Biten her uçuşun kilidi bırakılır; çok sayıda farklı token sözlüğü büyütmez.</summary>
     /// <returns>Görev.</returns>
     [Fact]

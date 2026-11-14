@@ -37,10 +37,12 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
 
         var gate = _gates.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
         await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var resolved = false;
         try
         {
             if (TryGetShared(key, out shared))
             {
+                resolved = true;
                 return shared!;
             }
 
@@ -50,7 +52,13 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
             var result = await api.RefreshAsync(refreshToken, detached.Token).ConfigureAwait(false);
             if (result.IsSuccess || result.Error!.Type == ErrorType.Unauthorized)
             {
-                Share(key, result);
+                // Başarı kazanır (review R2-1): paylaşılmış bir başarının üstüne 401 yazılmaz.
+                if (result.IsSuccess || !TryGetShared(key, out var existing) || existing is not { IsSuccess: true })
+                {
+                    Share(key, result);
+                }
+
+                resolved = true;
             }
 
             return result;
@@ -59,12 +67,16 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
         {
             gate.Release();
 
-            // Kilit yalnızca uçuş süresince yaşar (review R1-3): sonuç paylaşıldığı için sonradan gelen önbellekten okur.
-            _gates.TryRemove(new KeyValuePair<string, SemaphoreSlim>(key, gate));
+            // Kilit yalnızca kesin sonuç paylaşıldıktan sonra bırakılır (review R1-3, R2-1): bekleyenler ve sonradan gelenler
+            // önbellekten okur. Geçici hatada kilit kalır; böylece aynı eski token için ikinci bir eşzamanlı dönüş başlamaz.
+            if (resolved)
+            {
+                _gates.TryRemove(new KeyValuePair<string, SemaphoreSlim>(key, gate));
+            }
         }
     }
 
-    /// <summary>Gets uçuştaki refresh kilidi sayısı (bitmiş uçuşların kilitleri tutulmaz).</summary>
+    /// <summary>Gets tutulan refresh kilidi sayısı (kesin sonuçla biten uçuşların kilitleri tutulmaz; geçici hatada kilit kalır).</summary>
     public int ActiveGateCount => _gates.Count;
 
     /// <summary>Paylaşılan sonucu okur.</summary>
