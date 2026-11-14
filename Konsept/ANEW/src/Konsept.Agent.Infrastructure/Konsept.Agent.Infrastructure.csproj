@@ -6,5 +6,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Agent.Application\Konsept.Agent.Application.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Logging\Konsept.Shared.Logging.csproj" />
   </ItemGroup>
 </Project>

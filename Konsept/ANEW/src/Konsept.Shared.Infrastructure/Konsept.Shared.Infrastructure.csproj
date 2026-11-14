@@ -8,5 +8,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Logging\Konsept.Shared.Logging.csproj" />
   </ItemGroup>
 </Project>

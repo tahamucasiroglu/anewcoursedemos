@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Testing\Konsept.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Shared.Logging\Konsept.Shared.Logging.csproj" />
+  </ItemGroup>
+</Project>
