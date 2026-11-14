@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B-5 Video Pipeline Araştırması</title>
+<style>
+:root{
+  --bg:#fbf6ef; --surface:#fffaf3; --surface-2:#f4e9da; --text:#3b2a1e; --muted:#7a6352;
+  --accent:#c2601a; --accent-2:#8a4a1f; --border:#e6d5bf; --ok:#4f7a3a; --warn:#b5651d; --bad:#a63d2a;
+  --chip-bg:#f7e2c8; --code-bg:#f1e4d3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1d1611; --surface:#261d16; --surface-2:#30251c; --text:#f1e6d8; --muted:#bba58f;
+    --accent:#f0a061; --accent-2:#e2b48a; --border:#433427; --ok:#9cc488; --warn:#f0b070; --bad:#f08a76;
+    --chip-bg:#3d2d1f; --code-bg:#33271d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1d1611; --surface:#261d16; --surface-2:#30251c; --text:#f1e6d8; --muted:#bba58f;
+  --accent:#f0a061; --accent-2:#e2b48a; --border:#433427; --ok:#9cc488; --warn:#f0b070; --bad:#f08a76;
+  --chip-bg:#3d2d1f; --code-bg:#33271d;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 "Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--accent)} a:hover{color:var(--accent-2)}
+code{background:var(--code-bg);padding:.08em .35em;border-radius:4px;font:.88em/1.4 Consolas,"Cascadia Mono",monospace;overflow-wrap:anywhere}
+header.top{padding:32px 16px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--surface-2),var(--bg))}
+header.top .in{max-width:1180px;margin:0 auto}
+header.top h1{margin:0 0 6px;font-size:clamp(1.5rem,3.5vw,2.2rem);line-height:1.2}
+header.top p{margin:4px 0;color:var(--muted)}
+.banner{margin:14px 0 0;padding:12px 14px;border:1px solid var(--warn);border-left:6px solid var(--warn);border-radius:8px;background:var(--surface);color:var(--text)}
+.layout{max-width:1180px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:32px}
+nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:20px 0}
+nav.toc h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc li a{display:block;padding:5px 10px;border-left:3px solid transparent;text-decoration:none;color:var(--text);font-size:.93rem;border-radius:0 6px 6px 0}
+nav.toc li a:hover{background:var(--surface-2);border-left-color:var(--accent)}
+main{min-width:0;padding:20px 0 60px}
+section{margin:0 0 40px}
+h2{font-size:1.45rem;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--border);scroll-margin-top:12px}
+h3{font-size:1.12rem;margin:22px 0 8px;color:var(--accent-2)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.pick{background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--accent);border-radius:10px;padding:12px 14px}
+.pick .k{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pick .v{font-weight:650;font-size:1.05rem;margin:2px 0 4px}
+.pick p{margin:0;font-size:.92rem;color:var(--muted)}
+.tw{overflow-x:auto;margin:10px 0;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;text-align:left}
+th{background:var(--surface-2);font-weight:650;position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+.tag{display:inline-block;font-size:.74rem;font-weight:650;padding:1px 8px;border-radius:999px;background:var(--chip-bg);white-space:nowrap}
+.tag.ok{color:var(--ok)} .tag.warn{color:var(--warn)} .tag.bad{color:var(--bad)}
+.uv{color:var(--warn);font-weight:650;font-size:.85em;white-space:nowrap}
+ul.tight li{margin:3px 0}
+.q{border-left:4px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;margin:10px 0}
+.q b{display:block}
+.src{columns:2 320px;column-gap:28px;font-size:.86rem}
+.src h4{break-after:avoid;margin:12px 0 4px;color:var(--accent-2)}
+.src ul{margin:0 0 8px;padding-left:18px}
+.src li{overflow-wrap:anywhere;break-inside:avoid}
+footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--border);padding:16px;text-align:center}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;gap:0}
+  nav.toc{position:static;max-height:none;padding:12px 0;border-bottom:1px solid var(--border)}
+  nav.toc ol{display:flex;flex-wrap:wrap;gap:4px}
+  nav.toc li a{border-left:none;border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:.85rem}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <h1>B-5 Video Pipeline Araştırması</h1>
+  <p>ANEW Konsept · video motoru, yerel TTS, yerel görsel üretimi, çalışma zamanı ve H-4 sandbox · Araştırma tarihi: 14 Kasım 2026</p>
+  <p>Ortam varsayımı: Windows 11, .NET 10 / Avalonia ajan, 6 GB VRAM, içerik önce Türkçe.</p>
+  <div class="banner"><strong>Bunlar ÖNERİDİR, karar değildir.</strong> Her madde insan onayını bekliyor. Onaylananlar ADR ve spec'e (ör. <code>spec 0006</code>) dönüşecek. <span class="uv">(doğrulanmadı)</span> etiketi, birincil kaynakta teyit edilemeyen iddiaları gösterir.</div>
+</div></header>
+
+<div class="layout">
+<nav class="toc" aria-label="İçindekiler">
+  <h2>İçindekiler</h2>
+  <ol>
+    <li><a href="#ozet">Yönetici özeti</a></li>
+    <li><a href="#motor">1. Video motoru</a></li>
+    <li><a href="#ffmpeg">2. Altyazı ve FFmpeg</a></li>
+    <li><a href="#tts">3. TTS</a></li>
+    <li><a href="#gorsel">4. Görsel üretimi</a></li>
+    <li><a href="#runtime">5. Çalışma zamanı</a></li>
+    <li><a href="#sandbox">6. H-4 sandbox</a></li>
+    <li><a href="#kararlar">7. Karar listesi</a></li>
+    <li><a href="#riskler">8. Riskler ve sorular</a></li>
+    <li><a href="#dogrulanmayan">9. Doğrulanmayanlar</a></li>
+    <li><a href="#kaynaklar">10. Kaynaklar</a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="ozet">
+  <h2>Yönetici özeti</h2>
+  <div class="grid">
+    <div class="pick"><div class="k">Video motoru</div><div class="v">HyperFrames 0.9.43 (sabit)</div><p>Apache-2.0, yerel render ücretsiz ve hesapsız, ajan için tasarlanmış, Windows'ta Chrome sandbox'ı açık. Remotion opsiyonel ve varsayılan kapalı.</p></div>
+    <div class="pick"><div class="k">TTS</div><div class="v">Supertonic 3 (ONNX, .NET içinde)</div><p>Türkçe dahil 31 dil, Python gerekmez, CPU öncelikli. Repo arşivlendi: ağırlıklar aynalanır, sherpa-onnx .NET yolu var. Klonlama için Chatterbox V3.</p></div>
+    <div class="pick"><div class="k">Görsel modeli</div><div class="v">Z-Image-Turbo GGUF</div><p>Apache-2.0, resmi 4 GB VRAM tarifi var. İkinci model FLUX.2 [klein] 4B. Görselde Türkçe metin çizdirilmez.</p></div>
+    <div class="pick"><div class="k">Çalışma zamanı</div><div class="v">ONNX işlem içi + sidecar</div><p>PyTorch modelleri uv ile izole Python'da localhost sidecar. Görsel için stable-diffusion.cpp <code>sd-server</code>. GPU işleri sıralı.</p></div>
+    <div class="pick"><div class="k">Sandbox (H-4)</div><div class="v">Katmanlı, çalışma zamanında admin yok</div><p>AST kapısı → iş klasörü → AppContainer (spike şartlı) → Job Object → Chromium ayarları → Node izin modeli → ffprobe çıktı kapısı.</p></div>
+    <div class="pick"><div class="k">Her motor için kural</div><div class="v">Sahne başına klip</div><p>Altyazı (ASS karaoke) ve ilerleme çubuğu ajanın sabit şablonundan çıkar, LLM yazmaz. Son birleştirme FFmpeg'de.</p></div>
+  </div>
+  <div class="card">
+    <strong>Neden bu set?</strong>
+    <ul class="tight">
+      <li><strong>Maliyet:</strong> hepsi lisans ücreti olmadan yerelde çalışır. Bulut yedekleri ucuz: görsel için fal Z-Image-Turbo $0.005/MP, ses için ElevenLabs ~$1.2 / 15 dk.</li>
+      <li><strong>Token başına kalite:</strong> altyazı ve çubuk deterministik şablonlardan geldiği için LLM onlara token harcamaz. HyperFrames <code>lint --json</code> çıktısı onarım adımı için LLM'e geri döner.</li>
+      <li><strong>Türkçe:</strong> Supertonic 3 Türkçeyi destekliyor. HyperFrames'in dahili Kokoro ve Parakeet modelleri desteklemiyor, bu yüzden kelime zamanlamalarını kendi TTS'imiz sağlar.</li>
+      <li><strong>6 GB VRAM:</strong> görsel modeli kuantize edilip text encoder CPU'ya alınır. Tüm 6 GB süre tahminleri <span class="uv">doğrulanmadı</span>, bu yüzden ilk çalıştırmada benchmark yapılır.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="motor">
+  <h2>1. Video motoru</h2>
+  <div class="tw"><table>
+    <thead><tr><th></th><th>HyperFrames</th><th>Remotion</th><th>Revideo</th><th>Motion Canvas</th><th>Manim CE</th></tr></thead>
+    <tbody>
+      <tr><td><b>Öneri</b></td><td><span class="tag ok">Varsayılan</span></td><td><span class="tag warn">Opsiyonel, kapalı</span></td><td><span class="tag bad">Bırak</span></td><td><span class="tag bad">Bırak</span></td><td><span class="tag warn">Faz 2</span></td></tr>
+      <tr><td><b>LLM ne yazar</b></td><td>HTML/CSS/JS + data attribute; GSAP varsayılan</td><td>React/TS bileşenleri</td><td>TS generator</td><td>TS generator</td><td>Python sahneleri</td></tr>
+      <tr><td><b>Lisans</b></td><td>Apache-2.0; ticari kullanım serbest</td><td>Açık kaynak değil; birey, ≤3 kişilik şirket ve kâr amacı gütmeyenler için ücretsiz</td><td>MIT</td><td>MIT</td><td>MIT</td></tr>
+      <tr><td><b>Son sürüm</b></td><td>0.9.43 (2026-11-13)</td><td>4.0.543 (2026-11-11)</td><td>0.11.0 (2026-07-10)</td><td>3.17.2 (2024-12-14)</td><td>0.22.1 (2026-10-27)</td></tr>
+      <tr><td><b>Olgunluk</b></td><td>1.0 öncesi, günde birkaç sürüm</td><td>v4, birkaç günde bir</td><td>Düzensiz</td><td>Durmuş</td><td>Aktif</td></tr>
+      <tr><td><b>Runtime</b></td><td>Node ≥22, FFmpeg, Chrome</td><td>Node ≥16 / Bun ≥1.0.3, Chrome Headless Shell, native compositor</td><td>Node + tarayıcı</td><td>Node + tarayıcı</td><td>Python ≥3.11, PyAV; LaTeX yalnız formül için</td></tr>
+      <tr><td><b>Windows</b></td><td>Destekli (PowerShell'den render dahil); çok worker'lı yakalama ekran görüntüsü tabanlı</td><td>Windows x64 (ARM64 yok)</td><td>Belirtilmemiş</td><td>Belirtilmemiş</td><td>Evet</td></tr>
+      <tr><td><b>Determinizm</b></td><td><code>time = floor(frame)/fps</code>; Date.now, rAF, timer, tohumsuz random ve render sırasında fetch yasak</td><td><code>random(seed)</code></td><td>Seek</td><td>Seek</td><td>Deterministik</td></tr>
+      <tr><td><b>Hız</b></td><td><code>--workers</code> 1-24 (varsayılan auto, worker başına ~256 MB). Rehberdeki 25.0 s / 9.8 s optimizasyon kazancıdır, tipik hız değildir</td><td><code>--concurrency</code></td><td>Paralel worker</td><td>Tarayıcı export</td><td>Yavaş</td></tr>
+      <tr><td><b>LLM desteği</b></td><td>llms.txt, 9 skill, <code>lint --json</code>, <code>check --json</code></td><td>Skills, llms.txt; en çok eğitim verisi <span class="uv">(nitel)</span></td><td>Az</td><td>Orta</td><td>Büyük korpus, sürümler arası API kayması</td></tr>
+      <tr><td><b>Telemetri</b></td><td>Açık; <code>HYPERFRAMES_NO_TELEMETRY=1</code> ile kapanır</td><td>İstemci tarafı render'da kapatılamaz</td><td><code>DISABLE_TELEMETRY=true</code></td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>HyperFrames neden varsayılan</h3>
+  <ul class="tight">
+    <li>HeyGen'in tasarım yazısı (2026-06-22): "Outputs got safer and more repetitive the more guardrails we added". Düz HTML/CSS/JS'e dönünce "the creativity came back".</li>
+    <li>Doğrulama döngüsü: <code>lint --json</code> (errorCount, warningCount, infoCount, findings), ardından <code>check --json</code> (layout, motion, contrast, audio...), ardından render.</li>
+    <li>Çıktı: mp4, webm, mov, gif, png-sequence, hls. <code>--gpu</code> ile NVENC, AMF ve QSV donanım kodlaması.</li>
+    <li>Hesap yalnızca HeyGen sesleri, avatar ve bulut render için gerekiyor. Yerel render için gerekmiyor.</li>
+  </ul>
+  <h3>Dikkat edilecekler</h3>
+  <ul class="tight">
+    <li><b>1.0 öncesi değişkenlik.</b> Son iki sürüm Windows düzeltmesi içeriyor: v0.9.41 Chrome 157+ yakalama hatası, v0.9.43 ClearType renk saçağı. Tam sürüm sabitlenmeli.</li>
+    <li><b>Türkçe dahili konuşma yok.</b> Kokoro dilleri en, es, fr, hi, it, pt-br, ja, zh. Parakeet v3 kartında Türkçe yok; HyperFrames'in paketlediği Parakeet sürümü <span class="uv">doğrulanmadı</span>.</li>
+    <li><b>Uzun render.</b> Yerel uzun render rehberi yok, chunk'lama yalnızca dağıtık modda var. Sahne başına render ile çözülür.</li>
+    <li><b>Chromium 147'nin beginFrame'i kaldırdığı</b> iddiası <span class="uv">doğrulanmadı</span>.</li>
+  </ul>
+  <h3>Remotion</h3>
+  <ul class="tight">
+    <li>Automators planı: "$0.01 per render", 1000'lik bloklar ($10), aylık minimum $100. Prompt-to-video araçları bu plana giriyor.</li>
+    <li>Kullanıcıların kendi Remotion kodunu yüklemesi yasak. Remotion 5.0'da lisans değişecek ve Automators için sunucu tarafı telemetri zorunlu olacak.</li>
+    <li>Varsayılan olarak Chromium sandbox'ını kapatıyor (bkz. bölüm 6).</li>
+    <li>Tek kişi kendi PC'sinde ücretsiz lisansa uyar. Müşteri PC'lerinde render'a lisansın nasıl uygulandığı <span class="uv">doğrulanmadı (hukuki soru)</span>.</li>
+  </ul>
+  <h3>Bırakılanlar</h3>
+  <p>Revideo (düzensiz sürüm; ekip durumu yalnızca üçüncü taraf kaynakta), Motion Canvas (2024'ten beri durmuş), Editly (2022), Diffusion Studio (derinlemesine değerlendirilmedi). Düz HTML + Puppeteer'ı sıfırdan yazmaya gerek yok, çünkü HyperFrames aynı şeyi Apache-2.0 ile veriyor.</p>
+</section>
+
+<section id="ffmpeg">
+  <h2>2. Altyazı, ilerleme çubuğu ve FFmpeg son aşama</h2>
+  <div class="card">
+    <ul class="tight">
+      <li><b>Sahne başına klip.</b> Klipler concat demuxer ile, aynı codec ayarlarıyla stream-copy edilerek birleştirilir. Preset'ler 1080×1920 ve 1920×1080, 30 fps.</li>
+      <li><b>Karaoke altyazı.</b> TTS kelime zamanlarından ASS üretilir. <code>\k</code> dolguyu anında değiştirir, <code>\kf</code> soldan sağa süpürür. libass ile <code>subtitles</code> veya <code>ass</code> filtresinden yakılır.</li>
+      <li><b>İlerleme çubuğu.</b> <code>overlay</code> (renk kaynağı x ifadesiyle <code>t</code>'ye göre kaydırılır) veya <code>drawtext</code> ile yapılır. <strong>drawbox kullanılmaz:</strong> drawbox'ta <code>t</code> kalınlık demektir ve zaman değişkeni yoktur.</li>
+      <li><b>Türkçe.</b> Türkçe glif içeren fontlar paketlenir ve <code>lang="tr"</code> ayarlanır. Bu ayarın uppercase'te i'yi İ yapması <span class="uv">doğrulanmadı</span>.</li>
+      <li><b>Kazanç.</b> LLM token'ı harcanmaz, her motorla çalışır, düşük bellekle stream eder.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="tts">
+  <h2>3. TTS</h2>
+  <div class="card">
+    <b>2026'da plana etki eden değişiklikler</b>
+    <ul class="tight">
+      <li><b>Supertonic arşivlendi</b> (2026-09-09, "Development and support have ended"). Voice Builder 2026-08-31'den sonra erişilemez. Şirketin dağıldığı <span class="uv">doğrulanmadı</span>. Sherpa-onnx Supertonic 3'ü destekliyor ve .NET örneği var.</li>
+      <li><b>Chatterbox emekli</b> (Ağustos 2026). MIT lisansı geçerli kalıyor.</li>
+      <li><b>Ollama TTS</b> yalnızca macOS'ta çalışıyor ve Türkçe desteklemiyor.</li>
+    </ul>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Model</th><th>Türkçe</th><th>Lisans</th><th>.NET (Python'suz)</th><th>VRAM / hız</th><th>Klonlama</th><th>Öneri</th></tr></thead>
+    <tbody>
+      <tr><td><b>Supertonic 3</b></td><td>Evet; üretici tablosunda WER 1.00</td><td>Open RAIL-M (ticari kullanım serbest, kullanım kısıtlarıyla)</td><td>Evet (resmi C# + sherpa-onnx)</td><td>CPU öncelikli; yayınlanmış tek ölçüm e-okuyucuda RTF 0.3</td><td>Hayır</td><td><span class="tag ok">Yerel varsayılan</span></td></tr>
+      <tr><td><b>Chatterbox Multilingual V3</b></td><td>Evet</td><td>MIT + PerTh filigranı</td><td>Yalnızca topluluk ONNX'i (diakritik sorunu raporları)</td><td>~4-4.5 GB <span class="uv">(doğrulanmadı)</span></td><td>Evet (≥10 s referans)</td><td><span class="tag ok">İkinci, sidecar</span></td></tr>
+      <tr><td><b>VoxCPM2</b></td><td>Evet; kendi ölçümünde WER %1.65</td><td>Apache-2.0</td><td>Topluluk ONNX'i</td><td>~8 GB (6 GB'tan fazla)</td><td>Evet</td><td><span class="tag warn">Deneysel, ≥8 GB</span></td></tr>
+      <tr><td><b>Trendyol-TTS</b></td><td>Yalnızca TR; TR-Zor UTMOS 3.82</td><td>MIT etiketli, "research and prototyping"</td><td>Hayır</td><td>A100'de RTF 1.37</td><td>Belirtilmemiş</td><td><span class="tag warn">Deneysel</span></td></tr>
+      <tr><td><b>Ahenk / Ahenk Cep</b></td><td>Yalnızca TR; Ahenk WER 2.54</td><td>CC BY 4.0 (atıf şart)</td><td>Cep: belirtilmemiş</td><td>Cep 8.6M parametre, CPU'da RTF ~0.2</td><td>—</td><td><span class="tag warn">Cep: CPU seçeneği</span></td></tr>
+      <tr><td><b>Kokoro-82M</b></td><td>Hayır</td><td>Apache-2.0</td><td>Sherpa paketleri yalnızca EN ve ZH</td><td>Çok hafif</td><td>Hayır</td><td><span class="tag warn">Yalnızca İngilizce</span></td></tr>
+      <tr><td>XTTS-v2, F5-TTS TR, OmniVoice, MMS, Piper dfki</td><td>Var / kısmen</td><td>Ticari kullanımı yasak (CPML, CC BY-NC, CC BY-NC-SA)</td><td>—</td><td>—</td><td>—</td><td><span class="tag bad">Lisans nedeniyle elendi</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Online seçenekler (~15 dk ≈ 15k karakter varsayımı <span class="uv">doğrulanmadı</span>)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Servis</th><th>Fiyat</th><th>Türkçe</th><th>Zaman damgası</th><th>~15 dk</th></tr></thead>
+    <tbody>
+      <tr><td>ElevenLabs</td><td>$0.08/1K karakter; Flash/Turbo $0.04/1K</td><td>Evet</td><td>Evet, karakter hizalaması</td><td>$1.20 ($0.60)</td></tr>
+      <tr><td>Google Chirp 3 HD</td><td>$30/1M karakter</td><td><span class="uv">Doğrulanmadı</span></td><td>—</td><td>$0.45</td></tr>
+      <tr><td>Gemini 3.8 Flash TTS</td><td>$0.50 + $9/1M token (2026 sonuna kadar), sonra iki katı</td><td><span class="uv">Doğrulanmadı</span></td><td>—</td><td>~$0.20 → $0.41</td></tr>
+      <tr><td>Azure Neural</td><td>Ayda 0.5M karakter ücretsiz; PAYG <span class="uv">doğrulanmadı</span></td><td>Evet</td><td>tr-TR'de <span class="uv">doğrulanmadı</span></td><td>~$0.23</td></tr>
+      <tr><td>OpenAI TTS</td><td>—</td><td>Evet</td><td>—</td><td><span class="tag bad">2027-01-06'da kapanıyor</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Öneri</h3>
+  <ul class="tight">
+    <li>Tüm motorlar tek bir <code>ITtsEngine</code> arayüzünün arkasında: metin + ses girer, WAV + kelime zamanları çıkar.</li>
+    <li><b>Kelime zamanı:</b> cümle veya sahne başına sentez, ardından Whisper.net transkripti ve senaryoyla eşleme. Whisper.net forced alignment yapmaz, eşleme bizim kodumuz. Eşleme başarısız olursa süre, kelimelere karakter sayısına göre dağıtılır.</li>
+    <li><b>Uzun ses:</b> trnorm ile normalize, cümlelere bölme, sentez, hizalama, FFmpeg ile birleştirme, loudness normalize. Cümle bazlı önbellek sayesinde revizyonda yalnızca değişen cümleler yeniden üretilir.</li>
+    <li><b>Lisans yükümlülüğü:</b> OpenRAIL-M, makine üretimi içeriğin açıkça belirtilmeden yayımlanmasını yasaklıyor. Dışa aktarmada varsayılan olarak "Yapay zekâ ile üretilmiş ses" beyanı gerekir.</li>
+  </ul>
+</section>
+
+<section id="gorsel">
+  <h2>4. Görsel üretimi</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Model</th><th>Param / adım</th><th>Lisans</th><th>6 GB uyumu</th><th>Süre</th><th>Öneri</th></tr></thead>
+    <tbody>
+      <tr><td><b>Z-Image-Turbo</b></td><td>6B, 8 NFE</td><td>Apache-2.0</td><td>Resmi sd.cpp 4 GB tarifi: Q3_K/Q4_0 GGUF, Qwen3-4B Q4_K_M encoder, <code>--offload-to-cpu</code></td><td>6 GB'ta 15-70 s <span class="uv">(doğrulanmadı)</span></td><td><span class="tag ok">Varsayılan</span></td></tr>
+      <tr><td><b>FLUX.2 [klein] 4B</b></td><td>4B, distilled 4 adım</td><td>Apache-2.0 (<b>9B: FLUX NCL</b>)</td><td>~13 GB bf16; FP8/NVFP4 ve GGUF ile küçülür</td><td>RTX 5090'da ~1.2 s; 6 GB <span class="uv">doğrulanmadı</span></td><td><span class="tag ok">İkinci (düzenleme)</span></td></tr>
+      <tr><td><b>FLUX 3 Image Klein</b></td><td>5.6B, 16 adım, CFG yok</td><td>Kommunity (yıllık gelir &lt;$5M), gated</td><td>INT8 ile bile ≥8 GB; 6 GB resmi değil</td><td>RTX 4070'te 8.9 s</td><td><span class="tag warn">Opt-in</span></td></tr>
+      <tr><td>SDXL-Lightning</td><td>1-8 adım</td><td>OpenRAIL++</td><td>Sığar <span class="uv">(doğrulanmadı)</span></td><td>3-8 s <span class="uv">(doğrulanmadı)</span></td><td><span class="tag warn">Zayıf GPU yedeği</span></td></tr>
+      <tr><td>SD 3.5 Medium / Qwen-Image-2.1</td><td>2B / 7B</td><td>$1M sınırı / araştırma lisansı</td><td>—</td><td>—</td><td><span class="tag bad">Atla</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Runtime: stable-diffusion.cpp <code>sd-server</code> (MIT)</h3>
+  <ul class="tight">
+    <li>Windows'ta GPU üreticisine göre <b>ayrı zip</b> dağıtılıyor: cuda12, vulkan, rocm, cpu. Tek binary yok, bu yüzden ajan doğru build'i kendisi seçer. P/Invoke için DLL olup olmadığı <span class="uv">doğrulanmadı</span>.</li>
+    <li>OpenAI uyumlu <code>/v1/images/generations</code> ucu ve native asenkron <code>/sdcpp/v1/img_gen</code> + <code>jobs/{id}</code> ucu var. Boşta <code>models/unload</code> çağrılır.</li>
+    <li>Görseller 1344×768 veya 768×1344 üretilip büyütülür. Türkçe metin görsele çizdirilmez, video katmanında eklenir.</li>
+    <li>ComfyUI (GPL-3.0, ayrı süreç) "gelişmiş" adaptör olur. diffusers yalnızca deney için. Ollama Windows'ta yok.</li>
+  </ul>
+  <h3>Bulut yedeği</h3>
+  <p>fal Z-Image-Turbo $0.005/MP (60 görsel ≈ $0.31). Premium için Nano Banana 2 Lite batch (≈ $1.01 / 60) veya gpt-image-2 low (≈ $0.30-0.36 / 60).</p>
+</section>
+
+<section id="runtime">
+  <h2>5. Çalışma zamanı stratejisi</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Model türü</th><th>Nasıl çalışır</th><th>Not</th></tr></thead>
+    <tbody>
+      <tr><td>ONNX (Supertonic, Whisper.net)</td><td>.NET Agent içinde işlem içi: <code>Microsoft.ML.OnnxRuntime</code> veya sherpa-onnx</td><td>DirectML sustained engineering modunda, yeni geliştirme WinML'de. GPU planı WinML veya CUDA üzerine</td></tr>
+      <tr><td>PyTorch (Chatterbox, VoxCPM)</td><td>uv ile model başına izole Python, localhost <code>/v1/audio/speech</code> sidecar</td><td>uv, python-build-standalone'u otomatik indirir</td></tr>
+      <tr><td>Görsel</td><td>sd-server isteğe bağlı başlatılır, iş bitince unload</td><td>TTS ile aynı anda çalışmaz (6 GB VRAM)</td></tr>
+      <tr><td>Video</td><td>Node 26 LTS + HyperFrames + pinlenmiş Chrome + FFmpeg, sahne başına</td><td>Kurulumda <code>hyperframes doctor</code> çalışır ve telemetri kapatılır</td></tr>
+      <tr><td>İlk çalıştırma</td><td>VRAM ve GPU üreticisi tespit edilir, benchmark yapılır, sonuçlar ayarlara yazılır</td><td>6 GB süreleri bilinmiyor</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="sandbox">
+  <h2>6. H-4 sandbox</h2>
+  <div class="card">
+    <b>Neyi kapsıyoruz?</b> LLM'in yazdığı kod iki motorda da headless Chromium içinde çalışır; Node yalnızca orkestratördür. Dört saldırı yüzeyi var: Chromium renderer, Node orkestratör (Remotion uzak medyayı indirir), alt süreçler (Chrome, FFmpeg) ve tedarik zinciri (<code>npm install</code>).
+    <ul class="tight">
+      <li><b>Remotion</b> varsayılan olarak <code>--no-sandbox</code> kullanır ve özel ağ korumalarını kapatır. Flag bazında geri açmak yalnızca <b>v4.0.543+</b> sürümlerinde mümkün. CDP portu değiştirilemez.</li>
+      <li><b>HyperFrames</b> Windows'ta Chrome sandbox'ını açık tutar. Dosya sunucusu 127.0.0.1'e bağlanır. Symlink'leri bilerek çözmez, bu bilinen bir boşluktur ve iş klasöründe symlink reddedilerek kapatılır.</li>
+    </ul>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Seçenek</th><th>FS</th><th>Ağ</th><th>Admin</th><th>Güç</th><th>Öneri</th></tr></thead>
+    <tbody>
+      <tr><td>Node <code>--permission</code></td><td>Yalnızca Node JS</td><td>Node 26'da evet</td><td>Hayır</td><td>Düşük ("seat belt")</td><td><span class="tag warn">Orkestratör kemeri</span></td></tr>
+      <tr><td>Chromium sandbox</td><td>Evet</td><td>Evet</td><td>Hayır</td><td>Yüksek</td><td><span class="tag ok">Çekirdek</span></td></tr>
+      <tr><td>Chromium ağ bayrakları</td><td>—</td><td>URL düzeyinde</td><td>Hayır</td><td>Orta</td><td><span class="tag ok">Kullan</span></td></tr>
+      <tr><td>CDP Fetch</td><td>file:// reddedilebilir</td><td>HTTP(S)</td><td>Hayır</td><td>Orta-düşük</td><td><span class="tag warn">Opsiyonel</span></td></tr>
+      <tr><td><b>AppContainer</b></td><td>Evet</td><td>Evet</td><td>Belgelerde belirtilmemiş</td><td>Yüksek (kernel)</td><td><span class="tag ok">Tercih, önce spike</span></td></tr>
+      <tr><td>Low IL / restricted token</td><td>Yalnızca yazma</td><td>Hayır</td><td>Hayır</td><td>Düşük-orta</td><td><span class="tag warn">Yedek</span></td></tr>
+      <tr><td>Job Object</td><td>—</td><td>—</td><td>Hayır</td><td>Kaynak kontrolü</td><td><span class="tag ok">Her zaman</span></td></tr>
+      <tr><td>Windows Sandbox</td><td>Evet</td><td>Evet</td><td>Evet; Home'da yok</td><td>Çok yüksek</td><td><span class="tag warn">Paranoyak mod</span></td></tr>
+      <tr><td>Firewall kuralı</td><td>—</td><td>Evet</td><td>Evet (kurulumda)</td><td>Yüksek</td><td><span class="tag warn">Opsiyonel güçlü mod</span></td></tr>
+      <tr><td>Statik AST kontrolü (Acornima)</td><td>Dolaylı</td><td>Dolaylı</td><td>Hayır</td><td>Sınır değil, erken red</td><td><span class="tag ok">İlk kapı</span></td></tr>
+      <tr><td>CreateProcessInSandbox</td><td>Evet</td><td>Evet</td><td>Listelenmemiş</td><td>Deneysel</td><td><span class="tag bad">İzle</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Önerilen katmanlar (çalışma zamanında admin gerekmez)</h3>
+  <ol class="tight">
+    <li><b>L0 Sözleşme:</b> LLM yalnızca ajanın sabit şablonuna kompozisyon kaynağı yazar. Paket kurulmaz. Varlıkları (GSAP dahil) ajan <code>job\public\</code> altına koyar; CDN kullanılmaz.</li>
+    <li><b>L1 AST kapısı:</b> fetch, WebSocket, RTCPeerConnection, eval, dinamik import ve http/file/data kaynakları reddedilir. Kontrol hem Pi'de hem ajanda yapılır, hata LLM'e döner.</li>
+    <li><b>L2 İş klasörü:</b> her iş için yeni klasör. TEMP, TMP ve HOME bu klasörün içini gösterir. Klasörde sır tutulmaz, symlink reddedilir.</li>
+    <li><b>L3 AppContainer</b> (capability yok; iş klasörüne RW, runtime'a RX). Spike başarısız olursa yedek: restricted token + Chromium sandbox.</li>
+    <li><b>L4 Job Object:</b> kill-on-close, ~64 süreç sınırı, bellek sınırı, zaman aşımı.</li>
+    <li><b>L5 Chromium:</b> sandbox açık, ölü proxy <code>http://127.0.0.1:1</code>, <code>host-resolver-rules</code>, <code>disableWebSecurity</code> asla açılmaz.</li>
+    <li><b>L6 Node 26:</b> <code>--permission</code>, <code>--allow-net</code> verilmez.</li>
+    <li><b>L7 Çıktı kapısı:</b> ffprobe kontrolü yapılır, çıktı asla çalıştırılmaz.</li>
+  </ol>
+  <h3>Karardan önce yapılacak spike'lar</h3>
+  <ol class="tight">
+    <li>Aynı AppContainer içinde loopback: Node dinleyebiliyor ve Chromium bağlanabiliyor mu? Eski bir Microsoft belgesi (hh780593), muafiyet olsa bile dinleyicinin gelen paket alamayabileceğini söylüyor.</li>
+    <li>Chromium AppContainer içinde kendi sandbox'ıyla iç içe başlayabiliyor mu? ANGLE (D3D11) çalışıyor mu, render süresi ne oluyor?</li>
+    <li>Remotion ≥4.0.543 sandbox açıkken Windows'ta render edebiliyor mu?</li>
+    <li>Node 26 <code>--permission</code> fetch'i ve Remotion indirme yolunu engelliyor mu?</li>
+    <li>Remotion OffthreadVideo <code>public/</code> dışındaki dosyalara erişebiliyor mu?</li>
+  </ol>
+  <p>Kabul için 11 kasıtlı bozma testi (T1-T11) öneriliyor: fetch, WebSocket/WebRTC, file://, path traversal, symlink, obfuscation, uzak ses, kullanıcı klasörüne yazma, kaynak tüketme, token okuma ve zararsız şablon. Her test, ilgili katman kaldırıldığında kırmızıya dönmeli. Ayrıntılar ajan dosyasında.</p>
+</section>
+
+<section id="kararlar">
+  <h2>7. Karar listesi (öneriler)</h2>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Karar</th><th>Öneri</th></tr></thead>
+    <tbody>
+      <tr><td>K-1</td><td>Varsayılan video motoru</td><td>HyperFrames, tam sürüm sabit, telemetri kapalı</td></tr>
+      <tr><td>K-2</td><td>Remotion</td><td>Opsiyonel, varsayılan kapalı. Ticari dağıtımdan önce ADR ve hukuki inceleme</td></tr>
+      <tr><td>K-3</td><td>Manim</td><td>Faz 2, yalnızca matematik ve diyagram klipleri</td></tr>
+      <tr><td>K-4</td><td>Altyazı ve ilerleme çubuğu</td><td>Ajanın sabit şablonundan: ASS karaoke + overlay/drawtext</td></tr>
+      <tr><td>K-5</td><td>Render birimi</td><td>Sahne başına klip, concat ile stream-copy</td></tr>
+      <tr><td>K-6</td><td>Yerel TTS</td><td>Supertonic 3 ONNX, ağırlıklar aynalanır</td></tr>
+      <tr><td>K-7</td><td>AI ses beyanı</td><td>Varsayılan olarak açık</td></tr>
+      <tr><td>K-8</td><td>Klonlama</td><td>Chatterbox Multilingual V3 sidecar</td></tr>
+      <tr><td>K-9</td><td>Online TTS</td><td>ElevenLabs; OpenAI TTS üzerine yeni iş yapılmaz</td></tr>
+      <tr><td>K-10</td><td>Kelime zamanı</td><td>Whisper.net + metin eşleme + oransal yedek</td></tr>
+      <tr><td>K-11</td><td>Görsel</td><td>Z-Image-Turbo GGUF + sd-server; ikinci model klein 4B; 9B kesinlikle engellenir</td></tr>
+      <tr><td>K-12</td><td>Görselde metin</td><td>Yok; metin video katmanında</td></tr>
+      <tr><td>K-13</td><td>Bulut görsel</td><td>fal Z-Image-Turbo</td></tr>
+      <tr><td>K-14</td><td>GPU sırası</td><td>GPU işleri sıralı, boşta unload</td></tr>
+      <tr><td>K-15</td><td>PyTorch runtime</td><td>uv ile izole sidecar</td></tr>
+      <tr><td>K-16</td><td>Sandbox</td><td>L0-L7; L3 için AppContainer, spike 1-2 geçerse</td></tr>
+      <tr><td>K-17</td><td>Node sürümü</td><td>Node 26 LTS</td></tr>
+      <tr><td>K-18</td><td>Güçlü mod</td><td>Kurulumda opsiyonel firewall kuralı</td></tr>
+      <tr><td>K-19</td><td>Windows Sandbox</td><td>Varsayılan değil</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="riskler">
+  <h2>8. Riskler ve açık sorular</h2>
+  <div class="q"><b>HyperFrames 1.0 öncesi ve hızla değişiyor.</b>Öneri: sürümü sabitleyin. Yükseltmeyi, H-4 testleri ve örnek render'lar geçtikten sonra yapın.</div>
+  <div class="q"><b>15 dakikalık bir videonun render süresi ve bellek kullanımı bilinmiyor.</b>Öneri: geliştirici PC'sinde <code>hyperframes benchmark --json</code> çalıştırın ve düşük worker sayısıyla başlayın.</div>
+  <div class="q"><b>Supertonic arşivlendi.</b>Öneri: ağırlıkları aynalayın ve hash'lerini kaydedin. sherpa-onnx yolunu tutun. int8 ve fp32 modellerin Türkçe kalitesini karşılaştıran bir test ekleyin.</div>
+  <div class="q"><b>6 GB VRAM'de görsel ve TTS süreleri doğrulanmadı.</b>Öneri: ilk çalıştırmada kalibrasyon yapın. Kalibrasyon başarısız olursa bulut yedeğini önerin.</div>
+  <div class="q"><b>AppContainer'da loopback ve iç içe Chrome davranışı belirsiz.</b>Öneri: L3 kararından önce spike 1 ve 2'yi yapın. Başarısız olurlarsa restricted token ve opsiyonel firewall kuralına geçin.</div>
+  <div class="q"><b>Remotion lisansının müşteri PC'lerine nasıl uygulandığı belirsiz.</b>Öneri: ticari dağıtıma kadar Remotion'u kapalı tutun.</div>
+  <div class="q"><b>Paketlenecek FFmpeg build'inin lisansı (LGPL mi GPL mi) doğrulanmadı.</b>Öneri: LGPL bir build paketleyin ve configure bayraklarını kayda geçirin.</div>
+  <div class="q"><b>OpenRAIL-M, AI ile üretildiğinin beyan edilmesini istiyor.</b>Öneri: dışa aktarmada beyan varsayılan olarak açık olsun. Kapatma seçeneğini insan kararına bırakın.</div>
+  <div class="q"><b>Google TTS'in Türkçe ses listesi doğrulanmadı.</b>Öneri: online seçicide Google'ı Türkçe için listelemeden önce bu listeyi doğrulayın.</div>
+</section>
+
+<section id="dogrulanmayan">
+  <h2>9. Doğrulanmayanlar</h2>
+  <div class="card"><ul class="tight">
+    <li><b>Video:</b> HyperFrames'in kesin çıkış tarihi; Chromium 147'nin beginFrame'i kaldırması; uzun render bellek kullanımı; gerçek 15 dk render hızı; paketlenen Parakeet sürümü; Remotion'un varsayılan concurrency değeri; Revideo ekibinin durumu; Remotion'un dağıtık masaüstü lisansı; FFmpeg build lisansı; <code>lang="tr"</code> ile uppercase; motor başına eğitim verisi miktarı.</li>
+    <li><b>TTS:</b> Supertonic'in 2026-07-23 tarihli duyurusu ve şirketin dağılması; Chirp 3 HD'nin aylık 1M ücretsiz karakteri; Google'ın Türkçe sesleri; Azure PAYG fiyatı ve tr-TR WordBoundary; Chatterbox V3'ün 6 GB'ta VRAM ve RTF'si; VoxCPM2 GGUF'un 6 GB'a sığması; Supertonic hızı; int8 sherpa build'inin Türkçe kalitesi; Qwen3-TTS, MeloTTS, Orpheus ve MMS ayrıntıları; 15k karakter varsayımı; ONNX diakritik raporları.</li>
+    <li><b>Görsel:</b> 6 GB'taki tüm süreler; klein GGUF boyutu; city96 GGUF'un sd-server hatası; "Turbo V2" sürümünün varlığı; Klein'ın 1080'de yavaşlaması; sd.cpp DLL'i; tüm modellerde Türkçe metin; Kommunity lisansının tam metni; Qwen-Image-2.1 lisansı; Ollama'nın Windows'ta görsel üretimi; BFL fiyat kademeleri; Nano Banana 2.1 adı; fal Klein 9B çıktı koşulları; diffusers sınıf adları.</li>
+    <li><b>Sandbox:</b> AppContainer'da loopback, muafiyet için admin gereği, miras, iç içe Chrome ve GPU; Remotion'un sandbox açıkken render etmesi; OffthreadVideo'nun file: erişimi; WebRTC politika bayrağı; <code>^NOTFOUND</code> kuralı; firewall'un loopback'e etkisi; <code>--permission-audit</code> sürümü; CDP'nin worker'larda Fetch desteği; Meziantou API yüzeyi; Codex yazısının aslı (403); <code>wsb exec</code> stdout.</li>
+  </ul></div>
+</section>
+
+<section id="kaynaklar">
+  <h2>10. Kaynaklar</h2>
+  <div class="src">
+    <h4>HyperFrames</h4>
+    <ul>
+      <li><a href="https://github.com/heygen-com/hyperframes">github.com/heygen-com/hyperframes</a></li>
+      <li><a href="https://registry.npmjs.org/hyperframes">npm registry: hyperframes</a></li>
+      <li><a href="https://hyperframes.heygen.com/faq.md">FAQ</a> · <a href="https://hyperframes.heygen.com/packages/cli.md">CLI</a> · <a href="https://hyperframes.heygen.com/concepts/determinism.md">Determinism</a></li>
+      <li><a href="https://hyperframes.heygen.com/guides/performance.md">Performance</a> · <a href="https://hyperframes.heygen.com/guides/rendering.md">Rendering</a> · <a href="https://hyperframes.heygen.com/packages/engine.md">Engine</a> · <a href="https://hyperframes.heygen.com/packages/producer.md">Producer</a></li>
+      <li><a href="https://hyperframes.heygen.com/guides/captions-and-recuts.md">Captions</a> · <a href="https://hyperframes.heygen.com/changelog.md">Changelog</a> · <a href="https://hyperframes.heygen.com/llms.txt">llms.txt</a></li>
+      <li><a href="https://www.heygen.com/research/html-to-video">HeyGen: html-to-video (2026-06-22)</a> · <a href="https://www.heygen.com/blog/heygen-april-2026-release">HeyGen Nisan 2026</a></li>
+      <li><a href="https://raw.githubusercontent.com/heygen-com/hyperframes/main/packages/engine/src/services/chromeSandbox.ts">chromeSandbox.ts</a> · <a href="https://raw.githubusercontent.com/heygen-com/hyperframes/main/packages/engine/src/services/fileServer.ts">fileServer.ts</a></li>
+      <li>Üçüncü taraf: <a href="https://autoae.online/blog/hyperframes-topic2video-windows-setup">autoae.online</a></li>
+    </ul>
+    <h4>Remotion</h4>
+    <ul>
+      <li><a href="https://github.com/remotion-dev/remotion/blob/main/LICENSE.md">LICENSE.md</a> · <a href="https://www.remotion.dev/docs/license/pricing">Pricing</a> · <a href="https://www.remotion.dev/docs/license/faq.md">License FAQ</a></li>
+      <li><a href="https://www.remotion.dev/docs/index.md">Docs</a> · <a href="https://www.remotion.dev/docs/miscellaneous/chrome-headless-shell.md">Chrome Headless Shell</a> · <a href="https://www.remotion.dev/docs/using-randomness">Randomness</a> · <a href="https://www.remotion.dev/docs/ai/skills">AI skills</a></li>
+      <li><a href="https://www.remotion.dev/docs/captions/create-tiktok-style-captions">TikTok captions</a> · <a href="https://www.remotion.dev/docs/troubleshooting/sigkill">SIGKILL</a> · <a href="https://www.remotion.dev/docs/options/offthreadvideo-cache-size-in-bytes">OffthreadVideo cache</a> · <a href="https://www.remotion.dev/docs/offthreadvideo">OffthreadVideo</a></li>
+      <li><a href="https://raw.githubusercontent.com/remotion-dev/remotion/main/packages/renderer/src/open-browser.ts">open-browser.ts</a> · <a href="https://www.remotion.dev/docs/chromium-flags">chromium-flags</a> · <a href="https://www.remotion.dev/docs/options/chromium-flags">options/chromium-flags</a> · <a href="https://www.remotion.dev/docs/renderer/render-media">renderMedia</a></li>
+      <li><a href="https://registry.npmjs.org/remotion">npm: remotion</a> · <a href="https://registry.npmjs.org/@remotion/renderer/latest">npm: @remotion/renderer</a></li>
+    </ul>
+    <h4>Diğer motorlar</h4>
+    <ul>
+      <li><a href="https://github.com/redotvideo/revideo">Revideo</a> · <a href="https://registry.npmjs.org/@revideo/core">npm @revideo/core</a> · üçüncü taraf <a href="https://www.webfolio.to/tools/revideo">webfolio</a></li>
+      <li><a href="https://registry.npmjs.org/@motion-canvas/core">npm @motion-canvas/core</a> · <a href="https://registry.npmjs.org/editly">npm editly</a> · <a href="https://registry.npmjs.org/@diffusionstudio/core">npm @diffusionstudio/core</a></li>
+      <li><a href="https://pypi.org/pypi/manim/json">PyPI manim</a> · <a href="https://docs.manim.community/en/stable/changelog/0.19.0-changelog.html">Manim 0.19 changelog</a> · <a href="https://docs.manim.community/en/stable/installation/uv.html">Manim kurulum</a></li>
+      <li><a href="https://arxiv.org/abs/2603.13251">ManiBench</a> · <a href="https://arxiv.org/abs/2605.19382">PRISM</a> · <a href="https://arxiv.org/abs/2502.19400">TheoremExplainAgent</a></li>
+      <li><a href="https://ffmpeg.org/ffmpeg-filters.html">FFmpeg filters</a> · <a href="https://aegisub.org/docs/latest/ass_tags/">ASS tags</a></li>
+    </ul>
+    <h4>TTS</h4>
+    <ul>
+      <li><a href="https://github.com/supertone-inc/supertonic">Supertonic</a> · <a href="https://huggingface.co/supertone-oss-archive/supertonic-3">HF arşiv</a> · <a href="https://huggingface.co/Supertone/supertonic-3">HF Supertone</a> · <a href="https://huggingface.co/supertone-oss-archive/supertonic-3/raw/main/LICENSE">LICENSE (Open RAIL-M)</a></li>
+      <li><a href="https://antinodeaudio.com/en/work/faster-and-more-accurate-across-31-languages----introducing-supertonic-3">Antinode duyurusu</a> · <a href="https://support.supertone.ai/hc/articles/16940735914639">Destek makalesi (403)</a></li>
+      <li><a href="https://github.com/k2-fsa/sherpa-onnx">sherpa-onnx</a> · <a href="https://csukuangfj.github.io/sherpa/onnx/tts/supertonic.html">sherpa Supertonic</a> · <a href="https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/kokoro.html">sherpa Kokoro</a></li>
+      <li><a href="https://github.com/resemble-ai/chatterbox">Chatterbox</a> · <a href="https://www.resemble.ai/learn/models/chatterbox-multilingual">Chatterbox Multilingual</a> · <a href="https://huggingface.co/ResembleAI/chatterbox-turbo-ONNX">Turbo ONNX</a> · <a href="https://huggingface.co/ResembleAI/chatterbox-turbo-ONNX/discussions/3">tartışma</a> · <a href="https://huggingface.co/Vocabook/chatterbox-multilingual-ONNX-q4">ONNX q4</a> · <a href="https://huggingface.co/hugbos/chatterbox-multilingual-ONNX-v2">ONNX v2</a> · üçüncü taraf <a href="https://docs.clore.ai/guides/audio-and-voice/chatterbox-tts">clore.ai</a></li>
+      <li><a href="https://github.com/OpenBMB/VoxCPM">VoxCPM</a> · <a href="https://github.com/ozguradmin/ahenk-turkish-tts">Ahenk</a> · <a href="https://huggingface.co/Trendyol/Trendyol-TTS">Trendyol-TTS</a></li>
+      <li><a href="https://huggingface.co/coqui/XTTS-v2">XTTS-v2</a> · <a href="https://huggingface.co/marduk-ra/F5-TTS-Turkish">F5-TTS TR</a> · <a href="https://huggingface.co/k2-fsa/OmniVoice">OmniVoice</a> · <a href="https://huggingface.co/rhasspy/piper-voices/blob/main/tr/tr_TR/dfki/medium/MODEL_CARD">Piper dfki</a> · <a href="https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/VOICES.md">Piper VOICES</a> · <a href="https://www.ablt.dev/blog/turkish-tts/">ablt.dev</a></li>
+      <li><a href="https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md">Kokoro</a> · <a href="https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3">Parakeet v3</a> · <a href="https://arxiv.org/abs/2601.15621">Qwen3-TTS</a> · <a href="https://gigazine.net/gsc_news/en/20260123-qwen3-tts-family-opensource">gigazine</a> · <a href="https://github.com/myshell-ai/MeloTTS">MeloTTS</a> · <a href="https://github.com/canopyai/Orpheus-TTS">Orpheus</a> · <a href="https://ollama.com/blog/speech-models">Ollama speech</a></li>
+      <li><a href="https://developers.openai.com/api/docs/models/gpt-4o-mini-tts">gpt-4o-mini-tts</a> · <a href="https://developers.openai.com/api/docs/pricing">OpenAI pricing</a> · <a href="https://developers.openai.com/api/docs/guides/text-to-speech">OpenAI TTS guide</a></li>
+      <li><a href="https://cloud.google.com/text-to-speech/pricing">Google TTS pricing</a> · üçüncü taraf <a href="https://www.costbench.com/software/voice-apis/google-tts-api/">costbench</a></li>
+      <li><a href="https://elevenlabs.io/pricing/api">ElevenLabs pricing</a> · <a href="https://elevenlabs.io/docs/overview/models">models</a> · <a href="https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps">with-timestamps</a></li>
+      <li><a href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/">Azure pricing</a> · <a href="https://www.developersdigest.tech/models/speech/azure">developersdigest</a> · <a href="https://json2video.com/ai-voices/azure/voices/tr-tr-emelneural/">tr-TR-EmelNeural</a> · <a href="https://learn.microsoft.com/en-us/answers/questions/1613851/wordboundary-event-not-called-when-using-neural-te">WordBoundary Q&amp;A</a></li>
+      <li><a href="https://onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html">DirectML EP</a> · <a href="https://docs.astral.sh/uv/guides/install-python/">uv Python</a> · <a href="https://github.com/sandrohanea/whisper.net">Whisper.net</a></li>
+    </ul>
+    <h4>Görsel</h4>
+    <ul>
+      <li><a href="https://huggingface.co/Tongyi-MAI/Z-Image-Turbo">Z-Image-Turbo</a> · <a href="https://arxiv.org/html/2511.22699v2">makale</a> · <a href="https://github.com/leejet/stable-diffusion.cpp/wiki/How-to-Use-Z%E2%80%90Image-on-a-GPU-with-Only-4GB-VRAM">sd.cpp 4 GB wiki</a> · <a href="https://huggingface.co/leejet/Z-Image-Turbo-GGUF">leejet GGUF</a></li>
+      <li><a href="https://huggingface.co/black-forest-labs/FLUX.2-klein-4B">FLUX.2 klein 4B</a> · <a href="https://bfl.ai/blog/flux2-klein-towards-interactive-visual-intelligence">BFL klein blog</a> · <a href="https://docs.comfy.org/tutorials/flux/flux-2-klein">ComfyUI klein</a></li>
+      <li><a href="https://bfl.ai/blog/flux-3-image-klein">BFL FLUX 3 Klein</a> · <a href="https://recipes.vllm.ai/black-forest-labs/flux-3-image-klein">vLLM recipe</a> · <a href="https://build.nvidia.com/black-forest-labs/flux-3-image-klein/modelcard">NVIDIA model card</a> · <a href="https://docs.nvidia.com/nemo/automodel/nemo-automodel/nemo_automodel/components/models/flux3/text_encoding">NeMo text encoding</a></li>
+      <li><a href="https://huggingface.co/ByteDance/SDXL-Lightning">SDXL-Lightning</a> · <a href="https://huggingface.co/stabilityai/stable-diffusion-3.5-medium">SD 3.5 Medium</a> · <a href="https://stability.ai/license">Stability license</a></li>
+      <li><a href="https://github.com/leejet/stable-diffusion.cpp">stable-diffusion.cpp</a> · <a href="https://api.github.com/repos/leejet/stable-diffusion.cpp/releases/latest">son sürüm</a> · <a href="https://raw.githubusercontent.com/leejet/stable-diffusion.cpp/master/examples/server/README.md">server README</a> · <a href="https://raw.githubusercontent.com/leejet/stable-diffusion.cpp/master/examples/server/api.md">api.md</a></li>
+      <li><a href="https://github.com/comfyanonymous/ComfyUI">ComfyUI</a> · <a href="https://docs.comfy.org/development/comfyui-server/comms_routes.md">ComfyUI routes</a> · <a href="https://huggingface.co/docs/diffusers/main/en/quantization/gguf">diffusers GGUF</a> · <a href="https://ollama.com/blog/image-generation">Ollama image</a></li>
+      <li><a href="https://fal.ai/models/fal-ai/z-image/turbo/llms.txt">fal Z-Image</a> · <a href="https://fal.ai/models/fal-ai/flux-2/klein/4b/llms.txt">fal klein 4B</a> · <a href="https://fal.ai/models/fal-ai/flux-2/klein/4b/base/llms.txt">fal klein 4B base</a> · <a href="https://fal.ai/models/fal-ai/flux-2/klein/9b/llms.txt">fal klein 9B</a> · <a href="https://docs.bfl.ai/quick_start/pricing">BFL pricing</a></li>
+      <li><a href="https://aistudio.google.com/docs/pricing">Google AI Studio pricing</a> · <a href="https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-1-flash-lite-image">gemini-3.1-flash-lite-image</a> · <a href="https://developers.openai.com/api/docs/guides/image-generation">OpenAI image generation</a></li>
+      <li>İkincil: <a href="https://admin.kinovi.ai/blog/z-image-low-vram-6gb-gpu-setup">kinovi</a> · <a href="https://civarchive.com/articles/25600/z-image-turbo-6b-on-6gb-gpu-settings-workflow-source-for-beginners">civarchive</a> · <a href="https://alternativeto.net/news/2026/9/alibaba-launches-qwen-image-2-1-a-7b-ai-model-with-native-transparency-and-a-license-change/">alternativeto Qwen</a> · <a href="https://runtimewire.com/article/alibaba-qwen-image-2-1-transparent-editing-research-license">runtimewire</a> · <a href="https://aiweekly.co/alerts/alibaba-ships-qwen-image-21-7b-dit-with-native-2048x2048-and-rgba-drops-apache">aiweekly</a> · <a href="https://alternativeto.net/news/2026/1/ollama-launches-experimental-local-image-generation-on-macos-with-z-image-turbo-and-flux-2">alternativeto Ollama</a> · <a href="https://www.usagepricing.com/blueprint/activity/fal-ai-2026-10-22-flux-3-image-price-doubles">usagepricing</a></li>
+    </ul>
+    <h4>Sandbox</h4>
+    <ul>
+      <li><a href="https://nodejs.org/api/permissions.html">Node permissions</a> · <a href="https://nodejs.org/api/cli.html">Node CLI</a> · <a href="https://nodejs.org/en/about/previous-releases">Node releases</a> · <a href="https://sources.debian.org/src/nodejs/22.14.0%2Bdfsg-1/doc/contributing/security-model-strategy.md">security model strategy</a></li>
+      <li><a href="https://nodejs.org/en/blog/vulnerability/december-2025-security-releases">Node Aralık 2025 güvenlik</a> · <a href="https://www.tenable.com/cve/CVE-2026-21636">Tenable</a> · <a href="https://security-tracker.debian.org/tracker/CVE-2026-21636">Debian</a></li>
+      <li><a href="https://chromium.googlesource.com/chromium/src/+/main/docs/design/sandbox.md">Chromium sandbox</a> · <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/net/docs/proxy.md">proxy.md</a> · <a href="https://chromium.googlesource.com/chromium/src/+/main/net/dns/mapped_host_resolver.h">mapped_host_resolver.h</a> · <a href="https://chromium.googlesource.com/chromium/src.git/+/lkgr-android-internal/third_party/blink/common/peerconnection/webrtc_ip_handling_policy.cc">webrtc policy</a> · <a href="https://chromium.googlesource.com/chromium/src/sandbox/+/1900961933199837fc895087580930d4274a5259">AppContainer OS checks</a></li>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1452713">Mozilla bug 1452713</a> · <a href="https://gist.github.com/josephbolus/e214b3720dc1f3d6ef274ad905e6ab7d">host-resolver gist</a> · <a href="https://hackernoon.com/from-playwright-routing-to-browser-protocols-how-request-interception-works">CDP interception</a> · <a href="https://kiwix.lema.org/stackoverflow.com_en_all_2023-11/questions/70645680/does-chromium-support-intercept-webworker-requests-via-cdp">CDP workers (SO)</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createappcontainerprofile">CreateAppContainerProfile</a> · <a href="https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute">UpdateProcThreadAttribute</a> · <a href="https://learn.microsoft.com/en-us/windows/win32/secauthz/createprocessinsandbox">CreateProcessInSandbox</a> · <a href="https://learn.microsoft.com/en-us/previous-versions/windows/apps/hh780593(v=win.10)">hh780593</a> · <a href="https://learn.microsoft.com/en-us/windows/win32/api/netfw/nf-netfw-networkisolationsetappcontainerconfig">NetworkIsolationSetAppContainerConfig</a></li>
+      <li><a href="https://blahcat.github.io/posts/2020/12/29/cheap-sandboxing-with-appcontainers.html">AppContainer walkthrough</a> · <a href="https://windows-hexerror.linestarve.com/q/so63627101-failing-when-using-pinvoke-calling-updateprocthreadattribute-for-appcontainer-security-capabilities">P/Invoke tuzakları</a> · <a href="https://ahrvoje.github.io/sandy_cli/modes.html">Sandy</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/windows/win32/secauthz/mandatory-integrity-control">MIC</a> · <a href="https://zeltser.com/windows-integrity-levels-malware-protection-files">Zeltser</a> · <a href="https://msdn.microsoft.com/library/ms684161(v=VS.85).aspx">Job Objects</a> · <a href="https://learn.microsoft.com/pl-pl/windows/desktop/api/WinNT/ns-winnt-jobobject_basic_limit_information">basic limits</a> · <a href="https://www.nuget.org/packages/Meziantou.Framework.Win32.Jobs">Meziantou Jobs</a> · <a href="https://meziantou.net/killing-all-child-processes-when-the-parent-exits-job-object.htm">Meziantou blog</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/">Windows Sandbox</a> · <a href="https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-install">kurulum</a> · <a href="https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-cli">CLI</a> · <a href="https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-versions">sürümler</a></li>
+      <li><a href="https://openai.com/index/building-codex-windows-sandbox/">OpenAI Codex (403)</a> · <a href="https://discuss.pytorch.kr/t/openai-windows-codex-appcontainer-write-restricted-token-windows-firewall/10252">PyTorchKR özeti</a></li>
+      <li><a href="https://github.com/adams85/acornima">Acornima</a> · <a href="https://www.nuget.org/packages/Acornima">NuGet Acornima</a> · <a href="https://www.nuget.org/packages/Acornima.Extras">Acornima.Extras</a></li>
+    </ul>
+  </div>
+</section>
+</main>
+</div>
+<footer>B-5 araştırma raporu · 2026-11-14 · Öneri niteliğindedir; karar insanındır. Onaylanan maddeler ADR ve spec'e (ör. spec 0006) dönüşür. Ajan için yoğun sürüm: <code>b5-video-pipeline-arastirmasi.md</code></footer>
+</body>
+</html>
