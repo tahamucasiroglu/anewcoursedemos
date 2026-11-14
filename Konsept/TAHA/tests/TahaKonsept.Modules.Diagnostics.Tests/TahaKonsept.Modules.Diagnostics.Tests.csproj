@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Diagnostics modülü birim testleri: ActivityLogger, son kayıtlar/kapsam, istatistik birleştirme, hata bildirimi durum akışı (EF InMemory, DB gerekmez). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Diagnostics.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Diagnostics\TahaKonsept.Modules.Diagnostics.Infrastructure\TahaKonsept.Modules.Diagnostics.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

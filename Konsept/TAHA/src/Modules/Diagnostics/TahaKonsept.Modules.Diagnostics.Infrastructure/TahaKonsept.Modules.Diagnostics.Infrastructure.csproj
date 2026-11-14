@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Diagnostics modülü — Infrastructure: DiagnosticsDbContext (şema "diagnostics"), depolar, ActivityLogger (IActivityLogger). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Diagnostics.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Modules.Diagnostics.Application\TahaKonsept.Modules.Diagnostics.Application.csproj" />
+    <!-- Yalnızca genel IUserDirectory için (modüller arası izinli yol: Application/Abstract). -->
+    <ProjectReference Include="..\..\Identity\TahaKonsept.Modules.Identity.Application\TahaKonsept.Modules.Identity.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

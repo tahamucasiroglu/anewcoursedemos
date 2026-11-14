@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Diagnostics modülü — Application. Diğer modüllerin kullandığı genel sözleşmeler:
+    Abstract/IActivityLogger (günlüğe yaz), Abstract/IStatsContributor (yönetim paneline istatistik ver),
+    Abstract/IAdminUserDirectory (kimlik modülünün kullanıcı listesi/ban köprüsü).
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Diagnostics.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Modules.Diagnostics.Domain\TahaKonsept.Modules.Diagnostics.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Diagnostics.Tests" />
+  </ItemGroup>
+
+</Project>

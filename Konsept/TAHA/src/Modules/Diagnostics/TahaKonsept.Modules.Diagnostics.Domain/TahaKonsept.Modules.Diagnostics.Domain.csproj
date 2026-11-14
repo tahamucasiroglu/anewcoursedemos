@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Diagnostics modülü — Domain: ActivityLog (işlem günlüğü), ErrorReport (hata bildirimi). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Diagnostics.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Domain\TahaKonsept.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
