@@ -83,9 +83,17 @@ public static class Program
             });
         }
 
-        using var services = new ServiceCollection()
+        // Hub bağlantısı yalnız IAsyncDisposable: kapsayıcı DisposeAsync ile kapatılmalı (senkron Dispose kapanışta istisna fırlatıyordu).
+        var services = new ServiceCollection()
             .AddHeadlessAgent(DesktopAgentServiceCollectionExtensions.CreateAgentOptions())
             .BuildServiceProvider();
-        return services.GetRequiredService<IHeadlessAgentRunner>().RunAsync(options, cts.Token).GetAwaiter().GetResult();
+        try
+        {
+            return services.GetRequiredService<IHeadlessAgentRunner>().RunAsync(options, cts.Token).GetAwaiter().GetResult();
+        }
+        finally
+        {
+            services.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
     }
 }
