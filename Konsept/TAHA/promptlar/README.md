@@ -11,3 +11,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0005 | 2026-11-14 05:30 | Adımları commit'leme kuralı | [0005](0005_2026-11-14_0530_adim-commitleri.md) |
 | 0006 | 2026-11-14 05:31 | Kaynak kodu adım adım commit'le | [0006](0006_2026-11-14_0531_kaynak-kod-commitleri.md) |
 | 0007 | 2026-11-14 05:31 | Uyku molası, otonom devam | [0007](0007_2026-11-14_0531_uyku-molasi.md) |
+| 0008 | 2026-11-14 10:51 | 30 sn kurgu ile yöntem testleri | [0008_2026-11-14_1051_30sn-kurgu-testleri.md](0008_2026-11-14_1051_30sn-kurgu-testleri.md) |
