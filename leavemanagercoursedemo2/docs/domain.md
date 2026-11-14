@@ -14,7 +14,7 @@ kalan izin bakiyesinin izlendiği bir web uygulaması. Kurs demosu: tek şirket,
 | Term | Meaning | Notes / not to be confused with |
 |---|---|---|
 | Çalışan (`Employee`) | İzin talep eden kişi; bir yöneticiye bağlıdır | Her kullanıcı bir çalışandır; temel rol `Employee` (`docs/security.md`) |
-| Yönetici (`Manager`) | Kendisine bağlı çalışanların taleplerini onaylayan/reddeden çalışan | Yöneticisi olmayan kişinin (hiyerarşinin tepesi) talebini kimin onaylayacağı **açık karar** — ilk talep-onay spec'inde karara bağlanır |
+| Yönetici (`Manager`) | Kendisine bağlı çalışanların taleplerini onaylayan/reddeden çalışan | Yöneticisi olmayan kişinin (hiyerarşinin tepesi) talebini İK onaylar (BR-5) |
 | İK (`HR`) | İzin türlerini ve yıllık hakları tanımlayan, tüm talepleri görebilen rol | Onay kademesi değildir |
 | İzin türü (`LeaveType`) | Yıllık, mazeret, hastalık, ücretsiz; her türün bakiyeden düşüp düşmediği tanımlıdır (`DeductsFromBalance`) | |
 | İzin talebi (`LeaveRequest`) | Bir çalışanın bir tarih aralığı ve izin türü için başvurusu | |
@@ -28,7 +28,7 @@ kalan izin bakiyesinin izlendiği bir web uygulaması. Kurs demosu: tek şirket,
 - **BR-2:** Bakiyeden düşen bir türde, talep süresi kalan bakiye eksi aynı türdeki `Beklemede` taleplerin toplamını aşamaz. Talep oluşturulurken kontrol edilir.
 - **BR-3:** Bakiye talep **onaylandığında** düşer. Ret ve iptal bakiyeye dokunmaz.
 - **BR-4:** Bir çalışanın `Beklemede` ya da `Onaylandı` iki talebi tarih olarak çakışamaz.
-- **BR-5:** Talebi yalnız çalışanın kendi yöneticisi onaylar ya da reddeder. Kimse kendi talebini onaylayamaz.
+- **BR-5:** Talebi yalnız çalışanın kendi yöneticisi onaylar ya da reddeder; yöneticisi olmayan çalışanın talebini İK onaylar ya da reddeder. Kimse kendi talebini onaylayamaz.
 - **BR-6:** `Onaylandı`, `Reddedildi` ve `İptal` son durumlardır; değiştirilemez.
 - **BR-7:** Başlangıç tarihi bugünden (`TimeProvider`'a göre) önce olan talep açılamaz.
 

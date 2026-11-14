@@ -20,7 +20,7 @@
 - **Varsayılan reddet:** her uç nokta kimlik doğrulama ister (fallback authorization policy); yalnız giriş uç noktası `AllowAnonymous`.
 - Kimlik doğrulama: demo JWT (kısa ömürlü, ör. 1 saat; refresh token yok). Parolalar ASP.NET Core Identity `PasswordHasher` ile.
 - Roller: `Employee`, `Manager`, `HR`.
-- Yetki **Application katmanında** denetlenir (Api'deki öznitelikler yalnız ek kat): onay/ret yalnız talep sahibinin yöneticisi (BR-5),
+- Yetki **Application katmanında** denetlenir (Api'deki öznitelikler yalnız ek kat): onay/ret yalnız talep sahibinin yöneticisi, yöneticisi yoksa İK (BR-5),
   kendi talebini onaylama yok; talep görüntüleme yalnız sahibi, yöneticisi ve İK. Frontend'de buton gizlemek güvenlik sayılmaz.
 - Hassas alan: hastalık izni notu yalnız sahibine, yöneticisine ve İK'ya döner; diğer yanıtlarda alan hiç yer almaz.
 
