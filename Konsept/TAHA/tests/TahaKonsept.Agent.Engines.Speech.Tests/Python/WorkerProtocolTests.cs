@@ -80,6 +80,20 @@ public sealed class WorkerProtocolTests
         client.Sent.ToString().Trim().ShouldBe("{\"cmd\":\"ping\"}");
     }
 
+    /// <summary>Çağıran istek sürerken iptal ederse işçi yeniden başlatılır (geç gelen yanıt sonraki isteğe karışmasın) ve iptal yayılır.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Caller_cancellation_mid_request_restarts_worker()
+    {
+        await using var client = new HangingTtsWorkerClient();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        await Should.ThrowAsync<OperationCanceledException>(() => client.SendAsync(WorkerProtocol.Ping(), TimeSpan.FromSeconds(30), cts.Token));
+
+        client.BrokenCount.ShouldBe(1);
+    }
+
     /// <summary>Çıkış yanıt gelmeden kapanırsa iletişim hatası döner.</summary>
     [Fact]
     public async Task Client_reports_failure_when_output_ends()

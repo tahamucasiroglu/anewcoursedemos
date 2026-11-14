@@ -311,7 +311,18 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
                 return Result.Failure<ITtsWorkerClient>(SpeechErrors.Worker(ex.Message));
             }
 
-            var load = await worker.SendAsync(WorkerProtocol.Load(AdapterName, ModelId, Device, LoadOptions), LoadTimeout, ct).ConfigureAwait(false);
+            Result<WorkerResponse> load;
+            try
+            {
+                load = await worker.SendAsync(WorkerProtocol.Load(AdapterName, ModelId, Device, LoadOptions), LoadTimeout, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Yükleme sırasında iptal (duraklat/iptal) ya da beklenmeyen hata: süreç öksüz kalıp modeli GPU belleğinde tutmasın.
+                await worker.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+
             if (load.IsFailure || !load.Value.Ok)
             {
                 await worker.DisposeAsync().ConfigureAwait(false);

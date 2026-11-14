@@ -9,6 +9,7 @@ namespace TahaKonsept.Agent.Engines.Speech.Python.Base;
 /// <summary>
 /// JSON-lines istemcisinin ortak mantığı (taşıma bağımsız): istekleri kilitle sıraya alır, satırı <see cref="Input"/>'a yazar,
 /// <see cref="Output"/>'tan protokol yanıtı gelene kadar okur (JSON olmayan satırlar loglanır), zaman aşımı ve kapanışı yönetir.
+/// İstek gönderildikten sonra zaman aşımı, IO hatası ya da çağıranın iptali protokol senkronunu bozar → <see cref="OnProtocolBrokenAsync"/> (işçi yeniden başlar).
 /// Somut sınıf taşımayı sağlar (ör. süreç stdin/stdout: <c>ProcessTtsWorkerClient</c>; testte bellek akışları).
 /// </summary>
 public abstract class TtsWorkerClientBase : ITtsWorkerClient
@@ -75,6 +76,13 @@ public abstract class TtsWorkerClientBase : ITtsWorkerClient
                 // Yanıt yarıda kaldı: protokol senkronu bozuldu, işçi yeniden başlatılmalı.
                 await OnProtocolBrokenAsync().ConfigureAwait(false);
                 return Result.Failure<WorkerResponse>(SpeechErrors.Worker($"'{request.Cmd}' komutu {timeout.TotalSeconds:F0} sn içinde yanıtlanmadı."));
+            }
+            catch (OperationCanceledException)
+            {
+                // Çağıran iptal etti (duraklat/iptal) ama işçi yarım kalan komutu bitirip yanıtını yine yazacak: o satır sonraki isteğe
+                // yanıt sanılmasın (istek N ↔ yanıt N-1 kayması) diye işçi yeniden başlatılır.
+                await OnProtocolBrokenAsync().ConfigureAwait(false);
+                throw;
             }
             catch (IOException ex)
             {
