@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "key": "z-image-turbo",
+      "displayName": "Z-Image Turbo (GGUF Q3_K)",
+      "family": "z-image",
+      "license": "Apache-2.0",
+      "minVramMb": 4096,
+      "defaultSteps": 8,
+      "cfgScale": 1.0,
+      "samplingMethod": null,
+      "scheduler": null,
+      "flowShift": null,
+      "extraArgs": [],
+      "files": [
+        {
+          "role": "DiffusionModel",
+          "repo": "leejet/Z-Image-Turbo-GGUF",
+          "repoPath": "z_image_turbo-Q3_K.gguf",
+          "localPath": "diffusion/z_image_turbo-Q3_K.gguf",
+          "sizeBytes": 3143559104,
+          "sha256": "4b44bdaa7814f20d7cf144e3939bd93aa32f50660204dd0c2aea5c5376232980"
+        },
+        {
+          "role": "Llm",
+          "repo": "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+          "repoPath": "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+          "localPath": "text_encoders/Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+          "sizeBytes": 2497281120,
+          "sha256": "3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597"
+        },
+        {
+          "role": "Vae",
+          "repo": "Comfy-Org/z_image_turbo",
+          "repoPath": "split_files/vae/ae.safetensors",
+          "localPath": "vae/ae.safetensors",
+          "sizeBytes": 335304388,
+          "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38"
+        }
+      ]
+    },
+    {
+      "key": "flux2-klein-4b",
+      "displayName": "FLUX.2 klein 4B (GGUF Q4_0)",
+      "family": "flux2",
+      "license": "Apache-2.0",
+      "minVramMb": 4096,
+      "defaultSteps": 4,
+      "cfgScale": 1.0,
+      "samplingMethod": "euler",
+      "scheduler": null,
+      "flowShift": null,
+      "extraArgs": [],
+      "files": [
+        {
+          "role": "DiffusionModel",
+          "repo": "leejet/FLUX.2-klein-4B-GGUF",
+          "repoPath": "flux-2-klein-4b-Q4_0.gguf",
+          "localPath": "diffusion/flux-2-klein-4b-Q4_0.gguf",
+          "sizeBytes": 2460378560,
+          "sha256": "d1023499ef3f2f82ff7c50e6778495195c1b6cc34835741778868428111f9ff4"
+        },
+        {
+          "role": "Llm",
+          "repo": "unsloth/Qwen3-4B-GGUF",
+          "repoPath": "Qwen3-4B-Q4_K_M.gguf",
+          "localPath": "text_encoders/Qwen3-4B-Q4_K_M.gguf",
+          "sizeBytes": 2497281312,
+          "sha256": "f6f851777709861056efcdad3af01da38b31223a3ba26e61a4f8bf3a2195813a"
+        },
+        {
+          "role": "Vae",
+          "repo": "Comfy-Org/flux2-dev",
+          "repoPath": "split_files/vae/flux2-vae.safetensors",
+          "localPath": "vae/flux2-vae.safetensors",
+          "sizeBytes": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5"
+        }
+      ]
+    },
+    {
+      "key": "flux2-klein-9b",
+      "displayName": "FLUX.2 klein 9B (GGUF Q4_0, ticari olmayan lisans)",
+      "family": "flux2",
+      "license": "FLUX Non-Commercial",
+      "minVramMb": 8192,
+      "defaultSteps": 4,
+      "cfgScale": 1.0,
+      "samplingMethod": "euler",
+      "scheduler": null,
+      "flowShift": null,
+      "extraArgs": [],
+      "files": [
+        {
+          "role": "DiffusionModel",
+          "repo": "leejet/FLUX.2-klein-9B-GGUF",
+          "repoPath": "flux-2-klein-9b-Q4_0.gguf",
+          "localPath": "diffusion/flux-2-klein-9b-Q4_0.gguf",
+          "sizeBytes": 5616208032,
+          "sha256": "a7e77afa96871d16679ff7b949bd25f20c8179f219c4b662cac91e81ed99b944"
+        },
+        {
+          "role": "Llm",
+          "repo": "unsloth/Qwen3-8B-GGUF",
+          "repoPath": "Qwen3-8B-Q4_K_M.gguf",
+          "localPath": "text_encoders/Qwen3-8B-Q4_K_M.gguf",
+          "sizeBytes": 5027784512,
+          "sha256": "120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4"
+        },
+        {
+          "role": "Vae",
+          "repo": "Comfy-Org/flux2-dev",
+          "repoPath": "split_files/vae/flux2-vae.safetensors",
+          "localPath": "vae/flux2-vae.safetensors",
+          "sizeBytes": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5"
+        }
+      ]
+    },
+    {
+      "key": "flux3-klein",
+      "displayName": "FLUX.3 Image Klein (GGUF Q4_K)",
+      "family": "flux3",
+      "license": "FLUX Kommunity",
+      "minVramMb": 8192,
+      "defaultSteps": 16,
+      "cfgScale": 1.0,
+      "samplingMethod": "euler",
+      "scheduler": null,
+      "flowShift": null,
+      "extraArgs": [],
+      "files": [
+        {
+          "role": "DiffusionModel",
+          "repo": "leejet/flux-3-image-klein-GGUF",
+          "repoPath": "flux3-image-klein-Q4_K.gguf",
+          "localPath": "diffusion/flux3-image-klein-Q4_K.gguf",
+          "sizeBytes": 3514023104,
+          "sha256": "19ddbfbed61da4bb16ebf169aaf48e9e5db43aba557be1ee537e9f00f586092e"
+        },
+        {
+          "role": "Llm",
+          "repo": "Qwen/Qwen3-VL-4B-Instruct-GGUF",
+          "repoPath": "Qwen3VL-4B-Instruct-Q4_K_M.gguf",
+          "localPath": "text_encoders/Qwen3VL-4B-Instruct-Q4_K_M.gguf",
+          "sizeBytes": 2497281664,
+          "sha256": "66358cb18bb6b3b1b6675aa412c7a88ef01d228f481184d13668e5201c730a0a"
+        },
+        {
+          "role": "Vae",
+          "repo": "Comfy-Org/flux2-dev",
+          "repoPath": "split_files/vae/flux2-vae.safetensors",
+          "localPath": "vae/flux2-vae.safetensors",
+          "sizeBytes": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5"
+        }
+      ]
+    },
+    {
+      "key": "sd35-medium",
+      "displayName": "Stable Diffusion 3.5 Medium (GGUF Q4_0)",
+      "family": "sd3",
+      "license": "Stability Community",
+      "minVramMb": 6144,
+      "defaultSteps": 28,
+      "cfgScale": 4.5,
+      "samplingMethod": "euler",
+      "scheduler": null,
+      "flowShift": null,
+      "extraArgs": [
+        "--slg-scale",
+        "2.5"
+      ],
+      "files": [
+        {
+          "role": "FullModel",
+          "repo": "second-state/stable-diffusion-3.5-medium-GGUF",
+          "repoPath": "sd3.5_medium-Q4_0.gguf",
+          "localPath": "checkpoints/sd3.5_medium-Q4_0.gguf",
+          "sizeBytes": 2079836768,
+          "sha256": "3bb8c5e9ab0a841117089ed4ed81d885bb85161df2a766b812f829bc55b31adf"
+        },
+        {
+          "role": "ClipL",
+          "repo": "second-state/stable-diffusion-3.5-medium-GGUF",
+          "repoPath": "clip_l-Q8_0.gguf",
+          "localPath": "text_encoders/clip_l-Q8_0.gguf",
+          "sizeBytes": 130864000,
+          "sha256": "482dfa677edb6499a689f1936f287351f3c104d5da9094d8c797da527a98323b"
+        },
+        {
+          "role": "ClipG",
+          "repo": "second-state/stable-diffusion-3.5-medium-GGUF",
+          "repoPath": "clip_g-Q8_0.gguf",
+          "localPath": "text_encoders/clip_g-Q8_0.gguf",
+          "sizeBytes": 738543360,
+          "sha256": "0678985268cc46e8b61ae3671dc1909566b8d6d20a2a2e4b10c7402b59c7dd5a"
+        },
+        {
+          "role": "T5xxl",
+          "repo": "second-state/stable-diffusion-3.5-medium-GGUF",
+          "repoPath": "t5xxl-Q4_0.gguf",
+          "localPath": "text_encoders/t5xxl-Q4_0.gguf",
+          "sizeBytes": 2752841312,
+          "sha256": "987ba47c158b890c274f78fd35324419f50941e846a49789f0977e9fe9d97ab7"
+        }
+      ]
+    },
+    {
+      "key": "sdxl-lightning",
+      "displayName": "SDXL-Lightning 4 adım (GGUF Q4_0)",
+      "family": "sdxl",
+      "license": "OpenRAIL++",
+      "minVramMb": 4096,
+      "defaultSteps": 4,
+      "cfgScale": 1.0,
+      "samplingMethod": "euler",
+      "scheduler": "sgm_uniform",
+      "flowShift": null,
+      "extraArgs": [],
+      "files": [
+        {
+          "role": "FullModel",
+          "repo": "mzwing/SDXL-Lightning-GGUF",
+          "repoPath": "sdxl_lightning_4step.q4_0.gguf",
+          "localPath": "checkpoints/sdxl_lightning_4step.q4_0.gguf",
+          "sizeBytes": 2584858432,
+          "sha256": "33cc25b6f5dd121ecf3ad28e35eb38cb21427b7794c53527ceafe2dc3b109f4f"
+        },
+        {
+          "role": "Vae",
+          "repo": "madebyollin/sdxl-vae-fp16-fix",
+          "repoPath": "sdxl_vae.safetensors",
+          "localPath": "vae/sdxl_vae.safetensors",
+          "sizeBytes": 334641162,
+          "sha256": "235745af8d86bf4a4c1b5b4f529868b37019a10f7c0b2e79ad0abca3a22bc6e1"
+        }
+      ]
+    },
+    {
+      "key": "qwen-image",
+      "displayName": "Qwen-Image (GGUF Q4_0)",
+      "family": "qwen-image",
+      "license": "Apache-2.0",
+      "minVramMb": 12288,
+      "defaultSteps": 20,
+      "cfgScale": 2.5,
+      "samplingMethod": "euler",
+      "scheduler": null,
+      "flowShift": 3.0,
+      "extraArgs": [],
+      "files": [
+        {
+          "role": "DiffusionModel",
+          "repo": "QuantStack/Qwen-Image-GGUF",
+          "repoPath": "Qwen_Image-Q4_0.gguf",
+          "localPath": "diffusion/Qwen_Image-Q4_0.gguf",
+          "sizeBytes": 11852773920,
+          "sha256": "ab0f20d548f3bfb197ec0f0f61c15acc2f0f865495fee2941c658fef4391cd61"
+        },
+        {
+          "role": "Llm",
+          "repo": "mradermacher/Qwen2.5-VL-7B-Instruct-GGUF",
+          "repoPath": "Qwen2.5-VL-7B-Instruct.Q4_K_M.gguf",
+          "localPath": "text_encoders/Qwen2.5-VL-7B-Instruct.Q4_K_M.gguf",
+          "sizeBytes": 4683072512,
+          "sha256": "0f00a930ba3108b6861ddadf74d8ebbd82e257c63eba728e62c3e8970f5eed94"
+        },
+        {
+          "role": "Vae",
+          "repo": "Comfy-Org/Qwen-Image_ComfyUI",
+          "repoPath": "split_files/vae/qwen_image_vae.safetensors",
+          "localPath": "vae/qwen_image_vae.safetensors",
+          "sizeBytes": 253806246,
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Yerel görsel motorları: stable-diffusion.cpp (sd-cli.exe, CUDA/Vulkan/CPU) ve isteğe bağlı ComfyUI.
+    Model dosya kataloğu (Catalog/image-models.json) ve ComfyUI iş akışı şablonları gömülü kaynaktır.
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Engines.Image</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Catalog\image-models.json" LogicalName="TahaKonsept.Agent.Engines.Image.Catalog.image-models.json" />
+    <EmbeddedResource Include="ComfyUi\Workflows\*.json" LogicalName="TahaKonsept.Agent.Engines.Image.ComfyUi.Workflows.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Agent.Abstractions\TahaKonsept.Agent.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Agent.Engines.Image.Tests" />
+  </ItemGroup>
+
+</Project>

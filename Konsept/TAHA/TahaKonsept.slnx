@@ -39,8 +39,12 @@
   </Folder>
   <Folder Name="/src/Desktop/">
     <Project Path="src/Desktop/TahaKonsept.Agent.Abstractions/TahaKonsept.Agent.Abstractions.csproj" />
+    <Project Path="src/Desktop/TahaKonsept.Agent.Engines.Image/TahaKonsept.Agent.Engines.Image.csproj" />
+    <Project Path="src/Desktop/TahaKonsept.Agent.Engines.Speech/TahaKonsept.Agent.Engines.Speech.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TahaKonsept.Agent.Engines.Image.Tests/TahaKonsept.Agent.Engines.Image.Tests.csproj" />
+    <Project Path="tests/TahaKonsept.Agent.Engines.Speech.Tests/TahaKonsept.Agent.Engines.Speech.Tests.csproj" />
     <Project Path="tests/TahaKonsept.ArchitectureTests/TahaKonsept.ArchitectureTests.csproj" />
     <Project Path="tests/TahaKonsept.IntegrationTests/TahaKonsept.IntegrationTests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Diagnostics.Tests/TahaKonsept.Modules.Diagnostics.Tests.csproj" />

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Yerel görsel motoru testleri. Ağ ve GPU gerektirmez (sahte HTTP/süreç); gerçek üretim testi
+    .tools-dev/sd-cpp/sd-cli.exe ve .tools-dev/models/image altındaki Z-Image dosyaları yoksa atlanır.
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Engines.Image.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Desktop\TahaKonsept.Agent.Engines.Image\TahaKonsept.Agent.Engines.Image.csproj" />
+  </ItemGroup>
+
+</Project>
