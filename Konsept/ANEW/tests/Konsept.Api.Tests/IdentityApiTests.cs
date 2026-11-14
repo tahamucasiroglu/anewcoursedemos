@@ -230,6 +230,39 @@ public sealed class IdentityApiTests : IClassFixture<IdentityApiFactory>
     }
 
     /// <summary>
+    /// Sınır kayan penceredir (review R5-1, Req 9): sabit pencerenin kenarında ~20 deneme geçemez. t=0'da 1, t=59,5 sn'de 9
+    /// deneme geçer; t=60,0 sn'deki deneme son 60 sn'nin (dahil) 11. denemesidir ve reddedilir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task RateLimit_SlidingWindow_NoBurstAtWindowEdge()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = _factory.CreateClient();
+        var ip = AuthenticatedClient.NewIp();
+        async Task<HttpStatusCode> AttemptAsync()
+        {
+            using var response = await AuthenticatedClient.PostAsync(client, _factory.Services, "/api/auth/login", new { email = AuthenticatedClient.NewEmail(), password = "Yanlis12345" }, ct, ip);
+            return response.StatusCode;
+        }
+
+        var first = await AttemptAsync();
+        _factory.Time.Advance(TimeSpan.FromSeconds(59.5));
+        var burst = new List<HttpStatusCode>();
+        for (var i = 0; i < 9; i++)
+        {
+            burst.Add(await AttemptAsync());
+        }
+
+        _factory.Time.Advance(TimeSpan.FromSeconds(0.5));
+        var atEdge = await AttemptAsync();
+
+        first.ShouldBe(HttpStatusCode.Unauthorized);
+        burst.ShouldAllBe(s => s == HttpStatusCode.Unauthorized);
+        atEdge.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    /// <summary>
     /// İletilen istemci IP başlığına yalnızca servis anahtarıyla güvenilir: anahtarsız istekte her seferinde farklı IP
     /// yazılsa da hepsi bağlantının adresinden sayılır ve 11. istek reddedilir.
     /// </summary>

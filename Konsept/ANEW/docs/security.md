@@ -89,7 +89,8 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 - **Asıl yetki kontrolü API'dedir.** Web yetkisiz butonları gizler ama karar her zaman API'nindir.
 - **Sahiplik (BR-1):** EF Core global query filter ile her sorgu otomatik olarak `UserId`'ye göre filtrelenir.
 - **Rate limiting:** login ve üretim uçlarında. Giriş/kayıt sınırı (0002) **yalnızca Api'de**: istemci IP'si başına 60 sn'de
-  10 deneme, 11.'de 60 sn blok (`FixedBlockRateLimiter`, `TimeProvider`'lı); reddedilen istek servise ulaşmaz, hak sayacı
+  10 deneme (kayan pencere: son 60 sn içindeki izinler sayılır, sabit pencere kenarında patlama olmaz), 11.'de 60 sn blok
+  (`FixedBlockRateLimiter`, `TimeProvider`'lı); reddedilen istek servise ulaşmaz, hak sayacı
   değişmez, 429 `auth.too_many_attempts`. Web tarayıcının IP'sini `X-Konsept-Client-Ip` ile iletir; Api bu başlığa yalnızca
   geçerli servis anahtarıyla güvenir.
 
