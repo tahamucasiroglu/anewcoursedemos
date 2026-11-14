@@ -1,6 +1,7 @@
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Concrete;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
+using Konsept.Modules.Monitoring.Infrastructure.Logging;
 using Konsept.Modules.Monitoring.Infrastructure.Persistence;
 using Konsept.Modules.Monitoring.Infrastructure.Persistence.Concrete;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,10 @@ public static class MonitoringModule
         services.AddScoped<ISystemEventWriter>(sp => sp.GetRequiredService<ISystemEventService>());
         services.AddScoped<ISystemEventReader>(sp => sp.GetRequiredService<ISystemEventService>());
         services.AddScoped<ISystemStatusService, SystemStatusService>();
+        services.AddScoped<ITechnicalLogRepository, TechnicalLogRepository>();
+        services.AddScoped<ITechnicalLogService, TechnicalLogService>();
+        services.AddScoped<ITechnicalLogWriter>(sp => sp.GetRequiredService<ITechnicalLogService>());
+        services.AddHostedService<TechnicalLogRetentionWorker>();
         return services;
     }
 

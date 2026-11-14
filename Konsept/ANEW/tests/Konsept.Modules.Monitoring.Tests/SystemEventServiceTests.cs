@@ -4,6 +4,7 @@ using Konsept.Modules.Monitoring.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Modules.Monitoring.Domain.Entities;
 using Konsept.Modules.Monitoring.Domain.Enums;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using Shouldly;
@@ -23,7 +24,7 @@ public sealed class SystemEventServiceTests
     [Fact]
     public async Task WriteAsync_Entry_PersistsWithProviderTime()
     {
-        var service = new SystemEventService(_repository, _time);
+        var service = new SystemEventService(_repository, _time, NullLogger<SystemEventService>.Instance);
 
         var dto = await service.WriteAsync(
             new SystemEventEntry("agent.connected", SystemEventLevel.Info, "Ajan bağlandı"),
@@ -41,7 +42,7 @@ public sealed class SystemEventServiceTests
     [Fact]
     public async Task GetLatestAsync_NoEvents_ReturnsNull()
     {
-        var service = new SystemEventService(_repository, _time);
+        var service = new SystemEventService(_repository, _time, NullLogger<SystemEventService>.Instance);
 
         var latest = await service.GetLatestAsync(TestContext.Current.CancellationToken);
 
@@ -55,7 +56,7 @@ public sealed class SystemEventServiceTests
     {
         var stored = SystemEvent.Create("agent.disconnected", EventLevel.Warning, "Ajan bağlantısı koptu", _time.GetUtcNow(), null);
         _repository.GetLatestAsync(Arg.Any<CancellationToken>()).Returns(stored);
-        var service = new SystemEventService(_repository, _time);
+        var service = new SystemEventService(_repository, _time, NullLogger<SystemEventService>.Instance);
 
         var latest = await service.GetLatestAsync(TestContext.Current.CancellationToken);
 

@@ -239,8 +239,10 @@ body {
   color: var(--color-warning);
 }
 
-.journal[data-level="error"] .journal__text {
+.journal[data-level="error"] .journal__text,
+.journal[data-level="critical"] .journal__text {
   color: var(--color-error);
+  font-weight: 700;
 }
 
 .status {

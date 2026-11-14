@@ -3,7 +3,7 @@
 import { get } from './api.js';
 
 export const POLL_INTERVAL_MS = 3000;
-const LEVELS = ['info', 'warning', 'error'];
+const LEVELS = ['info', 'warning', 'error', 'critical'];
 
 function texts(box) {
   const d = box.dataset;

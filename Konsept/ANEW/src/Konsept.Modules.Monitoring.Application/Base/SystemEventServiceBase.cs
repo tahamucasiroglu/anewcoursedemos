@@ -32,6 +32,7 @@ public abstract class SystemEventServiceBase : ISystemEventService
             entry.Message,
             TimeProvider.GetUtcNow(),
             entry.UserId);
+        OnEventCreated(systemEvent);
         await PersistAsync(systemEvent, cancellationToken).ConfigureAwait(false);
         return ToDto(systemEvent);
     }
@@ -42,6 +43,13 @@ public abstract class SystemEventServiceBase : ISystemEventService
         var latest = await LoadLatestAsync(cancellationToken).ConfigureAwait(false);
         return latest is null ? null : ToDto(latest);
     }
+
+    /// <summary>
+    /// Olay oluşturulunca, kalıcı yapılmadan önce çağrılır: olay teknik loga da yazılır (spec 0008 Req 3) —
+    /// veritabanı kapalı olsa bile dosya logunda bulunsun diye önce.
+    /// </summary>
+    /// <param name="systemEvent">Olay (metni maskelenmiş).</param>
+    protected abstract void OnEventCreated(SystemEvent systemEvent);
 
     /// <summary>Olayı kalıcı olarak kaydeder.</summary>
     /// <param name="systemEvent">Olay.</param>

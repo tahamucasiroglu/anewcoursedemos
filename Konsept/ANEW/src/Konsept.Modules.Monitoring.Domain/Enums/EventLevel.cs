@@ -13,4 +13,7 @@ public enum EventLevel
 
     /// <summary>Hata.</summary>
     Error = 2,
+
+    /// <summary>Kritik.</summary>
+    Critical = 3,
 }

@@ -13,4 +13,7 @@ public enum SystemEventLevel
 
     /// <summary>Hata.</summary>
     Error = 2,
+
+    /// <summary>Kritik hata.</summary>
+    Critical = 3,
 }

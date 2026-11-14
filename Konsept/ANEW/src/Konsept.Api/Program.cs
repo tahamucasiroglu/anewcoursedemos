@@ -1,14 +1,17 @@
 using Konsept.Modules.AgentGateway.Infrastructure;
 using Konsept.Modules.AgentGateway.Presentation.Controllers;
+using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Modules.Monitoring.Infrastructure;
+using Konsept.Modules.Monitoring.Infrastructure.Logging;
 using Konsept.Modules.Monitoring.Presentation.Controllers;
 using Konsept.Shared.Infrastructure.Http;
 using Konsept.Shared.Infrastructure.Logging;
 using Konsept.Shared.Infrastructure.Versioning.Concrete;
 using Konsept.Shared.Kernel.Abstract;
+using Konsept.Shared.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.AddKonseptSerilog("api");
+builder.AddKonseptSerilog(LogSources.Api, "api", (logger, services) => logger.WriteToTechnicalLogDatabase(services, LogEntrySource.Api));
 
 var connectionString = builder.Configuration.GetConnectionString("Konsept")
     ?? throw new InvalidOperationException("ConnectionStrings:Konsept ayarı eksik.");
@@ -28,11 +31,13 @@ builder.Services
     .AddControllers(options => options.Filters.Add<ValidationActionFilter>())
     .AddApplicationPart(typeof(SystemController).Assembly)
     .AddApplicationPart(typeof(AgentController).Assembly);
+builder.Services.AddScoped<ServiceKeyAuthorizationFilter>();
 builder.Services.AddMonitoringModule(connectionString);
 builder.Services.AddAgentGatewayModule();
 
 var app = builder.Build();
 
+app.UseKonseptLogging();
 app.UseExceptionHandler();
 app.MapControllers();
 app.MapAgentGateway();

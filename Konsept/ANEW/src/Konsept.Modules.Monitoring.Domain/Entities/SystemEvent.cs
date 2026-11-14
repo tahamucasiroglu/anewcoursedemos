@@ -1,10 +1,12 @@
 using Konsept.Modules.Monitoring.Domain.Enums;
+using Konsept.Shared.Kernel.Security;
 
 namespace Konsept.Modules.Monitoring.Domain.Entities;
 
 /// <summary>
 /// Genel olay kaydındaki bir olay (spec 0001 Req 9): tür, UTC zaman, seviye, metin ve isteğe bağlı
-/// kullanıcı ayrı alanlarda tutulur; Günlük ve admin aktiviteleri bu kayıttan okur.
+/// kullanıcı ayrı alanlarda tutulur; Günlük ve admin aktiviteleri bu kayıttan okur. Metin oluşturulurken
+/// maskelenir (spec 0008 Req 8).
 /// </summary>
 public sealed class SystemEvent
 {
@@ -45,7 +47,7 @@ public sealed class SystemEvent
     /// <summary>Yeni bir olay oluşturur.</summary>
     /// <param name="type">Olay türü; boş olamaz, en fazla <see cref="TypeMaxLength"/> karakter.</param>
     /// <param name="level">Seviye.</param>
-    /// <param name="message">Metin; boş olamaz, uzunsa kırpılır.</param>
+    /// <param name="message">Metin; boş olamaz, maskelenir, uzunsa kırpılır.</param>
     /// <param name="occurredAt">Olay zamanı; UTC'ye çevrilir.</param>
     /// <param name="userId">İsteğe bağlı kullanıcı.</param>
     /// <returns>Yeni olay.</returns>
@@ -58,7 +60,8 @@ public sealed class SystemEvent
             throw new ArgumentException($"Olay türü en fazla {TypeMaxLength} karakter olabilir.", nameof(type));
         }
 
-        var text = message.Length > MessageMaxLength ? message[..MessageMaxLength] : message;
+        var masked = SecretMasker.Mask(message);
+        var text = masked.Length > MessageMaxLength ? masked[..MessageMaxLength] : masked;
         return new SystemEvent(Guid.CreateVersion7(occurredAt), type, level, text, occurredAt.ToUniversalTime(), userId);
     }
 }
