@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Production modülü altyapı katmanı: ProductionDbContext ("production" şeması), repository'ler, migration'lar,
+    orkestratör BackgroundService'i, yazım kılavuzu sağlayıcısı (Agent.Engines.Video AuthoringGuides), istatistik katkıcısı, DI kaydı.
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Production.Application\TahaKonsept.Modules.Production.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Desktop\TahaKonsept.Agent.Engines.Video\TahaKonsept.Agent.Engines.Video.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Production.Tests" />
+  </ItemGroup>
+
+</Project>

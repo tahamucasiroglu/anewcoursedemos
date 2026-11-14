@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Production modülü: alan katmanı (üretim ayarları, sıra, iş + aşama çalıştırmaları, video, okunuş sözlüğü). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Domain\TahaKonsept.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Production modülü birim testleri: aşama hash'i + yeniden kullanım kararları, orkestratör (sahte geçitler + sahte ajan), sıra, olay işleyici, bütçe durdurma (EF InMemory, DB gerekmez). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Production\TahaKonsept.Modules.Production.Infrastructure\TahaKonsept.Modules.Production.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

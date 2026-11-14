@@ -22,6 +22,10 @@
     <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Api/TahaKonsept.Modules.Identity.Api.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Production/">
+    <Project Path="src/Modules/Production/TahaKonsept.Modules.Production.Domain/TahaKonsept.Modules.Production.Domain.csproj" />
+    <Project Path="src/Modules/Production/TahaKonsept.Modules.Production.Application/TahaKonsept.Modules.Production.Application.csproj" />
+    <Project Path="src/Modules/Production/TahaKonsept.Modules.Production.Infrastructure/TahaKonsept.Modules.Production.Infrastructure.csproj" />
+    <Project Path="src/Modules/Production/TahaKonsept.Modules.Production.Api/TahaKonsept.Modules.Production.Api.csproj" />
     <Project Path="src/Modules/Production/TahaKonsept.Modules.Production.Normalization/TahaKonsept.Modules.Production.Normalization.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Profiles/">
@@ -71,6 +75,8 @@
     <Project Path="tests/TahaKonsept.Modules.Agents.Tests/TahaKonsept.Modules.Agents.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Diagnostics.Tests/TahaKonsept.Modules.Diagnostics.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Identity.Tests/TahaKonsept.Modules.Identity.Tests.csproj" />
+    <Project Path="tests/TahaKonsept.Modules.Production.Normalization.Tests/TahaKonsept.Modules.Production.Normalization.Tests.csproj" />
+    <Project Path="tests/TahaKonsept.Modules.Production.Tests/TahaKonsept.Modules.Production.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Profiles.Tests/TahaKonsept.Modules.Profiles.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Providers.Tests/TahaKonsept.Modules.Providers.Tests.csproj" />
   </Folder>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Production modülü: API katmanı (ProductionModule kaydı + controller'lar, rota api/production/...). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Production.Infrastructure\TahaKonsept.Modules.Production.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Api\TahaKonsept.BuildingBlocks.Api.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Production modülü uygulama katmanı: ayar/sıra/video/okunuş servisleri, aşama grafiği (hash + yeniden kullanım),
+    aşama işleyicileri (sunucu: Script/FactSheet/ScenePlan/SceneCode/Normalize + online Images/Speech; ajan: komut kurulumu),
+    iş ilerletici (orkestratör adımı) ve ajan olay işleyicisi. Diğer modüllere yalnızca Application arayüzleriyle bağlanır.
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Production.Domain\TahaKonsept.Modules.Production.Domain.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Modules.Production.Normalization\TahaKonsept.Modules.Production.Normalization.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\Providers\TahaKonsept.Modules.Providers.Application\TahaKonsept.Modules.Providers.Application.csproj" />
+    <ProjectReference Include="..\..\Agents\TahaKonsept.Modules.Agents.Application\TahaKonsept.Modules.Agents.Application.csproj" />
+    <ProjectReference Include="..\..\Profiles\TahaKonsept.Modules.Profiles.Application\TahaKonsept.Modules.Profiles.Application.csproj" />
+    <ProjectReference Include="..\..\Diagnostics\TahaKonsept.Modules.Diagnostics.Application\TahaKonsept.Modules.Diagnostics.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Production.Tests" />
+  </ItemGroup>
+
+</Project>
