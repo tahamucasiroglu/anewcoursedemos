@@ -17,11 +17,13 @@ if [ ! -f /etc/anewconcept/api.env ]; then
   printf 'ConnectionStrings__Konsept=Host=127.0.0.1;Port=5432;Database=anewconcept;Username=anewconcept;Password=%s\n' "$password" > /etc/anewconcept/api.env
   chown root:anewconcept /etc/anewconcept/api.env
   chmod 640 /etc/anewconcept/api.env
+  # Şifre psql'e stdin'den gider (printf kabuk yerleşiği): süreç listesinde görünmez (review I-5).
   if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='anewconcept'" | grep -q 1; then
-    sudo -u postgres psql -q -c "ALTER ROLE anewconcept WITH LOGIN PASSWORD '$password'"
+    verb=ALTER
   else
-    sudo -u postgres psql -q -c "CREATE ROLE anewconcept WITH LOGIN PASSWORD '$password'"
+    verb=CREATE
   fi
+  printf "%s ROLE anewconcept WITH LOGIN PASSWORD '%s';\n" "$verb" "$password" | sudo -u postgres psql -q -v ON_ERROR_STOP=1
 fi
 sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='anewconcept'" | grep -q 1 \
   || sudo -u postgres psql -q -c "CREATE DATABASE anewconcept OWNER anewconcept ENCODING 'UTF8' TEMPLATE template0"
