@@ -290,37 +290,37 @@
     "key": "z-image-turbo", "platform": "local", "providerModelId": "z-image-turbo-gguf-q4_0", "displayName": "Z-Image Turbo",
     "capability": "Image", "runsOn": "Agent", "pricing": { },
     "minVramMb": 4096, "defaultFor": ["image-local"],
-    "notes": "Yerel görsel varsayılanı. stable-diffusion.cpp, GGUF Q4_0 3.68 GB; 6 GB'ta --offload-to-cpu --diffusion-fa --vae-tiling. Apache-2.0. ~20-60 sn (doğrulanmadı)."
+    "notes": "Yerel görsel varsayılanı. stable-diffusion.cpp, GGUF Q3_K 3.1 GB + Qwen3-4B. Apache-2.0. RTX 3060 Laptop 6 GB'ta 1080x1920 ≈ 80 sn/görsel (ölçüldü, 14 Kas 2026)."
   },
   {
     "key": "flux2-klein-4b", "platform": "local", "providerModelId": "flux2-klein-4b-gguf-q4_k_m", "displayName": "FLUX.2 klein 4B",
     "capability": "Image", "runsOn": "Agent", "pricing": { },
     "minVramMb": 4096, "defaultFor": [],
-    "notes": "Edit/referans görsel. GGUF Q4_K_M ~2.6 GB, 4 adım. Apache-2.0. RTX 3060 Ti'de ~15-30 sn (doğrulanmadı)."
+    "notes": "GGUF Q4_0 2.5 GB + Qwen3-4B, 4 adım. Apache-2.0. RTX 3060 Laptop 6 GB'ta 1080x1920 ≈ 29 sn/görsel — en hızlı yerel model (ölçüldü, 14 Kas 2026)."
   },
   {
     "key": "flux2-klein-9b", "platform": "local", "providerModelId": "flux2-klein-9b", "displayName": "FLUX.2 klein 9B",
     "capability": "Image", "runsOn": "Agent", "pricing": { },
-    "minVramMb": 8192, "defaultFor": [],
-    "notes": "6 GB'ta zor. Non-Commercial lisans (kişisel kullanım)."
+    "minVramMb": 6144, "defaultFor": [],
+    "notes": "GGUF Q4_0 5.6 GB + Qwen3-8B 5 GB (≈ 11 GB indirme). 6 GB'ta azaltılmış kipte çalışır (metin kodlayıcı CPU'da, ~5 GB boş RAM gerekir): 1080x1920 ≈ 88 sn/görsel (ölçüldü, 14 Kas 2026). Non-Commercial lisans (kişisel kullanım)."
   },
   {
     "key": "flux3-klein", "platform": "local", "providerModelId": "flux3-image-klein", "displayName": "FLUX.3 Image Klein",
     "capability": "Image", "runsOn": "Agent", "pricing": { },
-    "minVramMb": 8192, "defaultFor": [],
-    "notes": "Resmi asgari INT8 8 GB. FLUX Kommunity lisansı."
+    "minVramMb": 6144, "defaultFor": [],
+    "notes": "GGUF Q4_K 3.5 GB + Qwen3-VL-4B. 6 GB'ta azaltılmış kipte: 1080x1920 ≈ 92 sn/görsel, istem uyumu en iyi (ölçüldü, 14 Kas 2026). FLUX Kommunity lisansı."
   },
   {
     "key": "sd35-medium", "platform": "local", "providerModelId": "sd3.5-medium", "displayName": "SD3.5 Medium",
     "capability": "Image", "runsOn": "Agent", "pricing": { },
     "minVramMb": 6144, "defaultFor": [],
-    "notes": "6 GB'ta belki. Stability Community lisansı."
+    "notes": "GGUF Q4_0 + CLIP-L/G + T5 (≈ 5.7 GB indirme), 28 adım. 1 MP'de üretilip 1080x1920'ye büyütülür: ≈ 65 sn/görsel (ölçüldü, 14 Kas 2026). Stability Community lisansı."
   },
   {
     "key": "sdxl-lightning", "platform": "local", "providerModelId": "sdxl-lightning", "displayName": "SDXL-Lightning",
     "capability": "Image", "runsOn": "Agent", "pricing": { },
     "minVramMb": 4096, "defaultFor": [],
-    "notes": "4 GB ve altı için yedek. OpenRAIL++ (doğrulanmadı)."
+    "notes": "4 GB ve altı için yedek. 1 MP'de (768x1344) üretilip 1080x1920'ye büyütülür (2 MP'de nesneler ikilenir): ≈ 12 sn/görsel (ölçüldü, 14 Kas 2026). OpenRAIL++."
   },
   {
     "key": "qwen-image", "platform": "local", "providerModelId": "qwen-image-2.1", "displayName": "Qwen-Image",

@@ -103,7 +103,7 @@ Test betiğinin kendi hataları (seçiciler, aynı adımın tekrar koşulmasınd
 - Avalonia GUI ajanının kendisiyle eşleme ve kurulum penceresi. UI otomasyonu yerine `--headless` kullanıldı; çekirdek, motorlar ve eşleme aynı kod.
 - Gerçek bir Ollama / LM Studio sunucusu. Yalnız sahte sunucu denendi; gerçek modellerin `json_schema strict` desteği modele göre değişebilir.
 - Online LLM, ses ve görsel sağlayıcıları (anahtar yok).
-- Yerel görsel (Z-Image Turbo) ve Remotion/Revideo motorları. Görsel kapalıydı, motor HyperFrames'ti.
+- (Bu bölüm ilk turu anlatır; yerel görsel modelleri ve Remotion/Revideo sonradan kurgu30 matrisiyle doğrulandı — aşağıya bakın.)
 - "Yeniden üret" (konsept düzenleyip baştan üretme), bütçe limiti engeli ve ajan çevrimdışıyken kuyruğun beklemesi.
 - Velopack kurulum paketi ve güncelleme.
 - Okunuş "Dinle" düğmesiyle yerel sentez (deneme kutusu artık sentez yapmıyor; Dinle akışı otomasyonda tıklanmadı).
@@ -196,3 +196,28 @@ Bu turda düzeltilen hatalar:
 - **GPU ses modeli VRAM'de kalıyordu:** Python işçisi ses aşamasından sonra açık kalıyordu (Chatterbox ~4 GB). Images aşaması Speech'ten önce çalıştığı için sonraki işin yerel görsel aşaması belleksiz kalırdı. `ISpeechEngine.ReleaseAsync` eklendi. Ses aşaması bitince (başarı ya da hata) GPU motorunun işçisi kapanıyor; CPU motorları sıcak kalıyor. Canlı doğrulama: Chatterbox'ta VRAM, aşama bitişinden 2 sn sonra 4,2 GB'tan 2,0 GB'a indi. Testler: `Release_stops_worker_only_for_gpu_engines` (GPU/CPU), `Speech_ReleasesEngine_EvenWhenSynthesisFails`.
 - **Türkçe desteklemeyen motor önce kuruluyordu:** Kokoro seçilince ajan önce ~2 GB torch ortamını kuruyor, ancak sentezde "dili desteklemiyor" diyordu. Dil kontrolü artık kurulumdan önce yapılıyor ve Türkçe önerili açık bir mesaj veriyor. Arayüzde de "Türkçe yok" model seçilince uyarı çıkıyor. Test: `Speech_UnsupportedLanguage_FailsBeforeInstall`.
 - **Koşucu (matrix.cjs):** erişim belirteci ~15 dk'da doluyor ve uzun (soğuk GPU) koşularda `401` ile kopuyordu. 401 alınca bir kez yeniden giriş yapılıyor.
+
+### Yerel görsel turu (14 Kas 2026)
+
+HyperFrames + Supertonic 3 + altyazı + çubuk; her yöntem `--new-concept` ile gerçek boru hattından geçti (API kuyruğu → orkestratör → penceresiz ajan → sd.cpp). Ajan sd.cpp'yi (master-1098, CUDA 12) ve her modelin dosyalarını **kendisi indirdi** (`.tools-dev/e2e-agent/Tools/sd-cpp`, `.tools-dev/e2e-agent/Models/image`; Z-Image dosyaları eski `.tools-dev/models/image`'dan sabit bağlantıyla alındı). Makine: RTX 3060 Laptop 6 GB, bu turda boş VRAM ~5,3 GB, boş RAM ~5,5 GB. VRAM tepe (toplam) 5,57 GB (`tests/e2e/out/kurgu30/logs/vram-images.csv`).
+
+`matrix.cjs` artık işin `images/` klasörünü yöntem klasörüne kopyalar ve denetler: görsel sayısı = sahne sayısı, her görsel **tam 1080x1920**; görsel kapalıyken hiç görsel yok.
+
+| Yöntem | Sonuç | Üretim boyutu | Görsel başı | Images aşaması | Render (iş başı → son) | whisper | Not |
+|---|---|---|---|---|---|---|---|
+| Z-Image Turbo (`z-image-turbo`) | ✅ | 1080x1920 | ~80 sn (Standard) | 365 sn (sd.cpp soğuk kurulum ~37 sn dahil) | 461 sn | 0,846 | yüksek ayrıntı |
+| FLUX.2 klein 4B (`flux2-klein-4b`) | ✅ (düzeltmeyle) | 1080x1920 (sd.cpp 1088 verir → kırpılır) | ~29 sn (Standard) | 119 sn | 214 sn | 0,827 | en hızlı |
+| SDXL-Lightning (`sdxl-lightning`) | ✅ (düzeltmeyle) | 768x1344 → 1080x1920 | ~12 sn | 49 sn | 169 sn | 0,769 | istem uyumu zayıf (top → sütun) |
+| SD3.5 Medium (`sd35-medium`) | ✅ | 768x1344 → 1080x1920 | ~65 sn (Standard) | 374 sn (5,7 GB indirme dahil) | 498 sn | 0,865 | |
+| FLUX.3 Image Klein (`flux3-klein`) | ✅ | 1080x1920 | ~92 sn (Reduced) | 466 sn (6 GB indirme dahil) | 571 sn | 0,846 | istem uyumu en iyi (genç sultan + top) |
+| FLUX.2 klein 9B (`flux2-klein-9b`) | ✅ | 1080x1920 | ~88 sn (Reduced) | 483 sn (10,6 GB indirme dahil) | 595 sn | — | metin kodlayıcı CPU'da; boş RAM ~5 GB yetti |
+| Qwen-Image (`qwen-image`) | ⏭ atlandı | — | — | — | — | — | en küçük GGUF Q2_K 7,06 GB + Qwen2.5-VL-7B 4,7 GB ≈ 11,8 GB; 6 GB VRAM + ~5,5 GB boş RAM'e sığmaz (Q4_0 11,85 GB) |
+| Görsel kapalı (boyut denetimi) | ✅ | — | — | sunucuda geçiş ("Kapalı (koddan çizim)") | 73 sn | — | 0 görsel, degrade + şekiller |
+
+Her yöntemde 4 kare incelendi: görsel sahnenin tamamını kaplıyor (Ken Burns + okunurluk katmanı), başlık ve kart üstte, sarı karaoke altyazı alt bölgede, turuncu ilerleme çubuğu üstte, Türkçe karakterler doğru. Tüm okunuşlar (Gugıl, yirmi dokuz Mayıs bin dört yüz elli üç, İkinci Mehmed, yüzde kırk, On beşinci yüzyıl) doğru; ses ve görüntü 31,27 / 31,24 sn.
+
+Bu turda düzeltilen hatalar:
+- **Görsel istenen boyutta değildi:** sd.cpp FLUX.2'de genişliği 16'nın katına yuvarlıyor; 1080x1920 isteğine 1088x1920 verdi ve ajan bunu olduğu gibi geçiriyordu. Yeni `IImageFitter` → `ImageFitterBase` → `FfmpegImageFitter` (Agent.Core/Media): Images aşaması her görseli kontrol noktasından önce isteğin tam boyutuna getirir (kapla + ortadan kırp, esnetme yok; boyut zaten doğruysa dokunmaz). Tüm görsel motorlarını kapsar. Testler: `FfmpegImageFitterTests` (gerçek ffmpeg ile 1088→1080), `Images_FitsEachGeneratedImageToRequestedSize`, `Images_FitFailure_FailsStage`.
+- **SDXL 2 MP'de nesneleri ikiliyordu:** 1080x1920 (2 MP) üretimde 3. sahnede iki sultan çıktı (SDXL ~1 MP'de eğitildi). Katalogda `maxPixels` (SDXL ve SD3.5 için 1 MP); sd.cpp motoru bu modellerde aynı oranda, 64'ün katı boyutta (768x1344) üretir, Images aşaması tam boyuta büyütür. SDXL görseli 18 sn'den 12 sn'ye indi, tek figür. Testler: `ImageEngineBaseSizeTests`, `Generates_within_model_pixel_budget`, `Generates_requested_size_without_budget`.
+- **Katalog VRAM değerleri:** FLUX.3 klein ve FLUX.2 klein 9B "en az 8 GB" yazıyordu; 6 GB kartta (5,3 GB boş) azaltılmış kipte ~90 sn/görselle çalıştılar → 6144 MB. Sunucu kataloğundaki "doğrulanmadı" notları ölçülen sürelerle değiştirildi.
+
