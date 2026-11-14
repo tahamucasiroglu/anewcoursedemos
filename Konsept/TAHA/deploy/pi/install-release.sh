@@ -9,7 +9,8 @@
 #   2. systemd unit'lerini /etc/systemd/system'e kurar, rollback.sh'ı /opt/tahakonsept/bin'e koyar.
 #   3. /var/lib/tahakonsept altındaki veri klasörlerini (App_Data/keys, App_Data/artifacts, logs) garanti eder.
 #   4. /opt/tahakonsept/current sembolik bağını atomik olarak yeni sürüme çevirir, eski hedefi 'previous' olarak saklar.
-#   5. Servisleri yeniden başlatır, sağlık kontrolü yapar; başarısızsa önceki sürüme otomatik geri döner.
+#   5. Servisleri yeniden başlatır, sağlık kontrolü yapar (API status=ok + database=ready + yeni sürüm; "degraded" başarı
+#      sayılmaz); başarısızsa önceki sürüme otomatik geri döner.
 #   6. Son KEEP_RELEASES (varsayılan 5) sürümü tutar, eskileri siler (current/previous asla silinmez).
 set -euo pipefail
 
@@ -108,6 +109,23 @@ wait_for() {
   return 1
 }
 
+# API 200 dönse de 'degraded' (veritabanı hazır değil) başarı sayılmaz: status=ok + database=ready (ve verildiyse sürüm) beklenir.
+wait_for_api() {
+  local expected_version="${1:-}" deadline=$((SECONDS + HEALTH_TIMEOUT)) body=""
+  while (( SECONDS < deadline )); do
+    body="$(curl -fs --max-time 5 "$API_HEALTH_URL" 2>/dev/null || true)"
+    if [[ "$body" == *'"status":"ok"'* && "$body" == *'"database":"ready"'* ]] && { [[ -z "$expected_version" ]] || [[ "$body" == *"\"version\":\"$expected_version\""* ]]; }; then
+      return 0
+    fi
+    sleep 2
+  done
+  log "API sağlıklı değil (son yanıt: ${body:-yok})"
+  return 1
+}
+
+EXPECTED_VERSION="${RELEASE_NAME%-*-*}"
+[[ "$EXPECTED_VERSION" == "$RELEASE_NAME" ]] && EXPECTED_VERSION=""
+
 restart_services() {
   systemctl enable tahakonsept-api.service tahakonsept-web.service >/dev/null 2>&1
   systemctl restart tahakonsept-api.service
@@ -115,7 +133,7 @@ restart_services() {
 }
 
 restart_services
-if wait_for "$API_HEALTH_URL" && wait_for "$WEB_URL"; then
+if wait_for_api "$EXPECTED_VERSION" && wait_for "$WEB_URL"; then
   log "Sağlık kontrolü geçti: $(curl -fsS --max-time 5 "$API_HEALTH_URL")"
 else
   log "Sağlık kontrolü BAŞARISIZ. Son loglar:"
@@ -125,7 +143,7 @@ else
     log "Önceki sürüme geri dönülüyor: $PREVIOUS_TARGET"
     switch_current "$PREVIOUS_TARGET"
     restart_services
-    if wait_for "$API_HEALTH_URL"; then log "Geri dönüş tamam."; else log "Geri dönülen sürüm de sağlıksız!"; fi
+    if wait_for_api; then log "Geri dönüş tamam."; else log "Geri dönülen sürüm de sağlıksız!"; fi
   fi
   die "kurulum başarısız: $RELEASE_NAME"
 fi

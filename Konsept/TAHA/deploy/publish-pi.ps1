@@ -155,6 +155,9 @@ if (-not $SkipVerify) {
     Write-Step "Bu bilgisayardan doğrulama ($PiAddress)"
     $health = Invoke-RestMethod -Uri "http://${PiAddress}:7111/api/health" -TimeoutSec 15
     Write-Host ("    api/health: status={0} version={1} environment={2} database={3}" -f $health.status, $health.version, $health.environment, $health.database)
+    if ($health.status -ne 'ok' -or $health.database -ne 'ready' -or $health.version -ne $version) {
+        throw "api/health beklenen değil (status=ok, database=ready, version=$version bekleniyordu)."
+    }
     $web = Invoke-WebRequest -Uri "http://${PiAddress}:7110/" -TimeoutSec 15 -UseBasicParsing -MaximumRedirection 5
     Write-Host "    web /: HTTP $($web.StatusCode)"
     if (Test-Path (Join-Path $downloadsOut 'TahaKonsept.Agent-win-Setup.exe')) {
