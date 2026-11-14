@@ -19,6 +19,9 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
     /// <summary>Sonucun paylaşıldığı süre.</summary>
     public static readonly TimeSpan ShareDuration = TimeSpan.FromSeconds(60);
 
+    /// <summary>Liderin Api refresh çağrısının üst süresi (isteğin iptalinden bağımsız).</summary>
+    public static readonly TimeSpan RefreshTimeout = TimeSpan.FromSeconds(15);
+
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _gates = new(StringComparer.Ordinal);
 
     /// <inheritdoc />
@@ -41,7 +44,10 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
                 return shared!;
             }
 
-            var result = await api.RefreshAsync(refreshToken, cancellationToken).ConfigureAwait(false);
+            // Api tarafında dönüş bir kez olur: tarayıcı isteği kesilse de lider çağrıyı bitirip sonucu paylaşır, yoksa yeni çift
+            // kaybolur ve kullanıcı düşer (review R1-1). Yalnızca zaman aşımıyla iptal edilir; bekleyenler kendi isteğiyle çıkabilir.
+            using var detached = new CancellationTokenSource(RefreshTimeout);
+            var result = await api.RefreshAsync(refreshToken, detached.Token).ConfigureAwait(false);
             if (result.IsSuccess || result.Error!.Type == ErrorType.Unauthorized)
             {
                 Share(key, result);
