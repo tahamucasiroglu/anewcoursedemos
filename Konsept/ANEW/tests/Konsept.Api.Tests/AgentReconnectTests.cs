@@ -84,6 +84,36 @@ public sealed class AgentReconnectTests
         }
     }
 
+    /// <summary>
+    /// Sunucu kaydı geçici olarak reddederse istemci hub'ı yeniden başlatmadan (aynı bağlantıda) yalnızca
+    /// kaydı yeniden dener ve sonunda "bağlı" olur (review round 2, L-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AgentClient_RegisterRejected_RetriesRegistrationOnSameConnection()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var port = FreeLoopbackPort();
+        var flaky = new FlakyRegistrationState(failuresBeforeSuccess: 2);
+        var settings = new AgentSettings(new Uri($"http://127.0.0.1:{port}/"), new Uri("http://127.0.0.1/"), TimeSpan.FromMilliseconds(200));
+        var api = new KestrelApiFactory(port, flakyRegistration: flaky);
+        await using (api.ConfigureAwait(false))
+        {
+            api.StartServer();
+            var connection = new SignalRServerConnection(settings, new TestAgentInfo());
+            await using (connection.ConfigureAwait(false))
+            {
+                await connection.StartAsync(ct);
+                await Eventually.WithinAsync(() => IsConnectedAsync(api, ct), Limit, ct);
+
+                connection.State.ShouldBe(ConnectionState.Connected);
+                flaky.Attempts.ShouldBe(3);
+                flaky.ConnectionIds.Distinct().Count().ShouldBe(1);
+                await connection.StopAsync(ct);
+            }
+        }
+    }
+
     private static async Task<bool> IsConnectedAsync(KestrelApiFactory factory, CancellationToken ct)
     {
         using var client = factory.CreateClient();
