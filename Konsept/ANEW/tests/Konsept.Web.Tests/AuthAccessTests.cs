@@ -128,6 +128,32 @@ public sealed class AuthAccessTests
         AssertLoginRedirectWithSessionEnded(expiredPage, "/uretilenler");
     }
 
+    /// <summary>
+    /// Tarayıcı cookie'si biletten uzun yaşar (max-age &gt; 14 gün): 14 gün boşta kalan gerçek tarayıcı cookie'yi hâlâ gönderir,
+    /// sunucu süresi dolmuş bileti görür ve giriş sayfası "Oturumunuz sona erdi" bilgisini gösterir (AC-13 sayfa yolu).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task IdleSession_BrowserKeepsCookie_LoginShowsSessionEnded()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = SignedInClient.CreateAnonymous(factory);
+        using var login = await SignedInClient.PostFormAsync(
+            client, "/giris", new Dictionary<string, string> { ["Email"] = SignedInClient.Email, ["Password"] = SignedInClient.Password }, ct);
+        var cookie = login.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("konsept.auth=", StringComparison.Ordinal));
+        var maxAge = int.Parse(System.Text.RegularExpressions.Regex.Match(cookie, "max-age=(\\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+
+        time.Advance(TimeSpan.FromDays(14).Add(TimeSpan.FromMinutes(1)));
+        using var page = await client.GetAsync(new Uri("/", UriKind.Relative), ct);
+        var loginPage = await WebFactory.GetDocumentAsync(client, page.Headers.Location!.PathAndQuery, ct);
+
+        TimeSpan.FromSeconds(maxAge).ShouldBeGreaterThan(TimeSpan.FromDays(14).Add(TimeSpan.FromMinutes(1)));
+        AssertLoginRedirectWithSessionEnded(page, "/");
+        loginPage.QuerySelector(".auth__notice")!.TextContent.ShouldBe("Oturumunuz sona erdi");
+    }
+
     /// <summary>Çıkış Api'de tüm oturumları kapatır, cookie'yi siler ve giriş sayfasına götürür; sonraki sayfa girişe gider.</summary>
     /// <returns>Görev.</returns>
     [Fact]

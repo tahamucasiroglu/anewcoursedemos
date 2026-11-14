@@ -66,6 +66,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             ? CookieSecurePolicy.Always
             : CookieSecurePolicy.SameAsRequest;
         options.ExpireTimeSpan = TimeSpan.FromDays(14);
+
+        // Tarayıcı cookie'yi biletten uzun tutar (review R1-2): 14 gün boşta kalan oturumda sunucu süresi dolmuş bileti görür
+        // ve girişe "Oturumunuz sona erdi" bilgisiyle yönlendirir; bilet süresi yine 14 gündür.
+        options.Cookie.MaxAge = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
         options.LoginPath = "/giris";
         options.LogoutPath = "/cikis";
