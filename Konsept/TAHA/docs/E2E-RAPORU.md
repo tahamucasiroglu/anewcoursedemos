@@ -107,3 +107,39 @@ Test betiğinin kendi hataları (seçiciler, aynı adımın tekrar koşulmasınd
 - "Yeniden üret" (konsept düzenleyip baştan üretme), bütçe limiti engeli ve ajan çevrimdışıyken kuyruğun beklemesi.
 - Velopack kurulum paketi ve güncelleme.
 - Okunuş "Dinle" düğmesiyle yerel sentez (deneme kutusu artık sentez yapmıyor; Dinle akışı otomasyonda tıklanmadı).
+
+## 30 saniyelik yöntem matrisi (kurgu30) — 14 Kas 2026
+
+Her yöntem (motor × yerel ses × yerel görsel) aynı sabit kurguyla, gerçek boru hattından geçirilip doğrulanır.
+
+- **Kurgu:** `tests/e2e/mock-llm/kurgu30.cjs` — İstanbul'un fethi, 4 sahne, 51 yazılı kelime (Supertonic 3 ile ~31 sn). Anlatımda "Google", "29 Mayıs 1453", "II. Mehmed", "%40", "XV. yüzyıl" geçer; her sahnenin İngilizce `visualPrompt`'u var. Mock, konsept isteğinde "kurgu30" görünce bunu döner; konsept `kurgu30` etiketini taşır.
+- **Sahne kodu:** `tests/e2e/mock-llm/scene-code.cjs` — sistem promptundan motoru tanır (HyperFrames HTML+GSAP, Remotion TSX, Revideo TSX). Başlık + ekran metni kartı, görsel verilirse tam ekran + Ken Burns + okunurluk katmanı (yoksa degrade + şekiller). Görsel yolu promptta `assets/<ad>` olarak gelir: HyperFrames `assets/<ad>`, Remotion `staticFile("assets/<ad>")`, Revideo `'/assets/<ad>'`.
+- **Koşucu:** `tests/e2e/matrix.cjs` (API + bearer). Şunları yapar:
+  1. Üretim ayarlarını yazar.
+  2. Onaylı kurgu30 konseptini bulur ya da üretip onaylar.
+  3. Konsepti sıraya ekler, başlatır ve aşamaları yazdırır.
+  4. Doğrular: ffprobe (h264+aac, 1080×1920, 25–40 sn), 4 kare, volumedetect (video + `speech.wav`), API `spokenText` okunuşları (Gugıl, yirmi dokuz Mayıs bin dört yüz elli üç, İkinci Mehmed, yüzde kırk, On beşinci yüzyıl). İsteğe bağlı olarak faster-whisper ile anlaşılırlığı ölçer.
+  5. Çıktıları `tests/e2e/out/kurgu30/<etiket>/` altına yazar: `result.json`, `video.mp4`, `speech.wav`, `frames/`, `detail.json`, `spoken.txt`, `whisper.json`.
+- **Motor ve model kurulumu:** ajan aşama yürütücüleri motoru gerektiğinde `EnsureEngineReadyAsync` ile kurar (SceneRender, Speech, Images). İlerleme aşama yüzdesi olarak görünür. Elle kurulum gerekmez.
+
+```
+node tests/e2e/stack.cjs start everything
+node tests/e2e/matrix.cjs --label hyperframes_supertonic3_img-off --new-concept           # taban çizgisi (temiz)
+node tests/e2e/matrix.cjs --label remotion_supertonic3_img-off --engine remotion
+node tests/e2e/matrix.cjs --label hf_supertonic3_zimage --image-mode Local --image-model <anahtar>
+node tests/e2e/matrix.cjs --label hf_piper --speech-model piper-tr [--voice <id>]
+node tests/e2e/matrix.cjs ... --whisper <uv.exe yolu>                                     # faster-whisper (CPU int8, model önbelleği .tools-dev/e2e-agent/Models/hf-cache)
+node tests/e2e/stack.cjs stop everything
+```
+
+Notlar:
+- Aynı konsept + aynı ayarla yeniden koşmak önceki işin aşamalarını yeniden kullanabilir. Temiz süre ölçümü için `--new-concept` kullanılır.
+- Çıkış kodları: 0 = geçti, 1 = denetim başarısız, 2 = üretim başarısız ya da zaman aşımı.
+
+| Yöntem | Sonuç | Süre (video / seslendirme) | Render (iş başı → son) | Not |
+|---|---|---|---|---|
+| HyperFrames + Supertonic 3 + görsel kapalı + altyazı + çubuk | ✅ | 31,27 / 31,24 sn | 80,2 sn (SceneRender 62,6 · Speech 7,4 · Compose 9,6) | whisper small kelime geri çağırma 0,865 |
+| Remotion + Supertonic 3 + görsel kapalı (duman testi) | ✅ | 31,27 / 31,24 sn | 90,1 sn | çıktı pix_fmt `yuvj420p` (HyperFrames'te `yuv420p`) |
+| Revideo + Supertonic 3 + görsel kapalı (duman testi) | ✅ | 31,27 / 31,24 sn | 40,4 sn | — |
+
+Bu turda düzeltilen hata: HyperFrames lint, görsel kullanan her sahneyi `missing_local_asset` ile reddediyordu, çünkü doğrulama klasörüne yalnız `index.html` yazılıyordu. Artık görseller doğrulama klasörünün `assets/` klasörüne de kopyalanıyor. Entegrasyon testi: `HyperFrames_ValidateAcceptsSceneWithImageAsset`.

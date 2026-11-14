@@ -202,7 +202,7 @@ export default makeScene2D('scene', function* (view) {
   const card = createRef<Rect>();
 
   view.add(<Rect width={${W}} height={${H}} fill={'${pal.b}'} />);
-  view.add(<Circle width={${Math.round(W * 1.3)}} height={${Math.round(W * 1.3)}} y={${Math.round(-H * 0.2)}} fill={'${pal.a}'} opacity={0.55} />);
+  view.add(<Circle width={${Math.round(W * 1.3)}} height={${Math.round(W * 1.3)}} y={${Math.round(-H * 0.2)}} fill={'${pal.a}'} opacity={0.32} />);
 ${asset ? `  view.add(<Img ref={photo} src={'${asset}'} height={${H}} scale={1} />);
   view.add(<Rect width={${W}} height={${H}} fill={'#0a0603'} opacity={0.45} />);
 ` : ''}  view.add(<Circle ref={ring} width={${ring}} height={${ring}} y={${ringY}} stroke={'rgba(255,255,255,0.18)'} lineWidth={10} scale={0.7} opacity={0} />);
