@@ -1,6 +1,9 @@
 @{
     ViewData["Title"] = "Ayarlar";
 }
+@section Head {
+    <link rel="stylesheet" href="~/css/pages/settings-pronunciation.css" asp-append-version="true" />
+}
 <div class="tk-page" id="tk-ayarlar">
     <div class="tk-page-head">
         <div>
@@ -37,7 +40,7 @@
                         <div><h2 id="st-dict-title">Okunuş sözlüğü</h2><small class="tk-muted">Ekranda yazılış kalır, seslendirmede okunuş kullanılır (Google → Gugıl).</small></div>
                     </div>
                 </header>
-                <div class="tk-card-body">
+                <div class="tk-card-body" id="st-pron">
                     <form class="tk-row" id="st-dict-form" autocomplete="off">
                         <input class="tk-input tk-grow" name="written" placeholder="Yazılış (ör. Google)" maxlength="120" style="flex:1 1 180px" aria-label="Yazılış" />
                         <input class="tk-input tk-grow" name="spoken" placeholder="Okunuş (ör. Gugıl)" maxlength="200" style="flex:1 1 180px" aria-label="Okunuş" />
@@ -48,7 +51,28 @@
                             <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-plus"></use></svg> Ekle
                         </button>
                     </form>
-                    <div id="st-dict" style="margin-top:14px"></div>
+                    <div class="sp-toolbar">
+                        <div class="sp-filters" role="tablist" aria-label="Duruma göre süz">
+                            <button type="button" class="is-active" data-filter="all">Tümü <span id="sp-count-all">0</span></button>
+                            <button type="button" data-filter="suggested">Öneri <span id="sp-count-suggested">0</span></button>
+                            <button type="button" data-filter="approved">Onaylı <span id="sp-count-approved">0</span></button>
+                        </div>
+                        <input type="search" class="tk-input sp-search" id="sp-search" placeholder="Sözlükte ara…" aria-label="Sözlükte ara" />
+                        <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" id="sp-approve-all" hidden>
+                            <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Önerilerin hepsini onayla
+                        </button>
+                    </div>
+                    <div id="st-dict"></div>
+                    <div class="sp-test">
+                        <div class="tk-label" style="margin-bottom:6px">Deneme: bir cümle yazın, seslendirmede nasıl okunacağını görün</div>
+                        <div class="sp-test-row">
+                            <textarea class="tk-textarea" id="sp-test-text" rows="2" maxlength="1000" placeholder="Ör. Google 2024'te III. çeyrekte 1,5 milyar $ kazandı; CEO Dr. Pichai açıkladı."></textarea>
+                            <button type="button" class="tk-btn tk-btn-primary" id="sp-test-run">
+                                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-volume"></use></svg> Dönüştür ve dinle
+                            </button>
+                        </div>
+                        <div id="sp-test-result" aria-live="polite"></div>
+                    </div>
                 </div>
             </section>
 
@@ -144,6 +168,8 @@
 
 @section Scripts {
     <script src="~/js/pages/ayarlar.js" asp-append-version="true"></script>
+    <script src="~/js/pages/production-shared.js" asp-append-version="true"></script>
+    <script src="~/js/pages/settings-pronunciation.js" asp-append-version="true"></script>
     <script src="~/js/pages/settings-agent.js" asp-append-version="true"></script>
     <script src="~/js/pages/settings-providers.js" asp-append-version="true"></script>
 }

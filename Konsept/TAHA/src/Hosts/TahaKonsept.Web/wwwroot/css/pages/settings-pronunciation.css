@@ -1,0 +1,46 @@
+/* Ayarlar → Okunuş sözlüğü: durum süzgeci, tablo, deneme kutusu (yazılış → okunuş + değişiklik listesi).
+   Renkler theme.css değişkenlerinden (açık/koyu mod otomatik). */
+
+.sp-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 14px 0 10px; }
+.sp-filters { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--tk-surface-3); }
+.sp-filters button {
+    border: 0; background: none; padding: 6px 12px; border-radius: 9px; font: inherit; font-weight: 800; font-size: .82rem;
+    color: var(--tk-text-soft); cursor: pointer;
+}
+.sp-filters button span { margin-left: 4px; padding: 0 6px; border-radius: 99px; background: var(--tk-surface); font-size: .72rem; color: var(--tk-text-muted); }
+.sp-filters button.is-active { background: var(--tk-surface); color: var(--tk-accent); box-shadow: var(--tk-shadow-sm); }
+.sp-filters button.is-active span { background: var(--tk-accent-soft); color: var(--tk-accent); }
+.sp-search { flex: 1 1 180px; max-width: 280px; }
+#sp-approve-all { margin-left: auto; }
+
+.sp-table-wrap { overflow-x: auto; }
+.sp-table td:last-child { text-align: right; white-space: nowrap; }
+.sp-table tr.is-suggested td { background: var(--tk-warning-soft); }
+.sp-table tr.is-suggested:hover td { background: var(--tk-warning-soft); filter: brightness(.98); }
+.sp-arrow { color: var(--tk-text-muted); margin: 0 4px; }
+.sp-source { font-size: .74rem; color: var(--tk-text-muted); display: block; }
+
+.sp-test {
+    margin-top: 18px; padding: 14px; border-radius: var(--tk-radius); border: 1px dashed var(--tk-border-strong); background: var(--tk-surface-2);
+}
+.sp-test-row { display: flex; gap: 10px; align-items: flex-start; }
+.sp-test-row .tk-textarea { flex: 1 1 auto; }
+.sp-test-row .tk-btn { flex: 0 0 auto; }
+.sp-result { margin-top: 12px; display: grid; gap: 10px; }
+.sp-result-box { padding: 10px 12px; border-radius: 12px; background: var(--tk-surface); border: 1px solid var(--tk-border); }
+.sp-result-box .tk-label { display: block; margin-bottom: 4px; }
+.sp-result-box p { margin: 0; line-height: 1.55; }
+.sp-changes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.sp-changes li { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: .88rem; }
+.sp-changes code { font-family: var(--tk-font-mono); font-size: .82rem; padding: 1px 6px; border-radius: 6px; background: var(--tk-surface-3); }
+.sp-changes .tk-badge { margin-left: auto; }
+.sp-add-btn { padding: 2px 8px; font-size: .74rem; }
+.sp-test audio { width: 100%; margin-top: 4px; }
+.sp-test .ur-mark { background: var(--tk-accent-soft); color: var(--tk-accent-press); border-radius: 4px; padding: 0 2px; }
+:root[data-theme="dark"] .sp-test .ur-mark { color: var(--tk-accent-hover); }
+
+@media (max-width: 760px) {
+    .sp-test-row { flex-direction: column; align-items: stretch; }
+    #sp-approve-all { margin-left: 0; }
+    .sp-search { max-width: none; }
+}

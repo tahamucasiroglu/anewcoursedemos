@@ -1,0 +1,67 @@
+/* Üretilenler sayfası: video listesi (küçük resim, süre, tarih, ücret), oynatıcı + işlemler, sağ sekmeler
+   (seslendirme + sahneler, konsept metni, ayrıntılar ve ücret), Yeni sürüm penceresi. Renkler theme.css değişkenlerinden. */
+
+/* ---------------------------------------------------------- Liste */
+.ur-search { padding: 12px 12px 0; }
+.ur-item { align-items: center; }
+.ur-thumb { position: relative; overflow: hidden; width: 76px; }
+.ur-thumb.is-vertical { width: 40px; }
+.ur-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ur-thumb-time {
+    position: absolute; right: 3px; bottom: 3px; padding: 0 4px; border-radius: 4px; font-size: .64rem; font-weight: 800;
+    background: rgba(18, 12, 8, .72); color: #fff; line-height: 1.5;
+}
+.ur-item .tk-list-sub { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ur-cost { color: var(--tk-accent); font-weight: 800; }
+
+/* ---------------------------------------------------------- Oynatıcı */
+.ur-stage { display: flex; flex-direction: column; gap: 14px; }
+#ur-player.is-vertical { aspect-ratio: 9 / 16; max-height: 62vh; width: auto; margin: 0 auto; }
+.ur-player-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ur-player-bar .tk-badge { font-weight: 700; }
+.ur-player-msg { font-size: .82rem; color: var(--tk-text-muted); }
+
+/* ---------------------------------------------------------- Sekmeler */
+.ur-panels { margin-top: 12px; }
+.ur-scene { padding: 12px 0; border-bottom: 1px solid var(--tk-divider); }
+.ur-scene:last-child { border-bottom: 0; }
+.ur-scene-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ur-scene-head strong { flex: 1 1 auto; min-width: 0; }
+.ur-seek {
+    border: 1px solid var(--tk-border); background: var(--tk-surface-2); color: var(--tk-text-soft); border-radius: 7px;
+    font: inherit; font-size: .74rem; font-weight: 800; padding: 1px 7px; cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.ur-seek:hover { border-color: var(--tk-accent); color: var(--tk-accent); }
+.ur-text-label { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--tk-text-muted); margin-top: 6px; }
+.ur-text { font-size: .9rem; line-height: 1.55; }
+.ur-text.is-spoken { color: var(--tk-text-soft); }
+.ur-mark { background: var(--tk-accent-soft); color: var(--tk-accent-press); border-radius: 4px; padding: 0 2px; }
+:root[data-theme="dark"] .ur-mark { color: var(--tk-accent-hover); }
+.ur-section-title { font-size: .78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: var(--tk-text-muted); margin: 16px 0 8px; }
+.ur-section-title:first-child { margin-top: 4px; }
+.ur-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.ur-hook { font-weight: 800; font-size: 1rem; margin: 6px 0; }
+.ur-concept-scene { padding: 8px 0; border-bottom: 1px dashed var(--tk-divider); }
+.ur-concept-scene:last-child { border-bottom: 0; }
+
+/* Ücret tablosu */
+.ur-cost-table td, .ur-cost-table th { padding: 7px 8px; font-size: .84rem; }
+.ur-cost-table td.is-num, .ur-cost-table th.is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ur-cost-table tfoot td { font-weight: 900; border-top: 2px solid var(--tk-border); border-bottom: 0; }
+.ur-total { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-radius: var(--tk-radius); background: var(--tk-accent-softer); border: 1px solid var(--tk-accent-soft); }
+.ur-total strong { font-size: 1.5rem; color: var(--tk-accent); font-weight: 900; }
+.ur-versions .tk-list-item { padding: 8px 10px; }
+.ur-versions .tk-list-item.is-current { border-color: var(--tk-accent); }
+
+/* ---------------------------------------------------------- Yeni sürüm penceresi */
+.ur-rerun { padding: 12px 14px; border-radius: var(--tk-radius); background: var(--tk-surface-2); border: 1px solid var(--tk-border); margin-bottom: 14px; }
+.ur-rerun-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.ur-rerun-row .tk-label { min-width: 120px; }
+.ur-stage-chip { font-size: .74rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; background: var(--tk-accent-soft); color: var(--tk-accent); }
+.ur-stage-chip.is-kept { background: var(--tk-success-soft); color: var(--tk-success); }
+.ur-version-tabs { margin-bottom: 12px; }
+.ur-version-panel[hidden] { display: none; }
+
+@media (max-width: 760px) {
+    .ur-rerun-row .tk-label { min-width: 0; width: 100%; }
+}

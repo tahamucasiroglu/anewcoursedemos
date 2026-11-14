@@ -1,6 +1,10 @@
 @{
     ViewData["Title"] = "Üretilenler";
 }
+@section Head {
+    <link rel="stylesheet" href="~/css/pages/konseptten-video.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pages/uretilenler.css" asp-append-version="true" />
+}
 <div class="tk-page" id="tk-uretilenler">
     <h1 class="tk-sr-only">Üretilen videolar</h1>
 
@@ -15,7 +19,7 @@
                     <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-refresh"></use></svg>
                 </button>
             </header>
-            <div style="padding:12px 12px 0">
+            <div class="ur-search">
                 <input type="search" class="tk-input" id="ur-search" placeholder="Başlıkta ara…" aria-label="Başlıkta ara" />
             </div>
             <div class="tk-card-body" id="ur-list"></div>
@@ -27,25 +31,29 @@
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-play"></use></svg></span>
                     <div><h2 id="ur-player-title">İzleme</h2><small class="tk-muted" id="ur-player-sub">Soldan bir video seçin</small></div>
                 </div>
+                <button type="button" class="tk-mini-btn" id="ur-fullscreen" title="Tam ekran" aria-label="Tam ekran" hidden>
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-external"></use></svg>
+                </button>
             </header>
-            <div class="tk-card-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="tk-card-body ur-stage">
                 <div class="tk-player" id="ur-player">
                     <div class="tk-player-empty">
                         <svg class="tk-ic tk-ic-lg" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg>
                         <div>Henüz video seçilmedi</div>
                     </div>
                 </div>
+                <div class="ur-player-bar" id="ur-player-bar"></div>
                 <div class="tk-player-actions" id="ur-actions" hidden>
-                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="folder">
+                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="folder" title="Video dosyasının klasörünü bilgisayarınızda açar">
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-folder"></use></svg> Klasörde aç
                     </button>
-                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="system">
-                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-external"></use></svg> Sistem oynatıcısında aç
+                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="system" title="Bilgisayarınızın varsayılan oynatıcısında açar">
+                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-monitor"></use></svg> Sistem oynatıcısında aç
                     </button>
-                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="regenerate">
+                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="regenerate" title="Önce konsepti düzenleyin, sonra baştan üretilir">
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-rotate"></use></svg> Yeniden üret
                     </button>
-                    <button type="button" class="tk-btn tk-btn-primary tk-btn-sm" data-act="version">
+                    <button type="button" class="tk-btn tk-btn-primary tk-btn-sm" data-act="version" title="Yalnızca değişen aşamalar yeniden çalışır">
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-layers"></use></svg> Yeni sürüm
                     </button>
                     <span class="tk-grow"></span>
@@ -60,23 +68,26 @@
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-info"></use></svg></span>
-                    <div><h2 id="ur-info-title">Ayrıntılar</h2><small class="tk-muted">Seslendirme, sahneler, ücret ve ek bilgiler</small></div>
+                    <div><h2 id="ur-info-title">Ayrıntılar</h2><small class="tk-muted">Seslendirme, sahneler, konsept, ücret</small></div>
                 </div>
             </header>
             <div class="tk-card-body">
                 <div class="tk-tabs" role="tablist">
-                    <button type="button" class="tk-tab is-active" data-tab="scenes">Sahneler</button>
-                    <button type="button" class="tk-tab" data-tab="concept">Konsept metni</button>
-                    <button type="button" class="tk-tab" data-tab="details">Ücret ve ayrıntı</button>
+                    <button type="button" class="tk-tab is-active" data-tab="scenes" role="tab">Seslendirme + sahneler</button>
+                    <button type="button" class="tk-tab" data-tab="concept" role="tab">Konsept metni</button>
+                    <button type="button" class="tk-tab" data-tab="details" role="tab">Ayrıntılar ve ücret</button>
                 </div>
-                <div class="tk-tab-panel is-active" data-panel="scenes" id="ur-scenes"></div>
-                <div class="tk-tab-panel" data-panel="concept" id="ur-concept"></div>
-                <div class="tk-tab-panel" data-panel="details" id="ur-details"></div>
+                <div class="ur-panels">
+                    <div class="tk-tab-panel is-active" data-panel="scenes" id="ur-scenes" role="tabpanel"></div>
+                    <div class="tk-tab-panel" data-panel="concept" id="ur-concept" role="tabpanel"></div>
+                    <div class="tk-tab-panel" data-panel="details" id="ur-details" role="tabpanel"></div>
+                </div>
             </div>
         </section>
     </div>
 </div>
 
 @section Scripts {
+    <script src="~/js/pages/production-shared.js" asp-append-version="true"></script>
     <script src="~/js/pages/uretilenler.js" asp-append-version="true"></script>
 }

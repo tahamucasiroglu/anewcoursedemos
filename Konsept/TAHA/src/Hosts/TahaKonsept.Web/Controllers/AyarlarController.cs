@@ -59,7 +59,7 @@ public sealed class AyarlarController : WebControllerBase
     public Task<IActionResult> Sozluk(CancellationToken ct) =>
         ProxyAsync(c => c.GetAsync<JsonElement>("api/production/pronunciations", ct));
 
-    /// <summary>Sözlüğe kayıt ekler / günceller (<c>{ id?, written, spoken, profileId? }</c>).</summary>
+    /// <summary>Sözlüğe kayıt ekler / günceller ya da öneriyi onaylar (<c>{ id?, written, spoken, isSuggestion }</c>).</summary>
     /// <param name="body">Kayıt.</param>
     /// <param name="ct">İptal belirteci.</param>
     [HttpPost]
@@ -74,7 +74,7 @@ public sealed class AyarlarController : WebControllerBase
     public Task<IActionResult> SozlukSil(string id, CancellationToken ct) =>
         ProxyAsync(c => c.DeleteAsync<JsonElement>($"api/production/pronunciations/{Seg(id)}", ct));
 
-    /// <summary>Okunuşu dinletir (<c>{ text }</c> → ajan/online TTS önizleme).</summary>
+    /// <summary>Okunuşu dinletir ve deneme cümlesini dönüştürür (<c>{ text, normalize }</c> → <c>{ displayText, spokenText, audioUrl | audioBase64, message }</c>).</summary>
     /// <param name="body">Metin.</param>
     /// <param name="ct">İptal belirteci.</param>
     [HttpPost]
