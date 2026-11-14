@@ -125,9 +125,14 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
             return context.Response.WriteAsJsonAsync(new { code = SessionExpiredCode, message = UiText.SessionExpired });
         }
 
+        // Yalnızca GET isteği dönüş adresi olur (review R1-5): ör. düşmüş oturumla POST /cikis girişten sonra GET /cikis'e (404)
+        // dönmesin.
+        var login = HttpMethods.IsGet(request.Method)
+            ? context.RedirectUri
+            : $"{request.PathBase}{context.Options.LoginPath}";
         var target = request.Cookies.ContainsKey(CookieName)
-            ? QueryHelpers.AddQueryString(context.RedirectUri, SessionEndedQuery, SessionEndedValue)
-            : context.RedirectUri;
+            ? QueryHelpers.AddQueryString(login, SessionEndedQuery, SessionEndedValue)
+            : login;
         context.Response.Redirect(target);
         return Task.CompletedTask;
     }
