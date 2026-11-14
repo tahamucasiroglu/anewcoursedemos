@@ -1,4 +1,7 @@
+using NSubstitute;
 using Shouldly;
+using TahaKonsept.Agent.Abstractions.Processes;
+using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 using TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 using TahaKonsept.Agent.Engines.Speech.Devices;
 using TahaKonsept.Agent.Engines.Speech.Devices.Concrete;
@@ -61,6 +64,57 @@ public sealed class GpuFirstSpeechTests
         using var cpuKokoro = new KokoroSpeechEngine(Services(false, out _));
         using var gpuKokoro = new KokoroSpeechEngine(Services(true, out _));
         cpuKokoro.RequirementsFingerprint.ShouldNotBe(gpuKokoro.RequirementsFingerprint);
+    }
+
+    /// <summary>CUDA dizininde torch paketleri yerel CUDA etiketiyle sabitlenir; diğer paketler ve CPU kurulumu aynen kalır.</summary>
+    [Fact]
+    public void Torch_requirements_are_pinned_to_cuda_index()
+    {
+        string[] requirements = ["torch==2.8.0", "torchaudio==2.8.0", "transformers==4.56.2", "torch-foo==1.0", "torchvision>=0.20", "soundfile"];
+
+        PythonSpeechEngineBase.PinTorchToIndex(requirements, "https://download.pytorch.org/whl/cu128")
+            .ShouldBe(["torch==2.8.0+cu128", "torchaudio==2.8.0+cu128", "transformers==4.56.2", "torch-foo==1.0", "torchvision>=0.20", "soundfile"]);
+        PythonSpeechEngineBase.PinTorchToIndex(["torch==2.6.0"], "https://download.pytorch.org/whl/cu124/").ShouldBe(["torch==2.6.0+cu124"]);
+        PythonSpeechEngineBase.PinTorchToIndex(["torch==2.8.0+cu128"], "https://download.pytorch.org/whl/cu128").ShouldBe(["torch==2.8.0+cu128"]);
+        PythonSpeechEngineBase.PinTorchToIndex(requirements, null).ShouldBe(requirements);
+        PythonSpeechEngineBase.PinTorchToIndex(requirements, "https://download.pytorch.org/whl/cpu").ShouldBe(requirements);
+    }
+
+    /// <summary>
+    /// CPU tekerleğiyle kurulmuş hafif motor ortamı GPU'ya geçince CUDA torch kurulur: uv'ye <c>torch==2.8.0+cu128</c> gider
+    /// (<c>torch==2.8.0</c>, yüklü <c>2.8.0+cpu</c> ile karşılandığı için uv yeniden kurmuyordu; e2e'de MMS CPU'da kaldı).
+    /// </summary>
+    [Fact]
+    public async Task Light_engine_installs_cuda_torch_over_cpu_wheel()
+    {
+        var calls = new List<ProcessSpec>();
+        var processes = Substitute.For<IProcessRunner>();
+        processes.RunAsync(Arg.Any<ProcessSpec>(), Arg.Any<Action<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(c =>
+            {
+                calls.Add(c.Arg<ProcessSpec>());
+                return Task.FromResult(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.Zero, false));
+            });
+        var root = TestEnvironment.NewTempDir("cuda-over-cpu");
+        var services = TestEnvironment.CreateServices(new TestAgentPaths(root), "uv.exe", processes) with
+        {
+            DeviceSelector = new NvidiaTorchDeviceSelector(new FakeGpuCapabilityProbe(true)),
+        };
+        using var cpuMms = new MmsTurkishSpeechEngine(services with { DeviceSelector = new NvidiaTorchDeviceSelector(new FakeGpuCapabilityProbe(false)) });
+        using var mms = new MmsTurkishSpeechEngine(services);
+        Directory.CreateDirectory(Path.GetDirectoryName(mms.VenvPython)!);
+        await File.WriteAllTextAsync(mms.VenvPython, string.Empty, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(mms.EnvironmentDir, PythonSpeechEngineBase.InstalledMarkerFile), cpuMms.RequirementsFingerprint, TestContext.Current.CancellationToken);
+
+        mms.IsInstalled().ShouldBeFalse();
+        (await mms.EnsureReadyAsync(null, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+
+        var install = calls.Single(c => c.Arguments.Count > 1 && c.Arguments[0] == "pip");
+        install.Arguments.ShouldContain("torch==2.8.0+cu128");
+        install.Arguments.ShouldNotContain("torch==2.8.0");
+        install.Arguments.ShouldContain("https://download.pytorch.org/whl/cu128");
+        cpuMms.InstallRequirements.ShouldContain("torch==2.8.0");
+        mms.IsInstalled().ShouldBeTrue();
     }
 
     /// <summary>GPU gerektiren motorlar GPU kararından bağımsız olarak CUDA tekerleği kurar (önceki davranış korunur).</summary>

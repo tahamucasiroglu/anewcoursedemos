@@ -18,7 +18,9 @@ namespace TahaKonsept.Agent.Engines.Speech.Base;
 /// (kullanıcı kurulum ekranına gitmeden), sonra <c>uv</c> ile motor başına venv
 /// (<c>PythonEnvsDir/&lt;Key&gt;/.venv</c>, Python <see cref="PythonVersion"/>; uv'nin yönettiği Python <c>ToolsDir/uv-python</c> altına iner),
 /// sabitlenmiş <see cref="Requirements"/> kurulumu (uv geçici Windows dosya kilidine takılırsa — <see cref="IsTransientFileLock"/> — iki kez yeniden dener; GPU motorlarında <see cref="TorchIndexUrl"/> CUDA tekerlek dizini), başarıda
-/// gereksinim parmak izini <c>.taha-installed</c> dosyasına yazar (<see cref="IsInstalled"/> bunu karşılaştırır).
+/// gereksinim parmak izini <c>.taha-installed</c> dosyasına yazar (<see cref="IsInstalled"/> bunu karşılaştırır). CUDA dizini varsa torch
+/// paketleri yerel CUDA etiketiyle sabitlenir (<see cref="InstallRequirements"/>, <see cref="PinTorchToIndex"/>): önceki CPU tekerleği
+/// (<c>2.8.0+cpu</c>) <c>torch==2.8.0</c> isteğini karşıladığı için GPU'ya geçişte yerinde kalıyordu.
 /// <see cref="ReleaseAsync"/>: GPU motorunda işçiyi kapatıp VRAM'i boşaltır (ses aşaması sonunda çağrılır).
 /// Çalışma: <c>PythonWorkers/tts_worker.py</c> uzun ömürlü süreç olarak açılır, ilk istekte <c>load</c> (adapter <see cref="AdapterName"/>,
 /// <see cref="ModelId"/>, <see cref="Device"/>, <see cref="LoadOptions"/>), her istekte <c>synth</c>. İşçi çökerse sonraki istekte yeniden başlar.
@@ -36,6 +38,8 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
 
     /// <summary>CUDA 12.8 PyTorch tekerlek dizini (torch 2.7+ için).</summary>
     protected const string TorchCu128Index = "https://download.pytorch.org/whl/cu128";
+
+    private static readonly HashSet<string> TorchPackages = new(StringComparer.OrdinalIgnoreCase) { "torch", "torchaudio", "torchvision" };
 
     private static readonly TimeSpan[] UvLockRetryDelays = [TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(10)];
     private static readonly string[] FileLockMarkers = ["os error 5)", "os error 32)", "Access is denied", "Erişim engellendi", "being used by another process"];
@@ -60,6 +64,9 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
 
     /// <summary>Sabitlenmiş pip gereksinimleri (uv pip install argümanları).</summary>
     public abstract IReadOnlyList<string> Requirements { get; }
+
+    /// <summary>Kuruluma giden gereksinimler: <see cref="Requirements"/>, CUDA dizini varsa torch sürümleri CUDA etiketiyle (<see cref="PinTorchToIndex"/>).</summary>
+    public IReadOnlyList<string> InstallRequirements => PinTorchToIndex(Requirements, TorchIndexUrl);
 
     /// <summary>
     /// PyTorch CUDA tekerlek dizini (ek dizin olarak eklenir); CPU motorlarında <c>null</c>. Hafif motorlar <see cref="CudaTorchIndex"/>
@@ -117,9 +124,39 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
     {
         get
         {
-            var text = string.Join('\n', new[] { PythonVersion ?? "-", TorchIndexUrl ?? "-" }.Concat(Requirements));
+            var text = string.Join('\n', new[] { PythonVersion ?? "-", TorchIndexUrl ?? "-" }.Concat(InstallRequirements));
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
         }
+    }
+
+    /// <summary>
+    /// CUDA tekerlek dizini verilmişse (<c>…/whl/cu128</c>) <c>torch</c>/<c>torchaudio</c>/<c>torchvision</c> <c>==X</c> gereksinimlerine
+    /// yerel CUDA etiketini ekler (<c>torch==2.8.0+cu128</c>). PEP 440'a göre <c>==2.8.0</c> yüklü <c>2.8.0+cpu</c> ile karşılanır, uv de
+    /// paketi yeniden kurmaz; etiketle CPU tekerleği artık isteği karşılamaz ve CUDA tekerleği kurulur. Dizin yoksa liste aynen döner.
+    /// </summary>
+    /// <param name="requirements">Gereksinimler.</param>
+    /// <param name="torchIndexUrl">PyTorch tekerlek dizini (CPU motorunda <c>null</c>).</param>
+    /// <returns>Kurulacak gereksinimler.</returns>
+    public static IReadOnlyList<string> PinTorchToIndex(IReadOnlyList<string> requirements, string? torchIndexUrl)
+    {
+        ArgumentNullException.ThrowIfNull(requirements);
+        var tag = torchIndexUrl?.TrimEnd('/').Split('/')[^1];
+        if (tag is null || tag.Length < 3 || !tag.StartsWith("cu", StringComparison.Ordinal) || !tag[2..].All(char.IsAsciiDigit))
+        {
+            return requirements;
+        }
+
+        return requirements.Select(r =>
+        {
+            var at = r.IndexOf("==", StringComparison.Ordinal);
+            if (at <= 0 || r.Contains('+', StringComparison.Ordinal) || !TorchPackages.Contains(r[..at].Trim()))
+            {
+                return r;
+            }
+
+            var version = r[(at + 2)..].Trim();
+            return version.Length > 0 && version.All(c => char.IsAsciiDigit(c) || c == '.') ? $"{r[..at].Trim()}=={version}+{tag}" : r;
+        }).ToList();
     }
 
     /// <summary>uv çıktısı geçici bir Windows dosya kilidini mi anlatıyor (erişim engellendi / paylaşım ihlali; yeniden denemeye değer).</summary>
@@ -174,7 +211,8 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
             return prepared;
         }
 
-        if (Requirements.Count > 0)
+        var requirements = InstallRequirements;
+        if (requirements.Count > 0)
         {
             progress?.Report(new EngineSetupProgress($"{DisplayName}: paketler kuruluyor (birkaç GB olabilir)", 15));
             var installArgs = new List<string> { "pip", "install", "--python", VenvPython };
@@ -183,7 +221,7 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
                 installArgs.AddRange(["--extra-index-url", TorchIndexUrl, "--index-strategy", "unsafe-best-match"]);
             }
 
-            installArgs.AddRange(Requirements);
+            installArgs.AddRange(requirements);
             var install = await RunUvAsync(uv.Value, installArgs, environment, InstallTimeout, progress, 15, ct).ConfigureAwait(false);
             if (install.IsFailure)
             {
