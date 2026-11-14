@@ -102,7 +102,7 @@ log "current → $TARGET (önceki: ${PREVIOUS_TARGET:-yok})"
 wait_for() {
   local url="$1" deadline=$((SECONDS + HEALTH_TIMEOUT))
   while (( SECONDS < deadline )); do
-    if curl -fsS -o /dev/null --max-time 5 "$url"; then return 0; fi
+    if curl -fs -o /dev/null --max-time 5 "$url" 2>/dev/null; then return 0; fi
     sleep 2
   done
   return 1

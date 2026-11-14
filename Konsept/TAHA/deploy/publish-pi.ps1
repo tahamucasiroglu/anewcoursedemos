@@ -62,7 +62,10 @@ if (-not $SkipPublish -and $Source -eq 'Head') {
     if (Test-Path $srcRoot) { Remove-Item -Recurse -Force $srcRoot }
     New-Item -ItemType Directory -Force $srcRoot | Out-Null
     $archive = Join-Path $outRoot 'head.tar'
-    Invoke-Native 'git' @('-C', $root, 'archive', '--format=tar', '-o', $archive, 'HEAD:Konsept/TAHA')
+    # Alt klasörden çalışınca git archive yolu filtreler; depo kökünden 'HEAD:<önek>' ağacı arşivlenir.
+    $gitTop = (git -C $root rev-parse --show-toplevel).Trim()
+    $gitPrefix = (git -C $root rev-parse --show-prefix).Trim().TrimEnd('/')
+    Invoke-Native 'git' @('-C', $gitTop, 'archive', '--format=tar', '-o', $archive, "HEAD:$gitPrefix")
     Invoke-Native 'tar' @('-xf', $archive, '-C', $srcRoot)
     Remove-Item -Force $archive
 }

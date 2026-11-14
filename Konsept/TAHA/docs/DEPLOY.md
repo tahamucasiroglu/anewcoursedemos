@@ -1,0 +1,91 @@
+# Taha Konsept — Raspberry Pi Yayını (README-DEPLOY)
+
+> Hedef: Pi 5, Debian 13 arm64 (`ssh tmpi`, LAN `192.168.1.102`). .NET runtime **yok** → her iki host **self-contained `linux-arm64`** yayınlanır.
+> Dosyalar: `deploy/publish-pi.ps1`, `deploy/pi/{install-release.sh, rollback.sh, tahakonsept-api.service, tahakonsept-web.service}`, `src/Hosts/*/appsettings.Pi.json`, `scripts/{dev-tunnel.ps1, dev-run.ps1}`.
+
+## 1. Pi düzeni
+
+| Ne | Yer |
+|---|---|
+| Sürümler | `/opt/tahakonsept/releases/<VERSION>-<yyyyMMdd-HHmmss>/{api,web}` (root sahipli, salt okunur) |
+| Etkin sürüm | `/opt/tahakonsept/current` → sembolik bağ (atomik çevrilir) |
+| Önceki sürüm | `/opt/tahakonsept/previous` → sembolik bağ (geri dönüş hedefi) |
+| Yardımcı betikler | `/opt/tahakonsept/bin/{rollback.sh, install-release.sh}` |
+| Veri (yazılabilir tek yer) | `/var/lib/tahakonsept` (kullanıcı `tahakonsept`, 0750) |
+| App_Data | `/var/lib/tahakonsept/App_Data` (`keys/` 0700: `jwt.key`, `master.key`, `web-dataprotection/`; `artifacts/`) |
+| Loglar (Serilog, günlük, 7 gün) | `/var/lib/tahakonsept/logs/api-YYYYMMDD.log`, `web-YYYYMMDD.log` + journald |
+| Gizli ortam | `/var/lib/tahakonsept/tahakonsept.env` (0600, sahibi `tahakonsept`): `TAHAKONSEPT_DB_PASSWORD=...` |
+| Servisler | `tahakonsept-api.service` (0.0.0.0:7111, LAN — masaüstü ajanı bağlanır), `tahakonsept-web.service` (0.0.0.0:7110) |
+| Veritabanı | PostgreSQL 17, `localhost:5432`, DB/rol `tahakonsept` |
+
+Unit'ler `ASPNETCORE_ENVIRONMENT=Pi` ile çalışır → `appsettings.Pi.json`:
+- **Api:** `ConnectionStrings:Main = Host=localhost;Port=5432;Database=tahakonsept;Username=tahakonsept` (parola env dosyasından, `DatabaseConnectionString` ekler), `App:DataDirectory=/var/lib/tahakonsept/App_Data`, `Logging:Directory=/var/lib/tahakonsept/logs`.
+- **Web:** `Api:BaseUrl=http://127.0.0.1:7111`, `DataProtection:KeysDirectory=/var/lib/tahakonsept/App_Data/keys/web-dataprotection`, aynı log klasörü.
+- App_Data çözümü BuildingBlocks'ta zaten yapılandırılabilir: `App:DataDirectory` → `TAHAKONSEPT_DATA` env → `<contentRoot>/App_Data` (`AppDataLocation.Resolve`). Unit'ler ayrıca `TAHAKONSEPT_DATA` ve `TAHAKONSEPT_LOG_DIR` verir (yedek). Ayrı bir `Paths:AppData` anahtarına gerek yok.
+- `HOME=/var/lib/tahakonsept` → ASP.NET varsayılan Data Protection anahtarları (`~/.aspnet`) da kalıcı veri klasörüne düşer.
+
+Sertleştirme (`tmautoclip-canli-api.service` deseni): `NoNewPrivileges`, boş `CapabilityBoundingSet`, `ProtectSystem=strict` + `ReadWritePaths=/var/lib/tahakonsept`, `ProtectHome`, `PrivateTmp/Devices`, çekirdek/cgroup/saat korumaları, `RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK`, `UMask=0077`. `MemoryDenyWriteExecute` ve `SystemCallFilter` **yok** (.NET JIT). `systemd-analyze security tahakonsept-api` → 2.9 OK.
+
+## 2. Yayınlama (bu bilgisayardan)
+
+```powershell
+# Çalışma klasöründen (yarım kalmış değişiklikler de girer):
+powershell -ExecutionPolicy Bypass -File deploy\publish-pi.ps1
+# Son commit'ten temiz kopya (paralel çalışma sürerken önerilen):
+powershell -ExecutionPolicy Bypass -File deploy\publish-pi.ps1 -Source Head
+# Son yayın çıktısını yeniden paketle/kur (derlemeden):
+powershell -ExecutionPolicy Bypass -File deploy\publish-pi.ps1 -SkipPublish
+```
+Parametreler: `-SshHost tmpi`, `-PiAddress 192.168.1.102`, `-SkipVerify`.
+
+Adımlar: `VERSION` okunur → `dotnet publish -c Release -r linux-arm64 --self-contained` (Api + Web; ayrı `--artifacts-path deploy/.out/build`, geliştirme `bin/obj`'una dokunmaz) → `deploy/.out/last/{api,web,pi}` → `tahakonsept-<sürüm>.tar.gz` (~93 MB) → `scp tmpi:/tmp` → `sudo bash install-release.sh <sürüm> <klasör>`:
+1. `releases/<sürüm>` oluşturur, unit dosyalarını değiştiyse kurar + `daemon-reload`.
+2. Veri klasörlerini garanti eder, env dosyasının izinlerini düzeltir (yoksa uyarır).
+3. `current`'ı yeni sürüme çevirir, eskisini `previous` yapar; servisleri `enable` + `restart` eder.
+4. `http://127.0.0.1:7111/api/health` ve `http://127.0.0.1:7110/` için 90 sn sağlık kontrolü; **başarısızsa otomatik önceki sürüme döner** ve hata verir.
+5. Son 5 sürümü tutar (`KEEP_RELEASES`), `current`/`previous` asla silinmez.
+
+Sonra betik bu bilgisayardan `http://192.168.1.102:7111/api/health` ve `http://192.168.1.102:7110/` doğrular.
+
+## 3. Geri dönüş (rollback)
+
+```bash
+ssh tmpi sudo /opt/tahakonsept/bin/rollback.sh --list                   # sürümler (current/previous işaretli)
+ssh tmpi sudo /opt/tahakonsept/bin/rollback.sh                          # previous'a dön
+ssh tmpi sudo /opt/tahakonsept/bin/rollback.sh 0.1.0-20261114-054614    # belirli sürüme dön
+```
+Not: EF migration'ları geri alınmaz. Şema değiştiren bir sürümden dönülecekse önce yeni şemanın eski kodla uyumlu olduğundan emin olun (ileri uyumlu migration yazın; gerekiyorsa `dotnet ef database update <önceki-migration>` tünel üzerinden).
+
+## 4. Loglar / durum
+
+```bash
+ssh tmpi journalctl -u tahakonsept-api -f            # canlı API logu
+ssh tmpi journalctl -u tahakonsept-web -n 100 --no-pager
+ssh tmpi systemctl status tahakonsept-api tahakonsept-web
+ssh tmpi sudo tail -f /var/lib/tahakonsept/logs/api-$(date +%Y%m%d).log
+curl http://192.168.1.102:7111/api/health
+```
+
+## 5. Gizli ortam dosyası
+
+Bir kez yazıldı (14 Kas 2026). Yeniden yazmak için (parola `TAHA/.env` içinde):
+```bash
+pw=$(grep '^TAHAKONSEPT_DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\r')
+printf 'TAHAKONSEPT_DB_PASSWORD=%s\n' "$pw" | ssh tmpi 'sudo install -m 0600 -o tahakonsept -g tahakonsept /dev/stdin /var/lib/tahakonsept/tahakonsept.env'
+ssh tmpi sudo systemctl restart tahakonsept-api
+```
+İleride: `TAHAKONSEPT_MASTER_KEY` (base64, AES-GCM) da buraya eklenebilir; yoksa `App_Data/keys/master.key` ilk kullanımda üretilir — **bu dosya kaybolursa şifreli API key'ler okunamaz, yedekleyin.**
+
+## 6. Geliştirme betikleri
+
+- `scripts/dev-tunnel.ps1` — `ssh -N -L 5433:localhost:5432 tmpi` (ön planda; `-Background` ile arka planda). Port açıksa yeni tünel açmaz.
+- `scripts/dev-run.ps1` — tüneli açar (`-NoTunnel` ile atlanır), Api (7111) ve Web (7110) host'larını ayrı pencerelerde `dotnet run` (Development) ile başlatır; `-Wait` ile bu pencerede bekler, Ctrl+C ikisini de kapatır.
+
+## 7. Yayın kaydı
+
+| Tarih | Sürüm | Kaynak | Sonuç |
+|---|---|---|---|
+| 2026-11-14 05:46 | `0.1.0-20261114-054614` | HEAD `e392960` (F0 host'ları; modüller henüz yok) | Kuruldu. `api/health` → `{"status":"ok","version":"0.1.0","environment":"Pi","database":"ready"}`; Web `/` → 302 `/Account/Login` (200 sonrası). |
+| 2026-11-14 05:47 | `0.1.0-20261114-054659` | aynı çıktı (`-SkipPublish`) | Kuruldu (sürüm dönüşü testi). `rollback.sh` → 054614 ve geri 054659 denendi, ikisi de sağlıklı. **Etkin: 054659.** |
+
+Bilinen: çalışma klasöründen yayın denemesi o an başka bir ajanın yarım `Shared.Contracts` değişikliği (`ImagePromptItem` yok) yüzünden derlenmedi → `-Source Head` eklendi. Web'in çağırdığı `api/identity/setup/status` Identity modülü gelene kadar 404 döner (beklenen).
