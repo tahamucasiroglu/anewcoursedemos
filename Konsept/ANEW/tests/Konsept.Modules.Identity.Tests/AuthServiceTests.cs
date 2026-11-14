@@ -6,6 +6,7 @@ using Konsept.Modules.Identity.Application.Dtos;
 using Konsept.Modules.Identity.Domain.Entities;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
+using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Shared.Kernel.Abstract;
 using Konsept.Shared.Kernel.Security;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -89,6 +90,26 @@ public sealed class AuthServiceTests
         opened.IsSuccess.ShouldBeTrue();
         _written.Select(e => e.Type).ShouldContain(IdentityEvents.Locked);
         _written.ShouldAllBe(e => e.UserId == _user.Id);
+    }
+
+    /// <summary>
+    /// Doğru şifre ama başarı kaydı eşzamanlı kilit nedeniyle uygulanmadı: kilitli cevabı ve (kilitli hesap yolundaki gibi)
+    /// <c>identity.login_failed</c> uyarısı yazılır, başarı olayı ve oturum yok (review R6-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Login_CorrectPassword_LockedConcurrently_WritesLoginFailed()
+    {
+        _users.RegisterSuccessfulLoginAsync(_user.Id, Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>()).Returns(false);
+
+        var result = await Login().LoginAsync(new LoginRequest("ayse@x.com", "dogru123"), TestContext.Current.CancellationToken);
+
+        result.Error!.Code.ShouldBe(IdentityErrors.LockedCode);
+        var written = _written.ShouldHaveSingleItem();
+        written.Type.ShouldBe(IdentityEvents.LoginFailed);
+        written.Level.ShouldBe(SystemEventLevel.Warning);
+        written.UserId.ShouldBe(_user.Id);
+        await _sessions.DidNotReceiveWithAnyArgs().AddAsync(default!, TestContext.Current.CancellationToken);
     }
 
     /// <summary>2 yanlıştan sonra başarılı giriş sayacı sıfırlar: sonraki yanlışta yine "2 hak".</summary>

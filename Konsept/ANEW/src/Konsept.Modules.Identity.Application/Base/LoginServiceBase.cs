@@ -51,6 +51,8 @@ public abstract class LoginServiceBase(AuthServiceDependencies dependencies) : A
 
         if (!await users.RegisterSuccessfulLoginAsync(user.Id, now, cancellationToken).ConfigureAwait(false))
         {
+            // Doğru şifre ama hesap bu arada kilitlendi: kilitli hesap yolundaki gibi başarısız giriş olayı yazılır (review R6-1).
+            await WriteEventAsync(IdentityEvents.LoginFailed, SystemEventLevel.Warning, user.Id, cancellationToken).ConfigureAwait(false);
             var current = await users.FindByIdAsync(user.Id, cancellationToken).ConfigureAwait(false);
             return Result<AuthSessionDto>.Failure(IdentityErrors.Locked(current?.LockedUntil ?? now + LockoutPolicy.LockDuration));
         }
