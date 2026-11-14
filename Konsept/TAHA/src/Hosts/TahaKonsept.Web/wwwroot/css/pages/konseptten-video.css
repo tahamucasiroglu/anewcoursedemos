@@ -1,0 +1,128 @@
+/* Konseptten Video sayfası: model seçim penceresi, onaylı konsept listesi, sahne düzenleyici, üretim sırası
+   (aşama zaman çizelgesi), ajan çevrimdışı uyarısı, üretilenler + oynatıcı. Renkler theme.css değişkenlerinden. */
+
+/* ---------------------------------------------------------- Uyarı şeridi */
+.kv-banner { margin-bottom: 14px; }
+.kv-banner[hidden] { display: none; }
+.kv-banner strong { display: block; }
+
+/* ---------------------------------------------------------- Model seçim penceresi */
+.kv-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--tk-surface-3); margin-bottom: 12px; flex-wrap: wrap; }
+.kv-seg button {
+    border: 0; background: none; padding: 7px 14px; border-radius: 9px; font: inherit; font-weight: 800; font-size: .84rem;
+    color: var(--tk-text-soft); cursor: pointer;
+}
+.kv-seg button:hover { color: var(--tk-text); }
+.kv-seg button.is-active { background: var(--tk-surface); color: var(--tk-accent); box-shadow: var(--tk-shadow-sm); }
+.kv-models { max-height: 46vh; overflow: auto; padding-right: 2px; }
+.kv-models .tk-list-item { align-items: flex-start; }
+.kv-models .tk-list-item input[type=radio] { accent-color: var(--tk-accent); width: 17px; height: 17px; margin-top: 2px; flex: 0 0 auto; }
+.kv-models .tk-list-item.is-disabled { opacity: .55; }
+.kv-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.kv-tags .tk-badge { font-weight: 700; }
+.kv-voice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.kv-voice {
+    display: flex; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 10px; border: 1px solid var(--tk-border);
+    cursor: pointer; font-size: .84rem; font-weight: 700; background: var(--tk-surface);
+}
+.kv-voice input { accent-color: var(--tk-accent); }
+.kv-voice:has(input:checked) { border-color: var(--tk-accent); background: var(--tk-accent-softer); }
+.kv-voice small { display: block; font-weight: 600; color: var(--tk-text-muted); font-size: .72rem; }
+.kv-speed { display: flex; align-items: center; gap: 10px; }
+.kv-speed input[type=range] { flex: 1 1 auto; accent-color: var(--tk-accent); }
+.kv-speed output { min-width: 42px; font-weight: 800; text-align: right; }
+
+/* ---------------------------------------------------------- Onaylanan konseptler */
+.kv-approved-tools { display: flex; align-items: center; gap: 8px; padding: 0 0 10px; }
+.kv-approved-tools .tk-input { flex: 1 1 auto; }
+.kv-concept input[type=checkbox] { accent-color: var(--tk-accent); width: 17px; height: 17px; flex: 0 0 auto; cursor: pointer; }
+.kv-concept .tk-list-sub { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.kv-concept.is-queued .tk-list-title::after { content: " · sırada"; color: var(--tk-accent); font-weight: 700; font-size: .78rem; }
+
+/* ---------------------------------------------------------- Konsept ayrıntısı (düzenleyici) */
+.kv-scene {
+    border: 1px solid var(--tk-border); border-radius: var(--tk-radius); padding: 10px 12px 2px; margin-bottom: 10px;
+    background: var(--tk-surface-2);
+}
+.kv-scene-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.kv-scene-no {
+    width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tk-accent-soft); color: var(--tk-accent); font-weight: 900; font-size: .78rem;
+}
+.kv-scene-head .tk-input { font-weight: 800; }
+.kv-scene .tk-field { margin-bottom: 8px; }
+.kv-scene .tk-textarea { min-height: 64px; }
+.kv-dirty { color: var(--tk-warning); font-weight: 800; }
+
+/* ---------------------------------------------------------- Üretim sırası */
+.kv-queue-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.kv-qitem {
+    border: 1px solid var(--tk-border); border-radius: var(--tk-radius); background: var(--tk-surface); padding: 10px 12px;
+    transition: border-color .2s var(--tk-ease), box-shadow .2s var(--tk-ease);
+}
+.kv-qitem.is-running { border-color: var(--tk-accent); box-shadow: 0 0 0 3px var(--tk-accent-ring); }
+.kv-qitem.is-done { background: var(--tk-surface-2); }
+.kv-qitem.is-failed { border-color: var(--tk-danger); }
+.kv-qhead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.kv-qtitle { flex: 1 1 auto; min-width: 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kv-qorder { color: var(--tk-text-muted); font-weight: 800; margin-right: 2px; }
+.kv-qactions { display: inline-flex; gap: 2px; flex: 0 0 auto; }
+.kv-qmeta { display: flex; gap: 10px; flex-wrap: wrap; font-size: .78rem; color: var(--tk-text-muted); margin-top: 6px; }
+.kv-qmeta strong { color: var(--tk-text-soft); }
+.kv-qitem .tk-progress { margin-top: 8px; height: 6px; }
+.kv-qitem.is-failed .tk-progress > span { background: var(--tk-danger); }
+.kv-qitem.is-done .tk-progress > span { background: var(--tk-success); }
+.kv-qmsg { font-size: .8rem; margin-top: 6px; color: var(--tk-text-soft); }
+.kv-qitem.is-failed .kv-qmsg { color: var(--tk-danger); }
+
+/* Aşama zaman çizelgesi (çalışan iş) */
+.kv-timeline { list-style: none; margin: 10px 0 0; padding: 0; position: relative; }
+.kv-timeline::before { content: ""; position: absolute; left: 11px; top: 6px; bottom: 6px; width: 2px; background: var(--tk-divider); }
+.kv-step { position: relative; display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: .86rem; }
+.kv-step-icon {
+    position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tk-surface-3); color: var(--tk-text-muted); border: 2px solid var(--tk-surface);
+}
+.kv-step-icon .tk-ic { width: 13px; height: 13px; }
+.kv-step-name { flex: 1 1 auto; min-width: 0; color: var(--tk-text-muted); font-weight: 700; }
+.kv-step-name small { font-weight: 600; margin-left: 4px; }
+.kv-step-time { font-size: .76rem; color: var(--tk-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kv-step.is-done .kv-step-icon { background: var(--tk-success-soft); color: var(--tk-success); }
+.kv-step.is-done .kv-step-name { color: var(--tk-text); }
+.kv-step.is-skipped .kv-step-icon { background: var(--tk-surface-3); color: var(--tk-text-muted); }
+.kv-step.is-skipped .kv-step-name { text-decoration: line-through; text-decoration-color: var(--tk-border-strong); }
+.kv-step.is-running .kv-step-icon { background: var(--tk-accent); color: var(--tk-text-on-accent); }
+.kv-step.is-running .kv-step-icon::after {
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--tk-accent-ring);
+    animation: kv-ping 1.4s ease-out infinite;
+}
+.kv-step.is-running .kv-step-name { color: var(--tk-accent); font-weight: 800; }
+.kv-step.is-failed .kv-step-icon { background: var(--tk-danger); color: #fff; }
+.kv-step.is-failed .kv-step-name { color: var(--tk-danger); }
+.kv-step.is-waiting .kv-step-icon { background: var(--tk-warning-soft); color: var(--tk-warning); }
+.kv-step-bar { display: block; height: 4px; border-radius: 99px; background: var(--tk-surface-3); overflow: hidden; margin-top: 3px; }
+.kv-step-bar > span { display: block; height: 100%; background: var(--tk-accent); border-radius: inherit; transition: width .4s var(--tk-ease); }
+@keyframes kv-ping { 0% { transform: scale(.85); opacity: 1; } 100% { transform: scale(1.35); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .kv-step.is-running .kv-step-icon::after { animation: none; } }
+
+/* Küçük aşama noktaları (bekleyen / biten işler) */
+.kv-dots { display: flex; gap: 3px; margin-top: 8px; }
+.kv-dot { flex: 1 1 0; height: 4px; border-radius: 99px; background: var(--tk-surface-3); }
+.kv-dot.is-done { background: var(--tk-success); }
+.kv-dot.is-running { background: var(--tk-accent); }
+.kv-dot.is-failed { background: var(--tk-danger); }
+.kv-dot.is-skipped { background: var(--tk-border-strong); }
+
+/* ---------------------------------------------------------- Üretilenler + oynatıcı */
+.kv-video-thumb { position: relative; overflow: hidden; }
+.kv-video-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.kv-player-msg { font-size: .8rem; color: var(--tk-text-muted); }
+#kv-player-box.is-vertical { aspect-ratio: 9 / 16; max-height: 60vh; width: auto; margin: 0 auto; }
+.kv-player-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 760px) {
+    .tk-produced.has-player { grid-template-columns: 1fr; }
+    .tk-produced-player { border-left: 0; border-top: 2px dashed var(--tk-border-strong); }
+    .kv-qactions .tk-mini-btn { width: 30px; height: 30px; }
+}

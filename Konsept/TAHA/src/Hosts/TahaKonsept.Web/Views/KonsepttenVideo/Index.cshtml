@@ -1,23 +1,26 @@
 @{
     ViewData["Title"] = "Konseptten Video";
 }
+@section Head {
+    <link rel="stylesheet" href="~/css/pages/konseptten-video.css" asp-append-version="true" />
+}
 <div class="tk-page" id="tk-video">
     <h1 class="tk-sr-only">Konseptten Video</h1>
 
     <section class="tk-strip" aria-label="Video üretim ayarları">
-        <button type="button" class="tk-strip-item" data-model-kind="code" title="Video kodunu yazan model ve efor">
+        <button type="button" class="tk-strip-item" data-model-kind="code" title="Video kodunu yazan model ve efor (tıkla: değiştir)">
             <span class="tk-strip-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-cpu"></use></svg></span>
             <span class="tk-strip-text"><span class="tk-strip-label">Video kodu</span><span class="tk-strip-value" id="kv-sum-code">—</span></span>
         </button>
-        <button type="button" class="tk-strip-item" data-model-kind="engine" title="Video motoru">
+        <button type="button" class="tk-strip-item" data-model-kind="engine" title="Video motoru (tıkla: değiştir)">
             <span class="tk-strip-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg></span>
             <span class="tk-strip-text"><span class="tk-strip-label">Motor</span><span class="tk-strip-value" id="kv-sum-engine">—</span></span>
         </button>
-        <button type="button" class="tk-strip-item" data-model-kind="image" title="Görsel üretimi">
+        <button type="button" class="tk-strip-item" data-model-kind="image" title="Görsel üretimi (tıkla: değiştir)">
             <span class="tk-strip-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-palette"></use></svg></span>
             <span class="tk-strip-text"><span class="tk-strip-label">Görsel</span><span class="tk-strip-value" id="kv-sum-image">—</span></span>
         </button>
-        <button type="button" class="tk-strip-item" data-model-kind="speech" title="Seslendirme">
+        <button type="button" class="tk-strip-item" data-model-kind="speech" title="Seslendirme modeli ve ses (tıkla: değiştir)">
             <span class="tk-strip-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-volume"></use></svg></span>
             <span class="tk-strip-text"><span class="tk-strip-label">Ses</span><span class="tk-strip-value" id="kv-sum-speech">—</span></span>
         </button>
@@ -28,10 +31,19 @@
             </label>
             <label class="tk-switch" title="Videonun üstünde ilerleme çubuğu göster">
                 <input type="checkbox" id="kv-progressbar" />
-                <span class="tk-switch-track"></span> İlerleme çubuğu
+                <span class="tk-switch-track"></span> Üst ilerleme çubuğu
             </label>
         </div>
     </section>
+
+    <div class="tk-alert is-warning kv-banner" id="kv-agent-banner" role="status" hidden>
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-monitor"></use></svg>
+        <div><strong>Ajan çevrimdışı</strong><span id="kv-agent-banner-text">Render, yerel ses ve yerel görsel aşamaları masaüstü programı bağlanınca kaldığı yerden devam eder.</span></div>
+    </div>
+    <div class="tk-alert is-danger kv-banner" id="kv-budget-banner" role="status" hidden>
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg>
+        <div><strong>Bütçe limiti doldu</strong><span id="kv-budget-banner-text">Yeni iş başlatılmadı. Ayarlar → Bütçe limiti bölümünden limiti artırabilirsiniz.</span></div>
+    </div>
 
     <div class="tk-grid-video">
         <div class="tk-col-split">
@@ -39,13 +51,19 @@
                 <header class="tk-card-head">
                     <div class="tk-card-title">
                         <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg></span>
-                        <div><h2 id="kv-approved-title">Onaylanan konseptler</h2><small class="tk-muted">Tıkla: ayrıntı · Kutucuk: sıraya ekle</small></div>
+                        <div><h2 id="kv-approved-title">Onaylanan konseptler</h2><small class="tk-muted" id="kv-approved-sub">Tıkla: ayrıntı · Kutucuk: sıraya ekle</small></div>
                     </div>
-                    <button type="button" class="tk-btn tk-btn-sm tk-btn-secondary" id="kv-add-queue" disabled>
+                    <button type="button" class="tk-btn tk-btn-sm tk-btn-primary" id="kv-add-queue" disabled>
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-queue"></use></svg> Sıraya ekle
                     </button>
                 </header>
-                <div class="tk-card-body" id="kv-approved"></div>
+                <div class="tk-card-body">
+                    <div class="kv-approved-tools">
+                        <label class="tk-check" title="Görünenlerin hepsini seç"><input type="checkbox" id="kv-check-all" aria-label="Hepsini seç" /></label>
+                        <input type="search" class="tk-input" id="kv-approved-search" placeholder="Konsept ara…" aria-label="Konsept ara" />
+                    </div>
+                    <div id="kv-approved"></div>
+                </div>
             </section>
             <section class="tk-card" aria-labelledby="kv-detail-title">
                 <header class="tk-card-head">
@@ -53,7 +71,7 @@
                         <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-edit-doc"></use></svg></span>
                         <div><h2 id="kv-detail-title">Konsept ayrıntısı</h2><small class="tk-muted" id="kv-detail-sub">Düzenlenebilir</small></div>
                     </div>
-                    <button type="button" class="tk-btn tk-btn-sm tk-btn-ghost" id="kv-detail-save" hidden>
+                    <button type="button" class="tk-btn tk-btn-sm tk-btn-secondary" id="kv-detail-save" hidden>
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Kaydet
                     </button>
                 </header>
@@ -65,7 +83,7 @@
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-queue"></use></svg></span>
-                    <div><h2 id="kv-queue-title">Üretim sırası</h2><small class="tk-muted" id="kv-queue-status">Bekliyor</small></div>
+                    <div><h2 id="kv-queue-title">Üretim sırası</h2><small class="tk-muted" id="kv-queue-status">Yükleniyor…</small></div>
                 </div>
                 <div class="tk-row">
                     <button type="button" class="tk-btn tk-btn-sm tk-btn-primary" id="kv-start">
@@ -74,8 +92,11 @@
                     <button type="button" class="tk-btn tk-btn-sm tk-btn-secondary" id="kv-pause" hidden>
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-pause"></use></svg> Durdur
                     </button>
-                    <button type="button" class="tk-btn tk-btn-sm tk-btn-secondary" id="kv-resume" hidden>
+                    <button type="button" class="tk-btn tk-btn-sm tk-btn-primary" id="kv-resume" hidden>
                         <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-play"></use></svg> Kaldığı yerden devam
+                    </button>
+                    <button type="button" class="tk-mini-btn" id="kv-clear" title="Biten, hatalı ve iptal edilen işleri temizle" aria-label="Bitenleri temizle" hidden>
+                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-trash"></use></svg>
                     </button>
                 </div>
             </header>
@@ -88,6 +109,9 @@
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg></span>
                     <div><h2 id="kv-produced-title">Üretilenler</h2><small class="tk-muted">Seçince kesikli çizginin yanında oynatılır</small></div>
                 </div>
+                <button type="button" class="tk-mini-btn" id="kv-produced-refresh" title="Yenile" aria-label="Yenile">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-refresh"></use></svg>
+                </button>
             </header>
             <div class="tk-card-body is-flush">
                 <div class="tk-produced" id="kv-produced">
@@ -100,6 +124,7 @@
                             </button>
                         </div>
                         <div class="tk-player" id="kv-player-box"></div>
+                        <div class="kv-player-meta" id="kv-player-meta"></div>
                         <a class="tk-btn tk-btn-sm tk-btn-secondary" asp-controller="Uretilenler" asp-action="Index" id="kv-player-open">
                             <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-external"></use></svg> Üretilenler'de aç
                         </a>
@@ -111,5 +136,6 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/pages/production-shared.js" asp-append-version="true"></script>
     <script src="~/js/pages/konseptten-video.js" asp-append-version="true"></script>
 }
