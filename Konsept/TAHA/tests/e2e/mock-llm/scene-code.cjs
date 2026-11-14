@@ -62,6 +62,7 @@ function hyperframes(p) {
   const dots = [0, 1, 2, 3, 4, 5].map(i => {
     let s = 7 + i * 31 + p.sceneNo * 13;
     const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    rnd(); rnd(); rnd(); // küçük tohumların ilk değerleri 0'a yakın; ısıt
     const x = Math.round(side + rnd() * (W - 2 * side - 40));
     const y = Math.round(H * 0.12 + rnd() * H * 0.55);
     const r = Math.round(14 + rnd() * 26);
