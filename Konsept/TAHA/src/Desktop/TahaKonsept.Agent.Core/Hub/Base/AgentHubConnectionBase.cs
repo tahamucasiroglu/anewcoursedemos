@@ -246,8 +246,38 @@ public abstract class AgentHubConnectionBase : IAgentHubConnection, IAsyncDispos
         await connection.StartAsync(ct);
         SetStatus(HubConnectionStatus.Connected);
         Logger.LogInformation("Hub'a bağlanıldı: {Url}", hubUrl);
-        await OnConnectedAsync(ct);
+        try
+        {
+            await OnConnectedAsync(ct);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested && closed.Task.IsCompleted)
+        {
+            // Sunucu bağlantıyı tanıtım bitmeden kesti: cihaz iptal edilmiş olabilir (ör. web'den tüm oturumları kapat).
+            // Erişim token'ı henüz geçerli olduğundan 401 gelmez; yenileme reddedilirse oturum kapanır ve yeniden eşleme istenir.
+            await HandleRejectedConnectionAsync(ct);
+            return;
+        }
+
+        if (closed.Task.IsCompleted)
+        {
+            await HandleRejectedConnectionAsync(ct);
+            return;
+        }
+
         await ServeAsync(connection, closed.Task, ct);
+    }
+
+    /// <summary>Bağlantı açılır açılmaz sunucu tarafından kapatıldığında çağrılır: token'ı yenilemeyi dener.</summary>
+    /// <param name="ct">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    private async Task HandleRejectedConnectionAsync(CancellationToken ct)
+    {
+        Logger.LogWarning("Sunucu hub bağlantısını hemen kapattı (cihaz yetkisi kaldırılmış olabilir); token yenileniyor.");
+        var refreshed = await _auth.RefreshAsync(ct);
+        if (!refreshed && !_auth.IsPaired)
+        {
+            Logger.LogWarning("Sunucu yetkiyi kaldırdı; ajan yeniden eşlenmeli.");
+        }
     }
 
     private async Task ServeAsync(HubConnection connection, Task closed, CancellationToken ct)
