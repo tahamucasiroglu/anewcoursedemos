@@ -13,7 +13,8 @@ using TahaKonsept.BuildingBlocks.Domain.Results;
 namespace TahaKonsept.Agent.Engines.Speech.Base;
 
 /// <summary>
-/// Python tabanlı ses motorlarının tabanı. Kurulum (<see cref="EnsureReadyAsync"/>): <c>uv</c> ile motor başına venv
+/// Python tabanlı ses motorlarının tabanı. Kurulum (<see cref="EnsureReadyAsync"/>): <c>uv</c> yoksa önce <c>IToolProvisioner</c> ile kurulur
+/// (kullanıcı kurulum ekranına gitmeden), sonra <c>uv</c> ile motor başına venv
 /// (<c>PythonEnvsDir/&lt;Key&gt;/.venv</c>, Python <see cref="PythonVersion"/>; uv'nin yönettiği Python <c>ToolsDir/uv-python</c> altına iner),
 /// sabitlenmiş <see cref="Requirements"/> kurulumu (GPU motorlarında <see cref="TorchIndexUrl"/> CUDA tekerlek dizini), başarıda
 /// gereksinim parmak izini <c>.taha-installed</c> dosyasına yazar (<see cref="IsInstalled"/> bunu karşılaştırır).
@@ -113,7 +114,7 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
             return Result.Success();
         }
 
-        var uv = Services.Tools.Require(ToolKind.Uv);
+        var uv = await RequireUvAsync(progress, ct).ConfigureAwait(false);
         if (uv.IsFailure)
         {
             return uv;
@@ -338,6 +339,19 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
         {
             _workerGate.Release();
         }
+    }
+
+    private async Task<Result<string>> RequireUvAsync(IProgress<EngineSetupProgress>? progress, CancellationToken ct)
+    {
+        var uv = Services.Tools.Require(ToolKind.Uv);
+        if (uv.IsSuccess || Services.Provisioner is null)
+        {
+            return uv;
+        }
+
+        progress?.Report(new EngineSetupProgress($"{DisplayName}: uv (Python yöneticisi) kuruluyor", 2));
+        Logger.LogInformation("{Engine}: uv bulunamadı, gerektiğinde kuruluyor", Key);
+        return await Services.Provisioner.EnsureAsync(ToolKind.Uv, progress, ct).ConfigureAwait(false);
     }
 
     private Dictionary<string, string> UvEnvironment() => new()

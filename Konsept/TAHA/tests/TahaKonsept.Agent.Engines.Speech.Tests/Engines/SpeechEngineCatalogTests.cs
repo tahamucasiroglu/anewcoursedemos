@@ -1,15 +1,19 @@
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Shouldly;
+using TahaKonsept.Agent.Abstractions.Engines;
 using TahaKonsept.Agent.Abstractions.Paths.Abstract;
 using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 using TahaKonsept.Agent.Abstractions.Speech;
 using TahaKonsept.Agent.Abstractions.Speech.Abstract;
+using TahaKonsept.Agent.Abstractions.Tools;
 using TahaKonsept.Agent.Abstractions.Tools.Abstract;
 using TahaKonsept.Agent.Engines.Speech.Base;
 using TahaKonsept.Agent.Engines.Speech.Concrete;
 using TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 using TahaKonsept.Agent.Engines.Speech.DependencyInjection;
 using TahaKonsept.Agent.Engines.Speech.Tests.Support;
+using TahaKonsept.BuildingBlocks.Domain.Results;
 using Xunit;
 
 namespace TahaKonsept.Agent.Engines.Speech.Tests.Engines;
@@ -114,6 +118,23 @@ public sealed class SpeechEngineCatalogTests
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Code.ShouldBe("tool.missing");
+    }
+
+    /// <summary>uv yoksa ve araç kurucu varsa, Python motoru kurulumu önce uv'yi kurucuya kurdurur (kullanıcı kurulum ekranına gitmez).</summary>
+    [Fact]
+    public async Task EnsureReady_provisions_missing_uv()
+    {
+        var provisioner = Substitute.For<IToolProvisioner>();
+        provisioner.EnsureAsync(ToolKind.Uv, Arg.Any<IProgress<EngineSetupProgress>?>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Failure<string>(Error.Failure("test.uv_install", "uv indirilemedi")));
+        var services = TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("provision"))) with { Provisioner = provisioner };
+        await using var engine = new PiperTurkishSpeechEngine(services);
+
+        var result = await engine.EnsureReadyAsync(null, TestContext.Current.CancellationToken);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("test.uv_install");
+        await provisioner.Received(1).EnsureAsync(ToolKind.Uv, Arg.Any<IProgress<EngineSetupProgress>?>(), Arg.Any<CancellationToken>());
     }
 
     /// <summary>Hugging Face adresi doğru üretilir (yol parçaları kaçışlı).</summary>

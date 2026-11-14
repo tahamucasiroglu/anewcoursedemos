@@ -120,6 +120,7 @@ public static class AgentCoreServiceCollectionExtensions
         services.AddSingleton<IPrerequisite, UvPrerequisite>();
         services.AddSingleton<IPrerequisite, PythonPrerequisite>();
         services.AddSingleton<IPrerequisiteInstaller, PrerequisiteInstaller>();
+        services.AddSingleton<IToolProvisioner, PrerequisiteToolProvisioner>();
 
         services.AddSingleton<IAgentHost, AgentHost>();
         return services;
