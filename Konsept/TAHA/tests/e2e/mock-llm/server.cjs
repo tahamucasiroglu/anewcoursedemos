@@ -8,13 +8,17 @@
  *   POST /v1/chat/completions  → isteği inceler (sistem/kullanıcı promptu, response_format json_schema şekli) ve
  *                                 GEÇERLİ hazır yanıt döner: konu önerisi, tam konsept (Türkçe, 3 kısa sahne, ~20 sn,
  *                                 "Google" ve "29 Mayıs 1453" ile normalizasyon denemesi, okunuş listesi), kelime denetimi,
- *                                 revize ve HyperFrames sahne kodu (ajanın lint'inden geçer). stream:true ise SSE.
+ *                                 revize ve sahne kodu (HyperFrames/Remotion/Revideo; scene-code.cjs, ajan lint'inden geçer).
+ *                                 Kullanıcı promptunda "kurgu30" geçen konsept isteği sabit 30 sn kurguyu döner (kurgu30.cjs).
+ *                                 stream:true ise SSE.
  *   GET  /__log                → son 200 isteğin özeti (JSON)
  * Gerçek ağ çağrısı yok; ücretsiz; deterministik olmayan tek şey konu havuzundaki dönüş sırasıdır.
  */
 'use strict';
 const http = require('http');
 const fs = require('fs');
+const kurgu30 = require('./kurgu30.cjs');
+const { sceneCode } = require('./scene-code.cjs');
 
 const args = process.argv.slice(2);
 const argOf = (name, def) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
@@ -131,61 +135,6 @@ function wordCheckFor(userPrompt) {
   return { scenes };
 }
 
-function sceneCodeFor(systemPrompt, userPrompt) {
-  const size = /—\s*(\d+)x(\d+)/.exec(userPrompt) || /width:\s*(\d+)px;\s*height:\s*(\d+)px/.exec(systemPrompt) || [0, 1080, 1920];
-  const W = Number(size[1]); const H = Number(size[2]);
-  const dur = /süre \{D\} = ([\d.]+) sn/.exec(userPrompt);
-  const D = dur ? Number(dur[1]) : 5;
-  const sceneNo = (/Sahne (\d+)/.exec(userPrompt) || [0, '1'])[1];
-  const onScreen = ((/Ekranda gösterilecek: (.*)/.exec(userPrompt) || [0, 'Taha Konsept'])[1] || 'Taha Konsept').trim();
-  const titleText = ((/Başlık: (.*)/.exec(userPrompt) || [0, ''])[1] || '').trim();
-  const images = /Kullanılabilir görseller \(yalnızca bunlar\): (.*)/.exec(userPrompt);
-  const firstImage = images ? images[1].split(',')[0].trim() : null;
-  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const vertical = H >= W;
-  const titleSize = vertical ? 104 : 88;
-  const subSize = vertical ? 52 : 42;
-  const palette = [['#e2711d', '#3d2412'], ['#b5651d', '#1f2a44'], ['#d9a441', '#2b1d14']][(Number(sceneNo) - 1) % 3];
-  const hold = Math.max(0.5, D - 0.4).toFixed(2);
-  const subStart = Math.min(1.0, D / 3).toFixed(2);
-  const bgImage = firstImage ? `\n  <img id="photo" class="clip" data-start="0" data-duration="${D}" src="${esc(firstImage)}" style="inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85" />` : '';
-  return `<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8" />
-<link rel="stylesheet" href="fonts/tk-fonts.css" />
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: ${W}px; height: ${H}px; overflow: hidden; background: #111; }
-  #root { position: relative; width: 100%; height: 100%; font-family: 'Inter', sans-serif; }
-  .clip { position: absolute; }
-  #bg { inset: 0; background: radial-gradient(circle at 50% 35%, ${palette[0]} 0%, ${palette[1]} 75%); }
-  #ring { left: ${Math.round(W / 2 - W * 0.3)}px; top: ${Math.round(H * 0.18)}px; width: ${Math.round(W * 0.6)}px; height: ${Math.round(W * 0.6)}px; border-radius: 50%; border: 12px solid rgba(255,255,255,0.25); }
-  #title { left: ${vertical ? 80 : 100}px; right: ${vertical ? 80 : 100}px; top: ${Math.round(H * (vertical ? 0.36 : 0.30))}px; text-align: center; color: #fff; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: ${titleSize}px; line-height: 1.1; opacity: 0; }
-  #sub { left: ${vertical ? 80 : 100}px; right: ${vertical ? 80 : 100}px; top: ${Math.round(H * (vertical ? 0.55 : 0.55))}px; text-align: center; color: #ffe8cc; font-weight: 700; font-size: ${subSize}px; opacity: 0; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="main" data-start="0" data-duration="${D}" data-width="${W}" data-height="${H}">
-  <div id="bg" class="clip" data-start="0" data-duration="${D}"></div>${bgImage}
-  <div id="ring" class="clip" data-start="0" data-duration="${D}"></div>
-  <h1 id="title" class="clip" data-start="0" data-duration="${D}">${esc(onScreen)}</h1>
-  <div id="sub" class="clip" data-start="${subStart}" data-duration="${(D - Number(subStart)).toFixed(2)}">${esc(titleText)}</div>
-</div>
-<script src="gsap.min.js"></script>
-<script>
-  window.__timelines = window.__timelines || {};
-  const tl = gsap.timeline({ paused: true });
-  tl.fromTo("#ring", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.8, ease: "power2.out" }, 0.0);
-  tl.fromTo("#title", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.1);
-  tl.fromTo("#sub", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, ${subStart});
-  tl.to("#ring", { rotation: 30, duration: ${Math.max(0.5, Number(hold) - 0.8).toFixed(2)}, ease: "none" }, 0.8);
-  window.__timelines["main"] = tl;
-</script>
-</body>
-</html>`;
-}
-
 /* ------------------------------------------------------------------ İstek sınıflandırma */
 function classify(body) {
   const messages = body.messages || [];
@@ -211,6 +160,9 @@ function classify(body) {
       const title = base.replace(/ \(revize( \d+)?\)$/, '') + ' (revize)';
       return { kind: 'revise', summary: `instr="${instr.slice(0, 60)}"`, json: conceptFor(title, 'Bin yıllık surlar o gece son kez sessizdi.', true) };
     }
+    if (kurgu30.matches(usr)) {
+      return { kind: 'concept-kurgu30', summary: 'sabit 30 sn kurgu', json: kurgu30.concept() };
+    }
     const t = /Konu: (.*)/.exec(usr);
     const h = /Önerilen kanca: (.*)/.exec(usr);
     const idea = /Kullanıcının fikri: (.*)/.exec(usr);
@@ -223,8 +175,8 @@ function classify(body) {
     return { kind: 'word-check', summary: '', json: wordCheckFor(usr) };
   }
   if (sys.includes('sahne yazım sözleşmesi') || /Kuralları uygula ve yalnızca sahne kodunu döndür/.test(usr)) {
-    const code = sceneCodeFor(sys, usr);
-    return { kind: 'scene-code', summary: (/Sahne (\d+) — süre \{D\} = ([\d.]+)/.exec(usr) || ['?'])[0], text: code };
+    const r = sceneCode(sys, usr);
+    return { kind: 'scene-code', summary: `${r.engine} sahne ${r.sceneNo} D=${r.D} görsel=${r.image || '-'}`, text: r.code };
   }
   if (rf && rf.type === 'json_schema') {
     return { kind: 'unknown-json', summary: `props=${props.join(',')}`, json: {} };

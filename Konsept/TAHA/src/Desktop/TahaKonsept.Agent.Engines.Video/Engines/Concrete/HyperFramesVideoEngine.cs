@@ -21,7 +21,7 @@ namespace TahaKonsept.Agent.Engines.Video.Engines.Concrete;
 /// HyperFrames (<c>hyperframes@0.9.43</c>, HTML + CSS + GSAP) video motoru — varsayılan motor.
 /// Sahne projesi: <c>WorkDir/hyperframes-scene-NNN/</c> altında <c>index.html</c> (LLM kodu), <c>gsap.min.js</c>,
 /// <c>fonts/</c> (+ <c>fonts/tk-fonts.css</c>) ve <c>assets/</c>. Render: <c>hyperframes render &lt;dir&gt; -o out.mp4 --fps N --strict</c>;
-/// ilerleme <c>@hf-progress {json}</c> satırlarından okunur. Doğrulama: <c>hyperframes lint --json</c>.
+/// ilerleme <c>@hf-progress {json}</c> satırlarından okunur. Doğrulama: <c>hyperframes lint --json</c> (sahne görselleri doğrulama klasörünün <c>assets/</c>'ına da kopyalanır).
 /// Kök öğenin <c>data-width/data-height</c> değerleri istenen boyuta zorlanır. Telemetri <c>HYPERFRAMES_NO_TELEMETRY</c> ile kapalı.
 /// </summary>
 public sealed partial class HyperFramesVideoEngine : NodeVideoEngineBase
@@ -121,6 +121,8 @@ public sealed partial class HyperFramesVideoEngine : NodeVideoEngineBase
         Directory.CreateDirectory(dir);
         await File.WriteAllTextAsync(Path.Combine(dir, "index.html"), ForceRootSize(request.SceneCode, request.Width, request.Height), Utf8NoBom, ct).ConfigureAwait(false);
 
+        // lint, <img src="assets/x.png"> başvurularını diskte arar (missing_local_asset); görseller doğrulama klasörüne de konur.
+        CopyAssets(request.AssetPaths, Path.Combine(dir, "assets"));
         var run = await RunNodeAsync([CliPath, "lint", dir, "--json"], TimeSpan.FromMinutes(2), ct).ConfigureAwait(false);
         if (run.IsFailure)
         {

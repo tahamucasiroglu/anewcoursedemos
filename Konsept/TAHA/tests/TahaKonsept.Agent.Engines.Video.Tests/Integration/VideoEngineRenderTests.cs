@@ -119,6 +119,31 @@ public sealed class VideoEngineRenderTests
         result.Error.Message.ShouldContain("lint");
     }
 
+    /// <summary>
+    /// HyperFrames lint, görsel kullanan sahnede (<c>&lt;img src="assets/x.png"&gt;</c>) görseli doğrulama klasöründe de bulur;
+    /// eskiden yalnız index.html yazıldığı için görsel açık her sahne <c>missing_local_asset</c> ile reddediliyordu.
+    /// </summary>
+    [Fact]
+    public async Task HyperFrames_ValidateAcceptsSceneWithImageAsset()
+    {
+        Assert.SkipUnless(TestEnvironment.CanRunEngines, "node/ffmpeg/.tools-dev yok ya da motor testleri kapalı.");
+        var ct = TestContext.Current.CancellationToken;
+        var engine = new HyperFramesVideoEngine(Paths(), Tools, Runner, Probe, new DefaultSceneCodeGuard(), NullLogger<HyperFramesVideoEngine>.Instance);
+        var dir = TestEnvironment.NewTempDir("hf-validate-img");
+        var image = Path.Combine(dir, "scene-01.png");
+        await File.WriteAllBytesAsync(image, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYPj/HwADAgH/7k3W7wAAAABJRU5ErkJggg=="), ct);
+        var code = HyperFramesScene.Replace(
+            "<h1 id=\"title\"",
+            "<img id=\"photo\" class=\"clip\" data-start=\"0\" data-duration=\"2\" src=\"assets/scene-01.png\" alt=\"\" /><h1 id=\"title\"",
+            StringComparison.Ordinal);
+        var request = new SceneRenderRequest(dir, 0, code, 540, 960, 30, 2, [image], Path.Combine(dir, "x.mp4"));
+
+        (await engine.EnsureReadyAsync(null, ct)).IsSuccess.ShouldBeTrue();
+        var result = await engine.ValidateSceneAsync(request, ct);
+
+        result.IsSuccess.ShouldBeTrue(result.IsFailure ? result.Error.Message : string.Empty);
+    }
+
     private static readonly TestToolLocator Tools = new();
     private static readonly TestProcessRunner Runner = new();
     private static readonly FfprobeMediaProbe Probe = new(Tools, Runner);

@@ -551,8 +551,12 @@ public abstract class NodeVideoEngineBase : IVideoEngine
         return !string.IsNullOrEmpty(npmFromLocator) && !OperatingSystem.IsWindows() ? npmFromLocator : null;
     }
 
-    private static void CopyAssets(IReadOnlyList<string> assets, string assetsDir)
+    /// <summary>Sahne görsellerini proje (ya da doğrulama) klasörünün <c>assets/</c> alt klasörüne kopyalar (dosya adı korunur).</summary>
+    /// <param name="assets">Görsel dosyaları.</param>
+    /// <param name="assetsDir">Hedef klasör.</param>
+    protected static void CopyAssets(IReadOnlyList<string> assets, string assetsDir)
     {
+        ArgumentNullException.ThrowIfNull(assets);
         Directory.CreateDirectory(assetsDir);
         foreach (var asset in assets.Where(File.Exists))
         {
