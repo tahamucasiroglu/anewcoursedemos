@@ -67,6 +67,7 @@ public static class ProductionServiceCollectionExtensions
         services.AddSingleton<IAuthoringGuideProvider, EmbeddedAuthoringGuideProvider>();
         services.AddSingleton<IProductionSignal, ProductionSignal>();
         services.AddSingleton<IUserJobLock, UserJobLock>();
+        services.AddSingleton<IJobCancellationRegistry, JobCancellationRegistry>();
         services.AddSingleton<IProductionActivity, ProductionActivity>();
 
         services.AddScoped<IStageHandler, ScriptStageHandler>();
@@ -92,6 +93,7 @@ public static class ProductionServiceCollectionExtensions
         services.AddScoped<IJobQueryService, JobQueryService>();
         services.TryAddScoped<IConceptSource, UnavailableConceptSource>();
 
+        services.AddScoped<IVideoVersionAllocator, VideoVersionAllocator>();
         services.AddScoped<IJobFactory, JobFactory>();
         services.AddScoped<IJobFinalizer, JobFinalizer>();
         services.AddScoped<JobAdvancerDependencies>();

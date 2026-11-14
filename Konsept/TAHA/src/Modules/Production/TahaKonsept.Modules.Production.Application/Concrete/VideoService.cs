@@ -13,6 +13,7 @@ namespace TahaKonsept.Modules.Production.Application.Concrete;
 /// <param name="items">Sıra öğeleri deposu.</param>
 /// <param name="queues">Sıra durumu deposu.</param>
 /// <param name="settings">Ayar servisi.</param>
+/// <param name="versions">Sürüm numarası ayırıcı.</param>
 /// <param name="agent">Ajan geçidi.</param>
 /// <param name="signal">Orkestratör sinyali.</param>
 /// <param name="activity">İşlem günlüğü.</param>
@@ -23,9 +24,10 @@ public sealed class VideoService(
     IQueueItemRepository items,
     IProductionQueueRepository queues,
     IProductionSettingsService settings,
+    IVideoVersionAllocator versions,
     IAgentGateway agent,
     IProductionSignal signal,
     IProductionActivity activity,
     ICurrentUser currentUser,
     ILogger<VideoService> logger)
-    : VideoServiceBase(videos, items, queues, settings, agent, signal, activity, currentUser, logger);
+    : VideoServiceBase(videos, items, queues, settings, versions, agent, signal, activity, currentUser, logger);

@@ -10,7 +10,8 @@ namespace TahaKonsept.Modules.Production.Domain.Entities;
 /// <see cref="OutputHash"/>, <see cref="OutputJson"/>, <see cref="ArtifactsJson"/> (online üretilen dosyaların indirme bilgileri),
 /// <see cref="CommandId"/> (ajan komutu), maliyet/token/süre, hata. Yeni sürümde <see cref="Reused"/> kaynak işten kopyalanır.
 /// Geçişler: <see cref="Start"/>, <see cref="Dispatch"/>, <see cref="ReportProgress"/>, <see cref="Complete"/>, <see cref="ReuseFrom"/>,
-/// <see cref="Fail"/>, <see cref="ResetPending"/>, <see cref="RequestRepair"/>, <see cref="Cancel"/>.
+/// <see cref="Fail"/>, <see cref="ResetPending"/>, <see cref="ReleaseAttempt"/>, <see cref="RequestRepair"/>, <see cref="Cancel"/>.
+/// <see cref="Attempts"/> yalnız gerçek denemeleri sayar: duraklatma, gönderim hatası ve sunucu yeniden başlaması <see cref="ReleaseAttempt"/> ile denemeyi geri verir.
 /// </summary>
 public sealed class StageRun : EntityBase<Guid>
 {
@@ -70,7 +71,7 @@ public sealed class StageRun : EntityBase<Guid>
     /// <summary>Son mesaj.</summary>
     public string? Message { get; private set; }
 
-    /// <summary>Deneme sayısı.</summary>
+    /// <summary>Deneme sayısı (duraklatma/gönderim hatası gibi aşamanın kendisi başarısız olmadan yapılan sıfırlamalar sayılmaz).</summary>
     public int Attempts { get; private set; }
 
     /// <summary>LLM'e hata ile yeniden yazdırma sayısı (sahne kodu).</summary>
@@ -237,6 +238,17 @@ public sealed class StageRun : EntityBase<Guid>
         DurationMs = 0;
     }
 
+    /// <summary>Başarısız denemenin harcamasını ekler (maliyet/token birikir; başarıda <see cref="Complete"/> da üstüne ekler).</summary>
+    /// <param name="costUsd">Maliyet.</param>
+    /// <param name="inputTokens">Giriş token'ı.</param>
+    /// <param name="outputTokens">Çıkış token'ı.</param>
+    public void AddUsage(decimal costUsd, long inputTokens, long outputTokens)
+    {
+        CostUsd += costUsd;
+        InputTokens += inputTokens;
+        OutputTokens += outputTokens;
+    }
+
     /// <summary>Hata ile bitirir.</summary>
     /// <param name="code">Hata kodu.</param>
     /// <param name="message">Mesaj.</param>
@@ -259,6 +271,21 @@ public sealed class StageRun : EntityBase<Guid>
         CommandId = null;
         Progress = 0;
         Message = ProductionLimits.ClipOrNull(message, ProductionLimits.MessageMaxLength);
+    }
+
+    /// <summary>
+    /// Beklemeye döndürür ve son denemeyi geri verir: aşama başarısız olmadan kesildiğinde (duraklatma, ajana gönderilemedi, sunucu yeniden başladı)
+    /// kullanılır; böylece bu kesintiler <c>MaxAgentAttempts</c> sınırını tüketmez.
+    /// </summary>
+    /// <param name="message">Mesaj.</param>
+    public void ReleaseAttempt(string? message)
+    {
+        if (Attempts > 0)
+        {
+            Attempts--;
+        }
+
+        ResetPending(message);
     }
 
     /// <summary>Yeniden kullanımı kapatır ve beklemeye döndürür.</summary>

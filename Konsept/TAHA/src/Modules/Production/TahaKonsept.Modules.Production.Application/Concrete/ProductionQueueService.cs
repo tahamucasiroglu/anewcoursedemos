@@ -15,6 +15,8 @@ namespace TahaKonsept.Modules.Production.Application.Concrete;
 /// <param name="agent">Ajan geçidi.</param>
 /// <param name="artifacts">Artefakt deposu.</param>
 /// <param name="locks">Kullanıcı kilidi.</param>
+/// <param name="cancellations">İş iptal kaydı.</param>
+/// <param name="versions">Sürüm numarası ayırıcı.</param>
 /// <param name="signal">Orkestratör sinyali.</param>
 /// <param name="currentUser">Oturumdaki kullanıcı.</param>
 /// <param name="clock">Saat.</param>
@@ -26,7 +28,9 @@ public sealed class ProductionQueueService(
     IAgentGateway agent,
     IArtifactStore artifacts,
     IUserJobLock locks,
+    IJobCancellationRegistry cancellations,
+    IVideoVersionAllocator versions,
     IProductionSignal signal,
     ICurrentUser currentUser,
     IClock clock)
-    : ProductionQueueServiceBase(queues, items, jobs, concepts, agent, artifacts, locks, signal, currentUser, clock);
+    : ProductionQueueServiceBase(queues, items, jobs, concepts, agent, artifacts, locks, cancellations, versions, signal, currentUser, clock);

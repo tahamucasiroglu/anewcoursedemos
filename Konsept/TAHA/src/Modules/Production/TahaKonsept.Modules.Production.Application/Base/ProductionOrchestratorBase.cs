@@ -4,8 +4,9 @@ using TahaKonsept.Modules.Production.Application.Abstract;
 namespace TahaKonsept.Modules.Production.Application.Base;
 
 /// <summary>
-/// <see cref="IProductionOrchestrator"/> ortak davranışı: sırası Boşta olmayan ya da etkin öğesi olan kullanıcıları bulur; her biri için kullanıcı
-/// kilidini alıp <see cref="IJobAdvancer.AdvanceUserAsync"/> çağırır. Bir kullanıcının hatası diğerlerini durdurmaz (Error günlüğü).
+/// <see cref="IProductionOrchestrator"/> ortak davranışı: sırası Boşta olmayan ya da etkin öğesi olan kullanıcıları bulur (<see cref="ListUsersAsync"/>);
+/// bir kullanıcı için kilidi alıp <see cref="IJobAdvancer.AdvanceUserAsync"/> çağırır (<see cref="AdvanceAsync"/>). Bir kullanıcının hatası diğerlerini
+/// durdurmaz (Error günlüğü); sıradan çıkarma ile kesilen zincir (iptal) Warning olarak yazılır, döngüyü bozmaz.
 /// </summary>
 public abstract class ProductionOrchestratorBase : IProductionOrchestrator
 {
@@ -30,26 +31,45 @@ public abstract class ProductionOrchestratorBase : IProductionOrchestrator
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>Bir tur çalıştırır.</summary>
+    /// <summary>İlerletilecek kullanıcılar.</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kullanıcılar.</returns>
+    public async Task<IReadOnlyList<Guid>> ListUsersAsync(CancellationToken cancellationToken) =>
+        (await _queues.ListNonIdleUserIdsAsync(cancellationToken))
+            .Concat(await _items.ListUserIdsWithActiveItemsAsync(cancellationToken))
+            .Distinct()
+            .ToList();
+
+    /// <summary>Tek kullanıcıyı ilerletir.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    public async Task AdvanceAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        using var held = await _locks.AcquireAsync(userId, cancellationToken);
+        try
+        {
+            await _advancer.AdvanceUserAsync(userId, cancellationToken);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Üretim zinciri kesildi (sıradan çıkarma ya da iptal edilen çağrı; kullanıcı {UserId})", userId);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Üretim sırası ilerletilemedi (kullanıcı {UserId})", userId);
+        }
+    }
+
+    /// <summary>Bir tur çalıştırır (kullanıcılar sırayla).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>İşlenen kullanıcı sayısı.</returns>
     public async Task<int> TickAsync(CancellationToken cancellationToken)
     {
-        var users = (await _queues.ListNonIdleUserIdsAsync(cancellationToken))
-            .Concat(await _items.ListUserIdsWithActiveItemsAsync(cancellationToken))
-            .Distinct()
-            .ToList();
+        var users = await ListUsersAsync(cancellationToken);
         foreach (var userId in users)
         {
-            using var held = await _locks.AcquireAsync(userId, cancellationToken);
-            try
-            {
-                await _advancer.AdvanceUserAsync(userId, cancellationToken);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Üretim sırası ilerletilemedi (kullanıcı {UserId})", userId);
-            }
+            await AdvanceAsync(userId, cancellationToken);
         }
 
         return users.Count;

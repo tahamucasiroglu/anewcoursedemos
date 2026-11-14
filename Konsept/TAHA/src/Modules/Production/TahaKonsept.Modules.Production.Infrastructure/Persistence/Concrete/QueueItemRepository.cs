@@ -50,6 +50,17 @@ public sealed class QueueItemRepository(ProductionDbContext context) : Repositor
     public async Task<int> MaxOrderAsync(Guid userId, CancellationToken cancellationToken) =>
         await QueryNoTracking().Where(x => x.UserId == userId).Select(x => (int?)x.Order).MaxAsync(cancellationToken) ?? 0;
 
+    /// <summary>Konseptin hata/iptal ile bitmemiş öğelerindeki en büyük sürüm.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sürüm (yoksa 0).</returns>
+    public async Task<int> MaxVersionForConceptAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken) =>
+        await QueryNoTracking()
+            .Where(x => x.UserId == userId && x.ConceptId == conceptId && x.Status != QueueItemStatus.Failed && x.Status != QueueItemStatus.Cancelled)
+            .Select(x => (int?)x.Version)
+            .MaxAsync(cancellationToken) ?? 0;
+
     /// <summary>Etkin öğesi olan kullanıcılar.</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Kullanıcılar.</returns>

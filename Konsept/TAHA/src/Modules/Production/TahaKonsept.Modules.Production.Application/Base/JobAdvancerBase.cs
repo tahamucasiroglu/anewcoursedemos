@@ -36,6 +36,7 @@ public abstract class JobAdvancerBase : IJobAdvancer
     private readonly IBudgetGuard _budget;
     private readonly IJobFinalizer _finalizer;
     private readonly IProductionActivity _activity;
+    private readonly IJobCancellationRegistry _cancellations;
     private readonly IClock _clock;
     private readonly ILogger _logger;
 
@@ -55,6 +56,7 @@ public abstract class JobAdvancerBase : IJobAdvancer
         _budget = dependencies.Budget;
         _finalizer = dependencies.Finalizer;
         _activity = dependencies.Activity;
+        _cancellations = dependencies.Cancellations;
         _clock = dependencies.Clock;
         _logger = dependencies.Logger;
     }
@@ -165,7 +167,10 @@ public abstract class JobAdvancerBase : IJobAdvancer
         }
     }
 
-    /// <summary>İşin bitmeyen aşamalarını sırayla işler (ajan aşamasında ya da duraklatmada durur).</summary>
+    /// <summary>
+    /// İşin bitmeyen aşamalarını sırayla işler (ajan aşamasında ya da duraklatmada durur). Zincir işe bağlı iptal kapsamında çalışır
+    /// (<see cref="IJobCancellationRegistry"/>): sıradan çıkarma sürmekte olan sunucu aşamasını (LLM/TTS/görsel çağrısı dahil) anında keser.
+    /// </summary>
     /// <param name="item">Öğe.</param>
     /// <param name="job">İş.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
@@ -174,6 +179,8 @@ public abstract class JobAdvancerBase : IJobAdvancer
     {
         ArgumentNullException.ThrowIfNull(item);
         ArgumentNullException.ThrowIfNull(job);
+        using var cancellation = _cancellations.Begin(job.UserId, item.Id, cancellationToken);
+        cancellationToken = cancellation.Token;
         var context = await _contexts.CreateAsync(job, cancellationToken);
         IReadOnlyList<StageRun> baseRuns = job.BaseJobId is Guid baseId ? await _jobs.ListRunsNoTrackingAsync(baseId, cancellationToken) : [];
         for (var guard = 0; guard < 10_000 && !cancellationToken.IsCancellationRequested; guard++)
@@ -206,7 +213,7 @@ public abstract class JobAdvancerBase : IJobAdvancer
                     await WatchAgentRunAsync(item, job, run, cancellationToken);
                     return;
                 case StageStatus.Running:
-                    run.ResetPending("Sunucu yeniden başladı; aşama tekrarlanıyor");
+                    run.ReleaseAttempt("Sunucu yeniden başladı; aşama tekrarlanıyor");
                     break;
             }
 
@@ -311,6 +318,7 @@ public abstract class JobAdvancerBase : IJobAdvancer
 
         if (result.IsFailure)
         {
+            run.AddUsage(request.Usage.CostUsd, request.Usage.InputTokens, request.Usage.OutputTokens);
             run.Fail(result.Error.Code, result.Error.Message, _clock.UtcNow);
             await FailJobAsync(item, job, run, result.Error.Message, cancellationToken);
             return false;
@@ -386,7 +394,7 @@ public abstract class JobAdvancerBase : IJobAdvancer
         var sent = await _agent.SendStageAsync(job.UserId, command.Value, cancellationToken);
         if (sent.IsFailure)
         {
-            run.ResetPending("Masaüstü programına gönderilemedi: " + sent.Error.Message);
+            run.ReleaseAttempt("Masaüstü programına gönderilemedi: " + sent.Error.Message);
             job.SetWaitingForAgent(true);
             await SaveAsync(cancellationToken);
         }
@@ -434,6 +442,14 @@ public abstract class JobAdvancerBase : IJobAdvancer
             run.Fail("production.agent_timeout", "Masaüstü programından yanıt alınamadı.", _clock.UtcNow);
             await FailJobAsync(item, job, run, run.ErrorMessage!, cancellationToken);
             return;
+        }
+
+        // Eski komut yalnız yavaş olabilir: yenisi aynı çalışma alanında onunla yan yana çalışmasın diye önce durdurulur
+        // (PauseJob kontrol noktalarını korur; yeni komut kaldığı yerden sürer). Eski komutun geç gelen sonucu CommandId uyuşmadığı için yok sayılır.
+        var stopped = await _agent.PauseJobAsync(job.UserId, job.WorkspaceId, cancellationToken);
+        if (stopped.IsFailure)
+        {
+            _logger.LogWarning("Yanıtsız ajan aşaması durdurulamadı (iş {JobId}): {Message}", job.Id, stopped.Error.Message);
         }
 
         run.ResetPending("Masaüstü programından yanıt yok; yeniden gönderilecek");

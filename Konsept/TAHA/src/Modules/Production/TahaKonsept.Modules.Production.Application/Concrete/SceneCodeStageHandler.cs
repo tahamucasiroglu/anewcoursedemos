@@ -130,6 +130,7 @@ public sealed class SceneCodeStageHandler : StageHandlerBase
             cost += result.Value.CostUsd;
             inTokens += result.Value.Usage.TotalInputTokens;
             outTokens += result.Value.Usage.OutputTokens;
+            request.Usage.Add(result.Value.CostUsd, result.Value.Usage.TotalInputTokens, result.Value.Usage.OutputTokens);
             var code = _validator.Extract(engine, result.Value.Value);
             if (code.IsSuccess)
             {

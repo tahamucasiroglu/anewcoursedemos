@@ -12,7 +12,9 @@ namespace TahaKonsept.Modules.Production.Application.Base;
 /// <summary>
 /// <see cref="IProductionQueueService"/> ortak davranışı (oturumdaki kullanıcı). Durum değişiklikleri sıra kaydına (<see cref="ProductionQueue"/>)
 /// yazılır ve orkestratör uyandırılır; işin kendisini orkestratör değiştirir. İstisna: çalışan öğe çıkarılınca iş kullanıcı kilidi altında iptal edilir
-/// (paylaşılmayan çalışma alanında ajana <c>CancelJob</c>, paylaşılanda <c>PauseJob</c> — kaynak sürümün dosyaları silinmesin).
+/// (paylaşılmayan çalışma alanında ajana <c>CancelJob</c>, paylaşılanda <c>PauseJob</c> — kaynak sürümün dosyaları silinmesin). Kilidi beklemeden önce
+/// <see cref="IJobCancellationRegistry"/> ile orkestratörün o iş için sürmekte olan sunucu zinciri (LLM/TTS/görsel çağrıları) kesilir; böylece istek
+/// uzun zinciri beklemez ve kalan ücretli çağrılar yapılmaz.
 /// </summary>
 public abstract class ProductionQueueServiceBase : IProductionQueueService
 {
@@ -23,6 +25,8 @@ public abstract class ProductionQueueServiceBase : IProductionQueueService
     private readonly IAgentGateway _agent;
     private readonly IArtifactStore _artifacts;
     private readonly IUserJobLock _locks;
+    private readonly IJobCancellationRegistry _cancellations;
+    private readonly IVideoVersionAllocator _versions;
     private readonly IProductionSignal _signal;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
@@ -35,6 +39,8 @@ public abstract class ProductionQueueServiceBase : IProductionQueueService
     /// <param name="agent">Ajan geçidi.</param>
     /// <param name="artifacts">Artefakt deposu.</param>
     /// <param name="locks">Kullanıcı kilidi.</param>
+    /// <param name="cancellations">İş iptal kaydı.</param>
+    /// <param name="versions">Sürüm numarası ayırıcı.</param>
     /// <param name="signal">Orkestratör sinyali.</param>
     /// <param name="currentUser">Oturumdaki kullanıcı.</param>
     /// <param name="clock">Saat.</param>
@@ -46,6 +52,8 @@ public abstract class ProductionQueueServiceBase : IProductionQueueService
         IAgentGateway agent,
         IArtifactStore artifacts,
         IUserJobLock locks,
+        IJobCancellationRegistry cancellations,
+        IVideoVersionAllocator versions,
         IProductionSignal signal,
         ICurrentUser currentUser,
         IClock clock)
@@ -57,6 +65,8 @@ public abstract class ProductionQueueServiceBase : IProductionQueueService
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _artifacts = artifacts ?? throw new ArgumentNullException(nameof(artifacts));
         _locks = locks ?? throw new ArgumentNullException(nameof(locks));
+        _cancellations = cancellations ?? throw new ArgumentNullException(nameof(cancellations));
+        _versions = versions ?? throw new ArgumentNullException(nameof(versions));
         _signal = signal ?? throw new ArgumentNullException(nameof(signal));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -94,7 +104,8 @@ public abstract class ProductionQueueServiceBase : IProductionQueueService
                 continue;
             }
 
-            await _items.AddAsync(QueueItem.Create(userId, conceptId, concept.Title, ++order, settingsJson), cancellationToken);
+            var version = await _versions.NextAsync(userId, conceptId, cancellationToken);
+            await _items.AddAsync(QueueItem.Create(userId, conceptId, concept.Title, ++order, settingsJson, version: version), cancellationToken);
             added++;
         }
 
@@ -140,13 +151,14 @@ public abstract class ProductionQueueServiceBase : IProductionQueueService
         return await BuildStateAsync(userId, cancellationToken);
     }
 
-    /// <summary>Öğeyi sıradan çıkarır; çalışıyorsa işi iptal eder.</summary>
+    /// <summary>Öğeyi sıradan çıkarır; çalışıyorsa önce sürmekte olan zinciri keser, sonra kilit altında işi iptal eder.</summary>
     /// <param name="id">Öğe.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Sonuç.</returns>
     public async Task<Result> RemoveAsync(Guid id, CancellationToken cancellationToken)
     {
         var userId = _currentUser.GetRequiredUserId();
+        _cancellations.Cancel(userId, id);
         using (await _locks.AcquireAsync(userId, cancellationToken))
         {
             var item = await _items.GetForUserAsync(id, userId, cancellationToken);

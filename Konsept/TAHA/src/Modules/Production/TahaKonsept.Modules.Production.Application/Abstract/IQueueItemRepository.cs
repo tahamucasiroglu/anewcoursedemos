@@ -39,6 +39,13 @@ public interface IQueueItemRepository : IRepository<QueueItem>
     /// <returns>Sonuç.</returns>
     Task<int> MaxOrderAsync(Guid userId, CancellationToken cancellationToken);
 
+    /// <summary>Konseptin hata/iptal ile bitmemiş öğelerindeki en büyük sürüm (yoksa 0).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sonuç.</returns>
+    Task<int> MaxVersionForConceptAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken);
+
     /// <summary>Etkin öğesi olan kullanıcılar.</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Sonuç.</returns>

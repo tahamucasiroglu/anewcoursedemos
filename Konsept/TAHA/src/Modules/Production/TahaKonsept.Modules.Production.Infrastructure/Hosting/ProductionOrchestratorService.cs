@@ -7,9 +7,11 @@ using TahaKonsept.Modules.Production.Application.Abstract;
 namespace TahaKonsept.Modules.Production.Infrastructure.Hosting;
 
 /// <summary>
-/// Üretim orkestratörü arka plan servisi: veritabanı hazır olunca döngüye girer; her turda yeni DI kapsamında
-/// <see cref="IProductionOrchestrator.TickAsync"/> çağırır, sonra <see cref="IProductionSignal"/> ya da <see cref="Interval"/> kadar bekler
-/// (ajan olayları, sıra komutları sinyalle hemen uyandırır). Kullanıcı başına aynı anda tek iş çalışır.
+/// Üretim orkestratörü arka plan servisi: veritabanı hazır olunca döngüye girer. Her turda ilerletilecek kullanıcıları bulur
+/// (<see cref="IProductionOrchestrator.ListUsersAsync"/>) ve her kullanıcıyı kendi DI kapsamında, ayrı bir görevde ilerletir
+/// (<see cref="IProductionOrchestrator.AdvanceAsync"/>); kullanıcının önceki görevi sürüyorsa yenisi başlatılmaz. Böylece bir kullanıcının
+/// uzun sunucu zinciri (ör. 40 sahnelik kod üretimi) diğer kullanıcıların sırasını bekletmez. Turlar arasında <see cref="IProductionSignal"/>
+/// ya da <see cref="Interval"/> kadar beklenir. Kullanıcı başına aynı anda tek iş çalışır.
 /// </summary>
 public sealed class ProductionOrchestratorService : BackgroundService
 {
@@ -17,6 +19,7 @@ public sealed class ProductionOrchestratorService : BackgroundService
     private readonly IProductionSignal _signal;
     private readonly IDatabaseStatus _database;
     private readonly ILogger<ProductionOrchestratorService> _logger;
+    private readonly Dictionary<Guid, Task> _running = [];
 
     /// <summary>Oluşturur.</summary>
     /// <param name="scopes">Kapsam fabrikası.</param>
@@ -45,8 +48,7 @@ public sealed class ProductionOrchestratorService : BackgroundService
         {
             try
             {
-                await using var scope = _scopes.CreateAsyncScope();
-                await scope.ServiceProvider.GetRequiredService<IProductionOrchestrator>().TickAsync(stoppingToken);
+                await StartUserWorkersAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -67,6 +69,57 @@ public sealed class ProductionOrchestratorService : BackgroundService
             }
         }
 
+        await DrainAsync();
         _logger.LogInformation("Üretim orkestratörü durdu");
+    }
+
+    private async Task StartUserWorkersAsync(CancellationToken stoppingToken)
+    {
+        foreach (var done in _running.Where(p => p.Value.IsCompleted).Select(p => p.Key).ToList())
+        {
+            _running.Remove(done);
+        }
+
+        IReadOnlyList<Guid> users;
+        await using (var scope = _scopes.CreateAsyncScope())
+        {
+            users = await scope.ServiceProvider.GetRequiredService<IProductionOrchestrator>().ListUsersAsync(stoppingToken);
+        }
+
+        foreach (var userId in users.Where(u => !_running.ContainsKey(u)))
+        {
+            _running[userId] = Task.Run(() => AdvanceUserAsync(userId, stoppingToken), CancellationToken.None);
+        }
+    }
+
+    private async Task AdvanceUserAsync(Guid userId, CancellationToken stoppingToken)
+    {
+        try
+        {
+            await using var scope = _scopes.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<IProductionOrchestrator>().AdvanceAsync(userId, stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Uygulama duruyor.
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Üretim sırası ilerletilemedi (kullanıcı {UserId})", userId);
+        }
+    }
+
+    private async Task DrainAsync()
+    {
+        try
+        {
+            await Task.WhenAll(_running.Values);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Üretim görevleri kapanırken hata");
+        }
+
+        _running.Clear();
     }
 }

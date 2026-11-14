@@ -115,6 +115,7 @@ public sealed class ImagesStageHandler : StageHandlerBase
             }
 
             cost += generated.Value.CostUsd;
+            request.Usage.Add(generated.Value.CostUsd);
             var bytes = generated.Value.Images.FirstOrDefault();
             if (bytes is null || bytes.Length == 0)
             {

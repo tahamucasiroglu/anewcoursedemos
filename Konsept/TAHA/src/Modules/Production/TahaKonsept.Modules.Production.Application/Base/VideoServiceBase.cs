@@ -22,6 +22,7 @@ public abstract class VideoServiceBase : IVideoService
     private readonly IQueueItemRepository _items;
     private readonly IProductionQueueRepository _queues;
     private readonly IProductionSettingsService _settings;
+    private readonly IVideoVersionAllocator _versions;
     private readonly IAgentGateway _agent;
     private readonly IProductionSignal _signal;
     private readonly IProductionActivity _activity;
@@ -33,6 +34,7 @@ public abstract class VideoServiceBase : IVideoService
     /// <param name="items">Sıra öğeleri deposu.</param>
     /// <param name="queues">Sıra durumu deposu.</param>
     /// <param name="settings">Ayar servisi.</param>
+    /// <param name="versions">Sürüm numarası ayırıcı.</param>
     /// <param name="agent">Ajan geçidi.</param>
     /// <param name="signal">Orkestratör sinyali.</param>
     /// <param name="activity">İşlem günlüğü.</param>
@@ -43,6 +45,7 @@ public abstract class VideoServiceBase : IVideoService
         IQueueItemRepository items,
         IProductionQueueRepository queues,
         IProductionSettingsService settings,
+        IVideoVersionAllocator versions,
         IAgentGateway agent,
         IProductionSignal signal,
         IProductionActivity activity,
@@ -53,6 +56,7 @@ public abstract class VideoServiceBase : IVideoService
         _items = items ?? throw new ArgumentNullException(nameof(items));
         _queues = queues ?? throw new ArgumentNullException(nameof(queues));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _versions = versions ?? throw new ArgumentNullException(nameof(versions));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _signal = signal ?? throw new ArgumentNullException(nameof(signal));
         _activity = activity ?? throw new ArgumentNullException(nameof(activity));
@@ -183,7 +187,7 @@ public abstract class VideoServiceBase : IVideoService
         }
 
         var effective = settings is null ? await _settings.GetForUserAsync(userId, cancellationToken) : ProductionSettingsDefaults.Normalize(settings);
-        var version = await _videos.MaxVersionForConceptAsync(userId, video.ConceptId, cancellationToken) + 1;
+        var version = await _versions.NextAsync(userId, video.ConceptId, cancellationToken);
         var order = await _items.MaxOrderAsync(userId, cancellationToken) + 1;
         var item = QueueItem.Create(
             userId,

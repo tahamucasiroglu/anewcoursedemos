@@ -1,7 +1,7 @@
 namespace TahaKonsept.Modules.Production.Application.Models;
 
 /// <summary>
-/// Bir aşama çalıştırma isteği: sahne, hesaplanan girdi hash'i, (sahne kodu için) doğrulama hatası ve deneme numarası.
+/// Bir aşama çalıştırma isteği: sahne, hesaplanan girdi hash'i, (sahne kodu için) doğrulama hatası, deneme numarası ve harcama sayacı (<see cref="Usage"/>).
 /// </summary>
 public sealed record StageExecutionRequest
 {
@@ -16,4 +16,7 @@ public sealed record StageExecutionRequest
 
     /// <summary>Deneme numarası.</summary>
     public int Attempt { get; init; } = 1;
+
+    /// <summary>Bu denemede başarılı ücretli çağrıların harcaması (aşama hata dönse de kaybolmasın diye).</summary>
+    public StageUsageMeter Usage { get; init; } = new();
 }

@@ -139,6 +139,7 @@ public sealed class SpeechStageHandler : StageHandlerBase
             }
 
             cost += spoken.Value.CostUsd;
+            request.Usage.Add(spoken.Value.CostUsd);
             parts.Add(spoken.Value.Audio);
         }
 

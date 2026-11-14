@@ -183,7 +183,7 @@ public abstract class ProductionStageEventHandlerBase : AgentStageEventHandlerBa
         var message = string.IsNullOrWhiteSpace(report.Message) ? "Masaüstü programında hata" : report.Message;
         if (report.Cancelled || report.ErrorCode == PausedCode)
         {
-            run.ResetPending("Duraklatıldı; devam edince kaldığı yerden sürer");
+            run.ReleaseAttempt("Duraklatıldı; devam edince kaldığı yerden sürer");
             return;
         }
 

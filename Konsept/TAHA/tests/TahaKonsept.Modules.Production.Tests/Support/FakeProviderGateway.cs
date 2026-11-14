@@ -7,6 +7,7 @@ namespace TahaKonsept.Modules.Production.Tests.Support;
 
 /// <summary>
 /// Sahte LLM geçidi: her metin isteğine geçerli bir HyperFrames sahne kodu döner (isteğe bağlı ilk N yanıt geçersiz), istekleri kaydeder.
+/// <see cref="BlockUntilCancelled"/> açıkken çağrı iptal edilene kadar asılı kalır (<see cref="Entered"/> çağrının başladığını bildirir).
 /// </summary>
 public sealed class FakeProviderGateway : IProviderGateway
 {
@@ -23,14 +24,26 @@ public sealed class FakeProviderGateway : IProviderGateway
     /// <summary>Çağrı başına maliyet.</summary>
     public decimal CostPerCall { get; set; } = 0.05m;
 
+    /// <summary>Açıksa metin çağrısı belirteç iptal edilene kadar bekler (uzun LLM çağrısı benzetimi).</summary>
+    public bool BlockUntilCancelled { get; set; }
+
+    /// <summary>Asılı kalan çağrı başladığında tamamlanır.</summary>
+    public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     /// <inheritdoc />
     public Task<Result<TextResult<T>>> RunStructuredAsync<T>(TextTask task, CancellationToken ct) =>
         Task.FromResult(Result.Failure<TextResult<T>>(Error.Failure("fake.unsupported", "Desteklenmez")));
 
     /// <inheritdoc />
-    public Task<Result<TextResult<string>>> RunTextAsync(TextTask task, CancellationToken ct)
+    public async Task<Result<TextResult<string>>> RunTextAsync(TextTask task, CancellationToken ct)
     {
         Requests.Enqueue(task);
+        if (BlockUntilCancelled)
+        {
+            Entered.TrySetResult();
+            await Task.Delay(Timeout.Infinite, ct);
+        }
+
         var text = InvalidResponsesLeft > 0 ? "geçersiz yanıt — kod yok, sadece açıklama metni burada" : "```html\n" + ValidCode + "\n```";
         if (InvalidResponsesLeft > 0)
         {
@@ -45,6 +58,6 @@ public sealed class FakeProviderGateway : IProviderGateway
             CostUsd = CostPerCall,
             Usage = new CallUsage { InputTokens = 1000, OutputTokens = 500 },
         };
-        return Task.FromResult(Result.Success(result));
+        return Result.Success(result);
     }
 }

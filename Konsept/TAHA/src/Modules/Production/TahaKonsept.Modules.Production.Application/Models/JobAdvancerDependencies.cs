@@ -20,6 +20,7 @@ namespace TahaKonsept.Modules.Production.Application.Models;
 /// <param name="Budget">Bütçe bekçisi.</param>
 /// <param name="Finalizer">İş bitirici.</param>
 /// <param name="Activity">İşlem günlüğü.</param>
+/// <param name="Cancellations">İş iptal kaydı (sıradan çıkarma zinciri anında durdurur).</param>
 /// <param name="Clock">Saat.</param>
 /// <param name="Logger">Günlük.</param>
 public sealed record JobAdvancerDependencies(
@@ -34,5 +35,6 @@ public sealed record JobAdvancerDependencies(
     IBudgetGuard Budget,
     IJobFinalizer Finalizer,
     IProductionActivity Activity,
+    IJobCancellationRegistry Cancellations,
     IClock Clock,
     ILogger<IJobAdvancer> Logger);
