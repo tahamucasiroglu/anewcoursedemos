@@ -4,6 +4,7 @@ using TahaKonsept.Agent.Core.Execution.Abstract;
 using TahaKonsept.Agent.Core.Hub.Abstract;
 using TahaKonsept.Agent.Core.SpeechPreview.Abstract;
 using TahaKonsept.Agent.Core.Videos.Abstract;
+using TahaKonsept.BuildingBlocks.Domain.Results;
 
 namespace TahaKonsept.Agent.Core.Commands.Concrete;
 
@@ -22,6 +23,19 @@ public sealed class AgentCommandHandler : AgentCommandHandlerBase
         : base(jobs, videos, previews, hub)
     {
         _logger = logger;
+    }
+
+    /// <inheritdoc />
+    protected override void OnVideoCommand(string command, Guid videoId, Result result)
+    {
+        if (result.IsSuccess)
+        {
+            _logger.LogInformation("Sunucu komutu işlendi: {Command} (video {VideoId}).", command, videoId);
+        }
+        else
+        {
+            _logger.LogWarning("Sunucu komutu başarısız: {Command} (video {VideoId}): {Error}", command, videoId, result.Error.Message);
+        }
     }
 
     /// <inheritdoc />

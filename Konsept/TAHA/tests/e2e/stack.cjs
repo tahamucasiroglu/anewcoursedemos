@@ -112,6 +112,7 @@ function stop(name) {
     fs.writeFileSync(path.join(OUT, 'agent.stop'), 'stop');
     const until = Date.now() + 20000;
     while (alive(pid) && Date.now() < until) { execSync('ping -n 2 127.0.0.1', { stdio: 'ignore' }); }
+    if (!alive(pid)) { console.log(`${name}: düzgün kapandı (PID ${pid})`); delete pids[name]; writePids(pids); return; }
   }
   if (alive(pid)) {
     try { execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore' }); } catch { /* zaten bitmiş */ }

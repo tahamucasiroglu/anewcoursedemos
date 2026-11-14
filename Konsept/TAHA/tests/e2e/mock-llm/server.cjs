@@ -125,7 +125,7 @@ function wordCheckFor(userPrompt) {
     let text = m[2];
     // İkinci "surlar" geçişini eş anlamlıyla değiştir (uzunluk korunur).
     let seen = 0;
-    text = text.replace(/\b(surlar|surları|surlara)\b/gi, w => (++seen === 2 ? 'duvarlar' : w));
+    text = text.replace(/(^|\s)(surlar)(?=[\s.,!?]|$)/gi, (m, pre, w) => (++seen === 2 ? pre + (w[0] === 'S' ? 'Duvarlar' : 'duvarlar') : m));
     scenes.push({ index: idx, narration: text });
   }
   return { scenes };

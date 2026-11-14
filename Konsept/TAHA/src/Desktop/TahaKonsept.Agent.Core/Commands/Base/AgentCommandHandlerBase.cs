@@ -54,13 +54,13 @@ public abstract class AgentCommandHandlerBase : IAgentClient
     }
 
     /// <inheritdoc />
-    public Task OpenFolder(Guid videoId) => ReportIfFailedAsync(_videos.OpenFolder(videoId), "Klasör açılamadı");
+    public Task OpenFolder(Guid videoId) => VideoCommandAsync(nameof(OpenFolder), videoId, _videos.OpenFolder, "Klasör açılamadı");
 
     /// <inheritdoc />
-    public Task OpenInSystemPlayer(Guid videoId) => ReportIfFailedAsync(_videos.OpenInSystemPlayer(videoId), "Video açılamadı");
+    public Task OpenInSystemPlayer(Guid videoId) => VideoCommandAsync(nameof(OpenInSystemPlayer), videoId, _videos.OpenInSystemPlayer, "Video açılamadı");
 
     /// <inheritdoc />
-    public Task DeleteVideo(Guid videoId) => ReportIfFailedAsync(_videos.Delete(videoId), "Video silinemedi");
+    public Task DeleteVideo(Guid videoId) => VideoCommandAsync(nameof(DeleteVideo), videoId, _videos.Delete, "Video silinemedi");
 
     /// <inheritdoc />
     public Task PreviewSpeech(SpeechPreviewCommand command)
@@ -78,6 +78,14 @@ public abstract class AgentCommandHandlerBase : IAgentClient
     {
         RunInBackground(() => _hub.SendHelloAsync(CancellationToken.None));
         return Task.CompletedTask;
+    }
+
+    /// <summary>Video komutu işlendikten sonra çağrılır (yerel log için; komutun ajana ulaştığının izi).</summary>
+    /// <param name="command">Komut adı (<c>OpenFolder</c>, <c>OpenInSystemPlayer</c>, <c>DeleteVideo</c>).</param>
+    /// <param name="videoId">Video.</param>
+    /// <param name="result">Sonuç.</param>
+    protected virtual void OnVideoCommand(string command, Guid videoId, Result result)
+    {
     }
 
     /// <summary>Arka plan işi hata verdiğinde çağrılır.</summary>
@@ -98,6 +106,13 @@ public abstract class AgentCommandHandlerBase : IAgentClient
                 OnBackgroundFailed(ex);
             }
         });
+
+    private Task VideoCommandAsync(string command, Guid videoId, Func<Guid, Result> action, string failurePrefix)
+    {
+        var result = action(videoId);
+        OnVideoCommand(command, videoId, result);
+        return ReportIfFailedAsync(result, failurePrefix);
+    }
 
     private Task ReportIfFailedAsync(Result result, string prefix) =>
         result.IsSuccess

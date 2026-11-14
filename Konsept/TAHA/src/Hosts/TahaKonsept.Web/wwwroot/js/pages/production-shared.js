@@ -346,7 +346,9 @@
                 patch[modeField] = current.mode;
                 patch[keyField] = current.mode === 'Off' ? (s[keyField] || null) : key;
                 if (isSpeech) {
-                    patch.voiceId = current.mode === 'Off' ? (s.voiceId || null) : ($el.find('input[name=voice]:checked').val() || current.voice || null);
+                    /* Yalnız kullanıcının açıkça seçtiği ses yazılır; boş ses = modelin varsayılanı (ekranda işaretli görünse de
+                       kaydedilmez — aksi halde yalnız altyazı değişen "Yeni sürüm"de ses aşaması gereksiz yeniden çalışırdı). */
+                    patch.voiceId = current.mode === 'Off' ? (s.voiceId || null) : current.voice;
                     patch.speechSpeed = current.speed;
                 }
                 return patch;
