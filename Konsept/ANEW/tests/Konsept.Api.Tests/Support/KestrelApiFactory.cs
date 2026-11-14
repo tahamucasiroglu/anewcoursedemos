@@ -10,14 +10,18 @@ namespace Konsept.Api.Tests.Support;
 /// <summary>
 /// Gerçek Kestrel üzerinde, sabit loopback portunda API (veritabanı yerine bellek deposu). Ajanın
 /// gerçek SignalR istemcisi buna ağ üzerinden bağlanır; aynı portta yeniden açılarak "API yeniden başladı"
-/// durumu kurulur.
+/// durumu kurulur. İstenirse veritabanı kapalı gibi davranır.
 /// </summary>
 public sealed class KestrelApiFactory : WebApplicationFactory<Program>
 {
+    private readonly bool _databaseDown;
+
     /// <summary>Initializes a new instance of the <see cref="KestrelApiFactory"/> class.</summary>
     /// <param name="port">Loopback portu.</param>
-    public KestrelApiFactory(int port)
+    /// <param name="databaseDown">Veritabanı kapalı gibi davransın mı.</param>
+    public KestrelApiFactory(int port, bool databaseDown = false)
     {
+        _databaseDown = databaseDown;
         UseKestrel(port);
     }
 
@@ -32,8 +36,8 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<ISystemEventRepository>();
             services.RemoveAll<IDatabaseProbe>();
-            services.AddSingleton<ISystemEventRepository>(new InMemorySystemEventRepository());
-            services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe());
+            services.AddSingleton<ISystemEventRepository>(_databaseDown ? new FailingSystemEventRepository() : new InMemorySystemEventRepository());
+            services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe { Available = !_databaseDown });
         });
     }
 }

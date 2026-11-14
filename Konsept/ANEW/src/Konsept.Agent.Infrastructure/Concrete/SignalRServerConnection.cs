@@ -22,6 +22,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly CancellationTokenSource _lifetime = new();
     private HubConnection? _hub;
     private Task _connectLoop = Task.CompletedTask;
+    private int _loopRunning;
 
     /// <summary>Initializes a new instance of the <see cref="SignalRServerConnection"/> class.</summary>
     /// <param name="settings">Ajan ayarları.</param>
@@ -38,7 +39,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     public override Task StartAsync(CancellationToken cancellationToken)
     {
         _hub ??= BuildHub();
-        _connectLoop = ConnectLoopAsync(_lifetime.Token);
+        EnsureConnectLoop();
         return Task.CompletedTask;
     }
 
@@ -87,18 +88,44 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             SetState(ConnectionState.Connecting);
             return Task.CompletedTask;
         };
-        hub.Reconnected += _ => RegisterAsync(_lifetime.Token);
+        // Yeniden bağlanınca kayıt; kayıt başarısızsa döngü yalnızca kaydı yeniden dener (hub zaten bağlı).
+        hub.Reconnected += _ =>
+        {
+            EnsureConnectLoop();
+            return Task.CompletedTask;
+        };
         hub.Closed += _ =>
         {
             SetState(ConnectionState.Disconnected);
             if (!_lifetime.IsCancellationRequested)
             {
-                _connectLoop = ConnectLoopAsync(_lifetime.Token);
+                EnsureConnectLoop();
             }
 
             return Task.CompletedTask;
         };
         return hub;
+    }
+
+    private void EnsureConnectLoop()
+    {
+        // Aynı anda tek döngü: Closed ve Reconnected aynı anda tetiklense de ikinci bir döngü açılmaz.
+        if (Interlocked.CompareExchange(ref _loopRunning, 1, 0) == 0)
+        {
+            _connectLoop = RunConnectLoopAsync(_lifetime.Token);
+        }
+    }
+
+    private async Task RunConnectLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await ConnectLoopAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            Volatile.Write(ref _loopRunning, 0);
+        }
     }
 
     private async Task ConnectLoopAsync(CancellationToken cancellationToken)
@@ -108,13 +135,25 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             SetState(ConnectionState.Connecting);
             try
             {
-                await _hub!.StartAsync(cancellationToken).ConfigureAwait(false);
+                // Hub zaten bağlıysa (ör. kayıt sunucuda hata verdi) yalnızca kayıt yeniden denenir;
+                // bağlıyken StartAsync çağrılmaz (review round 1, M-1).
+                if (_hub!.State == HubConnectionState.Disconnected)
+                {
+                    await _hub.StartAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                if (_hub.State != HubConnectionState.Connected)
+                {
+                    // Otomatik yeniden bağlanma sürüyor; bitince Reconnected/Closed döngüyü yeniden başlatır.
+                    return;
+                }
+
                 await RegisterAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
             catch (Exception) when (!cancellationToken.IsCancellationRequested)
             {
-                SetState(ConnectionState.Disconnected);
+                SetState(_hub!.State == HubConnectionState.Connected ? ConnectionState.Connecting : ConnectionState.Disconnected);
             }
             catch (OperationCanceledException)
             {

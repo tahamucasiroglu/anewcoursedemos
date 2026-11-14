@@ -40,7 +40,7 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
         ArgumentNullException.ThrowIfNull(registration);
         var session = new AgentSession(connectionId, registration.MachineName, registration.AgentVersion, TimeProvider.GetUtcNow());
         Registry.Set(session);
-        await OnConnectedAsync(session, cancellationToken).ConfigureAwait(false);
+        await RunSideEffectAsync(() => OnConnectedAsync(session, cancellationToken), cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -49,9 +49,16 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
         var removed = Registry.Remove(connectionId);
         if (removed is not null)
         {
-            await OnDisconnectedAsync(removed, cancellationToken).ConfigureAwait(false);
+            await RunSideEffectAsync(() => OnDisconnectedAsync(removed, cancellationToken), cancellationToken).ConfigureAwait(false);
         }
     }
+
+    /// <summary>
+    /// Olay yazımı gibi bir yan etki başarısız olduğunda çağrılır. Varlık durumu yan etkiye bağlı değildir:
+    /// veritabanı kapalı olsa da ajan kaydı başarılı döner (review round 1, M-1).
+    /// </summary>
+    /// <param name="exception">Oluşan hata.</param>
+    protected abstract void OnSideEffectFailed(Exception exception);
 
     /// <summary>Ajan bağlandığında çağrılır.</summary>
     /// <param name="session">Yeni oturum.</param>
@@ -64,4 +71,16 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>
     protected abstract Task OnDisconnectedAsync(AgentSession session, CancellationToken cancellationToken);
+
+    private async Task RunSideEffectAsync(Func<Task> sideEffect, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await sideEffect().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            OnSideEffectFailed(ex);
+        }
+    }
 }

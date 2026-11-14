@@ -51,6 +51,39 @@ public sealed class AgentReconnectTests
         }
     }
 
+    /// <summary>
+    /// Veritabanı kapalıyken (olay yazılamaz) ajan yine kaydolur, "bağlı" kalır ve bağlanma döngüsüne
+    /// girmez (review round 1, M-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AgentClient_DatabaseDown_StaysConnected()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var port = FreeLoopbackPort();
+        var settings = new AgentSettings(new Uri($"http://127.0.0.1:{port}/"), new Uri("http://127.0.0.1/"), TimeSpan.FromMilliseconds(300));
+        var api = new KestrelApiFactory(port, databaseDown: true);
+        await using (api.ConfigureAwait(false))
+        {
+            api.StartServer();
+            var connection = new SignalRServerConnection(settings, new TestAgentInfo());
+            await using (connection.ConfigureAwait(false))
+            {
+                var changes = 0;
+                await connection.StartAsync(ct);
+                await Eventually.WithinAsync(() => Task.FromResult(connection.State == ConnectionState.Connected), Limit, ct);
+                connection.StateChanged += (_, _) => Interlocked.Increment(ref changes);
+
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+
+                connection.State.ShouldBe(ConnectionState.Connected);
+                changes.ShouldBe(0);
+                (await IsConnectedAsync(api, ct)).ShouldBeTrue();
+                await connection.StopAsync(ct);
+            }
+        }
+    }
+
     private static async Task<bool> IsConnectedAsync(KestrelApiFactory factory, CancellationToken ct)
     {
         using var client = factory.CreateClient();

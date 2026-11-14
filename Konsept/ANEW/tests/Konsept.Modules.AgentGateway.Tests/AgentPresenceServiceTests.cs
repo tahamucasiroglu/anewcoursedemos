@@ -4,6 +4,7 @@ using Konsept.Modules.AgentGateway.Infrastructure.Concrete;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Contracts.Enums;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using Shouldly;
@@ -24,7 +25,7 @@ public sealed class AgentPresenceServiceTests
     [Fact]
     public async Task Register_Agent_MarksConnectedAndWritesEvent()
     {
-        var service = new AgentPresenceService(_registry, _events, _time);
+        var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
 
         await service.RegisterAsync("c1", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
 
@@ -43,7 +44,7 @@ public sealed class AgentPresenceServiceTests
     [Fact]
     public async Task Disconnect_CurrentAgent_MarksDisconnectedAndWritesWarning()
     {
-        var service = new AgentPresenceService(_registry, _events, _time);
+        var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
         await service.RegisterAsync("c1", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
 
         await service.DisconnectAsync("c1", TestContext.Current.CancellationToken);
@@ -59,7 +60,7 @@ public sealed class AgentPresenceServiceTests
     [Fact]
     public async Task Disconnect_StaleConnectionAfterReconnect_KeepsNewSession()
     {
-        var service = new AgentPresenceService(_registry, _events, _time);
+        var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
         await service.RegisterAsync("old", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
         await service.RegisterAsync("new", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
 
@@ -69,5 +70,21 @@ public sealed class AgentPresenceServiceTests
         await _events.DidNotReceive().WriteAsync(
             Arg.Is<SystemEventEntry>(e => e.Type == AgentPresenceService.DisconnectedEventType),
             Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Olay kaydına yazılamasa da (veritabanı kapalı) kayıt başarılı döner ve ajan "bağlı" görünür (review M-1).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Register_EventWriteFails_StillConnectedAndDoesNotThrow()
+    {
+        _events.WriteAsync(Arg.Any<SystemEventEntry>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<SystemEventDto>(new InvalidOperationException("veritabanı kapalı")));
+        var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
+
+        await Should.NotThrowAsync(() => service.RegisterAsync("c1", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken));
+
+        service.GetStatus().IsConnected.ShouldBeTrue();
+        await Should.NotThrowAsync(() => service.DisconnectAsync("c1", TestContext.Current.CancellationToken));
+        service.GetStatus().IsConnected.ShouldBeFalse();
     }
 }
