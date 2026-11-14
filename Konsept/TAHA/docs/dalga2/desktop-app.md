@@ -43,3 +43,12 @@ Not tested: pairing against the real API, installing prerequisites or engines fo
 - Window code-behind files are named `App.cs`, `SetupWindow.cs`, `StatusWindow.cs` (not `*.axaml.cs`) because of the file-name architecture rule.
 
 Key paths: `src/Desktop/TahaKonsept.Agent/`, `tests/TahaKonsept.Agent.Tests/`, `deploy/agent/pack-agent.ps1`, `deploy/agent/make-icon.ps1`, `src/Hosts/TahaKonsept.Web/wwwroot/downloads/TahaKonsept.Agent-win-Setup.exe`.
+
+## Penceresiz geliştirici modu (`--headless`, e2e — 14 Kas 2026)
+UI otomasyonu olmadan gerçek ajanı yerel API'ye bağlamak için:
+`TahaKonsept.Agent.exe --headless --server http://localhost:7191 --pair-code-out <dosya> [--stop-file <dosya>] [--skip-prerequisites]`
+- Avalonia açılmaz; `AddHeadlessAgent` = çekirdek + video/ses/görsel motorları + `IHeadlessAgentRunner` (`Headless/`).
+- Eksik zorunlu bileşenler kurulur, çekirdek başlar; eşlenmemişse kod dosyaya yazılır (1. satır kod, 2. satır adres), web'de Ayarlar → Masaüstü programı → **Kodu gir** ile onaylanınca dosyaya `PAIRED` yazılır.
+- Oturum sunucuda kapanırsa (web'den tüm oturumları kapat) log'a "yeniden eşleme gerekiyor" yazılır ve yeni kod üretilir.
+- `--stop-file` dosyası oluşunca düzgün kapanır (betikler için). Aynı makinede GUI ajanı çalışıyorsa (tek örnek kilidi) çıkış kodu 3.
+- Yalıtım için `TAHAKONSEPT_AGENT_ROOT` ile ayrı kök verin (e2e: `.tools-dev/e2e-agent`; bkz. `tests/e2e/stack.cjs start agent`).

@@ -28,6 +28,8 @@ using TahaKonsept.Agent.Updates.Concrete;
 using TahaKonsept.Agent.ViewModels.Concrete;
 using TahaKonsept.Agent.WebSite.Abstract;
 using TahaKonsept.Agent.WebSite.Concrete;
+using TahaKonsept.Agent.Headless.Abstract;
+using TahaKonsept.Agent.Headless.Concrete;
 
 namespace TahaKonsept.Agent.DependencyInjection;
 
@@ -68,6 +70,22 @@ public static class DesktopAgentServiceCollectionExtensions
         services.AddTransient<PairingViewModel>();
         services.AddTransient<SetupViewModel>();
         services.AddTransient<StatusViewModel>();
+        return services;
+    }
+
+    /// <summary>Penceresiz mod (<c>--headless</c>) servisleri: çekirdek + motorlar + <see cref="IHeadlessAgentRunner"/> (Avalonia yok).</summary>
+    /// <param name="services">Servisler.</param>
+    /// <param name="options">Çekirdek seçenekleri.</param>
+    /// <returns>Servisler.</returns>
+    public static IServiceCollection AddHeadlessAgent(this IServiceCollection services, AgentOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(options);
+        services.AddAgentCore(options);
+        services.AddVideoEngines();
+        services.AddSpeechEngines();
+        services.AddImageEngines();
+        services.AddSingleton<IHeadlessAgentRunner, HeadlessAgentRunner>();
         return services;
     }
 

@@ -4,6 +4,7 @@
  *   node tests/e2e/stack.cjs start [mock|api|web|all]   → arka planda başlatır, PID'leri out/pids.json'a yazar, sağlık bekler
  *   node tests/e2e/stack.cjs stop  [mock|api|web|all]   → başlattıklarını (süreç ağacıyla) durdurur
  *   node tests/e2e/stack.cjs status
+ *   node tests/e2e/stack.cjs start agent              → masaüstü ajanı --headless (eşleme kodu out/pair-code.txt); 'everything' = dördü
  *
  * Portlar: mock LLM 7199, API 7191, Web 7190. Veri klasörü: tests/e2e/out/appdata-{api,web} (git dışı).
  * Bağlantı: Host=localhost;Port=5433;Database=tahakonsept_e2e;Username=tahakonsept — parola host tarafından TAHA/.env'den
@@ -39,6 +40,7 @@ const SERVICES = {
       ConnectionStrings__Main: CONN,
       Kestrel__Endpoints__Http__Url: 'http://0.0.0.0:7191',
       App__DataDirectory: path.join(OUT, 'appdata-api'),
+      Agents__WebPort: '7190',
     },
     health: 'http://127.0.0.1:7191/api/health',
   },
@@ -53,6 +55,14 @@ const SERVICES = {
       App__DataDirectory: path.join(OUT, 'appdata-web'),
     },
     health: 'http://127.0.0.1:7190/',
+  },
+  agent: {
+    // Gerçek masaüstü ajanı, penceresiz geliştirici modunda (--headless). Kök: .tools-dev/e2e-agent (araçlar bağlantılarla).
+    cmd: path.join(ROOT, 'src/Desktop/TahaKonsept.Agent/bin/Debug/net10.0-windows/TahaKonsept.Agent.exe'),
+    args: ['--headless', '--server', 'http://localhost:7191', '--pair-code-out', path.join(OUT, 'pair-code.txt'), '--stop-file', path.join(OUT, 'agent.stop')],
+    cwd: path.join(ROOT, 'src/Desktop/TahaKonsept.Agent/bin/Debug/net10.0-windows'),
+    env: { TAHAKONSEPT_AGENT_ROOT: path.join(ROOT, '.tools-dev', 'e2e-agent'), TAHAKONSEPT_AGENT_VIDEO_PORT: '7120' },
+    health: 'http://127.0.0.1:7120/',
   },
 };
 
@@ -89,7 +99,7 @@ async function start(name) {
   child.unref();
   pids[name] = child.pid;
   writePids(pids);
-  const code = await waitHealthy(name, name === 'mock' ? 10000 : 180000);
+  const code = await waitHealthy(name, name === 'mock' ? 10000 : name === 'agent' ? 60000 : 180000);
   console.log(`${name}: PID ${child.pid} → ${code ? 'hazır (HTTP ' + code + ')' : 'SAĞLIK YANITI YOK, bkz. out/' + name + '.out.log'}`);
 }
 
@@ -97,6 +107,12 @@ function stop(name) {
   const pids = readPids();
   const pid = pids[name];
   if (!pid) { console.log(`${name}: kayıt yok`); return; }
+  if (name === 'agent' && alive(pid)) {
+    // Nazik kapanış: durdurma dosyası → ajan işleri bırakıp hub'ı kapatır.
+    fs.writeFileSync(path.join(OUT, 'agent.stop'), 'stop');
+    const until = Date.now() + 20000;
+    while (alive(pid) && Date.now() < until) { execSync('ping -n 2 127.0.0.1', { stdio: 'ignore' }); }
+  }
   if (alive(pid)) {
     try { execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore' }); } catch { /* zaten bitmiş */ }
     console.log(`${name}: durduruldu (PID ${pid})`);
@@ -109,7 +125,7 @@ function stop(name) {
 
 (async () => {
   const [action = 'status', which = 'all'] = process.argv.slice(2);
-  const names = which === 'all' ? ['mock', 'api', 'web'] : which.split(',');
+  const names = which === 'all' ? ['mock', 'api', 'web'] : which === 'everything' ? ['mock', 'api', 'web', 'agent'] : which.split(',');
   if (action === 'start') { for (const n of names) { await start(n); } }
   else if (action === 'stop') { for (const n of names.reverse()) { stop(n); } }
   else {
