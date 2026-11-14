@@ -57,7 +57,9 @@ public abstract class LoginServiceBase(AuthServiceDependencies dependencies) : A
             return Result<AuthSessionDto>.Failure(IdentityErrors.Locked(current?.LockedUntil ?? now + LockoutPolicy.LockDuration));
         }
 
+        // Önce oturum, sonra başarı olayı (review R10-1): oturum kaydı düşerse Günlük'e yanlış başarı yazılmaz.
+        var session = await OpenSessionAsync(user, now, cancellationToken).ConfigureAwait(false);
         await WriteEventAsync(IdentityEvents.LoginSucceeded, SystemEventLevel.Info, user.Id, cancellationToken).ConfigureAwait(false);
-        return Result<AuthSessionDto>.Success(await OpenSessionAsync(user, now, cancellationToken).ConfigureAwait(false));
+        return Result<AuthSessionDto>.Success(session);
     }
 }

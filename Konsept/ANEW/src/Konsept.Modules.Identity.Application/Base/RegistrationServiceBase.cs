@@ -31,7 +31,10 @@ public abstract class RegistrationServiceBase(AuthServiceDependencies dependenci
             return Result<AuthSessionDto>.Failure(IdentityErrors.EmailTaken);
         }
 
+        // Önce oturum, sonra kayıt olayı (review R10-1): oturum kaydı düşerse Günlük'e yanlış başarı yazılmaz. Kullanıcı + oturumun
+        // tek işlemde (atomik) yazılması backlog B-48.
+        var session = await OpenSessionAsync(user, now, cancellationToken).ConfigureAwait(false);
         await WriteEventAsync(IdentityEvents.Registered, SystemEventLevel.Info, user.Id, cancellationToken).ConfigureAwait(false);
-        return Result<AuthSessionDto>.Success(await OpenSessionAsync(user, now, cancellationToken).ConfigureAwait(false));
+        return Result<AuthSessionDto>.Success(session);
     }
 }

@@ -112,6 +112,25 @@ public sealed class AuthServiceTests
         await _sessions.DidNotReceiveWithAnyArgs().AddAsync(default!, TestContext.Current.CancellationToken);
     }
 
+    /// <summary>
+    /// Oturum kaydı başarısız olursa Günlük'e yanlış başarı olayı düşmez (review R10-1): olay oturum açıldıktan sonra yazılır
+    /// (giriş ve kayıt).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task SessionInsertFails_NoSuccessEvent_LoginAndRegister()
+    {
+        _sessions.AddAsync(Arg.Any<UserSession>(), Arg.Any<CancellationToken>()).Returns(Task.FromException(new InvalidOperationException("db")));
+        _users.TryAddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>()).Returns(true);
+
+        await Should.ThrowAsync<InvalidOperationException>(() => Login().LoginAsync(new LoginRequest("ayse@x.com", "dogru123"), TestContext.Current.CancellationToken));
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+            new RegistrationService(Dependencies()).RegisterAsync(new RegisterRequest("Irem", "irem@x.com", "sifre123"), TestContext.Current.CancellationToken));
+
+        _written.ShouldNotContain(e => e.Type == IdentityEvents.LoginSucceeded);
+        _written.ShouldNotContain(e => e.Type == IdentityEvents.Registered);
+    }
+
     /// <summary>2 yanlıştan sonra başarılı giriş sayacı sıfırlar: sonraki yanlışta yine "2 hak".</summary>
     /// <returns>Görev.</returns>
     [Fact]
