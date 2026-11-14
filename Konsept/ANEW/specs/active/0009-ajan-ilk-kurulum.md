@@ -5,7 +5,7 @@
 - Plan: `specs/plans/0009-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
 - Source: `specs/active/0009-ajan-kurulum-guncelleme.md` (eski 0009a — İlk kurulum); bölündü 2026-11-14, onay: tahamucasiroglu "önerilerin uygun"
-- Sensitive area: yok — kurulum, davranışı bizim koda bağlı bir ajan işidir (`docs/domain.md`: "Ajanın kendi işleri … H-4 kapsamı dışında"); yine de bileşen doğrulaması (AC-6) kasıtlı bozma ile kanıtlanır.
+- Sensitive area: none — yok — kurulum, davranışı bizim koda bağlı bir ajan işidir (`docs/domain.md`: "Ajanın kendi işleri … H-4 kapsamı dışında"); yine de bileşen doğrulaması (AC-6) kasıtlı bozma ile kanıtlanır.
 - Depends on: 0001 (ajan, tray, "Ajanı test et", sistem durum alanı), 0004 (Ayarlar sayfası temeli), 0008 (yerel teknik log, maskeleme), 0012 (cihaz eşleştirme), 0022 (ajan hata bildirimi akışı)
 
 ## Intent
@@ -148,7 +148,7 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
   erişilebilir adı ve değeri var; metin/arka plan kontrastı WCAG AA (açık ve koyu temada).
 
 ## Constraints & out of scope
-- Sensitive area: yok. Bu spec LLM'in ürettiği kodu çalıştırmaz; kurulum, bizim yazdığımız ve kullanıcı emriyle
+- Sensitive area: none — yok. Bu spec LLM'in ürettiği kodu çalıştırmaz; kurulum, bizim yazdığımız ve kullanıcı emriyle
   çalışan ajan işidir ve `docs/domain.md` gereği H-4 kapsamı dışındadır. Bileşen doğrulaması (AC-6) yine de
   kasıtlı bozma ile kanıtlanır. Ajanın web oturumunu takip etmesi (H-1) 0012'dedir.
 - Platform: yalnızca Windows 11 (öncelikli ajan; Linux/macOS kapsam dışı, `docs/architecture.md`).

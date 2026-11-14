@@ -5,7 +5,7 @@
 - Plan: `specs/plans/0006-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
 - Source: `specs/active/0006-uretim-konseptten-video.md` (bölüm A, B, F; Req 1–10, 24; AC-3 arayüz kısmı, AC-5–17, AC-36/37 ayar-sıra kısmı) — bölündü 2026-11-14, onay: tahamucasiroglu "önerilerin uygun"
-- Sensitive area: yok (sahiplik kontrolü 0003'teki BR-1 kalıbını kullanır ve normal testle kanıtlanır; bu spec hiçbir maliyet doğuran çağrı yapmaz — çağrılar 0017'de. Çıkışta durdurma kuralı H-3'ü koruyan bir kuraldır, çağrı yapmaz.)
+- Sensitive area: none — yok (sahiplik kontrolü 0003'teki BR-1 kalıbını kullanır ve normal testle kanıtlanır; bu spec hiçbir maliyet doğuran çağrı yapmaz — çağrılar 0017'de. Çıkışta durdurma kuralı H-3'ü koruyan bir kuraldır, çağrı yapmaz.)
 - Depends on: 0001, 0002, 0003, 0004, 0011, 0012, 0005, 0014, 0015, 0009
 
 ## Intent

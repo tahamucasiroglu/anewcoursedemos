@@ -5,7 +5,7 @@
 - Plan: `specs/plans/0016-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
 - Source: `specs/active/0005-konseptler.md` (Req 17'nin çöp kısmı, Req 21–23; AC-8'in Silinenler kısmı, AC-30…AC-33, AC-34–35'in silme/Silinenler kısmı; S-5'in silme kısmı, G-9, G-10, G-14, G-15; Ç-2) — bölündü 2026-11-14, onay: tahamucasiroglu "önerilerin uygun"
-- Sensitive area: yok (kalıcı silme geri alınamaz ama BR-7 ve normal testler yeterli — `docs/domain.md`; veri sahipliği BR-1 yalnızca tüketilir)
+- Sensitive area: none — yok (kalıcı silme geri alınamaz ama BR-7 ve normal testler yeterli — `docs/domain.md`; veri sahipliği BR-1 yalnızca tüketilir)
 - Depends on: 0001, 0002, 0003, 0004, 0013, 0005, 0014
 
 ## Intent
@@ -83,7 +83,7 @@ Kaynak: `ilk_promt.txt` (Konseptler ve Silinenler bölümleri, Ayarlar'da "öner
   vazgeçer, kapanınca odak açan kontrole döner; WCAG AA kontrast her iki temada.
 
 ## Constraints & out of scope
-- Sensitive area: yok. Kalıcı silme geri alınamaz; BR-7 ve normal testlerle kanıtlanır (`docs/domain.md`). BR-1 yalnızca
+- Sensitive area: none — yok. Kalıcı silme geri alınamaz; BR-7 ve normal testlerle kanıtlanır (`docs/domain.md`). BR-1 yalnızca
   tüketilir; AC-11 normal testle kanıtlanır (G-21). Bu spec online model çağrısı yapmaz.
 - Silme soft delete'tir (`DeletedAt`); kalıcı silme kaydı tamamen kaldırır.
 - Out of scope: geri yükleme (v1'de iki tarafta da yok) · Videolar sekmesinin içeriği, video silme ve silinen videonun

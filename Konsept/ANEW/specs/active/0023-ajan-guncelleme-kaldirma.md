@@ -5,7 +5,7 @@
 - Plan: `specs/plans/0023-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
 - Source: `specs/active/0009-ajan-kurulum-guncelleme.md` (eski 0009b — Güncelleme ve kaldırma); bölündü 2026-11-14, onay: tahamucasiroglu "önerilerin uygun"
-- Sensitive area: yok — güncelleme ve kaldırma, davranışı bizim koda bağlı ajan işleridir (`docs/domain.md`); ancak güncelleme paketinin imza/hash doğrulaması (`docs/security.md`) AC-4 ve AC-5'te kasıtlı bozma ile kanıtlanır.
+- Sensitive area: none — yok — güncelleme ve kaldırma, davranışı bizim koda bağlı ajan işleridir (`docs/domain.md`); ancak güncelleme paketinin imza/hash doğrulaması (`docs/security.md`) AC-4 ve AC-5'te kasıtlı bozma ile kanıtlanır.
 - Depends on: 0001 (ajan, tray, "Ajanı test et", sistem durum alanı, tek ürün versiyonu), 0006 (iş durumları, "Üretiliyor"), 0008 (yerel teknik log), 0009 (kurulum ekranı, kurulum yeri, bileşen doğrulaması, video klasörü), 0012 (ajanın API'ye bağlı/eşleşmiş durumu), 0017 ("Ajan bekleniyor" geçişi, ajan kopması kuralı), 0022 (ajan hata bildirimi akışı)
 
 ## Intent
@@ -92,7 +92,7 @@ birden fazla eski sürüm saklama, Windows kod imzalama sertifikası, ajan sür�
   kullanılabilir; durumlar metinle verilir; 0009'daki erişilebilirlik kuralları güncelleme ekranında aynen geçerlidir.
 
 ## Constraints & out of scope
-- Sensitive area: yok (bkz. başlık satırı). `docs/security.md` güncelleme imza/hash kuralını H-4 başlığı altında
+- Sensitive area: none — yok (bkz. başlık satırı). `docs/security.md` güncelleme imza/hash kuralını H-4 başlığı altında
   sayıyor; `docs/domain.md` H-4'ü LLM kodunun çalıştırılmasına daraltıyor. Bu spec "yok" der ve AC-4/AC-5'i kasıtlı
   bozma ile kanıtlar.
 - Platform: yalnızca Windows 11.

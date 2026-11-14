@@ -1,6 +1,6 @@
 # Spec 0001 — walking-skeleton
 
-- Status: In progress
+- Status: Shipped
 - Mode: lite
 - Plan: `specs/plans/0001-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi — tahamucasiroglu "önerilerin uygun")
@@ -61,7 +61,7 @@ video üretimi, kurulum ekranı, admin paneli — hepsi aşağıdaki yol haritas
   düğmelerinin erişilebilir adı var; metin/arka plan kontrastı her iki temada WCAG AA.
 
 ## Constraints & out of scope
-- Sensitive area: yok. (Giriş/kayıt bu spec'te yok; skeleton uçları yerel ağda kimliksiz — 0002 ekler
+- Sensitive area: none — yok. (Giriş/kayıt bu spec'te yok; skeleton uçları yerel ağda kimliksiz — 0002 ekler
   ve bu uçlar o zaman giriş ister.)
 - Out of scope: kimlik, profil, model/API key, konsept, üretim, video oynatma, kurulum ekranı ve "Ajanı
   indir" bağlantısı (0009; bu spec'te ajan geliştirici build'inden çalışır), admin, hata bildirme akışı,
@@ -92,29 +92,29 @@ video üretimi, kurulum ekranı, admin paneli — hepsi aşağıdaki yol haritas
   12. 0010 Admin: istatistikler ve aktiviteler → 0024 Admin: kullanıcılar ve ban (H-1) → 0025 Admin: hata bildirimi yönetimi
 
 ## Acceptance criteria
-- [ ] AC-1 — Ana sayfa açıldığında üst bar Requirements 1'deki tüm öğeleri tasarımdaki sırayla gösterir; sayfa bağlantılarının her biri kendi sayfasını açar ve o sayfa boş durum metnini gösterir; Yayınlama "Çok yakında sizlerleyiz" gösterir.
-- [ ] AC-2 — Tema düğmesi açık↔koyu geçiş yapar; sayfa yenilendiğinde son seçim korunur; hiç seçim yoksa açık mod gelir; renkler yalnızca tema değişkenlerinden gelir (K-7).
-- [ ] AC-3 — Pasif kontroller (profil seçimi, kalem, artı, hata bildir, ayarlar) tıklanınca hiçbir eylem yapmaz; fareyle üzerine gelince ve klavye odağında "Yakında" ipucu görünür; tüm kontroller klavyeyle erişilebilir ve erişilebilir ada sahiptir.
-- [ ] AC-4 — Durum alanı tek ürün versiyonunu (bu spec'te `0.1.0`; sabit metin değil, ürünün versiyon kaynağından okunur) ve API/DB/ajan durumlarını gösterir; API kapalıyken "API erişilemiyor", DB kapalıyken "DB erişilemiyor" hata durumu görünür; tüm istekler Web controller'ı üzerinden `$.ajax` ile gider (`fetch` yok, K-6).
-- [ ] AC-5 — Ajan başlatılınca tray'de durur; "Siteye git" siteyi varsayılan tarayıcıda açar; "Çıkış" uygulamayı kapatır; pencere kapatmak uygulamayı kapatmaz.
-- [ ] AC-6 — Ajan çalışırken site en geç 10 sn içinde "Ajan bağlı" gösterir; ajan kapanınca en geç 10 sn içinde "Ajan bağlı değil"e döner; API yeniden başlatılınca ajan kendiliğinden yeniden bağlanır.
-- [ ] AC-7 — "Ajanı test et": ajan bağlıyken ajanın versiyonu ve makine adı ekranda görünür; ajan bağlı değilken "Ajan bağlı değil", cevap 10 sn'de gelmezse "Zaman aşımı" hatası görünür.
-- [ ] AC-8 — Ajan bağlanma/kopma olayları veritabanına kaydedilir ve Günlük şeridinde son olay görünür; boş veritabanıyla başlayan API şemayı kendisi oluşturur.
-- [ ] AC-9 — `scripts/check --fast` ve `scripts/check` (full) yeşil; residue testi her iki profilde temiz; mimari testleri Y-1…Y-6, K-1, K-2 ve K-4 kurallarının ihlalinde kırmızıya döner.
-- [ ] AC-10 — Web ve Api Pi'de servis olarak çalışır, yerel ağdaki başka bir cihazdan site açılır; Pi yeniden başlatıldıktan sonra servisler kendiliğinden açılır; mevcut Pi uygulamaları etkilenmez (kanıt: kurulum öncesi ve sonrası diğer servislerin `systemctl is-active` çıktısı ve dinlenen port listesi aynı).
+- [x] AC-1 — Ana sayfa açıldığında üst bar Requirements 1'deki tüm öğeleri tasarımdaki sırayla gösterir; sayfa bağlantılarının her biri kendi sayfasını açar ve o sayfa boş durum metnini gösterir; Yayınlama "Çok yakında sizlerleyiz" gösterir.
+- [x] AC-2 — Tema düğmesi açık↔koyu geçiş yapar; sayfa yenilendiğinde son seçim korunur; hiç seçim yoksa açık mod gelir; renkler yalnızca tema değişkenlerinden gelir (K-7).
+- [x] AC-3 — Pasif kontroller (profil seçimi, kalem, artı, hata bildir, ayarlar) tıklanınca hiçbir eylem yapmaz; fareyle üzerine gelince ve klavye odağında "Yakında" ipucu görünür; tüm kontroller klavyeyle erişilebilir ve erişilebilir ada sahiptir.
+- [x] AC-4 — Durum alanı tek ürün versiyonunu (bu spec'te `0.1.0`; sabit metin değil, ürünün versiyon kaynağından okunur) ve API/DB/ajan durumlarını gösterir; API kapalıyken "API erişilemiyor", DB kapalıyken "DB erişilemiyor" hata durumu görünür; tüm istekler Web controller'ı üzerinden `$.ajax` ile gider (`fetch` yok, K-6).
+- [x] AC-5 — Ajan başlatılınca tray'de durur; "Siteye git" siteyi varsayılan tarayıcıda açar; "Çıkış" uygulamayı kapatır; pencere kapatmak uygulamayı kapatmaz.
+- [x] AC-6 — Ajan çalışırken site en geç 10 sn içinde "Ajan bağlı" gösterir; ajan kapanınca en geç 10 sn içinde "Ajan bağlı değil"e döner; API yeniden başlatılınca ajan kendiliğinden yeniden bağlanır.
+- [x] AC-7 — "Ajanı test et": ajan bağlıyken ajanın versiyonu ve makine adı ekranda görünür; ajan bağlı değilken "Ajan bağlı değil", cevap 10 sn'de gelmezse "Zaman aşımı" hatası görünür.
+- [x] AC-8 — Ajan bağlanma/kopma olayları veritabanına kaydedilir ve Günlük şeridinde son olay görünür; boş veritabanıyla başlayan API şemayı kendisi oluşturur.
+- [ ] ~~AC-9 — `scripts/check --fast` ve `scripts/check` (full) yeşil; residue testi her iki profilde temiz; mimari testleri Y-1…Y-6, K-1, K-2 ve K-4 kurallarının ihlalinde kırmızıya döner.~~ → moved to B-43 | spec 0001 — walking-skeleton, 2026-11-14, fast/full yeşil ve mimari testleri kanıtlı; full residue paralel TAHA süreçleri yüzünden temiz kaydedilemedi (triage round 2 kabul)
+- [ ] ~~AC-10 — Web ve Api Pi'de servis olarak çalışır, yerel ağdaki başka bir cihazdan site açılır; Pi yeniden başlatıldıktan sonra servisler kendiliğinden açılır; mevcut Pi uygulamaları etkilenmez (kanıt: kurulum öncesi ve sonrası diğer servislerin `systemctl is-active` çıktısı ve dinlenen port listesi aynı).~~ → moved to B-44 | spec 0001 — walking-skeleton, 2026-11-14, servis, LAN erişimi ve "diğer servisler aynı" kanıtlı (DEPLOY @7c7a2b8); Pi yeniden başlatma testini kullanıcı kendisi yapacak (R1 I-3 orada gözlenir)
 
 ## Definition of Done
-- [ ] Every acceptance criterion mapped to proof (test or reproducible observation)
-- [ ] `scripts/check` green
-- [ ] Independent review done; real findings fixed, noise rejected with written rationale, deferred ones in `specs/backlog.md`
-- [ ] Docs / ADRs updated if behavior or architecture changed
-- [ ] Spec moved to `specs/done/` (it becomes immutable there)
+- [x] Every acceptance criterion mapped to proof (test or reproducible observation)
+- [x] `scripts/check` green
+- [x] Independent review done; real findings fixed, noise rejected with written rationale, deferred ones in `specs/backlog.md`
+- [x] Docs / ADRs updated if behavior or architecture changed
+- [x] Spec moved to `specs/done/` (it becomes immutable there)
 
 ## Scorecard (fill at ship — honest numbers make the process improvable)
 | Metric | Value |
 |---|---|
-| Spec revisions | |
-| Fix rounds | |
-| Review findings: real / noise / deferred | |
-| Regressions introduced | |
-| Bugs escaped to production | |
+| Spec revisions | 1 |
+| Fix rounds | 2 |
+| Review findings: real / noise / deferred | 10 / 2 / 0 (+1 investigate → B-44) |
+| Regressions introduced | 0 |
+| Bugs escaped to production | 0 |
