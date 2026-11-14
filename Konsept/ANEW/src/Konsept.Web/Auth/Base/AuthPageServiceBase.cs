@@ -105,8 +105,13 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
     /// <summary>Kilidin açılma zamanını ekranda gösterilecek biçime çevirir (Europe/Istanbul, <c>HH:mm</c>).</summary>
     /// <param name="lockedUntil">Açılma zamanı.</param>
     /// <returns>Saat metni.</returns>
-    public static string FormatUnlockTime(DateTimeOffset lockedUntil) =>
-        TimeZoneInfo.ConvertTime(lockedUntil, TimeZoneInfo.FindSystemTimeZoneById(DisplayTimeZone)).ToString("HH:mm", CultureInfo.InvariantCulture);
+    public static string FormatUnlockTime(DateTimeOffset lockedUntil)
+    {
+        // Saniyesi olan açılış bir sonraki dakikaya yuvarlanır (review R1-6): gösterilen saat gerçek açılıştan erken olmasın.
+        var remainder = lockedUntil.UtcTicks % TimeSpan.TicksPerMinute;
+        var shown = remainder == 0 ? lockedUntil : lockedUntil.AddTicks(TimeSpan.TicksPerMinute - remainder);
+        return TimeZoneInfo.ConvertTime(shown, TimeZoneInfo.FindSystemTimeZoneById(DisplayTimeZone)).ToString("HH:mm", CultureInfo.InvariantCulture);
+    }
 
     private static bool IsSignedIn(Controller controller) => controller.User.Identity?.IsAuthenticated == true;
 

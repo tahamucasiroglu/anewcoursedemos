@@ -162,6 +162,21 @@ public sealed class AuthPageTests
         locked.GetElementById("Email")!.GetAttribute("value").ShouldBe("a@x.com");
     }
 
+    /// <summary>Kilit açılış saati Europe/Istanbul'da gösterilir ve saniyesi varsa bir sonraki dakikaya yuvarlanır (erken gösterilmez).</summary>
+    /// <param name="utc">Açılış zamanı (UTC, ISO).</param>
+    /// <param name="expected">Gösterilen saat.</param>
+    [Theory]
+    [InlineData("2026-11-14T09:15:00Z", "12:15")]
+    [InlineData("2026-11-14T09:15:00.0010000Z", "12:16")]
+    [InlineData("2026-11-14T09:15:30Z", "12:16")]
+    [InlineData("2026-11-14T20:59:59Z", "00:00")]
+    public void UnlockTime_IstanbulRoundedUpToMinute(string utc, string expected)
+    {
+        var lockedUntil = DateTimeOffset.Parse(utc, System.Globalization.CultureInfo.InvariantCulture);
+
+        Konsept.Web.Auth.Base.AuthPageServiceBase.FormatUnlockTime(lockedUntil).ShouldBe(expected);
+    }
+
     /// <summary>Kayıtlı olmayan e-posta: yalnızca "E-posta ya da şifre hatalı" (kalan hak yok).</summary>
     /// <returns>Görev.</returns>
     [Fact]
