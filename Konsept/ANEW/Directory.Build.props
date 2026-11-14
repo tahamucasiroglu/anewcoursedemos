@@ -1,0 +1,25 @@
+<Project>
+  <!-- Tek ürün versiyonu (Web, Api, Ajan ortak) — docs/conventions.md, Versioning. -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- K-3: summary zorunlu (CS1591 hata). -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SatelliteResourceLanguages>tr</SatelliteResourceLanguages>
+    <Company>ANEW Konsept</Company>
+    <Product>ANEW Konsept</Product>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+</Project>

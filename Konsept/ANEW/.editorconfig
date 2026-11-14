@@ -1,0 +1,56 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,props,csproj,xml,axaml,yml,yaml}]
+indent_size = 2
+
+[*.{js,css,cshtml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# StyleCop: yalnızca bu projenin kuralları (K-1). Diğer biçim kuralları dotnet format + review.
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.DocumentationRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.LayoutRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.MaintainabilityRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.NamingRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.OrderingRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.ReadabilityRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.SpacingRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.SpecialRules.severity = none
+# K-1: bir dosyada tek tip, dosya adı = tip adı.
+dotnet_diagnostic.SA1402.severity = error
+dotnet_diagnostic.SA1649.severity = error
+# K-3: summary zorunlu.
+dotnet_diagnostic.CS1591.severity = error
+
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace
+dotnet_sort_system_directives_first = true
+csharp_prefer_braces = true:warning
+dotnet_style_qualification_for_field = false
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
+csharp_style_var_elsewhere = true
+
+# Özel alanlar _camelCase
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+# Test projelerinde Method_State_Expected adları (CA1707) serbest.
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none

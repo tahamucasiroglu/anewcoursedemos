@@ -18,3 +18,10 @@ Thumbs.db
 # Proje kaynak klasörü (ilk_promt.txt: görseller, ikon, videolar). Repo kökündeki .gitignore
 # "Source/" satırı Windows'ta (core.ignorecase) bu klasörü de dışlıyordu; burada geri alınıyor.
 !source/
+
+# .NET / Node derleme çıktıları
+bin/
+obj/
+node_modules/
+TestResults/
+*.user

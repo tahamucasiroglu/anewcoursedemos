@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Ortak çekirdek: Result, Error ve base tipler. Hiçbir altyapıya bağımlı değildir (Y-2). -->
+</Project>
