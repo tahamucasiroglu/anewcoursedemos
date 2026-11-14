@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Taha Konsept masaüstü ajanı (Avalonia, Windows tepsi uygulaması):
+    tek örnek, tepsi menüsü (Siteye git / Kurulum / Durum / Çıkış), ilk kurulum penceresi (ön gereksinimler + cihaz eşleme),
+    durum penceresi (bağlantı, motorlar, iş ilerlemesi), Windows ile başlat (HKCU Run). Velopack ile paketlenir (deploy/agent/pack-agent.ps1).
+    Çekirdek: AddAgentCore + AddVideoEngines + AddSpeechEngines + AddImageEngines.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>TahaKonsept.Agent</RootNamespace>
+    <AssemblyName>TahaKonsept.Agent</AssemblyName>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Velopack" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Agent.Core\TahaKonsept.Agent.Core.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Agent.Engines.Video\TahaKonsept.Agent.Engines.Video.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Agent.Engines.Speech\TahaKonsept.Agent.Engines.Speech.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Agent.Engines.Image\TahaKonsept.Agent.Engines.Image.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Agent.Tests" />
+  </ItemGroup>
+
+</Project>

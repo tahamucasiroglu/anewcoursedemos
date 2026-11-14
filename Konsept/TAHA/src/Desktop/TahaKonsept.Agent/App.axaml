@@ -1,0 +1,157 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="TahaKonsept.Agent.App"
+             RequestedThemeVariant="Default">
+  <!--
+    Taha Konsept sıcak "kahve dükkanı" teması: açık modda krem / turuncu / açık kahve, koyu modda aynı paletin koyu karşılığı.
+    RequestedThemeVariant="Default" → Windows açık/koyu ayarını izler. Renkler tek yerden (Tk* anahtarları) yönetilir.
+  -->
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="TkBackground" Color="#FFF8F0" />
+          <SolidColorBrush x:Key="TkSurface" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="TkSurfaceAlt" Color="#FCEEDD" />
+          <SolidColorBrush x:Key="TkBorder" Color="#EBD3B8" />
+          <SolidColorBrush x:Key="TkText" Color="#3B2A1E" />
+          <SolidColorBrush x:Key="TkMuted" Color="#8A6E58" />
+          <SolidColorBrush x:Key="TkAccent" Color="#E2762B" />
+          <SolidColorBrush x:Key="TkAccentHover" Color="#C9631C" />
+          <SolidColorBrush x:Key="TkAccentSoft" Color="#FBDDC2" />
+          <SolidColorBrush x:Key="TkAccentText" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="TkBrown" Color="#7A4A2A" />
+          <SolidColorBrush x:Key="TkHeader" Color="#F6E3CC" />
+          <SolidColorBrush x:Key="TkSuccess" Color="#3E8E41" />
+          <SolidColorBrush x:Key="TkDanger" Color="#C0392B" />
+          <SolidColorBrush x:Key="TkWarning" Color="#C98A0B" />
+          <SolidColorBrush x:Key="TkIdle" Color="#C9B39E" />
+          <SolidColorBrush x:Key="TkLogBackground" Color="#2B1E16" />
+          <SolidColorBrush x:Key="TkLogText" Color="#F3E2CF" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="TkBackground" Color="#1D1612" />
+          <SolidColorBrush x:Key="TkSurface" Color="#2A201A" />
+          <SolidColorBrush x:Key="TkSurfaceAlt" Color="#33271F" />
+          <SolidColorBrush x:Key="TkBorder" Color="#4A382B" />
+          <SolidColorBrush x:Key="TkText" Color="#F3E6D8" />
+          <SolidColorBrush x:Key="TkMuted" Color="#BFA48C" />
+          <SolidColorBrush x:Key="TkAccent" Color="#F29A4A" />
+          <SolidColorBrush x:Key="TkAccentHover" Color="#F7AE6B" />
+          <SolidColorBrush x:Key="TkAccentSoft" Color="#4A301C" />
+          <SolidColorBrush x:Key="TkAccentText" Color="#1D1612" />
+          <SolidColorBrush x:Key="TkBrown" Color="#D9A47A" />
+          <SolidColorBrush x:Key="TkHeader" Color="#2F2219" />
+          <SolidColorBrush x:Key="TkSuccess" Color="#6CC070" />
+          <SolidColorBrush x:Key="TkDanger" Color="#F06B5B" />
+          <SolidColorBrush x:Key="TkWarning" Color="#F0C04A" />
+          <SolidColorBrush x:Key="TkIdle" Color="#6B5646" />
+          <SolidColorBrush x:Key="TkLogBackground" Color="#140F0C" />
+          <SolidColorBrush x:Key="TkLogText" Color="#EAD7C3" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#E2762B" RegionColor="#FFF8F0" />
+        <ColorPaletteResources x:Key="Dark" Accent="#F29A4A" RegionColor="#1D1612" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{DynamicResource TkBackground}" />
+      <Setter Property="Foreground" Value="{DynamicResource TkText}" />
+    </Style>
+
+    <Style Selector="TextBlock.title">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TkBrown}" />
+    </Style>
+    <Style Selector="TextBlock.section">
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TkBrown}" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Foreground" Value="{DynamicResource TkMuted}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.danger">
+      <Setter Property="Foreground" Value="{DynamicResource TkDanger}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource TkSurface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TkBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="Border.header">
+      <Setter Property="Background" Value="{DynamicResource TkHeader}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TkBorder}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="20,14" />
+    </Style>
+
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="14,7" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource TkAccent}" />
+      <Setter Property="Foreground" Value="{DynamicResource TkAccentText}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TkAccentHover}" />
+      <Setter Property="Foreground" Value="{DynamicResource TkAccentText}" />
+    </Style>
+    <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TkIdle}" />
+    </Style>
+
+    <Style Selector="ProgressBar">
+      <Setter Property="Foreground" Value="{DynamicResource TkAccent}" />
+      <Setter Property="Background" Value="{DynamicResource TkAccentSoft}" />
+      <Setter Property="MinHeight" Value="6" />
+      <Setter Property="CornerRadius" Value="3" />
+    </Style>
+
+    <!-- Durum noktası: varsayılan gri; ok yeşil, running turuncu, failed kırmızı. -->
+    <Style Selector="Ellipse.dot">
+      <Setter Property="Width" Value="12" />
+      <Setter Property="Height" Value="12" />
+      <Setter Property="Fill" Value="{DynamicResource TkIdle}" />
+    </Style>
+    <Style Selector="Ellipse.dot.ok">
+      <Setter Property="Fill" Value="{DynamicResource TkSuccess}" />
+    </Style>
+    <Style Selector="Ellipse.dot.running">
+      <Setter Property="Fill" Value="{DynamicResource TkAccent}" />
+    </Style>
+    <Style Selector="Ellipse.dot.failed">
+      <Setter Property="Fill" Value="{DynamicResource TkDanger}" />
+    </Style>
+
+    <!-- Kurulum adım şeridi. -->
+    <Style Selector="Border.stepchip">
+      <Setter Property="Background" Value="{DynamicResource TkSurfaceAlt}" />
+      <Setter Property="CornerRadius" Value="14" />
+      <Setter Property="Padding" Value="12,4" />
+    </Style>
+    <Style Selector="Border.stepchip.active">
+      <Setter Property="Background" Value="{DynamicResource TkAccent}" />
+    </Style>
+    <Style Selector="Border.stepchip.active TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TkAccentText}" />
+    </Style>
+  </Application.Styles>
+</Application>

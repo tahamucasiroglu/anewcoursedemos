@@ -53,6 +53,7 @@
     <Project Path="src/Hosts/TahaKonsept.Web/TahaKonsept.Web.csproj" />
   </Folder>
   <Folder Name="/src/Desktop/">
+    <Project Path="src/Desktop/TahaKonsept.Agent/TahaKonsept.Agent.csproj" />
     <Project Path="src/Desktop/TahaKonsept.Agent.Abstractions/TahaKonsept.Agent.Abstractions.csproj" />
     <Project Path="src/Desktop/TahaKonsept.Agent.Core/TahaKonsept.Agent.Core.csproj" />
     <Project Path="src/Desktop/TahaKonsept.Agent.Engines.Image/TahaKonsept.Agent.Engines.Image.csproj" />
@@ -60,6 +61,7 @@
     <Project Path="src/Desktop/TahaKonsept.Agent.Engines.Video/TahaKonsept.Agent.Engines.Video.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TahaKonsept.Agent.Tests/TahaKonsept.Agent.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Agent.Core.Tests/TahaKonsept.Agent.Core.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Agent.Engines.Image.Tests/TahaKonsept.Agent.Engines.Image.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Agent.Engines.Speech.Tests/TahaKonsept.Agent.Engines.Speech.Tests.csproj" />
