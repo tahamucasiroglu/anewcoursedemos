@@ -37,6 +37,36 @@ public abstract class HttpImageModelBase : ImageModelBase
     /// <summary>Varsayılan MIME (sağlayıcı bildirmezse).</summary>
     protected virtual string DefaultMimeType => "image/png";
 
+    /// <summary>Sonuç dosyası indirmede en fazla deneme (geçici hatalar).</summary>
+    protected const int MaxDownloadAttempts = 3;
+
+    /// <summary>
+    /// Tek idempotent HTTP çağrısını (durum sorgusu, sonuç indirme) ağ istisnalarına karşı korur: bağlantı hatası, gövde okunurken kopma ve
+    /// zaman aşımı <c>providers.network</c> sonucuna çevrilir (istisna üst katmana çıkıp tüm üretimi yeniden göndertmesin).
+    /// </summary>
+    /// <param name="call">Çağrı.</param>
+    /// <param name="ct">İptal belirteci.</param>
+    protected async Task<Result<MediaHttpResponse>> GuardAsync(Func<Task<Result<MediaHttpResponse>>> call, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(call);
+        try
+        {
+            return await call();
+        }
+        catch (HttpRequestException ex)
+        {
+            return ProviderHttpErrors.Network(PlatformDisplayName, ex.Message);
+        }
+        catch (IOException ex)
+        {
+            return ProviderHttpErrors.Network(PlatformDisplayName, ex.Message);
+        }
+        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            return ProviderHttpErrors.Network(PlatformDisplayName, "zaman aşımı (" + ex.Message + ")");
+        }
+    }
+
     /// <summary>İsteği gönderir (HTTP hataları eşlenir).</summary>
     /// <param name="request">İstek.</param>
     /// <param name="ct">İptal belirteci.</param>
@@ -65,7 +95,14 @@ public abstract class HttpImageModelBase : ImageModelBase
         string? mime = null;
         foreach (var url in urls)
         {
-            var file = await MediaHttp.DownloadAsync(Http, url, PlatformDisplayName, ct);
+            // İndirme idempotent GET: geçici hatada yalnız bu dosya yeniden denenir (üretim yeniden gönderilmez).
+            var file = await GuardAsync(() => MediaHttp.DownloadAsync(Http, url, PlatformDisplayName, ct), ct);
+            for (var retry = 1; file.IsFailure && ProviderErrorCodes.IsTransient(file.Error.Code) && retry < MaxDownloadAttempts; retry++)
+            {
+                await Task.Delay(Options.PollInterval, ct);
+                file = await GuardAsync(() => MediaHttp.DownloadAsync(Http, url, PlatformDisplayName, ct), ct);
+            }
+
             if (file.IsFailure)
             {
                 return file.Error;
@@ -96,7 +133,10 @@ public abstract class HttpImageModelBase : ImageModelBase
             var one = await single(ct);
             if (one.IsFailure)
             {
-                return one.Error;
+                // Önceki görseller ücretlendi: atılıp yeniden üretilmesin, eldekiler (kullanımıyla) döner; hiç yoksa hata.
+                return images.Count > 0
+                    ? new ImageModelOutput(images, mime, usage.Add(ProviderBilledUsage.Read(one.Error)))
+                    : one.Error;
             }
 
             images.AddRange(one.Value.Images);

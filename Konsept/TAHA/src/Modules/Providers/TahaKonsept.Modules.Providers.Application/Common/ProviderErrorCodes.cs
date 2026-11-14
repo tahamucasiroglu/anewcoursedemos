@@ -35,6 +35,12 @@ public static class ProviderErrorCodes
     /// <summary>Ağ hatası / zaman aşımı.</summary>
     public const string Network = "providers.network";
 
+    /// <summary>Üretim çağrısı zaman aşımına uğradı (yeniden denenmez: sağlayıcı işi işleyip ücretlendirmiş olabilir).</summary>
+    public const string Timeout = "providers.timeout";
+
+    /// <summary>İş gönderildi (ücretlendi) ama sonucu alınamadı (yeniden denenmez: yeniden gönderim ikinci kez ücretlenir).</summary>
+    public const string JobResultLost = "providers.job_result_lost";
+
     /// <summary>Sağlayıcı isteği reddetti (400 vb.).</summary>
     public const string BadRequest = "providers.bad_request";
 

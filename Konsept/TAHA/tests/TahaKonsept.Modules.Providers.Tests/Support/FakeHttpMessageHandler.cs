@@ -30,6 +30,19 @@ public sealed class FakeHttpMessageHandler : HttpMessageHandler
         return this;
     }
 
+    /// <summary>Verilen SSE başlangıcından sonra gövdesi kopan yanıtı sıraya ekler.</summary>
+    /// <param name="prefix">Kopmadan önceki olay satırları.</param>
+    public FakeHttpMessageHandler EnqueueBrokenSse(string prefix)
+    {
+        _responses.Enqueue(() =>
+        {
+            var content = new StreamContent(new BrokenAfterStream(Encoding.UTF8.GetBytes(prefix)));
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/event-stream");
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+        });
+        return this;
+    }
+
     /// <summary>İstemci oluşturur.</summary>
     public HttpClient CreateClient() => new(this, disposeHandler: false);
 

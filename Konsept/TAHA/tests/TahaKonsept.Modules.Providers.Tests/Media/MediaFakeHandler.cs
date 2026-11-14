@@ -42,6 +42,14 @@ public sealed class MediaFakeHandler : HttpMessageHandler
         return this;
     }
 
+    /// <summary>Sıradaki istekte istisna fırlatır (ağ kopması benzetimi).</summary>
+    /// <param name="exception">İstisna.</param>
+    public MediaFakeHandler Throw(Exception exception)
+    {
+        _responses.Enqueue(() => throw exception);
+        return this;
+    }
+
     /// <summary>İstemci oluşturur.</summary>
     public HttpClient CreateClient() => new(this, disposeHandler: false);
 

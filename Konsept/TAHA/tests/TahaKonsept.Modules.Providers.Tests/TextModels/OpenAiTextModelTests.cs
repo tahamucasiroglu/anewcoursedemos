@@ -137,6 +137,21 @@ public sealed class OpenAiTextModelTests
         body["stream_options"]!["include_usage"]!.GetValue<bool>().ShouldBeTrue();
     }
 
+    /// <summary>Akış ortasında kopan bağlantı (IOException) ağ hatası olarak kayda geçer ve yeniden denenir (500 server.unhandled olmaz).</summary>
+    [Fact]
+    public async Task Dropped_stream_is_recorded_as_network_error_and_retried()
+    {
+        _http.EnqueueBrokenSse("data: {\"choices\":[{\"delta\":{\"content\":\"<div>\"}}]}\n\n")
+            .EnqueueSse("data: {\"choices\":[{\"delta\":{\"content\":\"Tamam\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n");
+
+        var result = await Create("gpt-6.1-sol").RunTextAsync(TestFixtures.Request(40000) with { Stream = true }, TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue(result.IsFailure ? result.Error.Message : null);
+        result.Value.Value.ShouldBe("Tamam");
+        _recorder.Records.Count.ShouldBe(2);
+        _recorder.Records[0].Error!.Code.ShouldBe(ProviderErrorCodes.Network);
+    }
+
     /// <summary>Modeli oluşturur.</summary>
     /// <param name="key">Katalog anahtarı.</param>
     private OpenAiTextModel Create(string key) =>

@@ -223,20 +223,36 @@ public abstract class OpenAiCompatibleTextModelBase : TextModelBase
         return new ModelOutput(text ?? string.Empty, usage, finish, finish == "length", ReadString(root, "model"));
     }
 
-    /// <summary>SSE akışını okur ve birleştirir.</summary>
+    /// <summary>SSE akışını okur ve birleştirir; <see cref="TextModelBase.StreamIdleTimeout"/> boyunca satır gelmezse kesilir.</summary>
     /// <param name="response">Yanıt.</param>
     /// <param name="ct">İptal belirteci.</param>
     protected async Task<Result<ModelOutput>> ReadStreamAsync(HttpResponseMessage response, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(response);
-        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var idle = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        idle.CancelAfter(StreamIdleTimeout);
+        try
+        {
+            return await ReadStreamCoreAsync(response, idle, ct);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return StreamIdleTimeoutError();
+        }
+    }
+
+    private async Task<Result<ModelOutput>> ReadStreamCoreAsync(HttpResponseMessage response, CancellationTokenSource idle, CancellationToken ct)
+    {
+        await using var stream = await response.Content.ReadAsStreamAsync(idle.Token);
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var text = new StringBuilder();
         string? finish = null;
         string? modelId = null;
         var usage = CallUsage.Empty;
-        while (await reader.ReadLineAsync(ct) is { } line)
+        while (await reader.ReadLineAsync(idle.Token) is { } line)
         {
+            ct.ThrowIfCancellationRequested();
+            idle.CancelAfter(StreamIdleTimeout);
             if (!line.StartsWith("data:", StringComparison.Ordinal))
             {
                 continue;

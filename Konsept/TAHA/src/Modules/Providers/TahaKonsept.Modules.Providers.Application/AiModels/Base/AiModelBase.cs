@@ -62,7 +62,11 @@ public abstract class AiModelBase : IAiModel
     /// <param name="attempt">Biten deneme numarası (1'den başlar).</param>
     protected virtual TimeSpan RetryDelay(int attempt) => TimeSpan.FromSeconds(Math.Pow(2, attempt));
 
-    /// <summary>Bir sağlayıcı çağrısını ölçerek çalıştırır: süre, kullanım, maliyet, CallLog, yeniden deneme.</summary>
+    /// <summary>
+    /// Bir sağlayıcı çağrısını ölçerek çalıştırır: süre, kullanım, maliyet, CallLog, yeniden deneme (yalnız geçici/ağ/hız sınırı hataları;
+    /// zaman aşımı ve gönderildikten sonra sonucu alınamayan işler yeniden denenmez). Başarısız çağrının ücretlenmiş kullanımı
+    /// (<see cref="ProviderBilledUsage"/>) maliyet olarak kayda geçer; gövde okunurken kopan bağlantı (<see cref="IOException"/>) ağ hatasıdır.
+    /// </summary>
     /// <typeparam name="TOut">Ham çıktı türü.</typeparam>
     /// <param name="context">Kullanıcı + amaç.</param>
     /// <param name="send">Tek HTTP çağrısı.</param>
@@ -89,13 +93,24 @@ public abstract class AiModelBase : IAiModel
             {
                 result = ProviderHttpErrors.Network(PlatformDisplayName, ex.Message);
             }
-            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            catch (IOException ex)
             {
-                result = ProviderHttpErrors.Network(PlatformDisplayName, "zaman aşımı (" + ex.Message + ")");
+                // Gövde okunurken bağlantı koptu (HttpIOException, HttpRequestException'dan türemez): kayda geçsin, ağ hatası olarak eşlensin.
+                result = ProviderHttpErrors.Network(PlatformDisplayName, ex.Message);
+            }
+            catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                // Zaman aşımı yeniden denenmez: üretim isteği sağlayıcıda işlenip ücretlenmiş olabilir.
+                result = ProviderHttpErrors.Timeout(PlatformDisplayName, ex.Message);
             }
 
             var durationMs = (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds;
-            var usage = result.IsSuccess ? usageOf(result.Value) : CallUsage.Empty;
+            var usage = result.IsSuccess ? usageOf(result.Value) : ProviderBilledUsage.Read(result.Error);
+            if (result.IsFailure)
+            {
+                result = ProviderBilledUsage.Strip(result.Error);
+            }
+
             var cost = await Dependencies.Recorder.RecordAsync(
                 new CallRecordRequest(context, Model, usage, durationMs, result.IsSuccess ? null : result.Error),
                 CancellationToken.None);

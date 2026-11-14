@@ -46,28 +46,62 @@ public abstract class PollingImageModelBase : HttpImageModelBase
     /// <param name="root">Yanıt kökü.</param>
     protected abstract ImagePollStatus ParseStatus(JsonElement root);
 
-    /// <summary>Tek işi baştan sona yürütür: gönder → sorgula → indir.</summary>
+    /// <summary>Durum sorgusunda art arda tolere edilen geçici hata sayısı (tek GET yeniden denenir, iş yeniden gönderilmez).</summary>
+    protected virtual int MaxConsecutivePollFailures => 3;
+
+    /// <summary>
+    /// Tek işi baştan sona yürütür: gönder → sorgula → indir. Gönderim başarılı olduktan sonra iş ücretlenmiş sayılır: durum sorgusundaki
+    /// geçici hatalar tek GET olarak yeniden denenir; sonuç yine alınamazsa geçici hata yeniden denenmez koda
+    /// (<see cref="ProviderErrorCodes.JobResultLost"/>) çevrilir ve gönderilen görsel sayısı ücretlenmiş kullanım olarak eklenir
+    /// (<see cref="ProviderBilledUsage"/>).
+    /// </summary>
     /// <param name="request">İstek.</param>
     /// <param name="ct">İptal belirteci.</param>
     protected async Task<Result<ImageModelOutput>> RunJobAsync(ImageRequest request, CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var submitted = await SubmitAsync(request, ct);
         if (submitted.IsFailure)
         {
             return submitted.Error;
         }
 
+        var result = await PollAndDownloadAsync(submitted.Value, ct);
+        if (result.IsSuccess || result.Error.Code == ProviderErrorCodes.Refused)
+        {
+            return result;
+        }
+
+        var lost = ProviderErrorCodes.IsTransient(result.Error.Code) ? result.Error with { Code = ProviderErrorCodes.JobResultLost } : result.Error;
+        return ProviderBilledUsage.Attach(lost, new CallUsage { Images = Math.Max(1, request.Count) });
+    }
+
+    private async Task<Result<ImageModelOutput>> PollAndDownloadAsync(Uri statusUrl, CancellationToken ct)
+    {
         var started = Stopwatch.GetTimestamp();
+        var failures = 0;
         while (true)
         {
-            var poll = new HttpRequestMessage(HttpMethod.Get, submitted.Value);
-            ApplyAuth(poll);
-            var response = await SendAsync(poll, ct);
+            var response = await GuardAsync(
+                () =>
+                {
+                    var poll = new HttpRequestMessage(HttpMethod.Get, statusUrl);
+                    ApplyAuth(poll);
+                    return SendAsync(poll, ct);
+                },
+                ct);
             if (response.IsFailure)
             {
-                return response.Error;
+                if (!ProviderErrorCodes.IsTransient(response.Error.Code) || ++failures >= MaxConsecutivePollFailures)
+                {
+                    return response.Error;
+                }
+
+                await Task.Delay(Options.PollInterval, ct);
+                continue;
             }
 
+            failures = 0;
             var status = ReadJson(response.Value, root => Result.Success(ParseStatus(root)));
             if (status.IsFailure)
             {

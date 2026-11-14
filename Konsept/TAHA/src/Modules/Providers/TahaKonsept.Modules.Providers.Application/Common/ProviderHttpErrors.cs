@@ -37,6 +37,12 @@ public static class ProviderHttpErrors
     public static Error Network(string platformName, string message) =>
         Error.Failure(ProviderErrorCodes.Network, $"{platformName} sunucusuna ulaşılamadı: {Trim(message)}");
 
+    /// <summary>Zaman aşımı (yeniden denenmez).</summary>
+    /// <param name="platformName">Görünen platform adı.</param>
+    /// <param name="message">Ayrıntı.</param>
+    public static Error Timeout(string platformName, string message) =>
+        Error.Failure(ProviderErrorCodes.Timeout, $"{platformName} yanıtı zaman aşımına uğradı: {Trim(message)}");
+
     /// <summary>Uzun metni kısaltır.</summary>
     /// <param name="text">Metin.</param>
     private static string Trim(string text) => text.Length <= MaxDetail ? text : text[..MaxDetail] + "…";

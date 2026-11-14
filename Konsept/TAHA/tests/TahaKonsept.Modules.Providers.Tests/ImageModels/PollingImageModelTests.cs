@@ -55,6 +55,39 @@ public sealed class PollingImageModelTests
         result.Error.Code.ShouldBe(ProviderErrorCodes.Refused);
     }
 
+    /// <summary>BFL: durum sorgusunda ağ kopması yalnız sorguyu yeniden dener; iş yeniden gönderilmez (ikinci kez ücretlenmez).</summary>
+    [Fact]
+    public async Task Bfl_poll_network_blip_retries_poll_only()
+    {
+        _http.Json("""{"id":"job-3","polling_url":"https://api.bfl.ai/v1/get_result?id=job-3"}""")
+            .Throw(new HttpRequestException("bağlantı sıfırlandı"))
+            .Json("""{"id":"job-3","status":"Ready","result":{"sample":"https://delivery.bfl.ai/y.png"}}""")
+            .Bytes(MediaTestData.Png, "image/png");
+
+        var result = await Bfl().GenerateAsync(MediaTestData.Image(), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue(result.Error.Message);
+        _http.Requests.Count(r => r.Uri.ToString() == "https://api.bfl.ai/v1/flux-3-image-klein").ShouldBe(1);
+    }
+
+    /// <summary>BFL: sonuç indirilemezse iş yeniden gönderilmez; hata job_result_lost ve gönderilen görsel ücretiyle kayda geçer.</summary>
+    [Fact]
+    public async Task Bfl_lost_result_is_not_resubmitted_and_is_billed()
+    {
+        _http.Json("""{"id":"job-4","polling_url":"https://api.bfl.ai/v1/get_result?id=job-4"}""")
+            .Json("""{"id":"job-4","status":"Ready","result":{"sample":"https://delivery.bfl.ai/z.png"}}""")
+            .Json("""{"error":"boom"}""", System.Net.HttpStatusCode.BadGateway)
+            .Json("""{"error":"boom"}""", System.Net.HttpStatusCode.BadGateway)
+            .Json("""{"error":"boom"}""", System.Net.HttpStatusCode.BadGateway);
+
+        var result = await Bfl().GenerateAsync(MediaTestData.Image(), TestContext.Current.CancellationToken);
+
+        result.Error.Code.ShouldBe(ProviderErrorCodes.JobResultLost);
+        result.Error.Details.ShouldBeNull();
+        _http.Requests.Count(r => r.Uri.ToString() == "https://api.bfl.ai/v1/flux-3-image-klein").ShouldBe(1);
+        _recorder.Records.Single().Usage.Images.ShouldBe(1);
+    }
+
     /// <summary>Replicate: predictions → urls.get sorgusu → output indirilir.</summary>
     [Fact]
     public async Task Replicate_prediction()

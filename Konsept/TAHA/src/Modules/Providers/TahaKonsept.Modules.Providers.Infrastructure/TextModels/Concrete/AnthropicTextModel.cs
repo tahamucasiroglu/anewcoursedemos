@@ -53,12 +53,16 @@ public sealed class AnthropicTextModel : TextModelBase
                 ? await StreamAsync(parameters, ct)
                 : FromMessage(await _client.Messages.Create(parameters, ct));
             return output.StopReason == "refusal"
-                ? Error.Failure(ProviderErrorCodes.Refused, $"{DisplayName} isteği güvenlik nedeniyle yanıtlamadı.")
+                ? ProviderBilledUsage.Attach(Error.Failure(ProviderErrorCodes.Refused, $"{DisplayName} isteği güvenlik nedeniyle yanıtlamadı."), output.Usage)
                 : output;
         }
         catch (AnthropicApiException ex)
         {
             return ProviderHttpErrors.FromStatus(PlatformDisplayName, (int)ex.StatusCode, ex.Message);
+        }
+        catch (OperationCanceledException) when (request.Stream && !ct.IsCancellationRequested)
+        {
+            return StreamIdleTimeoutError();
         }
     }
 
@@ -119,8 +123,11 @@ public sealed class AnthropicTextModel : TextModelBase
         var usage = CallUsage.Empty;
         string? stopReason = null;
         string? modelId = null;
-        await foreach (var streamEvent in _client.Messages.CreateStreaming(parameters, ct))
+        using var idle = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        idle.CancelAfter(StreamIdleTimeout);
+        await foreach (var streamEvent in _client.Messages.CreateStreaming(parameters, idle.Token))
         {
+            idle.CancelAfter(StreamIdleTimeout);
             if (streamEvent.TryPickStart(out var start))
             {
                 modelId = start.Message.Model.ToString();

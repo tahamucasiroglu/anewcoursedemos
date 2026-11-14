@@ -120,6 +120,17 @@ public abstract class TextModelBase : AiModelBase, ITextModel
             $"{DisplayName} geçerli JSON döndürmedi (onarım denemesi de başarısız): {secondError}");
     }
 
+    /// <summary>
+    /// Akışlı yanıtta veri gelmeden beklenecek en uzun süre: HttpClient zaman aşımı yalnız başlıklara kadar geçerlidir; akış ortasında
+    /// takılan sağlayıcı (ya da yerel sunucu) bu süre sonunda kesilir (<c>providers.timeout</c>). Her gelen satır/olayda süre sıfırlanır.
+    /// </summary>
+    protected virtual TimeSpan StreamIdleTimeout => TimeSpan.FromMinutes(5);
+
+    /// <summary>Akış boşta zaman aşımı hatası.</summary>
+    /// <returns>Hata.</returns>
+    protected Error StreamIdleTimeoutError() =>
+        ProviderHttpErrors.Timeout(PlatformDisplayName, $"akış {StreamIdleTimeout.TotalMinutes:0} dakika veri göndermedi");
+
     /// <summary>Tek HTTP çağrısı: isteği sağlayıcıya gönderir ve ham çıktıyı döner (yeniden deneme / kayıt tabanda).</summary>
     /// <param name="request">İstek (<see cref="TextRequest.JsonSchema"/> doluysa JSON çıktı istenir).</param>
     /// <param name="ct">İptal belirteci.</param>
