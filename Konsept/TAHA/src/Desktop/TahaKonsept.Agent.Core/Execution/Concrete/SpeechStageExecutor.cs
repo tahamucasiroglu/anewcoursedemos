@@ -13,6 +13,8 @@ namespace TahaKonsept.Agent.Core.Execution.Concrete;
 /// <summary>
 /// <c>Speech</c> aşaması: seçilen <see cref="ISpeechEngine"/> ile sahne sahne <c>speech/scene-&lt;i&gt;.wav</c> üretir (var olanlar atlanır;
 /// boş metinli sahneye kısa sessizlik), sonra <c>speech/speech.wav</c>'a birleştirir ve <see cref="SpeechStageResult"/> döner.
+/// Motor içeriğin dilini desteklemiyorsa (ör. Kokoro + Türkçe) kurulumdan ÖNCE açık bir hatayla durur (<see cref="UnsupportedLanguage"/>).
+/// Aşama bitince (başarı ya da hata) <see cref="ISpeechEngine.ReleaseAsync"/> ile GPU motorunun belleği boşaltılır.
 /// </summary>
 public sealed class SpeechStageExecutor : StageExecutorBase<SpeechStagePayload>
 {
@@ -63,6 +65,38 @@ public sealed class SpeechStageExecutor : StageExecutorBase<SpeechStagePayload>
             }
         }
 
+        if (!engine.SupportsLanguage(payload.Language))
+        {
+            return UnsupportedLanguage(engine, payload.Language);
+        }
+
+        try
+        {
+            return await SynthesizeAllAsync(context, payload, engine, referenceAudio, ct);
+        }
+        finally
+        {
+            await engine.ReleaseAsync();
+        }
+    }
+
+    /// <summary>Motorun desteklemediği dil için kullanıcıya gösterilecek hata (Türkçe ise Türkçe destekli model önerir).</summary>
+    /// <param name="engine">Seçilen motor.</param>
+    /// <param name="language">İçeriğin dili.</param>
+    /// <returns>Doğrulama hatası.</returns>
+    public static Error UnsupportedLanguage(ISpeechEngine engine, string? language)
+    {
+        ArgumentNullException.ThrowIfNull(engine);
+        var turkish = string.IsNullOrWhiteSpace(language) || language.Trim().StartsWith("tr", StringComparison.OrdinalIgnoreCase);
+        var message = turkish
+            ? engine.DisplayName + " Türkçe seslendiremez (" + engine.LanguageLabel + "). Ses ayarlarından Türkçe destekli bir model seçin (ör. Supertonic 3, Piper, Ahenk)."
+            : engine.DisplayName + " '" + language + "' dilini desteklemiyor (" + engine.LanguageLabel + "). Ses ayarlarından bu dili destekleyen bir model seçin.";
+        return Error.Validation("speech.unsupported_language", message);
+    }
+
+    private async Task<Result<StageExecutionOutput>> SynthesizeAllAsync(
+        StageExecutionContext context, SpeechStagePayload payload, ISpeechEngine engine, string? referenceAudio, CancellationToken ct)
+    {
         var ready = await EnsureEngineReadyAsync(engine, context, 0, 5, ct);
         if (ready.IsFailure)
         {

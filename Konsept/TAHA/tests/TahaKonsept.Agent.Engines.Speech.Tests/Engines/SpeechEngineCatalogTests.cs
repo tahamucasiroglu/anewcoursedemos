@@ -159,6 +159,55 @@ public sealed class SpeechEngineCatalogTests
         PythonSpeechEngineBase.IsTransientFileLock("The process cannot access the file because it is being used by another process. (os error 32)").ShouldBeTrue();
     }
 
+    /// <summary>
+    /// GPU motorunda ReleaseAsync işçiyi kapatır (VRAM boşalır, sonraki istek yeni işçi açar); CPU motorunda işçi sıcak kalır.
+    /// </summary>
+    /// <param name="minVramMb">GPU gereksinimi (null = CPU).</param>
+    /// <param name="expectedWorkers">İkinci istekten sonra açılmış işçi sayısı.</param>
+    [Theory]
+    [InlineData(4096, 2)]
+    [InlineData(null, 1)]
+    public async Task Release_stops_worker_only_for_gpu_engines(int? minVramMb, int expectedWorkers)
+    {
+        var root = TestEnvironment.NewTempDir("release");
+        var script = Path.Combine(root, "tts_worker.py");
+        await File.WriteAllTextAsync(script, "# test", TestContext.Current.CancellationToken);
+        await using var engine = new ReleaseProbeSpeechEngine(TestEnvironment.CreateServices(new TestAgentPaths(root)), minVramMb, script);
+
+        (await engine.PingAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        await engine.ReleaseAsync();
+        (await engine.PingAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+
+        engine.Device.ShouldBe(minVramMb is null ? "cpu" : "cuda");
+        engine.WorkersCreated.ShouldBe(expectedWorkers);
+    }
+
+    /// <summary>
+    /// Chatterbox ortamı setuptools&lt;81 kurar: resemble-perth filigranı pkg_resources ister, yoksa model yüklemesi
+    /// "'NoneType' object is not callable" ile düşer (e2e'de görüldü).
+    /// </summary>
+    [Fact]
+    public void Chatterbox_requirements_include_pkg_resources_provider()
+    {
+        using var chatterbox = new ChatterboxSpeechEngine(TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("cb"))));
+
+        chatterbox.Requirements.ShouldContain("setuptools<81");
+    }
+
+    /// <summary>Kokoro Türkçe desteklemez (etiket "Türkçe yok"); Türkçe destekli motorlar tr-TR'yi kabul eder.</summary>
+    [Fact]
+    public void Kokoro_is_labelled_without_turkish()
+    {
+        var services = TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("kokoro")));
+        using var kokoro = new KokoroSpeechEngine(services);
+        using var chatterbox = new ChatterboxSpeechEngine(services);
+
+        kokoro.LanguageLabel.ShouldStartWith("Türkçe yok");
+        kokoro.SupportsLanguage("tr-TR").ShouldBeFalse();
+        kokoro.SupportsLanguage("en").ShouldBeTrue();
+        chatterbox.SupportsLanguage("tr-TR").ShouldBeTrue();
+    }
+
     /// <summary>Hugging Face adresi doğru üretilir (yol parçaları kaçışlı).</summary>
     [Fact]
     public void HuggingFace_url_uses_resolve_main()

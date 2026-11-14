@@ -18,6 +18,7 @@ namespace TahaKonsept.Agent.Engines.Speech.Base;
 /// (<c>PythonEnvsDir/&lt;Key&gt;/.venv</c>, Python <see cref="PythonVersion"/>; uv'nin yönettiği Python <c>ToolsDir/uv-python</c> altına iner),
 /// sabitlenmiş <see cref="Requirements"/> kurulumu (uv geçici Windows dosya kilidine takılırsa — <see cref="IsTransientFileLock"/> — iki kez yeniden dener; GPU motorlarında <see cref="TorchIndexUrl"/> CUDA tekerlek dizini), başarıda
 /// gereksinim parmak izini <c>.taha-installed</c> dosyasına yazar (<see cref="IsInstalled"/> bunu karşılaştırır).
+/// <see cref="ReleaseAsync"/>: GPU motorunda işçiyi kapatıp VRAM'i boşaltır (ses aşaması sonunda çağrılır).
 /// Çalışma: <c>PythonWorkers/tts_worker.py</c> uzun ömürlü süreç olarak açılır, ilk istekte <c>load</c> (adapter <see cref="AdapterName"/>,
 /// <see cref="ModelId"/>, <see cref="Device"/>, <see cref="LoadOptions"/>), her istekte <c>synth</c>. İşçi çökerse sonraki istekte yeniden başlar.
 /// Model dosyaları Hugging Face önbelleği olarak <c>ModelsDir/huggingface</c> altına iner (HF_HOME).
@@ -208,6 +209,14 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
             _workerGate.Release();
         }
     }
+
+    /// <summary>
+    /// GPU motorlarında (<see cref="Device"/> = <c>cuda</c>) işçiyi kapatır: model VRAM'de kalıp sonraki işin yerel görsel aşamasını
+    /// (Images, Speech'ten önce çalışır) bellek yetersizliğine düşürmesin. CPU motorlarında işçi sıcak kalır (yeniden yükleme maliyeti olmasın).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    public override Task ReleaseAsync() =>
+        _disposed || !Device.StartsWith("cuda", StringComparison.OrdinalIgnoreCase) ? Task.CompletedTask : StopWorkerAsync();
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

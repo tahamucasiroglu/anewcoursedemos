@@ -282,6 +282,12 @@
             var $v = $el.find('[data-role=voice]');
             var key = $el.find('input[name=' + kind + ']:checked').val();
             if (current.mode === 'Off' || !key) { $v.empty(); return; }
+            /* Türkçe desteklemeyen model (ör. Kokoro) seçilince açık uyarı: içerik Türkçe olduğunda ses aşaması hata verir. */
+            var picked = findModel(ctx.models, key);
+            var noTurkish = picked && picked.languageLabel === 'Türkçe yok'
+                ? '<div class="tk-alert is-danger" style="margin-top:12px" role="alert"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg><div>' +
+                  u.escape((picked.displayName || picked.key) + ' Türkçe seslendiremez. Türkçe videolarda ses aşaması hata verir; Türkçe destekli bir model seçin (ör. Supertonic 3, Piper, Ahenk).') + '</div></div>'
+                : '';
             var speedHtml = '<div class="tk-field" style="margin-top:12px"><label for="kv-speed">Konuşma hızı</label><div class="kv-speed">' +
                 '<input type="range" id="kv-speed" name="speed" min="0.5" max="2" step="0.05" value="' + current.speed + '" />' +
                 '<output for="kv-speed">' + current.speed.toFixed(2).replace('.', ',') + '×</output></div></div>';
@@ -304,11 +310,12 @@
                 $v.html(head + U().skeleton(1) + speedHtml);
                 ctx.loadVoices(key).done(function (voices) {
                     if ($el.find('input[name=' + kind + ']:checked').val() !== key) { return; }
-                    $v.html(grid(U().items(voices)) + speedHtml);
-                }).fail(function () { $v.html(grid([]) + speedHtml); });
+                    $v.html(noTurkish + grid(U().items(voices)) + speedHtml);
+                }).fail(function () { $v.html(noTurkish + grid([]) + speedHtml); });
             } else {
                 $v.html(grid([]) + speedHtml);
             }
+            if (noTurkish) { $v.prepend(noTurkish); }
         }
 
         function renderBody() {

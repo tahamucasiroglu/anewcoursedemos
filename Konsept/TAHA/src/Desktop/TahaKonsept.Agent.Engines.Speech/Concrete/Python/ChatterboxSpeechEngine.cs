@@ -5,11 +5,13 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 /// <summary>
 /// Chatterbox Multilingual (Resemble AI, MIT; HF <c>ResembleAI/chatterbox</c>; pip <c>chatterbox-tts</c>). Referans sesle sıfır-atış
 /// klonlama, 23 dil (Türkçe dahil), ~4 GB VRAM. Çıktıda Perth filigranı vardır. torch 2.6 (paketin sabitlediği) + CUDA 12.4.
-/// Hız kontrolü yoktur (gerekirse birleştirmede atempo).
+/// Hız kontrolü yoktur (gerekirse birleştirmede atempo). <c>setuptools&lt;81</c> şart: filigran paketi <c>resemble-perth</c>
+/// <c>pkg_resources</c> içe aktarır (uv venv'inde setuptools yok, 81+ sürümünde de <c>pkg_resources</c> kaldırıldı); yoksa
+/// <c>PerthImplicitWatermarker</c> sessizce <c>None</c> olur ve model yüklemesi "'NoneType' object is not callable" ile düşer.
 /// </summary>
 public sealed class ChatterboxSpeechEngine : PythonSpeechEngineBase
 {
-    private static readonly string[] Packages = ["torch==2.6.0", "torchaudio==2.6.0", "chatterbox-tts==0.1.7"];
+    private static readonly string[] Packages = ["torch==2.6.0", "torchaudio==2.6.0", "chatterbox-tts==0.1.7", "setuptools<81"];
 
     private static readonly string[] Codes =
         ["ar", "da", "de", "el", "en", "es", "fi", "fr", "he", "hi", "it", "ja", "ko", "ms", "nl", "no", "pl", "pt", "ru", "sv", "sw", "tr", "zh"];

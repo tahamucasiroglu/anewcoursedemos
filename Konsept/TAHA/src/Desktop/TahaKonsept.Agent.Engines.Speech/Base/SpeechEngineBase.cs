@@ -170,6 +170,9 @@ public abstract class SpeechEngineBase : ISpeechEngine
         return Result.Success();
     }
 
+    /// <inheritdoc />
+    public virtual Task ReleaseAsync() => Task.CompletedTask;
+
     /// <summary>Dil kodu destekleniyor mu (<see cref="Languages"/> boşsa hepsi; <c>tr-TR</c> → <c>tr</c> olarak da denenir).</summary>
     /// <param name="language">Dil kodu.</param>
     /// <returns>Destekleniyorsa <c>true</c>.</returns>

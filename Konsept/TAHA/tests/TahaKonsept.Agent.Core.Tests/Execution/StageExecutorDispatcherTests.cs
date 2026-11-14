@@ -54,6 +54,7 @@ public sealed class StageExecutorDispatcherTests : IDisposable
         _speech.Key.Returns("supertonic-3");
         _speech.DisplayName.Returns("Supertonic");
         _speech.IsInstalled().Returns(true);
+        _speech.SupportsLanguage(Arg.Any<string?>()).Returns(true);
         _speech.SynthesizeAsync(Arg.Any<SpeechRequest>(), Arg.Any<CancellationToken>()).Returns(call =>
         {
             var request = call.Arg<SpeechRequest>();
@@ -178,6 +179,52 @@ public sealed class StageExecutorDispatcherTests : IDisposable
         output.TotalDurationSec.ShouldBe(2.0 + SpeechStageExecutor.EmptySegmentSilenceSec, 0.01);
         File.Exists(WorkspaceLayout.SpeechAudioPath(_temp.Path)).ShouldBeTrue();
         result.Value.Artifacts.Count.ShouldBe(4);
+        await _speech.Received(1).ReleaseAsync();
+    }
+
+    /// <summary>
+    /// Motor içeriğin dilini desteklemiyorsa (Kokoro + Türkçe) kurulum ve sentez denenmeden açık bir Türkçe hata döner.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Speech_UnsupportedLanguage_FailsBeforeInstall()
+    {
+        _speech.SupportsLanguage("tr-TR").Returns(false);
+        _speech.DisplayName.Returns("Kokoro");
+        _speech.LanguageLabel.Returns("Türkçe yok (İngilizce vb.)");
+        var payload = new SpeechStagePayload
+        {
+            EngineKey = "supertonic-3",
+            Language = "tr-TR",
+            Segments = [new SpeechSegmentItem { SceneIndex = 0, DisplayText = "Google", SpokenText = "Gugıl" }],
+        };
+
+        var result = await _dispatcher.DispatchAsync(Context(PipelineStage.Speech, payload), TestContext.Current.CancellationToken);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("speech.unsupported_language");
+        result.Error.Message.ShouldContain("Kokoro Türkçe seslendiremez");
+        _ = _speech.DidNotReceive().IsInstalled();
+        await _speech.DidNotReceive().SynthesizeAsync(Arg.Any<SpeechRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Sentez başarısız olsa da ses aşaması sonunda motor bırakılır (GPU belleği boşalır).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Speech_ReleasesEngine_EvenWhenSynthesisFails()
+    {
+        _speech.SynthesizeAsync(Arg.Any<SpeechRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result.Failure<SpeechOutput>(Error.Failure("speech.synthesis_failed", "CUDA out of memory"))));
+        var payload = new SpeechStagePayload
+        {
+            EngineKey = "supertonic-3",
+            Segments = [new SpeechSegmentItem { SceneIndex = 0, DisplayText = "a", SpokenText = "a" }],
+        };
+
+        var result = await _dispatcher.DispatchAsync(Context(PipelineStage.Speech, payload), TestContext.Current.CancellationToken);
+
+        result.IsFailure.ShouldBeTrue();
+        await _speech.Received(1).ReleaseAsync();
     }
 
     /// <summary>Sahne kodu lint hatası <c>agent.scene_invalid</c> döner ve render çağrılmaz.</summary>
