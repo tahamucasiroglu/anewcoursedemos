@@ -87,9 +87,19 @@ public sealed class WorkerProtocolTests
     {
         await using var client = new HangingTtsWorkerClient();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
-        await Should.ThrowAsync<OperationCanceledException>(() => client.SendAsync(WorkerProtocol.Ping(), TimeSpan.FromSeconds(30), cts.Token));
+        // İptal, istek işçiye yazıldıktan sonra yapılır (yük altında sabit gecikme kilit beklerken iptale denk gelip testi kırıyordu).
+        var send = client.SendAsync(WorkerProtocol.Ping(), TimeSpan.FromSeconds(30), cts.Token);
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (client.Sent.ToString().Length == 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        client.Sent.ToString().ShouldNotBeEmpty();
+        await cts.CancelAsync();
+
+        await Should.ThrowAsync<OperationCanceledException>(() => send);
 
         client.BrokenCount.ShouldBe(1);
     }

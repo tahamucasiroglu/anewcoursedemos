@@ -13,6 +13,9 @@ namespace TahaKonsept.Agent.Engines.Image.Tests.Integration;
 /// </summary>
 public sealed class RealStableDiffusionCppTests
 {
+    /// <summary>Z-Image-Turbo Q3_K (difüzyon ≈3 GB + hesap tamponları) için gereken asgari boş VRAM; 4,3 GB boşta OOM gözlendi.</summary>
+    private const int MinFreeVramMiB = 5000;
+
     /// <summary>İkili çalışıyor: <c>--help</c> 0 ile döner ve beklenen bayrakları listeler.</summary>
     [Fact]
     public async Task Cli_help_lists_low_vram_flags()
@@ -43,6 +46,10 @@ public sealed class RealStableDiffusionCppTests
         var paths = new FakeAgentPaths(toolsDev!, toolsDir: toolsDev, modelsDir: Path.Combine(toolsDev!, "models"));
         var engine = EngineFactory.CreateSdCpp(paths, new LocalProcessRunner(), options: new ImageEngineOptions { AutoDownloadModels = false });
         Assert.SkipUnless(engine.IsModelInstalled("z-image-turbo"), "Z-Image-Turbo dosyaları .tools-dev/models/image altında yok");
+        var freeMiB = GpuMemoryProbe.FreeMiB();
+        Assert.SkipWhen(
+            freeMiB is < MinFreeVramMiB,
+            $"Boş VRAM {freeMiB} MiB < {MinFreeVramMiB} MiB (başka uygulamalar GPU belleğini tutuyor); Z-Image-Turbo CUDA OOM verir.");
 
         var output = Path.Combine(toolsDev!, "out", "engine-test.png");
         var request = new ImageRequest(
