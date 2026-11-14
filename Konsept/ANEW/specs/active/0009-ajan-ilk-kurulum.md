@@ -137,10 +137,10 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
     kurulu bileşenleri durumuyla gösterir ve kurulmamış isteğe bağlı bileşenlerin sonradan eklenmesini sağlar
     (ön kontrol, lisans, doğrulama ve ilerleme kuralları aynen geçerlidir). 0012'deki oturum durumu satırı
     menünün en başında kalır; yeni öğe onu ve 0001'in öğelerini değiştirmez.
-21a. **Tray menüsünün görünümü (R2).** Tray simgesine tıklanınca (sol ya da sağ tık) açılan menü, Windows'un
+21a. **Tray menüsünün görünümü (R2).** Tray simgesine sağ tıklanınca açılan menü (sol tık 0001'deki gibi durum penceresini açar), Windows'un
     düz yerel menüsü yerine ajanın kendi çizdiği küçük bir paneldir: sitenin turuncu/kahve paleti, açık/koyu
     tema Windows uygulama temasını izler (Req 23), üstte ikon + "ANEW Konsept" başlığı ve bağlantı durumu
-    satırı ("Bağlı" / "Bağlı değil"), altında menü öğeleri (0001: "Siteye git", "Çıkış"; bu spec ve 0012'nin
+    satırı ("ANEW Konsept · Sunucuya bağlı" / "… bağlı değil"; tıklanamaz), altında menü öğeleri (0001: "Siteye git", "Çıkış"; bu spec ve 0012'nin
     eklediği öğeler aynı panelde). Panel simgenin yanında (ekran kenarına taşmadan) açılır; dışarı
     tıklanınca, Esc'ye basınca ya da bir öğe seçilince kapanır; klavyeyle (ok tuşları, Enter) kullanılabilir.
     Bu madde 0009'un geri kalanından önce, bağımsız olarak uygulanabilir (öne çekildi, 2026-11-14).
@@ -227,7 +227,7 @@ Ollama (E-4: v1'de hiçbir rolde seçilemez, kurulmaz).
 - [ ] AC-21 — Tray menüsünde "Kurulum ve bileşenler" bulunur; açılan ekran kurulu bileşenleri durumuyla gösterir; kurulmamış bir isteğe bağlı bileşen işaretlenip başlatılınca yalnızca o bileşen (ön kontrol, lisans onayı ve doğrulamayla) kurulur; 0001'deki "Siteye git" ve "Çıkış" davranışı değişmez; 0012'deki tıklanamayan oturum durumu satırı menünün en başında kalır ve durumu doğru göstermeye devam eder (0012 AC-15 bu öğe eklenmişken de geçer).
 - [ ] AC-22 — Kurulum başlangıcı, her bileşenin kuruluşu, her otomatik yeniden deneme, her hata, her doğrulama başarısızlığı, Onarılmalı ve Hazır olayları yerel teknik loga uygun seviyede (Information/Warning/Error) yazılır; log dosyalarında şifre, token ya da API key geçmez.
 - [ ] AC-23 — Kurulum ekranındaki tüm kontroller klavyeyle kullanılabilir ve erişilebilir ada sahiptir; bileşen durumları metin olarak okunur (yalnızca renk değil); kontrast açık ve koyu temada WCAG AA; tema Windows uygulama temasını izler; palet sitenin turuncu/kahve paletidir; tüm metinler Türkçe ve kaynak dosyasından gelir.
-- [ ] AC-26 — (R2) Tray simgesine tıklanınca sitenin paletinde, Windows temasını (açık/koyu) izleyen özel bir menü paneli açılır: başlık, bağlantı durumu, "Siteye git" ve "Çıkış"; "Siteye git" siteyi açar, "Çıkış" ajanı kapatır (0001 AC-5 davranışı korunur); panel dışarı tıklanınca ya da Esc ile kapanır; öğeler klavyeyle seçilebilir; panel ekran kenarından taşmaz.
+- [ ] AC-26 — (R2) Tray simgesine sağ tıklanınca sitenin paletinde, Windows temasını (açık/koyu) izleyen özel bir menü paneli açılır: başlık, bağlantı durumu, "Siteye git" ve "Çıkış"; "Siteye git" siteyi açar, "Çıkış" ajanı kapatır (0001 AC-5 davranışı korunur); panel dışarı tıklanınca ya da Esc ile kapanır; öğeler klavyeyle seçilebilir; panel ekran kenarından taşmaz.
 - [ ] AC-24 — GPU varken CPU'ya düşme yok (Req 8a, kasıtlı bozma ile): NVIDIA kartlı makinede Hazır denetimi Supertonic, Chatterbox (seçiliyse), `sd-server` (seçiliyse) ve FFmpeg kodlamasının GPU'da çalıştığını doğrular ve "Kurulum ve bileşenler" ekranı her satırda aygıtı (GPU adı) gösterir; GPU dosyaları kasıtlı silinince (ör. cuDNN) ya da Chatterbox'a CPU derlemesi kurulunca bileşen CPU'da sessizce çalışmaz, "Hata — Ekran kartı kullanılamıyor" olur ve olay loga Error seviyesinde yazılır. Geliştirici makinesinde (RTX 3060 Laptop, 6 GB) gerçek donanımla da gözlenir.
 - [ ] AC-25 — NVIDIA sürücüsü CUDA 12 için gereken en düşük sürümün altındayken (sahte sürücü sürümüyle) ekran "NVIDIA sürücünüz eski; ekran kartı kullanılamaz — sürücüyü güncelleyin" gösterir ve GPU paketli bileşenlerin kurulumu başlamaz; AMD/Intel kartta Ses klonlama satırı "Bu ekran kartında Ses klonlama CPU'da çalışır; yavaş olabilir" gösterir ve bu durum hata sayılmaz.
 

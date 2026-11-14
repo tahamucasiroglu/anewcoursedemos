@@ -1,8 +1,64 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Konsept.Agent.App"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Default">
+  <!--
+    Ajanın görünümü sitenin turuncu/kahve paletini kullanır (spec 0009 Req 21a/23, R2). Renkler YALNIZCA
+    aşağıdaki iki tema sözlüğünde tanımlanır (site.css'teki K-7 kuralının ajan karşılığı); açık/koyu tema
+    Windows uygulama temasını izler. Tray menüsü Windows'ta Avalonia'nın kendi çizdiği açılır paneldir, bu
+    yüzden Fluent'in menü anahtarları burada palete bağlanır.
+  -->
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <Color x:Key="KonseptBg">#FFF4E6</Color>
+          <Color x:Key="KonseptSurface">#FFFFFF</Color>
+          <Color x:Key="KonseptSurfaceAlt">#F7E6D0</Color>
+          <Color x:Key="KonseptText">#4A2C1D</Color>
+          <Color x:Key="KonseptTextMuted">#6B4A38</Color>
+          <Color x:Key="KonseptBorder">#E2C9A8</Color>
+          <Color x:Key="KonseptPrimary">#B85A1A</Color>
+          <Color x:Key="KonseptOnPrimary">#FFFFFF</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <Color x:Key="KonseptBg">#1E1410</Color>
+          <Color x:Key="KonseptSurface">#2B1D16</Color>
+          <Color x:Key="KonseptSurfaceAlt">#3A281E</Color>
+          <Color x:Key="KonseptText">#F3E6D8</Color>
+          <Color x:Key="KonseptTextMuted">#D4BFA9</Color>
+          <Color x:Key="KonseptBorder">#5A4030</Color>
+          <Color x:Key="KonseptPrimary">#E8772E</Color>
+          <Color x:Key="KonseptOnPrimary">#1E1410</Color>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+
+      <!-- Fluent menü ve pencere anahtarları → palet (tray menüsü, durum penceresi). -->
+      <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="{DynamicResource KonseptSurface}" />
+      <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="{DynamicResource KonseptBorder}" />
+      <SolidColorBrush x:Key="MenuFlyoutItemBackground" Color="Transparent" />
+      <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPointerOver" Color="{DynamicResource KonseptSurfaceAlt}" />
+      <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPressed" Color="{DynamicResource KonseptBorder}" />
+      <SolidColorBrush x:Key="MenuFlyoutItemForeground" Color="{DynamicResource KonseptText}" />
+      <SolidColorBrush x:Key="MenuFlyoutItemForegroundPointerOver" Color="{DynamicResource KonseptText}" />
+      <SolidColorBrush x:Key="MenuFlyoutItemForegroundPressed" Color="{DynamicResource KonseptText}" />
+      <SolidColorBrush x:Key="MenuFlyoutItemForegroundDisabled" Color="{DynamicResource KonseptTextMuted}" />
+      <SolidColorBrush x:Key="MenuFlyoutSeparatorBackground" Color="{DynamicResource KonseptBorder}" />
+      <SolidColorBrush x:Key="KonseptWindowBackground" Color="{DynamicResource KonseptBg}" />
+      <SolidColorBrush x:Key="KonseptWindowForeground" Color="{DynamicResource KonseptText}" />
+      <SolidColorBrush x:Key="KonseptAccentBrush" Color="{DynamicResource KonseptPrimary}" />
+      <Color x:Key="SystemAccentColor">#B85A1A</Color>
+    </ResourceDictionary>
+  </Application.Resources>
   <Application.Styles>
     <FluentTheme />
+    <Style Selector=":is(MenuFlyoutPresenter)">
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="4" />
+    </Style>
+    <Style Selector=":is(MenuItem)">
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="MinHeight" Value="32" />
+    </Style>
   </Application.Styles>
 </Application>

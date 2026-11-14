@@ -11,6 +11,7 @@
   <data name="StateConnected" xml:space="preserve"><value>Sunucuya bağlı</value></data>
   <data name="StateConnecting" xml:space="preserve"><value>Sunucuya bağlanıyor…</value></data>
   <data name="StateDisconnected" xml:space="preserve"><value>Sunucuya bağlı değil</value></data>
+  <data name="TrayStatusFormat" xml:space="preserve"><value>ANEW Konsept · {0}</value></data>
   <data name="ServerLabel" xml:space="preserve"><value>Sunucu</value></data>
   <data name="VersionLabel" xml:space="preserve"><value>Sürüm</value></data>
   <data name="CloseHint" xml:space="preserve"><value>Pencereyi kapatmak ajanı kapatmaz; çıkmak için tray menüsündeki "Çıkış"ı kullanın.</value></data>

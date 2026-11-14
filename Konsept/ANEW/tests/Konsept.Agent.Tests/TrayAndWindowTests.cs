@@ -25,11 +25,45 @@ public sealed class TrayAndWindowTests
         icons.ShouldNotBeNull();
         icons.Count.ShouldBe(1);
         var headers = CurrentApp.TrayMenu!.Items.OfType<NativeMenuItem>()
-            .Where(i => i is not NativeMenuItemSeparator)
+            .Where(i => i is not NativeMenuItemSeparator && i.IsEnabled)
             .Select(i => i.Header)
             .ToList();
         headers.ShouldBe(["Siteye git", "Çıkış"]);
         icons[0].ToolTipText.ShouldBe("ANEW Konsept Ajan");
+    }
+
+    /// <summary>Tray menüsü tıklanamaz bir durum başlığıyla açılır ve bağlantı durumunu canlı gösterir (spec 0009 AC-26).</summary>
+    [AvaloniaFact]
+    public void TrayMenu_StatusHeader_ShowsLiveConnectionState()
+    {
+        var connection = Substitute.For<IServerConnection>();
+        connection.State.Returns(ConnectionState.Disconnected);
+        var status = CurrentApp.TrayStatusItem!;
+        CurrentApp.TrayMenu!.Items[0].ShouldBeSameAs(status);
+        status.IsEnabled.ShouldBeFalse();
+
+        CurrentApp.AttachTrayStatus(Composition(new Uri("http://localhost:8000/"), Substitute.For<IBrowserLauncher>(), connection));
+        status.Header.ShouldBe("ANEW Konsept · Sunucuya bağlı değil");
+
+        connection.StateChanged += Raise.Event<EventHandler<ConnectionState>>(connection, ConnectionState.Connected);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        status.Header.ShouldBe("ANEW Konsept · Sunucuya bağlı");
+        CurrentApp.ShowTrayStatus(ConnectionState.Disconnected);
+    }
+
+    /// <summary>Uygulama teması Windows'u izler ve tray menüsü site paletini kullanır (spec 0009 AC-26).</summary>
+    [AvaloniaFact]
+    public void App_Theme_FollowsSystemAndMenuUsesSitePalette()
+    {
+        CurrentApp.RequestedThemeVariant.ShouldBe(Avalonia.Styling.ThemeVariant.Default);
+
+        CurrentApp.TryGetResource("KonseptPrimary", Avalonia.Styling.ThemeVariant.Light, out var light).ShouldBeTrue();
+        CurrentApp.TryGetResource("KonseptPrimary", Avalonia.Styling.ThemeVariant.Dark, out var dark).ShouldBeTrue();
+        light.ShouldBe(Avalonia.Media.Color.Parse("#B85A1A"));
+        dark.ShouldBe(Avalonia.Media.Color.Parse("#E8772E"));
+        CurrentApp.TryGetResource("MenuFlyoutPresenterBackground", Avalonia.Styling.ThemeVariant.Dark, out var menuBg).ShouldBeTrue();
+        menuBg.ShouldBeOfType<Avalonia.Media.SolidColorBrush>();
     }
 
     /// <summary>"Siteye git" ayarlardaki site adresini varsayılan tarayıcıda açar.</summary>
@@ -41,7 +75,7 @@ public sealed class TrayAndWindowTests
         CurrentApp.Composition = Composition(site, browser, Substitute.For<IServerConnection>());
         try
         {
-            var openSite = CurrentApp.TrayMenu!.Items.OfType<NativeMenuItem>().First();
+            var openSite = CurrentApp.TrayMenu!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Siteye git");
 
             openSite.Command!.Execute(null);
 

@@ -47,10 +47,15 @@ public sealed partial class MainWindow : Window
         base.OnClosing(e);
     }
 
-    private void ShowState(ConnectionState state) => StateText.Text = state switch
+    /// <summary>Bağlantı durumunun kullanıcıya gösterilen metni (pencere ve tray menüsü başlığı ortak kullanır).</summary>
+    /// <param name="state">Bağlantı durumu.</param>
+    /// <returns>Durum metni.</returns>
+    internal static string StateLabel(ConnectionState state) => state switch
     {
         ConnectionState.Connected => AgentText.StateConnected,
         ConnectionState.Connecting => AgentText.StateConnecting,
         _ => AgentText.StateDisconnected,
     };
+
+    private void ShowState(ConnectionState state) => StateText.Text = StateLabel(state);
 }

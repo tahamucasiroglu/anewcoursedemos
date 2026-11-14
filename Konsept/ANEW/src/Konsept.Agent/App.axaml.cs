@@ -1,8 +1,11 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using Avalonia.Threading;
+using Konsept.Agent.Domain.Enums;
 using Konsept.Agent.Resources;
 
 namespace Konsept.Agent;
@@ -21,6 +24,9 @@ public sealed partial class App : Avalonia.Application
 
     /// <summary>Gets tray menüsü.</summary>
     internal NativeMenu? TrayMenu { get; private set; }
+
+    /// <summary>Gets tray menüsünün durum başlığı (tıklanamaz).</summary>
+    internal NativeMenuItem? TrayStatusItem { get; private set; }
 
     /// <summary>Masaüstü yaşam döngüsünü ayarlar: pencere kapanınca uygulama kapanmaz.</summary>
     /// <param name="desktop">Masaüstü yaşam döngüsü.</param>
@@ -44,6 +50,7 @@ public sealed partial class App : Avalonia.Application
             Composition ??= AgentComposition.CreateDefault();
             var window = new MainWindow();
             window.Attach(Composition);
+            AttachTrayStatus(Composition);
             desktop.MainWindow = window;
             window.Show();
             _ = Composition.Connection.StartAsync(CancellationToken.None);
@@ -79,9 +86,36 @@ public sealed partial class App : Avalonia.Application
         }
     }
 
+    /// <summary>Tray menüsünün en üstündeki salt-okunur başlık: uygulama adı ve bağlantı durumu (spec 0009 Req 21a).</summary>
+    /// <param name="state">Bağlantı durumu.</param>
+    internal void ShowTrayStatus(ConnectionState state)
+    {
+        if (TrayStatusItem is not null)
+        {
+            TrayStatusItem.Header = string.Format(CultureInfo.CurrentCulture, AgentText.TrayStatusFormat, MainWindow.StateLabel(state));
+        }
+    }
+
+    /// <summary>Tray menüsü başlığını bileşimin canlı bağlantı durumuna bağlar.</summary>
+    /// <param name="composition">Ajan bileşimi.</param>
+    internal void AttachTrayStatus(AgentComposition composition)
+    {
+        ArgumentNullException.ThrowIfNull(composition);
+        ShowTrayStatus(composition.Connection.State);
+        composition.Connection.StateChanged += (_, state) => Dispatcher.UIThread.Post(() => ShowTrayStatus(state));
+    }
+
     private TrayIcon CreateTrayIcon()
     {
         TrayMenu = new NativeMenu();
+        TrayStatusItem = new NativeMenuItem
+        {
+            IsEnabled = false,
+            Icon = new Avalonia.Media.Imaging.Bitmap(AssetLoader.Open(new Uri("avares://Konsept.Agent/Assets/tray-icon.png"))),
+        };
+        ShowTrayStatus(ConnectionState.Disconnected);
+        TrayMenu.Items.Add(TrayStatusItem);
+        TrayMenu.Items.Add(new NativeMenuItemSeparator());
         TrayMenu.Items.Add(new NativeMenuItem(AgentText.OpenSite) { Command = new DelegateCommand(OpenSite) });
         TrayMenu.Items.Add(new NativeMenuItemSeparator());
         TrayMenu.Items.Add(new NativeMenuItem(AgentText.Exit) { Command = new DelegateCommand(() => _ = ExitAsync()) });
@@ -90,7 +124,7 @@ public sealed partial class App : Avalonia.Application
         {
             ToolTipText = AgentText.AppTitle,
             Menu = TrayMenu,
-            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://Konsept.Agent/Assets/tray-placeholder.png"))),
+            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://Konsept.Agent/Assets/tray-icon.png"))),
         };
         icon.Clicked += (_, _) => ShowMainWindow();
         return icon;
