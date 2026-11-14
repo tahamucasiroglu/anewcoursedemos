@@ -167,7 +167,14 @@ public sealed class SupertonicSpeechEngine : SpeechEngineBase, IDisposable
             Logger.LogWarning("Supertonic 3: GPU yerine CPU kullanılıyor — {Reason}", reason);
         }
 
-        Logger.LogInformation("Supertonic 3 yüklendi ({Provider})", loaded.Provider);
+        if (loaded.Provider == OnnxExecutionProvider.DirectMl)
+        {
+            Logger.LogInformation("Supertonic 3 yüklendi ({Provider}, GPU: {Adapter})", loaded.Provider, sessions.GpuAdapterName ?? "adaptör adı okunamadı");
+        }
+        else
+        {
+            Logger.LogInformation("Supertonic 3 yüklendi ({Provider})", loaded.Provider);
+        }
         return loaded.Value;
     }
 

@@ -90,4 +90,19 @@ public sealed class OnnxProviderSelectionTests
         result.Value.ShouldBe("ORT_ENABLE_ALL");
         result.FallbackReason.ShouldBeNull();
     }
+
+    /// <summary>
+    /// DirectML fabrikası yüksek performanslı ekran kartının adını verir (log "RTX mi tümleşik GPU mu" göstersin); NVIDIA'lı makinede
+    /// NVIDIA kartı (Optimus dizüstüde Intel değil). Sahte fabrika adı bilmez.
+    /// </summary>
+    [Fact]
+    public void DirectMl_factory_names_high_performance_adapter()
+    {
+        new FakeOnnxSessionFactory(NullLogger.Instance, failingProvider: null).GpuAdapterName.ShouldBeNull();
+        Assert.SkipUnless(OperatingSystem.IsWindows() && File.Exists(Path.Combine(Environment.SystemDirectory, "nvidia-smi.exe")), "NVIDIA GPU yok.");
+
+        var name = new DirectMlOnnxSessionFactory(NullLogger<DirectMlOnnxSessionFactory>.Instance).GpuAdapterName;
+
+        name.ShouldNotBeNull().ShouldContain("NVIDIA");
+    }
 }

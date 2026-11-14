@@ -7,6 +7,8 @@
   -->
   <PropertyGroup>
     <RootNamespace>TahaKonsept.Agent.Engines.Speech</RootNamespace>
+    <!-- DxgiAdapterQuery: DXGI COM vtable çağrıları (işlev göstericileri) için; başka yerde unsafe kod yok. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

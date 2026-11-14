@@ -26,6 +26,9 @@ public abstract class OnnxSessionFactoryBase : IOnnxSessionFactory
     /// <summary>Günlükçü.</summary>
     protected ILogger Logger { get; }
 
+    /// <inheritdoc />
+    public virtual string? GpuAdapterName => null;
+
     /// <summary>Denenecek sağlayıcılar (sıralı).</summary>
     /// <param name="preferGpu">GPU isteniyor mu.</param>
     /// <returns>Sağlayıcı sırası.</returns>
