@@ -1,4 +1,6 @@
 using TahaKonsept.BuildingBlocks.Api.Modules.Abstract;
+using TahaKonsept.Modules.Diagnostics.Api;
+using TahaKonsept.Modules.Identity.Api;
 using TahaKonsept.Modules.Profiles.Api;
 
 namespace TahaKonsept.Api.Modules;
@@ -13,12 +15,12 @@ internal static class ApiModules
     /// <returns>Modüller.</returns>
     public static IReadOnlyList<IModule> Create() =>
     [
-        // new IdentityModule(),
+        new IdentityModule(),
         new ProfilesModule(),
         // new ProvidersModule(),
         // new ConceptsModule(),
         // new ProductionModule(),
         // new AgentsModule(),
-        // new DiagnosticsModule(),
+        new DiagnosticsModule(),
     ];
 }

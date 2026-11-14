@@ -4,8 +4,11 @@ using TahaKonsept.Web.Infrastructure.Api;
 using TahaKonsept.Web.Infrastructure.Api.Abstract;
 using TahaKonsept.Web.Infrastructure.Auth.Abstract;
 using TahaKonsept.Web.Models;
-using TahaKonsept.Web.Models.Api;
 using TahaKonsept.Web.Services.Account.Base;
+using ApiLoginRequest = TahaKonsept.Shared.Contracts.Identity.LoginRequest;
+using ApiSetupRequest = TahaKonsept.Shared.Contracts.Identity.SetupRequest;
+using LoginRequest = TahaKonsept.Web.Models.LoginRequest;
+using SetupRequest = TahaKonsept.Web.Models.SetupRequest;
 
 namespace TahaKonsept.Web.Services.Account.Concrete;
 
@@ -41,9 +44,9 @@ public sealed class AccountService : AccountServiceBase
             return Invalid("Kullanıcı adı ve parola gerekli.");
         }
 
-        var result = await Api.PostAsync<IdentityLoginRequest, TokenResponse>(
+        var result = await Api.PostAsync<ApiLoginRequest, TokenResponse>(
             "api/identity/login",
-            new IdentityLoginRequest { UserName = request.UserName.Trim(), Password = request.Password },
+            new ApiLoginRequest { UserName = request.UserName.Trim(), Password = request.Password },
             ct);
 
         if (!result.IsSuccess)
@@ -76,9 +79,9 @@ public sealed class AccountService : AccountServiceBase
             return Invalid("Parolalar eşleşmiyor.");
         }
 
-        var result = await Api.PostAsync<IdentitySetupRequest, JsonElement>(
+        var result = await Api.PostAsync<ApiSetupRequest, JsonElement>(
             "api/identity/setup",
-            new IdentitySetupRequest { UserName = request.UserName.Trim(), Password = request.Password },
+            new ApiSetupRequest { UserName = request.UserName.Trim(), Password = request.Password },
             ct);
 
         if (!result.IsSuccess)

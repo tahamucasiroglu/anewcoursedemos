@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Identity uygulama katmanı: kurulum/giriş/yenileme, token verme/iptal, kullanıcı dizini, tercihler. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Identity.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Identity.Domain\TahaKonsept.Modules.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" />
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+</Project>

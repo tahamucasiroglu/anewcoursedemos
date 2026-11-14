@@ -6,7 +6,6 @@ using TahaKonsept.Shared.Contracts.Identity;
 using TahaKonsept.Web.Infrastructure.Api.Abstract;
 using TahaKonsept.Web.Infrastructure.Auth.Abstract;
 using TahaKonsept.Web.Infrastructure.Auth.Base;
-using TahaKonsept.Web.Models.Api;
 
 namespace TahaKonsept.Web.Infrastructure.Auth.Concrete;
 
@@ -37,7 +36,7 @@ public sealed class ApiTokenRefresher : TokenRefresherBase
     protected override async Task<TokenResponse?> RequestRefreshAsync(string refreshToken, CancellationToken ct)
     {
         var http = _httpClientFactory.CreateClient(HttpClientName);
-        using var response = await http.PostAsJsonAsync("api/identity/refresh", new IdentityRefreshRequest { RefreshToken = refreshToken }, JsonOptions, ct);
+        using var response = await http.PostAsJsonAsync("api/identity/refresh", new RefreshRequest { RefreshToken = refreshToken }, JsonOptions, ct);
         if (!response.IsSuccessStatusCode)
         {
             if ((int)response.StatusCode >= 500)

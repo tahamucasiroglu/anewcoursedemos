@@ -15,11 +15,23 @@
     <Project Path="src/BuildingBlocks/TahaKonsept.Shared.Contracts/TahaKonsept.Shared.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Domain/TahaKonsept.Modules.Identity.Domain.csproj" />
+    <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Application/TahaKonsept.Modules.Identity.Application.csproj" />
+    <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Infrastructure/TahaKonsept.Modules.Identity.Infrastructure.csproj" />
+    <Project Path="src/Modules/Identity/TahaKonsept.Modules.Identity.Api/TahaKonsept.Modules.Identity.Api.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Profiles/">
     <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Domain/TahaKonsept.Modules.Profiles.Domain.csproj" />
     <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Application/TahaKonsept.Modules.Profiles.Application.csproj" />
     <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Infrastructure/TahaKonsept.Modules.Profiles.Infrastructure.csproj" />
     <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Api/TahaKonsept.Modules.Profiles.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Diagnostics/">
+    <Project Path="src/Modules/Diagnostics/TahaKonsept.Modules.Diagnostics.Domain/TahaKonsept.Modules.Diagnostics.Domain.csproj" />
+    <Project Path="src/Modules/Diagnostics/TahaKonsept.Modules.Diagnostics.Application/TahaKonsept.Modules.Diagnostics.Application.csproj" />
+    <Project Path="src/Modules/Diagnostics/TahaKonsept.Modules.Diagnostics.Infrastructure/TahaKonsept.Modules.Diagnostics.Infrastructure.csproj" />
+    <Project Path="src/Modules/Diagnostics/TahaKonsept.Modules.Diagnostics.Api/TahaKonsept.Modules.Diagnostics.Api.csproj" />
   </Folder>
   <Folder Name="/src/Hosts/">
     <Project Path="src/Hosts/TahaKonsept.Api/TahaKonsept.Api.csproj" />
@@ -31,6 +43,8 @@
   <Folder Name="/tests/">
     <Project Path="tests/TahaKonsept.ArchitectureTests/TahaKonsept.ArchitectureTests.csproj" />
     <Project Path="tests/TahaKonsept.IntegrationTests/TahaKonsept.IntegrationTests.csproj" />
+    <Project Path="tests/TahaKonsept.Modules.Diagnostics.Tests/TahaKonsept.Modules.Diagnostics.Tests.csproj" />
+    <Project Path="tests/TahaKonsept.Modules.Identity.Tests/TahaKonsept.Modules.Identity.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Profiles.Tests/TahaKonsept.Modules.Profiles.Tests.csproj" />
   </Folder>
 </Solution>

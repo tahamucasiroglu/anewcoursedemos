@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Identity modülü birim testleri: tek seferlik kurulum, giriş, refresh rotasyonu + tekrar kullanım, logout-all (ajan dahil), yasak (EF InMemory, DB gerekmez). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Identity.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Identity\TahaKonsept.Modules.Identity.Infrastructure\TahaKonsept.Modules.Identity.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

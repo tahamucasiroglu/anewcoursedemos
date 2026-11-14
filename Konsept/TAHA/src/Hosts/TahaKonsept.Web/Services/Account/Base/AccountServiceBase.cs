@@ -4,6 +4,8 @@ using TahaKonsept.Web.Infrastructure.Api.Abstract;
 using TahaKonsept.Web.Infrastructure.Auth.Abstract;
 using TahaKonsept.Web.Models;
 using TahaKonsept.Web.Services.Account.Abstract;
+using LoginRequest = TahaKonsept.Web.Models.LoginRequest;
+using SetupRequest = TahaKonsept.Web.Models.SetupRequest;
 
 namespace TahaKonsept.Web.Services.Account.Base;
 
