@@ -45,7 +45,7 @@ public static partial class SecretMasker
         "password", "passwords", "passwd", "secret", "secrets", "token", "pairingcode", "servicekey", "privatekey",
         "credential", "credentials", "secretkey", "accesskey", "signingkey", "accountkey", "authorization", "cookie",
         "passphrase", "pwd", "refreshtokens", "accesstokens", "idtokens", "authtokens", "bearertokens", "sessiontokens", "paircode",
-        "pairingpin", "encryptionkey", "masterkey", "clientkey", "apisecret", "sessionid", "sessionkey",
+        "pairingpin", "encryptionkey", "masterkey", "clientkey", "apisecret", "sessionid", "sessionkey", "session", "ticket", "salt", "pwdhash", "passhash",
     ];
 
     // Türkçe kökler (ad içinde geçerse): spec 0008/0012'deki adlar — şifre, parola, onay sırrı, oturum/yenileme

@@ -119,11 +119,13 @@ internal static class SecretKeyValueScanner
             // API key ve URL sorgu değeri boşluk içermez: tırnaksız değer ilk boşlukta (ya da ayraçta) biter, tarama
             // sonrasında sürer (H3-A; hunt r11: "?access_token=x - 10 ms" satırın kalanı korunur); satır sonuna kadar
             // okunmaz (hunt r4, perf).
-            // Sorgu değeri yalnızca boşluk/&/#'te biter (",;')" bir şifrede olabilir, hunt r12); API key ayrıca ayraçlarda.
+            // Sorgu değeri boşluk/&/#'te biter (",;')<>" bir şifrede olabilir, hunt r12/r14); '"' yalnızca JSON dizesini
+            // kapatıyorsa (ardından , } ] boşluk ya da son) biter (review r13, L-2). API key ayrıca ayraçlarda.
             var query = !apiKey;
             start = end = valueStart;
             while (end < text.Length && !char.IsWhiteSpace(text[end])
-                && (query ? text[end] is not ('&' or '#' or '"' or '<' or '>') : text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')')))
+                && (query ? text[end] is not ('&' or '#') && !(text[end] == '"' && ClosesJsonString(text, end))
+                    : text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')')))
             {
                 end++;
             }
@@ -326,6 +328,10 @@ internal static class SecretKeyValueScanner
         return end < text.Length && char.IsLetter(text[end]) ? -1 : end;
     }
 
+    /// <summary>Konumdaki '"' bir JSON dizesini kapatıyor mu: ardından , } ] boşluk ya da metin sonu.</summary>
+    private static bool ClosesJsonString(string text, int quote) =>
+        quote + 1 >= text.Length || char.IsWhiteSpace(text[quote + 1]) || text[quote + 1] is ',' or '}' or ']';
+
     private static bool IsCookieKey(string text, int keyStart, int keyEnd) =>
         SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]).EndsWith("cookie", StringComparison.Ordinal);
 
@@ -339,9 +345,14 @@ internal static class SecretKeyValueScanner
         }
 
         // 'cookie ".AspNetCore.Antiforgery…"' çerez adıdır, değer değil (hunt r9); --cookie ve cookie "x" gizlenir (review r9, M-2).
+        // Yalnızca '=' içermeyen yalın ad: cookie '.AspNetCore.Session=CfDJ8…' gizlenir (hunt r14).
         if (text[keyStart] != '-' && IsCookieKey(text, keyStart, keyEnd) && p + 1 < text.Length && text[p] is '"' or '\'' && text[p + 1] == '.')
         {
-            return keyEnd;
+            var closeQuote = text.IndexOf(text[p], p + 1);
+            if (closeQuote > p && text.IndexOf('=', p + 1, closeQuote - p - 1) < 0)
+            {
+                return keyEnd;
+            }
         }
 
         // SQL dize önekleri: E'…' / N'…' / U&'…' (PostgreSQL, SQL Server) ve $$…$$ (hunt r3).
@@ -931,16 +942,16 @@ internal static class SecretKeyValueScanner
 
         if (text[pos] is '{' or '[' && !connectionString && bracketClose >= 0)
         {
-            // Kapanış değeri bitirmiyor ("{Blue,Sky:2024}!", "{Hunter}2024", "{redacted}."): ayraç ve hemen ardındaki
-            // boşluksuz kuyruk birlikte gizlenir; içteki ayırıcılarda durulmaz, sonraki düzyazı korunur (hunt r13).
+            // Kapanış değeri bitirmiyor ("{Blue,Sky:2024}!", "{Hunter}2024 x9!"): ayraç içindeki ayırıcılar atlanır,
+            // kapanıştan sonrası serbest metin kuralıyla (", Ad=" ya da satır sonu) okunur — kuyruk açıkta kalmaz (hunt r13, review r13 L-1).
             var tail = bracketClose + 1;
-            while (tail < bracketLineEnd && !char.IsWhiteSpace(text[tail])
-                && !(text[tail] is ',' or ';' && tail + 1 < bracketLineEnd && text[tail + 1] == ' '))
+            while (tail < text.Length && !IsValueEnd(text, tail, pos, connectionString: false, urlEncoded))
             {
                 tail++;
             }
 
-            return (pos, tail, tail);
+            var trimmedTail = Trim(text, pos, tail);
+            return (pos, trimmedTail, trimmedTail);
         }
 
         var end = pos;

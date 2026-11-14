@@ -251,10 +251,19 @@ public sealed class SecretMaskerTests
         // Review r12 / hunt r13 (fix-14): sorgu değeri tırnakta biter; ayraç + kuyruk; ",ad=" şifrede; tek tırnaklı çerez adı.
         { "{\"url\":\"/cb?token=abc123def\",\"user\":\"ali\",\"status\":401}", "{\"url\":\"/cb?token=***\",\"user\":\"ali\",\"status\":401}", "abc123def" },
         { "Password = {Blue,Sky:2024}!", "Password = ***", "Sky:2024" },
-        { "Password: {redacted}. Login failed for user bob from 10.0.0.5", "Password: *** Login failed for user bob from 10.0.0.5", "\u0000" },
+        { "Password: {redacted}. Login failed for user bob from 10.0.0.5", "Password: ***", "\u0000" },
         { "password=Pa55,w0rd=Q!zSecret user=42", "password=***", "Q!zSecret" },
         { "Login: Email = ali@example.com, Password = Ab,cd=Ef12345, Remember = False", "Login: Email = ali@example.com, Password = ***, Remember = False", "Ef12345" },
         { "The cookie '.AspNetCore.Cookies' has set 'SameSite=None' and must also set 'Secure'.", "The cookie '.AspNetCore.Cookies' has set 'SameSite=None' and must also set 'Secure'.", "\u0000" },
+
+        // Review r13 / hunt r14 (fix-15): ayraç kuyruğu serbest metin kuralıyla; sorgu '"' yalnızca JSON kapanışı; çerez adı + değer; oturum/bilet/tuz adları.
+        { "Password = {Hunter}2024 x9!", "Password = ***", "x9!" },
+        { "Password = {Hunter}2024, x9!", "Password = ***", "x9!" },
+        { "GET /cb?password=Ab\"cd123 HTTP/1.1", "GET /cb?password=*** HTTP/1.1", "cd123" },
+        { "Appending cookie '.AspNetCore.Session=CfDJ8SessAbc12345' to response", "Appending cookie '***' to response", "CfDJ8Sess" },
+        { "Session cookie issued: konsept_session=Zx9Yw8Vu7Ts6Rq5Po4; HttpOnly; Secure", "Session cookie issued: konsept_session=***", "Zx9Yw8Vu7" },
+        { "Ticket for user 42 renewed: ticket=CfDJ8NrAkS1abc", "Ticket for user 42 renewed: ticket=***", "CfDJ8NrAk" },
+        { "Salt=Zm9vYmFyYmF6cXV4MTIz, Iterations=600000", "Salt=***, Iterations=600000", "Zm9vYmFy" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
