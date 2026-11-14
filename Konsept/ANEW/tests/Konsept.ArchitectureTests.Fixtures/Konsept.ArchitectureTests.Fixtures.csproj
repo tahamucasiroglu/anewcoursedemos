@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Mimari kurallarının kırmızıya dönebildiğini kanıtlayan KASITLI ihlaller. Ürün kodu değildir;
+       mimari testleri bu derlemeyi ürün kümesinden ayrı yükler (plan 0001, R-4). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);SA0001;CS1591;SA1402;SA1649;CA1822;CA1823;CS0169;CS0649;IDE0051;IDE0052</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+</Project>
