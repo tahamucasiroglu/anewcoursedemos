@@ -219,6 +219,9 @@ public sealed partial class HyperFramesVideoEngine : NodeVideoEngineBase
     {
         var env = base.BuildEnvironment();
         env["HYPERFRAMES_NO_TELEMETRY"] = "1";
+
+        // Tarayıcı GPU kipi CLI bayrağıyla seçilir (GpuArguments); ortamdan gelen PRODUCER_BROWSER_GPU_MODE=software "Önce GPU"yu ezmesin.
+        env["PRODUCER_BROWSER_GPU_MODE"] = "auto";
         env["HYPERFRAMES_SKIP_SKILLS"] = "1";
         env["HYPERFRAMES_CACHE_DIR"] = CacheDir;
         if (env.TryGetValue("FFMPEG_PATH", out var ffmpeg))
@@ -263,8 +266,18 @@ public sealed partial class HyperFramesVideoEngine : NodeVideoEngineBase
         return new SceneProject(dir, Path.Combine(dir, "assets"), entry, DeleteAfterRender: false);
     }
 
+    /// <summary>
+    /// GPU argümanları ("Önce GPU"): GPU açıkken <c>--gpu</c> (HyperFrames kullanılabilir GPU kodlayıcıyı — NVENC — kendisi yoklar, yoksa
+    /// libx264) ve tarayıcı GPU'su HyperFrames varsayılanı olan <c>auto</c> kalır (WebGL yoklaması; donanım varsa ANGLE/D3D11 +
+    /// GPU rasterleştirme, yoksa SwiftShader ve "browserGpuMode probe → software" satırı — taban sınıf bunu uyarı olarak loglar).
+    /// CPU yedeğinde <c>--no-browser-gpu</c> (SwiftShader) ve yazılım kodlayıcı.
+    /// </summary>
+    /// <param name="useGpu">GPU açık mı.</param>
+    /// <returns>Argümanlar.</returns>
+    public static IReadOnlyList<string> GpuArguments(bool useGpu) => useGpu ? ["--gpu"] : ["--no-browser-gpu"];
+
     /// <inheritdoc />
-    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request) =>
+    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request, bool useGpu) =>
         new List<string>
         {
             CliPath, "render", project.ProjectDir,
@@ -273,7 +286,7 @@ public sealed partial class HyperFramesVideoEngine : NodeVideoEngineBase
             "--quality", "looks",
             "--format", "mp4",
             "--strict",
-        };
+        }.Concat(GpuArguments(useGpu)).ToList();
 
     private static Dictionary<string, string> BuildDependencies()
     {

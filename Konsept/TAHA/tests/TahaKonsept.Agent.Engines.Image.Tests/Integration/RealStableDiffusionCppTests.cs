@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using Shouldly;
+using TahaKonsept.Agent.Abstractions.Gpu.Concrete;
 using TahaKonsept.Agent.Abstractions.Image;
 using TahaKonsept.Agent.Engines.Image.Gpu.Concrete;
 using TahaKonsept.Agent.Engines.Image.Options;

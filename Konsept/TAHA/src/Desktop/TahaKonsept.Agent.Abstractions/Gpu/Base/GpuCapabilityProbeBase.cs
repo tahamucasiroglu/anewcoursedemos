@@ -1,6 +1,6 @@
-using TahaKonsept.Agent.Engines.Image.Gpu.Abstract;
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
 
-namespace TahaKonsept.Agent.Engines.Image.Gpu.Base;
+namespace TahaKonsept.Agent.Abstractions.Gpu.Base;
 
 /// <summary>Sistem klasöründe sürücü DLL'lerinin varlığına bakan yoklama tabanı; alt sınıf <see cref="SystemDirectory"/> sağlar.</summary>
 public abstract class GpuCapabilityProbeBase : IGpuCapabilityProbe

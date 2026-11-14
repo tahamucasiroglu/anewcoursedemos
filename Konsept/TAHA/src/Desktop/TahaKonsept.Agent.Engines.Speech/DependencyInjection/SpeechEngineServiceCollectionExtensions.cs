@@ -1,14 +1,22 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
+using TahaKonsept.Agent.Abstractions.Gpu.Concrete;
 using TahaKonsept.Agent.Abstractions.Speech.Abstract;
 using TahaKonsept.Agent.Engines.Speech.Base;
 using TahaKonsept.Agent.Engines.Speech.Concrete;
 using TahaKonsept.Agent.Engines.Speech.Concrete.Python;
+using TahaKonsept.Agent.Engines.Speech.Devices.Abstract;
+using TahaKonsept.Agent.Engines.Speech.Devices.Concrete;
+using TahaKonsept.Agent.Engines.Speech.Onnx.Abstract;
+using TahaKonsept.Agent.Engines.Speech.Onnx.Concrete;
 
 namespace TahaKonsept.Agent.Engines.Speech.DependencyInjection;
 
 /// <summary>
-/// Yerel ses motorlarının DI kaydı. <see cref="AddSpeechEngines"/>: indirme HTTP istemcisi, <see cref="SpeechEngineServices"/> ve
+/// Yerel ses motorlarının DI kaydı. <see cref="AddSpeechEngines"/>: indirme HTTP istemcisi, "Önce GPU" yardımcıları
+/// (<see cref="IGpuCapabilityProbe"/>, <see cref="ITorchDeviceSelector"/> → <see cref="NvidiaTorchDeviceSelector"/>,
+/// <see cref="IOnnxSessionFactory"/> → <see cref="DirectMlOnnxSessionFactory"/>), <see cref="SpeechEngineServices"/> ve
 /// 14 motoru tekil (singleton) olarak hem somut türüyle hem <see cref="ISpeechEngine"/> olarak kaydeder.
 /// Ön koşul: <c>IAgentPaths</c>, <c>IToolLocator</c>, <c>IProcessRunner</c> ve loglama başka yerde (Agent.Core) kayıtlı olmalı.
 /// </summary>
@@ -26,6 +34,9 @@ public static class SpeechEngineServiceCollectionExtensions
             client.DefaultRequestHeaders.UserAgent.ParseAdd("TahaKonsept-Agent/1.0");
         });
         services.AddLogging();
+        services.TryAddSingleton<IGpuCapabilityProbe, WindowsGpuCapabilityProbe>();
+        services.TryAddSingleton<ITorchDeviceSelector, NvidiaTorchDeviceSelector>();
+        services.TryAddSingleton<IOnnxSessionFactory, DirectMlOnnxSessionFactory>();
         services.TryAddSingleton<SpeechEngineServices>();
 
         AddEngine<SupertonicSpeechEngine>(services);

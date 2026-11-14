@@ -4,7 +4,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 
 /// <summary>
 /// EMA Lightning (Apache-2.0, ~34 MB, HF <c>canberkkkkkk/ema-lightning</c>, pip <c>ema-lightning</c>). Sadece Türkçe, tek ses,
-/// CPU'da gerçek zamandan hızlı, 48 kHz. Model kartı sentetik ses bildirimi ister.
+/// 48 kHz. Model kartı sentetik ses bildirimi ister. "Önce GPU": GPU varsa CUDA torch tekerleği, model <c>cuda</c>'da ve CUDA grafik
+/// hızlandırması (<c>lightning()</c>) denenir; GPU yoksa uyarıyla CPU (CPU'da da gerçek zamandan hızlı).
 /// </summary>
 public sealed class EmaLightningSpeechEngine : PythonSpeechEngineBase
 {
@@ -43,4 +44,7 @@ public sealed class EmaLightningSpeechEngine : PythonSpeechEngineBase
 
     /// <inheritdoc />
     public override IReadOnlyList<string> Requirements => Packages;
+
+    /// <summary>GPU seçildiyse torch 2.8.0 CUDA 12.8 tekerleği (GPU yoksa CPU tekerleği; parmak izi değişince yeniden kurulur).</summary>
+    public override string? TorchIndexUrl => CudaTorchIndex(TorchCu128Index);
 }

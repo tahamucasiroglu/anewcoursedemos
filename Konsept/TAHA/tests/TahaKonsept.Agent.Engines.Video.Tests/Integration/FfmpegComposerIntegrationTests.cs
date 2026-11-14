@@ -5,6 +5,7 @@ using TahaKonsept.Agent.Abstractions.Compose;
 using TahaKonsept.Agent.Abstractions.Processes;
 using TahaKonsept.Agent.Abstractions.Tools;
 using TahaKonsept.Agent.Engines.Video.Compose.Concrete;
+using TahaKonsept.Agent.Engines.Video.Compose.Encoding.Concrete;
 using TahaKonsept.Agent.Engines.Video.Media.Concrete;
 using TahaKonsept.Agent.Engines.Video.Subtitles.Concrete;
 using TahaKonsept.Agent.Engines.Video.Tests.Support;
@@ -15,6 +16,7 @@ namespace TahaKonsept.Agent.Engines.Video.Tests.Integration;
 /// <summary>
 /// Gerçek ffmpeg ile birleştirme: kısa sahne son kareyle uzatılır, süreler toplanır, altyazı + çubuk + ses + küçük resim.
 /// Klasör adında boşluk, tırnak ve virgül var (Windows filtre yolu kaçışı da sınanır). ffmpeg yoksa atlanır.
+/// "Önce GPU": gerçek kodlayıcı seçici kullanılır (NVENC varsa GPU'da, yoksa uyarıyla libx264).
 /// </summary>
 public sealed class FfmpegComposerIntegrationTests
 {
@@ -144,7 +146,13 @@ public sealed class FfmpegComposerIntegrationTests
     }
 
     private FfmpegComposer CreateComposer() =>
-        new(_tools, _runner, new FfprobeMediaProbe(_tools, _runner), new AssKaraokeSubtitleWriter(), NullLogger<FfmpegComposer>.Instance);
+        new(
+            _tools,
+            _runner,
+            new FfprobeMediaProbe(_tools, _runner),
+            new AssKaraokeSubtitleWriter(),
+            new FfmpegNvencEncoderSelector(_runner, NullLogger<FfmpegNvencEncoderSelector>.Instance),
+            NullLogger<FfmpegComposer>.Instance);
 
     private async Task<double> OrangeBarWidth(string video, double atSec, int width, string dir)
     {

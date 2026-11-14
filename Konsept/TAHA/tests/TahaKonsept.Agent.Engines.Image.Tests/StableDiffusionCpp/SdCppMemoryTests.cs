@@ -1,5 +1,6 @@
 using NSubstitute;
 using Shouldly;
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
 using TahaKonsept.Agent.Abstractions.Image;
 using TahaKonsept.Agent.Abstractions.Processes;
 using TahaKonsept.Agent.Abstractions.Processes.Abstract;

@@ -7,7 +7,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Python.Protocol;
 /// <summary>
 /// JSON-lines protokolü (durumsuz): istek fabrikaları (<see cref="Ping"/>, <see cref="Load"/>, <see cref="Synth"/>, <see cref="Quit"/>),
 /// tek satıra serileştirme (<see cref="Serialize"/>) ve yanıt satırı ayrıştırma (<see cref="TryParseResponse"/>; JSON olmayan
-/// ya da <c>ok</c> alanı olmayan satırlar log satırı sayılır).
+/// ya da <c>ok</c> alanı olmayan satırlar log satırı sayılır). stderr'de <see cref="WarningPrefix"/> ile başlayan satırlar
+/// (ör. GPU'dan CPU'ya düşüş) <see cref="IsWarningLine"/> ile tanınır ve <c>Warning</c> seviyesinde loglanır.
 /// </summary>
 public static class WorkerProtocol
 {
@@ -23,12 +24,21 @@ public static class WorkerProtocol
     /// <summary>Quit komutu adı.</summary>
     public const string QuitCommand = "quit";
 
+    /// <summary>Adapter'ların stderr'e yazdığı uyarı satırı öneki (<c>adapters/_common.py</c> <c>warn()</c>).</summary>
+    public const string WarningPrefix = "[taha:warn]";
+
     private static readonly JsonSerializerOptions Options = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         WriteIndented = false,
     };
+
+    /// <summary>stderr satırı adapter uyarısı mı (<see cref="WarningPrefix"/> ile başlıyor mu).</summary>
+    /// <param name="line">stderr satırı.</param>
+    /// <returns>Uyarıysa <c>true</c>.</returns>
+    public static bool IsWarningLine(string? line) =>
+        line is not null && line.TrimStart().StartsWith(WarningPrefix, StringComparison.Ordinal);
 
     /// <summary>Ping isteği.</summary>
     /// <returns>İstek.</returns>

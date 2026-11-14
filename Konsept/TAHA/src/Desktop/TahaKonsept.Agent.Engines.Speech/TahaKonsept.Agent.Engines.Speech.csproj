@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Yerel seslendirme motorları (ISpeechEngine): Supertonic 3 (ONNX Runtime, doğrudan C#) ve
+    Yerel seslendirme motorları (ISpeechEngine): Supertonic 3 (ONNX Runtime DirectML → CPU yedeği, doğrudan C#) ve
     gömülü Python + uv venv + PythonWorkers/tts_worker.py (JSON-lines) üzerinden çalışan Python motorları.
     Kayıt: services.AddSpeechEngines().
   -->
@@ -14,8 +14,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" />
+    <!--
+      DirectML.dll: Microsoft.AI.DirectML kendi hedefleriyle yalnız PlatformTarget=x64 iken (ve hata ayıklama katmanıyla birlikte) kopyalar;
+      AnyCPU geliştirme derlemesinde hiç kopyalamaz ve ORT eski sistem DirectML.dll'ine düşer. Bu yüzden paketin build varlıkları kapatılır
+      ve yalnız x64 DirectML.dll açıkça çıktıya konur (ProjectReference ile ajanın çıktısına ve yayınına da akar). Ajan yalnız win-x64 yayınlanır.
+    -->
+    <PackageReference Include="Microsoft.AI.DirectML" GeneratePathProperty="true" ExcludeAssets="build" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(PkgMicrosoft_AI_DirectML)\bin\x64-win\DirectML.dll" Link="DirectML.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

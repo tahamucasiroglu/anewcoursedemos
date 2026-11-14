@@ -4,7 +4,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 
 /// <summary>
 /// Ahenk Cep (ağırlıklar CC BY 4.0): 8.6M parametreli öğrenci model (HF <c>ozgurguler/ahenk-cep-tr</c>, EMA Lightning 1.1.2 tabanlı).
-/// Sadece Türkçe, CPU. Git ile paket kurar (sistemde git gerekir).
+/// Sadece Türkçe. Git ile paket kurar (sistemde git gerekir). "Önce GPU": GPU varsa CUDA torch tekerleği + model <c>cuda</c>'da;
+/// yoksa uyarıyla CPU.
 /// </summary>
 public sealed class AhenkCepSpeechEngine : PythonSpeechEngineBase
 {
@@ -53,4 +54,7 @@ public sealed class AhenkCepSpeechEngine : PythonSpeechEngineBase
 
     /// <inheritdoc />
     public override IReadOnlyList<string> Requirements => Packages;
+
+    /// <summary>GPU seçildiyse torch 2.8.0 CUDA 12.8 tekerleği (GPU yoksa CPU tekerleği; parmak izi değişince yeniden kurulur).</summary>
+    public override string? TorchIndexUrl => CudaTorchIndex(TorchCu128Index);
 }

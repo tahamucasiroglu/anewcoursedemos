@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
 using TahaKonsept.Agent.Abstractions.Paths.Abstract;
 using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 using TahaKonsept.Agent.Engines.Image.Catalog.Abstract;

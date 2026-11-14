@@ -3,7 +3,7 @@
 lang -> KPipeline lang_code: en a (US) / en-gb b, es e, fr f, hi h, it i, ja j, pt p, zh z.
 """
 
-from adapters._common import resolve_device, write_wav
+from adapters._common import load_on_device, resolve_device, write_wav
 
 _LANG_CODES = {"en": "a", "en-us": "a", "en-gb": "b", "es": "e", "fr": "f", "hi": "h", "it": "i", "ja": "j", "pt": "p", "zh": "z"}
 _DEFAULT_VOICES = {
@@ -24,7 +24,11 @@ class KokoroAdapter:
         if code not in self.pipelines:
             from kokoro import KPipeline
 
-            self.pipelines[code] = KPipeline(lang_code=code, repo_id=self.repo, device=self.device)
+            # GPU-first: the pipeline (model) goes to cuda; out of VRAM / driver error -> reported CPU fallback.
+            pipeline, self.device = load_on_device(
+                lambda dev: KPipeline(lang_code=code, repo_id=self.repo, device=dev), self.device, "Kokoro"
+            )
+            self.pipelines[code] = pipeline
         return self.pipelines[code]
 
     def synth(self, text, lang, voice, ref_audio, speed, out):

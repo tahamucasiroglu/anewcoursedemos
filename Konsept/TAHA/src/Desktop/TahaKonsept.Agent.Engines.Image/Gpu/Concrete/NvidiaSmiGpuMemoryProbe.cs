@@ -1,3 +1,4 @@
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
 using TahaKonsept.Agent.Abstractions.Processes;
 using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 using TahaKonsept.Agent.Engines.Image.Gpu.Abstract;

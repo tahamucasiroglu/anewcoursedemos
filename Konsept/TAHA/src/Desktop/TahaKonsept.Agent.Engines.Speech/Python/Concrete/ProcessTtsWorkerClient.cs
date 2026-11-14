@@ -2,12 +2,13 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using TahaKonsept.Agent.Engines.Speech.Python.Base;
+using TahaKonsept.Agent.Engines.Speech.Python.Protocol;
 
 namespace TahaKonsept.Agent.Engines.Speech.Python.Concrete;
 
 /// <summary>
 /// <c>tts_worker.py</c>'yi venv Python'u ile ayrı süreç olarak başlatır (<see cref="Start"/>); stdin/stdout UTF-8 protokol kanalı,
-/// stderr satırları loga akar (son 20 satır hata mesajında kullanılır). Kapatırken <c>quit</c> yerine süreç ağacını öldürür.
+/// stderr satırları loga akar (son 20 satır hata mesajında kullanılır; <c>[taha:warn]</c> satırları <c>Warning</c>, diğerleri <c>Debug</c>). Kapatırken <c>quit</c> yerine süreç ağacını öldürür.
 /// </summary>
 public sealed class ProcessTtsWorkerClient : TtsWorkerClientBase
 {
@@ -145,6 +146,13 @@ public sealed class ProcessTtsWorkerClient : TtsWorkerClientBase
             {
                 _stderrTail.Dequeue();
             }
+        }
+
+        if (WorkerProtocol.IsWarningLine(line))
+        {
+            // Adapter uyarıları (ör. "cuda istendi ama torch GPU görmüyor, CPU'ya düşülüyor") sessiz kalmasın.
+            Logger.LogWarning("tts_worker: {Line}", line.Trim());
+            return;
         }
 
         Logger.LogDebug("tts_worker stderr: {Line}", line);

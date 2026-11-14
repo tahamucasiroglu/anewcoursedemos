@@ -4,7 +4,7 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 
 /// <summary>
 /// Meta MMS-TTS Türkçe (VITS, HF <c>facebook/mms-tts-tur</c>, transformers <c>VitsModel</c>). Lisans cc-by-nc-4.0.
-/// Sadece Türkçe, CPU, 16 kHz.
+/// Sadece Türkçe, 16 kHz. "Önce GPU": GPU varsa CUDA torch tekerleği + model <c>cuda</c>'da; yoksa uyarıyla CPU.
 /// </summary>
 public sealed class MmsTurkishSpeechEngine : PythonSpeechEngineBase
 {
@@ -46,4 +46,7 @@ public sealed class MmsTurkishSpeechEngine : PythonSpeechEngineBase
 
     /// <inheritdoc />
     public override IReadOnlyList<string> Requirements => Packages;
+
+    /// <summary>GPU seçildiyse torch 2.8.0 CUDA 12.8 tekerleği (GPU yoksa CPU tekerleği; parmak izi değişince yeniden kurulur).</summary>
+    public override string? TorchIndexUrl => CudaTorchIndex(TorchCu128Index);
 }

@@ -6,6 +6,8 @@ using TahaKonsept.Agent.Abstractions.Engines.Abstract;
 using TahaKonsept.Agent.Abstractions.Video.Abstract;
 using TahaKonsept.Agent.Engines.Video.Align.Concrete;
 using TahaKonsept.Agent.Engines.Video.Compose.Concrete;
+using TahaKonsept.Agent.Engines.Video.Compose.Encoding.Abstract;
+using TahaKonsept.Agent.Engines.Video.Compose.Encoding.Concrete;
 using TahaKonsept.Agent.Engines.Video.Engines.Concrete;
 using TahaKonsept.Agent.Engines.Video.Media.Abstract;
 using TahaKonsept.Agent.Engines.Video.Media.Concrete;
@@ -24,7 +26,8 @@ public static class VideoEnginesServiceCollectionExtensions
 {
     /// <summary>
     /// Kaydeder: <see cref="IVideoEngine"/> ×3 (HyperFrames, Remotion, Revideo; ayrıca <see cref="IAgentEngine"/> ve somut türleriyle),
-    /// <see cref="IComposer"/> (<see cref="FfmpegComposer"/>), <see cref="IAligner"/> (<see cref="ProportionalAligner"/>),
+    /// <see cref="IComposer"/> (<see cref="FfmpegComposer"/>), <see cref="IVideoEncoderSelector"/> (<see cref="FfmpegNvencEncoderSelector"/>,
+    /// NVENC → libx264), <see cref="IAligner"/> (<see cref="ProportionalAligner"/>),
     /// <see cref="IMediaProbe"/>, <see cref="ISceneCodeGuard"/>, <see cref="ICaptionSubtitleWriter"/>. Tümü singleton.
     /// </summary>
     /// <param name="services">Servis koleksiyonu.</param>
@@ -39,6 +42,7 @@ public static class VideoEnginesServiceCollectionExtensions
         AddEngine<RemotionVideoEngine>(services);
         AddEngine<RevideoVideoEngine>(services);
 
+        services.TryAddSingleton<IVideoEncoderSelector, FfmpegNvencEncoderSelector>();
         services.TryAddSingleton<IComposer, FfmpegComposer>();
         services.TryAddSingleton<ProportionalAligner>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IAligner, ProportionalAligner>(sp => sp.GetRequiredService<ProportionalAligner>()));

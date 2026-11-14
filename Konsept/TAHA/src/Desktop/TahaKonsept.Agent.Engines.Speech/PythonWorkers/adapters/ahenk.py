@@ -1,6 +1,7 @@
 """Ahenk Turkish TTS (weights CC BY 4.0, github.com/ozguradmin/ahenk-turkish-tts).
 
-model == "ahenk-cep": CPU student model, HF ozgurguler/ahenk-cep-tr (needs ema-lightning==1.1.2 + the ahenk repo package).
+model == "ahenk-cep": small student model, HF ozgurguler/ahenk-cep-tr (needs ema-lightning==1.1.2 + the ahenk repo package);
+  GPU first (cuda), CPU only as a reported fallback.
 otherwise: Ahenk (VoxCPM2 2B + LoRA), HF ozgurguler/ahenk-tts-tr, GPU; text is normalized with trnorm. voice = emotion.
 """
 
@@ -8,11 +9,11 @@ import json
 import sys
 from pathlib import Path
 
-from adapters._common import write_wav
+from adapters._common import load_on_device, write_wav
 
 
 class AhenkCepAdapter:
-    def __init__(self, options):
+    def __init__(self, device, options):
         from huggingface_hub import snapshot_download
 
         repo_dir = snapshot_download("ozgurguler/ahenk-cep-tr", allow_patterns=["*.pt", "ahenk_cep.py"])
@@ -20,7 +21,9 @@ class AhenkCepAdapter:
             sys.path.insert(0, repo_dir)
         from ahenk_cep import AhenkCep
 
-        self.tts = AhenkCep(f"{repo_dir}/student.pt", f"{repo_dir}/decoder.pt")
+        self.tts, self.device = load_on_device(
+            lambda dev: AhenkCep(f"{repo_dir}/student.pt", f"{repo_dir}/decoder.pt", device=dev), device, "Ahenk Cep"
+        )
         self.sample_rate = None
 
     def synth(self, text, lang, voice, ref_audio, speed, out):
@@ -71,5 +74,5 @@ class AhenkAdapter:
 
 def create(model, device, options):
     if (model or "").lower() == "ahenk-cep":
-        return AhenkCepAdapter(options)
+        return AhenkCepAdapter(device, options)
     return AhenkAdapter(options)

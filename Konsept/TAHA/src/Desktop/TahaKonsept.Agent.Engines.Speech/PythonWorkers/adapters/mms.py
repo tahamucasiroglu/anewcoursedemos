@@ -1,4 +1,4 @@
-"""Meta MMS-TTS Turkish (VITS, cc-by-nc-4.0). pip: transformers. HF: facebook/mms-tts-tur. CPU.
+"""Meta MMS-TTS Turkish (VITS, cc-by-nc-4.0). pip: transformers. HF: facebook/mms-tts-tur. GPU first (cuda), CPU fallback.
 
 The tokenizer vocabulary is lowercase letters only (no punctuation) and it lowercases with Python's str.lower(), which is wrong
 for Turkish ('I' -> 'i' instead of 'ı', 'İ' -> 'i' + combining dot). Without punctuation the model also reads a whole scene as one
@@ -8,7 +8,7 @@ commas and a longer one after sentence ends.
 
 import re
 
-from adapters._common import to_mono_list, write_wav
+from adapters._common import load_on_device, to_mono_list, write_wav
 
 # Pause after a chunk, by the punctuation that ended it (seconds).
 _PAUSES = {",": 0.15, ";": 0.2, ":": 0.2, ".": 0.35, "!": 0.35, "?": 0.35}
@@ -40,7 +40,7 @@ class MmsAdapter:
 
         repo = model or "facebook/mms-tts-tur"
         self.torch = torch
-        self.model = VitsModel.from_pretrained(repo)
+        self.model, self.device = load_on_device(lambda dev: VitsModel.from_pretrained(repo).to(dev).eval(), device, "MMS-TTS")
         self.tokenizer = AutoTokenizer.from_pretrained(repo)
         self.sample_rate = self.model.config.sampling_rate
 
@@ -48,6 +48,7 @@ class MmsAdapter:
         inputs = self.tokenizer(text, return_tensors="pt")
         if inputs["input_ids"].shape[-1] == 0:
             return []
+        inputs = inputs.to(self.device)
         with self.torch.no_grad():
             waveform = self.model(**inputs).waveform
         return to_mono_list(waveform[0])

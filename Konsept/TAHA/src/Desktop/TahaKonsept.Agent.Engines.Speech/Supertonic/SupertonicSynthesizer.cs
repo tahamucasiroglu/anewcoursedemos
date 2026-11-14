@@ -1,5 +1,7 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using TahaKonsept.Agent.Engines.Speech.Onnx;
+using TahaKonsept.Agent.Engines.Speech.Onnx.Abstract;
 
 namespace TahaKonsept.Agent.Engines.Speech.Supertonic;
 
@@ -8,8 +10,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Supertonic;
 /// metin → <c>duration_predictor</c> (süre, hız çarpanına bölünür) → <c>text_encoder</c> (metin gömmesi) →
 /// gürültülü gizil örnekleme → <c>vector_estimator</c> ile <c>totalSteps</c> adım akış eşleme (flow matching) → <c>vocoder</c> (dalga).
 /// Uzun metin <see cref="SupertonicTextChunker"/> ile bölünür, parçalar arasına sessizlik eklenir (<see cref="Synthesize"/>).
-/// CUDA sağlayıcısı istenirse denenir; yoksa CPU (<see cref="ExecutionProvider"/>). Oturumlar tek seferlik yüklenir, iş parçacığı güvenli değildir
-/// (çağıran kilitler).
+/// Oturumlar <see cref="IOnnxSessionFactory"/> ile "Önce GPU" açılır (DirectML → CPU yedeği; kullanılan: <see cref="ExecutionProvider"/>).
+/// Oturumlar tek seferlik yüklenir, iş parçacığı güvenli değildir (çağıran kilitler).
 /// </summary>
 internal sealed class SupertonicSynthesizer : IDisposable
 {
@@ -27,7 +29,7 @@ internal sealed class SupertonicSynthesizer : IDisposable
         InferenceSession textEncoder,
         InferenceSession vectorEstimator,
         InferenceSession vocoder,
-        string executionProvider)
+        OnnxExecutionProvider executionProvider)
     {
         _config = config;
         _textProcessor = textProcessor;
@@ -41,30 +43,22 @@ internal sealed class SupertonicSynthesizer : IDisposable
     /// <summary>Çıkış örnekleme hızı (Hz).</summary>
     public int SampleRate => _config.SampleRate;
 
-    /// <summary>Kullanılan çalıştırma sağlayıcısı (<c>CUDA</c> ya da <c>CPU</c>).</summary>
-    public string ExecutionProvider { get; }
+    /// <summary>Kullanılan çalıştırma sağlayıcısı (<see cref="OnnxExecutionProvider.DirectMl"/> ya da <see cref="OnnxExecutionProvider.Cpu"/>).</summary>
+    public OnnxExecutionProvider ExecutionProvider { get; }
 
     /// <summary><c>onnx</c> klasöründen modeli yükler.</summary>
     /// <param name="onnxDir">tts.json, unicode_indexer.json ve dört .onnx dosyasının klasörü.</param>
-    /// <param name="preferCuda">CUDA sağlayıcısı denensin mi.</param>
-    /// <returns>Hazır sentezleyici.</returns>
-    public static SupertonicSynthesizer Load(string onnxDir, bool preferCuda)
+    /// <param name="preferGpu">GPU (DirectML) sağlayıcısı denensin mi.</param>
+    /// <param name="sessions">Oturum fabrikası (GPU → CPU yedeği, düşüşü loglar).</param>
+    /// <returns>Hazır sentezleyici, kullanılan sağlayıcı ve varsa CPU'ya düşüş nedeni.</returns>
+    public static OnnxLoadResult<SupertonicSynthesizer> Load(string onnxDir, bool preferGpu, IOnnxSessionFactory sessions)
     {
         var config = SupertonicConfig.Load(Path.Combine(onnxDir, "tts.json"));
         var textProcessor = SupertonicTextProcessor.Load(Path.Combine(onnxDir, "unicode_indexer.json"));
-        var (options, provider) = CreateOptions(preferCuda);
-        using (options)
-        {
-            InferenceSession Open(string name) => new(Path.Combine(onnxDir, name), options);
-            return new SupertonicSynthesizer(
-                config,
-                textProcessor,
-                Open("duration_predictor.onnx"),
-                Open("text_encoder.onnx"),
-                Open("vector_estimator.onnx"),
-                Open("vocoder.onnx"),
-                provider);
-        }
+        var loaded = sessions.Load(preferGpu, options => OpenSessions(onnxDir, options));
+        var s = loaded.Value;
+        var synthesizer = new SupertonicSynthesizer(config, textProcessor, s[0], s[1], s[2], s[3], loaded.Provider);
+        return new OnnxLoadResult<SupertonicSynthesizer>(synthesizer, loaded.Provider, loaded.FallbackReason);
     }
 
     /// <summary>Metni (gerekirse parçalayarak) seslendirir.</summary>
@@ -175,22 +169,28 @@ internal sealed class SupertonicSynthesizer : IDisposable
         return wavLength > 0 && wavLength < wav.Length ? wav[..(int)wavLength] : wav;
     }
 
-    private static (SessionOptions Options, string Provider) CreateOptions(bool preferCuda)
+    private static InferenceSession[] OpenSessions(string onnxDir, SessionOptions options)
     {
-        if (preferCuda)
+        string[] files = ["duration_predictor.onnx", "text_encoder.onnx", "vector_estimator.onnx", "vocoder.onnx"];
+        var opened = new List<InferenceSession>(files.Length);
+        try
         {
-            var cudaOptions = new SessionOptions();
-            try
+            foreach (var file in files)
             {
-                cudaOptions.AppendExecutionProvider_CUDA(0);
-                return (cudaOptions, "CUDA");
+                opened.Add(new InferenceSession(Path.Combine(onnxDir, file), options));
             }
-            catch (Exception ex) when (ex is OnnxRuntimeException or EntryPointNotFoundException or DllNotFoundException)
-            {
-                cudaOptions.Dispose();
-            }
-        }
 
-        return (new SessionOptions { GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL }, "CPU");
+            return [.. opened];
+        }
+        catch
+        {
+            // GPU sağlayıcısında yarıda kalan açılış: açılmış oturumlar bırakılır (fabrika CPU ile yeniden dener).
+            foreach (var session in opened)
+            {
+                session.Dispose();
+            }
+
+            throw;
+        }
     }
 }

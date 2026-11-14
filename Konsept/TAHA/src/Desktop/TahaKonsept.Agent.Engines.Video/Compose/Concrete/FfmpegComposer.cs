@@ -7,6 +7,8 @@ using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 using TahaKonsept.Agent.Abstractions.Tools;
 using TahaKonsept.Agent.Abstractions.Tools.Abstract;
 using TahaKonsept.Agent.Engines.Video.Compose.Base;
+using TahaKonsept.Agent.Engines.Video.Compose.Encoding;
+using TahaKonsept.Agent.Engines.Video.Compose.Encoding.Abstract;
 using TahaKonsept.Agent.Engines.Video.Media.Abstract;
 using TahaKonsept.Agent.Engines.Video.Subtitles;
 using TahaKonsept.Agent.Engines.Video.Subtitles.Abstract;
@@ -21,6 +23,9 @@ namespace TahaKonsept.Agent.Engines.Video.Compose.Concrete;
 /// <c>W*t/SÜRE</c> olan dolgu; bkz. <see cref="BuildFinalVideoFilter"/>) basılır,
 /// ses AAC olarak eklenir (yoksa sessiz; kısa ses <c>apad</c> ile tamamlanır); hiçbir katman yoksa video yeniden kodlanmaz;
 /// (4) küçük resim (jpg) üretilir. İlerleme: normalize %0–55, concat %60, son geçiş %60–95 (<c>-progress</c>), küçük resim %98.
+/// Kodlama "Önce GPU": <see cref="IVideoEncoderSelector"/> NVENC (<c>h264_nvenc</c>) seçerse normalize ve son geçiş GPU'da kodlanır; NVENC
+/// kodlama sırasında düşerse seçici yazılıma çevrilir (uyarı loglanır) ve adım libx264 ile yeniden yapılır — normalize adımında karışık
+/// kodlayıcılı sahneler concat'e girmesin diye tüm sahneler baştan libx264 ile normalize edilir.
 /// </summary>
 public sealed class FfmpegComposer : ComposerBase
 {
@@ -28,6 +33,7 @@ public sealed class FfmpegComposer : ComposerBase
     private readonly IProcessRunner _runner;
     private readonly IMediaProbe _probe;
     private readonly ICaptionSubtitleWriter _subtitles;
+    private readonly IVideoEncoderSelector _encoders;
     private readonly ILogger<FfmpegComposer> _logger;
 
     /// <summary>Birleştirici oluşturur.</summary>
@@ -35,15 +41,23 @@ public sealed class FfmpegComposer : ComposerBase
     /// <param name="runner">Süreç çalıştırıcı.</param>
     /// <param name="probe">Süre okuyucu (ffprobe).</param>
     /// <param name="subtitles">Altyazı yazıcısı (ASS).</param>
+    /// <param name="encoders">H.264 kodlayıcı seçici (NVENC → libx264).</param>
     /// <param name="logger">Günlükçü.</param>
-    public FfmpegComposer(IToolLocator tools, IProcessRunner runner, IMediaProbe probe, ICaptionSubtitleWriter subtitles, ILogger<FfmpegComposer> logger)
+    public FfmpegComposer(IToolLocator tools, IProcessRunner runner, IMediaProbe probe, ICaptionSubtitleWriter subtitles, IVideoEncoderSelector encoders, ILogger<FfmpegComposer> logger)
     {
         _tools = tools;
         _runner = runner;
         _probe = probe;
         _subtitles = subtitles;
+        _encoders = encoders;
         _logger = logger;
     }
+
+    /// <summary>Sahne normalize kodlaması başarısız (NVENC ile kodlanıyorsa çağıran yazılım kodlayıcıyla baştan dener).</summary>
+    public const string NormalizeFailedCode = "compose.normalize_failed";
+
+    /// <summary>Son geçiş NVENC ile kodlanırken düştü (çağıran yazılım kodlayıcıyla yeniden dener).</summary>
+    public const string GpuEncodeFailedCode = "compose.gpu_encode_failed";
 
     /// <summary>İlerleme çubuğu rengi (ffmpeg renk sözdizimi).</summary>
     public const string ProgressBarColor = "0xF28C28@0.95";
@@ -133,21 +147,22 @@ public sealed class FfmpegComposer : ComposerBase
         Directory.CreateDirectory(work);
         progress?.Report(0);
 
-        var normalized = new List<string>();
-        var total = 0d;
-        for (var i = 0; i < request.ScenePaths.Count; i++)
+        var encoder = await _encoders.SelectAsync(ffmpeg.Value, ct).ConfigureAwait(false);
+        var scenes = await NormalizeScenesAsync(ffmpeg.Value, request, work, encoder, progress, ct).ConfigureAwait(false);
+        if (scenes.IsFailure && encoder.IsGpu && scenes.Error.Code == NormalizeFailedCode)
         {
-            var scene = await NormalizeSceneAsync(ffmpeg.Value, request, i, work, ct).ConfigureAwait(false);
-            if (scene.IsFailure)
-            {
-                return Result.Failure<ComposeOutput>(scene.Error);
-            }
-
-            normalized.Add(scene.Value.Path);
-            total += scene.Value.DurationSec;
-            Scale(progress, 0, 55, (i + 1d) / request.ScenePaths.Count);
+            // NVENC sahne kodlarken düştü: yazılıma geç ve tüm sahneleri baştan normalize et (concat kopyası tek kodlayıcı görsün).
+            encoder = _encoders.ReportGpuFailure(scenes.Error.Message);
+            scenes = await NormalizeScenesAsync(ffmpeg.Value, request, work, encoder, progress, ct).ConfigureAwait(false);
         }
 
+        if (scenes.IsFailure)
+        {
+            return Result.Failure<ComposeOutput>(scenes.Error);
+        }
+
+        var normalized = scenes.Value.Select(s => s.Path).ToList();
+        var total = scenes.Value.Sum(s => s.DurationSec);
         var concat = await ConcatAsync(ffmpeg.Value, normalized, work, ct).ConfigureAwait(false);
         if (concat.IsFailure)
         {
@@ -163,7 +178,13 @@ public sealed class FfmpegComposer : ComposerBase
             await File.WriteAllTextAsync(subtitlePath, text, new UTF8Encoding(true), ct).ConfigureAwait(false);
         }
 
-        var final = await FinalPassAsync(ffmpeg.Value, request, concat.Value, subtitlePath, total, progress, ct).ConfigureAwait(false);
+        var final = await FinalPassAsync(ffmpeg.Value, request, concat.Value, subtitlePath, total, encoder, progress, ct).ConfigureAwait(false);
+        if (final.IsFailure && final.Error.Code == GpuEncodeFailedCode)
+        {
+            encoder = _encoders.ReportGpuFailure(final.Error.Message);
+            final = await FinalPassAsync(ffmpeg.Value, request, concat.Value, subtitlePath, total, encoder, progress, ct).ConfigureAwait(false);
+        }
+
         if (final.IsFailure)
         {
             return Result.Failure<ComposeOutput>(final.Error);
@@ -173,11 +194,30 @@ public sealed class FfmpegComposer : ComposerBase
         var actual = duration.IsSuccess ? duration.Value : total;
         var thumbnail = await CreateThumbnailAsync(ffmpeg.Value, request.OutputPath, actual, ct).ConfigureAwait(false);
         progress?.Report(100);
-        _logger.LogInformation("Video birleştirildi: {Output} ({Duration:0.00} sn, altyazı={Subs}, çubuk={Bar})", request.OutputPath, actual, subtitlePath is not null, request.ShowProgressBar);
+        _logger.LogInformation("Video birleştirildi: {Output} ({Duration:0.00} sn, altyazı={Subs}, çubuk={Bar}, kodlayıcı={Encoder})", request.OutputPath, actual, subtitlePath is not null, request.ShowProgressBar, encoder.Encoder);
         return new ComposeOutput(request.OutputPath, actual, thumbnail);
     }
 
-    private async Task<Result<NormalizedScene>> NormalizeSceneAsync(string ffmpeg, ComposeRequest request, int index, string work, CancellationToken ct)
+    private async Task<Result<IReadOnlyList<NormalizedScene>>> NormalizeScenesAsync(
+        string ffmpeg, ComposeRequest request, string work, VideoEncoderChoice encoder, IProgress<double>? progress, CancellationToken ct)
+    {
+        var scenes = new List<NormalizedScene>(request.ScenePaths.Count);
+        for (var i = 0; i < request.ScenePaths.Count; i++)
+        {
+            var scene = await NormalizeSceneAsync(ffmpeg, request, i, work, encoder, ct).ConfigureAwait(false);
+            if (scene.IsFailure)
+            {
+                return Result.Failure<IReadOnlyList<NormalizedScene>>(scene.Error);
+            }
+
+            scenes.Add(scene.Value);
+            Scale(progress, 0, 55, (i + 1d) / request.ScenePaths.Count);
+        }
+
+        return scenes;
+    }
+
+    private async Task<Result<NormalizedScene>> NormalizeSceneAsync(string ffmpeg, ComposeRequest request, int index, string work, VideoEncoderChoice encoder, CancellationToken ct)
     {
         var source = request.ScenePaths[index];
         var measured = await _probe.GetDurationAsync(source, ct).ConfigureAwait(false);
@@ -197,15 +237,18 @@ public sealed class FfmpegComposer : ComposerBase
             "-vf", BuildNormalizeFilter(request.Width, request.Height, request.Fps, pad > 0 ? pad + 0.05 : 0),
             "-t", Seconds(target),
             "-r", request.Fps.ToString(CultureInfo.InvariantCulture),
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
+        };
+        args.AddRange(encoder.Arguments(VideoEncodePurpose.Intermediate));
+        args.AddRange(
+        [
             "-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
             "-video_track_timescale", "90000",
             output,
-        };
+        ]);
 
         var run = await RunAsync(ffmpeg, args, null, ct).ConfigureAwait(false);
         return run.IsFailure
-            ? Result.Failure<NormalizedScene>(Error.Failure("compose.normalize_failed", $"Sahne {index + 1} normalize edilemedi: {run.Error.Message}"))
+            ? Result.Failure<NormalizedScene>(Error.Failure(NormalizeFailedCode, $"Sahne {index + 1} normalize edilemedi: {run.Error.Message}"))
             : new NormalizedScene(output, target);
     }
 
@@ -220,7 +263,8 @@ public sealed class FfmpegComposer : ComposerBase
             : output;
     }
 
-    private async Task<Result> FinalPassAsync(string ffmpeg, ComposeRequest request, string concat, string? subtitlePath, double total, IProgress<double>? progress, CancellationToken ct)
+    private async Task<Result> FinalPassAsync(
+        string ffmpeg, ComposeRequest request, string concat, string? subtitlePath, double total, VideoEncoderChoice encoder, IProgress<double>? progress, CancellationToken ct)
     {
         var filter = BuildFinalVideoFilter(subtitlePath, request.ShowProgressBar, total, request.Width, request.Height, request.Fps);
         var hasAudio = !string.IsNullOrWhiteSpace(request.AudioPath);
@@ -253,7 +297,8 @@ public sealed class FfmpegComposer : ComposerBase
         }
         else
         {
-            args.AddRange(["-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", request.Fps.ToString(CultureInfo.InvariantCulture)]);
+            args.AddRange(encoder.Arguments(VideoEncodePurpose.Final));
+            args.AddRange(["-r", request.Fps.ToString(CultureInfo.InvariantCulture)]);
             args.AddRange(["-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709"]);
         }
 
@@ -268,9 +313,14 @@ public sealed class FfmpegComposer : ComposerBase
             }
         }, ct).ConfigureAwait(false);
 
-        return run.IsFailure
-            ? Error.Failure("compose.final_failed", $"Son video üretilemedi: {run.Error.Message}")
-            : Result.Success();
+        if (run.IsSuccess)
+        {
+            return Result.Success();
+        }
+
+        // Yeniden kodlanan son geçişte NVENC düştüyse çağıran libx264 ile yeniden dener (kopya geçişte kodlayıcı yok).
+        var code = filter is not null && encoder.IsGpu ? GpuEncodeFailedCode : "compose.final_failed";
+        return Error.Failure(code, $"Son video üretilemedi: {run.Error.Message}");
     }
 
     private async Task<string?> CreateThumbnailAsync(string ffmpeg, string video, double duration, CancellationToken ct)

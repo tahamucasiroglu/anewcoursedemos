@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.ML.OnnxRuntime;
 using TahaKonsept.Agent.Abstractions.Engines;
 using TahaKonsept.Agent.Abstractions.Speech;
 using TahaKonsept.Agent.Engines.Speech.Base;
+using TahaKonsept.Agent.Engines.Speech.Onnx;
+using TahaKonsept.Agent.Engines.Speech.Onnx.Concrete;
 using TahaKonsept.Agent.Engines.Speech.Supertonic;
 using TahaKonsept.BuildingBlocks.Domain.Results;
 
@@ -9,7 +12,9 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete;
 
 /// <summary>
 /// Supertonic 3 (Supertone, kod MIT / model OpenRAIL-M; HF <c>Supertone/supertonic-3</c>, depo 2026-09-09'da arşivlendi).
-/// Varsayılan yerel motor: Python'suz, doğrudan C# + ONNX Runtime, CPU'da çalışır (CUDA varsa dener). 31 dil, Türkçe dahil.
+/// Varsayılan yerel motor: Python'suz, doğrudan C# + ONNX Runtime. 31 dil, Türkçe dahil. "Önce GPU": oturumlar DirectML ile
+/// (yüksek performanslı GPU) açılır; DirectML eklenemez/açılamazsa ya da ilk çalıştırmada DirectML hatası olursa CPU ile yeniden yüklenir
+/// ve düşüş <c>Warning</c> olarak loglanır (<see cref="ExecutionProvider"/>).
 /// Model ~400 MB, <c>ModelsDir/supertonic-3/{onnx,voice_styles}</c> altına indirilir. Sesler: F1–F5 (kadın), M1–M5 (erkek);
 /// <c>VoiceId</c> bir .json yolu da olabilir (Voice Builder stili). Hız: istek hızı × 1.05 (resmi varsayılan).
 /// </summary>
@@ -69,14 +74,14 @@ public sealed class SupertonicSpeechEngine : SpeechEngineBase, IDisposable
     /// <inheritdoc />
     public override IReadOnlyDictionary<string, string> Voices => VoiceNames;
 
-    /// <summary>CUDA sağlayıcısı denensin mi (varsayılan <c>true</c>; CPU paketiyle sessizce CPU'ya düşer).</summary>
-    public bool PreferCuda { get; init; } = true;
+    /// <summary>GPU (DirectML) sağlayıcısı denensin mi (varsayılan <c>true</c>; olmazsa uyarıyla CPU).</summary>
+    public bool PreferGpu { get; init; } = true;
 
     /// <summary>Akış eşleme adım sayısı (varsayılan 8; daha yüksek = daha temiz, daha yavaş).</summary>
     public int TotalSteps { get; init; } = DefaultSteps;
 
     /// <summary>Son yüklemede kullanılan çalıştırma sağlayıcısı (yüklenmediyse <c>null</c>).</summary>
-    public string? ExecutionProvider => _synthesizer?.ExecutionProvider;
+    public OnnxExecutionProvider? ExecutionProvider => _synthesizer?.ExecutionProvider;
 
     private static IEnumerable<string> RequiredFiles => OnnxFiles.Concat(VoiceNames.Keys.Select(v => $"voice_styles/{v}.json"));
 
@@ -126,18 +131,23 @@ public sealed class SupertonicSpeechEngine : SpeechEngineBase, IDisposable
             return await Task.Run(
                 () =>
                 {
-                    var synthesizer = _synthesizer ??= LoadSynthesizer();
+                    var synthesizer = _synthesizer ??= LoadSynthesizer(PreferGpu);
                     var style = GetStyle(string.IsNullOrWhiteSpace(request.VoiceId) ? DefaultVoice : request.VoiceId);
                     var language = NormalizeLanguage(request.Language);
-                    var samples = synthesizer.Synthesize(
-                        request.Text,
-                        language,
-                        style,
-                        TotalSteps,
-                        (float)(request.Speed * BaseSpeed),
-                        ChunkSilenceSec,
-                        Random.Shared,
-                        ct);
+                    float[] samples;
+                    try
+                    {
+                        samples = Synthesize(synthesizer, request, style, language, ct);
+                    }
+                    catch (OnnxRuntimeException ex) when (synthesizer.ExecutionProvider == OnnxExecutionProvider.DirectMl)
+                    {
+                        // DirectML oturumu açıldı ama çalıştırmada düştü (sürücü/işlem desteği): CPU ile yeniden yükle, bir kez daha dene.
+                        Logger.LogWarning(ex, "Supertonic 3: DirectML çalıştırması başarısız, CPU ile yeniden yükleniyor");
+                        synthesizer.Dispose();
+                        _synthesizer = synthesizer = LoadSynthesizer(preferGpu: false);
+                        samples = Synthesize(synthesizer, request, style, language, ct);
+                    }
+
                     return Result.Success(WriteWav(request.OutputPath, samples, synthesizer.SampleRate));
                 },
                 ct).ConfigureAwait(false);
@@ -148,12 +158,21 @@ public sealed class SupertonicSpeechEngine : SpeechEngineBase, IDisposable
         }
     }
 
-    private SupertonicSynthesizer LoadSynthesizer()
+    private SupertonicSynthesizer LoadSynthesizer(bool preferGpu)
     {
-        var synthesizer = SupertonicSynthesizer.Load(Path.Combine(ModelDir, "onnx"), PreferCuda);
-        Logger.LogInformation("Supertonic 3 yüklendi ({Provider})", synthesizer.ExecutionProvider);
-        return synthesizer;
+        var sessions = Services.OnnxSessions ?? new DirectMlOnnxSessionFactory(Services.LoggerFactory.CreateLogger<DirectMlOnnxSessionFactory>());
+        var loaded = SupertonicSynthesizer.Load(Path.Combine(ModelDir, "onnx"), preferGpu, sessions);
+        if (loaded.FallbackReason is { } reason)
+        {
+            Logger.LogWarning("Supertonic 3: GPU yerine CPU kullanılıyor — {Reason}", reason);
+        }
+
+        Logger.LogInformation("Supertonic 3 yüklendi ({Provider})", loaded.Provider);
+        return loaded.Value;
     }
+
+    private float[] Synthesize(SupertonicSynthesizer synthesizer, SpeechRequest request, SupertonicVoiceStyle style, string language, CancellationToken ct) =>
+        synthesizer.Synthesize(request.Text, language, style, TotalSteps, (float)(request.Speed * BaseSpeed), ChunkSilenceSec, Random.Shared, ct);
 
     private SupertonicVoiceStyle GetStyle(string voice)
     {

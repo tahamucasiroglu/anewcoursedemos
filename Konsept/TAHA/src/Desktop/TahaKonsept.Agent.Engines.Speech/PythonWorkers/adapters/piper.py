@@ -1,5 +1,11 @@
 """Piper (ONNX VITS) Turkish voices, e.g. tr_TR-dfki-medium (voice license CC BY-NC-SA). pip: piper-tts.
 
+Runs on CPU by design (the GPU-first rule's documented exception): piper-tts depends on the CPU 'onnxruntime' wheel, and the
+GPU wheels ('onnxruntime-gpu' / 'onnxruntime-directml') install into the same 'onnxruntime' module, so both cannot coexist
+cleanly in one venv; CUDA also needs ~1 GB of extra cuDNN/cuBLAS wheels for a ~60 MB VITS model that already runs many times
+faster than real time on CPU. The agent therefore sends device=cpu (PiperTurkishSpeechEngine.SupportsGpu = false); if cuda is
+ever requested, use_cuda is passed through to piper and onnxruntime falls back to CPU with its own warning.
+
 Voice files are looked up in order (first source that has the files wins):
   1. HF rhasspy/piper-voices   tr/tr_TR/<speaker>/<quality>/<name>.onnx + .onnx.json   (official; dfki)
   2. HF speaches-ai/piper-<name>   model.onnx + config.json                            (mirror of the original release;

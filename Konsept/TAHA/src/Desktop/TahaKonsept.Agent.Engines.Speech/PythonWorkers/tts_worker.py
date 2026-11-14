@@ -10,7 +10,7 @@ Long-lived process driven by the desktop agent (PythonSpeechEngineBase) over a J
 
   stdout (exactly one JSON object per request line):
     {"ok": true, "pong": true}
-    {"ok": true, "sample_rate": 24000}
+    {"ok": true, "sample_rate": 24000, "device": "cuda"}            (load; "device_note" explains a cuda -> cpu fallback)
     {"ok": true, "out": "C:/.../a.wav", "duration": 3.21, "sample_rate": 24000}
     {"ok": false, "error": "message"}
 
@@ -45,10 +45,17 @@ def _load(request, state):
     if not _ENGINE_NAME.match(engine):
         raise ValueError("invalid engine name: %r" % engine)
     module = importlib.import_module("adapters." + engine)
-    adapter = module.create(request.get("model"), request.get("device") or "cpu", request.get("options") or {})
+    requested = request.get("device") or "cpu"
+    adapter = module.create(request.get("model"), requested, request.get("options") or {})
     state["adapter"] = adapter
     state["engine"] = engine
-    return {"ok": True, "sample_rate": getattr(adapter, "sample_rate", None)}
+    from adapters._common import device_note
+
+    response = {"ok": True, "sample_rate": getattr(adapter, "sample_rate", None), "device": str(getattr(adapter, "device", requested))}
+    note = device_note()
+    if note:
+        response["device_note"] = note
+    return response
 
 
 def _synth(request, state):

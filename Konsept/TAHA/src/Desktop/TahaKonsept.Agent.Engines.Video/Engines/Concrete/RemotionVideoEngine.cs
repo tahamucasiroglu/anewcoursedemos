@@ -123,8 +123,18 @@ public sealed partial class RemotionVideoEngine : TsxVideoEngineBase
         return new SceneProject(dir, Path.Combine(publicDir, "assets"), Path.Combine(dir, "index.ts"), DeleteAfterRender: true);
     }
 
+    /// <summary>
+    /// GPU argümanları ("Önce GPU"): GPU açıkken <c>--gl=angle</c> (Chrome ANGLE; Windows'ta D3D11 donanım GL, GPU rasterleştirme) ve
+    /// <c>--hardware-acceleration=if-possible</c> (Remotion'ın paketli ffmpeg'inde <c>h264_nvenc</c> varsa NVENC, yoksa libx264).
+    /// CPU yedeğinde <c>--gl=swangle</c> (SwiftShader) ve yazılım kodlayıcı.
+    /// </summary>
+    /// <param name="useGpu">GPU açık mı.</param>
+    /// <returns>Argümanlar.</returns>
+    public static IReadOnlyList<string> GpuArguments(bool useGpu) =>
+        useGpu ? ["--gl=angle", "--hardware-acceleration=if-possible"] : ["--gl=swangle", "--hardware-acceleration=disable"];
+
     /// <inheritdoc />
-    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request)
+    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request, bool useGpu)
     {
         var args = new List<string>
         {
@@ -134,6 +144,7 @@ public sealed partial class RemotionVideoEngine : TsxVideoEngineBase
             "--overwrite",
             "--log=info",
         };
+        args.AddRange(GpuArguments(useGpu));
         if (Tools.Find(ToolKind.ChromeHeadlessShell) is { } chrome)
         {
             args.Add("--browser-executable=" + chrome);

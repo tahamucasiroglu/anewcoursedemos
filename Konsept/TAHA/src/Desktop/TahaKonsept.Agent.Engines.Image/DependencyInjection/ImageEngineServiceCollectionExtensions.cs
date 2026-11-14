@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
+using TahaKonsept.Agent.Abstractions.Gpu.Concrete;
 using TahaKonsept.Agent.Abstractions.Image.Abstract;
 using TahaKonsept.Agent.Engines.Image.Abstract;
 using TahaKonsept.Agent.Engines.Image.Catalog.Abstract;

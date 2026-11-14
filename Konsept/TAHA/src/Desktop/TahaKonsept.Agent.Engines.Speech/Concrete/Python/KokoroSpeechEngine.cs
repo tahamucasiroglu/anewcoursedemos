@@ -4,7 +4,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 
 /// <summary>
 /// Kokoro-82M (hexgrad, Apache-2.0; HF <c>hexgrad/Kokoro-82M</c>, pip <c>kokoro</c> + <c>misaki</c>). Türkçe YOK: İngilizce,
-/// İspanyolca, Fransızca, Hintçe, İtalyanca, Japonca, Portekizce, Çince. CPU'da hızlı, 24 kHz. Python &lt; 3.13 ister.
+/// İspanyolca, Fransızca, Hintçe, İtalyanca, Japonca, Portekizce, Çince. 24 kHz. Python &lt; 3.13 ister.
+/// "Önce GPU": GPU varsa CUDA torch tekerleği kurulur ve model <c>cuda</c>'da çalışır; GPU yoksa/VRAM yetmezse uyarıyla CPU'ya düşer.
 /// </summary>
 public sealed class KokoroSpeechEngine : PythonSpeechEngineBase
 {
@@ -56,4 +57,7 @@ public sealed class KokoroSpeechEngine : PythonSpeechEngineBase
 
     /// <inheritdoc />
     public override IReadOnlyList<string> Requirements => Packages;
+
+    /// <summary>GPU seçildiyse torch 2.8.0 CUDA 12.8 tekerleği (GPU yoksa CPU tekerleği; parmak izi değişince yeniden kurulur).</summary>
+    public override string? TorchIndexUrl => CudaTorchIndex(TorchCu128Index);
 }

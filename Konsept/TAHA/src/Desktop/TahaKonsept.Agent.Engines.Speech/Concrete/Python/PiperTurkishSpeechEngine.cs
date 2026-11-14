@@ -4,7 +4,7 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 
 /// <summary>
 /// Piper Türkçe (ONNX VITS; pip <c>piper-tts</c>, sesler HF <c>rhasspy/piper-voices</c> <c>tr/tr_TR/…</c>). Ses lisansı CC BY-NC-SA.
-/// Sadece Türkçe, CPU, çok hızlı ama robotik. torch gerekmez.
+/// Sadece Türkçe, çok hızlı ama robotik. torch gerekmez. "Önce GPU" kuralının belgeli istisnası: CPU'da çalışır (<see cref="SupportsGpu"/>).
 /// </summary>
 public sealed class PiperTurkishSpeechEngine : PythonSpeechEngineBase
 {
@@ -51,4 +51,11 @@ public sealed class PiperTurkishSpeechEngine : PythonSpeechEngineBase
 
     /// <inheritdoc />
     public override IReadOnlyList<string> Requirements => Packages;
+
+    /// <summary>
+    /// <c>false</c>: piper-tts CPU <c>onnxruntime</c> tekerleğine bağlı; GPU tekerlekleri (<c>onnxruntime-gpu</c> / <c>-directml</c>) aynı
+    /// <c>onnxruntime</c> modülüne kurulduğu için tek venv'de temiz bir arada durmaz, CUDA yolu ayrıca ~1 GB cuDNN/cuBLAS tekerleği ister.
+    /// ~60 MB VITS modeli CPU'da zaten gerçek zamandan kat kat hızlı; bu yüzden tasarım gereği CPU (loglanır, uyarı değil).
+    /// </summary>
+    public override bool SupportsGpu => false;
 }

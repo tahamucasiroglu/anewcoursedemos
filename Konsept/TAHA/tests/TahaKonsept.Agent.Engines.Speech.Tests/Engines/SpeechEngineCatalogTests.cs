@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
 using TahaKonsept.Agent.Abstractions.Engines;
+using TahaKonsept.Agent.Abstractions.Gpu.Abstract;
 using TahaKonsept.Agent.Abstractions.Paths.Abstract;
 using TahaKonsept.Agent.Abstractions.Processes;
 using TahaKonsept.Agent.Abstractions.Processes.Abstract;
@@ -68,11 +69,14 @@ public sealed class SpeechEngineCatalogTests
         engines["supertonic-3"].Voices.Count.ShouldBe(10);
     }
 
-    /// <summary>Python motorları gereksinim ve adapter tanımlar; GPU motorları CUDA dizini kullanır.</summary>
+    /// <summary>
+    /// Python motorları gereksinim ve adapter tanımlar. "Önce GPU": NVIDIA sürücüsü varken torch kullanan her motor (hafifler dahil)
+    /// CUDA tekerlek dizini ve <c>cuda</c> alır; yalnız Piper (belgeli istisna) CPU'da kalır.
+    /// </summary>
     [Fact]
     public void Python_engines_declare_adapters_and_pinned_requirements()
     {
-        using var provider = BuildProvider();
+        using var provider = BuildProvider(hasNvidiaDriver: true);
         var engines = provider.GetServices<ISpeechEngine>().OfType<PythonSpeechEngineBase>().ToList();
 
         engines.Count.ShouldBe(13);
@@ -82,10 +86,18 @@ public sealed class SpeechEngineCatalogTests
         {
             engine.Requirements.ShouldNotBeEmpty();
             File.Exists(Path.Combine(workers, "adapters", engine.AdapterName + ".py")).ShouldBeTrue(engine.Key);
-            if (engine.MinVramMb is not null)
+            if (engine.Key == "piper-tr")
+            {
+                engine.SupportsGpu.ShouldBeFalse();
+                engine.Device.ShouldBe("cpu");
+                continue;
+            }
+
+            engine.SupportsGpu.ShouldBeTrue(engine.Key);
+            engine.Device.ShouldBe("cuda", engine.Key);
+            if (engine.Requirements.Any(r => r.StartsWith("torch==", StringComparison.Ordinal)))
             {
                 engine.TorchIndexUrl.ShouldNotBeNull(engine.Key);
-                engine.Device.ShouldBe("cuda");
             }
         }
     }
@@ -243,9 +255,10 @@ public sealed class SpeechEngineCatalogTests
             .ShouldBe("https://huggingface.co/a/b/resolve/main/dir/file%20name.json");
     }
 
-    private static ServiceProvider BuildProvider()
+    private static ServiceProvider BuildProvider(bool hasNvidiaDriver = true)
     {
         var services = new ServiceCollection();
+        services.AddSingleton<IGpuCapabilityProbe>(new FakeGpuCapabilityProbe(hasNvidiaDriver));
         services.AddSingleton<IAgentPaths>(new TestAgentPaths(TestEnvironment.NewTempDir("di")));
         services.AddSingleton(NSubstitute.Substitute.For<IToolLocator>());
         services.AddSingleton(NSubstitute.Substitute.For<IProcessRunner>());

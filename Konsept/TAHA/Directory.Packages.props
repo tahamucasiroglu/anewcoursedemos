@@ -53,7 +53,11 @@
     <PackageVersion Include="Velopack" Version="1.2.161" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.15" />
-    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.32.0" />
+    <!-- ONNX Runtime DirectML derlemesi ("Önce GPU"): her DX12 GPU'da çalışır, CUDA/cuDNN DLL'i istemez; CPU sağlayıcısı da içinde.
+         DirectML paketinin son sürümü 1.24.4 (Managed API aynı sürüme sabitlenir). CPU paketi (Microsoft.ML.OnnxRuntime) ile birlikte
+         KULLANILMAZ: ikisi de onnxruntime.dll getirir. -->
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.4" />
+    <PackageVersion Include="Microsoft.AI.DirectML" Version="1.15.4" />
   </ItemGroup>
   <ItemGroup Label="Test">
     <PackageVersion Include="xunit.v3" Version="4.0.3" />

@@ -5,6 +5,7 @@ using TahaKonsept.Agent.Abstractions.Engines;
 using TahaKonsept.Agent.Abstractions.Processes;
 using TahaKonsept.Agent.Abstractions.Speech;
 using TahaKonsept.Agent.Abstractions.Tools;
+using TahaKonsept.Agent.Engines.Speech.Devices;
 using TahaKonsept.Agent.Engines.Speech.Python.Abstract;
 using TahaKonsept.Agent.Engines.Speech.Python.Concrete;
 using TahaKonsept.Agent.Engines.Speech.Python.Protocol;
@@ -21,6 +22,8 @@ namespace TahaKonsept.Agent.Engines.Speech.Base;
 /// <see cref="ReleaseAsync"/>: GPU motorunda işçiyi kapatıp VRAM'i boşaltır (ses aşaması sonunda çağrılır).
 /// Çalışma: <c>PythonWorkers/tts_worker.py</c> uzun ömürlü süreç olarak açılır, ilk istekte <c>load</c> (adapter <see cref="AdapterName"/>,
 /// <see cref="ModelId"/>, <see cref="Device"/>, <see cref="LoadOptions"/>), her istekte <c>synth</c>. İşçi çökerse sonraki istekte yeniden başlar.
+/// Cihaz ("Önce GPU"): <see cref="SupportsGpu"/> olan her motor GPU varsa <c>cuda</c> ister (<see cref="DeviceDecision"/>); seçici ya da
+/// Python adapter'ı CPU'ya düşerse (sürücü yok, torch GPU görmüyor, VRAM yetmedi) neden <c>Warning</c> olarak loglanır — sessiz düşüş yok.
 /// Model dosyaları Hugging Face önbelleği olarak <c>ModelsDir/huggingface</c> altına iner (HF_HOME).
 /// </summary>
 public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposable, IDisposable
@@ -39,6 +42,7 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
 
     private readonly SemaphoreSlim _workerGate = new(1, 1);
     private ITtsWorkerClient? _worker;
+    private TorchDeviceDecision? _deviceDecision;
     private bool _disposed;
 
     /// <summary>Ortak bağımlılıklarla kurar.</summary>
@@ -57,14 +61,30 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
     /// <summary>Sabitlenmiş pip gereksinimleri (uv pip install argümanları).</summary>
     public abstract IReadOnlyList<string> Requirements { get; }
 
-    /// <summary>PyTorch CUDA tekerlek dizini (ek dizin olarak eklenir); CPU motorlarında <c>null</c>.</summary>
+    /// <summary>
+    /// PyTorch CUDA tekerlek dizini (ek dizin olarak eklenir); CPU motorlarında <c>null</c>. Hafif motorlar <see cref="CudaTorchIndex"/>
+    /// ile yalnız GPU seçildiğinde CUDA tekerleği kurar (GPU'suz makinede boşuna GB'larca indirme olmasın).
+    /// </summary>
     public virtual string? TorchIndexUrl => null;
 
     /// <summary>venv Python sürümü (uv indirir); <c>null</c> ise bulunan gömülü Python (ToolKind.Python) ya da uv varsayılanı.</summary>
     public virtual string? PythonVersion => "3.11";
 
-    /// <summary>Cihaz: GPU gerektiren motorlarda <c>cuda</c> (adapter GPU yoksa CPU'ya düşer), diğerlerinde <c>cpu</c>.</summary>
-    public virtual string Device => MinVramMb is null ? "cpu" : "cuda";
+    /// <summary>
+    /// Motor GPU'da çalışabiliyor mu ("GPU kullanabilir"; "GPU gerektirir" = <see cref="SpeechEngineBase.MinVramMb"/> dolu). Varsayılan
+    /// <c>true</c> ("Önce GPU"); yalnız GPU yolu temiz olmayan motor (ör. Piper) <c>false</c> döner ve nedenini belgeler.
+    /// </summary>
+    public virtual bool SupportsGpu => true;
+
+    /// <summary>
+    /// Cihaz kararı (bir kez hesaplanır): <see cref="SpeechEngineServices.DeviceSelector"/> varsa ondan, yoksa
+    /// <see cref="SupportsGpu"/> ise <c>cuda</c> (adapter GPU göremezse uyarıyla CPU'ya düşer).
+    /// </summary>
+    public TorchDeviceDecision DeviceDecision => _deviceDecision ??= Services.DeviceSelector?.Select(SupportsGpu)
+        ?? (SupportsGpu ? TorchDeviceDecision.Gpu : TorchDeviceDecision.CpuByDesign);
+
+    /// <summary>Cihaz: <see cref="DeviceDecision"/> (<c>cuda</c> ya da <c>cpu</c>).</summary>
+    public virtual string Device => DeviceDecision.Device;
 
     /// <summary><c>load</c> komutuna giden ek seçenekler.</summary>
     public virtual IReadOnlyDictionary<string, object?> LoadOptions => new Dictionary<string, object?>();
@@ -277,6 +297,30 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
         return Result.Success(new SpeechOutput(output, duration));
     }
 
+    /// <summary>
+    /// İşçinin <c>load</c> yanıtındaki gerçek cihaz istenenden farklıysa (ör. <c>cuda</c> istendi, adapter <c>cpu</c>'ya düştü) uyarı metni üretir.
+    /// </summary>
+    /// <param name="requestedDevice">İstenen cihaz.</param>
+    /// <param name="load">İşçinin <c>load</c> yanıtı (<see cref="WorkerResponse.Device"/>, <see cref="WorkerResponse.DeviceNote"/>).</param>
+    /// <returns>Düşüş varsa açıklama, yoksa <c>null</c> (eski işçi cihaz bildirmiyorsa da <c>null</c>).</returns>
+    public static string? DescribeDeviceFallback(string requestedDevice, WorkerResponse load)
+    {
+        ArgumentNullException.ThrowIfNull(load);
+        if (!requestedDevice.StartsWith(TorchDeviceDecision.Cuda, StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(load.Device)
+            || load.Device.StartsWith(TorchDeviceDecision.Cuda, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return string.IsNullOrWhiteSpace(load.DeviceNote) ? $"adapter {load.Device} kullanıyor" : load.DeviceNote;
+    }
+
+    /// <summary>Yalnız GPU seçildiyse CUDA tekerlek dizinini döndürür (hafif motorların <see cref="TorchIndexUrl"/> değeri için).</summary>
+    /// <param name="index">CUDA tekerlek dizini (ör. <see cref="TorchCu128Index"/>).</param>
+    /// <returns>GPU kararıysa <paramref name="index"/>, değilse <c>null</c> (CPU tekerleği).</returns>
+    protected string? CudaTorchIndex(string index) => DeviceDecision.UsesGpu ? index : null;
+
     /// <summary>Paket kurulumundan önce çalışan ek hazırlık (ör. kaynak deposu indirme). Varsayılan: hiçbir şey.</summary>
     /// <param name="progress">İlerleme.</param>
     /// <param name="ct">İptal belirteci.</param>
@@ -349,7 +393,7 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
                 return Result.Failure<ITtsWorkerClient>(SpeechErrors.Worker($"{DisplayName} yüklenemedi: {reason}"));
             }
 
-            Logger.LogInformation("{Engine} Python işçisinde yüklendi ({Device})", Key, Device);
+            LogDeviceOutcome(load.Value);
             _worker = worker;
             return Result.Success(worker);
         }
@@ -357,6 +401,27 @@ public abstract class PythonSpeechEngineBase : SpeechEngineBase, IAsyncDisposabl
         {
             _workerGate.Release();
         }
+    }
+
+    private void LogDeviceOutcome(WorkerResponse load)
+    {
+        var decision = DeviceDecision;
+        if (decision.FallbackReason is { } reason)
+        {
+            Logger.LogWarning("{Engine}: GPU yerine CPU kullanılıyor — {Reason}", Key, reason);
+        }
+        else if (!SupportsGpu)
+        {
+            Logger.LogInformation("{Engine}: CPU'da çalışıyor (motorun temiz bir GPU yolu yok)", Key);
+        }
+
+        if (DescribeDeviceFallback(Device, load) is { } adapterFallback)
+        {
+            Logger.LogWarning("{Engine}: CUDA istendi ama Python adapter'ı CPU'ya düştü — {Reason}", Key, adapterFallback);
+            return;
+        }
+
+        Logger.LogInformation("{Engine} Python işçisinde yüklendi ({Device})", Key, load.Device ?? Device);
     }
 
     private async Task<Result<string>> RequireUvAsync(IProgress<EngineSetupProgress>? progress, CancellationToken ct)

@@ -1,23 +1,79 @@
-"""Shared helpers for adapters: device resolution and WAV writing."""
+"""Shared helpers for adapters: GPU-first device resolution (with logged CPU fallback) and WAV writing.
+
+GPU-first rule: when the agent asks for 'cuda', adapters must run on the GPU. CPU is only a fallback (torch without CUDA,
+GPU not visible, out of VRAM, driver error) and every fallback is reported: a '[taha:warn]' line on stderr (the agent logs it
+at Warning) plus device_note(), which tts_worker returns in the load response.
+"""
 
 import math
 import struct
+import sys
 import wave
+
+WARN_PREFIX = "[taha:warn]"
+
+_device_note = None
+
+
+def warn(message):
+    """Write a warning line the agent picks up at Warning level (stdout is reserved for protocol lines)."""
+    print(f"{WARN_PREFIX} {message}", file=sys.stderr, flush=True)
+
+
+def device_note():
+    """Reason of the last cuda -> cpu fallback in this process (None if there was none)."""
+    return _device_note
+
+
+def note_cpu_fallback(reason):
+    """Record and report a cuda -> cpu fallback."""
+    global _device_note
+    _device_note = reason
+    warn("GPU yerine CPU: " + reason)
 
 
 def resolve_device(device):
-    """Return 'cuda' only when requested and torch actually sees a GPU; otherwise 'cpu'."""
+    """Return the requested cuda device when torch actually sees a GPU; otherwise 'cpu' (the fallback is reported)."""
     wanted = (device or "cpu").lower()
-    if wanted.startswith("cuda"):
-        try:
-            import torch
-
-            if torch.cuda.is_available():
-                return wanted
-        except ImportError:
-            pass
+    if not wanted.startswith("cuda"):
+        return wanted
+    try:
+        import torch
+    except ImportError:
+        note_cpu_fallback("cuda istendi ama torch kurulu değil")
         return "cpu"
-    return wanted
+    if torch.cuda.is_available():
+        return wanted
+    if getattr(torch.version, "cuda", None) is None:
+        note_cpu_fallback(f"cuda istendi ama torch {torch.__version__} CUDA'sız (CPU tekerleği) kurulmuş")
+    else:
+        note_cpu_fallback(f"cuda istendi ama torch {torch.__version__} (CUDA {torch.version.cuda}) GPU göremiyor (sürücü/GPU yok)")
+    return "cpu"
+
+
+def load_on_device(factory, device, what="model"):
+    """Build something with factory(device); if that fails on the GPU (out of VRAM, driver error), report and retry on CPU.
+
+    Returns (result, device actually used)."""
+    device = resolve_device(device)
+    if not device.startswith("cuda"):
+        return factory(device), device
+    try:
+        return factory(device), device
+    except Exception as exc:  # noqa: BLE001 - any GPU failure falls back to CPU, loudly
+        _free_cuda_memory()
+        note_cpu_fallback(f"{what} GPU'ya yüklenemedi ({type(exc).__name__}: {exc})")
+        return factory("cpu"), "cpu"
+
+
+def _free_cuda_memory():
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:  # noqa: BLE001 - best effort cleanup only
+        pass
 
 
 def to_mono_list(audio):

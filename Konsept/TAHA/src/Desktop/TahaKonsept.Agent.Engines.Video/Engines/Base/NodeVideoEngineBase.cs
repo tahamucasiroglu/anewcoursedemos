@@ -29,12 +29,30 @@ namespace TahaKonsept.Agent.Engines.Video.Engines.Base;
 /// <item><see cref="ValidateSceneAsync"/>: statik güvenlik denetimi + yapı kontrolü + motorun kendi doğrulaması (<see cref="ValidateWithToolAsync"/>).</item>
 /// </list>
 /// Telemetri ortam değişkenleriyle kapatılır; ağdan bağımsız çalışma için fontlar ve kütüphaneler şablondan kopyalanır.
+/// "Önce GPU": render önce GPU açık argümanlarla yapılır (<see cref="BuildRenderArguments"/> <c>useGpu=true</c>: Chrome ANGLE/D3D11 GPU
+/// rasterleştirme, motor destekliyorsa NVENC). Başarısız olur ve günlük GPU kaynaklı görünürse (<see cref="IsLikelyGpuFailure"/>)
+/// uyarı loglanır ve sahne CPU (SwiftShader/libx264) ile yeniden render edilir; bu süreçte motor artık CPU ile başlar. Başarılı
+/// render'da aracın kendi CPU'ya düşüşü (<see cref="DetectGpuFallback"/>, ör. HyperFrames WebGL yoklaması) de uyarı olarak loglanır.
 /// </summary>
 public abstract class NodeVideoEngineBase : IVideoEngine
 {
     private const string StampFileName = ".tk-template.json";
 
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> InstallLocks = new(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] GpuFailureMarkers =
+    [
+        "gpu", "angle", "d3d11", "webgl", "nvenc", "swiftshader", "context lost", "failed to launch", "browser process",
+        "target closed", "crashed", "cuda",
+    ];
+
+    private static readonly string[] GpuFallbackMarkers =
+    [
+        "browserGpuMode probe → software", "Falling back to software",
+        "GPU process isn't usable", "falling back to SwiftShader",
+    ];
+
+    private volatile string? _gpuDisabledReason;
 
     /// <summary>Taban oluşturur.</summary>
     /// <param name="paths">Ajan klasörleri.</param>
@@ -330,8 +348,39 @@ public abstract class NodeVideoEngineBase : IVideoEngine
     /// <summary>node'a verilecek argümanlar (ilk argüman çalıştırılacak betik).</summary>
     /// <param name="project">Proje.</param>
     /// <param name="request">İstek.</param>
+    /// <param name="useGpu">GPU hızlandırma açık mı ("Önce GPU"; <c>false</c> = CPU yedeği: SwiftShader / yazılım kodlayıcı).</param>
     /// <returns>Argümanlar.</returns>
-    protected abstract Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request);
+    protected abstract Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request, bool useGpu);
+
+    /// <summary>Motor GPU hızlandırmayı denesin mi (varsayılan <c>true</c>).</summary>
+    protected virtual bool PreferGpu => true;
+
+    /// <summary>Başarısız bir render günlüğü GPU/tarayıcı kaynaklı mı görünüyor (CPU ile yeniden denemeye değer mi).</summary>
+    /// <param name="log">Render günlüğü (stdout + stderr).</param>
+    /// <returns>GPU kaynaklı görünüyorsa <c>true</c>.</returns>
+    public static bool IsLikelyGpuFailure(string? log) =>
+        !string.IsNullOrEmpty(log) && GpuFailureMarkers.Any(m => log.Contains(m, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Başarılı render günlüğünde aracın kendi GPU → CPU düşüşünü arar (ör. HyperFrames "browserGpuMode probe → software").</summary>
+    /// <param name="log">Render günlüğü.</param>
+    /// <returns>Düşüşü anlatan satır ya da <c>null</c>.</returns>
+    public static string? DetectGpuFallback(string? log)
+    {
+        if (string.IsNullOrEmpty(log))
+        {
+            return null;
+        }
+
+        foreach (var line in log.Split('\n'))
+        {
+            if (GpuFallbackMarkers.Any(m => line.Contains(m, StringComparison.OrdinalIgnoreCase)))
+            {
+                return line.Trim();
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>Render bittikten sonra çıktıyı hedef yola taşır (gerekiyorsa). Varsayılan: hiçbir şey.</summary>
     /// <param name="project">Proje.</param>
@@ -471,10 +520,62 @@ public abstract class NodeVideoEngineBase : IVideoEngine
             File.Delete(request.OutputPath);
         }
 
-        var args = BuildRenderArguments(project, request);
+        var useGpu = PreferGpu && _gpuDisabledReason is null;
+        if (PreferGpu && !useGpu)
+        {
+            Logger.LogWarning("{Engine}: GPU hızlandırma bu oturumda kapalı, CPU ile render ediliyor — {Reason}", Key, _gpuDisabledReason);
+        }
+
+        var attempt = await RunRenderOnceAsync(node, project, request, useGpu, progress, ct).ConfigureAwait(false);
+        if (attempt.IsFailure)
+        {
+            return Result.Failure<VideoRenderOutput>(attempt.Error);
+        }
+
+        var (result, logText) = attempt.Value;
+        if (!result.Succeeded && useGpu && !result.TimedOut && !ct.IsCancellationRequested && IsLikelyGpuFailure(logText))
+        {
+            var why = Tail(result.StandardError, result.StandardOutput);
+            _gpuDisabledReason = why.Length <= 300 ? why : why[^300..];
+            Logger.LogWarning("{Engine}: GPU hızlandırmalı render başarısız (kod {Code}), sahne CPU ile yeniden render ediliyor — {Reason}", Key, result.ExitCode, _gpuDisabledReason);
+            if (File.Exists(request.OutputPath))
+            {
+                File.Delete(request.OutputPath);
+            }
+
+            attempt = await RunRenderOnceAsync(node, project, request, useGpu: false, progress, ct).ConfigureAwait(false);
+            if (attempt.IsFailure)
+            {
+                return Result.Failure<VideoRenderOutput>(attempt.Error);
+            }
+
+            (result, logText) = attempt.Value;
+        }
+        else if (result.Succeeded && useGpu && DetectGpuFallback(logText) is { } toolFallback)
+        {
+            Logger.LogWarning("{Engine}: araç GPU yerine CPU'ya düştü — {Line}", Key, toolFallback);
+        }
+
+        var finalize = result.Succeeded ? await FinalizeOutputAsync(project, request, ct).ConfigureAwait(false) : Result.Success();
+        if (!result.Succeeded || finalize.IsFailure || !File.Exists(request.OutputPath))
+        {
+            var reason = result.TimedOut ? "zaman aşımı" : $"kod {result.ExitCode}";
+            var detail = finalize.IsFailure ? finalize.Error.Message : Tail(result.StandardError, result.StandardOutput);
+            return Error.Failure($"video.{Key}.render_failed", $"{DisplayName} sahne {request.SceneIndex + 1} render edilemedi ({reason}): {detail}");
+        }
+
+        var duration = await Probe.GetDurationAsync(request.OutputPath, ct).ConfigureAwait(false);
+        progress?.Report(100);
+        return new VideoRenderOutput(request.OutputPath, duration.IsSuccess ? duration.Value : request.DurationSec);
+    }
+
+    private async Task<Result<(ProcessResult Result, string Log)>> RunRenderOnceAsync(
+        string node, SceneProject project, SceneRenderRequest request, bool useGpu, IProgress<double>? progress, CancellationToken ct)
+    {
+        var args = BuildRenderArguments(project, request, useGpu);
         if (args.IsFailure)
         {
-            return Result.Failure<VideoRenderOutput>(args.Error);
+            return Result.Failure<(ProcessResult, string)>(args.Error);
         }
 
         var spec = new ProcessSpec(node, args.Value, project.ProjectDir, BuildEnvironment(), RenderTimeout);
@@ -505,20 +606,10 @@ public abstract class NodeVideoEngineBase : IVideoEngine
             logText = log.ToString();
         }
 
-        var logPath = Path.Combine(request.WorkDir, string.Create(CultureInfo.InvariantCulture, $"{Key}-scene-{request.SceneIndex:D3}.log"));
+        var suffix = useGpu ? string.Empty : "-cpu";
+        var logPath = Path.Combine(request.WorkDir, string.Create(CultureInfo.InvariantCulture, $"{Key}-scene-{request.SceneIndex:D3}{suffix}.log"));
         await File.WriteAllTextAsync(logPath, logText, Utf8NoBom, CancellationToken.None).ConfigureAwait(false);
-
-        var finalize = result.Succeeded ? await FinalizeOutputAsync(project, request, ct).ConfigureAwait(false) : Result.Success();
-        if (!result.Succeeded || finalize.IsFailure || !File.Exists(request.OutputPath))
-        {
-            var reason = result.TimedOut ? "zaman aşımı" : $"kod {result.ExitCode}";
-            var detail = finalize.IsFailure ? finalize.Error.Message : Tail(result.StandardError, result.StandardOutput);
-            return Error.Failure($"video.{Key}.render_failed", $"{DisplayName} sahne {request.SceneIndex + 1} render edilemedi ({reason}): {detail}");
-        }
-
-        var duration = await Probe.GetDurationAsync(request.OutputPath, ct).ConfigureAwait(false);
-        progress?.Report(100);
-        return new VideoRenderOutput(request.OutputPath, duration.IsSuccess ? duration.Value : request.DurationSec);
+        return (result, logText);
     }
 
     private static string? ResolveNpmCli(string nodePath, string? npmFromLocator)

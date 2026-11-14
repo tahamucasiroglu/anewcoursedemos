@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using TahaKonsept.Agent.Abstractions.Engines;
@@ -134,13 +135,29 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
         return new SceneProject(dir, Path.Combine(publicDir, "assets"), entry, DeleteAfterRender: true);
     }
 
+    /// <summary>
+    /// Chrome GPU bayrakları ("Önce GPU"; render.mjs bunları ağ yasağı bayraklarına ekler, ağ yasağı her iki kipte de aynen kalır).
+    /// GPU: ANGLE/D3D11 donanım GL + GPU rasterleştirme + GPU kara listesini yok sayma (WebGL GPU'suz makinede SwiftShader'a
+    /// düşebilsin diye <c>--enable-unsafe-swiftshader</c>). CPU yedeği: ANGLE/SwiftShader. Kodlama Revideo'nun kendi ffmpeg'inde
+    /// sabit yazılım kodlayıcıyla yapılır (0.11 API'si kodlayıcı seçtirmez); ara dosya birleştiricide NVENC ile yeniden kodlanır.
+    /// </summary>
+    /// <param name="useGpu">GPU açık mı.</param>
+    /// <returns>Chrome bayrakları.</returns>
+    public static IReadOnlyList<string> ChromeGpuArguments(bool useGpu) => useGpu
+        ? ["--use-gl=angle", "--use-angle=d3d11", "--enable-gpu-rasterization", "--ignore-gpu-blocklist", "--enable-unsafe-swiftshader"]
+        : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+
     /// <inheritdoc />
-    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request)
+    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request, bool useGpu)
     {
         var chrome = ResolveChrome();
         return chrome is null
             ? Error.Failure("video.revideo.browser_missing", "Revideo için headless Chrome bulunamadı.")
-            : new List<string> { project.EntryPath, Path.Combine(project.ProjectDir, "out"), "scene.mp4", "-", chrome };
+            : new List<string>
+            {
+                project.EntryPath, Path.Combine(project.ProjectDir, "out"), "scene.mp4", "-", chrome,
+                JsonSerializer.Serialize(ChromeGpuArguments(useGpu)),
+            };
     }
 
     /// <inheritdoc />
@@ -189,13 +206,15 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
     private const string RenderScript = """
         import { renderVideo } from '@revideo/renderer';
 
-        const [, , outDir, outFile, ffmpegPath, chromePath] = process.argv;
+        const [, , outDir, outFile, ffmpegPath, chromePath, gpuFlagsJson] = process.argv;
         // Revideo her zaman --single-process ekler; yeni Chrome sürümlerinde sayfa düşüyor. includes() true dönen dizi bunu engeller.
         class NoSingleProcessArgs extends Array { includes() { return true; } }
         // LLM'in yazdığı sahne kodu güvenilmez: Chromium sandbox'ı açık kalır (--no-sandbox yok) ve ağ kapalıdır — tüm istekler ölü proxy'ye
         // (127.0.0.1:9) gider, yalnız loopback (Vite paket sunucusu) varsayılan olarak proxy dışıdır; WebRTC UDP'si de proxy dışına çıkamaz.
         const network = ['--proxy-server=http://127.0.0.1:9', '--force-webrtc-ip-handling-policy=disable_non_proxied_udp'];
-        const args = NoSingleProcessArgs.from([...network, ...(process.platform === 'linux' ? ['--disable-dev-shm-usage'] : [])]);
+        // "Önce GPU": ajan GPU (ANGLE/D3D11) ya da CPU yedeği (SwiftShader) bayraklarını JSON dizi olarak verir; ağ yasağı her iki kipte de aynı.
+        const gpu = gpuFlagsJson ? JSON.parse(gpuFlagsJson) : [];
+        const args = NoSingleProcessArgs.from([...network, ...gpu, ...(process.platform === 'linux' ? ['--disable-dev-shm-usage'] : [])]);
         let last = -1;
         await renderVideo({
           projectFile: './src/project.ts',
