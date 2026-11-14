@@ -14,6 +14,7 @@ public sealed class SecretMaskerTests
     public static TheoryData<string, string, string> FreeTextTable => new()
     {
         { "key: sk-proj-AbCdEf123456789xyz bitti", "key: sk-…xyz bitti", "AbCdEf123456789" },
+        { "yenileme knr_AbCdEf0123456789-_GhIjKlMnOpQrStUvWxYz012345678 bitti", "yenileme *** bitti", "AbCdEf0123456789" },
         { "sk-ant-api03-AbCdEfGhIjKlMnOp-Q7a", "sk-ant-…Q7a", "api03-AbCdEfGhIjKlMnOp" },
         { "anahtar=sk-or-v1-0123456789abcdef", "anahtar=sk-or-…def", "v1-0123456789abc" },
         { "token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig_part-123 geldi", "token [jwt] geldi", "eyJzdWIiOiIxIn0" },

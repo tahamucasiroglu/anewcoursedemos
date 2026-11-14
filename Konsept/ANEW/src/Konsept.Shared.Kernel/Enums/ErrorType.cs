@@ -19,4 +19,10 @@ public enum ErrorType
 
     /// <summary>Beklenen cevap süresinde gelmedi (504).</summary>
     Timeout,
+
+    /// <summary>Kimlik doğrulanamadı ya da oturum geçersiz (401).</summary>
+    Unauthorized,
+
+    /// <summary>Çok fazla deneme; bir süre sonra tekrar denenmeli (429).</summary>
+    TooManyRequests,
 }

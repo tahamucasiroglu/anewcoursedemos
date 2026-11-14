@@ -21,6 +21,12 @@ public static partial class SecretMasker
     /// <summary>JWT biçimli token'ın yerine yazılan metin.</summary>
     public const string JwtPlaceholder = "[jwt]";
 
+    /// <summary>
+    /// Identity modülünün ürettiği refresh token öneki (plan 0002): bu önekle başlayan değer serbest metinde her zaman
+    /// tamamen gizlenir.
+    /// </summary>
+    public const string RefreshTokenPrefix = "knr_";
+
     /// <summary>Maskelenecek en uzun metin; daha uzunu önce kırpılır.</summary>
     public const int MaxInputLength = 64 * 1024;
 
@@ -308,6 +314,7 @@ public static partial class SecretMasker
             ? m.Value
             : $"{m.Groups["scheme"].Value} {Record(secrets, m.Groups["token"].Value, Hidden)}");
         result = MaskUrlUserInfo(result, secrets);
+        result = RefreshTokenPattern().Replace(result, m => Record(secrets, m.Value, Hidden));
         result = ApiKeyPattern().Replace(result, m => Record(secrets, m.Value, MaskApiKey(m.Value)));
         result = GoogleApiKeyPattern().Replace(result, m => Record(secrets, m.Value, MaskApiKey(m.Value)));
         return SecretKeyValueScanner.Mask(result, secrets);
@@ -552,4 +559,8 @@ public static partial class SecretMasker
 
     [GeneratedRegex(@"(?:(?<=\\u[0-9A-Fa-f]{4})|(?<!(?<!\\)[A-Za-z0-9]))AIza[0-9A-Za-z_\-]{35}", RegexOptions.CultureInvariant)]
     private static partial Regex GoogleApiKeyPattern();
+
+    // Identity refresh token'ı: knr_ + base64url (plan 0002, AC-17).
+    [GeneratedRegex(@"(?:(?<=\\u[0-9A-Fa-f]{4})|(?<!(?<!\\)[A-Za-z0-9]))knr_[A-Za-z0-9_\-]{16,}", RegexOptions.CultureInvariant)]
+    private static partial Regex RefreshTokenPattern();
 }
