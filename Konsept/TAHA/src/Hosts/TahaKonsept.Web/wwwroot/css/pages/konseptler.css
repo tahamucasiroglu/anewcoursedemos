@@ -1,0 +1,87 @@
+/* Konseptler sayfası: üretim ilerleme şeridi, konu listesi, sahne düzenleyici, düzeltme adayı penceresi.
+   Renkler theme.css değişkenlerinden (açık/koyu mod otomatik). */
+
+/* ---------------------------------------------------------- Üretim ilerleme şeridi */
+.kp-job {
+    margin-bottom: 14px; padding: 12px 14px; border-radius: var(--tk-radius);
+    border: 1px solid var(--tk-border); background: var(--tk-surface); box-shadow: var(--tk-shadow-sm);
+    display: flex; flex-direction: column; gap: 9px;
+}
+.kp-job[hidden] { display: none; }
+.kp-job-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.kp-job-current { flex: 1 1 200px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .86rem; }
+.kp-job-meta { font-size: .82rem; font-weight: 700; color: var(--tk-text-soft); white-space: nowrap; }
+.kp-job-spinner {
+    width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto;
+    border: 2px solid var(--tk-accent-soft); border-top-color: var(--tk-accent);
+    animation: kp-spin .8s linear infinite;
+}
+.kp-job.is-done .kp-job-spinner { animation: none; border-color: var(--tk-success); background: var(--tk-success-soft); }
+.kp-job.is-failed .kp-job-spinner { animation: none; border-color: var(--tk-danger); background: var(--tk-danger-soft); }
+.kp-job.is-failed .tk-progress > span { background: var(--tk-danger); }
+.kp-job.is-done .tk-progress > span { background: var(--tk-success); }
+@keyframes kp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .kp-job-spinner { animation: none; } }
+
+/* ---------------------------------------------------------- Konudan üret */
+.kp-topic-row { margin-bottom: 12px; flex-wrap: nowrap; }
+.kp-topic-all { margin-right: auto; }
+.kp-topic-item .tk-list-sub { white-space: normal; }
+.kp-topic-item input[type=checkbox] { accent-color: var(--tk-accent); width: 17px; height: 17px; flex: 0 0 auto; }
+
+/* ---------------------------------------------------------- Üretilenler */
+.kp-concept-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 3px; }
+.kp-concept-meta .tk-badge { font-weight: 700; }
+.tk-mini-btn.is-success { color: var(--tk-success); }
+
+/* ---------------------------------------------------------- Düzenleme alanı */
+.kp-editor-stats { margin-right: auto; }
+.kp-doc-head { display: grid; gap: 0 12px; grid-template-columns: 1fr; }
+.kp-scene {
+    border: 1px solid var(--tk-border); border-radius: var(--tk-radius-sm); background: var(--tk-surface-2);
+    margin-bottom: 10px; overflow: hidden;
+}
+.kp-scene-head {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border-bottom: 1px solid var(--tk-divider); background: var(--tk-surface);
+}
+.kp-scene-no {
+    flex: 0 0 auto; min-width: 28px; height: 24px; padding: 0 7px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tk-accent-soft); color: var(--tk-accent); font-weight: 900; font-size: .78rem;
+}
+.kp-scene-head .tk-input { flex: 1 1 auto; min-width: 0; }
+.kp-scene-dur { font-size: .76rem; color: var(--tk-text-muted); white-space: nowrap; }
+.kp-scene-body { padding: 10px; display: grid; gap: 8px 12px; grid-template-columns: 1fr 1fr; }
+.kp-scene-body .tk-field { margin-bottom: 0; }
+.kp-scene-body .kp-wide { grid-column: 1 / -1; }
+.kp-scene-body textarea[name=visualPrompt] { font-family: var(--tk-font-mono); font-size: .8rem; }
+.kp-add-scene { width: 100%; justify-content: center; border-style: dashed; }
+.kp-extra { margin-top: 14px; display: grid; gap: 10px; }
+.kp-extra h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tk-text-muted); margin: 0 0 4px; }
+.kp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.kp-sources { margin: 0; padding-left: 18px; font-size: .85rem; }
+.kp-sources a { color: var(--tk-accent); word-break: break-word; }
+.kp-revise-box { display: flex; flex-direction: column; gap: 10px; }
+.kp-revise-box .tk-row { justify-content: flex-end; }
+
+/* ---------------------------------------------------------- Düzeltme adayı penceresi */
+.kp-candidate h3 { margin: 0 0 4px; }
+.kp-candidate .kp-hook { font-style: italic; color: var(--tk-text-soft); margin: 0 0 8px; }
+.kp-cand-scene { padding: 10px 0; border-top: 1px solid var(--tk-divider); }
+.kp-cand-scene.is-changed { background: linear-gradient(90deg, var(--tk-accent-softer), transparent 70%); box-shadow: inset 3px 0 0 var(--tk-accent); padding-left: 10px; }
+.kp-cand-scene strong { display: inline-flex; gap: 6px; align-items: center; }
+.kp-cand-scene .kp-onscreen { font-size: .8rem; color: var(--tk-text-muted); margin: 3px 0; }
+.kp-cand-again { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--tk-border-strong); display: flex; flex-direction: column; gap: 8px; }
+.kp-cand-again[hidden] { display: none; }
+.kp-modal-foot { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---------------------------------------------------------- Modeller penceresi */
+.kp-model-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.kp-model-price { font-size: .76rem; color: var(--tk-text-muted); }
+
+@media (max-width: 760px) {
+    .kp-scene-body { grid-template-columns: 1fr; }
+    .kp-topic-row { flex-wrap: wrap; }
+    .kp-model-row { grid-template-columns: 1fr; }
+}

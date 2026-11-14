@@ -4,11 +4,14 @@
 <div class="tk-page" id="tk-silinenler">
     <div class="tk-page-head">
         <div>
-            <h1>Silinenler</h1>
+            <h1>Silinenler <small class="tk-muted" id="sl-count"></small></h1>
             <p>Silinen konseptler sonsuza kadar burada saklanır ve benzer konuların tekrar önerilmesini engeller. Buradan silinen tamamen silinir.</p>
         </div>
         <div class="tk-page-actions">
-            <input type="search" class="tk-input" id="sl-search" placeholder="Ara…" aria-label="Silinenlerde ara" style="width:240px" />
+            <input type="search" class="tk-input" id="sl-search" placeholder="Başlık, özet ya da etiket ara…" aria-label="Silinenlerde ara" style="width:260px;max-width:100%" />
+            <button type="button" class="tk-mini-btn" id="sl-refresh" title="Yenile" aria-label="Yenile">
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-refresh"></use></svg>
+            </button>
         </div>
     </div>
 

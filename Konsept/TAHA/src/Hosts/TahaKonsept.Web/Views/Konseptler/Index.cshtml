@@ -1,31 +1,51 @@
 @{
     ViewData["Title"] = "Konseptler";
 }
+@section Head {
+    <link rel="stylesheet" href="~/css/pages/konseptler.css" asp-append-version="true" />
+}
 <div class="tk-page" id="tk-konseptler">
     <h1 class="tk-sr-only">Konseptler</h1>
 
     <section class="tk-strip" aria-label="Konsept ayarları">
-        <button type="button" class="tk-strip-item tk-strip-grow" id="kp-models" title="Konsept üretimi, kelime tekrar denetimi ve konu önerisi modellerini seç">
+        <button type="button" class="tk-strip-item tk-strip-grow" id="kp-models" title="Konsept üretimi, konu önerisi ve kelime tekrar denetimi modellerini seç">
             <span class="tk-strip-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-cpu"></use></svg></span>
             <span class="tk-strip-text">
                 <span class="tk-strip-label">Modeller</span>
                 <span class="tk-strip-value" id="kp-models-summary">Yükleniyor…</span>
             </span>
         </button>
-        <button type="button" class="tk-strip-item tk-strip-grow" id="kp-tuning" title="Ton, izleyici ve anlatım biçimi">
+        <button type="button" class="tk-strip-item tk-strip-grow" id="kp-tuning" title="Ton, izleyici, anlatım biçimi, notlar ve gerçek bilgi">
             <span class="tk-strip-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-sliders"></use></svg></span>
             <span class="tk-strip-text">
                 <span class="tk-strip-label">İnce ayar</span>
-                <span class="tk-strip-value" id="kp-tuning-summary">Varsayılan</span>
+                <span class="tk-strip-value" id="kp-tuning-summary">Profilden</span>
             </span>
         </button>
         <div class="tk-strip-end">
-            <label class="tk-switch" title="Üretilen konseptlerde aynı kelimenin gereksiz tekrarını denetle">
+            <span class="tk-badge" id="kp-fact-badge" title="Gerçek bilgi: web aramasıyla doğrulama ve kaynak zorunluluğu" hidden>Gerçek bilgi</span>
+            <label class="tk-switch" title="Üretilen konseptlerde aynı kelimenin gereksiz tekrarını denetle (önce ücretsiz yerel analiz, gerekirse ucuz model)">
                 <input type="checkbox" id="kp-wordcheck" />
                 <span class="tk-switch-track"></span>
                 Kelime denetimi
             </label>
         </div>
+    </section>
+
+    <section class="kp-job" id="kp-job" hidden aria-live="polite">
+        <div class="kp-job-head">
+            <span class="kp-job-spinner" aria-hidden="true"></span>
+            <strong id="kp-job-title">Konseptler üretiliyor…</strong>
+            <span class="tk-muted kp-job-current" id="kp-job-current"></span>
+            <span class="kp-job-meta" id="kp-job-meta"></span>
+            <button type="button" class="tk-btn tk-btn-ghost tk-btn-sm" id="kp-job-cancel">
+                <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-stop"></use></svg> Durdur
+            </button>
+            <button type="button" class="tk-mini-btn" id="kp-job-close" title="Gizle" aria-label="Gizle" hidden>
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-x"></use></svg>
+            </button>
+        </div>
+        <div class="tk-progress"><span id="kp-job-bar"></span></div>
     </section>
 
     <div class="tk-grid-quad">
@@ -34,22 +54,23 @@
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-list"></use></svg></span>
-                    <div><h2 id="kp-topic-title">Konu üreterek</h2><small class="tk-muted">Önce başlık önerileri, sonra seçtiklerini detaylandır</small></div>
+                    <div><h2 id="kp-topic-title">Konudan üret</h2><small class="tk-muted">Önce başlık önerileri, sonra seçtiklerini detaylandır</small></div>
                 </div>
             </header>
             <div class="tk-card-body">
-                <div class="tk-row" style="margin-bottom:12px">
+                <div class="tk-row kp-topic-row">
                     <input type="text" class="tk-input tk-grow" id="kp-topic-hint" maxlength="300" placeholder="İsteğe bağlı yön: ör. &quot;Bizans'ın son yüzyılı&quot;" />
                     <label class="tk-sr-only" for="kp-topic-count">Adet</label>
                     <input type="number" class="tk-input tk-input-num" id="kp-topic-count" min="1" max="100" value="10" title="Kaç başlık önerilsin (1–100)" />
                     <button type="button" class="tk-btn tk-btn-secondary" id="kp-topic-suggest">
-                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bulb"></use></svg> Konu öner
+                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bulb"></use></svg> Öner
                     </button>
                 </div>
                 <div id="kp-topic-list"></div>
             </div>
             <footer class="tk-card-foot">
-                <label class="tk-check" style="margin-right:auto"><input type="checkbox" id="kp-topic-all" /> Tümünü seç</label>
+                <label class="tk-check kp-topic-all"><input type="checkbox" id="kp-topic-all" /> Tümünü seç</label>
+                <span class="tk-hint" id="kp-topic-info"></span>
                 <button type="button" class="tk-btn tk-btn-primary" id="kp-topic-generate" disabled>
                     <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-spark"></use></svg> Seçtiklerini üret <span class="tk-badge" id="kp-topic-selected">0</span>
                 </button>
@@ -61,7 +82,7 @@
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-spark"></use></svg></span>
-                    <div><h2 id="kp-idea-title">Fikirden üreterek</h2><small class="tk-muted">Serbest fikir yaz, doğrudan konsept üretilsin</small></div>
+                    <div><h2 id="kp-idea-title">Fikirden üret</h2><small class="tk-muted">Serbest fikir yaz, doğrudan Üretilenler'e düşsün</small></div>
                 </div>
             </header>
             <div class="tk-card-body">
@@ -72,7 +93,7 @@
                 <div class="tk-row">
                     <label class="tk-label" for="kp-idea-count">Kaç konsept?</label>
                     <input type="number" class="tk-input tk-input-num" id="kp-idea-count" min="1" max="100" value="1" />
-                    <span class="tk-hint tk-grow">Her biri farklı açıdan ele alınır.</span>
+                    <span class="tk-hint tk-grow">Birden fazlaysa her biri farklı bir açıdan ele alınır.</span>
                 </div>
             </div>
             <footer class="tk-card-foot">
@@ -103,9 +124,11 @@
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-edit-doc"></use></svg></span>
                     <div><h2 id="kp-editor-title">Düzenleme alanı</h2><small class="tk-muted" id="kp-editor-sub">Üretilenlerden birini seçin</small></div>
                 </div>
+                <span class="tk-badge is-warning" id="kp-editor-dirty" hidden>Kaydedilmedi</span>
             </header>
             <div class="tk-card-body" id="kp-editor"></div>
             <footer class="tk-card-foot" id="kp-editor-foot" hidden>
+                <span class="tk-hint kp-editor-stats" id="kp-editor-stats"></span>
                 <button type="button" class="tk-btn tk-btn-ghost" id="kp-editor-save">
                     <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Kaydet
                 </button>
