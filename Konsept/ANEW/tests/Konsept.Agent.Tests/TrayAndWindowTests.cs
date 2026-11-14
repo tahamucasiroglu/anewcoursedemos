@@ -83,6 +83,29 @@ public sealed class TrayAndWindowTests
         }
     }
 
+    /// <summary>Bağlantı kapatılırken hata olsa bile "Çıkış" uygulamayı sonlandırır (review round 2, I-1).</summary>
+    /// <returns>Görev.</returns>
+    [AvaloniaFact]
+    public async Task TrayMenu_Exit_StopFails_StillShutsDown()
+    {
+        var connection = Substitute.For<IServerConnection>();
+        connection.StopAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(new InvalidOperationException("kapatılamadı")));
+        CurrentApp.Composition = Composition(new Uri("http://localhost:8000/"), Substitute.For<IBrowserLauncher>(), connection);
+        var shutdown = false;
+        CurrentApp.ShutdownAction = () => shutdown = true;
+        try
+        {
+            await Should.ThrowAsync<InvalidOperationException>(CurrentApp.ExitAsync);
+
+            shutdown.ShouldBeTrue();
+        }
+        finally
+        {
+            CurrentApp.Composition = null;
+            CurrentApp.ShutdownAction = null;
+        }
+    }
+
     /// <summary>Pencere kapatılınca uygulama kapanmaz; pencere yalnızca gizlenir.</summary>
     [AvaloniaFact]
     public void MainWindow_Close_DoesNotShutdown()

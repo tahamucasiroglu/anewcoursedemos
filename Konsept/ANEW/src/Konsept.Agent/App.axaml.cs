@@ -65,12 +65,18 @@ public sealed partial class App : Avalonia.Application
     /// <returns>Görev.</returns>
     internal async Task ExitAsync()
     {
-        if (Composition is not null)
+        try
         {
-            await Composition.Connection.StopAsync(CancellationToken.None).ConfigureAwait(true);
+            if (Composition is not null)
+            {
+                await Composition.Connection.StopAsync(CancellationToken.None).ConfigureAwait(true);
+            }
         }
-
-        ShutdownAction?.Invoke();
+        finally
+        {
+            // Bağlantı kapatılamasa bile uygulama kapanmalı (review round 2, I-1).
+            ShutdownAction?.Invoke();
+        }
     }
 
     private TrayIcon CreateTrayIcon()
