@@ -19,6 +19,8 @@ for app in Api Web; do
     --self-contained true -p:UseSharedCompilation=false -nodeReuse:false -o "$work/$lower" >/dev/null
 done
 cp "$ROOT/deploy/pi/anewconcept-api.service" "$ROOT/deploy/pi/anewconcept-web.service" "$ROOT/deploy/pi/provision.sh" "$work/"
+# Windows'ta düzenlenmiş dosyada CRLF kalmışsa Pi'de sh/systemd bozulur; yüklemeden önce LF'ye çevrilir.
+sed -i 's/$//' "$work/anewconcept-api.service" "$work/anewconcept-web.service" "$work/provision.sh"
 
 snapshot() {
   ssh -o BatchMode=yes "$PI" "systemctl list-units --type=service --state=running --no-legend --plain | awk '{print \$1}' | grep -v '^anewconcept-' | sort; echo '--- ports'; ss -Hltn | awk '{print \$4}' | grep -v -E ':(8000|8001)\$' | sort -u"

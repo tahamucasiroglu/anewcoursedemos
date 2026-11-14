@@ -53,7 +53,11 @@ public static class KonseptLogging
     public static MaskingTextFormatter CreateFormatter() =>
         new(new MessageTemplateTextFormatter(OutputTemplate, CultureInfo.InvariantCulture));
 
-    /// <summary>Günlük dönen, maskeli log dosyasını ekler. Saklama süresini <c>LogFileJanitor</c> uygular.</summary>
+    /// <summary>
+    /// Günlük dönen, maskeli log dosyasını ekler. Saklama süresini <c>LogFileJanitor</c> uygular. Her dosyanın tek
+    /// yazarı vardır; paylaşımlı mod kullanılmaz (Linux'ta adlandırılmış mutex servis kullanıcısının ev klasörünü
+    /// ister — Pi'deki <c>anewconcept</c> kullanıcısının ev klasörü yok).
+    /// </summary>
     /// <param name="configuration">Logger yapılandırması.</param>
     /// <param name="directory">Log klasörü.</param>
     /// <param name="prefix">Dosya öneki (ör. <c>api</c>).</param>
@@ -65,7 +69,6 @@ public static class KonseptLogging
             CreateFormatter(),
             Path.Combine(directory, $"{prefix}-.log"),
             rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 31,
-            shared: true);
+            retainedFileCountLimit: 31);
     }
 }

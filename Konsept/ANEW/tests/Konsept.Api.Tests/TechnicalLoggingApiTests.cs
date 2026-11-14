@@ -9,6 +9,7 @@ using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Monitoring.Domain.Enums;
 using Konsept.Modules.Monitoring.Infrastructure.Logging;
 using Konsept.Shared.Kernel.Security;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,11 +45,14 @@ public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
     public async Task ProblemDetails_CorrelationId_FoundInApiLog()
     {
         var ct = TestContext.Current.CancellationToken;
-        var failing = _factory.WithWebHostBuilder(b => b.ConfigureTestServices(s =>
-        {
-            s.RemoveAll<ISystemStatusService>();
-            s.AddScoped<ISystemStatusService, ThrowingSystemStatusService>();
-        }));
+        var logDirectory = Path.Combine(_factory.LogDirectory, "failing-" + Guid.NewGuid().ToString("N"));
+        var failing = _factory.WithWebHostBuilder(b => b
+            .UseSetting("Logging:Directory", logDirectory)
+            .ConfigureTestServices(s =>
+            {
+                s.RemoveAll<ISystemStatusService>();
+                s.AddScoped<ISystemStatusService, ThrowingSystemStatusService>();
+            }));
         using var client = failing.CreateClient();
 
         using var response = await client.GetAsync(new Uri("/api/system/status", UriKind.Relative), ct);
@@ -57,14 +61,14 @@ public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
 
         response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         correlationId.ShouldNotBeNullOrWhiteSpace();
-        await Eventually.WithinAsync(() => Task.FromResult(_factory.ReadLogText().Contains(correlationId, StringComparison.Ordinal)), Limit, ct);
-        var line = _factory.ReadLogText().Split('\n').First(l => l.Contains(correlationId, StringComparison.Ordinal) && l.Contains("[ERR]", StringComparison.Ordinal));
+        await Eventually.WithinAsync(() => Task.FromResult(FastApiFactory.ReadLogText(logDirectory).Contains(correlationId, StringComparison.Ordinal)), Limit, ct);
+        var line = FastApiFactory.ReadLogText(logDirectory).Split('\n').First(l => l.Contains(correlationId, StringComparison.Ordinal) && l.Contains("[ERR]", StringComparison.Ordinal));
         line.ShouldContain(" Api ");
         await Eventually.WithinAsync(
             () => Task.FromResult(_factory.TechnicalLogs.Logs.Any(l => l.CorrelationId == correlationId && l.Level == TechnicalLogLevel.Error)),
             Limit,
             ct);
-        _factory.ReadLogText().ShouldNotContain("THROWINGKEY123");
+        FastApiFactory.ReadLogText(logDirectory).ShouldNotContain("THROWINGKEY123");
         _factory.TechnicalLogs.Logs.Where(l => l.CorrelationId == correlationId).ShouldAllBe(l => !(l.Exception ?? string.Empty).Contains("THROWINGKEY123"));
     }
 

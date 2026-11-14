@@ -45,14 +45,19 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Log klasöründeki tüm log metnini okur (dosya Serilog tarafından açıkken de).</summary>
     /// <returns>Metin.</returns>
-    public string ReadLogText()
+    public string ReadLogText() => ReadLogText(LogDirectory);
+
+    /// <summary>Bir klasördeki tüm log metnini okur (dosya Serilog tarafından açıkken de).</summary>
+    /// <param name="directory">Klasör.</param>
+    /// <returns>Metin.</returns>
+    public static string ReadLogText(string directory)
     {
-        if (!Directory.Exists(LogDirectory))
+        if (!Directory.Exists(directory))
         {
             return string.Empty;
         }
 
-        return string.Concat(Directory.GetFiles(LogDirectory, "*.log").Select(f =>
+        return string.Concat(Directory.GetFiles(directory, "*.log").Select(f =>
         {
             using var stream = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var reader = new StreamReader(stream);
