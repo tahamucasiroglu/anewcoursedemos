@@ -237,9 +237,8 @@ internal static class SecretKeyValueScanner
             return false;
         }
 
-        var efName = text[valueStart + 1] == '_' && text[valueStart + 2] == '_';
-        var adoName = text[valueStart + 1] == 'p' && char.IsAsciiDigit(text[valueStart + 2]);
-        if (!efName && !adoName)
+        // Ad: EF ≤9 @__token_0, EF 10 @token, ADO @p0 — koruma tırnaklı SQL tanımlayıcısı şartıdır (review r6, L-3).
+        if (!(char.IsLetter(text[valueStart + 1]) || text[valueStart + 1] == '_'))
         {
             return false;
         }
@@ -253,36 +252,42 @@ internal static class SecretKeyValueScanner
         return p == text.Length || char.IsWhiteSpace(text[p]) || text[p] is ')' or ',';
     }
 
-    /// <summary>Anahtar, her bölümü büyük harfle başlayan noktalı bir tip adının son bölümü mü ve ardından ": " mi geliyor.</summary>
-    private static bool IsQualifiedTypeName(string text, int keyStart, int keyEnd)
+    /// <summary>
+    /// Anahtar bir tip ya da hata kodu adı mı: büyük harfle başlar ve tip benzeri bir sonekle biter
+    /// (<c>PasswordPolicyException</c>, <c>PasswordResetService</c>, <c>PasswordHasherOptions</c>) ya da bir ASP.NET Core
+    /// Identity hata kodudur (<c>PasswordRequiresDigit</c>). Bu adlar değer taşımaz.
+    /// </summary>
+    private static bool IsDescriptiveName(string text, int keyStart, int keyEnd)
     {
-        if (keyStart < 2 || text[keyStart - 1] != '.' || !char.IsUpper(text[keyStart]) || keyEnd + 1 >= text.Length
-            || text[keyEnd] != ':' || text[keyEnd + 1] != ' ')
+        if (!char.IsUpper(text[keyStart]))
         {
             return false;
         }
 
-        var p = keyStart - 1;
-        var segments = 0;
-        while (p > 0 && text[p] == '.')
+        var raw = text.AsSpan(keyStart, keyEnd - keyStart);
+        foreach (var suffix in TypeSuffixes)
         {
-            var segEnd = p;
-            p--;
-            while (p >= 0 && (char.IsLetterOrDigit(text[p]) || text[p] == '_'))
+            if (raw.Length > suffix.Length && raw.EndsWith(suffix, StringComparison.Ordinal))
             {
-                p--;
+                return true;
             }
-
-            if (segEnd - p - 1 == 0 || !char.IsUpper(text[p + 1]))
-            {
-                return false;
-            }
-
-            segments++;
         }
 
-        return segments >= 1;
+        return IdentityErrorCodes.Contains(raw.ToString());
     }
+
+    private static readonly string[] TypeSuffixes =
+    [
+        "Exception", "Service", "Handler", "Controller", "Validator", "Provider", "Manager", "Policy", "Hasher", "Store",
+        "Middleware", "Filter", "Factory", "Options", "Logger", "Worker", "Job", "Command", "Query", "Request", "Response",
+        "Result", "Event", "Settings", "Configuration", "Attribute", "Requirement",
+    ];
+
+    private static readonly HashSet<string> IdentityErrorCodes = new(StringComparer.Ordinal)
+    {
+        "PasswordTooShort", "PasswordRequiresDigit", "PasswordRequiresLower", "PasswordRequiresUpper",
+        "PasswordRequiresNonAlphanumeric", "PasswordRequiresUniqueChars", "PasswordMismatch", "InvalidToken",
+    };
 
     private static readonly HashSet<string> ValueWords =
         new(StringComparer.OrdinalIgnoreCase) { "key", "value", "string", "text", "değeri", "değer", "metni", "kodu", "code" };
@@ -599,10 +604,10 @@ internal static class SecretKeyValueScanner
             return keyStart > 0 && text[keyStart - 1] == ':' && PathHasSecretSegment(text, keyStart, out apiKey);
         }
 
-        if (IsQualifiedTypeName(text, keyStart, keyEnd))
+        if (IsDescriptiveName(text, keyStart, keyEnd))
         {
-            // "Konsept.Api.Auth.PasswordPolicyException: mesaj", "….PasswordResetService: mesaj": tip/kategori adıdır,
-            // ardındaki metin değer değildir (hunt r6, hasar). Küçük harfli özellik yolları (db.password=) etkilenmez.
+            // "PasswordPolicyException: mesaj", "PasswordResetService: mesaj", Identity kodu "PasswordRequiresDigit: …":
+            // tip/kod adıdır, ardındaki metin değer değildir (hunt r6/r7, hasar). Düz gizli ad (Smtp.Password:) etkilenmez.
             return false;
         }
 
@@ -868,12 +873,16 @@ internal static class SecretKeyValueScanner
             return ReadQuoted(text, pos, text[pos]);
         }
 
-        // Bağlantı dizesinde '{' sıradan karakterdir (Password={abc}def123; → ';'e kadar, hunt r6).
-        if (text[pos] is '{' or '[' && !connectionString)
+        // Satırda eşleşen kapanışa kadar (tek satırlık JSON'da sonraki alanlar korunsun, hunt r4); yoksa satır sonu.
+        // Bağlantı dizesinde ayraç yalnızca kapanıştan sonra ';' ya da satır sonu geliyorsa alıntıdır
+        // (Pwd={p@ss;w0rd}; ve {"pwd":"a;b"}); değilse sıradan karakterdir (Password={abc}def123; → ';'e kadar) (hunt r6/r7).
+        var bracketLineEnd = text[pos] is '{' or '[' ? LineEnd(text, pos) : pos;
+        var bracketClose = bracketLineEnd > pos ? MatchingBracket(text, pos, bracketLineEnd) : -1;
+        var quotedByBracket = bracketClose >= 0 && (bracketClose + 1 >= bracketLineEnd || text[bracketClose + 1] == ';');
+        if (text[pos] is '{' or '[' && (!connectionString || quotedByBracket))
         {
-            // Satırda eşleşen kapanışa kadar (tek satırlık JSON'da sonraki alanlar korunsun, hunt r4); yoksa satır sonu.
-            var lineEnd = LineEnd(text, pos);
-            var close = MatchingBracket(text, pos, lineEnd);
+            var lineEnd = bracketLineEnd;
+            var close = bracketClose;
             return close < 0 ? (pos, lineEnd, lineEnd) : (pos, close + 1, close + 1);
         }
 

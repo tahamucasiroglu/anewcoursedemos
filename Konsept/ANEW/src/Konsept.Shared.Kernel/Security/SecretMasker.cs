@@ -45,7 +45,7 @@ public static partial class SecretMasker
         "password", "passwords", "passwd", "secret", "secrets", "token", "pairingcode", "servicekey", "privatekey",
         "credential", "credentials", "secretkey", "accesskey", "signingkey", "accountkey", "authorization", "cookie",
         "passphrase", "pwd", "refreshtokens", "accesstokens", "idtokens", "authtokens", "bearertokens", "paircode",
-        "pairingpin", "encryptionkey", "masterkey", "clientkey", "apisecret",
+        "pairingpin", "encryptionkey", "masterkey", "clientkey", "apisecret", "sessionid", "sessionkey",
     ];
 
     // Türkçe kökler (ad içinde geçerse): spec 0008/0012'deki adlar — şifre, parola, onay sırrı, oturum/yenileme
@@ -54,7 +54,7 @@ public static partial class SecretMasker
     [
         "sifre", "şifre", "parola", "apianahtar", "erişimanahtar", "erisimanahtar", "gizlianahtar", "servisanahtar",
         "hizmetanahtar", "erişimbelirte", "erisimbelirte", "belirteç", "belirteci", "belirtecin", "sırrı", "sirri",
-        "onaysır", "onaysir", "eşleştirmekod", "eslestirmekod",
+        "onaysır", "onaysir", "eşleştirmekod", "eslestirmekod", "oturumanahtar", "oturumkimli",
     ];
 
     private static readonly Lock KnownSecretsLock = new();
@@ -405,7 +405,7 @@ public static partial class SecretMasker
         || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
 
     private static readonly HashSet<string> PassNames =
-        new(StringComparer.Ordinal) { "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
+        new(StringComparer.Ordinal) { "sid", "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
 
     /// <summary>Yalnızca harften (ve isteğe bağlı sondaki '=') oluşan, 15 karakterden kısa sözcük: token değil.</summary>
     private static bool IsPlainWord(string token)

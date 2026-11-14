@@ -189,6 +189,17 @@ public sealed class SecretMaskerTests
         { "GET http://[::1]:5000/api/users/ali@example.com - -", "GET http://[::1]:5000/api/users/ali@example.com - -", "\u0000" },
         { "Host=db;Username=k;Password={abc}def123;Database=x", "Host=db;Username=k;Password=***;Database=x", "def123" },
         { "x-api-key:AbCdEfGhIjKlMnOpQrStUv", "x-api-key:…tUv", "AbCdEfGhIjKl" },
+
+        // Review r6 / hunt r7 (fix-8): düz gizli ad noktalı yolda da gizli; tip/kod adları korunur; ODBC/JSON ayraç; EF 10; oturum.
+        { "Smtp.Password: S3cretPass99", "Smtp.Password: ***", "S3cretPass99" },
+        { "Input.Password: hunter2secret", "Input.Password: ***", "hunter2secret" },
+        { "Driver={PostgreSQL};Server=db;Uid=app;Pwd={p@ss;w0rdTail};Database=k", "Driver={PostgreSQL};Server=db;Uid=app;Pwd=***;Database=k", "w0rdTail" },
+        { "Credentials: {\"user\":\"app\",\"pwd\":\"P@ss;w0rd!23\"}", "Credentials: ***", "w0rd!23" },
+        { "WHERE u.\"Token\" = @token\nLIMIT 1", "WHERE u.\"Token\" = @token\nLIMIT 1", "\u0000" },
+        { "Errors: [PasswordRequiresDigit: Passwords must have at least one digit.], [DuplicateEmail: Email taken.]", "Errors: [PasswordRequiresDigit: Passwords must have at least one digit.], [DuplicateEmail: Email taken.]", "\u0000" },
+        { "PasswordHashFormatException: unsupported version byte 0x02", "PasswordHashFormatException: unsupported version byte 0x02", "\u0000" },
+        { "Session created for user 42: SessionId=Zk9xPq2Lm8Rt4Vw6", "Session created for user 42: SessionId=***", "Zk9xPq2Lm8Rt" },
+        { "Oturum anahtarı: Zk9xPq2Lm8Rt", "Oturum anahtarı: ***", "Zk9xPq2Lm8Rt" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
