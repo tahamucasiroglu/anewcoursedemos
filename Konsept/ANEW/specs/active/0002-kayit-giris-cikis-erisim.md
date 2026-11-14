@@ -4,6 +4,7 @@
 - Mode: lite
 - Plan: `specs/plans/0002-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
+- Revision: R1 2026-11-14 — giriş/kayıt sayfalarına karşılama bölümü (tahamucasiroglu: "sitede bir karşılama ekranı var mı"); Req 19 ve AC-20 eklendi; onay: tahamucasiroglu 2026-11-14 "yap gitsin bitince bakarım"
 - Source: `specs/active/0002-kimlik.md` (Req 1–15, AC-1–13, 22–25 ve Req 24'ün Günlük kısmı) — bölündü 2026-11-14, onay: tahamucasiroglu "önerilerin uygun"
 - Sensitive area: H-1 Kimlik ve yetki (H-2'ye yalnızca şifrelerin hash'lenip hiç loglanmaması yönüyle değer: `docs/security.md`)
 - Depends on: 0001, 0008
@@ -82,6 +83,14 @@ ajan eşleştirme ve ajanın çıkışta düşürülmesi 0012'de, ban ve etkisi 
     şeridinde görünür ve admin "aktivite" verisinin kaynağıdır (gösterimi 0010'da).
 18. Günlük şeridinde kullanıcı yalnızca kendi olaylarını görür.
 
+**Karşılama (R1)**
+19. Giriş ve kayıt sayfaları, formun yanında (dar ekranda formun üstünde) kısa bir karşılama bölümü taşır:
+    ürün adı ve logo (`source/` ikonu), ürünün ne yaptığını anlatan 2–3 cümlelik tanıtım (konsept önerisi →
+    onay → ajanda video üretimi), "Kayıt ol" / "Giriş yap" geçiş bağlantısı ve "Masaüstü ajanını giriş
+    yaptıktan sonra Ayarlar'dan indirebilirsin" notu. Bölüm kullanıcı verisi içermez, giriş istemez
+    (Req 11'in giriş/kayıt istisnasının parçasıdır) ve sitenin turuncu/kahve temasını, açık/koyu modu
+    izler. İndirme bağlantısının kendisi 0009'dadır; bu not yalnızca nerede bulunacağını söyler.
+
 ## User experience
 - Flow: Siteyi açan giriş yapmamış kullanıcı giriş sayfasını görür → "Kayıt ol" bağlantısıyla kayıt
   sayfasına geçer → ad, e-posta, şifre girer → Konseptler sayfasına gelir, üst barda adı görünür →
@@ -143,6 +152,7 @@ ajan eşleştirme ve ajanın çıkışta düşürülmesi 0012'de, ban ve etkisi 
 - [ ] AC-16 — Giriş ve kayıt formları gönderilirken "gönderiliyor" durumu görünür ve gönder düğmesi pasiftir; çift tıklama iki hesap açmaz ve iki yanlış deneme saymaz; boş alanla gönderilen giriş formu alan hatası gösterir ve hak sayacını değiştirmez.
 - [ ] AC-17 — Kayıt, giriş (başarılı ve başarısız) ve çıkış sırasında üretilen hiçbir log, hata mesajı ya da olay kaydı şifreyi ya da oturum belirtecini içermez; veritabanında şifre düz metin bulunmaz (kasıtlı bozma ile kanıtlanır; mekanizma 0008'de).
 - [ ] AC-18 — Giriş ve kayıt formları yalnızca klavyeyle doldurulup gönderilebilir; her alanın görünür etiketi var; hata mesajları ekran okuyucuya duyurulur ve odak ilk hatalı alana gider; kullanıcı menüsü ve "Çıkış yap" klavyeyle kullanılabilir.
+- [ ] AC-20 — (R1) Giriş ve kayıt sayfalarında karşılama bölümü görünür: ürün adı ve ikon, tanıtım metni, giriş/kayıt geçiş bağlantısı ve ajan indirme notu; geniş ekranda form yanında, 640 px altı genişlikte formun üstünde; açık ve koyu temada metin kontrastı WCAG AA; bölüm hiçbir kullanıcı verisi içermez.
 - [ ] AC-19 — Giriş ya da kayıt sırasında sunucuya ulaşılamazsa form "Şu an işleminizi yapamıyoruz" türünde, korelasyon numaralı genel bir hata gösterir; iç ayrıntı (stack trace, SQL) görünmez ve girilen ad/e-posta formda kalır.
 
 ## Definition of Done
