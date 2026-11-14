@@ -54,13 +54,28 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 
 ## AuthN / AuthZ
 **Kimlik doğrulama (H-1)**
-- **Login:** e-posta + şifre, ASP.NET Core Identity (Identity modülü). **3 hatalı denemede geçici kilit**; kilit
-  süresi login spec'inde netleşecek. Her yanlış girişte kalan hak gösterilir: "Yanlış girdiniz, 2 hakkınız kaldı".
+- **Login:** e-posta + şifre (Identity modülü). Şifre ASP.NET Core Identity'nin **`PasswordHasher`**'ıyla (V3: PBKDF2-HMAC-SHA512,
+  rastgele tuz) hash'lenir; `UserManager`/`IdentityDbContext` kullanılmaz (plan 0002 Risk 1). **3 hatalı denemede 15 dakika kilit**
+  (0002); sayaç tek atomik SQL ifadesiyle sayılır, eşzamanlı denemeler atlatamaz; kilitliyken denemeler süreyi uzatmaz.
+  Her yanlış girişte kalan hak gösterilir: "Yanlış girdiniz, 2 hakkınız kaldı".
   Bu mesaj e-postanın kayıtlı olup olmadığını belli eder (user enumeration); LAN + tek kullanıcı için kabul edildi,
   internete açılırken yeniden değerlendirilecek → `specs/backlog.md`.
 - **Kayıt:** ad + e-posta + şifre ile doğrudan. E-posta doğrulaması ertelendi → `specs/backlog.md`.
-- **Web ↔ API:** API kısa ömürlü **JWT (15 dk)** + **dönen (rotating) refresh token** verir; refresh token DB'de
-  hash'li tutulur. Web bunları **sunucu tarafında, şifreli, HttpOnly cookie** içinde saklar; tarayıcı token'ı görmez.
+- **Web ↔ API:** API kısa ömürlü **JWT (15 dk; `sub`, `sid`, `name`)** + **dönen (rotating) refresh token** (`knr_` + 32 bayt
+  rastgele) verir; refresh token DB'de SHA-256 hash'li tutulur ve tek ifadelik `UPDATE` ile döner (eski token ikinci kez
+  çalışmaz). Web bunları **Data Protection ile şifreli, HttpOnly cookie** (`konsept.auth`, SameSite=Lax, 14 gün kayan) içinde
+  saklar; tarayıcı token'ı görmez. HTTPS'e geçince `Auth__SecureCookie=true`; Web'in Data Protection anahtarları
+  `DataProtection__KeysDirectory` ayarlıysa orada kalıcıdır.
+- **Oturum doğrulama (0002):** Api'de her JWT'nin oturumu (`sid`) JwtBearer `OnTokenValidated`'da veritabanından doğrulanır
+  (iptal edilmemiş, son kullanım + 14 gün geçmemiş; son kullanım en fazla dakikada bir kaydırılır) — çıkış diğer tarayıcıyı
+  15 dakikayı beklemeden **anında** düşürür. Web her istekte oturumu Api'ye sorar; düşen oturumda sayfa
+  `/giris?oturum=bitti`'ye, Ajax isteği 401 JSON'a (`auth.session_expired`; `api.js` girişe yönlendirir) gider.
+- **Refresh tek uçuş (0002):** Web'de aynı eski refresh token için eşzamanlı istekler (sayfa + 3 sn yoklama) eski token'ın
+  hash'i başına tek kilitle Api'ye **tek** çağrı yapar, sonuç 60 sn bellekte paylaşılır (Web tek süreç). Api'de eski token
+  yeniden gelirse yalnızca 401 + Warning (tüm oturumları iptal edilmez; LAN'da yanlış alarmla kullanıcıyı atmamak için).
+- **İmza anahtarı:** `Auth__SigningKey` (≥ 32 bayt) Pi'de ortam değişkeni / `EnvironmentFile` ile verilir; Development dışında
+  yoksa Api açılmaz; Development'ta süreç başına rastgele üretilir ve Warning yazılır (anahtarın kendisi asla). Ad
+  `SigningKey` ile bittiği için yapılandırma taramasıyla bilinen sır olarak her logda gizlenir.
 - **Ajan girişi:** cihaz eşleştirme — ajan bir kod gösterir, kullanıcı web'de onaylar, ajan kendi refresh token'ını
   alır. Ajana şifre yazdırılmaz.
 - **Çıkış (BR-14):** web'den çıkış kullanıcının **tüm oturumlarını, ajan dahil** iptal eder; sunucu ajanın SignalR
@@ -73,7 +88,10 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 - **Yetki tabanlı politikalar:** örn. `admin.panel`, `publish.use`, `model.use:<model>`; roller bu yetkilerin paketidir.
 - **Asıl yetki kontrolü API'dedir.** Web yetkisiz butonları gizler ama karar her zaman API'nindir.
 - **Sahiplik (BR-1):** EF Core global query filter ile her sorgu otomatik olarak `UserId`'ye göre filtrelenir.
-- **Rate limiting:** login ve üretim uçlarında.
+- **Rate limiting:** login ve üretim uçlarında. Giriş/kayıt sınırı (0002) **yalnızca Api'de**: istemci IP'si başına 60 sn'de
+  10 deneme, 11.'de 60 sn blok (`FixedBlockRateLimiter`, `TimeProvider`'lı); reddedilen istek servise ulaşmaz, hak sayacı
+  değişmez, 429 `auth.too_many_attempts`. Web tarayıcının IP'sini `X-Konsept-Client-Ip` ile iletir; Api bu başlığa yalnızca
+  geçerli servis anahtarıyla güvenir.
 
 ## Dependencies
 - Yeni NuGet ya da npm paketi **PLAN aşamasında gerekçesiyle önerilir, insan onaylar.**
