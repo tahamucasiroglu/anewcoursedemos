@@ -1,7 +1,9 @@
 /**
  * TK.layout — üst barın davranışları: aylık harcama rozeti (/Harcama/Aylik, 60 sn'de bir), profil seçimi
  * (/Profil/Liste, /Profil/Sec/{id}), açılır menüler, mobil menü, "Hata bildir" düğmesi (pencere: TK.errorReport), çıkış.
- * Aktif profil değişince document üzerinde 'tk:profile' olayı tetiklenir. Tek modül (IIFE).
+ * Aktif profil değişince document üzerinde 'tk:profile' olayı tetiklenir. "Başlangıç" menü rozeti: kalan adım sayısı
+ * (/Baslangic/Durum, sunucuda 30 sn önbellekli; hepsi tamamsa rozet gizli, sayfa menüde kalır ama dürtmez; Başlangıç sayfası
+ * 'tk:onboarding' olayıyla canlı günceller). Tek modül (IIFE).
  */
 (function (window, $) {
     'use strict';
@@ -106,9 +108,25 @@
 
         $(document).on('tk:profile-saved', function (_, saved) { loadProfiles(saved && saved.id); loadSpend(); });
 
+        $(document).on('tk:onboarding', function (_, status) { renderOnboarding(status); });
+        $(document).on('tk:profile-saved', function () { loadOnboarding(true); });
+
         loadSpend();
         loadProfiles();
+        loadOnboarding();
         window.setInterval(loadSpend, 60000);
+    }
+
+    function renderOnboarding(status) {
+        var remaining = status && !status.isComplete ? Number(status.remaining || 0) : 0;
+        var $badge = $('#tk-onboarding-badge');
+        $badge.text(remaining > 0 ? String(remaining) : '').prop('hidden', remaining <= 0);
+        $('#tk-nav-start').attr('title', remaining > 0 ? 'İlk videoya ' + remaining + ' adım kaldı' : 'Başlangıç adımları');
+    }
+
+    function loadOnboarding(refresh) {
+        if (!$('#tk-onboarding-badge').length || $('#tk-baslangic').length) { return; }
+        TK.api.get('/Baslangic/Durum', refresh ? { yenile: true } : null, { silent: true }).done(renderOnboarding);
     }
 
     TK.layout = { init: init, refreshSpend: loadSpend, refreshProfiles: loadProfiles, activeProfile: activeProfile };

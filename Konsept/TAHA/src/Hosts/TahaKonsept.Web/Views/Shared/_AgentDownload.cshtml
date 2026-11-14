@@ -1,0 +1,37 @@
+@model TahaKonsept.Web.Models.AgentReleaseInfo
+@*
+    Masaüstü programı indirme bloğu (Başlangıç + Ayarlar › Masaüstü programı). Sürüm ve boyut sunucudaki dosyadan
+    (IAgentReleaseProvider) okunur; dosya yoksa bozuk bağlantı yerine açık bir uyarı gösterilir.
+*@
+@if (Model.IsAvailable)
+{
+    <div class="tk-download">
+        <a class="tk-btn tk-btn-primary tk-btn-lg" href="@Url.Content("~" + Model.DownloadUrl)" download="@Model.FileName" data-agent-download>
+            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-download"></use></svg>
+            Windows için indir
+        </a>
+        <div class="tk-download-meta">
+            <span class="tk-badge is-accent">@(Model.Version is null ? "Sürüm bilinmiyor" : "Sürüm " + Model.Version)</span>
+            <span class="tk-badge">@Model.SizeText</span>
+            @if (Model.PublishedAtUtc is { } published)
+            {
+                <span class="tk-hint">Yayın: @published.ToLocalTime().ToString("d MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"))</span>
+            }
+        </div>
+    </div>
+    <p class="tk-hint tk-download-note">
+        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-cpu"></use></svg>
+        Windows 10 / 11 (64 bit). NVIDIA ekran kartı önerilir (yoksa işlemciyle daha yavaş çalışır).
+        Gerekli araçlar (ffmpeg, ses ve görsel modelleri) ilk açılışta kurulum ekranından indirilir.
+    </p>
+}
+else
+{
+    <div class="tk-alert is-warning" data-agent-download-missing>
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg>
+        <span>
+            Kurulum dosyası bu sunucuda henüz yok (<code>downloads/@Model.FileName</code>). Masaüstü programını
+            <code>deploy/agent/pack-agent.ps1</code> ile paketleyip siteyi yeniden yayınlayın; bu düğme kendiliğinden görünür.
+        </span>
+    </div>
+}

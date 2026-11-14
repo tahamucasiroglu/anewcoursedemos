@@ -13,13 +13,17 @@ using TahaKonsept.Web.Infrastructure.Auth.Concrete;
 using TahaKonsept.Web.Infrastructure.Options;
 using TahaKonsept.Web.Services.Account.Abstract;
 using TahaKonsept.Web.Services.Account.Concrete;
+using TahaKonsept.Web.Services.Downloads.Abstract;
+using TahaKonsept.Web.Services.Downloads.Concrete;
+using TahaKonsept.Web.Services.Onboarding.Abstract;
+using TahaKonsept.Web.Services.Onboarding.Concrete;
 
 namespace TahaKonsept.Web.Startup;
 
 /// <summary>
 /// Web host'un DI kaydı. <see cref="AddTahaWeb"/>: MVC (global antiforgery + varsayılan olarak giriş zorunlu),
 /// cookie kimlik doğrulama (BFF; Ajax isteklerinde yönlendirme yerine 401/403), admin policy, Data Protection anahtarları
-/// (yeniden başlatmada oturumlar düşmesin), API HttpClient'ları, token deposu/yenileyici ve oturum servisi.
+/// (yeniden başlatmada oturumlar düşmesin), API HttpClient'ları, token deposu/yenileyici, oturum servisi, Başlangıç kontrol listesi ve masaüstü programı sürüm bilgisi.
 /// </summary>
 public static class WebServiceCollectionExtensions
 {
@@ -54,6 +58,8 @@ public static class WebServiceCollectionExtensions
         AddApiClients(services);
 
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IOnboardingService, OnboardingService>();
+        services.AddSingleton<IAgentReleaseProvider, WebRootAgentReleaseProvider>();
         return services;
     }
 

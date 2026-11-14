@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using TahaKonsept.Web.Controllers.Base;
+using TahaKonsept.Web.Models;
+using TahaKonsept.Web.Services.Downloads.Abstract;
 
 namespace TahaKonsept.Web.Controllers;
 
@@ -12,12 +14,19 @@ namespace TahaKonsept.Web.Controllers;
 /// <c>POST api/production/pronunciations/preview</c>, <c>POST api/concepts/topic-memory/reset</c>,
 /// <c>GET|PUT api/providers/budget</c>, <c>PUT api/identity/me/preferences</c>,
 /// <c>GET api/agents</c>, <c>POST api/agents/device/approve</c>, <c>DELETE api/agents/{id}</c>.
+/// Sayfa modeli <see cref="AgentReleaseInfo"/> (masaüstü programı indirme düğmesi: sürüm + boyut sunucudaki dosyadan).
 /// </summary>
 public sealed class AyarlarController : WebControllerBase
 {
+    private readonly IAgentReleaseProvider _releases;
+
+    /// <summary>Kurulum dosyası bilgisini alır.</summary>
+    /// <param name="releases">Kurulum dosyası bilgisi.</param>
+    public AyarlarController(IAgentReleaseProvider releases) => _releases = releases;
+
     /// <summary>Sayfa.</summary>
     [HttpGet]
-    public IActionResult Index() => View();
+    public IActionResult Index() => View(_releases.GetCurrent());
 
     /// <summary>Tema tercihini kullanıcı ayarına yazar (<c>{ theme: light|dark|system }</c>).</summary>
     /// <param name="body">Tercih.</param>

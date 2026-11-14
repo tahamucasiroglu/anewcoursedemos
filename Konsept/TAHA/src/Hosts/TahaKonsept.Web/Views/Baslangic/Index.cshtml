@@ -1,0 +1,132 @@
+@model TahaKonsept.Web.Models.AgentReleaseInfo
+@{
+    ViewData["Title"] = "Başlangıç";
+    var userName = User.Identity?.Name ?? string.Empty;
+}
+@section Head {
+    <link rel="stylesheet" href="~/css/pages/baslangic.css" asp-append-version="true" />
+}
+<div class="tk-page" id="tk-baslangic">
+    <section class="bs-hero" aria-labelledby="bs-title">
+        <img class="bs-hero-logo" src="~/img/logo.svg" alt="" />
+        <div class="bs-hero-text">
+            <h1 id="bs-title">Hoş geldiniz@(string.IsNullOrEmpty(userName) ? "" : ", " + userName)!</h1>
+            <p>Taha Konsept bir fikirden başlayıp konsepti, sahneleri, seslendirmeyi ve videoyu sizin için hazırlar.
+                İlk videonuza birkaç adım kaldı; her adım tamamlandıkça burada kendiliğinden işaretlenir.</p>
+            <div class="bs-progress-row">
+                <div class="tk-progress bs-progress" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-label="Tamamlanan adımlar">
+                    <span id="bs-progress-bar"></span>
+                </div>
+                <strong id="bs-progress-text" class="bs-progress-text">Durum alınıyor…</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="tk-card bs-complete" id="bs-complete" hidden aria-live="polite">
+        <div class="tk-card-body">
+            <span class="bs-complete-icon"><svg class="tk-ic tk-ic-lg" aria-hidden="true"><use href="/img/icons.svg#i-flag"></use></svg></span>
+            <div class="bs-complete-text">
+                <h2>Her şey hazır!</h2>
+                <p class="tk-muted">Kurulum tamam, ilk videonuz da üretildi. Bundan sonra doğrudan konseptlerle çalışabilirsiniz; bu sayfa menüde durur ama sizi rahatsız etmez.</p>
+            </div>
+            <div class="tk-row">
+                <a class="tk-btn tk-btn-primary" asp-controller="Konseptler" asp-action="Index">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bulb"></use></svg> Yeni konsept
+                </a>
+                <a class="tk-btn tk-btn-secondary" asp-controller="Uretilenler" asp-action="Index">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg> Üretilenler
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <ol class="bs-steps" id="bs-steps">
+        <li class="tk-card bs-step" data-step="llm-key">
+            <button type="button" class="bs-step-head" aria-expanded="true">
+                <span class="bs-step-mark" aria-hidden="true"><span class="bs-step-num">1</span><svg class="tk-ic bs-step-check" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg></span>
+                <span class="bs-step-title"><strong>LLM anahtarını girin</strong><small class="tk-muted" data-detail>Durum alınıyor…</small></span>
+                <span class="tk-badge" data-state>…</span>
+            </button>
+            <div class="bs-step-body">
+                <p>Konsept ve video kodunu bir dil modeli (LLM) yazar. Ayarlar'da bir sağlayıcının API anahtarını girin; anahtar sunucuda şifreli saklanır.
+                    <strong>Önerilen: Anthropic (Claude)</strong> — Türkçe metinde ve video kodunda en iyi sonucu verir. OpenAI, OpenRouter, Z.ai, Moonshot ya da yerel bir LLM sunucusu da olur.</p>
+                <a class="tk-btn tk-btn-primary" asp-controller="Ayarlar" asp-action="Index" asp-fragment="anahtarlar">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-key"></use></svg> Anahtarı gir
+                </a>
+            </div>
+        </li>
+
+        <li class="tk-card bs-step" data-step="agent">
+            <button type="button" class="bs-step-head" aria-expanded="true">
+                <span class="bs-step-mark" aria-hidden="true"><span class="bs-step-num">2</span><svg class="tk-ic bs-step-check" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg></span>
+                <span class="bs-step-title"><strong>Masaüstü programını kurun ve eşleyin</strong><small class="tk-muted" data-detail>Durum alınıyor…</small></span>
+                <span class="tk-badge" data-state>…</span>
+            </button>
+            <div class="bs-agent-live" id="bs-agent-live" aria-live="polite">
+                <span class="tk-live-dot" aria-hidden="true"></span><span class="bs-agent-live-text">Bağlantı kontrol ediliyor…</span>
+            </div>
+            <div class="bs-step-body">
+                <p>Render, yerel ses ve görsel üretimi kendi bilgisayarınızda (ekran kartında) çalışır. Programı indirip kurun; görev çubuğunda çalışır.</p>
+                <partial name="_AgentDownload" model="Model" />
+                <div class="bs-pair">
+                    <h3>Eşleme kodu</h3>
+                    <p class="tk-muted">Program açılınca ekranda <strong>XXXX-XXXX</strong> biçiminde bir kod gösterir (10 dakika geçerli). Kodu yazıp <strong>Onayla</strong>'ya basın.</p>
+                    <form class="tk-row" id="bs-agent-form" autocomplete="off">
+                        <input class="tk-input tk-code-input" name="userCode" placeholder="ABCD-1234" maxlength="9" aria-label="Eşleme kodu" />
+                        <button type="submit" class="tk-btn tk-btn-primary">
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Onayla
+                        </button>
+                    </form>
+                    <div id="bs-agents" class="bs-agents"></div>
+                </div>
+            </div>
+        </li>
+
+        <li class="tk-card bs-step" data-step="profile">
+            <button type="button" class="bs-step-head" aria-expanded="true">
+                <span class="bs-step-mark" aria-hidden="true"><span class="bs-step-num">3</span><svg class="tk-ic bs-step-check" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg></span>
+                <span class="bs-step-title"><strong>İlk kanal profilinizi oluşturun</strong><small class="tk-muted" data-detail>Durum alınıyor…</small></span>
+                <span class="tk-badge" data-state>…</span>
+            </button>
+            <div class="bs-step-body">
+                <p>Profil kanalınızı tanımlar: dil, dikey/yatay format, hedef süre, ton ve hedef kitle. Hazır şablonlardan biriyle başlayabilirsiniz.</p>
+                <button type="button" class="tk-btn tk-btn-primary" id="bs-profile-add">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-plus"></use></svg> Profil oluştur
+                </button>
+            </div>
+        </li>
+
+        <li class="tk-card bs-step" data-step="concept">
+            <button type="button" class="bs-step-head" aria-expanded="true">
+                <span class="bs-step-mark" aria-hidden="true"><span class="bs-step-num">4</span><svg class="tk-ic bs-step-check" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg></span>
+                <span class="bs-step-title"><strong>İlk konsepti üretin</strong><small class="tk-muted" data-detail>Durum alınıyor…</small></span>
+                <span class="tk-badge" data-state>…</span>
+            </button>
+            <div class="bs-step-body">
+                <p>Konseptler sayfasında konu önerisi alın ya da kendi fikrinizi yazın; beğendiğiniz konsepti onaylayın.</p>
+                <a class="tk-btn tk-btn-primary" asp-controller="Konseptler" asp-action="Index">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bulb"></use></svg> Konseptlere git
+                </a>
+            </div>
+        </li>
+
+        <li class="tk-card bs-step" data-step="video">
+            <button type="button" class="bs-step-head" aria-expanded="true">
+                <span class="bs-step-mark" aria-hidden="true"><span class="bs-step-num">5</span><svg class="tk-ic bs-step-check" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg></span>
+                <span class="bs-step-title"><strong>İlk videoyu üretin</strong><small class="tk-muted" data-detail>Durum alınıyor…</small></span>
+                <span class="tk-badge" data-state>…</span>
+            </button>
+            <div class="bs-step-body">
+                <p>Onaylanan konsepti Konseptten Video sayfasında seçip üretimi başlatın; görsel, ses ve render masaüstü programında çalışır.</p>
+                <a class="tk-btn tk-btn-primary" asp-controller="KonsepttenVideo" asp-action="Index">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg> Konseptten Video'ya git
+                </a>
+            </div>
+        </li>
+    </ol>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/agent-pairing.js" asp-append-version="true"></script>
+    <script src="~/js/pages/baslangic.js" asp-append-version="true"></script>
+}

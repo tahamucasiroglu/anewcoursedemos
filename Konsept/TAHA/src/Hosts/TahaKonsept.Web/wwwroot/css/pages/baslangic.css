@@ -1,0 +1,72 @@
+/* Başlangıç (karşılama) sayfası: sıcak karşılama başlığı + ilk videoya giden adımların kontrol listesi.
+   Renkler theme.css değişkenlerinden (açık/koyu mod otomatik). Ortak indirme bloğu site.css'te (.tk-download). */
+
+.bs-hero {
+    display: flex; align-items: center; gap: 22px; padding: 26px 28px; margin-bottom: 18px;
+    border-radius: var(--tk-radius-lg); border: 1px solid var(--tk-border);
+    background: linear-gradient(135deg, var(--tk-accent-softer) 0%, var(--tk-surface) 55%, var(--tk-brown-soft) 140%);
+    box-shadow: var(--tk-shadow);
+}
+.bs-hero-logo { width: 88px; height: 88px; flex: 0 0 88px; border-radius: 22px; box-shadow: var(--tk-shadow); }
+.bs-hero-text { flex: 1 1 auto; min-width: 0; }
+.bs-hero h1 { margin: 0 0 6px; font-size: 1.7rem; font-weight: 900; color: var(--tk-text); }
+.bs-hero p { margin: 0 0 14px; color: var(--tk-text-soft); line-height: 1.6; max-width: 70ch; }
+.bs-progress-row { display: flex; align-items: center; gap: 12px; }
+.bs-progress { flex: 1 1 auto; max-width: 360px; height: 10px; }
+.bs-progress-text { font-size: .88rem; color: var(--tk-text-soft); white-space: nowrap; }
+
+.bs-complete { margin-bottom: 18px; border-color: var(--tk-success); }
+.bs-complete .tk-card-body { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.bs-complete-icon {
+    display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 16px;
+    background: var(--tk-success-soft); color: var(--tk-success);
+}
+.bs-complete-text { flex: 1 1 260px; }
+.bs-complete-text h2 { margin: 0 0 4px; }
+.bs-complete-text p { margin: 0; }
+
+.bs-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.bs-step { overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.bs-step.is-next { border-color: var(--tk-accent); box-shadow: 0 0 0 3px var(--tk-accent-ring); }
+
+.bs-step-head {
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 18px;
+    border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.bs-step-head:focus-visible { outline: 2px solid var(--tk-accent); outline-offset: -2px; border-radius: var(--tk-radius); }
+.bs-step-mark {
+    display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: 0 0 36px;
+    border-radius: 50%; background: var(--tk-surface-3); color: var(--tk-text-soft); font-weight: 900;
+}
+.bs-step-mark .bs-step-check { display: none; }
+.bs-step.is-next .bs-step-mark { background: var(--tk-accent); color: var(--tk-text-on-accent); }
+.bs-step.is-done .bs-step-mark { background: var(--tk-success); color: #fff; }
+.bs-step.is-done .bs-step-num { display: none; }
+.bs-step.is-done .bs-step-mark .bs-step-check { display: inline-block; }
+.bs-step-title { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bs-step-title strong { font-size: 1.02rem; }
+.bs-step.is-done .bs-step-title strong { color: var(--tk-text-soft); }
+
+.bs-step-body { padding: 0 18px 18px 68px; }
+.bs-step-body > p { margin: 0 0 12px; color: var(--tk-text-soft); line-height: 1.6; }
+.bs-step.is-collapsed .bs-step-body { display: none; }
+
+.bs-agent-live {
+    display: flex; align-items: center; gap: 10px; margin: -4px 18px 14px 68px; padding: 8px 12px;
+    border-radius: var(--tk-radius-sm); background: var(--tk-surface-2); border: 1px solid var(--tk-border);
+    font-weight: 700; font-size: .88rem; color: var(--tk-text-soft);
+}
+.bs-agent-live.is-online { background: var(--tk-success-soft); border-color: transparent; color: var(--tk-success); }
+
+.bs-pair { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--tk-border); }
+.bs-pair h3 { margin: 0 0 4px; font-size: .98rem; }
+.bs-pair > p { margin: 0 0 10px; }
+.bs-agents { margin-top: 14px; }
+
+@media (max-width: 640px) {
+    .bs-hero { flex-direction: column; align-items: flex-start; padding: 20px; }
+    .bs-hero-logo { width: 64px; height: 64px; flex-basis: 64px; }
+    .bs-hero h1 { font-size: 1.4rem; }
+    .bs-step-body { padding-left: 18px; }
+    .bs-agent-live { margin-left: 18px; }
+}

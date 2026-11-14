@@ -15,10 +15,13 @@ namespace TahaKonsept.Web.Services.Account.Concrete;
 /// <summary>
 /// API Identity uçlarına bağlı oturum servisi:
 /// <c>GET api/identity/setup/status</c>, <c>POST api/identity/setup</c>, <c>POST api/identity/login</c>,
-/// <c>POST api/identity/logout-all</c>.
+/// <c>POST api/identity/logout-all</c>. Kurulum başarılı olunca <see cref="WelcomeUrl"/> (Başlangıç) sayfasına yönlendirir.
 /// </summary>
 public sealed class AccountService : AccountServiceBase
 {
+    /// <summary>İlk kurulumdan sonra açılan karşılama sayfası (Başlangıç kontrol listesi).</summary>
+    public const string WelcomeUrl = "/Baslangic";
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     /// <summary>Bağımlılıkları alır.</summary>
@@ -91,8 +94,8 @@ public sealed class AccountService : AccountServiceBase
 
         var tokens = TryReadTokens(result.Data);
         return tokens is not null
-            ? await SignInAsync(tokens, persistent: true, returnUrl: "/")
-            : ApiCallResult<RedirectResponse>.Success(new RedirectResponse { RedirectUrl = "/Account/Login" });
+            ? await SignInAsync(tokens, persistent: true, returnUrl: WelcomeUrl)
+            : ApiCallResult<RedirectResponse>.Success(new RedirectResponse { RedirectUrl = "/Account/Login?returnUrl=" + Uri.EscapeDataString(WelcomeUrl) });
     }
 
     /// <inheritdoc />

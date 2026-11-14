@@ -374,6 +374,25 @@ button.tk-strip-item:hover { border-color: var(--tk-accent); background: var(--t
 .tk-badge.is-danger { background: var(--tk-danger-soft); color: var(--tk-danger); }
 .tk-badge.is-info { background: var(--tk-info-soft); color: var(--tk-info); }
 
+/* Büyük düğme + masaüstü programı indirme bloğu (_AgentDownload.cshtml: Başlangıç ve Ayarlar) */
+.tk-btn-lg { padding: 13px 22px; border-radius: 13px; font-size: 1rem; }
+.tk-download { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; }
+.tk-download-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.tk-download-note { display: flex; align-items: flex-start; gap: 6px; margin: 10px 0 0; line-height: 1.55; }
+.tk-download-note .tk-ic { flex: 0 0 auto; margin-top: 3px; }
+
+/* Canlı bağlantı noktası (masaüstü programı çevrimiçi / çevrimdışı) */
+.tk-live-dot { display: inline-block; width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: var(--tk-text-muted); }
+.tk-live-dot.is-on { background: var(--tk-success); box-shadow: 0 0 0 3px var(--tk-success-soft); }
+
+/* Üst menü sayaç rozeti (Başlangıç: kalan adım) */
+.tk-nav-badge {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
+    margin-left: 6px; border-radius: 99px; background: var(--tk-accent); color: var(--tk-text-on-accent);
+    font-size: .7rem; font-weight: 900; line-height: 1; vertical-align: 1px;
+}
+.tk-nav-badge[hidden] { display: none; }
+
 /* İlerleme */
 .tk-progress { height: 8px; border-radius: 99px; background: var(--tk-surface-3); overflow: hidden; }
 .tk-progress > span { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--tk-accent), var(--tk-accent-hover)); transition: width .4s var(--tk-ease); }
