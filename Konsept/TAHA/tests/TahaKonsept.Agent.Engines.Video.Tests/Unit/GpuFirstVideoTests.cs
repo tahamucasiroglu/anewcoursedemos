@@ -138,6 +138,8 @@ public sealed class GpuFirstVideoTests
         RemotionVideoEngine.GpuArguments(false).ShouldContain("--gl=swangle");
 
         RevideoVideoEngine.ChromeGpuArguments(true).ShouldNotContain(a => a.StartsWith("--use-angle", StringComparison.Ordinal) || a.StartsWith("--use-gl", StringComparison.Ordinal));
+        RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--enable-gpu");
+        RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--disable-accelerated-video-encode");
         RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--enable-gpu-rasterization");
         RevideoVideoEngine.ChromeGpuArguments(true).ShouldContain("--ignore-gpu-blocklist");
         RevideoVideoEngine.ChromeGpuArguments(false).ShouldBe(["--disable-gpu"]);

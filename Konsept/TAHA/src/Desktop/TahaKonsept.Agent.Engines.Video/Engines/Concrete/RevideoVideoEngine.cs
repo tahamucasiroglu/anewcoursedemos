@@ -137,15 +137,18 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
 
     /// <summary>
     /// Chrome GPU bayrakları ("Önce GPU"; render.mjs bunları ağ yasağı bayraklarına ekler, ağ yasağı her iki kipte de aynen kalır).
-    /// GPU: GPU rasterleştirme + GPU kara listesini yok sayma. Windows'ta headless Chrome zaten ANGLE/D3D11 ile ekran kartını kullanır
-    /// (ölçüm: WebGL renderer = RTX 3060, D3D11). <c>--use-gl</c>/<c>--use-angle</c> bayrakları Revideo'da sessiz ses dosyası süresini
-    /// bozuyor ("Invalid duration specification for t: N/A"), bu yüzden eklenmez. CPU yedeği: <c>--disable-gpu</c>. Kodlama Revideo'nun kendi ffmpeg'inde
+    /// GPU: <c>--enable-gpu</c> + GPU rasterleştirme + GPU kara listesini yok sayma. <c>chrome-headless-shell</c> GPU'yu kendiliğinden
+    /// açmaz: <c>--enable-gpu</c> olmadan rasterleştirme/birleştirme <c>disabled_software</c>, WebGL SwiftShader kalır (ölçüm, SystemInfo);
+    /// bu bayrakla ANGLE/D3D11 + RTX (<c>enabled_force</c>). <c>--use-gl</c>/<c>--use-angle</c> bayrakları Revideo'da sessiz ses dosyası
+    /// süresini bozuyor ("Invalid duration specification for t: N/A"), bu yüzden eklenmez. GPU açıkken Chrome WebCodecs'te donanım
+    /// kodlayıcıyı seçer ve Revideo'nun mp4-wasm çıktısının süresi okunamaz (aynı "t: N/A" hatası); <c>--disable-accelerated-video-encode</c>
+    /// yalnız bu ara kodlamayı yazılımda tutar (çizim GPU'da kalır). CPU yedeği: <c>--disable-gpu</c>. Kodlama Revideo'nun kendi ffmpeg'inde
     /// sabit yazılım kodlayıcıyla yapılır (0.11 API'si kodlayıcı seçtirmez); ara dosya birleştiricide NVENC ile yeniden kodlanır.
     /// </summary>
     /// <param name="useGpu">GPU açık mı.</param>
     /// <returns>Chrome bayrakları.</returns>
     public static IReadOnlyList<string> ChromeGpuArguments(bool useGpu) => useGpu
-        ? ["--enable-gpu-rasterization", "--ignore-gpu-blocklist"]
+        ? ["--enable-gpu", "--enable-gpu-rasterization", "--ignore-gpu-blocklist", "--disable-accelerated-video-encode"]
         : ["--disable-gpu"];
 
     /// <inheritdoc />
