@@ -17,6 +17,7 @@
 - Commit **`anewcoursedemos` kökünden** alınır (TAHA'nın iki üstü). **Push YOK.**
 - Sadece kendi klasörü: `git add -A -- Konsept/TAHA` ardından `git commit -m "..." -- Konsept/TAHA`. Pathspec sayesinde başka klasörlerin stage'leri commit'e girmez.
 - **Her adım/faz/anlamlı iş biriminin sonunda commit al — ihmal etme** (14 Kas 2026, kullanıcı uyarısı). Uzun işlerde ara commit'ler at; build kırık olsa bile ilerleme kaybolmasın (mesajda belirt).
+- Bu **kaynak kodu (src/, tests/ …) da kapsar**, sadece doküman/memory değil. Arka planda iş akışı/ajan çalışırken de beklemeden ara commit al (kullanıcı uyarısı 14 Kas 2026: "proje kodları duruyor hala").
 - Aynı anda başka oturumlar commit alabilir: `index.lock` hatası olursa birkaç saniye bekleyip tekrar dene; lock dosyasını asla elle silme.
 
 ## Raporlar (14 Kas 2026)

@@ -9,3 +9,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0003 | 2026-11-14 04:49 | Kodlamaya başla, test edilebilir hale kadar durma | [0003](0003_2026-11-14_0449_kodlamaya-basla.md) |
 | 0004 | 2026-11-14 04:57 | TreatWarningsAsErrors kuralı | [0004](0004_2026-11-14_0457_treat-warnings-as-errors.md) |
 | 0005 | 2026-11-14 05:30 | Adımları commit'leme kuralı | [0005](0005_2026-11-14_0530_adim-commitleri.md) |
+| 0006 | 2026-11-14 05:31 | Kaynak kodu adım adım commit'le | [0006](0006_2026-11-14_0531_kaynak-kod-commitleri.md) |
