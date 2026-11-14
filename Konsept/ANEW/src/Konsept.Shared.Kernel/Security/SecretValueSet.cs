@@ -8,7 +8,8 @@ namespace Konsept.Shared.Kernel.Security;
 /// URL kodlu ya da JSON kaçışlı geçse de aynı biçimde gizlenir; kodlu metnin çözülmüş halinde bulunan değerler de
 /// ham metne buradan uygulanır.
 /// </summary>
-internal sealed class SecretValueSet
+/// <param name="allowPlainWords">Düz sözcük değerleri de kaydedilsin mi (yapılandırmadaki sırlar için).</param>
+internal sealed class SecretValueSet(bool allowPlainWords = false)
 {
     /// <summary>Kaydedilecek en kısa değer; daha kısası metnin geneline uygulanmaz (yanlış eşleşme).</summary>
     public const int MinLength = 6;
@@ -32,7 +33,8 @@ internal sealed class SecretValueSet
         if (value.Length < MinLength || value.Length > MaxLength || _values.Count >= MaxValues || value == replacement
             || value.Contains(SecretMasker.Hidden, StringComparison.Ordinal)
             || value.Contains(SecretMasker.JwtPlaceholder, StringComparison.Ordinal)
-            || value.Contains('…', StringComparison.Ordinal))
+            || value.Contains('…', StringComparison.Ordinal)
+            || (!allowPlainWords && value.Length <= 15 && value.All(char.IsLetter))) // "Password", "Failed": düz sözcük metnin geneline yayılmaz (hunt r10)
         {
             return;
         }

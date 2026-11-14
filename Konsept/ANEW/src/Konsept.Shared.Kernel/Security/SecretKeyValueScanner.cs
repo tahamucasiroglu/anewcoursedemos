@@ -69,11 +69,13 @@ internal static class SecretKeyValueScanner
                 keyEnd = pairEnd;
             }
 
-            if (PrecededByQualifier(text, i))
+            if (PrecededByQualifier(text, i) && keyEnd + 2 < text.Length && text[keyEnd] == ':' && text[keyEnd + 1] == ' '
+                && QuoteLength(text, keyEnd + 2) == 0)
             {
-                // "Invalid password: user 42, attempts 2" olay açıklamasıdır: yalnızca tek parça değer gizlenir
-                // ("Invalid password: hunter2"); düzyazı korunur, içindeki anahtarlar ayrıca taranır (hunt r9, hasar).
-                i = Math.Max(keyEnd, MaskSingleTokenValue(text, keyEnd, apiKey, output));
+                // "Invalid password: user 42, attempts 2" olay açıklamasıdır: ilk parça her zaman gizlenir, düzyazının
+                // devamı korunur (hunt r9 hasar). Yalnızca "Ad: tırnaksız değer"; '=', tırnaklı ve bayrak biçimleri normal
+                // yoldan tümüyle gizlenir (review r9, M-1: "Failed token=x path=…" sızıyordu).
+                i = Math.Max(keyEnd, MaskFirstToken(text, keyEnd + 2, apiKey, output));
                 continue;
             }
 
@@ -331,7 +333,6 @@ internal static class SecretKeyValueScanner
     private static bool IsCookieKey(string text, int keyStart, int keyEnd) =>
         SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]).EndsWith("cookie", StringComparison.Ordinal);
 
-    /// <summary>Ayırıcısız biçimler: CLI bayrağı <c>--password değer</c> ve SQL <c>PASSWORD 'değer'</c>.</summary>
     /// <summary>Anahtardan hemen önce (tek boşluk) bir hata niteleyicisi var mı: "Invalid", "Wrong", "Hatalı", "Yanlış"…</summary>
     private static bool PrecededByQualifier(string text, int keyStart)
     {
@@ -355,14 +356,9 @@ internal static class SecretKeyValueScanner
         "rejected", "geçersiz", "hatalı", "yanlış", "eksik", "boş", "zayıf",
     };
 
-    /// <summary>Ayırıcıdan sonraki değer satırda tek parçaysa (ardında yalnızca noktalama) gizler; değilse taramayı değerde sürdürür.</summary>
-    private static int MaskSingleTokenValue(string text, int keyEnd, bool apiKey, SecretMaskOutput output)
+    /// <summary>Değerin ilk boşluksuz parçasını (sondaki noktalama/tırnak/ayraç hariç) gizler; parçanın sonunu döner.</summary>
+    private static int MaskFirstToken(string text, int valueStart, bool apiKey, SecretMaskOutput output)
     {
-        if (!TryReadSeparator(text, keyEnd, out var valueStart, out _))
-        {
-            return keyEnd;
-        }
-
         var end = valueStart;
         while (end < text.Length && !char.IsWhiteSpace(text[end]))
         {
@@ -370,16 +366,15 @@ internal static class SecretKeyValueScanner
         }
 
         var tokenEnd = end;
-        while (tokenEnd > valueStart && text[tokenEnd - 1] is '.' or ',' or ';' or ')')
+        while (tokenEnd > valueStart && text[tokenEnd - 1] is '.' or ',' or ';' or ')' or '"' or '\'' or '}' or ']')
         {
             tokenEnd--;
         }
 
-        return tokenEnd > valueStart && RestOfLineBlank(text, end, LineEnd(text, end))
-            ? Emit(text, valueStart, tokenEnd, apiKey, output)
-            : valueStart;
+        return tokenEnd > valueStart ? Emit(text, valueStart, tokenEnd, apiKey, output) : valueStart;
     }
 
+    /// <summary>Ayırıcısız biçimler: CLI bayrağı <c>--password değer</c> ve SQL <c>PASSWORD 'değer'</c>.</summary>
     private static int MaskWithoutSeparator(string text, int keyStart, int keyEnd, bool apiKey, SecretMaskOutput output)
     {
         var p = SkipInlineSpace(text, keyEnd);
@@ -388,8 +383,8 @@ internal static class SecretKeyValueScanner
             return keyEnd;
         }
 
-        // 'cookie ".AspNetCore.Antiforgery…"' çerez adıdır, değer değil (hunt r9, hasar).
-        if (IsCookieKey(text, keyStart, keyEnd))
+        // 'cookie ".AspNetCore.Antiforgery…"' çerez adıdır, değer değil (hunt r9); --cookie ve cookie "x" gizlenir (review r9, M-2).
+        if (text[keyStart] != '-' && IsCookieKey(text, keyStart, keyEnd) && p + 1 < text.Length && text[p] == '"' && text[p + 1] == '.')
         {
             return keyEnd;
         }
@@ -1103,7 +1098,7 @@ internal static class SecretKeyValueScanner
         if (connectionString)
         {
             // ';' yalnızca ardından yeni bir "Ad=" (ya da metin/boşluk sonu) geliyorsa biter: Password=Hunter;2024 tümüyle gizli (hunt r9).
-            return c == ';' && (p + 1 >= text.Length || char.IsWhiteSpace(text[p + 1]) || text[p + 1] is '"' or '\'' || LooksLikeKeySeparator(text, p + 1, allowColon: false));
+            return c == ';' && (p + 1 >= text.Length || char.IsWhiteSpace(text[p + 1]) || text[p + 1] is '"' or '\'' || LooksLikeKeySeparator(text, p + 1, allowColon: false, allowSpacedName: true));
         }
 
         if (urlEncoded)
@@ -1122,7 +1117,7 @@ internal static class SecretKeyValueScanner
     }
 
     /// <summary>Konumdan sonra (sınırlı bakış) <c>[boşluk]["]Ad["][boşluk]=</c> ya da <c>:</c> geliyor mu.</summary>
-    private static bool LooksLikeKeySeparator(string text, int p, bool allowColon)
+    private static bool LooksLikeKeySeparator(string text, int p, bool allowColon, bool allowSpacedName = false)
     {
         var limit = Math.Min(text.Length, p + LookaheadNameLength + 8);
         while (p < limit && IsInlineSpace(text[p]))
@@ -1135,8 +1130,9 @@ internal static class SecretKeyValueScanner
             p++;
         }
 
+        // Bağlantı dizesi anahtarları boşluklu olabilir: "User Id", "Include Error Detail" (hunt r10).
         var nameStart = p;
-        while (p < limit && IsKeyChar(text[p]))
+        while (p < limit && (IsKeyChar(text[p]) || (allowSpacedName && text[p] == ' ' && p > nameStart && p + 1 < limit && char.IsLetter(text[p + 1]))))
         {
             p++;
         }

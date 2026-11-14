@@ -173,7 +173,7 @@ public static partial class SecretMasker
 
         if (segments.Any(s => IsConnectionStringField(Normalize(s)) || Normalize(s) == "connectionstrings"))
         {
-            var secrets = new SecretValueSet();
+            var secrets = new SecretValueSet(allowPlainWords: true);
             MaskCore(value, secrets);
             foreach (var secret in secrets.Values)
             {
@@ -410,7 +410,7 @@ public static partial class SecretMasker
     /// <summary>Yalnızca harften (ve isteğe bağlı sondaki '=') oluşan, 15 karakterden kısa sözcük: token değil.</summary>
     private static bool IsPlainWord(string token)
     {
-        var word = token.TrimEnd('=');
+        var word = token.Trim('(', ')', '[', ']', '.', ',', ':').TrimEnd('='); // "Bearer (expected …)" (hunt r10)
         return word.Length is > 0 and <= 15 && word.All(char.IsLetter);
     }
 
