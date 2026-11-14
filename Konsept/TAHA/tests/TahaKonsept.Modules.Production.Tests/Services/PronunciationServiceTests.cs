@@ -77,6 +77,27 @@ public sealed class PronunciationServiceTests
         preview.Message.ShouldNotBeNull().ShouldContain("Ses kapalı");
     }
 
+    /// <summary>Deneme kutusu: yalnız metin istendiğinde ses üretilmez (ajan/online çağrısı yok), değişiklik listesi döner.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Preview_text_only_does_not_synthesize()
+    {
+        await using var h = new ProductionTestHarness();
+        await h.SaveSettingsAsync(TestSettings.LocalSpeech);
+        await Save(h, new SavePronunciationRequest { Written = "Google", Spoken = "Gugıl" });
+
+        var preview = await h.WithAsync<IPronunciationService, PronunciationPreviewResponse>(async s =>
+            (await s.PreviewAsync(new PronunciationPreviewRequest { Text = "Google 29 Mayıs 1453'te", Synthesize = false }, CancellationToken.None)).Value);
+
+        preview.Source.ShouldBe("none");
+        preview.AudioUrl.ShouldBeNull();
+        preview.Message.ShouldBeNull();
+        preview.SpokenText.ShouldContain("Gugıl");
+        preview.SpokenText.ShouldNotContain("1453");
+        preview.Changes.ShouldContain(c => c.Rule == "lexicon" && c.Original == "Google");
+        h.Agent.Previews.ShouldBeEmpty();
+    }
+
     private static Task<PronunciationDto> Save(ProductionTestHarness h, SavePronunciationRequest request) =>
         h.WithAsync<IPronunciationService, PronunciationDto>(async s => (await s.SaveAsync(request, CancellationToken.None)).Value);
 

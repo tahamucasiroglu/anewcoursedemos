@@ -10,4 +10,7 @@ public sealed record PronunciationPreviewRequest
 
     /// <summary>Önce okunuş düzeltmesi (sözlük + sayı/tarih ...) uygulansın mı.</summary>
     public bool Normalize { get; init; } = true;
+
+    /// <summary>Ses de üretilsin mi. <c>false</c> = yalnız metin (ücretsiz; deneme kutusu); <c>true</c> = "Dinle" (ajan ya da online, ücretli olabilir).</summary>
+    public bool Synthesize { get; init; } = true;
 }

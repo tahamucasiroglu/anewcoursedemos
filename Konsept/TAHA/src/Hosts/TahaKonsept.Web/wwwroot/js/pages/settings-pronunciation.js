@@ -3,7 +3,8 @@
  *  - Tablo: yazılış, okunuş, durum (Öneri / Onaylı), kaynak; süzgeç (Tümü / Öneri / Onaylı) + arama.
  *  - Ekle (üst form), düzenle (pencere), sil (onay penceresi), öneriyi onayla, önerilerin hepsini onayla.
  *  - "Dinle": okunuşu güncel ses modeliyle seslendirir (ajan ya da online; dönen ses çalınır).
- *  - Deneme kutusu: cümle → normalleştirilmiş okunuş + değişiklik listesi (+ ses). Değişiklik "Sözlüğe ekle" ile forma aktarılır.
+ *  - Deneme kutusu: cümle → normalleştirilmiş okunuş + değişiklik listesi (yalnız metin, ses üretmez — ücretsiz). Sonuçtaki
+ *    "Dinle" okunuşu seslendirir (isteğe bağlı). Değişiklik "Sözlüğe ekle" ile forma aktarılır.
  * MVC uçları: /Ayarlar/{Sozluk (GET|POST), SozlukSil, SozlukDinle}. Fark hesabı: TK.production.textChanges / diffHtml. Tek modül (IIFE).
  */
 (function (window, $) {
@@ -150,7 +151,7 @@
         var $r = $('#sp-test-result');
         if (!text) { TK.toast.warning('Denemek için bir cümle yazın.'); return; }
         $r.html('<div class="sp-result">' + U.skeleton(2) + '</div>');
-        U.busy($btn, TK.api.post('/Ayarlar/SozlukDinle', { text: text, normalize: true })).done(function (res) {
+        U.busy($btn, TK.api.post('/Ayarlar/SozlukDinle', { text: text, normalize: true, synthesize: false })).done(function (res) {
             res = res || {};
             var display = res.displayText || text;
             var spoken = res.spokenText || display;
@@ -165,12 +166,10 @@
                             '<button type="button" class="tk-btn tk-btn-ghost sp-add-btn" data-add="' + i + '" title="Bu okunuşu sözlük formuna aktar">Sözlüğe ekle</button></li>';
                     }).join('') + '</ul>'
                     : '<p class="tk-muted">Değişiklik yok; metin yazıldığı gibi okunur.</p>') + '</div>';
-            var src = audioSrc(res);
-            html += src ? '<div class="sp-result-box"><span class="tk-label">Ses önizlemesi</span><audio controls autoplay></audio></div>'
-                : (res.message ? '<div class="tk-alert is-warning">' + U.icon('volume') + '<div>' + U.escape(res.message) + '</div></div>' : '');
+            html += '<div class="tk-row"><button type="button" class="tk-btn tk-btn-ghost" data-test-listen title="Okunuşu güncel ses modeliyle seslendirir (online modelde ücretlidir)">' +
+                U.icon('volume') + ' Dinle</button></div>';
             $r.html(html + '</div>');
-            if (src) { $r.find('audio').attr('src', src); }
-            $r.data('changes', changes);
+            $r.data('changes', changes).data('spoken', spoken);
         }).fail(function () { $r.empty(); });
     }
 
@@ -217,6 +216,7 @@
         $('#sp-approve-all').on('click', function () { approveAll($(this)); });
 
         $('#sp-test-run').on('click', function () { runTest($(this)); });
+        $('#sp-test-result').on('click', '[data-test-listen]', function () { listen($('#sp-test-result').data('spoken'), $(this)); });
         $('#sp-test-text').on('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runTest($('#sp-test-run')); } });
         $('#sp-test-result').on('click', '[data-add]', function () {
             var c = ($('#sp-test-result').data('changes') || [])[+$(this).attr('data-add')];

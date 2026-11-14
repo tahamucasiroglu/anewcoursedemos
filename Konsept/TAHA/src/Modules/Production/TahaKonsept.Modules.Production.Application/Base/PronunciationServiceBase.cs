@@ -133,15 +133,26 @@ public abstract class PronunciationServiceBase : IPronunciationService
         var settings = await _settings.GetForUserAsync(userId, cancellationToken);
         var text = request.Text.Trim();
         var spoken = text;
+        IReadOnlyList<PronunciationChangeDto> changes = [];
         if (request.Normalize)
         {
             var lexicon = (await _repository.ListApprovedAsync(userId, cancellationToken))
                 .Select(p => new PronunciationEntry { Written = p.Written, Spoken = p.Spoken })
                 .ToList();
-            spoken = _normalizer.Normalize(text, "tr", lexicon).Spoken;
+            var normalized = _normalizer.Normalize(text, "tr", lexicon);
+            spoken = normalized.Spoken;
+            changes = normalized.Changes
+                .Select(c => new PronunciationChangeDto { Original = c.Original, Replacement = c.Replacement, Rule = c.Rule })
+                .ToList();
         }
 
-        var response = new PronunciationPreviewResponse { DisplayText = text, SpokenText = spoken };
+        var response = new PronunciationPreviewResponse { DisplayText = text, SpokenText = spoken, Changes = changes };
+        if (!request.Synthesize)
+        {
+            // Yalnız metin: ücretli/ajan sentezi yapılmaz (deneme kutusu).
+            return response;
+        }
+
         if (settings.SpeechMode == MediaMode.Off || string.IsNullOrWhiteSpace(settings.SpeechModelKey))
         {
             return response with { Message = "Ses kapalı; Konseptten Video ayarlarından bir ses modeli seçin." };

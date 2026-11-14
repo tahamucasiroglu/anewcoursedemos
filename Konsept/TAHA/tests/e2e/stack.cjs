@@ -89,7 +89,7 @@ async function start(name) {
   child.unref();
   pids[name] = child.pid;
   writePids(pids);
-  const code = await waitHealthy(name, name === 'mock' ? 10000 : 90000);
+  const code = await waitHealthy(name, name === 'mock' ? 10000 : 180000);
   console.log(`${name}: PID ${child.pid} → ${code ? 'hazır (HTTP ' + code + ')' : 'SAĞLIK YANITI YOK, bkz. out/' + name + '.out.log'}`);
 }
 

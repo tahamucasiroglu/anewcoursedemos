@@ -11,6 +11,9 @@ public sealed record PronunciationPreviewResponse
     /// <summary>Okunuş (TTS'e giden).</summary>
     public string SpokenText { get; init; } = string.Empty;
 
+    /// <summary>Normalizasyon değişiklikleri (normalize istenmediyse boş).</summary>
+    public IReadOnlyList<PronunciationChangeDto> Changes { get; init; } = [];
+
     /// <summary>Ses adresi (ajan yerel sunucusu ya da <c>data:</c> adresi).</summary>
     public string? AudioUrl { get; init; }
 

@@ -117,8 +117,8 @@
     }
 
     function priceHint(m) {
-        if (isLocal(m)) { return 'Ücretsiz'; }
         var p = m.pricing || {};
+        if (isLocal(m) || (p.inputPerMTok === 0 && p.outputPerMTok === 0)) { return 'Ücretsiz'; }
         var u = U();
         if (p.perImage) { return u.money(p.perImage) + '/görsel'; }
         if (p.perKChars) { return u.money(p.perKChars) + '/1K karakter'; }
@@ -133,7 +133,8 @@
     function modelTags(m, agentVramMb) {
         var u = U();
         var tags = [];
-        if (m.runsOn !== undefined) { tags.push(isLocal(m) ? '<span class="tk-badge is-info">Yerel</span>' : '<span class="tk-badge is-accent">Online</span>'); }
+        if (m.platform === 'local-openai') { tags.push('<span class="tk-badge is-info" title="Kendi bilgisayarınızdaki / ağınızdaki OpenAI uyumlu sunucu">Yerel sunucu</span>'); }
+        else if (m.runsOn !== undefined) { tags.push(isLocal(m) ? '<span class="tk-badge is-info">Yerel</span>' : '<span class="tk-badge is-accent">Online</span>'); }
         if (m.languageLabel) {
             var cls = m.languageLabel === 'Türkçe yok' ? 'is-danger' : m.languageLabel === 'Sadece Türkçe' ? 'is-success' : '';
             tags.push('<span class="tk-badge ' + cls + '">' + u.escape(m.languageLabel) + '</span>');
