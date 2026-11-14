@@ -153,3 +153,23 @@ Bu turda düzeltilen hata: HyperFrames lint, görsel kullanan her sahneyi `missi
 - **Penceresiz ajan kapanışı:** `stack.cjs stop` sırasında ajan `AgentHubConnection type only implements IAsyncDisposable` ile çöküyordu. Servis kapsayıcısı artık `DisposeAsync` ile kapatılıyor; kapanış temiz.
 
 **Revideo ölü proxy doğrulaması:** render betiği kaynaktaki `RenderScript` ile birebir çalıştırıldı. Sahne, makinenin LAN adresindeki (192.168.1.100:7399) yerel bir HTTP sunucusuna `fetch` ve `Image` isteği, example.com'a da `fetch` gönderdi. `--proxy-server=http://127.0.0.1:9` ile sunucuya hiç istek düşmedi, dış istek `EXTERNAL-BLOCKED` oldu ve render yine mp4 üretti. Bayraklar kaldırılınca (kontrol) istekler sunucuya ulaştı ve dış istek geçti. Kayıt: `tests/e2e/out/kurgu30/revideo_supertonic3_img-off/proxy-probe-hits.txt`. Gerçek boru hattındaki Revideo render'ı da bu betikle başarılı.
+
+### Hafif yerel Türkçe ses turu (14 Kas 2026)
+
+HyperFrames + görsel kapalı + altyazı + çubuk; her yöntem `--new-concept` ile gerçek boru hattından geçti. Python ortamı ajanın kendi yoluyla kuruldu (ses aşaması: uv → `PythonEnvs/<anahtar>/.venv` → paketler → `tts_worker.py`; model ilk yüklemede HF önbelleğine iner). Whisper için ajanın kurduğu uv kullanıldı: `--whisper .tools-dev/e2e-agent/Tools/uv/uv.exe`.
+
+| Yöntem | Sonuç | Süre (video / seslendirme) | Render | Speech aşaması | whisper (yazılı) | Not |
+|---|---|---|---|---|---|---|
+| Piper DFKI (`piper-tr`, `tr_TR-dfki-medium`) | ✅ (düzeltmeyle) | 26,41 / 26,41 sn | 628 sn soğuk (uv + Python 3.11 + paket + ses indirme) | 340 sn soğuk; sentez ~1,6 sn | 0,808 | uv'yi ajan kendisi kurdu; tepe 0 dBFS (6 örnek) |
+| Piper Fahrettin (`tr_TR-fahrettin-medium`) | ✅ (düzeltmeyle) | 23,27 / 23,24 sn | 87,1 sn | 4,6 sn | 0,769 | hızlı konuşuyor: 25 sn alt sınırının altında, içerik aynı |
+| Piper Fettah (`tr_TR-fettah-medium`) | ✅ | 28,50 / 28,49 sn | 105,3 sn | 5,7 sn | 0,731 | ayna deposundan indi |
+| MMS-TTS Türkçe (`mms-tts-tr`) | ✅ (düzeltmeyle), anlaşılırlık zayıf | 34,37 / 34,37 sn | 93,4 sn (ilk, soğuk: 194 sn) | 13,1 sn | 0,673 | model kendi telaffuzu bulanık ("Gubil aritasında") |
+| EMA Lightning (`ema-lightning`) | ✅ | 23,00 / 23,00 sn | 240,2 sn soğuk | 127,5 sn soğuk (torch kurulumu 86 sn) | 0,827 | hızlı konuşuyor (23 sn) |
+| Ahenk Cep (`ahenk-cep`) | ✅ | 25,32 / 25,32 sn | 193,6 sn soğuk | 102,2 sn soğuk; sentez ~8 sn | 0,846 | en anlaşılır hafif motor |
+| Trendyol-TTS | ⏭ atlandı | — | — | — | — | katalogda en az 8 GB VRAM (VoxCPM tabanlı); makinede 6 GB, OBS ile ~4 GB boş; hafif/CPU motoru değil |
+
+Bu turda düzeltilen hatalar:
+- **uv yoksa Python motorları düşüyordu:** web'den Piper/MMS/EMA seçilince ses aşaması "uv bulunamadı. Kurulum ekranından 'uv' bileşenini kurun." ile başarısız oluyordu; uv isteğe bağlı bir bileşen olduğu için yalnız masaüstü kurulum ekranından kurulabiliyordu. Yeni `IToolProvisioner` (Abstractions) → `ToolProvisionerBase` → `PrerequisiteToolProvisioner` (Agent.Core) eksik aracı ilgili ön gereksinim bileşeniyle kurar; `PythonSpeechEngineBase` uv yoksa onu kullanır. Testler: `PrerequisiteToolProvisionerTests` (4), `EnsureReady_provisions_missing_uv`.
+- **uv Python indirmesinde Windows dosya kilidi:** ilk kurulumda `failed to rename … Erişim engellendi (os error 5)` (yeni açılan klasörü tarayıcı kısa süre kilitliyor). Bu sefer sunucunun aşama yeniden denemesi kurtardı. Artık uv komutları geçici kilitte 3 ve 10 sn arayla iki kez yeniden denenir (`IsTransientFileLock`). Test: `EnsureReady_retries_uv_on_transient_file_lock`.
+- **Piper Fahrettin/Fettah 404:** `rhasspy/piper-voices` main dalında artık yalnız `tr_TR-dfki-medium` var. Adapter resmi depoda bulamazsa `speaches-ai/piper-<ses>` aynasından (`model.onnx` + `config.json`) indirir.
+- **MMS-TTS noktalama ve İ/I:** sözlükte noktalama yok (sahne tek nefeste okunuyordu) ve tokenizer `str.lower()` ile İ'yi "i + birleşik nokta", I'yı "i" yapıyordu. Adapter artık Türkçe küçük harfe çevirip cümle/virgül parçalarıyla sentezler, araya kısa duraklar koyar. Whisper dökümünde cümleler ve "Henüz", "1453" düzeldi; skor 0,673'te kaldı (kalan hata modelin telaffuzu).

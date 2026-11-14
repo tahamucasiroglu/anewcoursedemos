@@ -11,3 +11,5 @@
 
 ## Açık sorular
 - Bloklamayan sorular `PLAN.md` §5'te, varsayılanlarla ilerleniyor.
+
+- (14 Kas 2026) Piper Türkçe: `rhasspy/piper-voices` main artık yalnız dfki içeriyor; fahrettin/fettah `speaches-ai/piper-tr_TR-<ses>-medium` aynasından iner (adapter otomatik). MMS-TTS sözlüğünde noktalama yok, adapter parçalı sentezler. Python ses motorları uv yoksa ajan uv'yi kendisi kurar (IToolProvisioner).
