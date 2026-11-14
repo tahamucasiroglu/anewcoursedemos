@@ -100,6 +100,39 @@ public sealed class KonseptLoggingTests
         }
     }
 
+    /// <summary>Gets AC-8 tam alan tablosundaki alan adları.</summary>
+    public static TheoryData<string> SecretFields => [.. Konsept.Testing.SecretFieldSamples.All.Select(s => s.Field)];
+
+    /// <summary>
+    /// AC-8 dosya yolu, tam alan tablosu (review round 2, I-3): adlandırılmış gizli alan dosyada düz metin görünmez;
+    /// yeni gizli alan <c>SecretFieldSamples</c>'a eklenince bu test de onu kapsar.
+    /// </summary>
+    /// <param name="field">Gizli alan adı.</param>
+    [Theory]
+    [MemberData(nameof(SecretFields))]
+    public void Masking_EverySecretField_NeverPlainInFile(string field)
+    {
+        var sample = Konsept.Testing.SecretFieldSamples.Get(field);
+        var dir = Directory.CreateTempSubdirectory("anewconcept-log-");
+        try
+        {
+            using (var logger = new LoggerConfiguration().WithKonseptEnrichment(LogSources.Api).WriteToKonseptFile(dir.FullName, "api").CreateLogger())
+            {
+#pragma warning disable CA2254 // Test: alan adı tablodan geliyor.
+                logger.Warning($"gizli {{{field}}}", sample.Value);
+#pragma warning restore CA2254
+            }
+
+            var text = File.ReadAllText(Directory.GetFiles(dir.FullName).Single());
+            text.ShouldContain("gizli ");
+            text.ShouldNotContain(sample.Secret);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
     /// <summary>Log dosyası yalnızca verilen klasöre yazılır, başka yerde dosya oluşmaz (AC-5).</summary>
     [Fact]
     public void LogDirectory_OnlyConfiguredFolder_NoFilesElsewhere()
