@@ -28,6 +28,15 @@
           <SolidColorBrush x:Key="TkIdle" Color="#C9B39E" />
           <SolidColorBrush x:Key="TkLogBackground" Color="#2B1E16" />
           <SolidColorBrush x:Key="TkLogText" Color="#F3E2CF" />
+          <!-- Fluent Expander (Günlük) başlığı: kahve yüzey rengi. -->
+          <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="#FCEEDD" />
+          <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="#FCEEDD" />
+          <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="#EBD3B8" />
+          <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="#EBD3B8" />
+          <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="#EBD3B8" />
+          <SolidColorBrush x:Key="ExpanderContentBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="#EBD3B8" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
           <SolidColorBrush x:Key="TkBackground" Color="#1D1612" />
@@ -48,6 +57,15 @@
           <SolidColorBrush x:Key="TkIdle" Color="#6B5646" />
           <SolidColorBrush x:Key="TkLogBackground" Color="#140F0C" />
           <SolidColorBrush x:Key="TkLogText" Color="#EAD7C3" />
+          <!-- Fluent Expander (Günlük) başlığı: siyah varsayılan yerine kahve yüzey rengi. -->
+          <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="#2A201A" />
+          <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="#33271F" />
+          <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="#33271F" />
+          <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="#4A382B" />
+          <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="#4A382B" />
+          <SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="#4A382B" />
+          <SolidColorBrush x:Key="ExpanderContentBackground" Color="#2A201A" />
+          <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="#4A382B" />
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>
