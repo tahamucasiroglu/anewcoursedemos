@@ -1,0 +1,221 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using TahaKonsept.Agent.Abstractions.Engines;
+using TahaKonsept.Agent.Abstractions.Paths.Abstract;
+using TahaKonsept.Agent.Abstractions.Processes.Abstract;
+using TahaKonsept.Agent.Abstractions.Tools;
+using TahaKonsept.Agent.Abstractions.Tools.Abstract;
+using TahaKonsept.Agent.Abstractions.Video;
+using TahaKonsept.Agent.Engines.Video.Engines.Base;
+using TahaKonsept.Agent.Engines.Video.Fonts;
+using TahaKonsept.Agent.Engines.Video.Media.Abstract;
+using TahaKonsept.Agent.Engines.Video.Safety.Abstract;
+using TahaKonsept.BuildingBlocks.Domain.Results;
+
+namespace TahaKonsept.Agent.Engines.Video.Engines.Concrete;
+
+/// <summary>
+/// Revideo (<c>@revideo/*@0.11.0</c>, MIT, Motion Canvas türevi; deneysel) video motoru. LLM <c>src/scene.tsx</c> yazar
+/// (<c>export default makeScene2D('scene', function* (view) {...})</c>); motor <c>src/project.ts</c> (boyut/fps istekten),
+/// <c>src/tk-fonts.css</c> ve <c>render.mjs</c> (renderVideo API) üretir. Proje şablon içinde <c>work/&lt;guid&gt;</c> altında kurulur.
+/// Notlar (yerelde doğrulandı): Revideo Chrome'a her zaman <c>--single-process</c> ekler ve yeni Chrome'da sayfa düşer — render.mjs
+/// bunu engeller; sistem ffmpeg 8 ile <c>lavfi</c> algılaması bozuk olduğundan Revideo kendi paketli ffmpeg'ini kullanır
+/// (<c>FFMPEG_PATH</c> verilmez). İlerleme: <c>@tk-progress N</c>.
+/// </summary>
+public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
+{
+    /// <summary>Motor anahtarı.</summary>
+    public const string EngineKey = "revideo";
+
+    /// <summary>Sabit Revideo sürümü.</summary>
+    public const string RevideoVersion = "0.11.0";
+
+    /// <summary>Sabit @puppeteer/browsers sürümü (Chrome indirme).</summary>
+    public const string PuppeteerBrowsersVersion = "3.2.7";
+
+    private const string BrowsersFolder = ".browsers";
+
+    private static readonly IReadOnlySet<string> Imports = new HashSet<string>(StringComparer.Ordinal) { "@revideo/2d", "@revideo/core" };
+
+    /// <summary>Motor oluşturur.</summary>
+    /// <param name="paths">Ajan klasörleri.</param>
+    /// <param name="tools">Araç bulucu.</param>
+    /// <param name="runner">Süreç çalıştırıcı.</param>
+    /// <param name="probe">Medya süresi okuyucu.</param>
+    /// <param name="guard">Güvenlik denetçisi.</param>
+    /// <param name="logger">Günlükçü.</param>
+    public RevideoVideoEngine(IAgentPaths paths, IToolLocator tools, IProcessRunner runner, IMediaProbe probe, ISceneCodeGuard guard, ILogger<RevideoVideoEngine> logger)
+        : base(paths, tools, runner, probe, guard, logger)
+    {
+    }
+
+    /// <inheritdoc />
+    public override string Key => EngineKey;
+
+    /// <inheritdoc />
+    public override string DisplayName => "Revideo (deneysel)";
+
+    /// <inheritdoc />
+    protected override IReadOnlyDictionary<string, string> Dependencies { get; } = BuildDependencies();
+
+    /// <inheritdoc />
+    protected override string CliRelativePath => "node_modules/@revideo/renderer/package.json";
+
+    /// <inheritdoc />
+    protected override bool UsesEsModules => true;
+
+    /// <inheritdoc />
+    protected override IReadOnlySet<string> AllowedImports => Imports;
+
+    /// <inheritdoc />
+    public override double? ParseProgress(string line)
+    {
+        var match = ProgressRegex().Match(line);
+        return match.Success ? double.Parse(match.Groups["p"].Value, CultureInfo.InvariantCulture) : null;
+    }
+
+    /// <inheritdoc />
+    protected override bool IsRuntimeReady() => ResolveChrome() is not null;
+
+    /// <inheritdoc />
+    protected override async Task<Result> InstallRuntimeAsync(IProgress<EngineSetupProgress>? progress, CancellationToken ct)
+    {
+        if (ResolveChrome() is not null)
+        {
+            return Result.Success();
+        }
+
+        progress?.Report(new EngineSetupProgress("Revideo: headless Chrome indiriliyor…", 80));
+        var cli = Path.Combine(TemplateDir, "node_modules", "@puppeteer", "browsers", "lib", "main-cli.js");
+        var install = await RunNodeAsync([cli, "install", "chrome-headless-shell@stable", "--path", Path.Combine(TemplateDir, BrowsersFolder)], TimeSpan.FromMinutes(15), ct).ConfigureAwait(false);
+        if (install.IsFailure)
+        {
+            return install.Error;
+        }
+
+        return install.Value.Succeeded && ResolveChrome() is not null
+            ? Result.Success()
+            : Error.Failure("video.revideo.browser_failed", $"Revideo için Chrome indirilemedi: {Tail(install.Value.StandardError, install.Value.StandardOutput)}");
+    }
+
+    /// <inheritdoc />
+    protected override Dictionary<string, string> BuildEnvironment()
+    {
+        var env = base.BuildEnvironment();
+        env.Remove("FFMPEG_PATH");
+        env.Remove("FFPROBE_PATH");
+        env["DISABLE_TELEMETRY"] = "true";
+        return env;
+    }
+
+    /// <inheritdoc />
+    protected override async Task<Result<SceneProject>> PrepareProjectAsync(SceneRenderRequest request, CancellationToken ct)
+    {
+        var chrome = ResolveChrome();
+        if (chrome is null)
+        {
+            return Error.Failure("video.revideo.browser_missing", "Revideo için headless Chrome bulunamadı; motoru yeniden kurun.");
+        }
+
+        var codeCopy = Path.Combine(request.WorkDir, string.Create(CultureInfo.InvariantCulture, $"revideo-scene-{request.SceneIndex:D3}.tsx"));
+        await File.WriteAllTextAsync(codeCopy, request.SceneCode, Utf8NoBom, ct).ConfigureAwait(false);
+
+        var dir = CreateTemplateWorkDir();
+        var src = Path.Combine(dir, "src");
+        var publicDir = Path.Combine(dir, "public");
+        Directory.CreateDirectory(src);
+        CopyBundledFonts(Path.Combine(publicDir, BundledFontCatalog.FontsFolder));
+        await File.WriteAllTextAsync(Path.Combine(src, "tk-fonts.css"), BundledFontCatalog.BuildCss("/fonts/"), Utf8NoBom, ct).ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(src, "scene.tsx"), request.SceneCode, Utf8NoBom, ct).ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(src, "project.ts"), BuildProject(request.Width, request.Height, request.Fps), Utf8NoBom, ct).ConfigureAwait(false);
+        var entry = Path.Combine(dir, "render.mjs");
+        await File.WriteAllTextAsync(entry, RenderScript, Utf8NoBom, ct).ConfigureAwait(false);
+        return new SceneProject(dir, Path.Combine(publicDir, "assets"), entry, DeleteAfterRender: true);
+    }
+
+    /// <inheritdoc />
+    protected override Result<IReadOnlyList<string>> BuildRenderArguments(SceneProject project, SceneRenderRequest request)
+    {
+        var chrome = ResolveChrome();
+        return chrome is null
+            ? Error.Failure("video.revideo.browser_missing", "Revideo için headless Chrome bulunamadı.")
+            : new List<string> { project.EntryPath, Path.Combine(project.ProjectDir, "out"), "scene.mp4", "-", chrome };
+    }
+
+    /// <inheritdoc />
+    protected override Task<Result> FinalizeOutputAsync(SceneProject project, SceneRenderRequest request, CancellationToken ct)
+    {
+        var produced = Path.Combine(project.ProjectDir, "out", "scene.mp4");
+        if (!File.Exists(produced))
+        {
+            return Task.FromResult(Result.Failure(Error.Failure("video.revideo.no_output", "Revideo çıktı dosyası üretmedi.")));
+        }
+
+        File.Move(produced, request.OutputPath, overwrite: true);
+        return Task.FromResult(Result.Success());
+    }
+
+    private static string BuildProject(int width, int height, int fps) =>
+        string.Create(CultureInfo.InvariantCulture, $$"""
+            import { makeProject } from '@revideo/core';
+            import './tk-fonts.css';
+            import scene from './scene?scene';
+
+            export default makeProject({
+              scenes: [scene],
+              settings: { shared: { size: { x: {{width}}, y: {{height}} }, background: '#000000' }, rendering: { fps: {{fps}} } },
+            });
+
+            """);
+
+    private const string RenderScript = """
+        import { renderVideo } from '@revideo/renderer';
+
+        const [, , outDir, outFile, ffmpegPath, chromePath] = process.argv;
+        // Revideo her zaman --single-process ekler; yeni Chrome sürümlerinde sayfa düşüyor. includes() true dönen dizi bunu engeller.
+        class NoSingleProcessArgs extends Array { includes() { return true; } }
+        const args = NoSingleProcessArgs.from(['--no-sandbox', '--disable-dev-shm-usage']);
+        let last = -1;
+        await renderVideo({
+          projectFile: './src/project.ts',
+          settings: {
+            outDir, outFile, workers: 1, logProgress: false,
+            ...(ffmpegPath && ffmpegPath !== '-' ? { ffmpeg: { ffmpegPath } } : {}),
+            puppeteer: { executablePath: chromePath, headless: 'shell', args },
+            viteConfig: { publicDir: 'public', logLevel: 'warn' },
+            progressCallback: (_w, p) => { const pct = Math.floor(p * 100); if (pct !== last) { last = pct; console.log(`@tk-progress ${pct}`); } },
+          },
+        });
+        console.log('@tk-done');
+
+        """;
+
+    private static Dictionary<string, string> BuildDependencies() => new(StringComparer.Ordinal)
+    {
+        ["@revideo/core"] = RevideoVersion,
+        ["@revideo/2d"] = RevideoVersion,
+        ["@revideo/renderer"] = RevideoVersion,
+        ["@revideo/vite-plugin"] = RevideoVersion,
+        ["@revideo/ffmpeg"] = RevideoVersion,
+        ["@revideo/ui"] = RevideoVersion,
+        ["@puppeteer/browsers"] = PuppeteerBrowsersVersion,
+        ["@fontsource/inter"] = BundledFontCatalog.PackageVersion,
+        ["@fontsource/montserrat"] = BundledFontCatalog.PackageVersion,
+        ["@fontsource/playfair-display"] = BundledFontCatalog.PackageVersion,
+    };
+
+    private string? ResolveChrome()
+    {
+        if (Tools.Find(ToolKind.ChromeHeadlessShell) is { } chrome && File.Exists(chrome))
+        {
+            return chrome;
+        }
+
+        var exe = OperatingSystem.IsWindows() ? "chrome-headless-shell.exe" : "chrome-headless-shell";
+        return FindInTemplate(BrowsersFolder, exe);
+    }
+
+    [GeneratedRegex(@"^@tk-progress\s+(?<p>\d+)", RegexOptions.CultureInvariant)]
+    private static partial Regex ProgressRegex();
+}

@@ -12,3 +12,5 @@ source/**/*.safetensors
 **/App_Data/keys/
 **/App_Data/artifacts/
 **/logs/
+# Gelistirici arac klasoru (portable ffmpeg vb., asla depoya girmez)
+.tools-dev/

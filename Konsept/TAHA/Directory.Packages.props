@@ -28,6 +28,7 @@
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" />
   </ItemGroup>
   <ItemGroup Label="Validasyon / loglama">
     <PackageVersion Include="FluentValidation" Version="12.2.0" />

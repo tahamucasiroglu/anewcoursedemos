@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Ajan video motorları (HyperFrames, Remotion, Revideo), ffmpeg birleştirici (ASS karaoke + ilerleme çubuğu) ve oransal hizalayıcı. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Engines.Video</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Agent.Abstractions\TahaKonsept.Agent.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- LLM sistem promptuna giden yazım kılavuzları (Markdown); AuthoringGuides üzerinden okunur. -->
+    <EmbeddedResource Include="Authoring\Resources\*.md" LogicalName="TahaKonsept.Agent.Engines.Video.Authoring.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Agent.Engines.Video.Tests" />
+  </ItemGroup>
+
+</Project>
