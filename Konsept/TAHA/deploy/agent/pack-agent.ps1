@@ -53,6 +53,7 @@ try {
     dotnet vpk pack `
         --packId $packId `
         --packVersion $Version `
+        --runtime win-x64 `
         --packDir $publishDir `
         --mainExe 'TahaKonsept.Agent.exe' `
         --packTitle 'Taha Konsept' `
