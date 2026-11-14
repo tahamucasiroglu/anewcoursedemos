@@ -265,6 +265,63 @@ public sealed class AuthAccessTests
     }
 
     /// <summary>
+    /// Refresh geçici olarak düştüğü için oturum dolmuş erişim token'ıyla korunduysa çıkış önce token'ı yeniler ve Api'ye
+    /// geçerli token'la gider (review R3-1): dolmuş token'ın 401'i "zaten çıkılmış" sayılıp diğer oturumlar açık kalmaz.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Logout_AfterKeptSessionWithExpiredToken_RefreshesThenRevokes()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        var page = await WebFactory.GetDocumentAsync(client, "/", ct);
+        var token = page.QuerySelector("form.user-menu__logout input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+        factory.Api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(
+            Result<AuthSessionResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable),
+            Result<AuthSessionResponse>.Success(new AuthSessionResponse("jwt-yeni", time.GetUtcNow().AddMinutes(35), "knr_yeni", WebFactory.UserId, WebFactory.UserName)));
+        factory.Api.LogoutAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(call =>
+            call.ArgAt<string>(0) == "jwt-yeni" ? Result<int>.Success(3) : Result<int>.Failure(new("api.error", "jwt süresi doldu", ErrorType.Unauthorized)));
+        time.Advance(TimeSpan.FromMinutes(20));
+
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
+        using var logout = await client.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct);
+
+        logout.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        logout.Headers.Location!.OriginalString.ShouldBe("/giris");
+        await factory.Api.Received(1).LogoutAsync("jwt-yeni", Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Dolmuş erişim token'ıyla çıkışta refresh geçici olarak başarısız olursa çıkış başarısız sayılır (review R3-1): oturum
+    /// kalır, korelasyonlu genel hata gösterilir; Api'ye dolmuş token'la çıkış gönderilmez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Logout_ExpiredTokenRefreshTransientFailure_KeepsSessionShowsError()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        var page = await WebFactory.GetDocumentAsync(client, "/", ct);
+        var token = page.QuerySelector("form.user-menu__logout input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+        factory.Api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Result<AuthSessionResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable));
+        factory.Api.LogoutAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Result<int>.Failure(new("api.error", "jwt süresi doldu", ErrorType.Unauthorized)));
+        time.Advance(TimeSpan.FromMinutes(20));
+
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
+        using var logout = await client.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct);
+        var errorPage = await WebFactory.ParseAsync(await logout.Content.ReadAsStringAsync(ct), ct);
+
+        logout.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        errorPage.QuerySelector("[role=alert]")!.TextContent.ShouldStartWith("Şu an işleminizi yapamıyoruz (hata no: ");
+        logout.Headers.Contains("Set-Cookie").ShouldBeFalse();
+        await factory.Api.DidNotReceive().LogoutAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
     /// Anonim çizilmiş giriş/kayıt formu, başka sekmede giriş yapıldıktan sonra gönderilince ham 400 (CSRF) yerine Konseptler'e
     /// yönlendirilir; Api'ye ikinci giriş/kayıt gitmez.
     /// </summary>

@@ -43,6 +43,12 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
     /// <summary>Gets teknik log.</summary>
     protected abstract ILogger Logger { get; }
 
+    /// <summary>Gets refresh koordinatörü (çıkıştan önce dolmuş token'ı yenilemek için).</summary>
+    protected abstract ITokenRefreshCoordinator Coordinator { get; }
+
+    /// <summary>Gets saat kaynağı.</summary>
+    protected abstract TimeProvider Time { get; }
+
     /// <inheritdoc />
     public IActionResult ShowLogin(Controller controller, string? returnUrl, bool sessionEnded)
     {
@@ -81,24 +87,48 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
     public async Task<IActionResult> LogoutAsync(Controller controller, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(controller);
-        var access = await controller.HttpContext.GetTokenAsync(KonseptCookieEvents.AccessTokenName).ConfigureAwait(false);
+        var http = controller.HttpContext;
+        var access = await http.GetTokenAsync(KonseptCookieEvents.AccessTokenName).ConfigureAwait(false);
+        AuthSessionResponse? renewed = null;
+        if (!string.IsNullOrEmpty(access))
+        {
+            // Oturum refresh geçici olarak düştüğü için dolmuş token'la korunduysa (review R2-2) önce yenilenir (review R3-1):
+            // dolmuş token'ın 401'i "zaten çıkılmış" sayılıp diğer oturumlar açık kalmasın. Refresh 401'i oturumun gerçekten
+            // düştüğünü gösterir; geçici refresh hatası çıkış hatasıdır.
+            if (ExpiresSoon(await http.GetTokenAsync(KonseptCookieEvents.ExpiresAtName).ConfigureAwait(false)))
+            {
+                var refresh = await http.GetTokenAsync(KonseptCookieEvents.RefreshTokenName).ConfigureAwait(false);
+                var refreshed = string.IsNullOrEmpty(refresh)
+                    ? Result<AuthSessionResponse>.Failure(new Error(KonseptCookieEvents.SessionExpiredCode, UiText.SessionExpired, ErrorType.Unauthorized))
+                    : await Coordinator.RefreshAsync(Api, refresh, cancellationToken).ConfigureAwait(false);
+                if (!refreshed.IsSuccess && refreshed.Error!.Type != ErrorType.Unauthorized)
+                {
+                    return LogoutFailed(controller, refreshed.Error.Code);
+                }
+
+                renewed = refreshed.IsSuccess ? refreshed.Value : null;
+                access = renewed?.AccessToken;
+            }
+        }
+
         if (!string.IsNullOrEmpty(access))
         {
             var result = await Api.LogoutAsync(access, cancellationToken).ConfigureAwait(false);
 
             // Api oturumları iptal edemediyse çıkış başarılı gibi gösterilmez (Req 15, review R1-4): oturum kalır, genel hata ve
-            // korelasyon numarası gösterilir. Oturum Api'de zaten düşmüşse (401) yerel cookie de silinir.
+            // korelasyon numarası gösterilir. Oturum Api'de zaten düşmüşse (geçerli token'a 401) yerel cookie de silinir.
             if (!result.IsSuccess && result.Error!.Type != ErrorType.Unauthorized)
             {
-                var correlation = controller.HttpContext.TraceIdentifier;
-                LogLogoutFailed(Logger, result.Error.Code, correlation);
-                controller.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-                controller.ViewData[ErrorMessageKey] = string.Format(CultureInfo.CurrentCulture, UiText.ServiceUnavailable, correlation);
-                return controller.View(ErrorView);
+                if (renewed is not null)
+                {
+                    await KeepRenewedSessionAsync(http, renewed).ConfigureAwait(false); // Dönmüş token çifti kaybolmasın.
+                }
+
+                return LogoutFailed(controller, result.Error.Code);
             }
         }
 
-        await controller.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+        await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
         return controller.LocalRedirect("/giris");
     }
 
@@ -114,6 +144,29 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
     }
 
     private static bool IsSignedIn(Controller controller) => controller.User.Identity?.IsAuthenticated == true;
+
+    private static async Task KeepRenewedSessionAsync(HttpContext http, AuthSessionResponse renewed)
+    {
+        var current = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+        if (current.Succeeded)
+        {
+            KonseptCookieEvents.StoreSession(current.Properties!, renewed);
+            await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, current.Principal!, current.Properties).ConfigureAwait(false);
+        }
+    }
+
+    private IActionResult LogoutFailed(Controller controller, string code)
+    {
+        var correlation = controller.HttpContext.TraceIdentifier;
+        LogLogoutFailed(Logger, code, correlation);
+        controller.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        controller.ViewData[ErrorMessageKey] = string.Format(CultureInfo.CurrentCulture, UiText.ServiceUnavailable, correlation);
+        return controller.View(ErrorView);
+    }
+
+    private bool ExpiresSoon(string? expiresAt) =>
+        !DateTimeOffset.TryParse(expiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expires)
+        || expires - Time.GetUtcNow() < KonseptCookieEvents.RefreshAhead;
 
     private static string? ClientIp(Controller controller) => controller.HttpContext.Connection.RemoteIpAddress?.ToString();
 
