@@ -69,16 +69,8 @@ internal static class SecretKeyValueScanner
                 keyEnd = pairEnd;
             }
 
-            if (PrecededByQualifier(text, i) && keyEnd + 2 < text.Length && text[keyEnd] == ':' && text[keyEnd + 1] == ' '
-                && QuoteLength(text, keyEnd + 2) == 0)
-            {
-                // "Invalid password: user 42, attempts 2" olay açıklamasıdır: ilk parça her zaman gizlenir, düzyazının
-                // devamı korunur (hunt r9 hasar). Yalnızca "Ad: tırnaksız değer"; '=', tırnaklı ve bayrak biçimleri normal
-                // yoldan tümüyle gizlenir (review r9, M-1: "Failed token=x path=…" sızıyordu).
-                i = Math.Max(keyEnd, MaskFirstToken(text, keyEnd + 2, apiKey, output));
-                continue;
-            }
-
+            // Not: "Invalid password: user 42, …" için niteleyici istisnası (fix-10/11) kaldırıldı — her biçimi yeni bir
+            // sızıntı açtı (review r9/r10). Bu satırlar tümüyle gizlenir; tanı kaybı güvenli taraftır (B-45).
             i = Math.Max(keyEnd, MaskPair(text, i, keyEnd, apiKey, output));
         }
 
@@ -122,10 +114,11 @@ internal static class SecretKeyValueScanner
         }
 
         int start, end, after;
-        if (unquoted && apiKey)
+        if (unquoted && (apiKey || (keyStart > 0 && text[keyStart - 1] is '?' or '&' && text[valueStart - 1] == '=')))
         {
-            // API key boşluk içermez: tırnaksız değer ilk boşlukta (ya da ayraçta) biter, tarama sonrasında sürer
-            // (H3-A); satır sonuna kadar okunmaz (hunt r4, perf).
+            // API key ve URL sorgu değeri boşluk içermez: tırnaksız değer ilk boşlukta (ya da ayraçta) biter, tarama
+            // sonrasında sürer (H3-A; hunt r11: "?access_token=x - 10 ms" satırın kalanı korunur); satır sonuna kadar
+            // okunmaz (hunt r4, perf).
             start = end = valueStart;
             while (end < text.Length && !char.IsWhiteSpace(text[end]) && text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')'))
             {
@@ -332,47 +325,6 @@ internal static class SecretKeyValueScanner
 
     private static bool IsCookieKey(string text, int keyStart, int keyEnd) =>
         SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]).EndsWith("cookie", StringComparison.Ordinal);
-
-    /// <summary>Anahtardan hemen önce (tek boşluk) bir hata niteleyicisi var mı: "Invalid", "Wrong", "Hatalı", "Yanlış"…</summary>
-    private static bool PrecededByQualifier(string text, int keyStart)
-    {
-        if (keyStart < 2 || text[keyStart - 1] != ' ' || !char.IsLetter(text[keyStart - 2]))
-        {
-            return false;
-        }
-
-        var wordStart = keyStart - 2;
-        while (wordStart > 0 && char.IsLetter(text[wordStart - 1]) && keyStart - wordStart <= 16)
-        {
-            wordStart--;
-        }
-
-        return (wordStart == 0 || !char.IsLetterOrDigit(text[wordStart - 1])) && Qualifiers.Contains(text[wordStart..(keyStart - 1)]);
-    }
-
-    private static readonly HashSet<string> Qualifiers = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "invalid", "wrong", "incorrect", "failed", "empty", "weak", "expired", "missing", "revoked", "bad", "unknown",
-        "rejected", "geçersiz", "hatalı", "yanlış", "eksik", "boş", "zayıf",
-    };
-
-    /// <summary>Değerin ilk boşluksuz parçasını (sondaki noktalama/tırnak/ayraç hariç) gizler; parçanın sonunu döner.</summary>
-    private static int MaskFirstToken(string text, int valueStart, bool apiKey, SecretMaskOutput output)
-    {
-        var end = valueStart;
-        while (end < text.Length && !char.IsWhiteSpace(text[end]))
-        {
-            end++;
-        }
-
-        var tokenEnd = end;
-        while (tokenEnd > valueStart && text[tokenEnd - 1] is '.' or ',' or ';' or ')' or '"' or '\'' or '}' or ']')
-        {
-            tokenEnd--;
-        }
-
-        return tokenEnd > valueStart ? Emit(text, valueStart, tokenEnd, apiKey, output) : valueStart;
-    }
 
     /// <summary>Ayırıcısız biçimler: CLI bayrağı <c>--password değer</c> ve SQL <c>PASSWORD 'değer'</c>.</summary>
     private static int MaskWithoutSeparator(string text, int keyStart, int keyEnd, bool apiKey, SecretMaskOutput output)
@@ -901,6 +853,11 @@ internal static class SecretKeyValueScanner
         return p;
     }
 
+    /// <summary>
+    /// Anahtar bir bağlantı dizesinin içinde mi: önceki ';' bölümü <c>Ad=değer</c> içeriyor (<c>Host=db;Password=</c>) ya da
+    /// anahtar satır başında ve sonraki ilk ';'den sonra yeni bir <c>Ad=</c> geliyor. Düzyazıdaki "signed in; SessionId=…"
+    /// bağlantı dizesi değildir (hunt r11, hasar).
+    /// </summary>
     private static bool ConnectionStringContext(string text, int keyStart)
     {
         var p = keyStart - 1;
@@ -911,11 +868,18 @@ internal static class SecretKeyValueScanner
 
         if (p >= 0)
         {
-            return text[p] == ';';
+            if (text[p] != ';')
+            {
+                return false;
+            }
+
+            var segmentStart = Math.Max(text.LastIndexOfAny([';', '\n', '\r'], Math.Max(p - 1, 0), Math.Min(p, 256)) + 1, p - 256);
+            return p > 0 && text.IndexOf('=', Math.Max(segmentStart, 0), p - Math.Max(segmentStart, 0)) >= 0;
         }
 
         var lineEnd = LineEnd(text, keyStart);
-        return text.IndexOf(';', keyStart, lineEnd - keyStart) >= 0;
+        var semicolon = text.IndexOf(';', keyStart, lineEnd - keyStart);
+        return semicolon >= 0 && LooksLikeKeySeparator(text, semicolon + 1, allowColon: false, allowSpacedName: true);
     }
 
     /// <summary>Değeri okur: (başlangıç, bitiş, değerden sonraki konum — kapanan tırnak dahil).</summary>

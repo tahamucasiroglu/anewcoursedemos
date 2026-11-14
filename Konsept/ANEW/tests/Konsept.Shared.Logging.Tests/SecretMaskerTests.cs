@@ -213,23 +213,33 @@ public sealed class SecretMaskerTests
         { "{\"detail\":\"password:Welcome\"}", "{\"detail\":\"password:***}", "Welcome" },
         { "'Password:Summer'", "'Password:***", "Summer" },
         { "{\"ConnectionStrings\":{\"Default\":\"Host=db;Password={Pa;ss1234}\"}}", "{\"ConnectionStrings\":{\"Default\":\"Host=db;Password=***\"}}", "ss1234" },
-        { "Invalid password: user 42, remaining attempts 2.", "Invalid password: *** 42, remaining attempts 2.", "\u0000" },
-        { "Hatalı şifre: kullanıcı 42, kalan hak 1", "Hatalı şifre: *** 42, kalan hak 1", "\u0000" },
-        { "Invalid service key: agent 7 rejected from 192.168.1.40", "Invalid service key: *** 7 rejected from 192.168.1.40", "\u0000" },
-        { "Invalid password: hunter2.", "Invalid password: ***.", "hunter2" },
+        { "Invalid password: user 42, remaining attempts 2.", "Invalid password: ***", "\u0000" },
+        { "Hatalı şifre: kullanıcı 42, kalan hak 1", "Hatalı şifre: ***", "\u0000" },
+        { "Invalid service key: agent 7 rejected from 192.168.1.40", "Invalid service key: ***", "\u0000" },
+        { "Invalid password: hunter2.", "Invalid password: ***", "hunter2" },
         { "Password=Hunter;2024", "Password=***", "2024" },
         { "The required antiforgery cookie \".AspNetCore.Antiforgery.abc\" is not present.", "The required antiforgery cookie \".AspNetCore.Antiforgery.abc\" is not present.", "\u0000" },
 
         // Review r9 / hunt r10 (fix-11): niteleyici istisnası sızdırmaz; --cookie gizli; boşluklu bağlantı anahtarları; düz sözcük yayılmaz.
         { "Failed token=abc123def456 path=/api", "Failed token=***", "abc123def456" },
-        { "Invalid password: hunter2 (attempt 3)", "Invalid password: *** (attempt 3)", "hunter2" },
+        { "Invalid password: hunter2 (attempt 3)", "Invalid password: ***", "hunter2" },
         { "Invalid password: \"hunter 2\" for bob", "Invalid password: \"***\" for bob", "hunter 2" },
         { "Wrong password 'hunter2' for bob", "Wrong password '***' for bob", "hunter2" },
-        { "{\"msg\":\"Invalid password: hunter2\"}", "{\"msg\":\"Invalid password: ***\"}", "hunter2" },
+        { "{\"msg\":\"Invalid password: hunter2\"}", "{\"msg\":\"Invalid password: ***}", "hunter2" },
         { "curl --cookie sid=abc123secret https://x", "curl --cookie *** https://x", "abc123secret" },
         { "Server=db;Database=app;Password=Secret1;User Id=sa;Encrypt=false", "Server=db;Database=app;Password=***;User Id=sa;Encrypt=false", "Secret1" },
-        { "Validation failed: \n -- Password: 'Password' must not be empty.\n   at Konsept.Identity.PasswordPolicy.Validate()", "Validation failed: \n -- Password: '***' must not be empty.\n   at Konsept.Identity.PasswordPolicy.Validate()", "\u0000" },
+        { "Validation failed: \n -- Password: 'Password' must not be empty.\n   at Konsept.Identity.PasswordPolicy.Validate()", "Validation failed: \n -- ***: '***' must not be empty.\n   at Konsept.Identity.PasswordPolicy.Validate()", "\u0000" },
         { "Scheme mismatch: got Bearer (expected Cookies)", "Scheme mismatch: got Bearer (expected Cookies)", "\u0000" },
+
+        // Review r10 / hunt r11 (fix-12): niteleyici istisnası kaldırıldı; tek sözcük değer tam sözcük yayılır; düzyazıda ';'; sorgu değeri.
+        { "Invalid password: correct horse battery staple", "Invalid password: ***", "horse battery" },
+        { "Invalid password:  Sunshine2024", "Invalid password:  ***", "Sunshine2024" },
+        { "Invalid cookie: theme=dark; .AspNetCore.Identity.Application=CfDJ8abcdef1234567890", "Invalid cookie: ***", "CfDJ8abcdef" },
+        { "Invalid password: Sunshine. Please retry with Sunshine", "Invalid password: ***", "Sunshine" },
+        { "{\"password\":\"Sunshine\",\"note\":\"user typed Sunshine again\"}", "{\"password\":\"***\",\"note\":\"user typed *** again\"}", "Sunshine" },
+        { "User 42 signed in; SessionId=7f3a9c2e1b4d, ExpiresUtc=2026-11-28T10:00:00Z, Ip=192.168.1.10", "User 42 signed in; SessionId=***, ExpiresUtc=2026-11-28T10:00:00Z, Ip=192.168.1.10", "7f3a9c2e1b4d" },
+        { "GET http://localhost:5000/hubs/agent?id=abc123&access_token=svc_9f8e7d6c5b4a3210 - 101 ms", "GET http://localhost:5000/hubs/agent?id=abc123&access_token=*** - 101 ms", "svc_9f8e7d6c" },
+        { "q=user%253Dbob%2526password%253DSupersecretpw", "q=user%253Dbob%2526password%253D***", "Supersecretpw" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>

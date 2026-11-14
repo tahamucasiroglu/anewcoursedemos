@@ -173,7 +173,7 @@ public static partial class SecretMasker
 
         if (segments.Any(s => IsConnectionStringField(Normalize(s)) || Normalize(s) == "connectionstrings"))
         {
-            var secrets = new SecretValueSet(allowPlainWords: true);
+            var secrets = new SecretValueSet();
             MaskCore(value, secrets);
             foreach (var secret in secrets.Values)
             {

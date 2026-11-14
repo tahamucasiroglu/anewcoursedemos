@@ -8,8 +8,7 @@ namespace Konsept.Shared.Kernel.Security;
 /// URL kodlu ya da JSON kaçışlı geçse de aynı biçimde gizlenir; kodlu metnin çözülmüş halinde bulunan değerler de
 /// ham metne buradan uygulanır.
 /// </summary>
-/// <param name="allowPlainWords">Düz sözcük değerleri de kaydedilsin mi (yapılandırmadaki sırlar için).</param>
-internal sealed class SecretValueSet(bool allowPlainWords = false)
+internal sealed class SecretValueSet
 {
     /// <summary>Kaydedilecek en kısa değer; daha kısası metnin geneline uygulanmaz (yanlış eşleşme).</summary>
     public const int MinLength = 6;
@@ -33,8 +32,7 @@ internal sealed class SecretValueSet(bool allowPlainWords = false)
         if (value.Length < MinLength || value.Length > MaxLength || _values.Count >= MaxValues || value == replacement
             || value.Contains(SecretMasker.Hidden, StringComparison.Ordinal)
             || value.Contains(SecretMasker.JwtPlaceholder, StringComparison.Ordinal)
-            || value.Contains('…', StringComparison.Ordinal)
-            || (!allowPlainWords && value.Length <= 15 && value.All(char.IsLetter))) // "Password", "Failed": düz sözcük metnin geneline yayılmaz (hunt r10)
+            || value.Contains('…', StringComparison.Ordinal))
         {
             return;
         }
@@ -49,6 +47,14 @@ internal sealed class SecretValueSet(bool allowPlainWords = false)
     {
         foreach (var (value, replacement) in _values.OrderByDescending(v => v.Key.Length))
         {
+            // Yalnızca harften oluşan değer ("Password", "Sunshine") yalnızca tam sözcük olarak yayılır: "PasswordPolicy"
+            // gibi tanımlayıcılar bozulmaz, etiketsiz tekrar yine gizlenir (hunt r10/r11).
+            if (value.All(char.IsLetter))
+            {
+                text = ReplaceWholeWord(text, value, replacement);
+                continue;
+            }
+
             foreach (var form in Forms(value))
             {
                 text = text.Replace(form, replacement, StringComparison.Ordinal);
@@ -56,6 +62,52 @@ internal sealed class SecretValueSet(bool allowPlainWords = false)
         }
 
         return text;
+    }
+
+    /// <summary>Konumdan hemen önce (en fazla 9 karakter) yalnızca onaltılık rakam ve '%' içeren bir kaçış dizisi var mı.</summary>
+    private static bool AfterPercentEscape(string text, int index)
+    {
+        for (var p = index - 1; p >= 0 && index - p <= 9; p--)
+        {
+            if (text[p] == '%')
+            {
+                return true;
+            }
+
+            if (!char.IsAsciiHexDigit(text[p]))
+            {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static string ReplaceWholeWord(string text, string word, string replacement)
+    {
+        var index = text.IndexOf(word, StringComparison.Ordinal);
+        if (index < 0)
+        {
+            return text;
+        }
+
+        var builder = new StringBuilder(text.Length);
+        var copied = 0;
+        while (index >= 0)
+        {
+            var end = index + word.Length;
+            var boundaryBefore = index == 0 || !char.IsLetterOrDigit(text[index - 1]) || AfterPercentEscape(text, index); // %3D, %253D…
+            var boundaryAfter = end == text.Length || !char.IsLetterOrDigit(text[end]);
+            if (boundaryBefore && boundaryAfter)
+            {
+                builder.Append(text, copied, index - copied).Append(replacement);
+                copied = end;
+            }
+
+            index = text.IndexOf(word, end, StringComparison.Ordinal);
+        }
+
+        return copied == 0 ? text : builder.Append(text, copied, text.Length - copied).ToString();
     }
 
     /// <summary>
