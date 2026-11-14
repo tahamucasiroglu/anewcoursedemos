@@ -13,6 +13,9 @@ namespace Konsept.Agent.Tests;
 /// </summary>
 public sealed class AgentLoggingTests
 {
+    /// <summary>Gets AC-8 tam alan tablosundaki alan adları.</summary>
+    public static TheoryData<string> SecretFields => [.. Konsept.Testing.SecretFieldSamples.All.Select(s => s.Field)];
+
     /// <summary>Ajan dört seviyede yazar; her satırda UTC zaman, seviye ve kaynak "Agent" bulunur.</summary>
     [Fact]
     public void AgentLog_WritesToFileWithSource()
@@ -30,7 +33,7 @@ public sealed class AgentLoggingTests
 
             var lines = File.ReadAllLines(Directory.GetFiles(Path.Combine(dir.FullName, "logs")).Single());
             lines.Length.ShouldBe(4);
-            lines.ShouldAllBe(l => l.Contains(" Agent ") && l.Contains('Z'));
+            lines.ShouldAllBe(l => System.Text.RegularExpressions.Regex.IsMatch(l, @"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z \[(INF|WRN|ERR|FTL)\] Agent "));
             lines.Select(l => l.Substring(25, 5)).ShouldBe(["[INF]", "[WRN]", "[ERR]", "[FTL]"]);
         }
         finally
@@ -46,6 +49,8 @@ public sealed class AgentLoggingTests
         var dir = Directory.CreateTempSubdirectory("anewconcept-agentlog-");
         try
         {
+            var defaultLogs = Path.Combine(AppContext.BaseDirectory, "logs");
+            var defaultBefore = Directory.Exists(defaultLogs) ? Directory.GetFiles(defaultLogs).Order(StringComparer.Ordinal).ToArray() : [];
             using (var logging = AgentLogging.Create(dir.FullName, TimeProvider.System))
             {
                 logging.Directory.ShouldBe(Path.Combine(dir.FullName, "logs"));
@@ -54,6 +59,8 @@ public sealed class AgentLoggingTests
 
             Directory.GetFiles(dir.FullName, "*", SearchOption.AllDirectories)
                 .ShouldAllBe(f => Path.GetDirectoryName(f) == Path.Combine(dir.FullName, "logs") && Path.GetFileName(f).StartsWith("agent-", StringComparison.Ordinal));
+            Directory.GetFiles(Path.Combine(dir.FullName, "logs")).Length.ShouldBe(1);
+            (Directory.Exists(defaultLogs) ? Directory.GetFiles(defaultLogs).Order(StringComparer.Ordinal).ToArray() : []).ShouldBe(defaultBefore);
         }
         finally
         {
@@ -107,5 +114,46 @@ public sealed class AgentLoggingTests
         }
 
         await Should.NotThrowAsync(() => sink.EmitBatchAsync(events));
+    }
+
+    /// <summary>
+    /// AC-8 ajan özeti yolu, tam alan tablosu (review round 1, M-3): gerçek ajan log kurulumunda adlandırılmış gizli alan
+    /// içeren Error, bağlantıya maskeli özet olarak gider.
+    /// </summary>
+    /// <param name="field">Gizli alan adı.</param>
+    /// <returns>Görev.</returns>
+    [Theory]
+    [MemberData(nameof(SecretFields))]
+    public async Task Masking_EverySecretField_NeverPlainInSummary(string field)
+    {
+        var sample = Konsept.Testing.SecretFieldSamples.Get(field);
+        var connection = Substitute.For<IServerConnection>();
+        var sent = new System.Collections.Concurrent.ConcurrentQueue<LogSummary>();
+        connection.TryReportLogAsync(Arg.Do<LogSummary>(sent.Enqueue), Arg.Any<CancellationToken>()).Returns(true);
+        var dir = Directory.CreateTempSubdirectory("anewconcept-agentlog-");
+        try
+        {
+            using (var logging = AgentLogging.Create(dir.FullName, TimeProvider.System))
+            {
+                logging.SummarySink.Attach(connection);
+#pragma warning disable CA2254 // Test: alan adı tablodan geliyor.
+                logging.Logger.Error($"hata {{{field}}}", sample.Value);
+#pragma warning restore CA2254
+                var until = DateTime.UtcNow.AddSeconds(10);
+                while (sent.IsEmpty && DateTime.UtcNow < until)
+                {
+                    await Task.Delay(100, TestContext.Current.CancellationToken);
+                }
+            }
+
+            var summary = sent.ShouldHaveSingleItem();
+            summary.Message.ShouldStartWith("hata ");
+            summary.Message.ShouldNotContain(sample.Secret);
+            File.ReadAllText(Directory.GetFiles(Path.Combine(dir.FullName, "logs")).Single()).ShouldNotContain(sample.Secret);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
     }
 }

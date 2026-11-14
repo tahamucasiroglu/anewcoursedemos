@@ -9,6 +9,7 @@ using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Monitoring.Domain.Enums;
 using Konsept.Modules.Monitoring.Infrastructure.Logging;
 using Konsept.Shared.Kernel.Security;
+using Konsept.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
@@ -26,6 +27,9 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
 {
+    /// <summary>Gets AC-8 tam alan tablosundaki alan adları.</summary>
+    public static TheoryData<string> SecretFields => [.. SecretFieldSamples.All.Select(s => s.Field)];
+
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(10);
     private readonly FastApiFactory _factory;
 
@@ -179,5 +183,49 @@ public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
         written.ShouldAllBe(l => l.Source == LogSource.Agent && l.AgentVersion == "0.2.0");
         written.Select(l => l.Level).Order().ShouldBe([TechnicalLogLevel.Error, TechnicalLogLevel.Critical]);
         written.ShouldAllBe(l => !l.Message.Contains("agent-pw-77"));
+    }
+
+    /// <summary>Servis anahtarı yapılandırılmamışsa iç uç her isteği reddeder (kapalı varsayılan; review L-4).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task InternalLogs_NoConfiguredKey_AlwaysUnauthorized()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var unconfigured = _factory.WithWebHostBuilder(b => b
+            .UseSetting("Internal:ServiceKey", string.Empty)
+            .UseSetting("Logging:Directory", Path.Combine(_factory.LogDirectory, "nokey-" + Guid.NewGuid().ToString("N"))));
+        using var client = unconfigured.CreateClient();
+        using var withKey = new HttpRequestMessage(HttpMethod.Post, "/api/internal/logs") { Content = JsonContent.Create(Array.Empty<object>()) };
+        withKey.Headers.Add(ServiceKeyHeader.Name, FastApiFactory.ServiceKey);
+        using var empty = new HttpRequestMessage(HttpMethod.Post, "/api/internal/logs") { Content = JsonContent.Create(Array.Empty<object>()) };
+        empty.Headers.Add(ServiceKeyHeader.Name, string.Empty);
+
+        (await client.SendAsync(withKey, ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await client.SendAsync(empty, ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
+    /// AC-8 veritabanı yolu, tam alan tablosu (review round 1, M-3): adlandırılmış gizli alan içeren Warning veritabanı
+    /// teknik loguna düşer ama değer düz metin değildir.
+    /// </summary>
+    /// <param name="field">Gizli alan adı.</param>
+    /// <returns>Görev.</returns>
+    [Theory]
+    [MemberData(nameof(SecretFields))]
+    public async Task Masking_EverySecretField_NeverPlainInDatabase(string field)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var sample = SecretFieldSamples.Get(field);
+        using var client = _factory.CreateClient();
+        var marker = Guid.NewGuid().ToString("N");
+        var logger = _factory.Services.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("Konsept.Api.Tests.Masking");
+
+#pragma warning disable CA1848, CA2254 // Test: alan adı tablodan geliyor.
+        Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, $"gizli {{Marker}} {{{field}}}", marker, sample.Value);
+#pragma warning restore CA1848, CA2254
+
+        await Eventually.WithinAsync(() => Task.FromResult(_factory.TechnicalLogs.Logs.Any(l => l.Message.Contains(marker, StringComparison.Ordinal))), Limit, ct);
+        var log = _factory.TechnicalLogs.Logs.Single(l => l.Message.Contains(marker, StringComparison.Ordinal));
+        log.Message.ShouldNotContain(sample.Secret);
     }
 }

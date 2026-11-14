@@ -17,6 +17,21 @@ public sealed class WebFactory : WebApplicationFactory<Program>
     /// <summary>Gets sahte API istemcisi.</summary>
     public IKonseptApiClient Api { get; } = Substitute.For<IKonseptApiClient>();
 
+    /// <summary>Gets bu örneğin log klasörü.</summary>
+    public string LogDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "web-logs-" + Guid.NewGuid().ToString("N"));
+
+    /// <summary>Log klasöründeki tüm log metnini okur (dosya Serilog tarafından açıkken de).</summary>
+    /// <returns>Metin.</returns>
+    public string ReadLogText() =>
+        !Directory.Exists(LogDirectory)
+            ? string.Empty
+            : string.Concat(Directory.GetFiles(LogDirectory, "*.log").Select(f =>
+            {
+                using var stream = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var reader = new StreamReader(stream);
+                return reader.ReadToEnd();
+            }));
+
     /// <summary>Sayfayı getirir ve AngleSharp belgesine çevirir.</summary>
     /// <param name="client">HTTP istemcisi.</param>
     /// <param name="path">Sayfa yolu.</param>
@@ -35,7 +50,7 @@ public sealed class WebFactory : WebApplicationFactory<Program>
     {
         ArgumentNullException.ThrowIfNull(builder);
         builder.UseSetting("Api:BaseUrl", "http://api.invalid/");
-        builder.UseSetting("Logging:Directory", Path.Combine(Path.GetTempPath(), "anewconcept-tests", "logs"));
+        builder.UseSetting("Logging:Directory", LogDirectory);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IKonseptApiClient>();

@@ -61,6 +61,12 @@ describe('durum alanı ve Günlük şeridi (AC-4, AC-6, AC-8)', () => {
     expect(document.getElementById('journal').dataset.level).toBe('warning');
   });
 
+  it('kritik olay (seviye 3) kritik olarak gösterilir (spec 0008 A-1)', () => {
+    render(document, { ...healthy, lastEvent: { ...healthy.lastEvent, level: 3, message: 'Kritik hata' } });
+
+    expect(document.getElementById('journal').dataset.level).toBe('critical');
+  });
+
   it('istekler $.ajax ile Web controller üzerinden gider', async () => {
     const ajax = vi.spyOn($, 'ajax').mockReturnValue(ajaxResolving($, healthy));
 
