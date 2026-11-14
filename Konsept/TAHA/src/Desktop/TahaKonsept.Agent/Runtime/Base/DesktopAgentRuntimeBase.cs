@@ -54,14 +54,19 @@ public abstract class DesktopAgentRuntimeBase : IDesktopAgentRuntime
         Logger.LogInformation("Taha Konsept ajanı başlıyor (oturum açılışından: {FromLogin}).", options.StartedFromLogin);
         ApplyStartupDefault();
 
-        if (_navigator.IsSetupRequired())
+        // Bileşen denetimi süreç başlatabilir (node --version vb.); UI iş parçacığını kilitlememek için arka planda.
+        var setupRequired = await Task.Run(_navigator.IsSetupRequired, ct).ConfigureAwait(false);
+        RunOnUi(() =>
         {
-            _navigator.ShowSetup();
-        }
-        else if (!options.StartedFromLogin)
-        {
-            _navigator.ShowStatus();
-        }
+            if (setupRequired)
+            {
+                _navigator.ShowSetup();
+            }
+            else if (!options.StartedFromLogin)
+            {
+                _navigator.ShowStatus();
+            }
+        });
 
         var result = await Task.Run(() => _host.StartAsync(ct), ct).ConfigureAwait(false);
         if (result.IsFailure)

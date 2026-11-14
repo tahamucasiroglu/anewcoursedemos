@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Taha Konsept masaüstü ajanı için geçici uygulama ikonunu (app.ico + app.png) üretir.
 .DESCRIPTION

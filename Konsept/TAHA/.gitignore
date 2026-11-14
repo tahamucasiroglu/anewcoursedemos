@@ -14,3 +14,10 @@ source/**/*.safetensors
 **/logs/
 # Gelistirici arac klasoru (portable ffmpeg vb., asla depoya girmez)
 .tools-dev/
+# Masaüstü ajanı kurulum paketi (deploy/agent/pack-agent.ps1 üretir; depoya girmez)
+src/Hosts/TahaKonsept.Web/wwwroot/downloads/*.exe
+src/Hosts/TahaKonsept.Web/wwwroot/downloads/*.nupkg
+src/Hosts/TahaKonsept.Web/wwwroot/downloads/releases.*.json
+src/Hosts/TahaKonsept.Web/wwwroot/downloads/assets.*.json
+src/Hosts/TahaKonsept.Web/wwwroot/downloads/RELEASES*
+artifacts/agent/
