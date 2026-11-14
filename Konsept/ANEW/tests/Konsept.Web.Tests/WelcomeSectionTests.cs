@@ -1,6 +1,11 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Konsept.Shared.Kernel.Enums;
+using Konsept.Shared.Kernel.Results;
+using Konsept.Web.ApiClient;
+using Konsept.Web.ApiClient.Dtos;
 using Konsept.Web.Tests.Support;
+using NSubstitute;
 using Shouldly;
 
 namespace Konsept.Web.Tests;
@@ -51,6 +56,46 @@ public sealed partial class WelcomeSectionTests : IClassFixture<WebFactory>
         welcome.TextContent.ShouldNotContain(SignedInClient.Email);
         page.QuerySelector(".user-menu").ShouldBeNull();
         page.QuerySelector("#system-status").ShouldBeNull();
+    }
+
+    /// <summary>
+    /// Hatalı gönderimden sonra da karşılama bölümü girilen değerleri içermez (review R3-5): yanlış şifreli girişte e-posta,
+    /// alan hatalı kayıtta ad ve e-posta yalnızca formun alanlarında durur.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AuthPages_AfterFailedPost_WelcomeHasNoEnteredValues()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        factory.Api.LoginAsync(Arg.Any<LoginApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(
+            Result<AuthSessionResponse>.Failure(new Error(ApiClientErrors.WrongPasswordCode, "x", ErrorType.Unauthorized)
+            {
+                Metadata = new Dictionary<string, object> { [ApiClientErrors.RemainingAttemptsKey] = 2 },
+            }));
+        factory.Api.RegisterAsync(Arg.Any<RegisterApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(
+            Result<AuthSessionResponse>.Failure(new Error(ApiClientErrors.ValidationCode, "x", ErrorType.Validation)
+            {
+                FieldErrors = new Dictionary<string, string[]> { ["Password"] = ["Şifre en az bir harf ve en az bir rakam içermeli."] },
+            }));
+        using var client = SignedInClient.CreateAnonymous(factory);
+        const string loginEmail = "karsilama-giris@ornek.com";
+        const string name = "Zeynep Karşılamatest";
+        const string registerEmail = "karsilama-kayit@ornek.com";
+
+        using var login = await SignedInClient.PostFormAsync(client, "/giris", new Dictionary<string, string> { ["Email"] = loginEmail, ["Password"] = "Yanlis12345" }, ct);
+        var loginPage = await WebFactory.ParseAsync(await login.Content.ReadAsStringAsync(ct), ct);
+        using var register = await SignedInClient.PostFormAsync(
+            client, "/kayit", new Dictionary<string, string> { ["Name"] = name, ["Email"] = registerEmail, ["Password"] = "12345678" }, ct);
+        var registerPage = await WebFactory.ParseAsync(await register.Content.ReadAsStringAsync(ct), ct);
+
+        loginPage.GetElementById("Email")!.GetAttribute("value").ShouldBe(loginEmail);
+        loginPage.QuerySelector("section.welcome")!.OuterHtml.ShouldNotContain(loginEmail);
+        registerPage.GetElementById("Name")!.GetAttribute("value").ShouldBe(name);
+        registerPage.GetElementById("Email")!.GetAttribute("value").ShouldBe(registerEmail);
+        var welcome = registerPage.QuerySelector("section.welcome")!.OuterHtml;
+        welcome.ShouldNotContain(name);
+        welcome.ShouldNotContain(registerEmail);
     }
 
     /// <summary>Geniş ekranda iki sütun (karşılama + form); 640 px altında tek sütun ve karşılama DOM'da formdan önce (üstte).</summary>
