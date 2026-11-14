@@ -1,6 +1,7 @@
 /**
  * TK.baslangic — Başlangıç (karşılama) sayfası: ilk videoya giden adımların canlı kontrol listesi.
  * Durum: GET /Baslangic/Durum?yenile=true (15 sn polling; { steps: [{ key, state: Done|Waiting|Unknown, detail }], remaining, isComplete }).
+ * Hepsi tamamsa durum yoklaması durur (bitmiş liste API'yi yormaz); eşleme sayısı / profil değişince tek seferlik tazelenir.
  * Masaüstü programı eşleme formu ve bilgisayar listesi ortak modülle (TK.agentPairing; Ayarlar ile aynı kod); canlı "bağlı / bağlı değil"
  * göstergesi o listeden çizilir. Profil oluştur → TK.profile.create(). Durum değişince document'ta 'tk:onboarding' tetiklenir
  * (TK.layout üst menü rozetini günceller). Tamamlanan adımlar katlanır (başlığa tıklayınca açılır). Tek modül (IIFE).
@@ -47,6 +48,12 @@
         $('.bs-step:not(.is-done):not(.is-unknown)').first().addClass('is-next');
 
         $(document).trigger('tk:onboarding', [status]);
+        if (status && status.isComplete && statusPoller) { statusPoller.stop(); }
+    }
+
+    function refreshStatus() {
+        if (!statusPoller) { return; }
+        if (statusPoller.isRunning()) { statusPoller.now(); } else { statusPoller.start(); }
     }
 
     function renderLive(items) {
@@ -65,7 +72,7 @@
         $live.find('.bs-agent-live-text').text(text);
 
         // Eşleme sayısı değişince kontrol listesini hemen tazele.
-        if (lastPaired !== null && lastPaired !== s.paired && statusPoller) { statusPoller.now(); }
+        if (lastPaired !== null && lastPaired !== s.paired) { refreshStatus(); }
         lastPaired = s.paired;
     }
 
@@ -76,7 +83,7 @@
             setExpanded($step, $step.hasClass('is-collapsed'));
         });
         $('#bs-profile-add').on('click', function () { TK.profile.create(); });
-        $(document).on('tk:profile-saved', function () { if (statusPoller) { statusPoller.now(); } });
+        $(document).on('tk:profile-saved', refreshStatus);
     }
 
     function init() {
@@ -95,6 +102,6 @@
         });
     }
 
-    TK.baslangic = { init: init, refresh: function () { if (statusPoller) { statusPoller.now(); } if (pairing) { pairing.refresh(); } } };
+    TK.baslangic = { init: init, refresh: function () { refreshStatus(); if (pairing) { pairing.refresh(); } } };
     $(init);
 })(window, window.jQuery);

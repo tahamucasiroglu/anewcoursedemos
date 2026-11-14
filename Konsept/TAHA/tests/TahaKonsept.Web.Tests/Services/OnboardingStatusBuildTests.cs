@@ -49,6 +49,28 @@ public sealed class OnboardingStatusBuildTests
         status.Steps[0].Detail.ShouldBe("Anthropic (Claude) kayıtlı.");
         status.Steps[1].Detail.ShouldBe("1 bilgisayar eşli · 1 çevrimiçi.");
         status.Steps[2].Detail.ShouldBe("2 profil.");
+        OnboardingServiceBase.CacheDurationFor(status).ShouldBe(OnboardingServiceBase.CompleteCacheDuration);
+    }
+
+    /// <summary>Video sayısı take=1 ile geldiği için açıklamada sayı yazılmaz (40 video "1 video." görünmesin).</summary>
+    [Fact]
+    public void Video_step_detail_has_no_count()
+    {
+        var status = OnboardingServiceBase.Build(new OnboardingFacts { Videos = 1 });
+
+        var video = status.Steps.Single(s => s.Key == OnboardingStepKeys.Video);
+        video.State.ShouldBe(OnboardingStepState.Done);
+        video.Detail.ShouldBe("En az bir video üretildi.");
+    }
+
+    /// <summary>Bitmemiş liste kısa süre önbelleklenir (rozet çabuk güncellensin).</summary>
+    [Fact]
+    public void Unfinished_status_uses_short_cache()
+    {
+        var status = OnboardingServiceBase.Build(new OnboardingFacts { LlmKeyPlatforms = [], PairedAgents = 0, Profiles = 0, Concepts = 0, Videos = 0 });
+
+        OnboardingServiceBase.CacheDurationFor(status).ShouldBe(OnboardingServiceBase.CacheDuration);
+        OnboardingServiceBase.CompleteCacheDuration.ShouldBeGreaterThan(OnboardingServiceBase.CacheDuration);
     }
 
     /// <summary>Eşli ama çevrimdışı bilgisayar adımı tamamlar; açıklama bağlı olmadığını söyler.</summary>

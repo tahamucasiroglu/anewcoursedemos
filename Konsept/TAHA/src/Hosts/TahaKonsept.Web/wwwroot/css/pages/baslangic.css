@@ -70,3 +70,8 @@
     .bs-step-body { padding-left: 18px; }
     .bs-agent-live { margin-left: 18px; }
 }
+
+/* Hero metni: bitince "birkaç adım kaldı" yerine tamam cümlesi */
+#tk-baslangic .bs-hero-done { display: none; }
+#tk-baslangic.is-complete .bs-hero-pending { display: none; }
+#tk-baslangic.is-complete .bs-hero-done { display: inline; }

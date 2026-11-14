@@ -566,6 +566,8 @@ body.tk-modal-open { overflow: hidden; }
 
 /* ------------------------------------------------------------ Ayarlar */
 .tk-settings { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 16px; align-items: start; }
+/* Izgara çocukları içeriğe göre genişlemesin (dar ekranda yatay menü kendi içinde kaysın, sayfa yana kaymasın). */
+.tk-settings > * { min-width: 0; }
 .tk-settings-nav { position: sticky; top: calc(var(--tk-topbar-h) + 18px); display: flex; flex-direction: column; gap: 2px; padding: 8px; background: var(--tk-surface); border: 1px solid var(--tk-border); border-radius: var(--tk-radius-lg); box-shadow: var(--tk-shadow-sm); }
 .tk-settings-nav a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: var(--tk-text-soft); font-weight: 700; font-size: .9rem; }
 .tk-settings-nav a:hover { background: var(--tk-surface-3); color: var(--tk-text); }
@@ -607,15 +609,15 @@ body.tk-modal-open { overflow: hidden; }
 }
 
 /* ------------------------------------------------------------ Duyarlı */
-@media (max-width: 1360px) {
+/* Üst bar: menü (Başlangıç rozetiyle) + araçlar tek satıra sığmazsa önce araç etiketleri ve "Bu ay" yazısı gizlenir,
+   profil seçici daralır; o da yetmezse menü hamburgere geçer. Kontrol: 1481–1700 px'te rozet görünürken yatay kaydırma yok. */
+@media (max-width: 1700px) {
     .tk-icon-btn .tk-label { display: none; }
-    .tk-grid-video { grid-template-columns: 1fr 1fr; }
-    .tk-grid-video > .tk-card:last-child { grid-column: 1 / -1; min-height: 420px; }
-    .tk-grid-library { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.7fr); }
-    .tk-grid-library > .tk-card:last-child { grid-column: 1 / -1; }
+    .tk-spend .tk-spend-label { display: none; }
+    .tk-profile-select select { max-width: 150px; }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1480px) {
     .tk-menu-toggle { display: inline-flex; }
     .tk-nav {
         position: fixed; top: var(--tk-topbar-h); left: 0; right: 0; margin: 0;
@@ -625,8 +627,15 @@ body.tk-modal-open { overflow: hidden; }
     }
     .tk-nav.is-open { display: flex; }
     .tk-nav a.is-active::after { display: none; }
-    .tk-spend .tk-spend-label { display: none; }
 }
+
+@media (max-width: 1360px) {
+    .tk-grid-video { grid-template-columns: 1fr 1fr; }
+    .tk-grid-video > .tk-card:last-child { grid-column: 1 / -1; min-height: 420px; }
+    .tk-grid-library { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.7fr); }
+    .tk-grid-library > .tk-card:last-child { grid-column: 1 / -1; }
+}
+
 
 @media (max-width: 900px) {
     .tk-grid-quad, .tk-grid-video, .tk-grid-library { grid-template-columns: 1fr; grid-template-rows: none; }
