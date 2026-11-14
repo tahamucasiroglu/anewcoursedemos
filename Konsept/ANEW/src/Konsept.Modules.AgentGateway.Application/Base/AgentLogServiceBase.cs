@@ -3,6 +3,7 @@ using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Konsept.Modules.AgentGateway.Domain.Entities;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Contracts.Enums;
+using Konsept.Shared.Kernel.Security;
 
 namespace Konsept.Modules.AgentGateway.Application.Base;
 
@@ -30,7 +31,9 @@ public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, Age
             return false;
         }
 
-        var message = summary.Message.Length > MaxMessageLength ? summary.Message[..MaxMessageLength] : summary.Message;
+        // Önce maskele, sonra kırp: kesilen bir key desen eşiğinin altına düşüp parça sızdırmasın (review L-2).
+        var masked = SecretMasker.Mask(summary.Message ?? string.Empty);
+        var message = masked.Length > MaxMessageLength ? masked[..MaxMessageLength] : masked;
         var entry = new TechnicalLogEntry(
             summary.OccurredAt,
             (LogEntryLevel)summary.Level,

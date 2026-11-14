@@ -134,4 +134,55 @@ public sealed class TechnicalLogServiceTests
 
         await repository.Received(1).DeleteOlderThanAsync(_time.GetUtcNow().AddDays(-30), Arg.Any<CancellationToken>());
     }
+
+    /// <summary>
+    /// Sunucu saatinden 5 dakikadan fazla sapan gönderilmiş zaman sunucu saatine çekilir (gelecek tarihli kayıt saklamadan
+    /// kaçamaz, geçmiş tarihli kayıt hemen silinmez); sınır içindeki zaman korunur (review L-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task TechnicalLogService_Write_ClampsClientClock()
+    {
+        var repository = Substitute.For<ITechnicalLogRepository>();
+        IReadOnlyList<TechnicalLog>? saved = null;
+        await repository.AddRangeAsync(Arg.Do<IReadOnlyList<TechnicalLog>>(l => saved = l), Arg.Any<CancellationToken>());
+        var service = new TechnicalLogService(repository, _time);
+        var now = _time.GetUtcNow();
+
+        await service.WriteAsync(
+            [
+                new TechnicalLogEntry(new DateTimeOffset(9999, 1, 1, 0, 0, 0, TimeSpan.Zero), LogEntryLevel.Error, LogEntrySource.Agent, "gelecek"),
+                new TechnicalLogEntry(now.AddDays(-40), LogEntryLevel.Error, LogEntrySource.Agent, "geçmiş"),
+                new TechnicalLogEntry(now.AddMinutes(-4), LogEntryLevel.Error, LogEntrySource.Agent, "yakın"),
+            ],
+            TestContext.Current.CancellationToken);
+
+        saved![0].OccurredAt.ShouldBe(now);
+        saved[1].OccurredAt.ShouldBe(now);
+        saved[2].OccurredAt.ShouldBe(now.AddMinutes(-4));
+    }
+
+    /// <summary>Listede null eleman ya da tanımsız seviye/kaynak varsa o kayıt atlanır; istek hata vermez (review L-2).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task TechnicalLogService_Write_SkipsNullAndUndefinedValues()
+    {
+        var repository = Substitute.For<ITechnicalLogRepository>();
+        IReadOnlyList<TechnicalLog>? saved = null;
+        await repository.AddRangeAsync(Arg.Do<IReadOnlyList<TechnicalLog>>(l => saved = l), Arg.Any<CancellationToken>());
+        var service = new TechnicalLogService(repository, _time);
+        var now = _time.GetUtcNow();
+
+        var count = await service.WriteAsync(
+            [
+                null!,
+                new TechnicalLogEntry(now, (LogEntryLevel)99, LogEntrySource.Web, "seviye 99"),
+                new TechnicalLogEntry(now, LogEntryLevel.Error, (LogEntrySource)7, "kaynak 7"),
+                new TechnicalLogEntry(now, LogEntryLevel.Error, LogEntrySource.Web, "geçerli"),
+            ],
+            TestContext.Current.CancellationToken);
+
+        count.ShouldBe(1);
+        saved!.Single().Message.ShouldBe("geçerli");
+    }
 }

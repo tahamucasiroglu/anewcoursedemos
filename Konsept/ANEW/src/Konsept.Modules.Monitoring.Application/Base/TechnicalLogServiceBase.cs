@@ -17,6 +17,12 @@ public abstract class TechnicalLogServiceBase(TimeProvider timeProvider) : ITech
     /// <summary>Veritabanında saklama süresi.</summary>
     public static readonly TimeSpan Retention = TimeSpan.FromDays(30);
 
+    /// <summary>
+    /// Gönderilen zamanın sunucu saatinden en fazla bu kadar sapmasına izin verilir; daha fazlası sunucu saatine çekilir
+    /// (review L-1: istemci zamanı saklama süresini belirleyemez).
+    /// </summary>
+    public static readonly TimeSpan MaxClockSkew = TimeSpan.FromMinutes(5);
+
     /// <summary>Gets saat kaynağı.</summary>
     protected TimeProvider TimeProvider { get; } = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
@@ -24,10 +30,14 @@ public abstract class TechnicalLogServiceBase(TimeProvider timeProvider) : ITech
     public async Task<int> WriteAsync(IReadOnlyList<TechnicalLogEntry> entries, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entries);
+        var now = TimeProvider.GetUtcNow();
         var logs = entries
-            .Where(e => e.Level >= LogEntryLevel.Warning)
+            .Where(e => e is not null
+                && e.Level >= LogEntryLevel.Warning
+                && Enum.IsDefined(e.Level)
+                && Enum.IsDefined(e.Source))
             .Select(e => TechnicalLog.Create(
-                e.OccurredAt,
+                (e.OccurredAt - now).Duration() > MaxClockSkew ? now : e.OccurredAt,
                 (TechnicalLogLevel)e.Level,
                 (LogSource)e.Source,
                 e.Message,
