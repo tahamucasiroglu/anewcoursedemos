@@ -6,7 +6,8 @@
 - **Web (Pi üzerinde):** her şeyin yönetildiği yer (API key girişi, üretim, izleme). MVC → API → PostgreSQL.
 - **Masaüstü ajanı (Avalonia, Windows):** görev çubuğunda (sağ alt) ikon; sağ tık: "Siteye git", "Çıkış". Render, yerel TTS, yerel görsel üretimi bu bilgisayarda. Kurulum/güncelleme ekranı profesyonel görünür; format atılmış PC'ye bile gerekli araçları (ör. Ollama, ffmpeg…) kurar. Web'deki login'i takip eder (web'den çıkış → ajan da yetkisiz).
 - **Admin panel:** kullanıcı listesi, toplam üretilen klip, aktiviteler, ban, bildirilen hatalar, grafikler. Öncelik düşük.
-- Kullanıcı yetkileri: login dışında rol/izin (ör. herkes her modeli / yayınlamayı kullanamaz).
+- Şu an **tek kullanıcı** (sadece Taha, şahsi, yerel ağ). Rol/izin altyapısı ileride genişlemek için kodda durur.
+- Türkçe okunuş: Normalize aşaması + Okunuş sözlüğü (Ayarlar), ör. Google → Gugıl.
 
 ## Model sınıfları
 - Konsept, konu önerisi, video kodu: **online LLM** (Anthropic varsayılan; OpenAI, OpenRouter, GLM, Kimi…). Performans/efor seçimi (low→max).

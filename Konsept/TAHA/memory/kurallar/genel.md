@@ -29,3 +29,7 @@
 
 ## Sunucu
 - Web sunucusu: yerel ağdaki Raspberry Pi 5 8 GB. Bağlantı bilgisi `anewcoursedemos/.env` (gizli; asla commit'leme, asla dışarı yazma). Boş port seçilir; kullanılanlar: 22, 111, 5090, 5432, 7100-7105.
+
+## Kullanım kapsamı (14 Kas 2026 — kullanıcı uyarısı)
+- Program **tek kullanıcılı, şahsi, ticari değil.** Lisans/ticari kullanım konusunu **tekrar soru olarak açma**; kişisel kullanıma izin veren her model eklenir. Sadece teknik engel (VRAM, platform) belirtilir.
+- "Şu an sadece ben gibi" geliştir: çok kullanıcılı özellikleri öne çıkarma, Pi dışarı açılmaz.

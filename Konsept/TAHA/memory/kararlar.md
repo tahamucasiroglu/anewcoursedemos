@@ -17,3 +17,5 @@
 | 2026-11-14 | Kapsam: "hepsi tam olacak" — tüm özellikler 1.0.0'da; fazlar sadece sıra. Plan: `PLAN.md`. | prompt 0001 soru-cevap |
 | 2026-11-14 | `source/` git'e girer (TAHA/.gitignore `!source/`), büyük ikililer hariç. | prompt 0001 soru-cevap |
 | 2026-11-14 | Varsayılan teknik seçimler (rapor 0001): HyperFrames, ffmpeg ASS altyazı aşaması, Supertonic 3, sd.cpp, SignalR (ajan), jQuery polling (tarayıcı), Velopack, .NET 10, MediatR yok. Portlar 7110 web / 7111 API. | rapor 0001 |
+| 2026-11-14 | **Tek kullanıcı (sadece ben), şahsi, ticari değil.** Pi sadece yerelde. Kişisel kullanıma izin veren tüm ses ve görsel modelleri eklenecek. Kayıt kapalı, kurulumda tek hesap. | prompt 0002 |
+| 2026-11-14 | Türkçe okunuş düzeltme: Normalize aşaması (yazılış ≠ okunuş; sözlük, sayı, tarih, romen, kısaltma, LLM önerisi). Örn. Google → Gugıl. | prompt 0002 |

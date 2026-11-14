@@ -29,3 +29,6 @@
 - Güvenlik: şifreler hash'li (geri dönüşsüz), kullanıcı API key'leri şifreli saklanır.
 - Optimizasyon: kullanıcı API key'i girdi diye savurgan token kullanımı yok; minimum token / maksimum kalite. Output token limitlerine dikkat (1-2 dk video kodu için 32k yetmeyebilir, 64k gerekebilir).
 - Test yazılır (1.0.0 için şart).
+
+## Türkçe seslendirme (14 Kas 2026)
+- TTS'e giden metin her zaman Normalize aşamasından geçer: yazılış (ekran/altyazı) ile okunuş (ses) ayrı tutulur. Yabancı kelimeler Türkçe okunuşla (Google → Gugıl), sayılar/tarihler/romen rakamları/kısaltmalar açık yazıyla okunur. Ayrıntı: PLAN.md §3.1.
