@@ -626,6 +626,17 @@ body.tk-modal-open { overflow: hidden; }
     .tk-brand span { display: none; }
     .tk-main { padding: 12px 12px calc(var(--tk-journal-h) + 12px); }
     .tk-tools .tk-hide-sm { display: none; }
+    /* Dar ekranda üst bar araçları taşmasın: etiketler gizlenir, profil seçici daralır (adı üç noktayla biter). */
+    .tk-tools { gap: 2px; min-width: 0; flex-shrink: 1; }
+    .tk-tools .tk-label { display: none; }
+    .tk-tools .tk-icon-btn { min-width: 32px; padding: 0 6px; }
+    .tk-profile-select { min-width: 0; padding-left: 6px; }
+    .tk-profile-select > .tk-ic { display: none; }
+    .tk-profile-select select { max-width: 96px; }
     .tk-theme-choices { grid-template-columns: 1fr; }
     .tk-strip-end { margin-left: 0; }
+}
+
+@media (max-width: 420px) {
+    .tk-spend { display: none; }
 }

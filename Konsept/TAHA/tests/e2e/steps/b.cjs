@@ -50,6 +50,7 @@ module.exports = async (ctx) => {
     r.click();
   });
   await ctx.sleep(200);
+  await page.$eval('.tk-modal [data-pt="local-openai"]', i => { i.value = ''; });
   await page.type('.tk-modal [data-pt="local-openai"]', 'mock');
   await ctx.shot('kod-modeli-modal');
   await page.click('.tk-modal-head .tk-mini-btn');

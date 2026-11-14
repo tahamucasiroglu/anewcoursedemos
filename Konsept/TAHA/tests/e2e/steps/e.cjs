@@ -26,7 +26,7 @@ module.exports = async (ctx) => {
     const list = r.ok ? (r.data.items || r.data) : [];
     return list.find(a => a.isOnline || a.online || a.connected) || null;
   }, 40000, 2000);
-  ctx.check('ajan çevrimiçi (hub bağlı)', !!online, online ? { machine: online.machineName, vram: online.vramMb || online.gpuVramMb, engines: (online.engines || []).length } : null);
+  ctx.check('ajan çevrimiçi (hub bağlı)', !!online, online ? { machine: online.machineName, vram: online.vramMb || online.gpuVramMb, capabilities: online.capabilities ? Object.keys(online.capabilities) : null } : null);
   await ctx.goto('/Ayarlar#masaustu');
   await ctx.sleep(1500);
   const el = await page.$('#masaustu');
