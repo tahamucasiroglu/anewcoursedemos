@@ -27,6 +27,12 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
     /// <summary>Doğrulanmış erişim token'ının isteğe bırakıldığı öğe anahtarı.</summary>
     public const string AccessTokenItem = "konsept.access_token";
 
+    /// <summary>
+    /// Oturum kullanılabilir token olmadan korunduğunda (refresh geçici hata + dolmuş token) isteğe bırakılan işaret: bu
+    /// istekte Api'nin 401'i "oturum bitti" değil "API erişilemiyor" sayılır (review R3-2).
+    /// </summary>
+    public const string TokenUnavailableItem = "konsept.token_unavailable";
+
     /// <summary>Bilet içindeki erişim token'ı adı.</summary>
     public const string AccessTokenName = "access_token";
 
@@ -105,7 +111,9 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
             {
                 // Refresh geçici olarak başarısız (Api erişilemiyor) ve saklı token zaten dolmuş (review R2-2): dolmuş JWT ile
                 // oturum sorgusu 401 alıp oturumu yanlışlıkla düşürürdü. Oturum korunur, istek Api token'ı olmadan sürer
-                // (sayfa "API erişilemiyor" gösterir); sonraki istek yeniden refresh dener.
+                // (sayfa "API erişilemiyor" gösterir); sonraki istek yeniden refresh dener. Token'sız Api çağrısının 401'i bu
+                // istekte "oturum bitti" sayılmaz (review R3-2), yoksa Ajax 401 → /giris → / döngüsü olurdu.
+                http.Items[TokenUnavailableItem] = true;
                 return;
             }
         }

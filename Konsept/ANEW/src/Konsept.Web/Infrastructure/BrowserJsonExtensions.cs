@@ -18,11 +18,12 @@ public static class BrowserJsonExtensions
     /// sayfa "API erişilemiyor" durumunu gösterebilir.
     /// </summary>
     /// <param name="resultTask">API çağrısı.</param>
+    /// <param name="http">Geçerli istek (oturum token'sız korunduysa 401 "oturum bitti" sayılmaz).</param>
     /// <returns>JSON yanıtı.</returns>
-    public static async Task<IActionResult> ToStatusJson(this Task<Result<SystemStatusResponse>> resultTask)
+    public static async Task<IActionResult> ToStatusJson(this Task<Result<SystemStatusResponse>> resultTask, HttpContext http)
     {
         ArgumentNullException.ThrowIfNull(resultTask);
-        var result = await resultTask.ConfigureAwait(false);
+        var result = WithoutTokenlessUnauthorized(await resultTask.ConfigureAwait(false), http);
         if (!result.IsSuccess && result.Error!.Type == ErrorType.Unauthorized)
         {
             return SessionExpired(); // Oturum Api'de düştü: sessizce "API yok" denmez, tarayıcı girişe yönlenir (AC-13).
@@ -43,11 +44,12 @@ public static class BrowserJsonExtensions
     /// <summary>Başarıda değeri 200 ile, hatada uygun durum koduyla <c>{ code, message }</c> döndürür.</summary>
     /// <typeparam name="T">Değer tipi.</typeparam>
     /// <param name="resultTask">API çağrısı.</param>
+    /// <param name="http">Geçerli istek (oturum token'sız korunduysa 401 "oturum bitti" sayılmaz).</param>
     /// <returns>JSON yanıtı.</returns>
-    public static async Task<IActionResult> ToBrowserJson<T>(this Task<Result<T>> resultTask)
+    public static async Task<IActionResult> ToBrowserJson<T>(this Task<Result<T>> resultTask, HttpContext http)
     {
         ArgumentNullException.ThrowIfNull(resultTask);
-        var result = await resultTask.ConfigureAwait(false);
+        var result = WithoutTokenlessUnauthorized(await resultTask.ConfigureAwait(false), http);
         if (result.IsSuccess)
         {
             return new JsonResult(result.Value);
@@ -57,6 +59,16 @@ public static class BrowserJsonExtensions
         return error.Type == ErrorType.Unauthorized
             ? SessionExpired()
             : new JsonResult(new { code = error.Code, message = error.Message }) { StatusCode = StatusOf(error) };
+    }
+
+    // Oturum kullanılabilir token olmadan korunduysa (refresh geçici hata + dolmuş token) Api'nin token'sız isteğe 401'i
+    // oturumun bittiğini göstermez (review R3-2): "API erişilemiyor" sayılır, yoksa Ajax 401 → /giris → / döngüsü olurdu.
+    private static Result<T> WithoutTokenlessUnauthorized<T>(Result<T> result, HttpContext http)
+    {
+        ArgumentNullException.ThrowIfNull(http);
+        return !result.IsSuccess && result.Error!.Type == ErrorType.Unauthorized && http.Items.ContainsKey(KonseptCookieEvents.TokenUnavailableItem)
+            ? Result<T>.Failure(ApiClientErrors.Unavailable)
+            : result;
     }
 
     private static JsonResult SessionExpired() =>

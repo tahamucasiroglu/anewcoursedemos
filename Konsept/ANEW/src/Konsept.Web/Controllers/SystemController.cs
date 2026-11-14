@@ -24,12 +24,12 @@ public sealed class SystemController : Controller
     /// <returns>JSON.</returns>
     [HttpGet("status")]
     public Task<IActionResult> Status(CancellationToken cancellationToken) =>
-        _api.GetSystemStatusAsync(cancellationToken).ToStatusJson();
+        _api.GetSystemStatusAsync(cancellationToken).ToStatusJson(HttpContext);
 
     /// <summary>"Ajanı test et".</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>JSON.</returns>
     [HttpPost("agent-test")]
     public Task<IActionResult> AgentTest(CancellationToken cancellationToken) =>
-        _api.TestAgentAsync(cancellationToken).ToBrowserJson();
+        _api.TestAgentAsync(cancellationToken).ToBrowserJson(HttpContext);
 }

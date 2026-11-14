@@ -265,6 +265,30 @@ public sealed class AuthAccessTests
     }
 
     /// <summary>
+    /// Oturum token'sız korunduğunda (refresh geçici hata + dolmuş token) Api'nin token'sız isteğe verdiği 401 "oturum bitti"
+    /// sayılmaz (review R3-2): durum yoklaması 401 almaz, "API erişilemiyor" alır; böylece /giris → / döngüsü oluşmaz.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task RefreshTransientFailure_ExpiredToken_StatusIsNotSessionExpired()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        factory.Api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Result<AuthSessionResponse>.Failure(new("api.error", "Sunucu hatası", ErrorType.Unavailable)));
+        factory.Api.GetSystemStatusAsync(Arg.Any<CancellationToken>())
+            .Returns(Result<SystemStatusResponse>.Failure(new("api.error", "token yok", ErrorType.Unauthorized)));
+        time.Advance(TimeSpan.FromMinutes(20));
+
+        using var ajax = await SendAjaxAsync(client, HttpMethod.Get, "/system/status", ct);
+        var body = await ajax.Content.ReadFromJsonAsync<JsonElement>(ct);
+
+        ajax.StatusCode.ShouldNotBe(HttpStatusCode.Unauthorized);
+        body.GetProperty("apiAvailable").GetBoolean().ShouldBeFalse();
+    }
+
+    /// <summary>
     /// Refresh geçici olarak düştüğü için oturum dolmuş erişim token'ıyla korunduysa çıkış önce token'ı yeniler ve Api'ye
     /// geçerli token'la gider (review R3-1): dolmuş token'ın 401'i "zaten çıkılmış" sayılıp diğer oturumlar açık kalmaz.
     /// </summary>
