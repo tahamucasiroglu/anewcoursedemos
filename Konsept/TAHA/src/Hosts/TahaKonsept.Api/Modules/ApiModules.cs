@@ -1,5 +1,6 @@
 using TahaKonsept.BuildingBlocks.Api.Modules.Abstract;
 using TahaKonsept.Modules.Agents.Api;
+using TahaKonsept.Modules.Concepts.Api;
 using TahaKonsept.Modules.Diagnostics.Api;
 using TahaKonsept.Modules.Identity.Api;
 using TahaKonsept.Modules.Profiles.Api;
@@ -20,7 +21,7 @@ internal static class ApiModules
         new IdentityModule(),
         new ProfilesModule(),
         new ProvidersModule(),
-        // new ConceptsModule(),
+        new ConceptsModule(),
         // new ProductionModule(),
         new AgentsModule(),
         new DiagnosticsModule(),

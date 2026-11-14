@@ -53,14 +53,6 @@ public abstract class ConceptJobProcessorBase : IConceptJobProcessor
         Services.Tracker.Update(job.Id, d => d with { Status = ConceptJobStatus.Running, StartedAt = started, Message = null });
         Services.Logger.LogInformation("Konsept işi başladı {JobId} ({Kind}, {Count} adet)", job.Id, job.Kind, job.Count);
 
-        var contextResult = await Services.Contexts.ResolveAsync(job.UserId, job.ProfileId, cancellationToken);
-        if (contextResult.IsFailure)
-        {
-            await FinishAsync(job, started, 0, 0, 0, contextResult.Error.Message, false);
-            return;
-        }
-
-        var context = contextResult.Value;
         var produced = 0;
         var failed = 0;
         decimal cost = 0;
@@ -68,6 +60,14 @@ public abstract class ConceptJobProcessorBase : IConceptJobProcessor
         var cancelled = false;
         try
         {
+            var contextResult = await Services.Contexts.ResolveAsync(job.UserId, job.ProfileId, cancellationToken);
+            if (contextResult.IsFailure)
+            {
+                await FinishAsync(job, started, 0, 0, 0, contextResult.Error.Message, false);
+                return;
+            }
+
+            var context = contextResult.Value;
             var plan = await PlanAsync(job, context, cancellationToken);
             cost += plan.CostUsd;
             Services.Tracker.Update(job.Id, d => d with { Total = plan.Briefs.Count, CostUsd = cost });

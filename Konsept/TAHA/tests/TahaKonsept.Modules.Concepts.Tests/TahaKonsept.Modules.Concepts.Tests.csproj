@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Concepts modülü birim testleri: durum geçişleri, konu hafızası (eleme + token tavanı), prompt işleme, sahte LLM geçidiyle
+       üretim / iş çalıştırıcı / düzeltme adayı döngüsü, kelime denetimi, doğrulayıcılar (EF InMemory, DB gerekmez). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Concepts.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Concepts\TahaKonsept.Modules.Concepts.Infrastructure\TahaKonsept.Modules.Concepts.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

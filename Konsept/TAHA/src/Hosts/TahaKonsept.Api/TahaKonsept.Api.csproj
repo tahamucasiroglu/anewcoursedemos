@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Api\TahaKonsept.BuildingBlocks.Api.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\Agents\TahaKonsept.Modules.Agents.Api\TahaKonsept.Modules.Agents.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Concepts\TahaKonsept.Modules.Concepts.Api\TahaKonsept.Modules.Concepts.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Diagnostics\TahaKonsept.Modules.Diagnostics.Api\TahaKonsept.Modules.Diagnostics.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\TahaKonsept.Modules.Identity.Api\TahaKonsept.Modules.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Profiles\TahaKonsept.Modules.Profiles.Api\TahaKonsept.Modules.Profiles.Api.csproj" />
