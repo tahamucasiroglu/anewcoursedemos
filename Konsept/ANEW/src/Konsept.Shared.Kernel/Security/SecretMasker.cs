@@ -405,7 +405,7 @@ public static partial class SecretMasker
         || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
 
     private static readonly HashSet<string> PassNames =
-        new(StringComparer.Ordinal) { "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
+        new(StringComparer.Ordinal) { "oturum", "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
 
     /// <summary>Yalnızca harften (ve isteğe bağlı sondaki '=') oluşan, 15 karakterden kısa sözcük: token değil.</summary>
     private static bool IsPlainWord(string token)

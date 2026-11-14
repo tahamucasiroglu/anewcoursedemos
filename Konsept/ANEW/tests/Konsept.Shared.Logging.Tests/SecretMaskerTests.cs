@@ -269,6 +269,10 @@ public sealed class SecretMaskerTests
         { "Pairing status: {\"status\":\"Pending\",\"agentToken\":null,\"expiresInSeconds\":240,\"machineName\":\"DESKTOP-01\"}", "Pairing status: {\"status\":\"Pending\",\"agentToken\":***,\"expiresInSeconds\":240,\"machineName\":\"DESKTOP-01\"}", "\u0000" },
         { "{\"token\":null,\"error\":\"invalid_credentials\",\"remainingAttempts\":2}", "{\"token\":***,\"error\":\"invalid_credentials\",\"remainingAttempts\":2}", "\u0000" },
         { "{\"pairingCode\":482913,\"agentId\":7}", "{\"pairingCode\":***,\"agentId\":7}", "482913" },
+        { "\"password\": 2024 Summer2024", "\"password\": ***", "Summer2024" },
+        { "\"password\":1234,Secret5678", "\"password\":***", "Secret5678" },
+        { "Oturum açıldı: oturum=CfDJ8SessAbcdef1234567 kullanıcı=42", "Oturum açıldı: oturum=***", "CfDJ8Sess" },
+        { "{\"oturum\":\"CfDJ8SessAbcdef1234567\",\"kullanici\":42}", "{\"oturum\":\"***\",\"kullanici\":42}", "CfDJ8Sess" },
         { "{\"password\":nullable123,\"x\":1}", "{\"password\":***}", "nullable123" },
     };
 

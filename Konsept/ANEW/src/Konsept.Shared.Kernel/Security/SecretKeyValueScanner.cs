@@ -317,7 +317,7 @@ internal static class SecretKeyValueScanner
     };
 
     private static readonly HashSet<string> ValueWords =
-        new(StringComparer.OrdinalIgnoreCase) { "key", "value", "string", "text", "değeri", "değer", "metni", "kodu", "code" };
+        new(StringComparer.OrdinalIgnoreCase) { "key", "value", "string", "text", "değeri", "değer", "metni", "kodu", "code", "anahtarı", "kimliği", "belirteci" };
 
     private static int SkipAnyWord(string text, int pos)
     {
@@ -358,13 +358,28 @@ internal static class SecretKeyValueScanner
         var token = text.AsSpan(valueStart, p - valueStart);
         var isLiteral = token is "null" or "true" or "false"
             || (token.Length is > 0 and <= 32 && double.TryParse(token, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _));
-        if (!isLiteral || !(p == text.Length || char.IsWhiteSpace(text[p]) || text[p] is ',' or '}' or ']'))
+        // Değişmezden sonra (satır içi boşluk atlanarak) yalnızca , } ] ya da satır/metin sonu: "password": 2024 Summer düzyazıdır (hunt r16).
+        var afterLiteral = SkipInlineSpace(text, p);
+        // JSON'da virgülden sonra (boşluk atlanarak) yalnızca tırnaklı bir anahtar gelir: "password":1234,Secret5678 değişmez değildir.
+        var commaThenKey = afterLiteral < text.Length && text[afterLiteral] == ','
+            && SkipWhitespace(text, afterLiteral + 1) is var next && (next >= text.Length || text[next] == '"');
+        if (!isLiteral || !(afterLiteral >= text.Length || commaThenKey || text[afterLiteral] is '}' or ']' or '\r' or '\n'))
         {
             return false;
         }
 
         literalEnd = p;
         return true;
+    }
+
+    private static int SkipWhitespace(string text, int p)
+    {
+        while (p < text.Length && char.IsWhiteSpace(text[p]))
+        {
+            p++;
+        }
+
+        return p;
     }
 
     /// <summary>Konumdaki '"' bir JSON dizesini kapatıyor mu: ardından , } ] boşluk ya da metin sonu.</summary>
