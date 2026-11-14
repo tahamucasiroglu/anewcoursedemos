@@ -274,6 +274,26 @@ public sealed class AuthPageTests
     }
 
     /// <summary>
+    /// Giriş ve kayıt sayfaları gönderim korumasını yapan <c>auth.js</c> modülünü yükler; form gönderilirken gösterilecek metni
+    /// (<c>data-text-sending</c>) resx'ten taşır (review R3-4).
+    /// </summary>
+    /// <param name="path">Sayfa.</param>
+    /// <returns>Görev.</returns>
+    [Theory]
+    [InlineData("/giris")]
+    [InlineData("/kayit")]
+    public async Task AuthPages_LoadAuthScript_FormCarriesSendingText(string path)
+    {
+        await using var factory = new WebFactory();
+        using var client = SignedInClient.CreateAnonymous(factory);
+
+        var page = await WebFactory.GetDocumentAsync(client, path, TestContext.Current.CancellationToken);
+
+        page.QuerySelectorAll("script[type=module][src^='/js/auth.js']").Length.ShouldBe(1);
+        page.QuerySelector("form[data-auth-form]")!.GetAttribute("data-text-sending").ShouldBe("Gönderiliyor…");
+    }
+
+    /// <summary>
     /// Kullanıcı menüsü klavyeyle açılır (<c>details/summary</c>), tema düğmesinden sonradır ve "Çıkış yap" CSRF belirteçli bir
     /// POST formudur.
     /// </summary>
