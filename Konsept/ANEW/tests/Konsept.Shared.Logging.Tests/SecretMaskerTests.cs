@@ -115,9 +115,9 @@ public sealed class SecretMaskerTests
         { "{\\u0022password\\u0022:\\u0022Hunter2Pass\\u0022}", "{\\u0022password\\u0022:\\u0022***\\u0022}", "Hunter2Pass" },
         { "hata\\nsk-proj-AbCdEf123456789xyz", "hata\\nsk-…xyz", "AbCdEf123456789" },
         { "GET /maps?key=AIzaSyA1234567890abcdefghijklmnopqrstuv x", "GET /maps?key=AIza…tuv x", "1234567890abcdef" },
-        { "Ai:ApiKeys:Gemini=AIzaSyA1234567890abcdefghijklmnopqrstuv", "Ai:ApiKeys:…tuv", "1234567890abcdef" },
+        { "Ai:ApiKeys:Gemini=AIzaSyA1234567890abcdefghijklmnopqrstuv", "Ai:ApiKeys:Gemini=AIza…tuv", "1234567890abcdef" },
         { "gemini hata: AIzaSyA1234567890abcdefghijklmnopqrstuv geçersiz", "gemini hata: AIza…tuv geçersiz", "1234567890abcdef" },
-        { "Ai:ApiKeys:Gemini=plainsecret12345", "Ai:ApiKeys:…345", "plainsecret" },
+        { "Ai:ApiKeys:Gemini=plainsecret12345", "Ai:ApiKeys:Gemini=…345", "plainsecret" },
 
         // Hunt r3 (fix-4): API key alanı, çerezler, kodlu anahtarlar (çözülmüş görünüm), anahtar süsleri, XML, URL, tekrar eden değer…
         { "api_key=abcd1234efgh5678 password=Hunter2Pass", "api_key=…678 password=***", "Hunter2Pass" },
@@ -164,6 +164,20 @@ public sealed class SecretMaskerTests
         { "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService: Authorization failed. These requirements were not met", "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService: Authorization failed. These requirements were not met", "\u0000" },
         { "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationHandler: AuthenticationScheme: Cookies signed in.", "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationHandler: AuthenticationScheme: Cookies signed in.", "\u0000" },
         { "İşlem sırasında sıra numarası 5 bypass=true", "İşlem sırasında sıra numarası 5 bypass=true", "\u0000" },
+
+        // Hunt r5 (fix-6): sıradan log cümleleri bozulmaz; yol ve SQL parametresi değer sayılmaz; port şifre değildir.
+        { "Token expired: user=alice at 2026-11-14T10:00:00Z", "Token expired: user=alice at 2026-11-14T10:00:00Z", "\u0000" },
+        { "Password reset: user=x requested", "Password reset: user=x requested", "\u0000" },
+        { "Belirteç kullanımı: giriş=1200 çıkış=300", "Belirteç kullanımı: giriş=1200 çıkış=300", "\u0000" },
+        { "Pairing code expired: deviceId=agent-01", "Pairing code expired: deviceId=agent-01", "\u0000" },
+        { "AuthenticationScheme: Bearer was challenged.", "AuthenticationScheme: Bearer was challenged.", "\u0000" },
+        { "WWW-Authenticate: Bearer error=\"invalid_token\"", "WWW-Authenticate: Bearer error=\"invalid_token\"", "\u0000" },
+        { "firstPass=3 secondPass=4 classPass=ok", "firstPass=3 secondPass=4 classPass=ok", "\u0000" },
+        { "Provider OpenRouter: ApiKey not set (key Ai:ApiKeys:OpenRouter)", "Provider OpenRouter: ApiKey not set (key Ai:ApiKeys:OpenRouter)", "\u0000" },
+        { "WHERE r.\"Token\" = @__token_0\nLIMIT 1", "WHERE r.\"Token\" = @__token_0\nLIMIT 1", "\u0000" },
+        { "Request starting HTTP/1.1 GET http://localhost:5000/api/users/by-email/ali@example.com - -", "Request starting HTTP/1.1 GET http://localhost:5000/api/users/by-email/ali@example.com - -", "\u0000" },
+        { "Ai:ApiKeys:Groq=\"gsk_live_9f8e7d6c5b4a3210fedcba\"", "Ai:ApiKeys:Groq=\"…cba\"", "9f8e7d6c5b4a" },
+        { "Token value: abc123def456ghi", "Token value: ***", "abc123def456" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>

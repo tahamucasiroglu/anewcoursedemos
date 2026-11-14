@@ -302,7 +302,8 @@ public static partial class SecretMasker
     private static string MaskCore(string text, SecretValueSet secrets)
     {
         var result = JwtPattern().Replace(text, m => Record(secrets, m.Value, JwtPlaceholder));
-        result = BearerPattern().Replace(result, m => m.Groups["token"].Value == JwtPlaceholder
+        // "Bearer was challenged", "Bearer error=…": sıradan sözcük token değildir (hunt r5, hasar).
+        result = BearerPattern().Replace(result, m => m.Groups["token"].Value == JwtPlaceholder || IsPlainWord(m.Groups["token"].Value)
             ? m.Value
             : $"{m.Groups["scheme"].Value} {Record(secrets, m.Groups["token"].Value, Hidden)}");
         result = MaskUrlUserInfo(result, secrets);
@@ -399,8 +400,18 @@ public static partial class SecretMasker
     private static bool IsHiddenField(string name) =>
         NameForms(name).Any(n => HiddenFieldSuffixes.Any(s => n.EndsWith(s, StringComparison.Ordinal))
             || n.StartsWith("password", StringComparison.Ordinal) // password_confirmation, passwordHash…
-            || (n.EndsWith("pass", StringComparison.Ordinal) && !n.EndsWith("bypass", StringComparison.Ordinal) && !n.EndsWith("compass", StringComparison.Ordinal))) // DB_PASS
+            || PassNames.Contains(n)) // DB_PASS, SMTP_PASS — genel "pass" eki firstPass/classPass'i de yakalıyordu (hunt r5)
         || HiddenFieldStems.Any(s => name.Contains(s, StringComparison.Ordinal)); // şifreniz, parolası, yeniŞifre…
+
+    private static readonly HashSet<string> PassNames =
+        new(StringComparer.Ordinal) { "pass", "dbpass", "smtppass", "mailpass", "userpass", "adminpass", "rootpass", "postgrespass", "mysqlpass", "redispass" };
+
+    /// <summary>Yalnızca harften (ve isteğe bağlı sondaki '=') oluşan, 15 karakterden kısa sözcük: token değil.</summary>
+    private static bool IsPlainWord(string token)
+    {
+        var word = token.TrimEnd('=');
+        return word.Length is > 0 and <= 15 && word.All(char.IsLetter);
+    }
 
     /// <summary>Adın karşılaştırılan biçimleri: kendisi, sondaki sıra numarası atılmış, çoğul eki atılmış (<c>token_0</c>, <c>tokens</c>, <c>apiKey2</c>).</summary>
     private static IEnumerable<string> NameForms(string name)
@@ -471,8 +482,10 @@ public static partial class SecretMasker
 
             // Şifrede '/', '?', '#' olabilir (amqp://guest:gu#S3CRET@rabbit): ilk ayraçtan önce ':' varsa yetki
             // bölümü sert sınıra kadar uzatılır; fazla maskeleme güvenli taraftır (hunt r2).
+            // ':' sonrası ilk ayraca kadar yalnızca rakamsa port'tur (http://localhost:5000/…/ali@x), şifre değil (hunt r5).
             var firstColon = text.IndexOf(':', start, hardEnd - start);
-            var end = softEnd >= 0 && !(firstColon >= 0 && firstColon < softEnd) ? softEnd : hardEnd;
+            var colonIsPort = firstColon >= 0 && softEnd > firstColon + 1 && IsDigits(text, firstColon + 1, softEnd);
+            var end = softEnd >= 0 && (colonIsPort || !(firstColon >= 0 && firstColon < softEnd)) ? softEnd : hardEnd;
             var at = end > start ? text.LastIndexOf('@', end - 1, end - start) : -1;
             if (at < 0 && hardEnd < limit && text[hardEnd] is ',' or ';')
             {
@@ -497,6 +510,19 @@ public static partial class SecretMasker
         }
 
         return copied == 0 ? text : output.Append(text, copied, text.Length - copied).ToString();
+    }
+
+    private static bool IsDigits(string text, int start, int end)
+    {
+        for (var i = start; i < end; i++)
+        {
+            if (!char.IsAsciiDigit(text[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>Boşluk/tırnak/ayraç ya da bir sonraki <c>://</c>'ye kadar; ilk '/', '?' veya '#' de biter.</summary>

@@ -104,6 +104,13 @@ internal static class SecretKeyValueScanner
 
         var lineEndOfValue = LineEnd(text, valueStart);
         var unquoted = QuoteLength(text, valueStart) == 0 && valueStart < text.Length && text[valueStart] is not ('{' or '[');
+        if (unquoted && (IsPathContinuation(text, valueStart, apiKey) || IsSqlParameter(text, valueStart)))
+        {
+            // Ai:ApiKeys:OpenRouter yolu (sağlayıcı adı değer değildir; sonraki bölüm yol kuralıyla okunur) ve
+            // EF SQL'deki "Token" = @__token_0 parametre adı (hunt r5, hasar).
+            return keyEnd;
+        }
+
         int start, end, after;
         if (unquoted && apiKey)
         {
@@ -188,8 +195,54 @@ internal static class SecretKeyValueScanner
         return true;
     }
 
-    /// <summary>Konumda tek boşluk + en fazla 24 harflik bir sözcük varsa sözcüğün sonu; yoksa -1.</summary>
+    /// <summary>
+    /// Konumda tek boşluk + değer bildiren bir sözcük (<c>key</c>, <c>value</c>, <c>değeri</c>, <c>string</c>…) varsa
+    /// sözcüğün sonu; yoksa -1. Her sözcük kabul edilseydi "Token expired: …", "Password reset: …" satırları silinirdi (hunt r5).
+    /// </summary>
     private static int SkipWord(string text, int pos)
+    {
+        var end = SkipAnyWord(text, pos);
+        return end > 0 && ValueWords.Contains(text[(pos + 1)..end]) ? end : -1;
+    }
+
+    /// <summary>API key adından sonra boşluksuz <c>:</c> ve yalnızca harften oluşan bir yol bölümü mü (<c>ApiKeys:OpenRouter</c>).</summary>
+    private static bool IsPathContinuation(string text, int valueStart, bool apiKey)
+    {
+        if (!apiKey || valueStart == 0 || text[valueStart - 1] != ':' || !char.IsLetter(text[valueStart]))
+        {
+            return false;
+        }
+
+        var p = valueStart;
+        while (p < text.Length && char.IsLetter(text[p]))
+        {
+            p++;
+        }
+
+        return p == text.Length || !IsKeyChar(text[p]);
+    }
+
+    /// <summary>Değer bir SQL parametre adı mı (<c>@__token_0</c>, <c>@p0</c>).</summary>
+    private static bool IsSqlParameter(string text, int valueStart)
+    {
+        if (text[valueStart] != '@' || valueStart + 1 >= text.Length || !(char.IsLetter(text[valueStart + 1]) || text[valueStart + 1] == '_'))
+        {
+            return false;
+        }
+
+        var p = valueStart + 1;
+        while (p < text.Length && (char.IsLetterOrDigit(text[p]) || text[p] == '_'))
+        {
+            p++;
+        }
+
+        return p == text.Length || char.IsWhiteSpace(text[p]) || text[p] is ')' or ',' or ';';
+    }
+
+    private static readonly HashSet<string> ValueWords =
+        new(StringComparer.OrdinalIgnoreCase) { "key", "value", "string", "text", "değeri", "değer", "metni", "kodu", "code" };
+
+    private static int SkipAnyWord(string text, int pos)
     {
         if (pos + 1 >= text.Length || text[pos] != ' ' || !char.IsLetter(text[pos + 1]))
         {
