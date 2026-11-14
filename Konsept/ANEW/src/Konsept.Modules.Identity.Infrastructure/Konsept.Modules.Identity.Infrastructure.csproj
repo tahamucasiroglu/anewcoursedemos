@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Identity altyapısı: identity şeması ve DbContext'i (Y-4), atomik SQL depoları, şifre hash'i (ASP.NET Core Identity
+       PasswordHasher, paylaşılan çerçevede), JWT üretimi/doğrulaması, IP başına hız sınırı. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Identity.Application\Konsept.Modules.Identity.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

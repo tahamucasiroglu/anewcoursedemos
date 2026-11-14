@@ -73,6 +73,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Konsept.Modules.Identity.Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Konsept.Modules.Identity.Tests", "tests\Konsept.Modules.Identity.Tests\Konsept.Modules.Identity.Tests.csproj", "{20721683-F761-4597-904F-7010C3BBBB50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Konsept.Modules.Identity.Infrastructure", "src\Konsept.Modules.Identity.Infrastructure\Konsept.Modules.Identity.Infrastructure.csproj", "{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -479,6 +481,18 @@ Global
 		{20721683-F761-4597-904F-7010C3BBBB50}.Release|x64.Build.0 = Release|Any CPU
 		{20721683-F761-4597-904F-7010C3BBBB50}.Release|x86.ActiveCfg = Release|Any CPU
 		{20721683-F761-4597-904F-7010C3BBBB50}.Release|x86.Build.0 = Release|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Debug|x64.Build.0 = Debug|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Debug|x86.Build.0 = Debug|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Release|x64.ActiveCfg = Release|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Release|x64.Build.0 = Release|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Release|x86.ActiveCfg = Release|Any CPU
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -517,5 +531,6 @@ Global
 		{74CB786F-3F94-482F-BDBB-270CA44C4E32} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{EA4E31CC-2712-4F8C-B5C3-09E0E233F207} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{20721683-F761-4597-904F-7010C3BBBB50} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{2F7C3E87-CA17-44F1-AF1A-9D348310FCDD} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
