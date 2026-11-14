@@ -1,15 +1,27 @@
 #!/bin/sh
 # Pi'de (sudo ile) bir kez/her kurulumda çalışır: yalnızca "anewconcept" adlı kullanıcı, klasör, veritabanı ve
 # servisleri oluşturur; başka uygulamalara (muskitakip, tmautoclip, tahakonsept) dokunmaz (spec 0001 D1, D3).
-# Veritabanı şifresi Pi'de üretilir ve yalnızca /etc/anewconcept/api.env'de durur (repoya, loglara girmez).
+# Veritabanı şifresi ve Web ↔ Api servis anahtarı Pi'de üretilir; yalnızca /etc/anewconcept/*.env'de durur
+# (repoya, loglara girmez). Loglar yalnızca /opt/anewconcept/logs/{api,web} altında (spec 0008 Req 5).
 #   sudo sh provision.sh <yükleme-klasörü>
 set -eu
 SRC=${1:?yükleme klasörü gerekli}
 
 id -u anewconcept >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin anewconcept
 install -d -o root -g root -m 755 /opt/anewconcept
-install -d -o anewconcept -g anewconcept -m 750 /var/log/anewconcept
+install -d -o anewconcept -g anewconcept -m 750 /opt/anewconcept/logs /opt/anewconcept/logs/api /opt/anewconcept/logs/web
 install -d -o root -g anewconcept -m 750 /etc/anewconcept
+
+# 0.1.x logları /var/log/anewconcept'teydi; bir kez yeni yere taşınır, boş kalan eski klasör kaldırılır.
+if [ -d /var/log/anewconcept ]; then
+  for app in api web; do
+    for f in /var/log/anewconcept/"$app"-*.log; do
+      if [ -e "$f" ]; then mv "$f" "/opt/anewconcept/logs/$app/"; fi
+    done
+  done
+  chown -R anewconcept:anewconcept /opt/anewconcept/logs
+  rmdir /var/log/anewconcept 2>/dev/null || true
+fi
 
 if [ ! -f /etc/anewconcept/api.env ]; then
   password=$(openssl rand -hex 24)
@@ -25,6 +37,16 @@ if [ ! -f /etc/anewconcept/api.env ]; then
   fi
   printf "%s ROLE anewconcept WITH LOGIN PASSWORD '%s';\n" "$verb" "$password" | sudo -u postgres psql -q -v ON_ERROR_STOP=1
 fi
+# Web → Api iç uç servis anahtarı (plan 0008, Risk 2): bir kez üretilir, iki env dosyasına da yazılır.
+if ! grep -q '^Internal__ServiceKey=' /etc/anewconcept/api.env; then
+  umask 027
+  printf 'Internal__ServiceKey=%s\n' "$(openssl rand -hex 32)" >> /etc/anewconcept/api.env
+fi
+umask 027
+grep '^Internal__ServiceKey=' /etc/anewconcept/api.env > /etc/anewconcept/web.env
+chown root:anewconcept /etc/anewconcept/web.env
+chmod 640 /etc/anewconcept/web.env
+
 sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='anewconcept'" | grep -q 1 \
   || sudo -u postgres psql -q -c "CREATE DATABASE anewconcept OWNER anewconcept ENCODING 'UTF8' TEMPLATE template0"
 

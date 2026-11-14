@@ -21,7 +21,13 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
   API key'ler çözülemez hale gelir.
 - Üretim gizli bilgileri (DB şifresi vb.) Pi'de ortam değişkeni ya da systemd `EnvironmentFile` ile verilir;
   repoda yalnızca `.env.example` bulunur. `appsettings*.json` içinde gizli bilgi olmaz.
-- **Loglar (Serilog):** şifre hiçbir zaman loglanmaz; API key yalnızca maskeli (`sk-…a3f`).
+- **Loglar (Serilog):** şifre hiçbir zaman loglanmaz (maskeli bile değil: `***`); API key yalnızca maskeli (`sk-…a3f`);
+  token, eşleştirme kodu/sırrı, video akış token'ı ve bağlantı dizesindeki şifre düz metin görünmez. Tek mekanizma
+  `SecretMasker` (0008): log olayı özellikleri, dosya/konsol çıktısı, veritabanı teknik logu, ajan özeti ve olay
+  kaydı hep buradan geçer; desen tablosu `SecretMaskerTests`'te, kasıtlı bozma ile kanıtlıdır.
+- **Web ↔ Api iç uçları** (ör. `POST /api/internal/logs`): Pi'de üretilen paylaşılan servis anahtarı
+  (`X-Konsept-Service-Key`; `/etc/anewconcept/{api,web}.env` → `Internal__ServiceKey`); sabit zamanlı
+  karşılaştırma; anahtar yapılandırılmamışsa her istek 401 (0008, plan Risk 2).
 
 ## Input & output
 - **Sınırda doğrulama:** her API isteği FluentValidation'dan geçer; doğrulama generic validation filter ile

@@ -12,7 +12,7 @@ WorkingDirectory=/opt/anewconcept/api
 ExecStart=/opt/anewconcept/api/Konsept.Api
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://0.0.0.0:8001
-Environment=Logging__Directory=/var/log/anewconcept
+Environment=Logging__Directory=/opt/anewconcept/logs/api
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
 EnvironmentFile=/etc/anewconcept/api.env
 Restart=always

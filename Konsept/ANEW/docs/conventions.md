@@ -31,7 +31,7 @@
 | Tarayıcıda canlı akış | **Ajax polling** (2–3 sn) | SignalR tarayıcı istemcisi `fetch` kullandığı için yok. |
 | Veritabanı | **PostgreSQL 17** + **EF Core 10** (Npgsql) | Pi'de kurulu PostgreSQL 17 kullanılır (spec 0001 kararı D1, 2026-11-14); ayrı `anewconcept` veritabanı ve kullanıcısı. Tek DB, modül başına şema + `DbContext`. |
 | Doğrulama | **FluentValidation** | Generic validation filter ile (K-4). |
-| Loglama | **Serilog** (dosya + DB sink) | Yerel log rotasyonu 1 hafta. |
+| Loglama | **Serilog** (dosya + DB sink) | Ortak kurulum `Konsept.Shared.Logging` (0008): kaynak (Web/Api/Agent), UTC zaman, korelasyon, maskeleme. Dosya `<klasör>/<önek>-yyyyMMdd.log`; yerel saklama 7 gün (tarihe göre `LogFileJanitor`); Pi: `/opt/anewconcept/logs/{api,web}`, ajan: kendi klasörü altında `logs`. Veritabanında (`monitoring.technical_logs`) Api/Web Warning+ ve ajan Error/Critical özeti, 30 gün. Gizli bilgi tek mekanizma `SecretMasker` (Shared.Kernel) ile maskelenir; yeni gizli alan = `SecretMaskerTests` tablosuna satır. Host logger'ı statik `Log.Logger`'a bağlanmaz (`preserveStaticLogger: true`). |
 | Sunucu | **Raspberry Pi 5**, `linux-arm64` | |
 | Kullanıcı PC araçları | **Node.js LTS + FFmpeg + headless Chromium**; izole **Python** ortamı yalnızca isteğe bağlı "Ses klonlama" bileşeninde (Chatterbox, 0009) | Ajan kendi klasörüne, çakışmasız kurar. Ollama kurulmaz (E-4, 0009). |
 
