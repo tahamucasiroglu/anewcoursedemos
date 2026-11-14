@@ -1,0 +1,40 @@
+@model Konsept.Web.Models.RegisterForm
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = UiText.RegisterTitle;
+    var alert = Model.Message ?? (Model.Errors.Count > 0 ? UiText.FormErrorSummary : null);
+    var focus = Model.FirstInvalidField;
+    var nameError = Model.ErrorFor("Name");
+    var emailError = Model.ErrorFor("Email");
+    var passwordError = Model.ErrorFor("Password");
+}
+<h1 class="auth__title">@UiText.RegisterTitle</h1>
+<p class="auth__alert" id="form-message" role="alert" aria-live="assertive">@alert</p>
+<form method="post" action="/kayit" class="auth__form" novalidate asp-antiforgery="true"
+      data-auth-form data-text-sending="@UiText.Submitting">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+    <div class="auth__field">
+        <label class="auth__label" for="Name">@UiText.NameLabel</label>
+        <input class="auth__input" id="Name" name="Name" type="text" autocomplete="name" maxlength="200" value="@Model.Name"
+               aria-describedby="Name-error" aria-invalid="@(nameError is null ? null : "true")"
+               autofocus="@(focus == "Name" ? "autofocus" : null)" />
+        <span class="auth__error" id="Name-error">@nameError</span>
+    </div>
+    <div class="auth__field">
+        <label class="auth__label" for="Email">@UiText.EmailLabel</label>
+        <input class="auth__input" id="Email" name="Email" type="email" autocomplete="email" value="@Model.Email"
+               aria-describedby="Email-error" aria-invalid="@(emailError is null ? null : "true")"
+               autofocus="@(focus == "Email" ? "autofocus" : null)" />
+        <span class="auth__error" id="Email-error">@emailError</span>
+    </div>
+    <div class="auth__field">
+        <label class="auth__label" for="Password">@UiText.PasswordLabel</label>
+        <input class="auth__input" id="Password" name="Password" type="password" autocomplete="new-password"
+               aria-describedby="Password-hint Password-error" aria-invalid="@(passwordError is null ? null : "true")"
+               autofocus="@(focus == "Password" ? "autofocus" : null)" />
+        <span class="auth__hint" id="Password-hint">@UiText.PasswordHint</span>
+        <span class="auth__error" id="Password-error">@passwordError</span>
+    </div>
+    <button type="submit" class="auth__submit">@UiText.RegisterSubmit</button>
+</form>
+<p class="auth__switch"><a class="auth__link" href="/giris">@UiText.ToLogin</a></p>

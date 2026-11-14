@@ -1,0 +1,25 @@
+@* Karşılama bölümü (spec 0002 Req 19, AC-20): ürün adı ve logo, kısa tanıtım, giriş/kayıt geçişi ve ajan indirme notu.
+   Kullanıcı verisi içermez; geniş ekranda formun yanında, dar ekranda üstünde (site.css). *@
+@{
+    var onRegister = string.Equals(Context.Request.Path.Value, "/kayit", StringComparison.OrdinalIgnoreCase);
+}
+<section class="welcome" aria-labelledby="welcome-title">
+    <div class="welcome__brand">
+        <img class="welcome__logo welcome__logo--light" src="~/img/app-icon.svg" alt="@UiText.WelcomeLogoAlt" width="64" height="64" />
+        <img class="welcome__logo welcome__logo--dark" src="~/img/app-icon-dark.svg" alt="@UiText.WelcomeLogoAlt" width="64" height="64" />
+        <h2 class="welcome__title" id="welcome-title">@UiText.AppName</h2>
+    </div>
+    <p class="welcome__tagline">@UiText.WelcomeTagline</p>
+    <p class="welcome__intro">@UiText.WelcomeIntro</p>
+    <p class="welcome__switch">
+        @if (onRegister)
+        {
+            <a class="welcome__link" href="/giris">@UiText.ToLogin</a>
+        }
+        else
+        {
+            <a class="welcome__link" href="/kayit">@UiText.ToRegister</a>
+        }
+    </p>
+    <p class="welcome__note">@UiText.WelcomeAgentNote</p>
+</section>

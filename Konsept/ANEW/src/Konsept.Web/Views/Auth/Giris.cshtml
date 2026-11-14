@@ -1,0 +1,35 @@
+@model Konsept.Web.Models.LoginForm
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = UiText.LoginTitle;
+    var alert = Model.Message ?? (Model.Errors.Count > 0 ? UiText.FormErrorSummary : null);
+    var focus = Model.FirstInvalidField ?? (Model.Message is not null ? "Password" : null);
+    var emailError = Model.ErrorFor("Email");
+    var passwordError = Model.ErrorFor("Password");
+}
+<h1 class="auth__title">@UiText.LoginTitle</h1>
+@if (Model.Notice is not null)
+{
+    <p class="auth__notice" role="status">@Model.Notice</p>
+}
+<p class="auth__alert" id="form-message" role="alert" aria-live="assertive">@alert</p>
+<form method="post" action="/giris" class="auth__form" novalidate asp-antiforgery="true"
+      data-auth-form data-text-sending="@UiText.Submitting">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+    <div class="auth__field">
+        <label class="auth__label" for="Email">@UiText.EmailLabel</label>
+        <input class="auth__input" id="Email" name="Email" type="email" autocomplete="username" value="@Model.Email"
+               aria-describedby="Email-error" aria-invalid="@(emailError is null ? null : "true")"
+               autofocus="@(focus == "Email" ? "autofocus" : null)" />
+        <span class="auth__error" id="Email-error">@emailError</span>
+    </div>
+    <div class="auth__field">
+        <label class="auth__label" for="Password">@UiText.PasswordLabel</label>
+        <input class="auth__input" id="Password" name="Password" type="password" autocomplete="current-password"
+               aria-describedby="Password-error" aria-invalid="@(passwordError is null ? null : "true")"
+               autofocus="@(focus == "Password" ? "autofocus" : null)" />
+        <span class="auth__error" id="Password-error">@passwordError</span>
+    </div>
+    <button type="submit" class="auth__submit">@UiText.LoginSubmit</button>
+</form>
+<p class="auth__switch"><a class="auth__link" href="/kayit">@UiText.ToRegister</a></p>

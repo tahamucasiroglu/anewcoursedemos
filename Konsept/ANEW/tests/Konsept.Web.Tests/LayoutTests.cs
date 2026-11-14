@@ -33,7 +33,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     [Fact]
     public async Task Layout_TopBar_RendersItemsInDesignOrder()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         var bar = doc.QuerySelector("header.topbar")!;
@@ -56,7 +56,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     [MemberData(nameof(Pages))]
     public async Task Pages_EachLink_RendersEmptyState(string path, string title, string emptyText)
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
         var home = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
         home.QuerySelectorAll(".topbar__nav a").Select(a => a.GetAttribute("href")).ShouldContain(path);
 
@@ -72,7 +72,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     [Fact]
     public async Task Publishing_Page_ShowsComingSoon()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
 
         var doc = await WebFactory.GetDocumentAsync(client, "/yayinlama", TestContext.Current.CancellationToken);
 
@@ -84,7 +84,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     [Fact]
     public async Task Layout_PassiveControls_HaveTooltipAndAccessibleName()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         var passive = doc.QuerySelectorAll(".passive").ToList();
@@ -120,7 +120,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     [Fact]
     public async Task Layout_DefaultTheme_IsLight()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         doc.DocumentElement.GetAttribute("data-theme").ShouldBe("light");
@@ -132,7 +132,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     [Fact]
     public async Task Layout_SecurityHeaders_ForbidInlineScripts()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
         using var response = await client.GetAsync(new Uri("/", UriKind.Relative), TestContext.Current.CancellationToken);
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 

@@ -2,6 +2,8 @@ using Konsept.Shared.Kernel.Enums;
 using Konsept.Shared.Kernel.Results;
 using Konsept.Web.ApiClient;
 using Konsept.Web.ApiClient.Dtos;
+using Konsept.Web.Auth;
+using Konsept.Web.Resources;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Konsept.Web.Infrastructure;
@@ -21,6 +23,11 @@ public static class BrowserJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(resultTask);
         var result = await resultTask.ConfigureAwait(false);
+        if (!result.IsSuccess && result.Error!.Type == ErrorType.Unauthorized)
+        {
+            return SessionExpired(); // Oturum Api'de düştü: sessizce "API yok" denmez, tarayıcı girişe yönlenir (AC-13).
+        }
+
         return result.IsSuccess
             ? new JsonResult(new
             {
@@ -47,12 +54,19 @@ public static class BrowserJsonExtensions
         }
 
         var error = result.Error!;
-        return new JsonResult(new { code = error.Code, message = error.Message }) { StatusCode = StatusOf(error) };
+        return error.Type == ErrorType.Unauthorized
+            ? SessionExpired()
+            : new JsonResult(new { code = error.Code, message = error.Message }) { StatusCode = StatusOf(error) };
     }
+
+    private static JsonResult SessionExpired() =>
+        new(new { code = KonseptCookieEvents.SessionExpiredCode, message = UiText.SessionExpired }) { StatusCode = StatusCodes.Status401Unauthorized };
 
     private static int StatusOf(Error error) => error.Type switch
     {
         ErrorType.Validation => StatusCodes.Status400BadRequest,
+        ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+        ErrorType.TooManyRequests => StatusCodes.Status429TooManyRequests,
         ErrorType.NotFound => StatusCodes.Status404NotFound,
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.Timeout => StatusCodes.Status504GatewayTimeout,

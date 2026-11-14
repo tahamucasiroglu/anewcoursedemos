@@ -32,7 +32,7 @@ public sealed class SystemEndpointTests : IClassFixture<WebFactory>
     {
         _factory.Api.GetSystemStatusAsync(Arg.Any<CancellationToken>())
             .Returns(Result<SystemStatusResponse>.Failure(ApiClientErrors.Unavailable));
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
 
         var body = await client.GetFromJsonAsync<JsonElement>("/system/status", TestContext.Current.CancellationToken);
 
@@ -46,7 +46,7 @@ public sealed class SystemEndpointTests : IClassFixture<WebFactory>
     {
         _factory.Api.GetSystemStatusAsync(Arg.Any<CancellationToken>()).Returns(Result<SystemStatusResponse>.Success(
             new SystemStatusResponse("0.1.0", false, new AgentStatusResponse(true, "TAHA-PC", "0.1.0", null), null)));
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
 
         var body = await client.GetFromJsonAsync<JsonElement>("/system/status", TestContext.Current.CancellationToken);
 
@@ -61,7 +61,7 @@ public sealed class SystemEndpointTests : IClassFixture<WebFactory>
     [Fact]
     public async Task AgentTest_WithoutAntiforgeryToken_IsRejected()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
 
         using var response = await client.PostAsync(new Uri("/system/agent-test", UriKind.Relative), null, TestContext.Current.CancellationToken);
 
@@ -73,7 +73,7 @@ public sealed class SystemEndpointTests : IClassFixture<WebFactory>
     [Fact]
     public async Task AgentTest_WithToken_ForwardsResultAndErrors()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateSignedInClientAsync(TestContext.Current.CancellationToken);
         var page = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
         var token = page.QuerySelector("meta[name='csrf-token']")!.GetAttribute("content")!;
 

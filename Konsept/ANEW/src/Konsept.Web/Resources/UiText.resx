@@ -43,4 +43,29 @@
   <data name="AgentTestTimeout" xml:space="preserve"><value>Zaman aşımı</value></data>
   <data name="AgentTestApiDown" xml:space="preserve"><value>API erişilemiyor</value></data>
   <data name="AgentTestFailed" xml:space="preserve"><value>Ajana ulaşılamadı</value></data>
+  <data name="LoginTitle" xml:space="preserve"><value>Giriş yap</value></data>
+  <data name="RegisterTitle" xml:space="preserve"><value>Kayıt ol</value></data>
+  <data name="NameLabel" xml:space="preserve"><value>Ad</value></data>
+  <data name="EmailLabel" xml:space="preserve"><value>E-posta</value></data>
+  <data name="PasswordLabel" xml:space="preserve"><value>Şifre</value></data>
+  <data name="PasswordHint" xml:space="preserve"><value>En az 8 karakter; en az bir harf ve bir rakam.</value></data>
+  <data name="LoginSubmit" xml:space="preserve"><value>Giriş yap</value></data>
+  <data name="RegisterSubmit" xml:space="preserve"><value>Kayıt ol</value></data>
+  <data name="Submitting" xml:space="preserve"><value>Gönderiliyor…</value></data>
+  <data name="ToRegister" xml:space="preserve"><value>Hesabın yok mu? Kayıt ol</value></data>
+  <data name="ToLogin" xml:space="preserve"><value>Zaten hesabın var mı? Giriş yap</value></data>
+  <data name="FormErrorSummary" xml:space="preserve"><value>Lütfen işaretli alanları düzeltin.</value></data>
+  <data name="LoginWrongPassword" xml:space="preserve"><value>Yanlış girdiniz, {0} hakkınız kaldı</value></data>
+  <data name="LoginLocked" xml:space="preserve"><value>Çok fazla yanlış deneme. Hesabınız {0}'de açılacak</value></data>
+  <data name="LoginInvalidCredentials" xml:space="preserve"><value>E-posta ya da şifre hatalı</value></data>
+  <data name="EmailTaken" xml:space="preserve"><value>Bu e-posta zaten kayıtlı</value></data>
+  <data name="TooManyAttempts" xml:space="preserve"><value>Çok fazla deneme, biraz sonra tekrar deneyin</value></data>
+  <data name="SessionExpired" xml:space="preserve"><value>Oturumunuz sona erdi</value></data>
+  <data name="ServiceUnavailable" xml:space="preserve"><value>Şu an işleminizi yapamıyoruz (hata no: {0})</value></data>
+  <data name="UserMenuLabel" xml:space="preserve"><value>Kullanıcı menüsü</value></data>
+  <data name="Logout" xml:space="preserve"><value>Çıkış yap</value></data>
+  <data name="WelcomeTagline" xml:space="preserve"><value>Fikirden videoya, tek akışta.</value></data>
+  <data name="WelcomeIntro" xml:space="preserve"><value>ANEW Konsept, yapay zekâyla senin için video konseptleri önerir. Beğendiğin konsepti onaylarsın, bilgisayarındaki masaüstü ajanı onu senin yerine videoya dönüştürür. Üretilen videolar senin bilgisayarında kalır.</value></data>
+  <data name="WelcomeAgentNote" xml:space="preserve"><value>Masaüstü ajanını giriş yaptıktan sonra Ayarlar'dan indirebilirsin.</value></data>
+  <data name="WelcomeLogoAlt" xml:space="preserve"><value>ANEW Konsept logosu</value></data>
 </root>
