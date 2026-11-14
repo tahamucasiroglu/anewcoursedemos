@@ -2,7 +2,7 @@
 
   <!--
     Production modülü: seslendirme metni normalizasyonu (yazılış → okunuş). Saf kütüphane, altyapı bağımlılığı yok.
-    Tek G/Ç: gömülü yerleşik okunuş sözlüğü (Resources/builtin-lexicon.tr.json). Kayıt: services.AddSpeechTextNormalization();
+    Tek G/Ç: gömülü yerleşik okunuş sözlüğü (Resources/builtin-lexicon-tr.json). Kayıt: services.AddSpeechTextNormalization();
     DI'sız kullanım: SpeechTextNormalizerFactory.CreateDefault().
   -->
   <PropertyGroup>
@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\builtin-lexicon.tr.json" LogicalName="TahaKonsept.Normalization.builtin-lexicon.tr.json" />
+    <EmbeddedResource Include="Resources\builtin-lexicon-tr.json" LogicalName="TahaKonsept.Normalization.builtin-lexicon-tr.json" />
   </ItemGroup>
 
 </Project>

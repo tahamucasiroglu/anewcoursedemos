@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Türkçe okunuş normalizasyonu birim testleri (tablo tabanlı; DB/ağ gerektirmez). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Production.Normalization.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Production\TahaKonsept.Modules.Production.Normalization\TahaKonsept.Modules.Production.Normalization.csproj" />
+  </ItemGroup>
+
+</Project>

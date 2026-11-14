@@ -121,7 +121,7 @@ public sealed partial class DateRule : NormalizationRuleBase
         return suffix is { Success: true } ? _harmonizer.Attach(words, suffix.Value) : words;
     }
 
-    [GeneratedRegex(@"(?<![\p{L}\p{N}])(?<era>M\.\s?Ö\.?|MÖ|M\.\s?S\.|MS)(?![\p{L}])(?:\s*(?<y>\d{1,4})(?:['’](?<suf>\p{L}+))?(?![\p{N}.,]\d))?", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?<![\p{L}\p{N}])(?<era>M\.\s?Ö\.?|MÖ|M\.\s?S\.|MS)(?![\p{L}])(?:\s*(?<y>\d{1,4})(?:['’](?<suf>\p{L}+))?(?![\p{N}.,]\d|\.[ \t]+\p{Ll}))?", RegexOptions.CultureInvariant)]
     private static partial Regex Era();
 
     [GeneratedRegex(@"\G\s*(?:\d|[IVXLCDM]+\.)", RegexOptions.CultureInvariant)]
@@ -133,7 +133,7 @@ public sealed partial class DateRule : NormalizationRuleBase
     [GeneratedRegex(@"(?<![\p{L}\p{N}.,])(?:(?<d>\d{1,2})\s+)?(?<mon>" + TurkishMonths.Pattern + @")(?![\p{L}])(?<monsuf>['’]\p{L}+)?(?:\s+(?<y>\d{1,4})(?:['’](?<suf>\p{L}+))?(?![\p{L}\p{N}]|[.,]\d))?", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex MonthDate();
 
-    [GeneratedRegex(@"(?<![\p{L}\p{N}.,])(?<y>\d{1,4})(?=\s+(?:yıl|sene)\p{L}*)", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?<![\-–][ ]?)(?<![\p{L}\p{N}.,])(?<y>\d{1,4})(?=\s+(?:yıl|sene)\p{L}*)", RegexOptions.CultureInvariant)]
     private static partial Regex YearContext();
 
     [GeneratedRegex(@"(?<![\p{N}:.,])(?<h>[01]?\d|2[0-3]):(?<mi>[0-5]\d)(?:['’](?<suf>\p{L}+))?(?![\p{N}:])", RegexOptions.CultureInvariant)]
