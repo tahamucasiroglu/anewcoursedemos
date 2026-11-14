@@ -6,9 +6,11 @@ using TahaKonsept.BuildingBlocks.Infrastructure.Persistence;
 using TahaKonsept.Modules.Diagnostics.Application.Abstract;
 using TahaKonsept.Modules.Providers.Application.Abstract;
 using TahaKonsept.Modules.Providers.Application.Concrete;
+using TahaKonsept.Modules.Providers.Application.Media.Abstract;
 using TahaKonsept.Modules.Providers.Application.Validators;
 using TahaKonsept.Modules.Providers.Infrastructure.Catalog.Concrete;
 using TahaKonsept.Modules.Providers.Infrastructure.KeyTesting.Concrete;
+using TahaKonsept.Modules.Providers.Infrastructure.Media.Concrete;
 using TahaKonsept.Modules.Providers.Infrastructure.Persistence;
 using TahaKonsept.Modules.Providers.Infrastructure.Persistence.Repositories.Concrete;
 using TahaKonsept.Modules.Providers.Infrastructure.Recording.Concrete;
@@ -21,7 +23,7 @@ namespace TahaKonsept.Modules.Providers.Infrastructure.DependencyInjection;
 
 /// <summary>
 /// Providers modülünün DI kaydı. Tekil: katalog, maliyet hesaplayıcı, çağrı kaydedici, anahtar kasası, model fabrikası,
-/// <see cref="IProviderGateway"/> (arka plan servislerinden de doğrudan kullanılabilir). Kapsamlı: depolar, anahtar/kullanım/bütçe
+/// <see cref="IProviderGateway"/>, görsel/ses: <see cref="IMediaModelFactory"/>, <see cref="IVoiceCatalog"/>, <see cref="IMediaGateway"/> (arka plan servislerinden de doğrudan kullanılabilir). Kapsamlı: depolar, anahtar/kullanım/bütçe
 /// servisleri, <see cref="IBudgetGuard"/>, doğrulayıcılar, yönetim paneli harcama katkıcısı (<c>ProvidersStatsContributor</c>).
 /// </summary>
 public static class ProvidersInfrastructureServiceCollectionExtensions
@@ -36,6 +38,7 @@ public static class ProvidersInfrastructureServiceCollectionExtensions
 
         services.AddModuleDbContext<ProvidersDbContext>(configuration, ProvidersDbContext.SchemaName);
         services.AddHttpClient(TextModelFactory.HttpClientName, c => c.Timeout = TimeSpan.FromMinutes(15));
+        services.AddHttpClient(MediaModelFactory.HttpClientName, c => c.Timeout = TimeSpan.FromMinutes(5));
         services.AddHttpClient<IApiKeyTester, HttpApiKeyTester>(c => c.Timeout = TimeSpan.FromSeconds(20));
 
         services.AddSingleton<IModelCatalog, EmbeddedModelCatalog>();
@@ -44,6 +47,9 @@ public static class ProvidersInfrastructureServiceCollectionExtensions
         services.AddSingleton<IApiKeyVault, ScopedApiKeyVault>();
         services.AddSingleton<ITextModelFactory, TextModelFactory>();
         services.AddSingleton<IProviderGateway, ProviderGateway>();
+        services.AddSingleton<IMediaModelFactory, MediaModelFactory>();
+        services.AddSingleton<IVoiceCatalog, StaticVoiceCatalog>();
+        services.AddSingleton<IMediaGateway, MediaGateway>();
 
         services.AddScoped<IProviderApiKeyRepository, ProviderApiKeyRepository>();
         services.AddScoped<ICallLogRepository, CallLogRepository>();

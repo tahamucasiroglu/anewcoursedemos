@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using TahaKonsept.BuildingBlocks.Api.Controllers.Base;
 using TahaKonsept.Modules.Providers.Application.Abstract;
+using TahaKonsept.Modules.Providers.Application.Media.Abstract;
 using TahaKonsept.Shared.Contracts.Providers;
 
 namespace TahaKonsept.Modules.Providers.Api.Controllers;
 
 /// <summary>
 /// Sağlayıcı uçları (<c>api/providers</c>): model kataloğu, API anahtarları (listele / kaydet / sil / test), aylık harcama,
-/// bütçe ayarı. Tüm iş servislerde; aksiyonlar tek satır.
+/// bütçe ayarı, online ses modellerinin sesleri (<c>voices?modelKey=</c>). Tüm iş servislerde; aksiyonlar tek satır.
 /// </summary>
 [Route("api/providers")]
 public sealed class ProvidersController : ApiControllerBase
@@ -16,18 +17,21 @@ public sealed class ProvidersController : ApiControllerBase
     private readonly IApiKeyService _keys;
     private readonly IUsageService _usage;
     private readonly IBudgetService _budget;
+    private readonly IVoiceCatalog _voices;
 
     /// <summary>Kurucu.</summary>
     /// <param name="catalog">Model kataloğu.</param>
     /// <param name="keys">Anahtar servisi.</param>
     /// <param name="usage">Harcama servisi.</param>
     /// <param name="budget">Bütçe servisi.</param>
-    public ProvidersController(IModelCatalog catalog, IApiKeyService keys, IUsageService usage, IBudgetService budget)
+    /// <param name="voices">Ses kataloğu.</param>
+    public ProvidersController(IModelCatalog catalog, IApiKeyService keys, IUsageService usage, IBudgetService budget, IVoiceCatalog voices)
     {
         _catalog = catalog;
         _keys = keys;
         _usage = usage;
         _budget = budget;
+        _voices = voices;
     }
 
     /// <summary>Model kataloğu (<c>?capability=Text|Image|Speech|VideoEngine</c>, <c>?runsOn=Server|Agent</c>).</summary>
@@ -36,6 +40,11 @@ public sealed class ProvidersController : ApiControllerBase
     [HttpGet("models")]
     public IActionResult Models([FromQuery] ModelCapability? capability, [FromQuery] ModelRunsOn? runsOn) =>
         ToActionResult(_catalog.Query(capability, runsOn));
+
+    /// <summary>Online ses modelinin seçilebilir sesleri (Türkçeye özgü sesler önce).</summary>
+    /// <param name="modelKey">Katalog anahtarı (ör. <c>azure-neural</c>).</param>
+    [HttpGet("voices")]
+    public IActionResult Voices([FromQuery] string? modelKey) => ToActionResult(_voices.List(modelKey));
 
     /// <summary>Tüm online platformlar ve anahtar durumları (yalnızca son 4 hane).</summary>
     /// <param name="ct">İptal belirteci.</param>
