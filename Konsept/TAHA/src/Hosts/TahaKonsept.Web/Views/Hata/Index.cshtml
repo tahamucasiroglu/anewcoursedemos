@@ -1,0 +1,29 @@
+@model ErrorPageModel
+@{
+    ViewData["Title"] = Model.StatusCode == 404 ? "Sayfa bulunamadı" : "Hata";
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_AuthLayout";
+}
+<div class="tk-soon">
+    <div class="tk-soon-card">
+        <div class="tk-soon-icon">
+            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-@(Model.StatusCode == 404 ? "info" : "alert")"></use></svg>
+        </div>
+        @if (Model.StatusCode == 404)
+        {
+            <h1>Sayfa bulunamadı</h1>
+            <p>Aradığınız sayfa taşınmış ya da hiç var olmamış olabilir.</p>
+        }
+        else if (Model.StatusCode == 403)
+        {
+            <h1>Erişim yok</h1>
+            <p>Bu sayfayı görüntüleme yetkiniz bulunmuyor.</p>
+        }
+        else
+        {
+            <h1>Bir şeyler ters gitti</h1>
+            <p>Beklenmeyen bir hata oluştu. Sorun sürerse "Hata bildir" ile bize iletin.</p>
+        }
+        <p class="tk-hint">Kod: @Model.StatusCode · İz: <code>@Model.TraceId</code></p>
+        <a class="tk-btn tk-btn-primary" href="/">Ana sayfaya dön</a>
+    </div>
+</div>

@@ -1,0 +1,27 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="VERSION" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/TahaKonsept.BuildingBlocks.Domain/TahaKonsept.BuildingBlocks.Domain.csproj" />
+    <Project Path="src/BuildingBlocks/TahaKonsept.BuildingBlocks.Application/TahaKonsept.BuildingBlocks.Application.csproj" />
+    <Project Path="src/BuildingBlocks/TahaKonsept.BuildingBlocks.Infrastructure/TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/TahaKonsept.BuildingBlocks.Api/TahaKonsept.BuildingBlocks.Api.csproj" />
+    <Project Path="src/BuildingBlocks/TahaKonsept.Shared.Contracts/TahaKonsept.Shared.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Hosts/">
+    <Project Path="src/Hosts/TahaKonsept.Api/TahaKonsept.Api.csproj" />
+    <Project Path="src/Hosts/TahaKonsept.Web/TahaKonsept.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/Desktop/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/TahaKonsept.ArchitectureTests/TahaKonsept.ArchitectureTests.csproj" />
+    <Project Path="tests/TahaKonsept.IntegrationTests/TahaKonsept.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

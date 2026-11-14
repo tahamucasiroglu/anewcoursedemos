@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- API host: tüm modüllerin Api katmanlarını, SignalR hub'ını ve arka plan servislerini barındırır. Port 7111. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Api</RootNamespace>
+    <AssemblyName>TahaKonsept.Api</AssemblyName>
+    <UserSecretsId>tahakonsept-api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Api\TahaKonsept.BuildingBlocks.Api.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

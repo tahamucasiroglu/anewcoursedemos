@@ -1,0 +1,31 @@
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "İlk kurulum";
+    ViewData["Subtitle"] = "Hoş geldiniz! Önce yönetici hesabını oluşturalım.";
+}
+<div class="tk-alert" style="margin-bottom:14px">
+    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-shield"></use></svg>
+    <span>Bu sayfa yalnızca bir kez görünür. Oluşturduğunuz hesap tüm yetkilere sahip tek kullanıcı olur; kayıt daha sonra kapalıdır.</span>
+</div>
+<form id="tk-setup-form" data-url="@Url.Action("Index", "Kurulum")" novalidate autocomplete="off">
+    <div class="tk-field">
+        <label for="setup-user">Kullanıcı adı</label>
+        <input id="setup-user" name="userName" class="tk-input" autocomplete="username" required minlength="3" maxlength="64" autofocus />
+    </div>
+    <div class="tk-field">
+        <label for="setup-pass">Parola</label>
+        <input id="setup-pass" name="password" type="password" class="tk-input" autocomplete="new-password" required minlength="8" maxlength="128" />
+        <span class="tk-hint">En az 8 karakter; harf ve rakam içersin.</span>
+    </div>
+    <div class="tk-field">
+        <label for="setup-pass2">Parola (tekrar)</label>
+        <input id="setup-pass2" name="passwordConfirm" type="password" class="tk-input" autocomplete="new-password" required maxlength="128" />
+    </div>
+    <div class="tk-alert is-danger" id="tk-setup-error" hidden>
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg>
+        <span></span>
+    </div>
+    <button type="submit" class="tk-btn tk-btn-primary tk-btn-block" style="margin-top:8px">
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Hesabı oluştur ve başla
+    </button>
+</form>

@@ -1,0 +1,133 @@
+@{
+    ViewData["Title"] = "Ayarlar";
+}
+<div class="tk-page" id="tk-ayarlar">
+    <div class="tk-page-head">
+        <div>
+            <h1>Ayarlar</h1>
+            <p>Sağlayıcı anahtarları, Türkçe okunuş sözlüğü, masaüstü programı, tema ve bütçe.</p>
+        </div>
+    </div>
+
+    <div class="tk-settings">
+        <nav class="tk-settings-nav" aria-label="Ayar bölümleri">
+            <a href="#anahtarlar" class="is-active"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-key"></use></svg> API anahtarları</a>
+            <a href="#okunus"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-book"></use></svg> Okunuş sözlüğü</a>
+            <a href="#masaustu"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-monitor"></use></svg> Masaüstü programı</a>
+            <a href="#oneriler"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-rotate"></use></svg> Önerileri sıfırla</a>
+            <a href="#tema"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-palette"></use></svg> Tema</a>
+            <a href="#butce"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg> Bütçe limiti</a>
+        </nav>
+
+        <div class="tk-settings-sections">
+            <section class="tk-card" id="anahtarlar" aria-labelledby="st-keys-title">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-key"></use></svg></span>
+                        <div><h2 id="st-keys-title">API anahtarları</h2><small class="tk-muted">Sunucuda AES-256 ile şifreli saklanır; yalnızca son 4 hane gösterilir.</small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body is-flush" id="st-keys"></div>
+            </section>
+
+            <section class="tk-card" id="okunus" aria-labelledby="st-dict-title">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-book"></use></svg></span>
+                        <div><h2 id="st-dict-title">Okunuş sözlüğü</h2><small class="tk-muted">Ekranda yazılış kalır, seslendirmede okunuş kullanılır (Google → Gugıl).</small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body">
+                    <form class="tk-row" id="st-dict-form" autocomplete="off">
+                        <input class="tk-input tk-grow" name="written" placeholder="Yazılış (ör. Google)" maxlength="120" style="flex:1 1 180px" aria-label="Yazılış" />
+                        <input class="tk-input tk-grow" name="spoken" placeholder="Okunuş (ör. Gugıl)" maxlength="200" style="flex:1 1 180px" aria-label="Okunuş" />
+                        <button type="button" class="tk-btn tk-btn-ghost" id="st-dict-listen" title="Okunuşu dinle">
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-volume"></use></svg> Dinle
+                        </button>
+                        <button type="submit" class="tk-btn tk-btn-primary">
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-plus"></use></svg> Ekle
+                        </button>
+                    </form>
+                    <div id="st-dict" style="margin-top:14px"></div>
+                </div>
+            </section>
+
+            <section class="tk-card" id="masaustu" aria-labelledby="st-agent-title">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-monitor"></use></svg></span>
+                        <div><h2 id="st-agent-title">Masaüstü programı eşleme</h2><small class="tk-muted">Render, yerel ses ve görsel üretimi bilgisayarınızda çalışır.</small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body">
+                    <div class="tk-alert" style="margin-bottom:14px">
+                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-info"></use></svg>
+                        <span>Masaüstü programını açın; ekranda <strong>XXXX-XXXX</strong> biçiminde bir kod görünecek. Kodu aşağıya yazıp onaylayın.</span>
+                    </div>
+                    <form class="tk-row" id="st-agent-form" autocomplete="off">
+                        <input class="tk-input tk-code-input" name="userCode" placeholder="ABCD-1234" maxlength="9" aria-label="Eşleme kodu" />
+                        <button type="submit" class="tk-btn tk-btn-primary">
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Onayla
+                        </button>
+                    </form>
+                    <h3 style="margin:18px 0 8px">Eşlenmiş bilgisayarlar</h3>
+                    <div id="st-agents"></div>
+                </div>
+            </section>
+
+            <section class="tk-card" id="oneriler" aria-labelledby="st-reset-title">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-rotate"></use></svg></span>
+                        <div><h2 id="st-reset-title">Önerileri sıfırla</h2><small class="tk-muted">Konu önerisi hafızasını temizler.</small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body">
+                    <p class="tk-muted">Daha önce üretilen, silinen ya da beğenilmeyen konular normalde tekrar önerilmez. Sıfırlarsanız bu konular yeniden önerilebilir. Silinen konseptler silinmez.</p>
+                    <button type="button" class="tk-btn tk-btn-danger" id="st-reset">
+                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-rotate"></use></svg> Önerileri sıfırla
+                    </button>
+                </div>
+            </section>
+
+            <section class="tk-card" id="tema" aria-labelledby="st-theme-title">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-palette"></use></svg></span>
+                        <div><h2 id="st-theme-title">Tema</h2><small class="tk-muted">Sağ üstteki güneş / ay düğmesiyle de değiştirebilirsiniz.</small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body">
+                    <div class="tk-theme-choices" role="radiogroup" aria-label="Tema">
+                        <label class="tk-theme-choice"><input type="radio" name="theme" value="light" /><span class="tk-theme-preview is-light"></span> Açık</label>
+                        <label class="tk-theme-choice"><input type="radio" name="theme" value="dark" /><span class="tk-theme-preview is-dark"></span> Koyu</label>
+                        <label class="tk-theme-choice"><input type="radio" name="theme" value="system" /><span class="tk-theme-preview is-system"></span> Sistem</label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tk-card" id="butce" aria-labelledby="st-budget-title">
+                <header class="tk-card-head">
+                    <div class="tk-card-title">
+                        <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg></span>
+                        <div><h2 id="st-budget-title">Bütçe limiti</h2><small class="tk-muted">Aylık harcama limiti aşılınca uyarı verilir ve yeni üretim durdurulur.</small></div>
+                    </div>
+                </header>
+                <div class="tk-card-body">
+                    <form id="st-budget-form" class="tk-row" autocomplete="off">
+                        <label class="tk-label" for="st-budget">Aylık limit ($)</label>
+                        <input class="tk-input" id="st-budget" name="monthlyLimitUsd" type="number" min="0" step="0.5" placeholder="0 = limitsiz" style="width:160px" />
+                        <label class="tk-switch"><input type="checkbox" name="stopOnExceed" checked /><span class="tk-switch-track"></span> Aşınca üretimi durdur</label>
+                        <button type="submit" class="tk-btn tk-btn-primary">
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Kaydet
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/ayarlar.js" asp-append-version="true"></script>
+}

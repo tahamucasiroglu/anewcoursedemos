@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "Üretilenler";
+}
+<div class="tk-page" id="tk-uretilenler">
+    <h1 class="tk-sr-only">Üretilen videolar</h1>
+
+    <div class="tk-grid-library">
+        <section class="tk-card" aria-labelledby="ur-list-title">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg></span>
+                    <div><h2 id="ur-list-title">Üretilenler</h2><small class="tk-muted" id="ur-count">—</small></div>
+                </div>
+                <button type="button" class="tk-mini-btn" id="ur-refresh" title="Yenile" aria-label="Yenile">
+                    <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-refresh"></use></svg>
+                </button>
+            </header>
+            <div style="padding:12px 12px 0">
+                <input type="search" class="tk-input" id="ur-search" placeholder="Başlıkta ara…" aria-label="Başlıkta ara" />
+            </div>
+            <div class="tk-card-body" id="ur-list"></div>
+        </section>
+
+        <section class="tk-card" aria-labelledby="ur-player-title">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-play"></use></svg></span>
+                    <div><h2 id="ur-player-title">İzleme</h2><small class="tk-muted" id="ur-player-sub">Soldan bir video seçin</small></div>
+                </div>
+            </header>
+            <div class="tk-card-body" style="display:flex;flex-direction:column;gap:14px">
+                <div class="tk-player" id="ur-player">
+                    <div class="tk-player-empty">
+                        <svg class="tk-ic tk-ic-lg" aria-hidden="true"><use href="/img/icons.svg#i-film"></use></svg>
+                        <div>Henüz video seçilmedi</div>
+                    </div>
+                </div>
+                <div class="tk-player-actions" id="ur-actions" hidden>
+                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="folder">
+                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-folder"></use></svg> Klasörde aç
+                    </button>
+                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="system">
+                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-external"></use></svg> Sistem oynatıcısında aç
+                    </button>
+                    <button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-act="regenerate">
+                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-rotate"></use></svg> Yeniden üret
+                    </button>
+                    <button type="button" class="tk-btn tk-btn-primary tk-btn-sm" data-act="version">
+                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-layers"></use></svg> Yeni sürüm
+                    </button>
+                    <span class="tk-grow"></span>
+                    <button type="button" class="tk-btn tk-btn-danger tk-btn-sm" data-act="delete">
+                        <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-trash"></use></svg> Sil
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="tk-card" aria-labelledby="ur-info-title">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-info"></use></svg></span>
+                    <div><h2 id="ur-info-title">Ayrıntılar</h2><small class="tk-muted">Seslendirme, sahneler, ücret ve ek bilgiler</small></div>
+                </div>
+            </header>
+            <div class="tk-card-body">
+                <div class="tk-tabs" role="tablist">
+                    <button type="button" class="tk-tab is-active" data-tab="scenes">Sahneler</button>
+                    <button type="button" class="tk-tab" data-tab="concept">Konsept metni</button>
+                    <button type="button" class="tk-tab" data-tab="details">Ücret ve ayrıntı</button>
+                </div>
+                <div class="tk-tab-panel is-active" data-panel="scenes" id="ur-scenes"></div>
+                <div class="tk-tab-panel" data-panel="concept" id="ur-concept"></div>
+                <div class="tk-tab-panel" data-panel="details" id="ur-details"></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/uretilenler.js" asp-append-version="true"></script>
+}

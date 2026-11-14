@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- API, Web ve masaüstü ajanı arasında paylaşılan sözleşmeler. Hiçbir projeye/pakete bağımlı DEĞİL. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Shared.Contracts</RootNamespace>
+  </PropertyGroup>
+
+</Project>

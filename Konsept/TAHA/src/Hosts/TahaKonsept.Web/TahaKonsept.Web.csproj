@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Taha Konsept Web (MVC, BFF): tarayıcı → MVC (cookie) → API (JWT). Port 7110. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Web</RootNamespace>
+    <AssemblyName>TahaKonsept.Web</AssemblyName>
+    <UserSecretsId>tahakonsept-web-6c1d2b8e</UserSecretsId>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+
+  <!-- source/ içindeki gerçek logo varsa wwwroot/img/logo.svg üzerine kopyalanır (yoksa geçici logo kalır). -->
+  <Target Name="CopyBrandIcons" BeforeTargets="Build" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\source\logo.svg')">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\..\source\logo.svg" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot\img" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

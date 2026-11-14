@@ -8,3 +8,7 @@ source/**/*.wav
 source/**/*.gguf
 source/**/*.onnx
 source/**/*.safetensors
+# Calisma zamani gizli anahtarlari ve gecici veriler (asla depoya girmez)
+**/App_Data/keys/
+**/App_Data/artifacts/
+**/logs/

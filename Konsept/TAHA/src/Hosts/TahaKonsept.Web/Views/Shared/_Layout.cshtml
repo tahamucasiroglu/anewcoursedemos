@@ -1,0 +1,133 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var area = ViewContext.RouteData.Values["area"]?.ToString() ?? string.Empty;
+    var tokens = Antiforgery.GetAndStoreTokens(Context);
+    var userName = User.Identity?.Name ?? "Kullanıcı";
+    var initial = userName.Length > 0 ? userName.Substring(0, 1).ToUpper(new System.Globalization.CultureInfo("tr-TR")) : "T";
+    var isAdmin = User.HasClaim(c => (c.Type == "permission" || c.Type == "permissions") && c.Value == "admin.access") || User.IsInRole("Admin");
+    string Nav(string name) => string.IsNullOrEmpty(area) && string.Equals(controller, name, StringComparison.OrdinalIgnoreCase) ? "is-active" : string.Empty;
+}
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="@tokens.RequestToken" />
+    <meta name="csrf-header" content="@tokens.HeaderName" />
+    <meta name="color-scheme" content="light dark" />
+    <title>@(ViewData["Title"] is string t ? t + " · " : string.Empty)Taha Konsept</title>
+    <link rel="icon" type="image/svg+xml" href="~/img/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/core/theme.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+    <a class="tk-sr-only" href="#tk-main">İçeriğe geç</a>
+
+    <header class="tk-topbar" id="tk-topbar">
+        <button type="button" class="tk-icon-btn tk-menu-toggle" id="tk-menu-toggle" aria-controls="tk-nav" aria-expanded="false" title="Menü">
+            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-menu"></use></svg>
+        </button>
+
+        <a class="tk-brand" asp-area="" asp-controller="Konseptler" asp-action="Index" aria-label="Taha Konsept ana sayfa">
+            <img src="~/img/logo.svg" alt="" />
+            <span>Taha <span class="tk-brand-accent">Konsept</span></span>
+        </a>
+
+        <span class="tk-spend" id="tk-spend" title="Bu ayki toplam harcama">
+            <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg>
+            <span class="tk-spend-label">Bu ay</span> <strong>$0.00</strong>
+        </span>
+
+        <nav class="tk-nav" id="tk-nav" aria-label="Ana menü">
+            <a asp-area="" asp-controller="Konseptler" asp-action="Index" class="@Nav("Konseptler")">Konseptler</a>
+            <a asp-area="" asp-controller="KonsepttenVideo" asp-action="Index" class="@Nav("KonsepttenVideo")">Konseptten Video</a>
+            <a asp-area="" asp-controller="Uretilenler" asp-action="Index" class="@Nav("Uretilenler")">Üretilenler</a>
+            <a asp-area="" asp-controller="Silinenler" asp-action="Index" class="@Nav("Silinenler")">Silinenler</a>
+            <a asp-area="" asp-controller="Yayinlama" asp-action="Index" class="@Nav("Yayinlama")">Yayınlama</a>
+        </nav>
+
+        <div class="tk-topbar-spacer"></div>
+
+        <div class="tk-tools">
+            <label class="tk-profile-select" title="Aktif kanal profili">
+                <svg class="tk-ic tk-ic-sm" aria-hidden="true"><use href="/img/icons.svg#i-channel"></use></svg>
+                <span class="tk-sr-only">Profil seçimi</span>
+                <select id="tk-profile" aria-label="Profil seçimi"><option value="">Yükleniyor…</option></select>
+            </label>
+            <button type="button" class="tk-icon-btn" id="tk-profile-edit" title="Profili düzenle" aria-label="Profili düzenle">
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-pencil"></use></svg>
+            </button>
+            <button type="button" class="tk-icon-btn is-accent" id="tk-profile-add" title="Profil ekle" aria-label="Profil ekle">
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-plus"></use></svg>
+            </button>
+
+            <span class="tk-tools-sep" aria-hidden="true"></span>
+
+            <button type="button" class="tk-icon-btn tk-hide-sm" id="tk-bug" title="Hata bildir">
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bug"></use></svg>
+                <span class="tk-label">Hata bildir</span>
+            </button>
+            <a class="tk-icon-btn @Nav("Ayarlar")" asp-area="" asp-controller="Ayarlar" asp-action="Index" title="Ayarlar">
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-settings"></use></svg>
+                <span class="tk-label">Ayarlar</span>
+            </a>
+            <button type="button" class="tk-icon-btn tk-theme-toggle" data-theme-toggle title="Açık / koyu tema" aria-label="Temayı değiştir">
+                <svg class="tk-ic tk-ic-moon" aria-hidden="true"><use href="/img/icons.svg#i-moon"></use></svg>
+                <svg class="tk-ic tk-ic-sun" aria-hidden="true"><use href="/img/icons.svg#i-sun"></use></svg>
+            </button>
+
+            <div class="tk-dropdown">
+                <button type="button" class="tk-icon-btn" data-dropdown-toggle aria-haspopup="true" aria-expanded="false" title="Hesap">
+                    <span class="tk-avatar">@initial</span>
+                </button>
+                <div class="tk-dropdown-menu" role="menu">
+                    <div class="tk-dropdown-head">
+                        <strong>@userName</strong>
+                        <small>Tek kullanıcı modu</small>
+                    </div>
+                    @if (isAdmin)
+                    {
+                        <a class="tk-dropdown-item" role="menuitem" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-chart"></use></svg> Yönetim paneli
+                        </a>
+                    }
+                    <a class="tk-dropdown-item" role="menuitem" asp-area="" asp-controller="Ayarlar" asp-action="Index" asp-fragment="masaustu">
+                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-monitor"></use></svg> Masaüstü programı
+                    </a>
+                    <button type="button" class="tk-dropdown-item is-danger" role="menuitem" id="tk-logout">
+                        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-logout"></use></svg> Çıkış yap
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="tk-main" id="tk-main">
+        @RenderBody()
+    </main>
+
+    <div class="tk-journal-panel" id="tk-journal-panel" aria-live="polite"></div>
+    <footer class="tk-journal" id="tk-journal" role="button" tabindex="0" aria-expanded="false" aria-controls="tk-journal-panel" title="Günlüğü aç / kapat">
+        <span class="tk-journal-tag"><span class="tk-journal-dot"></span> Günlük</span>
+        <span class="tk-journal-ticker"><span class="tk-muted">Bağlanıyor…</span></span>
+        <span class="tk-journal-count"></span>
+    </footer>
+
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/js/core/util.js" asp-append-version="true"></script>
+    <script src="~/js/core/toast.js" asp-append-version="true"></script>
+    <script src="~/js/core/api.js" asp-append-version="true"></script>
+    <script src="~/js/core/poll.js" asp-append-version="true"></script>
+    <script src="~/js/core/modal.js" asp-append-version="true"></script>
+    <script src="~/js/core/profile.js" asp-append-version="true"></script>
+    <script src="~/js/core/layout.js" asp-append-version="true"></script>
+    <script src="~/js/core/journal.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

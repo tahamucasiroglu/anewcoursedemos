@@ -1,0 +1,27 @@
+@model LoginPageModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Giriş";
+    ViewData["Subtitle"] = "Hesabınızla giriş yapın.";
+}
+<form id="tk-login-form" class="tk-auth-form" data-url="@Url.Action("Login", "Account")" novalidate autocomplete="on">
+    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+    <div class="tk-field">
+        <label for="login-user">Kullanıcı adı</label>
+        <input id="login-user" name="userName" class="tk-input" autocomplete="username" required autofocus maxlength="64" />
+    </div>
+    <div class="tk-field">
+        <label for="login-pass">Parola</label>
+        <input id="login-pass" name="password" type="password" class="tk-input" autocomplete="current-password" required maxlength="128" />
+    </div>
+    <div class="tk-field">
+        <label class="tk-check"><input type="checkbox" name="rememberMe" checked /> Beni hatırla</label>
+    </div>
+    <div class="tk-alert is-danger" id="tk-login-error" hidden>
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg>
+        <span></span>
+    </div>
+    <button type="submit" class="tk-btn tk-btn-primary tk-btn-block" style="margin-top:8px">
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-lock"></use></svg> Giriş yap
+    </button>
+</form>

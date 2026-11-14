@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Yönetim paneli";
+}
+<div class="tk-page" id="tk-admin">
+    <div class="tk-page-head">
+        <div>
+            <h1>Yönetim paneli</h1>
+            <p>Üretim istatistikleri, harcamalar, hata bildirimleri ve son aktiviteler.</p>
+        </div>
+        <div class="tk-page-actions">
+            <button type="button" class="tk-btn tk-btn-secondary" id="ad-refresh">
+                <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-refresh"></use></svg> Yenile
+            </button>
+        </div>
+    </div>
+
+    <div class="tk-stats">
+        <div class="tk-stat"><div class="tk-stat-label">Toplam klip</div><div class="tk-stat-value" id="ad-clips">—</div><div class="tk-stat-sub">Tüm zamanlar</div></div>
+        <div class="tk-stat"><div class="tk-stat-label">Konsept</div><div class="tk-stat-value" id="ad-concepts">—</div><div class="tk-stat-sub">Üretilen + onaylı</div></div>
+        <div class="tk-stat"><div class="tk-stat-label">Bu ay harcama</div><div class="tk-stat-value" id="ad-spend">—</div><div class="tk-stat-sub">LLM + ses + görsel</div></div>
+        <div class="tk-stat"><div class="tk-stat-label">Hata bildirimi</div><div class="tk-stat-value" id="ad-errors">—</div><div class="tk-stat-sub">Açık bildirimler</div></div>
+    </div>
+
+    <div class="tk-admin-grid">
+        <section class="tk-card">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-chart"></use></svg></span>
+                    <div><h2>Günlük üretilen klip</h2><small class="tk-muted">Son 30 gün</small></div>
+                </div>
+            </header>
+            <div class="tk-card-body"><div class="tk-chart-box"><canvas id="ad-chart-daily" role="img" aria-label="Son 30 günde günlük üretilen klip sayısı"></canvas></div></div>
+        </section>
+        <section class="tk-card">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-wallet"></use></svg></span>
+                    <div><h2>Sağlayıcıya göre harcama</h2><small class="tk-muted">Bu ay ($)</small></div>
+                </div>
+            </header>
+            <div class="tk-card-body"><div class="tk-chart-box"><canvas id="ad-chart-provider" role="img" aria-label="Bu ay sağlayıcıya göre harcama"></canvas></div></div>
+        </section>
+    </div>
+
+    <div class="tk-admin-grid">
+        <section class="tk-card">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-bug"></use></svg></span>
+                    <div><h2>Hata bildirimleri</h2></div>
+                </div>
+            </header>
+            <div class="tk-card-body is-flush" id="ad-reports"></div>
+        </section>
+        <section class="tk-card">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-list"></use></svg></span>
+                    <div><h2>Son aktiviteler</h2></div>
+                </div>
+            </header>
+            <div class="tk-card-body" id="ad-activities"></div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/pages/admin-dashboard.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Silinenler";
+}
+<div class="tk-page" id="tk-silinenler">
+    <div class="tk-page-head">
+        <div>
+            <h1>Silinenler</h1>
+            <p>Silinen konseptler sonsuza kadar burada saklanır ve benzer konuların tekrar önerilmesini engeller. Buradan silinen tamamen silinir.</p>
+        </div>
+        <div class="tk-page-actions">
+            <input type="search" class="tk-input" id="sl-search" placeholder="Ara…" aria-label="Silinenlerde ara" style="width:240px" />
+        </div>
+    </div>
+
+    <section class="tk-card">
+        <div class="tk-card-body is-flush" id="sl-list"></div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/silinenler.js" asp-append-version="true"></script>
+}

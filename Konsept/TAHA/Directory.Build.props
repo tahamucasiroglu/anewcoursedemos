@@ -1,0 +1,26 @@
+<Project>
+  <!--
+    Taha Konsept ortak derleme ayarları (MIMARI §1).
+    - Sürüm tek kaynaktan: kökteki VERSION dosyası.
+    - CS1591 (public türde/üyede summary eksik) HATA'dır.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
+    <TahaKonseptVersion>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)VERSION').Trim())</TahaKonseptVersion>
+    <Version>$(TahaKonseptVersion)</Version>
+    <AssemblyVersion>$(TahaKonseptVersion).0</AssemblyVersion>
+    <FileVersion>$(TahaKonseptVersion).0</FileVersion>
+    <InformationalVersion>$(TahaKonseptVersion)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Company>Taha Konsept</Company>
+    <Product>Taha Konsept</Product>
+    <NeutralLanguage>tr-TR</NeutralLanguage>
+    <SatelliteResourceLanguages>tr;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+</Project>

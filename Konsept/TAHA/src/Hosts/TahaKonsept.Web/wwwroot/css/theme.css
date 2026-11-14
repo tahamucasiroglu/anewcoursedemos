@@ -1,0 +1,108 @@
+/* =========================================================================
+   Taha Konsept — Tema değişkenleri
+   Açık mod (varsayılan): krem / beyazımsı turuncu zemin, kahve metin, turuncu vurgu.
+   Koyu mod: koyu kahve zemin, turuncu vurgu. <html data-theme="dark|light">
+   Bütün renkler buradan yönetilir; site.css sadece bu değişkenleri kullanır.
+   ========================================================================= */
+
+:root {
+    color-scheme: light;
+
+    /* Zeminler */
+    --tk-bg: #fbf5ec;
+    --tk-bg-grad: radial-gradient(1200px 600px at 10% -10%, #fff1df 0%, transparent 60%),
+                  radial-gradient(900px 500px at 110% 0%, #ffe9d2 0%, transparent 55%);
+    --tk-surface: #ffffff;
+    --tk-surface-2: #fff7ee;
+    --tk-surface-3: #fdeedd;
+    --tk-overlay: rgba(46, 28, 16, 0.42);
+
+    /* Metin */
+    --tk-text: #3b2719;
+    --tk-text-soft: #5e4433;
+    --tk-text-muted: #8f735f;
+    --tk-text-on-accent: #ffffff;
+
+    /* Çizgi */
+    --tk-border: #eedcc6;
+    --tk-border-strong: #dfc3a3;
+    --tk-divider: #f2e5d4;
+
+    /* Vurgu */
+    --tk-accent: #e67a2e;
+    --tk-accent-hover: #d0661c;
+    --tk-accent-press: #b8570f;
+    --tk-accent-soft: #fde6d1;
+    --tk-accent-softer: #fff1e4;
+    --tk-accent-ring: rgba(230, 122, 46, 0.35);
+    --tk-brown: #8b5a3c;
+    --tk-brown-soft: #f3e3d3;
+
+    /* Durumlar */
+    --tk-success: #3f8a4d;
+    --tk-success-soft: #e3f2e2;
+    --tk-warning: #c48a0e;
+    --tk-warning-soft: #fdf1cf;
+    --tk-danger: #c4412c;
+    --tk-danger-soft: #fbe2dc;
+    --tk-info: #3b74a8;
+    --tk-info-soft: #e1ecf6;
+
+    /* Gölge */
+    --tk-shadow-sm: 0 1px 2px rgba(91, 55, 28, 0.06), 0 1px 1px rgba(91, 55, 28, 0.04);
+    --tk-shadow: 0 6px 18px -8px rgba(91, 55, 28, 0.18), 0 2px 6px rgba(91, 55, 28, 0.06);
+    --tk-shadow-lg: 0 24px 60px -20px rgba(70, 40, 18, 0.35), 0 8px 20px rgba(70, 40, 18, 0.10);
+
+    /* Ölçüler */
+    --tk-radius-sm: 8px;
+    --tk-radius: 14px;
+    --tk-radius-lg: 20px;
+    --tk-topbar-h: 62px;
+    --tk-journal-h: 34px;
+    --tk-font: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --tk-font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+    --tk-ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --tk-bg: #1b1410;
+    --tk-bg-grad: radial-gradient(1200px 600px at 10% -10%, rgba(230, 122, 46, 0.10) 0%, transparent 60%),
+                  radial-gradient(900px 500px at 110% 0%, rgba(139, 90, 60, 0.18) 0%, transparent 55%);
+    --tk-surface: #261c16;
+    --tk-surface-2: #2e221b;
+    --tk-surface-3: #382a21;
+    --tk-overlay: rgba(8, 5, 3, 0.62);
+
+    --tk-text: #f5e8da;
+    --tk-text-soft: #dcc7b3;
+    --tk-text-muted: #a78d78;
+    --tk-text-on-accent: #1d120b;
+
+    --tk-border: #3f2f25;
+    --tk-border-strong: #574234;
+    --tk-divider: #33261e;
+
+    --tk-accent: #f28d3c;
+    --tk-accent-hover: #f7a05a;
+    --tk-accent-press: #e07a28;
+    --tk-accent-soft: rgba(242, 141, 60, 0.18);
+    --tk-accent-softer: rgba(242, 141, 60, 0.09);
+    --tk-accent-ring: rgba(242, 141, 60, 0.45);
+    --tk-brown: #d9a47c;
+    --tk-brown-soft: rgba(217, 164, 124, 0.14);
+
+    --tk-success: #74c283;
+    --tk-success-soft: rgba(116, 194, 131, 0.14);
+    --tk-warning: #f0c14b;
+    --tk-warning-soft: rgba(240, 193, 75, 0.14);
+    --tk-danger: #ff7f69;
+    --tk-danger-soft: rgba(255, 127, 105, 0.15);
+    --tk-info: #7fb2e5;
+    --tk-info-soft: rgba(127, 178, 229, 0.14);
+
+    --tk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --tk-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --tk-shadow-lg: 0 28px 70px -20px rgba(0, 0, 0, 0.75), 0 10px 24px rgba(0, 0, 0, 0.4);
+}
