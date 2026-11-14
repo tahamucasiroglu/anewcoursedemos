@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kurgu30 Yöntem Testleri</title>
+<meta name="description" content="Taha Konsept: her video motoru, yerel ses ve yerel görsel yönteminin 30 saniyelik sabit kurguyla gerçek hat testi (14 Kasım 2026).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+(function(){try{var t=localStorage.getItem('tk-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<style>
+:root{
+  --bg:#fbf5ec; --bg-2:#f5e9d8; --surface:#fffaf3; --surface-2:#fdf1e2;
+  --text:#3b2416; --text-2:#6b4a35; --muted:#8c6c56;
+  --accent:#d9731f; --accent-2:#b85a12; --accent-soft:#fbe1c6;
+  --border:#ead6bf; --shadow:0 1px 2px rgba(80,45,20,.06),0 8px 24px rgba(80,45,20,.07);
+  --ok:#3f7d3a; --ok-bg:#e4f1df; --warn:#a6620b; --warn-bg:#fdecd2; --bad:#a83a2a; --bad-bg:#f8dfd9; --info:#5d4a8a; --info-bg:#ebe5f6;
+  --code-bg:#f3e4d0;
+  --radius:14px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c140f; --bg-2:#241a13; --surface:#2a1f17; --surface-2:#33261c;
+    --text:#f3e6d6; --text-2:#d8c2aa; --muted:#a8907a;
+    --accent:#f08f3c; --accent-2:#ffab5e; --accent-soft:#4a2f1a;
+    --border:#45342a; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    --ok:#9bd08f; --ok-bg:#24361f; --warn:#f2bb6b; --warn-bg:#3d2c14; --bad:#f39a8a; --bad-bg:#40221c; --info:#c3b4ec; --info-bg:#2d2640;
+    --code-bg:#3a2b20;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c140f; --bg-2:#241a13; --surface:#2a1f17; --surface-2:#33261c;
+  --text:#f3e6d6; --text-2:#d8c2aa; --muted:#a8907a;
+  --accent:#f08f3c; --accent-2:#ffab5e; --accent-soft:#4a2f1a;
+  --border:#45342a; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --ok:#9bd08f; --ok-bg:#24361f; --warn:#f2bb6b; --warn-bg:#3d2c14; --bad:#f39a8a; --bad-bg:#40221c; --info:#c3b4ec; --info-bg:#2d2640;
+  --code-bg:#3a2b20;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-2);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--accent)}
+code{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:.86em;background:var(--code-bg);padding:.1em .38em;border-radius:6px;word-break:break-word}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.2;color:var(--text)}
+h2{font-size:1.65rem;margin:0 0 .4rem}
+h3{font-size:1.15rem;margin:1.6rem 0 .6rem}
+p{margin:.5rem 0 1rem}
+
+.hero{background:linear-gradient(135deg,var(--bg-2),var(--accent-soft));border-bottom:1px solid var(--border)}
+.hero-inner{max-width:1240px;margin:0 auto;padding:44px 24px 36px;position:relative}
+.eyebrow{display:inline-block;font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-2);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:999px}
+.hero h1{font-size:clamp(1.9rem,4.4vw,3rem);margin:.7rem 0 .4rem}
+.hero p{max-width:760px;color:var(--text-2);margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.9rem;color:var(--muted)}
+.theme-btn{position:absolute;top:20px;right:24px;width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--accent-2);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow)}
+.theme-btn:hover{color:var(--accent)}
+.theme-btn svg{width:20px;height:20px}
+.theme-btn .moon{display:none}
+:root[data-theme="dark"] .theme-btn .sun{display:none}
+:root[data-theme="dark"] .theme-btn .moon{display:block}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .theme-btn .sun{display:none}:root:not([data-theme="light"]) .theme-btn .moon{display:block}}
+
+.layout{max-width:1240px;margin:0 auto;padding:28px 24px 64px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:36px}
+.toc{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;box-shadow:var(--shadow)}
+.toc strong{display:block;font-family:Fraunces,serif;font-size:1rem;margin:0 6px 8px}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}
+.toc li{counter-increment:t}
+.toc a{display:flex;gap:8px;padding:6px 8px;border-radius:8px;color:var(--text-2);text-decoration:none;font-size:.92rem}
+.toc a::before{content:counter(t,decimal-leading-zero);color:var(--accent);font-family:"JetBrains Mono",monospace;font-size:.78rem;padding-top:2px}
+.toc a:hover{background:var(--surface-2);color:var(--text)}
+
+section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px 26px 18px;margin-bottom:24px;box-shadow:var(--shadow)}
+.lead{color:var(--text-2)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:14px}
+.card{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 16px 12px;border-top:4px solid var(--accent)}
+.card .k{font-size:.74rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.card .v{font-family:Fraunces,serif;font-size:1.16rem;font-weight:700;margin:4px 0 6px;color:var(--text)}
+.card p{font-size:.9rem;color:var(--text-2);margin:0 0 6px}
+
+.table-wrap{overflow-x:auto;margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}
+th{background:var(--surface-2);color:var(--text-2);font-weight:600;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+td:first-child{font-weight:600;color:var(--text)}
+
+.pill{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.p-bad{background:var(--bad-bg);color:var(--bad)}
+.p-info{background:var(--info-bg);color:var(--info)}
+
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0 16px;color:var(--text)}
+.callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+.callout strong{color:var(--accent-2)}
+.callout.warn strong{color:var(--warn)}
+
+.pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 14px}
+.step{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:.88rem;font-weight:500}
+.step.hot{border-color:var(--accent);color:var(--accent-2)}
+.arrow{color:var(--accent)}
+
+ul.clean,ol.clean{padding-left:1.25rem;margin:.4rem 0 1rem}
+ul.clean li,ol.clean li{margin:.3rem 0}
+ol.questions{counter-reset:q;list-style:none;padding:0;margin:8px 0}
+ol.questions li{counter-increment:q;position:relative;padding:10px 12px 10px 48px;border-bottom:1px dashed var(--border)}
+ol.questions li::before{content:counter(q);position:absolute;left:8px;top:9px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:600;font-size:.82rem;display:grid;place-items:center}
+.qgroup{font-family:Fraunces,serif;font-weight:700;color:var(--accent-2);margin:18px 0 2px}
+
+.sources{columns:2 300px;column-gap:28px;font-size:.88rem}
+.sources h4{break-after:avoid;margin:12px 0 4px;font-size:.9rem;color:var(--text-2)}
+.sources ul{margin:0 0 8px;padding-left:1.1rem}
+.sources li{break-inside:avoid;margin:3px 0;word-break:break-all}
+
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 16px 40px}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:20px 16px 48px;gap:18px}
+  .toc{position:static;max-height:none}
+  .toc ol{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+  .hero-inner{padding:56px 16px 28px}
+  .theme-btn{top:14px;right:16px}
+  section{padding:20px 16px 12px}
+}
+@media (max-width:480px){.toc ol{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-family:Fraunces,serif;font-size:1.7rem;color:var(--accent-2);line-height:1.1}
+.stat span{font-size:.84rem;color:var(--muted)}
+td.num{font-family:"JetBrains Mono",monospace;font-size:.84rem;white-space:nowrap}
+td.small{font-size:.84rem;color:var(--text-2)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:12px 0 18px}
+.gallery figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.gallery img{display:block;width:100%;height:auto;aspect-ratio:9/16;object-fit:cover;background:var(--bg-2)}
+.gallery figcaption{font-size:.8rem;padding:6px 9px;color:var(--text-2)}
+ol.bugs{padding-left:1.4rem}
+ol.bugs li{margin:.45rem 0}
+ol.bugs code{font-size:.78em}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Açık/koyu tema değiştir" title="Tema değiştir">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></svg>
+    </button>
+    <span class="eyebrow">Rapor 0002</span>
+    <h1>kurgu30 Yöntem Testleri</h1>
+    <p>Her video motoru, yerel ses ve yerel görsel yöntemi aynı 30 saniyelik sabit kurguyla (İstanbul'un fethi, 4 sahne, 51 kelime) gerçek hattan geçirildi: Web/API kuyruğu → orkestratör → penceresiz ajan. LLM sahte (ücretsiz), veritabanı yalnız <code>tahakonsept_e2e</code>. Makine: RTX 3060 Laptop 6 GB (OBS vb. açıkken ~4–5 GB boş).</p>
+    <div class="stats">
+      <div class="stat"><b>20</b><span>yöntem doğru videoya ulaştı</span></div>
+      <div class="stat"><b>16</b><span>gerçek hata bulundu ve düzeltildi</span></div>
+      <div class="stat"><b>5</b><span>yöntem VRAM/RAM yüzünden atlandı</span></div>
+      <div class="stat"><b>0.2.3</b><span>yeni sürüm</span></div>
+    </div>
+    <div class="meta"><span>14 Kasım 2026</span><span>Ayrıntılı ölçüm: <code>docs/E2E-RAPORU.md</code></span><span>Çıktılar: <code>tests/e2e/out/kurgu30/</code></span></div>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="İçindekiler">
+  <strong>İçindekiler</strong>
+  <ol>
+    <li><a href="#oneriler">Öneriler</a></li>
+    <li><a href="#denetim">Neler denetlendi</a></li>
+    <li><a href="#motor">Video motorları</a></li>
+    <li><a href="#hafif">Hafif yerel ses</a></li>
+    <li><a href="#gpu">GPU yerel ses</a></li>
+    <li><a href="#gorsel">Yerel görsel</a></li>
+    <li><a href="#hatalar">Düzeltilen hatalar</a></li>
+    <li><a href="#dogrulanmayan">Doğrulanmayanlar</a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="oneriler">
+  <h2>Öneriler</h2>
+  <p class="lead">6 GB ekran kartında, OBS gibi uygulamalar açıkken ölçülen sonuçlara göre.</p>
+  <div class="cards">
+    <div class="card"><div class="k">Türkçe ses (varsayılan)</div><div class="v">Supertonic 3</div><p>En yüksek anlaşılırlık (Whisper 0.865), GPU ve Python gerekmez, 4 sahne ~7 sn'de seslenir, süre hedefini tutturur.</p><p>CPU yedeği: <b>Ahenk Cep</b> (0.846). GPU ile farklı ses: <b>XTTS-v2</b> ya da <b>OmniVoice</b> (0.827).</p><span class="pill p-ok">Önerilen</span></div>
+    <div class="card"><div class="k">Yerel görsel (varsayılan)</div><div class="v">FLUX.2 klein 4B</div><p>Görsel başına ~29 sn, Standard kipte rahat sığar, kalite iyi.</p><p>En iyi istem uyumu: <b>FLUX.3 Klein</b> (~92 sn). Hızlı taslak: <b>SDXL-Lightning</b> (~12 sn, istem uyumu zayıf).</p><span class="pill p-ok">Önerilen</span></div>
+    <div class="card"><div class="k">Video motoru</div><div class="v">HyperFrames</div><p>LLM'e en uygun HTML+GSAP, lint ile denetlenir, doğrudan yuv420p verir; görselli sahneler de artık geçiyor.</p><p>Hız gerekiyorsa <b>Revideo</b>: sahne render'ı ~2,5 kat hızlı (24,5 sn / 62–72 sn).</p><span class="pill p-ok">Varsayılan</span></div>
+  </div>
+  <div class="callout warn"><strong>Önerilmeyen:</strong> MMS-TTS Türkçe çalışıyor ama en az anlaşılır olanı (0.673). VoxCPM2, Ahenk (tam), Fish S2 Pro, Trendyol-TTS ve Qwen-Image bu makinede pratik değil.</div>
+</section>
+
+<section id="denetim">
+  <h2>Neler denetlendi</h2>
+  <ul class="clean">
+    <li><b>ffprobe:</b> h264 + aac, 1080x1920, 30 fps, yuv420p; video süresi anlatıma eşit (fark ≤ 0,05 sn).</li>
+    <li><b>Ses:</b> volumedetect ile sessiz olmadığı (ortalama −13 ile −26 dB arası).</li>
+    <li><b>Kareler:</b> her videodan 2–4 kare gözle: sahne, sarı karaoke altyazı, turuncu ilerleme çubuğu, Türkçe harfler (ş ğ ı İ ü ç â).</li>
+    <li><b>Okunuş:</b> API spokenText'te Google → Gugıl, 29 Mayıs 1453 → yirmi dokuz Mayıs bin dört yüz elli üç, II. Mehmed → İkinci Mehmed, %40 → yüzde kırk, XV. yüzyıl → on beşinci yüzyıl; ekranda yazılı biçim korunur.</li>
+    <li><b>Anlaşılırlık:</b> faster-whisper small ile kelime yakalama (WR, yazılı metne göre).</li>
+    <li><b>Görsel:</b> açıkken sahne başına tam bir görsel, tam 1080x1920; kapalıyken hiç görsel yok.</li>
+  </ul>
+  <p style="font-size:.88rem;color:var(--muted)">“Render” sütunu kuyruktan bitişe toplam süredir; <span class="pill p-info">soğuk</span> ilk kurulum veya model indirmeyi de içerir.</p>
+</section>
+
+<section id="motor">
+  <h2>Video motorları</h2>
+  <p class="lead">Supertonic 3 ses, görsel kapalı, altyazı + ilerleme çubuğu açık. GPU modeli yok (Chrome headless).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Yöntem</th><th>Durum</th><th>Süre</th><th>Render</th><th>VRAM</th><th>Denetim</th><th>Düzeltilen</th></tr></thead>
+    <tbody>
+      <tr><td>HyperFrames</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">31,27 sn</td><td class="num">80,2 sn</td><td class="small">GPU gerekmez</td><td class="small">Tüm denetimler; WR 0.865; SceneRender 62,6 sn</td><td class="small">Görselli sahneler lint'te reddediliyordu</td></tr>
+      <tr><td>Remotion</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">31,27 sn</td><td class="num">91,4 sn</td><td class="small">GPU gerekmez</td><td class="small">Tüm denetimler; WR 0.865; SceneRender 71,5 sn</td><td class="small">Renk aralığı (yuvj420p); ajan kapanış çökmesi</td></tr>
+      <tr><td>Revideo</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">31,27 sn</td><td class="num">53,3 sn</td><td class="small">GPU gerekmez</td><td class="small">Tüm denetimler; WR 0.865; SceneRender 24,5 sn; ağ engeli (dead-proxy) doğrulandı</td><td class="small">Yazı tipi yarışı: kartta ikinci satır taşıyordu</td></tr>
+    </tbody>
+  </table></div>
+  <div class="gallery">
+    <figure><img src="img/hyperframes.jpg" alt="HyperFrames karesi" loading="lazy"><figcaption>HyperFrames</figcaption></figure>
+    <figure><img src="img/remotion.jpg" alt="Remotion karesi" loading="lazy"><figcaption>Remotion</figcaption></figure>
+    <figure><img src="img/revideo.jpg" alt="Revideo karesi" loading="lazy"><figcaption>Revideo</figcaption></figure>
+  </div>
+</section>
+
+<section id="hafif">
+  <h2>Hafif yerel ses (CPU)</h2>
+  <p class="lead">HyperFrames, görsel kapalı. Ajan uv'yi ve motorun Python ortamını kendisi kurdu (kullanıcı makinesindeki gibi).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Yöntem</th><th>Durum</th><th>Süre</th><th>Render</th><th>VRAM</th><th>Denetim</th><th>Düzeltilen</th></tr></thead>
+    <tbody>
+      <tr><td>Supertonic 3 (taban)</td><td><span class="pill p-ok">Geçti</span></td><td class="num">31,27 sn</td><td class="num">80,2 sn</td><td class="small">CPU (ONNX)</td><td class="small">WR 0.865; ses aşaması 7,4 sn</td><td class="small">–</td></tr>
+      <tr><td>Piper DFKI</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">26,41 sn</td><td class="num">628,2 sn <span class="pill p-info">soğuk</span></td><td class="small">CPU</td><td class="small">WR 0.808; tepe 0 dBFS (birkaç örnek)</td><td class="small">uv yoksa düşüyordu; uv dosya kilidi</td></tr>
+      <tr><td>Piper Fahrettin</td><td><span class="pill p-warn">Düzeltildi · geçti*</span></td><td class="num">23,27 sn</td><td class="num">87,1 sn</td><td class="small">CPU</td><td class="small">WR 0.769; *koşucunun 25 sn alt sınırı dışında (ses hızlı)</td><td class="small">Ses 404 veriyordu → ayna yedeği</td></tr>
+      <tr><td>Piper Fettah</td><td><span class="pill p-ok">Geçti</span></td><td class="num">28,50 sn</td><td class="num">105,3 sn</td><td class="small">CPU</td><td class="small">WR 0.731; tüm denetimler</td><td class="small">(ayna yedeğiyle)</td></tr>
+      <tr><td>MMS-TTS Türkçe</td><td><span class="pill p-warn">Düzeltildi · geçti*</span></td><td class="num">34,37 sn</td><td class="num">93,4 sn</td><td class="small">CPU</td><td class="small">WR 0.673; *isteğe bağlı 0.70 eşiğinin altında</td><td class="small">Noktalama ve İ/I harfleri</td></tr>
+      <tr><td>EMA Lightning</td><td><span class="pill p-warn">Geçti*</span></td><td class="num">23,00 sn</td><td class="num">240,2 sn <span class="pill p-info">soğuk</span></td><td class="small">CPU</td><td class="small">WR 0.827; *25 sn alt sınırı dışında (ses hızlı)</td><td class="small">–</td></tr>
+      <tr><td>Ahenk Cep</td><td><span class="pill p-ok">Geçti</span></td><td class="num">25,32 sn</td><td class="num">193,6 sn <span class="pill p-info">soğuk</span></td><td class="small">CPU</td><td class="small">WR 0.846 (hafiflerin en iyisi); hız ayarını yok sayar</td><td class="small">–</td></tr>
+      <tr><td>Trendyol-TTS</td><td><span class="pill p-bad">Atlandı</span></td><td class="num">–</td><td class="num">–</td><td class="small">≥8 GB VRAM</td><td class="small">Motor kendisi 8 GB istiyor</td><td class="small">–</td></tr>
+    </tbody>
+  </table></div>
+  <div class="gallery">
+    <figure><img src="img/piper-dfki.jpg" alt="Piper DFKI karesi" loading="lazy"><figcaption>Piper DFKI</figcaption></figure>
+    <figure><img src="img/piper-fahrettin.jpg" alt="Piper Fahrettin karesi" loading="lazy"><figcaption>Piper Fahrettin</figcaption></figure>
+    <figure><img src="img/piper-fettah.jpg" alt="Piper Fettah karesi" loading="lazy"><figcaption>Piper Fettah</figcaption></figure>
+    <figure><img src="img/mms-tts-tr.jpg" alt="MMS-TTS karesi" loading="lazy"><figcaption>MMS-TTS Türkçe</figcaption></figure>
+    <figure><img src="img/ema-lightning.jpg" alt="EMA Lightning karesi" loading="lazy"><figcaption>EMA Lightning</figcaption></figure>
+    <figure><img src="img/ahenk-cep.jpg" alt="Ahenk Cep karesi" loading="lazy"><figcaption>Ahenk Cep</figcaption></figure>
+  </div>
+</section>
+
+<section id="gpu">
+  <h2>GPU yerel ses</h2>
+  <p class="lead">HyperFrames, görsel kapalı. VRAM sütunu OBS vb. dahil toplam tepedir. GPU ses modeli artık Speech aşaması bitince bellekten çıkarılıyor.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Yöntem</th><th>Durum</th><th>Süre</th><th>Render</th><th>VRAM</th><th>Denetim</th><th>Düzeltilen</th></tr></thead>
+    <tbody>
+      <tr><td>Chatterbox Multilingual</td><td><span class="pill p-warn">Düzeltildi · geçti*</span></td><td class="num">23,04 sn</td><td class="num">206,6 sn</td><td class="small">5,7 GB (sınırda)</td><td class="small">WR 0.712; *25 sn alt sınırı dışında</td><td class="small">setuptools eksikti; VRAM serbest bırakma</td></tr>
+      <tr><td>XTTS-v2</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">31,59 sn</td><td class="num">157,0 sn</td><td class="small">4,5 GB</td><td class="small">WR 0.827; tüm denetimler</td><td class="small"><code>six</code> eksikti</td></tr>
+      <tr><td>F5-TTS Türkçe</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">25,37 sn</td><td class="num">126,7 sn</td><td class="small">3,4 GB</td><td class="small">WR 0.712; tüm denetimler</td><td class="small">İngilizce klipten klonluyordu (44 sn) → Türkçe referans</td></tr>
+      <tr><td>OmniVoice</td><td><span class="pill p-ok">Geçti</span></td><td class="num">25,23 sn</td><td class="num">337,7 sn <span class="pill p-info">soğuk</span></td><td class="small">3,6 GB</td><td class="small">WR 0.827; tüm denetimler</td><td class="small">–</td></tr>
+      <tr><td>VoxCPM2</td><td><span class="pill p-bad">Atlandı</span></td><td class="num">–</td><td class="num">–</td><td class="small">VRAM taşıyor</td><td class="small">GPU'da 6,6 sn ses ≈ 7 dk; CPU'da ağırlık yüklerken çöktü</td><td class="small">–</td></tr>
+      <tr><td>Ahenk (tam)</td><td><span class="pill p-bad">Atlandı</span></td><td class="num">–</td><td class="num">–</td><td class="small">≥8 GB</td><td class="small">VoxCPM2 tabanı, aynı sınır</td><td class="small">–</td></tr>
+      <tr><td>Fish S2 Pro</td><td><span class="pill p-bad">Atlandı</span></td><td class="num">–</td><td class="num">–</td><td class="small">≥12 GB</td><td class="small">11 GB ağırlık; VRAM ve boş RAM'den büyük</td><td class="small">–</td></tr>
+      <tr><td>Kokoro (dil koruması)</td><td><span class="pill p-ok">Düzeltildi</span></td><td class="num">–</td><td class="num">4 sn hata</td><td class="small">–</td><td class="small">Türkçe yok: kurulumdan önce net Türkçe hata</td><td class="small">Önce ~2 GB kurup sonra düşüyordu; web uyarısı eklendi</td></tr>
+    </tbody>
+  </table></div>
+  <div class="gallery">
+    <figure><img src="img/chatterbox.jpg" alt="Chatterbox karesi" loading="lazy"><figcaption>Chatterbox</figcaption></figure>
+    <figure><img src="img/xtts-v2.jpg" alt="XTTS-v2 karesi" loading="lazy"><figcaption>XTTS-v2</figcaption></figure>
+    <figure><img src="img/f5-tts-tr.jpg" alt="F5-TTS karesi" loading="lazy"><figcaption>F5-TTS Türkçe</figcaption></figure>
+    <figure><img src="img/omnivoice.jpg" alt="OmniVoice karesi" loading="lazy"><figcaption>OmniVoice</figcaption></figure>
+  </div>
+</section>
+
+<section id="gorsel">
+  <h2>Yerel görsel</h2>
+  <p class="lead">HyperFrames + Supertonic 3, sd.cpp (CUDA). Ajan sd.cpp'yi ve modelleri kendisi indirdi. Her görsel tam 1080x1920.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Durum</th><th>Süre</th><th>Render</th><th>VRAM</th><th>Denetim</th><th>Düzeltilen</th></tr></thead>
+    <tbody>
+      <tr><td>FLUX.2 klein 4B</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">31,27 sn</td><td class="num">214,4 sn</td><td class="small">Standard, ~5,3 GB boşta</td><td class="small">~29 sn/görsel; WR 0.827</td><td class="small">1088x1920 geliyordu → tam boyuta kırpma</td></tr>
+      <tr><td>SDXL-Lightning</td><td><span class="pill p-ok">Düzeltildi · geçti</span></td><td class="num">31,27 sn</td><td class="num">168,5 sn</td><td class="small">Standard + offload</td><td class="small">~12 sn/görsel; WR 0.769; top hâlâ sütun gibi (model zayıflığı)</td><td class="small">2 MP'de iki sultan → 768x1344 üret + büyüt</td></tr>
+      <tr><td>Z-Image Turbo</td><td><span class="pill p-ok">Geçti</span></td><td class="num">31,27 sn</td><td class="num">461,0 sn</td><td class="small">Standard, ~4,7 GB kullanım</td><td class="small">~80 sn/görsel; WR 0.846</td><td class="small">–</td></tr>
+      <tr><td>SD3.5 Medium</td><td><span class="pill p-ok">Geçti</span></td><td class="num">31,27 sn</td><td class="num">498,0 sn <span class="pill p-info">soğuk</span></td><td class="small">Standard</td><td class="small">~65 sn/görsel; WR 0.865</td><td class="small">–</td></tr>
+      <tr><td>FLUX.3 Klein (Q4_K)</td><td><span class="pill p-ok">Geçti</span></td><td class="num">31,27 sn</td><td class="num">571,1 sn <span class="pill p-info">soğuk</span></td><td class="small">Reduced, tepe 5,6 GB</td><td class="small">~92 sn/görsel; en iyi istem uyumu; WR 0.846</td><td class="small">Katalog 8 → 6 GB</td></tr>
+      <tr><td>FLUX.2 klein 9B (Q4_0)</td><td><span class="pill p-ok">Geçti</span></td><td class="num">31,27 sn</td><td class="num">595,3 sn <span class="pill p-info">soğuk</span></td><td class="small">Reduced, ~3,6 GB sınır; ~5 GB boş RAM</td><td class="small">~88 sn/görsel; Whisper koşulmadı</td><td class="small">Katalog 8 → 6 GB</td></tr>
+      <tr><td>Qwen-Image</td><td><span class="pill p-bad">Atlandı</span></td><td class="num">–</td><td class="num">–</td><td class="small">≥12 GB</td><td class="small">En küçük Q2_K 7 GB + 4,7 GB kodlayıcı</td><td class="small">–</td></tr>
+      <tr><td>Görsel kapalı</td><td><span class="pill p-ok">Geçti</span></td><td class="num">31,27 sn</td><td class="num">72,8 sn</td><td class="small">GPU gerekmez</td><td class="small">0 görsel; koddan çizim</td><td class="small">–</td></tr>
+    </tbody>
+  </table></div>
+  <div class="gallery">
+    <figure><img src="img/flux2-klein-4b-1.jpg" alt="FLUX.2 klein 4B sahne 3" loading="lazy"><figcaption>FLUX.2 klein 4B · sahne 3</figcaption></figure>
+    <figure><img src="img/flux2-klein-4b-2.jpg" alt="FLUX.2 klein 4B sahne 1" loading="lazy"><figcaption>FLUX.2 klein 4B · sahne 1</figcaption></figure>
+    <figure><img src="img/sdxl-lightning-1.jpg" alt="SDXL-Lightning sahne 3" loading="lazy"><figcaption>SDXL-Lightning · sahne 3</figcaption></figure>
+    <figure><img src="img/sdxl-lightning-2.jpg" alt="SDXL-Lightning sahne 1" loading="lazy"><figcaption>SDXL-Lightning · sahne 1</figcaption></figure>
+    <figure><img src="img/z-image-turbo-1.jpg" alt="Z-Image Turbo sahne 3" loading="lazy"><figcaption>Z-Image Turbo · sahne 3</figcaption></figure>
+    <figure><img src="img/z-image-turbo-2.jpg" alt="Z-Image Turbo sahne 1" loading="lazy"><figcaption>Z-Image Turbo · sahne 1</figcaption></figure>
+    <figure><img src="img/sd35-medium-1.jpg" alt="SD3.5 Medium sahne 3" loading="lazy"><figcaption>SD3.5 Medium · sahne 3</figcaption></figure>
+    <figure><img src="img/sd35-medium-2.jpg" alt="SD3.5 Medium sahne 1" loading="lazy"><figcaption>SD3.5 Medium · sahne 1</figcaption></figure>
+    <figure><img src="img/flux3-klein-1.jpg" alt="FLUX.3 Klein sahne 3" loading="lazy"><figcaption>FLUX.3 Klein · sahne 3</figcaption></figure>
+    <figure><img src="img/flux3-klein-2.jpg" alt="FLUX.3 Klein sahne 1" loading="lazy"><figcaption>FLUX.3 Klein · sahne 1</figcaption></figure>
+    <figure><img src="img/flux2-klein-9b-1.jpg" alt="FLUX.2 klein 9B sahne 3" loading="lazy"><figcaption>FLUX.2 klein 9B · sahne 3</figcaption></figure>
+    <figure><img src="img/flux2-klein-9b-2.jpg" alt="FLUX.2 klein 9B sahne 1" loading="lazy"><figcaption>FLUX.2 klein 9B · sahne 1</figcaption></figure>
+    <figure><img src="img/img-off.jpg" alt="Görsel kapalı sahne 4" loading="lazy"><figcaption>Görsel kapalı · sahne 4</figcaption></figure>
+  </div>
+</section>
+
+<section id="hatalar">
+  <h2>Düzeltilen hatalar</h2>
+  <p class="lead">16 hata; her biri testle korundu ve düzeltmeden sonra yöntem yeniden koşuldu.</p>
+  <ol class="bugs">
+    <li><b>HyperFrames görselli sahneyi reddediyordu</b> (<code>missing_local_asset</code>): doğrulama klasörüne yalnız index.html yazılıyordu; görseller de kopyalanıyor. <code>c9e84cb</code></li>
+    <li><b>Soluk/yanık renk:</b> Remotion ve Revideo son videosu tam aralıklı (yuvj420p) çıkıyordu; birleştirme artık limited range BT.709'a çeviriyor. <code>90b9870</code></li>
+    <li><b>Revideo'da yazı kart dışına taşıyordu:</b> düzen yazı tipleri yüklenmeden hesaplanıyordu; tüm yazı tipleri önceden yükleniyor. <code>0aae158</code></li>
+    <li><b>Ajan kapanışta çöküyordu</b> (IAsyncDisposable): servisler DisposeAsync ile kapatılıyor. <code>38d95d3</code></li>
+    <li><b>uv yoksa Python sesleri düşüyordu:</b> ajan eksik aracı (uv, Python, node, ffmpeg, chrome) gerektiğinde kendisi kuruyor. <code>d829f5a</code></li>
+    <li><b>uv Python indirmesi Windows dosya kilidinde düşüyordu</b> (os error 5): iki kez yeniden deneniyor. <code>982fa39</code></li>
+    <li><b>Piper Fahrettin ve Fettah 404:</b> resmi depoda artık yoklar; ayna depodan indiriliyor. <code>98275ae</code></li>
+    <li><b>MMS-TTS tek nefeste okuyor, İ/I harflerini bozuyordu:</b> Türkçe küçük harf + cümle/virgül parçalı sentez. <code>38bcb98</code></li>
+    <li><b>Chatterbox yüklenmiyordu:</b> <code>setuptools&lt;81</code> eklendi. <code>1c6a421</code></li>
+    <li><b>GPU ses modeli VRAM'de kalıyordu:</b> Speech aşaması bitince bellekten çıkarılıyor (canlıda 4,2 → 2,0 GB). <code>1c6a421</code></li>
+    <li><b>Kokoro Türkçe için önce ~2 GB kuruyordu:</b> dil kurulumdan önce denetleniyor, web ayarlarında kırmızı uyarı. <code>1c6a421</code>, <code>1e1f4b8</code></li>
+    <li><b>XTTS-v2 yüklenmiyordu:</b> eksik <code>six</code> eklendi. <code>c3bbbaf</code></li>
+    <li><b>F5-TTS yavaş ve aksanlıydı (44 sn):</b> İngilizce örnek klipten klonluyordu; 6,7 sn Türkçe referans klip gömüldü. <code>0788ff0</code></li>
+    <li><b>Görsel istenen boyutta değildi</b> (1088x1920): her görsel tam boyuta kırpılıp ortalanıyor, gerilmiyor. <code>b38f42c</code></li>
+    <li><b>SDXL iki sultan çiziyordu:</b> modelin piksel bütçesi içinde (768x1344) üretilip büyütülüyor. <code>dafb1cb</code></li>
+    <li><b>Test koşucusu 15 dk sonra oturumu kaybediyordu</b> (401): bir kez yeniden giriş yapıyor. <code>1e1f4b8</code></li>
+  </ol>
+</section>
+
+<section id="dogrulanmayan">
+  <h2>Doğrulanmayanlar</h2>
+  <ul class="clean">
+    <li>Video motorlarının soğuk kurulumu (üçü de zaten kuruluydu).</li>
+    <li>Görselli koşular yalnız HyperFrames ile yapıldı; Remotion/Revideo + görsel denenmedi. Revideo'daki daire opaklığı 0,32 değişikliği ikinci koşuda görüldü.</li>
+    <li>Kokoro hata mesajının son metni canlıda koşulmadı (birim testli); web uyarısı tarayıcıda görülmedi.</li>
+    <li>Chatterbox ve XTTS modelleri teşhis sırasında indirildi; ses süreleri indirmeyi içermez. FLUX.2 klein 9B için Whisper koşulmadı.</li>
+    <li>Altyazısız / ilerleme çubuksuz kombinasyonlar ve online sağlayıcılar bu turda koşulmadı.</li>
+  </ul>
+</section>
+</main>
+</div>
+<footer>Taha Konsept · kurgu30 Yöntem Testleri · 14 Kasım 2026</footer>
+
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  function current(){
+    var t=root.getAttribute('data-theme');
+    if(t) return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  btn.addEventListener('click',function(){
+    var next=current()==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('tk-theme',next);}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
