@@ -26,6 +26,7 @@ public static class SerilogSetup
         Action<LoggerConfiguration, IServiceProvider>? configureSinks = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        KonseptLogging.RegisterKnownSecrets(builder.Configuration.AsEnumerable());
         var directory = LogDirectory(builder.Configuration);
         builder.Services.AddSerilog((services, logger) =>
         {

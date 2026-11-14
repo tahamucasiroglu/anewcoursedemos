@@ -7,6 +7,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+KonseptLogging.RegisterKnownSecrets(builder.Configuration.AsEnumerable()); // Servis anahtarı vb. logda hiçbir biçimde geçmez.
 var logDirectory = builder.Configuration["Logging:Directory"] ?? Path.Combine(AppContext.BaseDirectory, "logs");
 builder.Services.AddSingleton(TimeProvider.System);
 var logToConsole = builder.Configuration.GetValue("Logging:Console", defaultValue: true);

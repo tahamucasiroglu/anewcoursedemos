@@ -19,7 +19,7 @@ namespace Konsept.Shared.Kernel.Security;
 /// <c>; Ad=</c>, <c>&amp;ad=</c>, kapanan <c>}</c>; URL kodlu ayırıcıda boşluk, <c>&amp;</c>, <c>%26</c>.</item>
 /// <item>Ayrıca: CLI bayrağı (<c>--password değer</c>, tırnaklı değer), SQL tarzı <c>PASSWORD 'x'</c>, XML öğesi
 /// (<c>&lt;ns:Password a="…"&gt;değer&lt;/…&gt;</c>, CDATA), <c>KeyValuePair</c> metni <c>[Password, değer]</c>.</item>
-/// <item>API key alanında yalnızca ilk boşluksuz parça key sayılır; daha önce maskelenmişse (<c>sk-…xyz</c>) korunur.</item>
+/// <item>API key alanı: tek parça değer <c>sk-…xyz</c>, boşluk içeren değer tümüyle gizlenir; tırnaksız değer ilk boşlukta biter. Cookie değeri satır sonuna kadar. Anahtar süsleri (<c>["Password"]=</c>, <c>**Password**:</c>, <c>password[0]</c>), <c>A__B__C</c>/<c>A.B.C</c> yolları, iki sözcüklü adlar (<c>API key</c>), <c>Token'ınız</c>, tuple <c>(Password, x)</c>, SQL <c>E'…'</c>/<c>$$…$$</c>.</item>
 /// </list>
 /// </summary>
 internal static class SecretKeyValueScanner
@@ -31,10 +31,11 @@ internal static class SecretKeyValueScanner
 
     /// <summary>Metindeki gizli anahtar/değer çiftlerinin değerini maskeler.</summary>
     /// <param name="text">Metin.</param>
+    /// <param name="secrets">Gizlenen değerlerin kaydı.</param>
     /// <returns>Maskelenmiş metin (değişiklik yoksa aynı örnek).</returns>
-    public static string Mask(string text)
+    public static string Mask(string text, SecretValueSet? secrets = null)
     {
-        var output = new SecretMaskOutput(text);
+        var output = new SecretMaskOutput(text, secrets);
         var i = 0;
         while (i < text.Length)
         {
@@ -50,10 +51,22 @@ internal static class SecretKeyValueScanner
                 keyEnd++;
             }
 
-            if (keyEnd - i > MaxKeyLength || !IsSecretKey(text, i, keyEnd, out var apiKey))
+            if (keyEnd - i > MaxKeyLength)
             {
                 i = keyEnd;
                 continue;
+            }
+
+            if (!IsSecretKey(text, i, keyEnd, out var apiKey))
+            {
+                // İki sözcüklü ad: "API key:", "Pairing code:", "Erişim anahtarı:" (hunt r3).
+                if (!TryTwoWordKey(text, i, keyEnd, out var pairEnd, out apiKey))
+                {
+                    i = keyEnd;
+                    continue;
+                }
+
+                keyEnd = pairEnd;
             }
 
             i = Math.Max(keyEnd, MaskPair(text, i, keyEnd, apiKey, output));
@@ -65,15 +78,16 @@ internal static class SecretKeyValueScanner
     /// <summary>Gizli anahtardan sonraki değeri bulup maskeler; taramanın süreceği konumu döner.</summary>
     private static int MaskPair(string text, int keyStart, int keyEnd, bool apiKey, SecretMaskOutput output)
     {
-        if (TryXmlElement(text, keyStart, keyEnd, out var xmlStart, out var xmlEnd))
+        if (TryMaskXmlElement(text, keyStart, keyEnd, apiKey, output, out _))
         {
-            return Emit(text, xmlStart, xmlEnd, apiKey, output);
+            // Tarama etiketin özniteliklerinden sürer (ClientSecret="…" gibi gizli öznitelik adları da okunur).
+            return keyEnd;
         }
 
-        // KeyValuePair metni: [Password, değer]
-        if (keyStart > 0 && text[keyStart - 1] == '[' && keyEnd + 1 < text.Length && text[keyEnd] == ',' && text[keyEnd + 1] == ' ')
+        // KeyValuePair metni [Password, değer] ve tuple metni (Password, değer).
+        if (keyStart > 0 && text[keyStart - 1] is '[' or '(' && keyEnd + 1 < text.Length && text[keyEnd] == ',' && text[keyEnd + 1] == ' ')
         {
-            var close = text.IndexOf(']', keyEnd);
+            var close = text.IndexOf(text[keyStart - 1] == '[' ? ']' : ')', keyEnd);
             var lineEnd = LineEnd(text, keyEnd);
             return Emit(text, keyEnd + 2, close >= 0 && close < lineEnd ? close : lineEnd, apiKey, output);
         }
@@ -85,17 +99,40 @@ internal static class SecretKeyValueScanner
 
         var (start, end, after) = ReadValue(text, valueStart, ConnectionStringContext(text, keyStart), urlEncoded);
         var lineEndOfValue = LineEnd(text, valueStart);
+        var unquoted = QuoteLength(text, valueStart) == 0 && valueStart < text.Length && text[valueStart] is not ('{' or '[');
+        if (unquoted && end > start && IsCookieKey(text, keyStart, keyEnd))
+        {
+            // Cookie/Set-Cookie: başlık değeri satır sonuna kadar — "a=1; session=…" ikinci çerez açıkta kalmasın (H3-B).
+            end = after = Trim(text, start, lineEndOfValue);
+        }
+        else if (unquoted && apiKey && end > start)
+        {
+            // API key boşluk içermez: tırnaksız değer ilk boşlukta biter, tarama sonrasında sürer (H3-A).
+            var tokenEnd = start;
+            while (tokenEnd < end && !char.IsWhiteSpace(text[tokenEnd]))
+            {
+                tokenEnd++;
+            }
+
+            end = after = tokenEnd;
+        }
+
         if (end > start && IsBlockIndicator(text, start, lineEndOfValue))
         {
-            return Math.Max(after, MaskIndentedLines(text, keyStart, lineEndOfValue, output));
+            MaskIndentedLines(text, keyStart, lineEndOfValue, output);
+            return after;
         }
 
         if (end <= start)
         {
-            // Boş değer: satırın kalanı boşsa (ya da yorum) değer sonraki girintili satırlardadır; değilse tarama sürer.
-            return RestOfLineBlank(text, after, lineEndOfValue)
-                ? Math.Max(after, MaskIndentedLines(text, keyStart, lineEndOfValue, output))
-                : after;
+            // Boş değer: satırın kalanı boşsa (ya da yorum) değer sonraki girintili satırlardadır; tarama her durumda
+            // değerden hemen sonra sürer (yorumdaki "token=…" de okunur, H3-F).
+            if (RestOfLineBlank(text, after, lineEndOfValue))
+            {
+                MaskIndentedLines(text, keyStart, lineEndOfValue, output);
+            }
+
+            return after;
         }
 
         var next = Emit(text, start, end, apiKey, output);
@@ -107,6 +144,42 @@ internal static class SecretKeyValueScanner
         return Math.Max(next, after);
     }
 
+    /// <summary>Ad tek boşlukla ayrılmış ikinci bir sözcükle birlikte gizli bir ad oluşturuyor mu (<c>API key</c> → <c>apikey</c>).</summary>
+    private static bool TryTwoWordKey(string text, int keyStart, int keyEnd, out int pairEnd, out bool apiKey)
+    {
+        pairEnd = keyEnd;
+        apiKey = false;
+        if (keyEnd + 1 >= text.Length || text[keyEnd] != ' ' || !IsKeyChar(text[keyEnd + 1]))
+        {
+            return false;
+        }
+
+        var end = keyEnd + 1;
+        while (end < text.Length && IsKeyChar(text[end]) && end - keyStart <= LookaheadNameLength)
+        {
+            end++;
+        }
+
+        // İkinci sözcük tek başına gizliyse (ör. "-Password" bayrağı) kendi başına okunur.
+        if ((end < text.Length && IsKeyChar(text[end])) || IsSecretKey(text, keyEnd + 1, end, out _))
+        {
+            return false;
+        }
+
+        var name = SecretMasker.NormalizeFieldName(string.Concat(text.AsSpan(keyStart, keyEnd - keyStart), text.AsSpan(keyEnd + 1, end - keyEnd - 1)));
+        apiKey = SecretMasker.IsApiKeyFieldName(name);
+        if (!apiKey && !SecretMasker.IsHiddenFieldName(name))
+        {
+            return false;
+        }
+
+        pairEnd = end;
+        return true;
+    }
+
+    private static bool IsCookieKey(string text, int keyStart, int keyEnd) =>
+        SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]).EndsWith("cookie", StringComparison.Ordinal);
+
     /// <summary>Ayırıcısız biçimler: CLI bayrağı <c>--password değer</c> ve SQL <c>PASSWORD 'değer'</c>.</summary>
     private static int MaskWithoutSeparator(string text, int keyStart, int keyEnd, bool apiKey, SecretMaskOutput output)
     {
@@ -114,6 +187,23 @@ internal static class SecretKeyValueScanner
         if (p == keyEnd || p >= text.Length)
         {
             return keyEnd;
+        }
+
+        // SQL dize önekleri: E'…' / N'…' / U&'…' (PostgreSQL, SQL Server) ve $$…$$ (hunt r3).
+        if (p + 1 < text.Length && text[p] is 'E' or 'e' or 'N' or 'n' && text[p + 1] == '\'')
+        {
+            p++;
+        }
+        else if (p + 2 < text.Length && text[p] is 'U' or 'u' && text[p + 1] == '&' && text[p + 2] == '\'')
+        {
+            p += 2;
+        }
+        else if (p + 1 < text.Length && text[p] == '$' && text[p + 1] == '$')
+        {
+            var close = text.IndexOf("$$", p + 2, StringComparison.Ordinal);
+            var lineEnd = LineEnd(text, p);
+            var end = close >= 0 && close < lineEnd ? close : lineEnd;
+            return Math.Max(Emit(text, p + 2, end, apiKey, output), Math.Min(text.Length, end + 2));
         }
 
         if (text[p] is '"' or '\'')
@@ -136,10 +226,13 @@ internal static class SecretKeyValueScanner
         return keyEnd;
     }
 
-    /// <summary>XML öğesi: <c>&lt;[ns:]ad [öznitelik…]&gt;değer&lt;</c> (CDATA dahil).</summary>
-    private static bool TryXmlElement(string text, int keyStart, int keyEnd, out int start, out int end)
+    /// <summary>
+    /// XML öğesi: <c>&lt;[ns:]ad [öznitelik…]&gt;değer&lt;</c> (CDATA dahil); ad gizliyse <c>value="…"</c> özniteliği ve
+    /// içerik yalnızca alt öğelerse kapanış etiketine kadar tüm içerik de gizlenir (H3-E).
+    /// </summary>
+    private static bool TryMaskXmlElement(string text, int keyStart, int keyEnd, bool apiKey, SecretMaskOutput output, out int resume)
     {
-        start = end = 0;
+        resume = keyEnd;
         var q = keyStart - 1;
         if (q >= 0 && text[q] == ':')
         {
@@ -150,17 +243,80 @@ internal static class SecretKeyValueScanner
             }
         }
 
-        if (q < 0 || text[q] != '<' || keyEnd >= text.Length || !(text[keyEnd] == '>' || char.IsWhiteSpace(text[keyEnd])))
+        if (q < 0 || text[q] != '<' || keyEnd >= text.Length || !(text[keyEnd] is '>' or '/' || char.IsWhiteSpace(text[keyEnd])))
         {
             return false;
         }
 
         var close = text.IndexOf('>', keyEnd);
-        if (close < 0 || text[close - 1] == '/')
+        if (close < 0)
         {
             return false;
         }
 
+        MaskValueAttribute(text, keyEnd, close, apiKey, output);
+        resume = close + 1;
+        if (text[close - 1] == '/')
+        {
+            return true;
+        }
+
+        if (TryXmlContent(text, close, out var start, out var end))
+        {
+            resume = Math.Max(resume, Emit(text, start, end, apiKey, output));
+            return true;
+        }
+
+        // İçerik boş ve alt öğe başlıyorsa: kapanış etiketine kadar (en fazla 8 KB) tümü gizlenir.
+        var lt = text.IndexOf('<', close + 1);
+        if (lt >= 0 && lt + 1 < text.Length && text[lt + 1] != '/' && Trim(text, close + 1, lt) == close + 1)
+        {
+            var closing = string.Concat("</", text.AsSpan(q + 1, keyEnd - q - 1), ">");
+            var closeTag = text.IndexOf(closing, lt, Math.Min(text.Length - lt, 8192), StringComparison.Ordinal);
+            if (closeTag > lt)
+            {
+                output.Replace(close + 1, closeTag, SecretMasker.Hidden);
+                resume = closeTag;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Etiket içindeki <c>value="…"</c> (büyük/küçük harf önemsiz) özniteliğinin değerini gizler.</summary>
+    private static void MaskValueAttribute(string text, int from, int close, bool apiKey, SecretMaskOutput output)
+    {
+        var p = from;
+        while (p < close)
+        {
+            var hit = text.IndexOf("value", p, close - p, StringComparison.OrdinalIgnoreCase);
+            if (hit < 0)
+            {
+                return;
+            }
+
+            var s = SkipInlineSpace(text, hit + 5);
+            if (char.IsWhiteSpace(text[hit - 1]) && s < close && text[s] == '=')
+            {
+                s = SkipInlineSpace(text, s + 1);
+                if (s < close && text[s] is '"' or '\'')
+                {
+                    var end = text.IndexOf(text[s], s + 1, close - s - 1);
+                    if (end > s)
+                    {
+                        Emit(text, s + 1, end, apiKey, output);
+                        return;
+                    }
+                }
+            }
+
+            p = hit + 5;
+        }
+    }
+
+    /// <summary>Açılış etiketinden sonraki metin içeriği (CDATA dahil); boşsa <c>false</c>.</summary>
+    private static bool TryXmlContent(string text, int close, out int start, out int end)
+    {
         start = close + 1;
         const string CData = "<![CDATA[";
         var contentStart = start;
@@ -178,7 +334,7 @@ internal static class SecretKeyValueScanner
 
         var lt = text.IndexOf('<', start);
         end = Trim(text, start, lt < 0 ? text.Length : lt);
-        return true;
+        return end > start;
     }
 
     private static int Emit(string text, int start, int end, bool apiKey, SecretMaskOutput output)
@@ -188,20 +344,8 @@ internal static class SecretKeyValueScanner
             return Math.Max(start, end);
         }
 
-        if (apiKey)
-        {
-            var tokenEnd = start;
-            while (tokenEnd < end && !char.IsWhiteSpace(text[tokenEnd]))
-            {
-                tokenEnd++;
-            }
-
-            var token = text[start..tokenEnd];
-            output.Replace(start, tokenEnd, token == SecretMasker.Hidden || SecretMasker.IsMaskedApiKey(token) ? token : SecretMasker.MaskApiKey(token));
-            return tokenEnd;
-        }
-
-        output.Replace(start, end, SecretMasker.Hidden);
+        // API key: tek parça değer sk-…abc; boşluk içeren değer (key + başka metin) tümüyle gizlenir (H3-A).
+        output.Replace(start, end, apiKey ? SecretMasker.MaskApiKeyValue(text[start..end]) : SecretMasker.Hidden);
         return end;
     }
 
@@ -232,7 +376,7 @@ internal static class SecretKeyValueScanner
     private static int MaskIndentedLines(string text, int keyStart, int from, SecretMaskOutput output)
     {
         var lineStart = keyStart == 0 ? 0 : text.LastIndexOfAny(['\r', '\n'], keyStart - 1) + 1;
-        var keyIndent = Indent(text, lineStart);
+        var keyIndent = Columns(text, lineStart);
         var p = NextLineStart(text, from);
         var last = from;
         while (p < text.Length)
@@ -246,7 +390,7 @@ internal static class SecretKeyValueScanner
                 continue;
             }
 
-            if (indent <= keyIndent)
+            if (Columns(text, p) <= keyIndent)
             {
                 break;
             }
@@ -268,6 +412,18 @@ internal static class SecretKeyValueScanner
         }
 
         return p - lineStart;
+    }
+
+    /// <summary>Satır başı girintisinin sütun genişliği (sekme = 4); karşılaştırma için.</summary>
+    private static int Columns(string text, int lineStart)
+    {
+        var columns = 0;
+        for (var p = lineStart; p < text.Length && text[p] is ' ' or '\t'; p++)
+        {
+            columns += text[p] == '\t' ? 4 : 1;
+        }
+
+        return columns;
     }
 
     private static int NextLineStart(string text, int pos)
@@ -323,6 +479,21 @@ internal static class SecretKeyValueScanner
             return true;
         }
 
+        // .NET ortam değişkeni yolu: Ai__ApiKeys__ElevenLabs (H3-D).
+        var raw = text[keyStart..keyEnd];
+        if (raw.Contains("__", StringComparison.Ordinal))
+        {
+            foreach (var segment in raw.Split("__", StringSplitOptions.RemoveEmptyEntries))
+            {
+                var segmentName = SecretMasker.NormalizeFieldName(segment);
+                if (SecretMasker.IsApiKeyFieldName(segmentName) || SecretMasker.IsHiddenFieldName(segmentName))
+                {
+                    apiKey = SecretMasker.IsApiKeyFieldName(segmentName);
+                    return true;
+                }
+            }
+        }
+
         return PathHasSecretSegment(text, keyStart, out apiKey);
     }
 
@@ -331,7 +502,7 @@ internal static class SecretKeyValueScanner
     {
         apiKey = false;
         var q = keyStart - 1;
-        for (var depth = 0; depth < 8 && q > 0 && text[q] == ':'; depth++)
+        for (var depth = 0; depth < 8 && q > 0 && text[q] is ':' or '.'; depth++)
         {
             var segEnd = q;
             q--;
@@ -402,12 +573,30 @@ internal static class SecretKeyValueScanner
         return 0;
     }
 
+    /// <summary>Kesme işaretli Türkçe ek: <c>Token'ınız</c>, <c>Şifre'yi</c> (en fazla 6 harf); yoksa konum değişmez.</summary>
+    private static int SkipTurkishSuffix(string text, int pos)
+    {
+        if (pos + 1 >= text.Length || text[pos] is not ('\'' or '’') || !char.IsLetter(text[pos + 1]))
+        {
+            return pos;
+        }
+
+        var p = pos + 1;
+        while (p < text.Length && p - pos <= 6 && char.IsLetter(text[p]))
+        {
+            p++;
+        }
+
+        return p < text.Length && char.IsLetter(text[p]) ? pos : p;
+    }
+
     /// <summary>Anahtardan sonra: isteğe bağlı tırnak, boşluk, ayırıcı, boşluk.</summary>
     private static bool TryReadSeparator(string text, int pos, out int valueStart, out bool urlEncoded)
     {
         valueStart = pos;
         urlEncoded = false;
-        var p = pos + QuoteLength(text, pos);
+        var p = SkipTurkishSuffix(text, pos);
+        p = p > pos ? p : SkipKeyDecoration(text, pos + QuoteLength(text, pos));
         p = SkipInlineSpace(text, p);
         if (p + 1 < text.Length && text[p] is ':' or '：' && text[p + 1] == '=')
         {
@@ -435,6 +624,53 @@ internal static class SecretKeyValueScanner
 
         valueStart = SkipInlineSpace(text, p);
         return true;
+    }
+
+    /// <summary>
+    /// Anahtarla ayırıcı arasındaki süsleri atlar (H3-D): Serilog sözlüğü <c>["Password"]=</c>, form dizisi
+    /// <c>password[]</c>/<c>Passwords[0]</c>/<c>user[password]</c>/<c>%5D</c>, Markdown <c>**Password**:</c>, <c>`password`:</c>.
+    /// </summary>
+    private static int SkipKeyDecoration(string text, int p)
+    {
+        for (var round = 0; round < 3 && p < text.Length; round++)
+        {
+            var start = p;
+            if (text[p] == '[')
+            {
+                var q = p + 1;
+                while (q < text.Length && q - p <= 7 && char.IsAsciiDigit(text[q]))
+                {
+                    q++;
+                }
+
+                if (q < text.Length && text[q] == ']')
+                {
+                    p = q + 1;
+                }
+            }
+            else if (text[p] == ']')
+            {
+                p++;
+            }
+            else if (p + 2 < text.Length && text[p] == '%' && text[p + 1] == '5' && text[p + 2] is 'D' or 'd')
+            {
+                p += 3;
+            }
+            else
+            {
+                while (p < text.Length && p - start < 3 && text[p] is '*' or '`')
+                {
+                    p++;
+                }
+            }
+
+            if (p == start)
+            {
+                break;
+            }
+        }
+
+        return p;
     }
 
     private static bool ConnectionStringContext(string text, int keyStart)

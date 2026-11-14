@@ -147,6 +147,29 @@ public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
     }
 
     /// <summary>
+    /// Api'nin kendi yapılandırmasındaki sır (servis anahtarı) bilinen sır olarak kaydedilir: etiketsiz geçse de teknik
+    /// loga açık yazılmaz (hunt r3, H3-H).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task InternalLogs_ConfiguredServiceKeyInMessage_NeverStored()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = _factory.CreateClient();
+        var marker = Guid.NewGuid().ToString("N");
+        object[] body = [new { occurredAt = DateTimeOffset.UtcNow, level = 3, source = 1, message = $"uyarı {marker} retry with {FastApiFactory.ServiceKey} failed" }];
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/internal/logs") { Content = JsonContent.Create(body) };
+        request.Headers.Add(ServiceKeyHeader.Name, FastApiFactory.ServiceKey);
+
+        using var response = await client.SendAsync(request, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var written = _factory.TechnicalLogs.Logs.Single(l => l.Message.Contains(marker, StringComparison.Ordinal));
+        written.Message.ShouldNotContain(FastApiFactory.ServiceKey);
+        written.Message.ShouldContain("retry with ***");
+    }
+
+    /// <summary>
     /// Ajan özeti yalnızca kayıtlı bağlantıdan ve yalnızca Error/Critical seviyesinde kabul edilir; kabul edilen özet
     /// kaynak "ajan", ajan sürümü ve maskeli mesajla teknik loga düşer.
     /// </summary>

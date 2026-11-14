@@ -47,25 +47,16 @@ public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, Age
     }
 
     /// <summary>
-    /// Kaba sınır: <see cref="MaxMessageLength"/> × 2'den uzun mesaj kesilir ve kesim noktasındaki yarım parça (son
-    /// boşluğa kadar, en fazla 64 karakter; boşluk yoksa son 64 karakter) atılır — yarım key desen eşiğinin altında kalıp
-    /// sızmasın (review round 3, L-1).
+    /// Kaba sınır: <see cref="MaxMessageLength"/> × 2'den uzun mesaj son ayraçta kesilir
+    /// (<see cref="SecretMasker.SafeCutIndex"/>) — kesim noktasındaki yarım key/URL desen eşiğinin altında kalıp sızmasın
+    /// (review round 3, L-1; hunt r3).
     /// </summary>
     /// <param name="raw">Ham mesaj.</param>
     /// <returns>Kesilmiş mesaj.</returns>
     public static string CoarseCut(string raw)
     {
         ArgumentNullException.ThrowIfNull(raw);
-        const int Limit = MaxMessageLength * 2;
-        const int Tail = 64;
-        if (raw.Length <= Limit)
-        {
-            return raw;
-        }
-
-        var cut = raw[..Limit];
-        var space = cut.LastIndexOfAny([' ', '\t', '\r', '\n'], Limit - 1, Tail);
-        return space > 0 ? cut[..space] : cut[..(Limit - Tail)];
+        return raw[..SecretMasker.SafeCutIndex(raw, MaxMessageLength * 2)];
     }
 
     /// <summary>Kaydı teknik loga yazar.</summary>

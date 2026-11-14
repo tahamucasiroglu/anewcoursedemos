@@ -118,7 +118,61 @@ public sealed class SecretMaskerTests
         { "Ai:ApiKeys:Gemini=AIzaSyA1234567890abcdefghijklmnopqrstuv", "Ai:ApiKeys:…tuv", "1234567890abcdef" },
         { "gemini hata: AIzaSyA1234567890abcdefghijklmnopqrstuv geçersiz", "gemini hata: AIza…tuv geçersiz", "1234567890abcdef" },
         { "Ai:ApiKeys:Gemini=plainsecret12345", "Ai:ApiKeys:…345", "plainsecret" },
+
+        // Hunt r3 (fix-4): API key alanı, çerezler, kodlu anahtarlar (çözülmüş görünüm), anahtar süsleri, XML, URL, tekrar eden değer…
+        { "api_key=abcd1234efgh5678 password=Hunter2Pass", "api_key=…678 password=***", "Hunter2Pass" },
+        { "{\"apiKey\":\" sk_live_abcdefghijklmnop1234\"}", "{\"apiKey\":\"…234\"}", "abcdefghijklmnop" },
+        { "\"ApiKeys\": { \"OpenRouter\": \"elv1234abcd5678efgh\", \"Other\": \"zzq9876yyyy5432\" }", "\"ApiKeys\": ***", "zzq9876yyyy" },
+        { "Request headers: Cookie: theme=dark; session=CfDJ8SECRETSESSION", "Request headers: Cookie: ***", "CfDJ8SECRET" },
+        { "{\"body\":\"\\u003CPassword\\u003EGizliSoap99\\u003C/Password\\u003E\"}", "{\"body\":\"\\u003CPassword\\u003E***\\u003C/Password\\u003E\"}", "GizliSoap99" },
+        { "{\"\\u015Fifre\":\"Gizli1234\"}", "{\"\\u015Fifre\":\"***\"}", "Gizli1234" },
+        { "kullanici=ali&%C5%9Fifre=Gizli1234&x=1", "kullanici=ali&%C5%9Fifre=***&x=1", "Gizli1234" },
+        { "{\"url\":\"postgres:\\/\\/app:Hunter2Pass@db.local:5432\\/k\"}", "{\"url\":\"postgres:\\/\\/app:***@db.local:5432\\/k\"}", "Hunter2Pass" },
+        { "{\"m\":\"{\\\\u0022password\\\\u0022:\\\\u0022Hunter2Pass\\\\u0022}\"}", "{\"m\":\"{\\\\u0022password\\\\u0022:\\\\u0022***\\\\u0022}\"}", "Hunter2Pass" },
+        { "HttpRequestException: 401\\r\\nBearer opaqueTok-9f8e7d6c5b4a", "HttpRequestException: 401\\r\\nBearer ***", "opaqueTok" },
+        { "q=%7B%22key%22%3A%22sk-or-v1-0123456789abcdef0123456789abcdef%22%7D", "q=%7B%22key%22%3A%22sk-or-…def%22%7D", "0123456789abcdef0123" },
+        { "[Parameters=[@__token_0='TokValue12345' (Size = 4000)]", "[Parameters=[@__token_0='***' (Size = 4000)]", "TokValue12345" },
+        { "user%5Bpassword%5D=NestedForm123&user%5Bname%5D=bob", "user%5Bpassword%5D=***", "NestedForm123" },
+        { "Login {[\"UserName\"]=\"bob\", [\"Password\"]=\"Hunter2Secret\"}", "Login {[\"UserName\"]=\"bob\", [\"Password\"]=\"***\"}", "Hunter2Secret" },
+        { "- **Password**: Hunter2Secret\n- **Token**: Tok2Secret99", "- **Password**: ***\n- **Token**: ***", "Tok2Secret99" },
+        { "Ai__ApiKeys__ElevenLabs=zzq9876yyyy5432", "Ai__ApiKeys__ElevenLabs=…432", "zzq9876yyyy" },
+        { "Ai.ApiKeys.ElevenLabs = zzq9876yyyy5432", "Ai.ApiKeys.ElevenLabs = …432", "zzq9876yyyy" },
+        { "<ClientSecret Value=\"CsAttr12345\"/>", "<ClientSecret Value=\"***\"/>", "CsAttr12345" },
+        { "<Credentials><Username>bob</Username><Value>Hunter2Pass</Value></Credentials>", "<Credentials>***</Credentials>", "Hunter2Pass" },
+        { "client_secret= \"\"  # rotated, token=zzq9876yyyy5432", "client_secret= \"\"  # rotated, token=***", "zzq9876yyyy" },
+        { "postgres://user:Secr;etPassXY@host:5432/db", "postgres://user:***@host:5432/db", "etPassXY" },
+        { "{\"password\":\"Hunter2Pass\",\"note\":\"retry with Hunter2Pass\"}", "{\"password\":\"***\",\"note\":\"retry with ***\"}", "Hunter2Pass" },
+        { "(Password, TupleSecret99)", "(Password, ***)", "TupleSecret99" },
+        { "Invalid API key: zzq9876yyyy5432", "Invalid API key: …432", "zzq9876yyyy" },
+        { "Pairing code: 482913", "Pairing code: ***", "482913" },
+        { "Erişim anahtarı=zzq9876yyyy5432", "Erişim anahtarı=***", "zzq9876yyyy" },
+        { "Token'ınız: Gizli12345", "Token'ınız: ***", "Gizli12345" },
+        { "CREATE ROLE app LOGIN PASSWORD E'Hunter2Secret';", "CREATE ROLE app LOGIN PASSWORD E'***';", "Hunter2Secret" },
+        { "db:\n    password: |\n\t\tHunter2Pass\n", "db:\n    password: |\n\t\t***\n", "Hunter2Pass" },
+        { "MaxTokens=4096 InputTokens=12 Invalid key format", "MaxTokens=4096 InputTokens=12 Invalid key format", "\u0000" },
     };
+
+    /// <summary>Uygulamanın bildiği sır (kayıtlı) metnin herhangi bir yerinde, etiketsiz de olsa gizlenir (H3-H).</summary>
+    [Fact]
+    public void Mask_RegisteredKnownSecret_HiddenAnywhere()
+    {
+        SecretMasker.RegisterKnownSecret("KnownSecretXyz987");
+
+        SecretMasker.Mask("connect failed using KnownSecretXyz987 (retry)").ShouldBe("connect failed using *** (retry)");
+        SecretMasker.Mask("q=KnownSecretXyz987%21").ShouldNotContain("KnownSecretXyz987");
+    }
+
+    /// <summary>Yapılandırmadaki gizli girdiler (gizli ad, bağlantı dizesindeki şifre) bilinen sır olur; sıradan girdiler olmaz.</summary>
+    [Fact]
+    public void RegisterConfigurationValue_SecretEntriesOnly()
+    {
+        SecretMasker.RegisterConfigurationValue("ConnectionStrings:Konsept", "Host=db;Username=app;Password=CfgPwQwe123;Database=k");
+        SecretMasker.RegisterConfigurationValue("Internal:ServiceKey", "SvcKeyAsd456789");
+        SecretMasker.RegisterConfigurationValue("Logging:LogLevel:Default", "InformationLevelXyz");
+
+        SecretMasker.Mask("auth failed CfgPwQwe123 / SvcKeyAsd456789").ShouldBe("auth failed *** / ***");
+        SecretMasker.Mask("level InformationLevelXyz").ShouldBe("level InformationLevelXyz");
+    }
 
     /// <summary>Serbest metne gömülü her biçim maskelenir; gizli parça çıktıda geçmez.</summary>
     /// <param name="input">Girdi.</param>
@@ -179,6 +233,9 @@ public sealed class SecretMaskerTests
     [InlineData("a:a:")]
     [InlineData("password=a ")]
     [InlineData("x, token: ")]
+    [InlineData("eyJ-")]
+    [InlineData("\\u0022password\\u0022:\\u0022x ")]
+    [InlineData("%22token%22%3A%22")]
     public void Mask_LargeAdversarialInput_StaysFast(string unit)
     {
         var text = string.Concat(Enumerable.Repeat(unit, (32 * 1024) / unit.Length));
@@ -219,8 +276,8 @@ public sealed class SecretMaskerTests
     {
         var masked = SecretMasker.Mask(new string('a', SecretMasker.MaxInputLength + 5000));
 
-        // Boşluk yoksa kesim 256 karakter geri çekilir: sınırdaki yarım token bile çıkmaz.
-        masked.Length.ShouldBe(SecretMasker.MaxInputLength - 256 + SecretMasker.TruncatedMarker.Length);
+        // Ayraç yoksa kesim CutBackoff kadar geri çekilir: sınırdaki yarım token bile çıkmaz.
+        masked.Length.ShouldBe(SecretMasker.MaxInputLength - SecretMasker.CutBackoff + SecretMasker.TruncatedMarker.Length);
         masked.ShouldEndWith(SecretMasker.TruncatedMarker);
     }
 

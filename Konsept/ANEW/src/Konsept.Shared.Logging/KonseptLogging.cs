@@ -71,4 +71,18 @@ public static class KonseptLogging
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 31);
     }
+
+    /// <summary>
+    /// Yapılandırmadaki gizli girdileri (gizli ad, bağlantı dizesi şifresi) bilinen sır olarak kaydeder; bu değerler
+    /// logda hangi biçimde geçerse geçsin maskelenir (hunt r3, H3-H). Uygulama başlarken bir kez çağrılır.
+    /// </summary>
+    /// <param name="entries">Yapılandırma girdileri (<c>IConfiguration.AsEnumerable()</c>).</param>
+    public static void RegisterKnownSecrets(IEnumerable<KeyValuePair<string, string?>> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        foreach (var (key, value) in entries)
+        {
+            Kernel.Security.SecretMasker.RegisterConfigurationValue(key, value);
+        }
+    }
 }
