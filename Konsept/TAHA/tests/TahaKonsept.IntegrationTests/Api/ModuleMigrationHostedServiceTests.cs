@@ -68,7 +68,7 @@ public sealed class ModuleMigrationHostedServiceTests
                 ["ConnectionStrings:Main"] = "Host=localhost;Port=1;Database=test;Username=test",
             })
             .Build();
-        var services = new ServiceCollection().BuildServiceProvider();
+        var services = new ServiceCollection().AddLogging().BuildServiceProvider();
         return new ModuleMigrationHostedService(
             services,
             new ModuleRegistry([module]),
