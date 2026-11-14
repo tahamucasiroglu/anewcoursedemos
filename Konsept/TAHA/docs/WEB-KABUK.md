@@ -110,3 +110,13 @@ If Identity defines its own versions in Shared.Contracts, these should be replac
 Only the Identity calls are typed. Everything else is passed through as raw JSON, so these routes are my proposal; the module APIs can match them, or the strings in the controllers can be changed.
 
 I did not edit any root files, did not commit, and stopped both test servers.
+
+## Dalga 2 ekleri (entegratör, 14 Kas 2026)
+
+Dalga 2'de eklenen MVC eylemleri ve vekillik ettikleri API rotaları (hepsi API'de var; oturumsuz 401 döndüğü canlı doğrulandı):
+
+- **Konseptler:** `KonuBegenme` → `POST api/concepts/topics/dislike`; `Gorev` → `GET api/concepts/jobs/current`; `GorevIptal` → `POST api/concepts/jobs/current/cancel`; `AdayKabul` → `POST api/concepts/{id}/candidates/{candidateId}/accept`; `AdaySil` → `DELETE api/concepts/{id}/candidates/{candidateId}` (aday kimliği sorgu dizesinde).
+- **KonsepttenVideo:** `Sesler` → `GET api/providers/voices?modelKey=`; `Ajanlar` → `GET api/agents`; `Konsept` → `GET|PUT api/concepts/{id}`; `BitenleriTemizle` → `POST api/production/queue/clear-finished`; `Video` → `GET api/production/videos/{id}`.
+- **API'de olup henüz Web'den çağrılmayanlar:** `GET api/production/queue/{id}/status`, `GET api/production/jobs/{id}`, `POST api/production/videos/{id}/open-player` (`open-in-player` takma adı).
+- Gövdeler ham JSON olarak aktarılır (Web host'ta string-enum dönüştürücü yok); JS, DTO alan adlarını kullanır (`codeModelKey`, `burnSubtitles`, durum `Done`, ilerleme 0–100).
+

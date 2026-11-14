@@ -100,6 +100,23 @@ foreach ($name in 'api', 'web') {
     }
 }
 
+# Masaüstü ajan indirmeleri (Setup.exe, Velopack .nupkg / releases.*.json / assets.*.json / RELEASES) gitignore'da:
+# -Source Head kopyasında yoklar. Her zaman ÇALIŞMA KLASÖRÜNDEKİ wwwroot/downloads içeriği web çıktısına kopyalanır.
+$downloadsSrc = Join-Path $root 'src/Hosts/TahaKonsept.Web/wwwroot/downloads'
+$downloadsOut = Join-Path $bundle 'web/wwwroot/downloads'
+if (Test-Path $downloadsSrc) {
+    $downloadFiles = @(Get-ChildItem $downloadsSrc -File | Where-Object { $_.Name -ne '.gitkeep' })
+    if ($downloadFiles.Count -gt 0) {
+        New-Item -ItemType Directory -Force $downloadsOut | Out-Null
+        $downloadFiles | Copy-Item -Destination $downloadsOut -Force
+        $downloadMb = [math]::Round(($downloadFiles | Measure-Object Length -Sum).Sum / 1MB, 1)
+        Write-Step "Ajan indirmeleri eklendi ($($downloadFiles.Count) dosya, $downloadMb MB): $($downloadFiles.Name -join ', ')"
+    }
+    else {
+        Write-Host '    Uyarı: wwwroot/downloads boş — ajan kurulum dosyası pakette yok (deploy/agent/pack-agent.ps1).' -ForegroundColor Yellow
+    }
+}
+
 # Pi dosyaları: satır sonlarını LF'ye çevirerek kopyala (bash CRLF ile bozulur).
 Write-Step 'Pi betikleri ve unit dosyaları hazırlanıyor'
 $piOut = Join-Path $bundle 'pi'
@@ -140,6 +157,10 @@ if (-not $SkipVerify) {
     Write-Host ("    api/health: status={0} version={1} environment={2} database={3}" -f $health.status, $health.version, $health.environment, $health.database)
     $web = Invoke-WebRequest -Uri "http://${PiAddress}:7110/" -TimeoutSec 15 -UseBasicParsing -MaximumRedirection 5
     Write-Host "    web /: HTTP $($web.StatusCode)"
+    if (Test-Path (Join-Path $downloadsOut 'TahaKonsept.Agent-win-Setup.exe')) {
+        $setup = Invoke-WebRequest -Uri "http://${PiAddress}:7110/downloads/TahaKonsept.Agent-win-Setup.exe" -Method Head -TimeoutSec 30 -UseBasicParsing
+        Write-Host "    web /downloads/TahaKonsept.Agent-win-Setup.exe: HTTP $($setup.StatusCode)"
+    }
 }
 
 Write-Step "Tamam: $release"
