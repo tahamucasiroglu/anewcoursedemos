@@ -15,6 +15,12 @@
     <Project Path="src/BuildingBlocks/TahaKonsept.Shared.Contracts/TahaKonsept.Shared.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Profiles/">
+    <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Domain/TahaKonsept.Modules.Profiles.Domain.csproj" />
+    <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Application/TahaKonsept.Modules.Profiles.Application.csproj" />
+    <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Infrastructure/TahaKonsept.Modules.Profiles.Infrastructure.csproj" />
+    <Project Path="src/Modules/Profiles/TahaKonsept.Modules.Profiles.Api/TahaKonsept.Modules.Profiles.Api.csproj" />
+  </Folder>
   <Folder Name="/src/Hosts/">
     <Project Path="src/Hosts/TahaKonsept.Api/TahaKonsept.Api.csproj" />
     <Project Path="src/Hosts/TahaKonsept.Web/TahaKonsept.Web.csproj" />
@@ -25,5 +31,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/TahaKonsept.ArchitectureTests/TahaKonsept.ArchitectureTests.csproj" />
     <Project Path="tests/TahaKonsept.IntegrationTests/TahaKonsept.IntegrationTests.csproj" />
+    <Project Path="tests/TahaKonsept.Modules.Profiles.Tests/TahaKonsept.Modules.Profiles.Tests.csproj" />
   </Folder>
 </Solution>

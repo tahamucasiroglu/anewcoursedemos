@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Api\TahaKonsept.BuildingBlocks.Api.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\Profiles\TahaKonsept.Modules.Profiles.Api\TahaKonsept.Modules.Profiles.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

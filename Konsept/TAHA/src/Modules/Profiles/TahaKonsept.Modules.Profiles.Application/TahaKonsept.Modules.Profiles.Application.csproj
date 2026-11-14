@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Profiles modülü: uygulama katmanı (profil servisi, okuyucu, prompt kurucu, hazır şablon kataloğu). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Profiles.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Profiles.Domain\TahaKonsept.Modules.Profiles.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\profile-templates.json" LogicalName="TahaKonsept.Modules.Profiles.Application.Templates.profile-templates.json" />
+  </ItemGroup>
+
+</Project>
