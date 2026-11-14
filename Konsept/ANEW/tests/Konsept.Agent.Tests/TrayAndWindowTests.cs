@@ -53,6 +53,36 @@ public sealed class TrayAndWindowTests
         }
     }
 
+    /// <summary>"Çıkış" önce sunucu bağlantısını kapatır, sonra uygulamayı sonlandırır (review L-3).</summary>
+    /// <returns>Görev.</returns>
+    [AvaloniaFact]
+    public async Task TrayMenu_Exit_StopsConnectionThenShutsDown()
+    {
+        var connection = Substitute.For<IServerConnection>();
+        var order = new List<string>();
+        connection.StopAsync(Arg.Any<CancellationToken>()).Returns(_ =>
+        {
+            order.Add("stop");
+            return Task.CompletedTask;
+        });
+        CurrentApp.Composition = Composition(new Uri("http://localhost:8000/"), Substitute.For<IBrowserLauncher>(), connection);
+        CurrentApp.ShutdownAction = () => order.Add("shutdown");
+        try
+        {
+            var exit = CurrentApp.TrayMenu!.Items.OfType<NativeMenuItem>().Last();
+            exit.Header.ShouldBe("Çıkış");
+
+            await CurrentApp.ExitAsync();
+
+            order.ShouldBe(["stop", "shutdown"]);
+        }
+        finally
+        {
+            CurrentApp.Composition = null;
+            CurrentApp.ShutdownAction = null;
+        }
+    }
+
     /// <summary>Pencere kapatılınca uygulama kapanmaz; pencere yalnızca gizlenir.</summary>
     [AvaloniaFact]
     public void MainWindow_Close_DoesNotShutdown()

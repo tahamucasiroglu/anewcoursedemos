@@ -16,6 +16,9 @@ public sealed partial class App : Avalonia.Application
     /// <summary>Gets or sets bileşim (testte sahte bileşenlerle değiştirilebilir).</summary>
     internal AgentComposition? Composition { get; set; }
 
+    /// <summary>Gets or sets uygulamayı sonlandıran eylem (masaüstünde lifetime.Shutdown; testte sahte).</summary>
+    internal Action? ShutdownAction { get; set; }
+
     /// <summary>Gets tray menüsü.</summary>
     internal NativeMenu? TrayMenu { get; private set; }
 
@@ -37,6 +40,7 @@ public sealed partial class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             ConfigureDesktop(desktop);
+            ShutdownAction ??= () => desktop.Shutdown();
             Composition ??= AgentComposition.CreateDefault();
             var window = new MainWindow();
             window.Attach(Composition);
@@ -58,17 +62,15 @@ public sealed partial class App : Avalonia.Application
     }
 
     /// <summary>"Çıkış": bağlantıyı kapatır ve uygulamayı sonlandırır.</summary>
-    internal async void Exit()
+    /// <returns>Görev.</returns>
+    internal async Task ExitAsync()
     {
         if (Composition is not null)
         {
             await Composition.Connection.StopAsync(CancellationToken.None).ConfigureAwait(true);
         }
 
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.Shutdown();
-        }
+        ShutdownAction?.Invoke();
     }
 
     private TrayIcon CreateTrayIcon()
@@ -76,7 +78,7 @@ public sealed partial class App : Avalonia.Application
         TrayMenu = new NativeMenu();
         TrayMenu.Items.Add(new NativeMenuItem(AgentText.OpenSite) { Command = new DelegateCommand(OpenSite) });
         TrayMenu.Items.Add(new NativeMenuItemSeparator());
-        TrayMenu.Items.Add(new NativeMenuItem(AgentText.Exit) { Command = new DelegateCommand(Exit) });
+        TrayMenu.Items.Add(new NativeMenuItem(AgentText.Exit) { Command = new DelegateCommand(() => _ = ExitAsync()) });
 
         var icon = new TrayIcon
         {
