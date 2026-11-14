@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Identity modülünün kullanıcıya dönen metinleri (yalnızca Türkçe): doğrulama, hata ve Günlük olay metinleri. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="NameRequired" xml:space="preserve"><value>Adınızı girin.</value></data>
+  <data name="NameTooLong" xml:space="preserve"><value>Ad en fazla 100 karakter olabilir.</value></data>
+  <data name="EmailRequired" xml:space="preserve"><value>E-posta adresinizi girin.</value></data>
+  <data name="EmailInvalid" xml:space="preserve"><value>Geçerli bir e-posta adresi girin.</value></data>
+  <data name="EmailTooLong" xml:space="preserve"><value>E-posta en fazla 254 karakter olabilir.</value></data>
+  <data name="PasswordRequired" xml:space="preserve"><value>Şifrenizi girin.</value></data>
+  <data name="PasswordLength" xml:space="preserve"><value>Şifre 8 ile 128 karakter arasında olmalı.</value></data>
+  <data name="PasswordLetterAndDigit" xml:space="preserve"><value>Şifre en az bir harf ve en az bir rakam içermeli.</value></data>
+  <data name="ValidationFailed" xml:space="preserve"><value>Girilen bilgiler geçersiz.</value></data>
+  <data name="EmailTaken" xml:space="preserve"><value>Bu e-posta zaten kayıtlı.</value></data>
+  <data name="InvalidCredentials" xml:space="preserve"><value>E-posta ya da şifre hatalı</value></data>
+  <data name="WrongPassword" xml:space="preserve"><value>Yanlış girdiniz, {0} hakkınız kaldı</value></data>
+  <data name="AccountLocked" xml:space="preserve"><value>Hesap geçici olarak kilitli.</value></data>
+  <data name="SessionInvalid" xml:space="preserve"><value>Oturumunuz sona erdi.</value></data>
+  <data name="TooManyAttempts" xml:space="preserve"><value>Çok fazla deneme, biraz sonra tekrar deneyin</value></data>
+  <data name="EventRegistered" xml:space="preserve"><value>Hesap oluşturuldu</value></data>
+  <data name="EventLoginSucceeded" xml:space="preserve"><value>Giriş yapıldı</value></data>
+  <data name="EventLoginFailed" xml:space="preserve"><value>Başarısız giriş denemesi</value></data>
+  <data name="EventLocked" xml:space="preserve"><value>Hesap 15 dakika kilitlendi</value></data>
+  <data name="EventLoggedOut" xml:space="preserve"><value>Çıkış yapıldı, tüm oturumlar kapatıldı</value></data>
+</root>

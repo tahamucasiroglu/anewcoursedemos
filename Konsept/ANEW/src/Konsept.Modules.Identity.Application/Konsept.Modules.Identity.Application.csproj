@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Identity use-case'leri: kayıt, giriş, oturum (refresh, çıkış, doğrulama). Infrastructure'a referans vermez (Y-3). -->
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Identity.Contracts\Konsept.Modules.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Identity.Domain\Konsept.Modules.Identity.Domain.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Kullanıcıya dönen metinler yalnızca resx'te (Türkçe). Derlemede tipli IdentityText sınıfı üretilir. -->
+    <EmbeddedResource Update="Resources\IdentityText.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)IdentityText.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Konsept.Modules.Identity.Application.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>IdentityText</StronglyTypedClassName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

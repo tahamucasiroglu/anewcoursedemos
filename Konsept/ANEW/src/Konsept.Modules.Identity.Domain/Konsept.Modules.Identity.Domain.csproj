@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Identity iş kuralları (kilit, oturum süresi, e-posta normalleştirme); yalnızca Shared.Kernel'e bağımlı (Y-2). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>
