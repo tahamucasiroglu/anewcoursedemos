@@ -13,3 +13,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0007 | 2026-11-14 05:31 | Uyku molası, otonom devam | [0007](0007_2026-11-14_0531_uyku-molasi.md) |
 | 0008 | 2026-11-14 10:51 | 30 sn kurgu ile yöntem testleri | [0008_2026-11-14_1051_30sn-kurgu-testleri.md](0008_2026-11-14_1051_30sn-kurgu-testleri.md) |
 | 0009 | 2026-11-14 11:35 | İkon promptu nerede | [0009_2026-11-14_1135_ikon-promptu-nerede.md](0009_2026-11-14_1135_ikon-promptu-nerede.md) |
+| 0010 | 2026-11-14 11:46 | İkon eklendi, kullanıma alındı | [0010_2026-11-14_1146_ikon-eklendi.md](0010_2026-11-14_1146_ikon-eklendi.md) |

@@ -1,12 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Taha Konsept">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f29a4a"/>
-      <stop offset="1" stop-color="#c25a1c"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5A3820"/>
+      <stop offset="1" stop-color="#3B2416"/>
+    </linearGradient>
+    <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF9F43"/>
+      <stop offset="1" stop-color="#F28C28"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="18" fill="url(#g)"/>
-  <path d="M18 20h20M28 20v26" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <path d="M38 33l11 6.5-11 6.5z" fill="#fff4e6"/>
-  <circle cx="47" cy="19" r="3.5" fill="#fff4e6"/>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path fill="url(#fg)" d="M241.9 137.4L375.7 214.4A48 48 0 0 1 375.7 297.6L241.9 374.6A48 48 0 0 1 170 333L170 179A48 48 0 0 1 241.9 137.4Z"/>
+  <path fill="#FFF3E0" d="M268 187Q281.2 240.8 328 256Q281.2 271.2 268 325Q254.8 271.2 208 256Q254.8 240.8 268 187Z"/>
 </svg>

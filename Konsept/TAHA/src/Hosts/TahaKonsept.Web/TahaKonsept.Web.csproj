@@ -17,9 +17,9 @@
     <PackageReference Include="Serilog.AspNetCore" />
   </ItemGroup>
 
-  <!-- source/ içindeki gerçek logo varsa wwwroot/img/logo.svg üzerine kopyalanır (yoksa geçici logo kalır). -->
-  <Target Name="CopyBrandIcons" BeforeTargets="Build" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\source\logo.svg')">
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\..\source\logo.svg" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot\img" SkipUnchangedFiles="true" />
+  <!-- Marka ikonu tek kaynaktan: source/taha-konsept-app.svg → wwwroot/img/logo.svg (logo + sekme ikonu). -->
+  <Target Name="CopyBrandIcons" BeforeTargets="Build" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\source\taha-konsept-app.svg')">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\..\source\taha-konsept-app.svg" DestinationFiles="$(MSBuildThisFileDirectory)wwwroot\img\logo.svg" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

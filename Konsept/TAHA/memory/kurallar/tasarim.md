@@ -13,3 +13,6 @@
 - En altta ince **Günlük** şeridi: son işlemler akar; hata kırmızı, uyarı sarı, normal nötr.
 - Seçim/düzenleme pencereleri sayfanın içine sıkıştırılmaz → **ekranın üstünde ayrı modal**; dışına tıklayınca veya kapat ile kapanır ve ayarları kaydeder.
 - Seçenek kutuları (altyazı, ilerleme çubuğu, kelime denetimi) **gerçekten çalışmalı**; süs olmaz.
+
+## Marka ikonu (14 Kas 2026)
+- Tek kaynak: `source/taha-konsept-app.svg` (kullanıcının ürettiği ikon). Web: build sırasında `wwwroot/img/logo.svg`'ye kopyalanır (logo + sekme ikonu). Masaüstü: `node deploy/brand/make-icons.cjs` → `src/Desktop/TahaKonsept.Agent/Assets/app.ico` + `app.png` (tepsi, pencereler, Velopack kurulum ikonu). İkon değişirse bu betiği çalıştır ve ajanı yeniden paketle.
