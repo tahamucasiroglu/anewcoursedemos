@@ -366,6 +366,38 @@ public sealed class AuthPageTests
         await Eventually(() => factory.ReadLogText().Contains(correlation, StringComparison.Ordinal), ct);
     }
 
+    /// <summary>
+    /// Api 500 + ProblemDetails <c>correlationId</c> döndürürse gösterilen hata numarası Api'ninkidir (review R9-1, 0008:
+    /// numara Api log kaydını bulur): giriş formunda ve çıkışta; Web logu iki numarayı da yazar.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ApiServerError_ShowsApiCorrelationId_FormAndLogout()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        using var signedIn = await factory.CreateSignedInClientAsync(ct);
+        var serverError = new Error("api.error", "Sunucu hatası", ErrorType.Unavailable)
+        {
+            Metadata = new Dictionary<string, object> { [ApiClientErrors.CorrelationIdKey] = "api-korelasyon-42" },
+        };
+        factory.Api.LoginAsync(Arg.Any<LoginApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(Result<AuthSessionResponse>.Failure(serverError));
+        factory.Api.LogoutAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Result<int>.Failure(serverError));
+        using var anonymous = SignedInClient.CreateAnonymous(factory);
+        var home = await WebFactory.GetDocumentAsync(signedIn, "/", ct);
+        var token = home.QuerySelector("form.user-menu__logout input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+
+        var loginPage = await PostAndParseAsync(anonymous, "/giris", Fields(("Email", "ayse@x.com"), ("Password", "Sifre1234")), ct);
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
+        using var logout = await signedIn.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct);
+        var logoutPage = await WebFactory.ParseAsync(await logout.Content.ReadAsStringAsync(ct), ct);
+
+        loginPage.GetElementById("form-message")!.TextContent.ShouldBe("Şu an işleminizi yapamıyoruz (hata no: api-korelasyon-42)");
+        logout.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        logoutPage.QuerySelector("[role=alert]")!.TextContent.ShouldBe("Şu an işleminizi yapamıyoruz (hata no: api-korelasyon-42)");
+        await Eventually(() => factory.ReadLogText().Contains("api-korelasyon-42", StringComparison.Ordinal), ct);
+    }
+
     /// <summary>Başarılı ve başarısız giriş, kayıt ve çıkış sırasında Web logu şifreyi ya da token'ları içermez.</summary>
     /// <returns>Görev.</returns>
     [Fact]

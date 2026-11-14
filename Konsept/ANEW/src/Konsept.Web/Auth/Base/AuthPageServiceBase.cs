@@ -103,7 +103,7 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
                     : await Coordinator.RefreshAsync(Api, refresh, cancellationToken).ConfigureAwait(false);
                 if (!refreshed.IsSuccess && refreshed.Error!.Type != ErrorType.Unauthorized)
                 {
-                    return LogoutFailed(controller, refreshed.Error.Code);
+                    return LogoutFailed(controller, refreshed.Error);
                 }
 
                 renewed = refreshed.IsSuccess ? refreshed.Value : null;
@@ -124,7 +124,7 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
                     await KeepRenewedSessionAsync(http, renewed).ConfigureAwait(false); // Dönmüş token çifti kaybolmasın.
                 }
 
-                return LogoutFailed(controller, result.Error.Code);
+                return LogoutFailed(controller, result.Error);
             }
         }
 
@@ -155,10 +155,15 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
         }
     }
 
-    private IActionResult LogoutFailed(Controller controller, string code)
+    // Gösterilen hata numarası: Api ProblemDetails correlationId'si varsa o (0008: numara Api log kaydını bulur; review R9-1),
+    // yoksa Web isteğinin izi.
+    private static string CorrelationOf(Controller controller, Error error) =>
+        error.Metadata?.GetValueOrDefault(ApiClientErrors.CorrelationIdKey) is string { Length: > 0 } api ? api : controller.HttpContext.TraceIdentifier;
+
+    private IActionResult LogoutFailed(Controller controller, Error error)
     {
-        var correlation = controller.HttpContext.TraceIdentifier;
-        LogLogoutFailed(Logger, code, correlation);
+        var correlation = CorrelationOf(controller, error);
+        LogLogoutFailed(Logger, error.Code, correlation, controller.HttpContext.TraceIdentifier);
         controller.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
         controller.ViewData[ErrorMessageKey] = string.Format(CultureInfo.CurrentCulture, UiText.ServiceUnavailable, correlation);
         return controller.View(ErrorView);
@@ -226,16 +231,16 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
                     return;
                 }
 
-                var correlation = controller.HttpContext.TraceIdentifier;
-                LogAuthUnavailable(Logger, error.Code, correlation);
+                var correlation = CorrelationOf(controller, error);
+                LogAuthUnavailable(Logger, error.Code, correlation, controller.HttpContext.TraceIdentifier);
                 form.Message = string.Format(CultureInfo.CurrentCulture, UiText.ServiceUnavailable, correlation);
                 return;
         }
     }
 
-    [LoggerMessage(EventId = 3001, Level = LogLevel.Warning, Message = "Kimlik işlemi tamamlanamadı: {Code} (korelasyon {Correlation})")]
-    private static partial void LogAuthUnavailable(ILogger logger, string code, string correlation);
+    [LoggerMessage(EventId = 3001, Level = LogLevel.Warning, Message = "Kimlik işlemi tamamlanamadı: {Code} (korelasyon {Correlation}, Web izi {WebTrace})")]
+    private static partial void LogAuthUnavailable(ILogger logger, string code, string correlation, string webTrace);
 
-    [LoggerMessage(EventId = 3002, Level = LogLevel.Warning, Message = "Api çıkışı başarısız: {Code} (korelasyon {Correlation}); oturum korundu")]
-    private static partial void LogLogoutFailed(ILogger logger, string code, string correlation);
+    [LoggerMessage(EventId = 3002, Level = LogLevel.Warning, Message = "Api çıkışı başarısız: {Code} (korelasyon {Correlation}, Web izi {WebTrace}); oturum korundu")]
+    private static partial void LogLogoutFailed(ILogger logger, string code, string correlation, string webTrace);
 }
