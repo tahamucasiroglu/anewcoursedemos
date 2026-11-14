@@ -26,4 +26,7 @@ public sealed record ConceptLlmOutput
 
     /// <summary>Etiketler.</summary>
     public List<string> Tags { get; init; } = [];
+
+    /// <summary>Kontrol edilmesi gereken iddialar (yoksa boş).</summary>
+    public List<string> ReviewNotes { get; init; } = [];
 }

@@ -44,4 +44,7 @@ public sealed record ConceptDocument
 
     /// <summary>Etiketler.</summary>
     public IReadOnlyList<string> Tags { get; init; } = [];
+
+    /// <summary>Yayından önce kontrol edilmesi gereken (modelin emin olmadığı) iddialar — özellikle web araması olmayan modellerde.</summary>
+    public IReadOnlyList<string> ReviewNotes { get; init; } = [];
 }

@@ -21,4 +21,16 @@ public interface IConceptContextProvider
     /// <param name="profile">Profil.</param>
     /// <returns>Gerektiriyor mu.</returns>
     bool IsFactHeavy(ProfileDto? profile);
+
+    /// <summary>Anlatım hızı (kullanıcının üretimdeki ses modeli; bilinmiyorsa dil sabiti).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="language">Dil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kelime/sn.</returns>
+    Task<double> WordsPerSecondAsync(Guid userId, string language, CancellationToken cancellationToken = default);
+
+    /// <summary>Konsept modeli web araması yapabiliyor mu.</summary>
+    /// <param name="modelKey">Model anahtarı.</param>
+    /// <returns>Yapabiliyor mu.</returns>
+    bool CanSearchWeb(string? modelKey);
 }

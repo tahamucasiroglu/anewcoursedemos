@@ -11,7 +11,8 @@ namespace TahaKonsept.Modules.Concepts.Application.Base;
 
 /// <summary>
 /// <see cref="IConceptSettingsService"/> ortak davranışı: kayıt yoksa varsayılanlar; kaydetmede yoksa oluşturulur.
-/// <c>EffectiveFactGrounding</c> = ayar ?? aktif profilin alanı (<see cref="IConceptContextProvider.IsFactHeavy"/>).
+/// <c>EffectiveFactGrounding</c> = ayar ?? aktif profilin alanı (<see cref="IConceptContextProvider.IsFactHeavy"/>);
+/// <c>ConceptModelCanSearchWeb</c> ve <c>EffectiveWordsPerSecond</c> bağlam kurucudan (yalnız yanıtta).
 /// </summary>
 public abstract class ConceptSettingsServiceBase : IConceptSettingsService
 {
@@ -75,7 +76,13 @@ public abstract class ConceptSettingsServiceBase : IConceptSettingsService
 
     private async Task<Result<ConceptSettingsDto>> ToDtoAsync(Guid userId, ConceptPreferences preferences, CancellationToken cancellationToken)
     {
-        var effective = preferences.FactGrounding ?? Contexts.IsFactHeavy(await Profiles.GetActiveAsync(userId, cancellationToken));
-        return preferences.ToDto(effective);
+        var profile = await Profiles.GetActiveAsync(userId, cancellationToken);
+        var effective = preferences.FactGrounding ?? Contexts.IsFactHeavy(profile);
+        var language = string.IsNullOrWhiteSpace(profile?.Language) ? "tr" : profile.Language;
+        return preferences.ToDto(effective) with
+        {
+            ConceptModelCanSearchWeb = Contexts.CanSearchWeb(preferences.ConceptModelKey),
+            EffectiveWordsPerSecond = await Contexts.WordsPerSecondAsync(userId, language, cancellationToken),
+        };
     }
 }

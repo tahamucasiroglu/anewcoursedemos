@@ -44,6 +44,12 @@ public sealed record ConceptGenerationContext
     /// <summary>Gerçek bilgi (web araması + kaynak zorunlu).</summary>
     public bool FactGrounding { get; init; }
 
+    /// <summary>
+    /// Konsept modeli web araması yapabiliyor mu (katalog <c>supportsWebSearch</c>; yerel LLM asla). Değilse gerçek bilgi açıkken
+    /// prompt kaynak istemez: yalnız yerleşik bilgiler, kaynak uydurma yok, şüpheliler <c>reviewNotes</c>'a.
+    /// </summary>
+    public bool WebSearchAvailable { get; init; } = true;
+
     /// <summary>Seslendirme hızı (kelime/sn).</summary>
     public double WordsPerSecond { get; init; } = ConceptLimits.TurkishWordsPerSecond;
 

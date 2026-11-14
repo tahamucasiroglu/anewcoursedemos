@@ -85,6 +85,7 @@ public static class ConceptMappings
             Sources = document.Sources.Select(s => new ConceptSourceLlm { Title = s.Title, Url = s.Url }).ToList(),
             Pronunciations = document.Pronunciations.Select(p => new PronunciationLlm { Written = p.Written, Spoken = p.Spoken }).ToList(),
             Tags = document.Tags.ToList(),
+            ReviewNotes = document.ReviewNotes.ToList(),
         };
     }
 }

@@ -14,7 +14,8 @@
     var TK = window.TK = window.TK || {};
     var U = null;
 
-    var WPS = 2.4;
+    /* Anlatım hızı (kelime/sn): sunucu üretimdeki ses modeline göre verir (EffectiveWordsPerSecond); gelene kadar yedek. */
+    var WPS = 2.0;
     var EFFORT_LABELS = { Low: 'Düşük', Medium: 'Orta', High: 'Yüksek', XHigh: 'Çok yüksek', Max: 'En yüksek' };
     var TONES = ['Bilgilendirici', 'Merak uyandıran', 'Dramatik', 'Esprili', 'Sakin', 'Heyecanlı', 'Gizemli'];
     var AUDIENCES = ['Genel izleyici', '18–35 yaş, meraklı', 'Tarih meraklıları', 'Öğrenciler', 'Teknoloji meraklıları'];
@@ -62,6 +63,15 @@
         var fact = !!s.effectiveFactGrounding;
         $('#kp-fact-badge').prop('hidden', false).toggleClass('is-success', fact)
             .text(fact ? 'Gerçek bilgi: açık' + (s.factGrounding === null || s.factGrounding === undefined ? ' (oto)' : '') : 'Gerçek bilgi: kapalı');
+        $('#kp-noweb-chip').prop('hidden', !(fact && !canSearchWeb(s)));
+        if (Number(s.effectiveWordsPerSecond) > 0) { WPS = Number(s.effectiveWordsPerSecond); }
+    }
+
+    /** Seçili konsept modeli web araması yapabiliyor mu: sunucu yanıtı (conceptModelCanSearchWeb), yoksa model listesi. */
+    function canSearchWeb(s) {
+        if (s.conceptModelCanSearchWeb === true || s.conceptModelCanSearchWeb === false) { return s.conceptModelCanSearchWeb; }
+        var m = model(s.conceptModelKey);
+        return !m || (!!m.supportsWebSearch && m.platform !== 'local-openai');
     }
 
     function saveSettings(patch) {
@@ -432,6 +442,11 @@
             html += '<div><h3>Okunuş önerileri</h3><div class="kp-chips">' + $.map(d.pronunciations, function (p) {
                 return '<span class="tk-badge is-info">' + U.escape(p.written) + ' → ' + U.escape(p.spoken) + '</span>';
             }).join('') + '</div></div>';
+        }
+        if (d.reviewNotes && d.reviewNotes.length) {
+            html += '<div><h3>Kontrol edilecekler</h3><ul class="kp-review">' + $.map(d.reviewNotes, function (n) {
+                return '<li>' + U.escape(n) + '</li>';
+            }).join('') + '</ul></div>';
         }
         if (d.sources && d.sources.length) {
             html += '<div><h3>Kaynaklar</h3><ol class="kp-sources">' + $.map(d.sources, function (s) {

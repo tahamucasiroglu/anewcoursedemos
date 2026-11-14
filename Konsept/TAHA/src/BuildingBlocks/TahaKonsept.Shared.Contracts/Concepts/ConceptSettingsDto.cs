@@ -42,4 +42,10 @@ public sealed record ConceptSettingsDto
 
     /// <summary>Aktif profil için geçerli gerçek bilgi değeri (yalnız yanıtta).</summary>
     public bool EffectiveFactGrounding { get; init; }
+
+    /// <summary>Seçili konsept modeli web araması yapabiliyor mu (yalnız yanıtta; hayırsa kaynaklar boş kalabilir).</summary>
+    public bool ConceptModelCanSearchWeb { get; init; } = true;
+
+    /// <summary>Anlatım hızı (kelime/sn; üretimdeki ses modeline göre — yalnız yanıtta, sahne süresi tahmini için).</summary>
+    public double EffectiveWordsPerSecond { get; init; } = 2.0;
 }

@@ -14,6 +14,7 @@ using TahaKonsept.Modules.Profiles.Application.Concrete;
 using TahaKonsept.Modules.Providers.Application.Abstract;
 using TahaKonsept.Shared.Contracts.Concepts;
 using TahaKonsept.Shared.Contracts.Profiles;
+using TahaKonsept.Shared.Contracts.Providers;
 
 namespace TahaKonsept.Modules.Concepts.Tests.Support;
 
@@ -64,7 +65,11 @@ public sealed class ConceptsTestContext : IDisposable
         Memory = new TopicMemory(MemoryRepository, Normalizer);
         Prompts = new ConceptPromptFactory(new EmbeddedPromptLibrary(), new PromptTemplateRenderer());
         Pace = Substitute.For<INarrationPaceSource>();
-        Contexts = new ConceptContextProvider(SettingsRepository, Profiles, new ProfilePromptBuilder(), Pace);
+        Catalog = Substitute.For<IModelCatalog>();
+        Catalog.Find(Arg.Any<string>()).Returns(ci => ci.Arg<string>().StartsWith("local-openai", StringComparison.Ordinal)
+            ? new ModelInfo { Key = "local-openai", Platform = "local-openai", Capability = ModelCapability.Text, SupportsWebSearch = false }
+            : new ModelInfo { Key = ci.Arg<string>(), Platform = "anthropic", Capability = ModelCapability.Text, SupportsWebSearch = true });
+        Contexts = new ConceptContextProvider(SettingsRepository, Profiles, new ProfilePromptBuilder(), Pace, Catalog);
         Generator = new ConceptGenerator(Gateway, Prompts);
         Topics = new TopicGenerator(Gateway, Prompts, Memory, Normalizer);
         Analyzer = new WordRepetitionAnalyzer();
@@ -73,6 +78,9 @@ public sealed class ConceptsTestContext : IDisposable
         Queue = new ChannelConceptJobQueue();
         Candidates = new InMemoryRevisionCandidateStore(Clock);
     }
+
+    /// <summary>Model kataloğu (yerel LLM web araması yapamaz; diğerleri yapar).</summary>
+    public IModelCatalog Catalog { get; }
 
     /// <summary>Anlatım hızı portu (varsayılan: bilgi yok → dil sabiti).</summary>
     public INarrationPaceSource Pace { get; }

@@ -216,7 +216,8 @@ public abstract class ConceptJobProcessorBase : IConceptJobProcessor
 
         if (context.FactGrounding && document.Sources.Count == 0)
         {
-            await Services.Activity.WarningAsync(ActivitySources.Concepts, $"Kaynaksız konsept (gerçek bilgi açık): {document.Title}", userId: job.UserId, cancellationToken: CancellationToken.None);
+            var reason = context.WebSearchAvailable ? "gerçek bilgi açık" : "model web araması yapamıyor, kontrol notlarına bakın";
+            await Services.Activity.WarningAsync(ActivitySources.Concepts, $"Kaynaksız konsept ({reason}): {document.Title}", userId: job.UserId, cancellationToken: CancellationToken.None);
         }
 
         var concept = Concept.Create(job.UserId, context.ProfileId, brief.Origin, document, g.ModelKey, input, output, cost);

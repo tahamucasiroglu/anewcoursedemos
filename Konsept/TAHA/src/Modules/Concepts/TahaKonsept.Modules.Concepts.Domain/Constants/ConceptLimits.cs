@@ -45,6 +45,12 @@ public static class ConceptLimits
     /// <summary>Sahne metin alanları en fazla uzunluk.</summary>
     public const int SceneTextMaxLength = 4000;
 
+    /// <summary>Kontrol notu azami uzunluğu.</summary>
+    public const int ReviewNoteMaxLength = 400;
+
+    /// <summary>Belgedeki en fazla kontrol notu.</summary>
+    public const int MaxReviewNotes = 12;
+
     /// <summary>Varsayılan konsept modeli.</summary>
     public const string DefaultConceptModelKey = "claude-sonnet-5-5";
 

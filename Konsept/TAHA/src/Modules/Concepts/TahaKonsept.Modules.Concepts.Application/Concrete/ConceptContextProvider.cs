@@ -1,6 +1,7 @@
 using TahaKonsept.Modules.Concepts.Application.Abstract;
 using TahaKonsept.Modules.Concepts.Application.Base;
 using TahaKonsept.Modules.Profiles.Application.Abstract;
+using TahaKonsept.Modules.Providers.Application.Abstract;
 
 namespace TahaKonsept.Modules.Concepts.Application.Concrete;
 
@@ -11,5 +12,6 @@ namespace TahaKonsept.Modules.Concepts.Application.Concrete;
 /// <param name="profiles">Profil okuyucu.</param>
 /// <param name="promptBuilder">Profil prompt kurucu.</param>
 /// <param name="pace">Ses modeline göre anlatım hızı portu.</param>
-public sealed class ConceptContextProvider(IConceptSettingsRepository settings, IProfileReader profiles, IProfilePromptBuilder promptBuilder, INarrationPaceSource pace)
-    : ConceptContextProviderBase(settings, profiles, promptBuilder, pace);
+/// <param name="catalog">Model kataloğu.</param>
+public sealed class ConceptContextProvider(IConceptSettingsRepository settings, IProfileReader profiles, IProfilePromptBuilder promptBuilder, INarrationPaceSource pace, IModelCatalog catalog)
+    : ConceptContextProviderBase(settings, profiles, promptBuilder, pace, catalog);

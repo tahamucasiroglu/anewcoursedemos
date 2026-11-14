@@ -9,7 +9,9 @@ namespace TahaKonsept.Modules.Concepts.Application.Base;
 
 /// <summary>
 /// <see cref="IConceptPromptFactory"/> ortak davranışı. Konsept sistem promptu kanal metni + ince ayar + süre/kelime/sahne hedefleri +
-/// kadraj + gerçek bilgi bayrağıyla işlenir (bir iş boyunca sabit → önbellek). Düzeltme aynı sistem promptunu kullanır.
+/// kadraj + gerçek bilgi bayrağıyla işlenir (bir iş boyunca sabit → önbellek). Gerçek bilgi açık + model web araması yapabiliyorsa
+/// <c>fact</c> (doğrula, en az 2 gerçek kaynak); yapamıyorsa <c>factOffline</c> (yalnız yerleşik bilgi, kaynak boş kalabilir, şüpheliler
+/// <c>reviewNotes</c>'a) bölümü açılır. Düzeltme aynı sistem promptunu kullanır.
 /// </summary>
 public abstract class ConceptPromptFactoryBase : IConceptPromptFactory
 {
@@ -129,7 +131,8 @@ public abstract class ConceptPromptFactoryBase : IConceptPromptFactory
             ["wps"] = context.WordsPerSecond.ToString("0.0", inv),
             ["scenes"] = context.SceneCountHint.ToString(inv),
             ["aspect"] = context.Format == VideoFormat.Horizontal ? "16:9 yatay (horizontal 16:9)" : "9:16 dikey (vertical 9:16)",
-            ["fact"] = context.FactGrounding ? "1" : null,
+            ["fact"] = context.FactGrounding && context.WebSearchAvailable ? "1" : null,
+            ["factOffline"] = context.FactGrounding && !context.WebSearchAvailable ? "1" : null,
         });
     }
 

@@ -135,6 +135,13 @@ public abstract class ConceptGeneratorBase : IConceptGenerator
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Take(12)
                 .ToList(),
+            ReviewNotes = (output.ReviewNotes ?? [])
+                .Select(Clean)
+                .Where(n => n.Length > 0)
+                .Select(n => n.Length <= ConceptLimits.ReviewNoteMaxLength ? n : n[..ConceptLimits.ReviewNoteMaxLength])
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(ConceptLimits.MaxReviewNotes)
+                .ToList(),
         };
     }
 
@@ -148,7 +155,7 @@ public abstract class ConceptGeneratorBase : IConceptGenerator
             SystemPrompt = prompts.System,
             UserPrompt = prompts.User,
             MaxOutputTokens = OutputBudget(context),
-            UseWebSearch = context.FactGrounding,
+            UseWebSearch = context.FactGrounding && context.WebSearchAvailable,
             Purpose = purpose,
             CacheSystemPrompt = true,
         };
