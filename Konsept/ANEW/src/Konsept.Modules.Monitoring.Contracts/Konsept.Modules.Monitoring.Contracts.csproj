@@ -1,3 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Monitoring modülünün başka modüllere açık tek yüzeyi (Y-1). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
+  </ItemGroup>
 </Project>

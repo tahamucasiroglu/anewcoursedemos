@@ -23,9 +23,11 @@ public static class MonitoringModule
             connectionString,
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MonitoringDbContext.SchemaName)));
         services.AddScoped<ISystemEventRepository, SystemEventRepository>();
+        services.AddScoped<IDatabaseProbe, EfDatabaseProbe>();
         services.AddScoped<ISystemEventService, SystemEventService>();
         services.AddScoped<ISystemEventWriter>(sp => sp.GetRequiredService<ISystemEventService>());
         services.AddScoped<ISystemEventReader>(sp => sp.GetRequiredService<ISystemEventService>());
+        services.AddScoped<ISystemStatusService, SystemStatusService>();
         return services;
     }
 

@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- AgentGateway'in başka modüllere ve ajana açık yüzeyi: hub sözleşmesi ve DTO'lar (Y-1). -->
+</Project>

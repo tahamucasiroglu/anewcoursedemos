@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- API host'u (modüler monolit): modülleri kaydeder, açılışta şemayı hazırlar, hub'ı ve controller'ları bağlar. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Infrastructure\Konsept.Modules.Monitoring.Infrastructure.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Presentation\Konsept.Modules.Monitoring.Presentation.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Infrastructure\Konsept.Modules.AgentGateway.Infrastructure.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Presentation\Konsept.Modules.AgentGateway.Presentation.csproj" />
+  </ItemGroup>
+</Project>

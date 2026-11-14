@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Testing\Konsept.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.AgentGateway.Infrastructure\Konsept.Modules.AgentGateway.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

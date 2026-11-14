@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- AgentGateway altyapısı: SignalR hub'ı, oturum kaydı, komut kanalı. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Application\Konsept.Modules.AgentGateway.Application.csproj" />
+  </ItemGroup>
+</Project>

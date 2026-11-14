@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- AgentGateway use-case'leri: ajan varlığı ve "test et" komutu. Infrastructure'a referans vermez (Y-3). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Domain\Konsept.Modules.AgentGateway.Domain.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
+  </ItemGroup>
+</Project>
