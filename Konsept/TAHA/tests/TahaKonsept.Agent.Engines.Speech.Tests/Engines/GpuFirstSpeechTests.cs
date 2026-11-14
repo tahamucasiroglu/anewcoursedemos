@@ -117,6 +117,21 @@ public sealed class GpuFirstSpeechTests
         mms.IsInstalled().ShouldBeTrue();
     }
 
+    /// <summary>
+    /// EMA Lightning düz CUDA yoluyla yüklenir: <c>lightning()</c> CUDA grafikleri her yüklemede ~28 sn ve 2,9–5,7 GB VRAM harcayıp
+    /// 4 sahnede 0,8 sn kazandırıyordu (e2e, RTX 3060). Ajan <c>lightning=false</c> gönderir; adapter'ın varsayılanı da kapalı.
+    /// </summary>
+    [Fact]
+    public void Ema_lightning_uses_plain_cuda_path()
+    {
+        using var ema = new EmaLightningSpeechEngine(Services(true, out _));
+
+        ema.Device.ShouldBe("cuda");
+        ema.LoadOptions["lightning"].ShouldBe(false);
+        var adapter = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "PythonWorkers", "adapters", "ema_lightning.py"));
+        adapter.ShouldContain("options.get(\"lightning\", False)");
+    }
+
     /// <summary>GPU gerektiren motorlar GPU kararından bağımsız olarak CUDA tekerleği kurar (önceki davranış korunur).</summary>
     [Fact]
     public void Heavy_engines_keep_cuda_wheels_without_gpu()

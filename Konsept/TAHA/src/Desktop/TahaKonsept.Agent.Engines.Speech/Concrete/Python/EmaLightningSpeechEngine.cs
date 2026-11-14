@@ -4,8 +4,10 @@ namespace TahaKonsept.Agent.Engines.Speech.Concrete.Python;
 
 /// <summary>
 /// EMA Lightning (Apache-2.0, ~34 MB, HF <c>canberkkkkkk/ema-lightning</c>, pip <c>ema-lightning</c>). Sadece Türkçe, tek ses,
-/// 48 kHz. Model kartı sentetik ses bildirimi ister. "Önce GPU": GPU varsa CUDA torch tekerleği, model <c>cuda</c>'da ve CUDA grafik
-/// hızlandırması (<c>lightning()</c>) denenir; GPU yoksa uyarıyla CPU (CPU'da da gerçek zamandan hızlı).
+/// 48 kHz. Model kartı sentetik ses bildirimi ister. "Önce GPU": GPU varsa CUDA torch tekerleği ve model <c>cuda</c>'da; GPU yoksa
+/// uyarıyla CPU (CPU'da da gerçek zamandan hızlı). CUDA grafik hızlandırması (<c>lightning()</c>) kapalıdır (<see cref="LoadOptions"/>):
+/// RTX 3060'ta düz CUDA 4 sahneyi 1,0 sn'de / 132 MB VRAM ile seslendirirken <c>lightning()</c> her yüklemede 28 sn (ilk kez ~170 sn
+/// toplu boyut ölçümü) ve 2,9–5,7 GB VRAM harcayıp yalnız 0,8 sn kazandırıyor; GPU işçisi her işten sonra kapandığı için hiç geri ödemez.
 /// </summary>
 public sealed class EmaLightningSpeechEngine : PythonSpeechEngineBase
 {
@@ -44,6 +46,9 @@ public sealed class EmaLightningSpeechEngine : PythonSpeechEngineBase
 
     /// <inheritdoc />
     public override IReadOnlyList<string> Requirements => Packages;
+
+    /// <summary>Adapter seçenekleri: <c>lightning=false</c> (düz CUDA yolu; gerekçe sınıf özetinde).</summary>
+    public override IReadOnlyDictionary<string, object?> LoadOptions { get; } = new Dictionary<string, object?> { ["lightning"] = false };
 
     /// <summary>GPU seçildiyse torch 2.8.0 CUDA 12.8 tekerleği (GPU yoksa CPU tekerleği; parmak izi değişince yeniden kurulur).</summary>
     public override string? TorchIndexUrl => CudaTorchIndex(TorchCu128Index);
