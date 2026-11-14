@@ -24,6 +24,7 @@
 - Her class / interface / abstract / enum'un başında `/// <summary>`: nesnenin ne iş yaptığı, önemli metotları ve önemli alanları. Hem insan hem Claude için; büyük dosyayı okumadan summary'den anlaşılmalı.
 
 ## Genel kalite
+- **TreatWarningsAsErrors=true** tüm projelerde (14 Kas 2026, kullanıcı isteği). Uyarı `NoWarn` ile bastırılmaz, kod düzeltilir; zorunlu istisna olursa gerekçesiyle yorum yazılır.
 - SOLID, clean code, DRY: aynı mantıkta çalışan kod tek yerde toplanır (farklı tiplerle aynı işi yapan → generic metot).
 - Loglama her uygulamada (MVC, API, Desktop): Information / Warning / Error / Critical. Yerel loglar 7 gün tutulur, günlük dosyalara ayrılır.
 - Güvenlik: şifreler hash'li (geri dönüşsüz), kullanıcı API key'leri şifreli saklanır.

@@ -19,3 +19,5 @@
 | 2026-11-14 | Varsayılan teknik seçimler (rapor 0001): HyperFrames, ffmpeg ASS altyazı aşaması, Supertonic 3, sd.cpp, SignalR (ajan), jQuery polling (tarayıcı), Velopack, .NET 10, MediatR yok. Portlar 7110 web / 7111 API. | rapor 0001 |
 | 2026-11-14 | **Tek kullanıcı (sadece ben), şahsi, ticari değil.** Pi sadece yerelde. Kişisel kullanıma izin veren tüm ses ve görsel modelleri eklenecek. Kayıt kapalı, kurulumda tek hesap. | prompt 0002 |
 | 2026-11-14 | Türkçe okunuş düzeltme: Normalize aşaması (yazılış ≠ okunuş; sözlük, sayı, tarih, romen, kısaltma, LLM önerisi). Örn. Google → Gugıl. | prompt 0002 |
+| 2026-11-14 | Pi deploy: **self-contained linux-arm64** (Pi'de .NET runtime yok; mevcut projelerle aynı kalıp) → `/opt/tahakonsept`, veri `/var/lib/tahakonsept`, kullanıcı `tahakonsept`, DB/rol `tahakonsept` (oluşturuldu). DB parolası `TAHA/.env` (git dışı). Geliştirmede PG tüneli `ssh -L 5433:localhost:5432 tmpi`. | prompt 0003 |
+| 2026-11-14 | Bağlayıcı teknik sözleşme: `docs/MIMARI.md`. | prompt 0003 |

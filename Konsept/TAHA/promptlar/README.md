@@ -6,3 +6,6 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 |---|---|---|---|
 | 0001 | 2026-11-14 04:17 | Proje başlangıcı: kurallar, klasörler, mimari, sayfalar | [0001](0001_2026-11-14_0417_proje-baslangici.md) |
 | 0002 | 2026-11-14 04:46 | Tek kullanıcı, tüm ses/görsel modelleri, Türkçe okunuş | [0002](0002_2026-11-14_0446_tek-kullanici-ve-turkce-okunus.md) |
+| 0003 | 2026-11-14 04:49 | Kodlamaya başla, test edilebilir hale kadar durma | [0003](0003_2026-11-14_0449_kodlamaya-basla.md) |
+| 0004 | 2026-11-14 04:57 | TreatWarningsAsErrors kuralı | [0004](0004_2026-11-14_0457_treat-warnings-as-errors.md) |
+| 0005 | 2026-11-14 05:30 | Adımları commit'leme kuralı | [0005](0005_2026-11-14_0530_adim-commitleri.md) |
