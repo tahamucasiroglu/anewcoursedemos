@@ -32,7 +32,8 @@
     function renderProfiles(selectedId) {
         var $sel = $('#tk-profile').empty();
         if (!profiles.length) {
-            $sel.append('<option value="">Profil yok — ➕ ile ekleyin</option>');
+            /* Kısa metin dar üst barda da sığar; ayrıntı ipucunda (seçici metni kesilmeden üç noktayla biter). */
+            $sel.append('<option value="">Profil yok</option>').attr('title', 'Profil yok — ➕ ile ekleyin');
             return;
         }
         $.each(profiles, function (_, p) {
@@ -40,6 +41,7 @@
             if ((selectedId && String(p.id) === String(selectedId)) || (!selectedId && p.isActive)) { $o.prop('selected', true); }
             $sel.append($o);
         });
+        $sel.attr('title', 'Aktif profil: ' + ($sel.find('option:selected').text() || ''));
     }
 
     function loadProfiles(selectedId) {
@@ -84,6 +86,7 @@
             var id = $(this).val();
             if (!id) { return; }
             TK.api.post('/Profil/Sec/' + encodeURIComponent(id)).done(function () {
+                $('#tk-profile').attr('title', 'Aktif profil: ' + $('#tk-profile option:selected').text());
                 TK.toast.info('Aktif profil: ' + $('#tk-profile option:selected').text());
                 $(document).trigger('tk:profile', [activeProfile()]);
             });
