@@ -21,6 +21,8 @@ namespace TahaKonsept.Agent.Engines.Image.Base;
 /// <item><see cref="EnsureModelAsync"/>: katalogdaki dosya setini <c>ModelsDir/{ModelsSubdirectory}</c> altına indirir; toplam ilerleme raporlar,
 /// kesintide kaldığı yerden devam eder.</item>
 /// <item><see cref="IsModelInstalled"/>: tüm dosyalar beklenen boyutta var mı.</item>
+/// <item><see cref="PlanGenerationSize"/>: istenen boyut modelin <see cref="ImageModelDefinition.MaxPixels"/> bütçesini aşarsa
+/// aynı oranda, <see cref="GenerationAlignment"/>'ın katı daha küçük üretim boyutu (Images aşaması tam boyuta getirir).</item>
 /// </list>
 /// </summary>
 public abstract class ImageEngineBase : ILocalImageEngine
@@ -30,6 +32,9 @@ public abstract class ImageEngineBase : ILocalImageEngine
 
     /// <summary>İzin verilen en büyük kenar (piksel).</summary>
     public const int MaxDimension = 4096;
+
+    /// <summary>Bütçeye küçültülen üretim boyutunun hizası (piksel; SDXL/SD3/FLUX gizli uzay yaması için güvenli kat).</summary>
+    public const int GenerationAlignment = 64;
 
     private static readonly string[] AllowedExtensions = [".png", ".jpg", ".jpeg", ".webp"];
 
@@ -198,6 +203,28 @@ public abstract class ImageEngineBase : ILocalImageEngine
         }
 
         return model;
+    }
+
+    /// <summary>
+    /// Üretim boyutunu planlar: <paramref name="maxPixels"/> yoksa ya da istek bütçe içindeyse istenen boyut aynen döner; aşarsa
+    /// oran korunarak bütçeye ölçeklenir ve her kenar <see cref="GenerationAlignment"/>'ın katına aşağı yuvarlanır (en az bir kat).
+    /// Örnek: 1080x1920, 1 MP bütçe → 768x1344.
+    /// </summary>
+    /// <param name="width">İstenen genişlik.</param>
+    /// <param name="height">İstenen yükseklik.</param>
+    /// <param name="maxPixels">Model piksel bütçesi.</param>
+    /// <returns>Üretim boyutu.</returns>
+    public static (int Width, int Height) PlanGenerationSize(int width, int height, int? maxPixels)
+    {
+        if (maxPixels is not { } budget || budget <= 0 || (long)width * height <= budget)
+        {
+            return (width, height);
+        }
+
+        var scale = Math.Sqrt(budget / ((double)width * height));
+        return (Align(width * scale), Align(height * scale));
+
+        static int Align(double value) => Math.Max(GenerationAlignment, (int)Math.Floor(value / GenerationAlignment) * GenerationAlignment);
     }
 
     /// <summary>Asıl üretim (istek doğrulanmış, çıktı klasörü hazır).</summary>

@@ -131,15 +131,46 @@ public sealed class StableDiffusionCppImageEngineTests : IDisposable
         reports.Last().Percent.ShouldBe(100);
     }
 
+    /// <summary>Model piksel bütçesi (SDXL ~1 MP) aşılırsa sd-cli bütçedeki 64'ün katı boyutla çağrılır: 1080x1920 → 768x1344.</summary>
+    [Fact]
+    public async Task Generates_within_model_pixel_budget()
+    {
+        InstallTinyModel();
+        var runner = new FakeProcessRunner();
+        var engine = EngineFactory.CreateSdCpp(_paths, runner, catalog: TinyCatalog(maxPixels: 1024 * 1024));
+
+        var result = await engine.GenerateAsync(new ImageRequest("z-image-turbo", "kedi", null, 1080, 1920, 1, null, Path.Combine(_temp.Path, "b.png")), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue(result.IsFailure ? result.Error.Message : null);
+        var args = runner.LastSpec.ShouldNotBeNull().Arguments.ToList();
+        args[args.IndexOf("-W") + 1].ShouldBe("768");
+        args[args.IndexOf("-H") + 1].ShouldBe("1344");
+    }
+
+    /// <summary>Bütçe tanımsızsa istenen boyut aynen geçer.</summary>
+    [Fact]
+    public async Task Generates_requested_size_without_budget()
+    {
+        InstallTinyModel();
+        var runner = new FakeProcessRunner();
+        var engine = EngineFactory.CreateSdCpp(_paths, runner, catalog: TinyCatalog());
+
+        await engine.GenerateAsync(new ImageRequest("z-image-turbo", "kedi", null, 1080, 1920, 1, null, Path.Combine(_temp.Path, "c.png")), TestContext.Current.CancellationToken);
+
+        var args = runner.LastSpec.ShouldNotBeNull().Arguments.ToList();
+        args[args.IndexOf("-W") + 1].ShouldBe("1080");
+        args[args.IndexOf("-H") + 1].ShouldBe("1920");
+    }
+
     private static ImageRequest Request() => new("z-image-turbo", "kedi", null, 512, 512, 1, null, "a.png");
 
-    private static IImageModelCatalog TinyCatalog()
+    private static IImageModelCatalog TinyCatalog(int? maxPixels = null)
     {
         var model = new ImageModelDefinition("z-image-turbo", "Test Z", "z-image", "Apache-2.0", 4096, 8, 1.0, null, null, null, [],
         [
             new ImageModelFile(ImageModelFileRole.DiffusionModel, "test/tiny", "d.gguf", "diffusion/d.gguf", DiffusionBytes.Length, null),
             new ImageModelFile(ImageModelFileRole.Vae, "test/tiny", "vae/ae.safetensors", "vae/ae.safetensors", VaeBytes.Length, null),
-        ]);
+        ], maxPixels);
         var catalog = Substitute.For<IImageModelCatalog>();
         catalog.Models.Returns([model]);
         catalog.Find(Arg.Any<string>()).Returns(ci => string.Equals((string)ci[0], model.Key, StringComparison.OrdinalIgnoreCase) ? model : null);

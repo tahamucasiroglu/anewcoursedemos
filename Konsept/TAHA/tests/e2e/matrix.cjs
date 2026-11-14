@@ -337,7 +337,7 @@ async function verify(videoId, run, settings) {
   } else {
     const sceneCount = (detail.scenes || []).length;
     check(`görsel sayısı = sahne sayısı (${sceneCount})`, images.length === sceneCount, images.map(i => `${i.name} ${i.width}x${i.height}`));
-    check('görseller dikey 9:16 (±2%)', images.length > 0 && images.every(i => i.width && i.height && Math.abs(i.width / i.height - W / H) <= 0.02 * (W / H)),
+    check(`görseller tam ${W}x${H} (dikey 9:16)`, images.length > 0 && images.every(i => i.width === W && i.height === H),
       images.map(i => `${i.width}x${i.height}`));
   }
 

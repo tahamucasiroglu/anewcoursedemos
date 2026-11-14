@@ -16,6 +16,9 @@ namespace TahaKonsept.Agent.Engines.Image.Catalog;
 /// <param name="FlowShift">Flow shift (<c>null</c> = otomatik).</param>
 /// <param name="ExtraArgs">Modele özgü ek CLI argümanları.</param>
 /// <param name="Files">İndirilecek dosyalar.</param>
+/// <param name="MaxPixels">Modelin iyi sonuç verdiği en büyük piksel sayısı (genişlik × yükseklik). İstek bunu aşarsa görsel bu bütçede,
+/// aynı en-boy oranıyla ve <c>ImageEngineBase.GenerationAlignment</c> (64)'ın katı boyutta üretilir; Images aşaması sonra tam boyuta büyütür.
+/// <c>null</c> = sınır yok (istenen boyutta üret). SDXL/SD3.5 ~1 MP'de eğitildi; 1080x1920 (2 MP) üretimde nesneler ikilenir.</param>
 public sealed record ImageModelDefinition(
     string Key,
     string DisplayName,
@@ -28,7 +31,8 @@ public sealed record ImageModelDefinition(
     string? Scheduler,
     double? FlowShift,
     IReadOnlyList<string> ExtraArgs,
-    IReadOnlyList<ImageModelFile> Files)
+    IReadOnlyList<ImageModelFile> Files,
+    int? MaxPixels = null)
 {
     /// <summary>Tüm dosyaların toplam boyutu (bayt).</summary>
     public long TotalSizeBytes => Files.Sum(f => f.SizeBytes);

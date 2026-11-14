@@ -24,6 +24,7 @@ namespace TahaKonsept.Agent.Engines.Image.StableDiffusionCpp.Concrete;
 /// Bellek: üretimden hemen önce boş VRAM okunur (<see cref="IGpuMemoryProbe"/>) ve kip seçilir (<see cref="ISdCppMemoryPlanner"/>:
 /// standart / azaltılmış — metin kodlayıcı CPU'da + <c>--max-vram</c>); CUDA bellek hatasında (<see cref="IsOutOfMemory"/>) bir kez en agresif
 /// kiple (metin kodlayıcı + VAE CPU'da) yeniden denenir.
+/// Boyut: model <see cref="ImageModelDefinition.MaxPixels"/> tanımlıyorsa istek o bütçeye küçültülür (<see cref="ImageEngineBase.PlanGenerationSize"/>).
 /// </summary>
 public sealed class StableDiffusionCppImageEngine : ImageEngineBase
 {
@@ -127,7 +128,19 @@ public sealed class StableDiffusionCppImageEngine : ImageEngineBase
             File.Delete(outputPath);
         }
 
-        var targeted = request with { OutputPath = outputPath };
+        var (genWidth, genHeight) = PlanGenerationSize(request.Width, request.Height, model.MaxPixels);
+        if (genWidth != request.Width || genHeight != request.Height)
+        {
+            Logger.LogInformation(
+                "{Model} {Width}x{Height} yerine model bütçesinde {GenWidth}x{GenHeight} üretilecek (Images aşaması tam boyuta getirir)",
+                model.Key,
+                request.Width,
+                request.Height,
+                genWidth,
+                genHeight);
+        }
+
+        var targeted = request with { OutputPath = outputPath, Width = genWidth, Height = genHeight };
         var plan = _memoryPlanner.Plan(model, await _gpuMemory.GetFreeVramMiBAsync(ct).ConfigureAwait(false), Options.LowVram, aggressive: false);
         var (result, details) = await RunOnceAsync(executable.Value, model, targeted, plan, ct).ConfigureAwait(false);
         if (!result.TimedOut && !result.Succeeded && plan.Level != SdCppMemoryLevel.Minimal && IsOutOfMemory(details))

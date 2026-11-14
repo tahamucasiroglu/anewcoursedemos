@@ -168,6 +168,7 @@
       "samplingMethod": "euler",
       "scheduler": null,
       "flowShift": null,
+      "maxPixels": 1048576,
       "extraArgs": [
         "--slg-scale",
         "2.5"
@@ -218,6 +219,7 @@
       "samplingMethod": "euler",
       "scheduler": "sgm_uniform",
       "flowShift": null,
+      "maxPixels": 1048576,
       "extraArgs": [],
       "files": [
         {
