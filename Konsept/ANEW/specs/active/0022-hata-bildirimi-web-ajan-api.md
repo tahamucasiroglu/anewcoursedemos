@@ -1,6 +1,6 @@
 # Spec 0022 — hata-bildirimi-web-ajan-api
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0022-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

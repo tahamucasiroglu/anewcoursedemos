@@ -1,6 +1,6 @@
 # Spec 0002 — Kayıt, giriş, çıkış ve erişim
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0002-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

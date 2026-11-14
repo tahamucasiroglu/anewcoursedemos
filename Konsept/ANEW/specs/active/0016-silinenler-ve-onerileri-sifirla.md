@@ -1,6 +1,6 @@
 # Spec 0016 — Silinenler sayfası ve önerileri sıfırla
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0016-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

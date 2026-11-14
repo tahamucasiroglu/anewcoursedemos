@@ -1,6 +1,6 @@
 # Spec 0014 — Konsept üretimi ve onay
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0014-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

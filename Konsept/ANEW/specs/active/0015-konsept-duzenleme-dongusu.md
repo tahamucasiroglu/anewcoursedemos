@@ -1,6 +1,6 @@
 # Spec 0015 — Konsept düzenleme döngüsü
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0015-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

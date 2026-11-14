@@ -1,6 +1,6 @@
 # Spec 0019 — video-silme-ve-silinenler-videolar
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0019-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

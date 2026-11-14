@@ -1,6 +1,6 @@
 # Spec 0008 — teknik-loglama-maskeleme
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0008-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

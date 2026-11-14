@@ -1,6 +1,6 @@
 # Spec 0010 — Admin: istatistikler ve aktiviteler
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0010-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

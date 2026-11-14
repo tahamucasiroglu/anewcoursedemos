@@ -1,6 +1,6 @@
 # Spec 0020 — yeni-surum-ve-yeniden-uret
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0020-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

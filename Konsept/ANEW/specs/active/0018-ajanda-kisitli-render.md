@@ -1,6 +1,6 @@
 # Spec 0018 — Ajanda kısıtlı render
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0018-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

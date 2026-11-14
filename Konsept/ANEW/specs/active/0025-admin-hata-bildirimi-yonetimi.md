@@ -1,6 +1,6 @@
 # Spec 0025 — Admin: hata bildirimi yönetimi
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0025-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

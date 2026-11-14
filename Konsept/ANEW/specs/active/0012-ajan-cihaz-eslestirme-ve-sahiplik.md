@@ -1,6 +1,6 @@
 # Spec 0012 — Ajan cihaz eşleştirme ve ajan sahipliği
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0012-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

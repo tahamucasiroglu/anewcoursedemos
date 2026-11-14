@@ -1,6 +1,6 @@
 # Spec 0024 — Admin: kullanıcılar ve ban
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0024-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

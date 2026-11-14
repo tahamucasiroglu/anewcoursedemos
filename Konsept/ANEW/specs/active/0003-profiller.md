@@ -1,6 +1,6 @@
 # Spec 0003 — profiller
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0003-plan.md`
 - Source: `specs/active/0003-profiller.md` (orijinal taslak); bölünmedi 2026-11-14, onay: tahamucasiroglu "önerilerin uygun"

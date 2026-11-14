@@ -1,6 +1,6 @@
 # Spec 0023 — ajan-guncelleme-kaldirma
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0023-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

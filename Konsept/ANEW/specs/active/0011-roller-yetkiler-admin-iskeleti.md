@@ -1,6 +1,6 @@
 # Spec 0011 — Roller, yetkiler ve admin iskeleti
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0011-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)

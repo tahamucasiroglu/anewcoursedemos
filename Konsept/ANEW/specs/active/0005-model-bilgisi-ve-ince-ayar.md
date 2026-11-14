@@ -1,6 +1,6 @@
 # Spec 0005 — Model bilgisi ve ince ayar
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0005-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
