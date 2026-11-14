@@ -30,6 +30,36 @@ public sealed class ProcessRunnerTests
         result.StandardOutput.ShouldContain("merhaba");
     }
 
+    /// <summary>stdout ve stderr'e aynı anda yoğun yazan süreçte geri çağrılar eşzamanlı çalışmaz (kilitsiz tampon bozulmaz, satır kaybolmaz).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Run_SerializesCallbacksAcrossStreams()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "Yalnızca Windows.");
+        var inside = 0;
+        var overlaps = 0;
+        var count = 0;
+
+        var result = await _runner.RunAsync(
+            new ProcessSpec("cmd.exe", ["/c", "for /L %i in (1,1,300) do @(echo o%i & echo e%i 1>&2)"]),
+            _ =>
+            {
+                if (Interlocked.Increment(ref inside) > 1)
+                {
+                    Interlocked.Increment(ref overlaps);
+                }
+
+                Thread.SpinWait(2000);
+                count++;
+                Interlocked.Decrement(ref inside);
+            },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.ShouldBeTrue();
+        overlaps.ShouldBe(0);
+        count.ShouldBe(600);
+    }
+
     /// <summary>Sıfır olmayan çıkış kodu döner.</summary>
     /// <returns>Görev.</returns>
     [Fact]

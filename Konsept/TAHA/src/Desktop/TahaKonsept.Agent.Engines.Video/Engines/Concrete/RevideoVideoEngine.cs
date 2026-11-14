@@ -175,7 +175,10 @@ public sealed partial class RevideoVideoEngine : TsxVideoEngineBase
         const [, , outDir, outFile, ffmpegPath, chromePath] = process.argv;
         // Revideo her zaman --single-process ekler; yeni Chrome sürümlerinde sayfa düşüyor. includes() true dönen dizi bunu engeller.
         class NoSingleProcessArgs extends Array { includes() { return true; } }
-        const args = NoSingleProcessArgs.from(['--no-sandbox', '--disable-dev-shm-usage']);
+        // LLM'in yazdığı sahne kodu güvenilmez: Chromium sandbox'ı açık kalır (--no-sandbox yok) ve ağ kapalıdır — tüm istekler ölü proxy'ye
+        // (127.0.0.1:9) gider, yalnız loopback (Vite paket sunucusu) varsayılan olarak proxy dışıdır; WebRTC UDP'si de proxy dışına çıkamaz.
+        const network = ['--proxy-server=http://127.0.0.1:9', '--force-webrtc-ip-handling-policy=disable_non_proxied_udp'];
+        const args = NoSingleProcessArgs.from([...network, ...(process.platform === 'linux' ? ['--disable-dev-shm-usage'] : [])]);
         let last = -1;
         await renderVideo({
           projectFile: './src/project.ts',

@@ -6,7 +6,7 @@ using TahaKonsept.Agent.Abstractions.Processes.Abstract;
 namespace TahaKonsept.Agent.Core.Processes.Base;
 
 /// <summary>
-/// Süreç çalıştırıcı tabanı: stdout/stderr satır satır okunur ve geri çağrıya iletilir, stdin (varsa) yazılıp kapatılır,
+/// Süreç çalıştırıcı tabanı: stdout/stderr satır satır okunur ve geri çağrıya iletilir (iki akışın geri çağrıları birbirini beklemeli, eşzamanlı değil), stdin (varsa) yazılıp kapatılır,
 /// zaman aşımında ya da iptalde <b>süreç ağacı</b> öldürülür. Zaman aşımı <see cref="ProcessResult.TimedOut"/> ile döner;
 /// kullanıcı iptali <see cref="OperationCanceledException"/> fırlatır. Genişletme: <see cref="CreateStartInfo"/>, <see cref="OnStarted"/>, <see cref="OnCompleted"/>.
 /// </summary>
@@ -146,23 +146,24 @@ public abstract class ProcessRunnerBase : IProcessRunner
             return;
         }
 
+        // stdout ve stderr olayları farklı iş parçacıklarında gelir: tampon ve geri çağrı aynı kilit altında, sırayla çalışır
+        // (geri çağrılar kendi durumlarını kilitsiz güncelleyebilsin).
         lock (gate)
         {
             buffer.AppendLine(line);
-        }
+            if (onOutput is null)
+            {
+                return;
+            }
 
-        if (onOutput is null)
-        {
-            return;
-        }
-
-        try
-        {
-            onOutput(line);
-        }
-        catch (Exception ex)
-        {
-            OnOutputCallbackFailed(ex);
+            try
+            {
+                onOutput(line);
+            }
+            catch (Exception ex)
+            {
+                OnOutputCallbackFailed(ex);
+            }
         }
     }
 

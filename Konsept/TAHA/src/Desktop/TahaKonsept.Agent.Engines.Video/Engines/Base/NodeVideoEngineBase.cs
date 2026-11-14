@@ -482,20 +482,31 @@ public abstract class NodeVideoEngineBase : IVideoEngine
         var log = new StringBuilder();
         var result = await Runner.RunAsync(spec, line =>
         {
-            if (log.Length < 2_000_000)
+            // stdout ve stderr geri çağrıları farklı iş parçacıklarından aynı anda gelir: günlük ve ilerleme kilit altında güncellenir
+            // (aksi hâlde StringBuilder bozulur/satırlar kaybolur, ilerleme geri gidebilir).
+            lock (log)
             {
-                log.AppendLine(line);
-            }
+                if (log.Length < 2_000_000)
+                {
+                    log.AppendLine(line);
+                }
 
-            if (ParseProgress(line) is { } p && p > last)
-            {
-                last = Math.Clamp(p, 0, 99);
-                progress?.Report(last);
+                if (ParseProgress(line) is { } p && p > last)
+                {
+                    last = Math.Clamp(p, 0, 99);
+                    progress?.Report(last);
+                }
             }
         }, ct).ConfigureAwait(false);
 
+        string logText;
+        lock (log)
+        {
+            logText = log.ToString();
+        }
+
         var logPath = Path.Combine(request.WorkDir, string.Create(CultureInfo.InvariantCulture, $"{Key}-scene-{request.SceneIndex:D3}.log"));
-        await File.WriteAllTextAsync(logPath, log.ToString(), Utf8NoBom, CancellationToken.None).ConfigureAwait(false);
+        await File.WriteAllTextAsync(logPath, logText, Utf8NoBom, CancellationToken.None).ConfigureAwait(false);
 
         var finalize = result.Succeeded ? await FinalizeOutputAsync(project, request, ct).ConfigureAwait(false) : Result.Success();
         if (!result.Succeeded || finalize.IsFailure || !File.Exists(request.OutputPath))
