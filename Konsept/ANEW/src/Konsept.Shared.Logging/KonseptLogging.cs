@@ -1,5 +1,6 @@
 using System.Globalization;
 using Serilog;
+using Serilog.Events;
 using Serilog.Formatting.Display;
 
 namespace Konsept.Shared.Logging;
@@ -19,6 +20,19 @@ public static class KonseptLogging
     /// <summary>Dosya ve konsol satır şablonu: UTC zaman, seviye, kaynak, korelasyon, mesaj, exception.</summary>
     public const string OutputTemplate =
         "{UtcTimestamp:yyyy-MM-ddTHH:mm:ss.fffZ} [{Level:u3}] {Application} {CorrelationId} {SourceContext}: {Message:lj}{NewLine}{Exception}";
+
+    private static readonly MessageTemplateTextFormatter MessageOnly = new("{Message:lj}", CultureInfo.InvariantCulture);
+
+    /// <summary>Olayın mesajını dosyadaki gibi işler (metin değerleri tırnaksız, diğerleri JSON).</summary>
+    /// <param name="logEvent">Olay.</param>
+    /// <returns>Mesaj metni.</returns>
+    public static string RenderMessage(LogEvent logEvent)
+    {
+        ArgumentNullException.ThrowIfNull(logEvent);
+        using var writer = new StringWriter(CultureInfo.InvariantCulture);
+        MessageOnly.Format(logEvent, writer);
+        return writer.ToString();
+    }
 
     /// <summary>Ortak zenginleştiricileri ekler; maskeleme en sondadır.</summary>
     /// <param name="configuration">Logger yapılandırması.</param>
