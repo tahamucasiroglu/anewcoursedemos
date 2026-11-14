@@ -9,7 +9,8 @@ namespace Konsept.Api.Tests.Support;
 
 /// <summary>
 /// Gerçek PostgreSQL 17'ye bağlı API (full profil): her örnek temiz bir test veritabanıyla açılır,
-/// açılış migration'ı açıktır. Veritabanı fabrika kapanınca silinir.
+/// açılış migration'ı açıktır (monitoring + identity). Veritabanı fabrika kapanınca silinir. Kimlikli istemci için
+/// <see cref="AuthenticatedClient"/> (servis anahtarı ve imza anahtarı ayarlı).
 /// </summary>
 public sealed class IntegrationApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -44,5 +45,7 @@ public sealed class IntegrationApiFactory : WebApplicationFactory<Program>, IAsy
         builder.UseSetting("ConnectionStrings:Konsept", Database.ConnectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Logging:Directory", Path.Combine(Path.GetTempPath(), "anewconcept-tests", "logs"));
+        builder.UseSetting("Internal:ServiceKey", FastApiFactory.ServiceKey);
+        builder.UseSetting("Auth:SigningKey", FastApiFactory.SigningKey);
     }
 }

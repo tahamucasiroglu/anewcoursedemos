@@ -5,5 +5,7 @@
     <ProjectReference Include="..\Konsept.Modules.Monitoring.Presentation\Konsept.Modules.Monitoring.Presentation.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AgentGateway.Infrastructure\Konsept.Modules.AgentGateway.Infrastructure.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AgentGateway.Presentation\Konsept.Modules.AgentGateway.Presentation.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Identity.Infrastructure\Konsept.Modules.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Identity.Presentation\Konsept.Modules.Identity.Presentation.csproj" />
   </ItemGroup>
 </Project>

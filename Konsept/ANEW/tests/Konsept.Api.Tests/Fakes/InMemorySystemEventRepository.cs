@@ -24,4 +24,12 @@ public sealed class InMemorySystemEventRepository : ISystemEventRepository
     /// <inheritdoc />
     public Task<SystemEvent?> GetLatestAsync(CancellationToken cancellationToken) =>
         Task.FromResult(_events.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).FirstOrDefault());
+
+    /// <inheritdoc />
+    public Task<SystemEvent?> GetLatestVisibleAsync(Guid? userId, CancellationToken cancellationToken) =>
+        Task.FromResult(_events
+            .Where(e => e.UserId is null || (userId is not null && e.UserId == userId))
+            .OrderByDescending(e => e.OccurredAt)
+            .ThenByDescending(e => e.Id)
+            .FirstOrDefault());
 }

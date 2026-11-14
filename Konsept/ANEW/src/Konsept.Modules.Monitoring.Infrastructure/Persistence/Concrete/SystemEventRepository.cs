@@ -31,4 +31,13 @@ public sealed class SystemEventRepository : EfRepositoryBase<MonitoringDbContext
             .OrderByDescending(e => e.OccurredAt)
             .ThenByDescending(e => e.Id)
             .FirstOrDefaultAsync(cancellationToken);
+
+    /// <inheritdoc />
+    public Task<SystemEvent?> GetLatestVisibleAsync(Guid? userId, CancellationToken cancellationToken) =>
+        Context.SystemEvents
+            .AsNoTracking()
+            .Where(e => e.UserId == null || (userId != null && e.UserId == userId))
+            .OrderByDescending(e => e.OccurredAt)
+            .ThenByDescending(e => e.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 }

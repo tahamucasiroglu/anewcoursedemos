@@ -168,5 +168,5 @@ public sealed class AuthServiceTests
     private LoginService Login() => new(Dependencies());
 
     private AuthServiceDependencies Dependencies() =>
-        new(_users, _sessions, _passwords, _tokens, new RefreshTokenFactory(), _events, _time);
+        new(_users, _sessions, _passwords, _tokens, new RefreshTokenFactory(), _events, _time, NullLogger<AuthServiceBase>.Instance);
 }

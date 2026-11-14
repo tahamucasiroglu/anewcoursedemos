@@ -1,5 +1,7 @@
 using Konsept.Modules.AgentGateway.Infrastructure;
 using Konsept.Modules.AgentGateway.Presentation.Controllers;
+using Konsept.Modules.Identity.Infrastructure;
+using Konsept.Modules.Identity.Presentation.Controllers;
 using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Modules.Monitoring.Infrastructure;
 using Konsept.Modules.Monitoring.Infrastructure.Logging;
@@ -9,6 +11,8 @@ using Konsept.Shared.Infrastructure.Logging;
 using Konsept.Shared.Infrastructure.Versioning.Concrete;
 using Konsept.Shared.Kernel.Abstract;
 using Konsept.Shared.Logging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddKonseptSerilog(LogSources.Api, "api", (logger, services) => logger.WriteToTechnicalLogDatabase(services, LogEntrySource.Api));
@@ -30,21 +34,37 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
 builder.Services
     .AddControllers(options => options.Filters.Add<ValidationActionFilter>())
     .AddApplicationPart(typeof(SystemController).Assembly)
-    .AddApplicationPart(typeof(AgentController).Assembly);
+    .AddApplicationPart(typeof(AgentController).Assembly)
+    .AddApplicationPart(typeof(AuthController).Assembly);
 builder.Services.AddScoped<ServiceKeyAuthorizationFilter>();
 builder.Services.AddMonitoringModule(connectionString);
 builder.Services.AddAgentGatewayModule();
+builder.Services.AddIdentityModule(connectionString, builder.Configuration, builder.Environment.IsDevelopment());
+
+// Default-deny (spec 0002 Req 11): açıkça [AllowAnonymous] olmayan her uç geçerli oturumlu JWT ister; iç uçlar servis
+// anahtarı ister.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).RequireAuthenticatedUser().Build();
+    options.AddPolicy(AuthPolicies.InternalService, policy => policy.AddAuthenticationSchemes(AuthPolicies.ServiceKeyScheme).RequireAuthenticatedUser());
+});
 
 var app = builder.Build();
 
 app.UseKonseptLogging();
 app.UseExceptionHandler();
+app.UseRouting();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapAgentGateway();
+app.Services.WarnIfEphemeralSigningKey();
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", defaultValue: true))
 {
     await app.Services.MigrateMonitoringDatabaseAsync(CancellationToken.None);
+    await app.Services.MigrateIdentityDatabaseAsync(CancellationToken.None);
 }
 
 await app.RunAsync();

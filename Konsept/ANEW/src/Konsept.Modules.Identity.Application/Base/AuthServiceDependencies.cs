@@ -1,5 +1,6 @@
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
+using Microsoft.Extensions.Logging;
 
 namespace Konsept.Modules.Identity.Application.Base;
 
@@ -11,6 +12,7 @@ namespace Konsept.Modules.Identity.Application.Base;
 /// <param name="RefreshTokens">Refresh token üretimi.</param>
 /// <param name="Events">Günlük olay yazıcısı (Monitoring Contracts).</param>
 /// <param name="TimeProvider">Saat kaynağı.</param>
+/// <param name="Logger">Teknik log (olay yazılamazsa uyarı).</param>
 public sealed record AuthServiceDependencies(
     IUserRepository Users,
     ISessionRepository Sessions,
@@ -18,4 +20,5 @@ public sealed record AuthServiceDependencies(
     ITokenIssuer Tokens,
     IRefreshTokenFactory RefreshTokens,
     ISystemEventWriter Events,
-    TimeProvider TimeProvider);
+    TimeProvider TimeProvider,
+    ILogger<AuthServiceBase> Logger);

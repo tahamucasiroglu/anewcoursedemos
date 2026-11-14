@@ -15,4 +15,8 @@ public sealed class FailingSystemEventRepository : ISystemEventRepository
     /// <inheritdoc />
     public Task<SystemEvent?> GetLatestAsync(CancellationToken cancellationToken) =>
         Task.FromException<SystemEvent?>(new InvalidOperationException("veritabanı kapalı"));
+
+    /// <inheritdoc />
+    public Task<SystemEvent?> GetLatestVisibleAsync(Guid? userId, CancellationToken cancellationToken) =>
+        Task.FromException<SystemEvent?>(new InvalidOperationException("veritabanı kapalı"));
 }

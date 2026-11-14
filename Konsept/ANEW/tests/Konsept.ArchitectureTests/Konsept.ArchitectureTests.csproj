@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Domain\Konsept.Modules.Identity.Domain.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Application\Konsept.Modules.Identity.Application.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Infrastructure\Konsept.Modules.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Presentation\Konsept.Modules.Identity.Presentation.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Api\Konsept.Api.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Web.ApiClient\Konsept.Web.ApiClient.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Web\Konsept.Web.csproj" />

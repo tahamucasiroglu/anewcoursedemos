@@ -1,11 +1,12 @@
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Shared.Infrastructure.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Konsept.Modules.Monitoring.Presentation.Controllers;
 
 /// <summary>
-/// Sağlık kontrolü (her zaman kimliksiz) ve sistem durumu (bu spec'te kimliksiz, 0002'de giriş ister).
+/// Sağlık kontrolü (her zaman kimliksiz, spec 0002 Req 11 istisnası) ve sistem durumu (giriş ister; default-deny).
 /// </summary>
 [ApiController]
 public sealed class SystemController : ControllerBase
@@ -22,6 +23,7 @@ public sealed class SystemController : ControllerBase
     /// <summary>API, veritabanı ve sürüm; kullanıcıya ya da ajana ait bilgi içermez.</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Sağlık bilgisi.</returns>
+    [AllowAnonymous]
     [HttpGet("/health")]
     public Task<IActionResult> Health(CancellationToken cancellationToken) =>
         _status.GetHealthAsync(cancellationToken).ToActionResult();

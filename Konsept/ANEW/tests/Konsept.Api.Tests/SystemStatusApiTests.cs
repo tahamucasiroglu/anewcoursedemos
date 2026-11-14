@@ -29,7 +29,7 @@ public sealed class SystemStatusApiTests : IClassFixture<FastApiFactory>
         _factory.Database.Available = false;
         try
         {
-            using var client = _factory.CreateClient();
+            using var client = await _factory.CreateAuthenticatedClientAsync(TestContext.Current.CancellationToken);
 
             var status = await client.GetFromJsonAsync<JsonElement>("/api/system/status", TestContext.Current.CancellationToken);
             var health = await client.GetFromJsonAsync<JsonElement>("/health", TestContext.Current.CancellationToken);
@@ -50,7 +50,7 @@ public sealed class SystemStatusApiTests : IClassFixture<FastApiFactory>
     [Fact]
     public async Task Version_ReadFromAssembly_NotLiteral()
     {
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateAuthenticatedClientAsync(TestContext.Current.CancellationToken);
         var expected = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
             .InformationalVersion.Split('+')[0];
 

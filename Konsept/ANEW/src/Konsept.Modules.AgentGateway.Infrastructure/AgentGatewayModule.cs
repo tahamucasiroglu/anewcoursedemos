@@ -32,12 +32,15 @@ public static class AgentGatewayModule
         return services;
     }
 
-    /// <summary>Ajan hub'ını <see cref="AgentHubContract.HubPath"/> yoluna bağlar.</summary>
+    /// <summary>
+    /// Ajan hub'ını <see cref="AgentHubContract.HubPath"/> yoluna bağlar. Hub şimdilik kimliksizdir (spec 0002 Req 11'in
+    /// geçici istisnası); geçici, 0012 kaldırır ve yerine eşleştirme istisnalarını koyar.
+    /// </summary>
     /// <param name="endpoints">Uç nokta kurucusu.</param>
     /// <returns>Aynı kurucu.</returns>
     public static IEndpointRouteBuilder MapAgentGateway(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapHub<AgentHub>(AgentHubContract.HubPath);
+        endpoints.MapHub<AgentHub>(AgentHubContract.HubPath).AllowAnonymous(); // geçici, 0012 kaldırır
         return endpoints;
     }
 }

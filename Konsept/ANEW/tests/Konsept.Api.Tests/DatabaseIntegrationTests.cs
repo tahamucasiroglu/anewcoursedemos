@@ -45,7 +45,7 @@ public sealed class DatabaseIntegrationTests : IClassFixture<IntegrationApiFacto
     public async Task AgentEvents_Persisted_LastEventShownInStrip()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var client = _factory.CreateClient();
+        using var client = await AuthenticatedClient.CreateAsync(_factory, ct);
         var agent = _factory.CreateAgentConnection();
         await using (agent.ConfigureAwait(false))
         {

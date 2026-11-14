@@ -4,6 +4,7 @@ using Konsept.Modules.Identity.Domain.Entities;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Contracts.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace Konsept.Modules.Identity.Application.Base;
 
@@ -11,7 +12,7 @@ namespace Konsept.Modules.Identity.Application.Base;
 /// Kayıt, giriş ve oturum servislerinin ortak temeli (K-5): oturum açma (refresh token + hash + oturum kaydı + JWT) ve
 /// kullanıcıya bağlı Günlük olayı yazma. Olay metni şifre ya da token içermez.
 /// </summary>
-public abstract class AuthServiceBase
+public abstract partial class AuthServiceBase
 {
     /// <summary>Initializes a new instance of the <see cref="AuthServiceBase"/> class.</summary>
     /// <param name="dependencies">Ortak bağımlılıklar.</param>
@@ -53,12 +54,27 @@ public abstract class AuthServiceBase
         return new AuthSessionDto(access.Token, access.ExpiresAt, refreshToken, user.Id, user.Name);
     }
 
-    /// <summary>Kullanıcıya bağlı Günlük olayı yazar.</summary>
+    /// <summary>
+    /// Kullanıcıya bağlı Günlük olayı yazar. Olay bir yan etkidir (AgentGateway ile aynı ilke): olay deposu yazamazsa kimlik
+    /// işlemi bozulmaz, uyarı loglanır — olay Monitoring'de kalıcı yapılmadan önce teknik loga zaten yazılmıştır.
+    /// </summary>
     /// <param name="type">Olay türü (<see cref="IdentityEvents"/>).</param>
     /// <param name="level">Seviye.</param>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>
-    protected Task WriteEventAsync(string type, SystemEventLevel level, Guid userId, CancellationToken cancellationToken) =>
-        Dependencies.Events.WriteAsync(new SystemEventEntry(type, level, IdentityEvents.MessageOf(type), userId), cancellationToken);
+    protected async Task WriteEventAsync(string type, SystemEventLevel level, Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Dependencies.Events.WriteAsync(new SystemEventEntry(type, level, IdentityEvents.MessageOf(type), userId), cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            LogEventWriteFailed(Dependencies.Logger, type, ex);
+        }
+    }
+
+    [LoggerMessage(EventId = 2002, Level = LogLevel.Warning, Message = "Kimlik olayı yazılamadı: {EventType}")]
+    private static partial void LogEventWriteFailed(ILogger logger, string eventType, Exception exception);
 }

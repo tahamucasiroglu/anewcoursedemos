@@ -57,7 +57,7 @@ public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
                 s.RemoveAll<ISystemStatusService>();
                 s.AddScoped<ISystemStatusService, ThrowingSystemStatusService>();
             }));
-        using var client = failing.CreateClient();
+        using var client = await AuthenticatedClient.CreateAsync(failing, ct);
 
         using var response = await client.GetAsync(new Uri("/api/system/status", UriKind.Relative), ct);
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>(ct);

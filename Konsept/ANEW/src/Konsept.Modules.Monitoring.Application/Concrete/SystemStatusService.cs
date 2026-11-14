@@ -2,33 +2,42 @@ using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Base;
-using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
+using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Shared.Kernel.Abstract;
 
 namespace Konsept.Modules.Monitoring.Application.Concrete;
 
 /// <summary>
-/// Sistem durumunu veritabanı yoklaması, olay kaydı, ajan durumu ve ürün versiyonundan derler.
+/// Sistem durumunu veritabanı yoklaması, olay kaydı, ajan durumu ve ürün versiyonundan derler. Son olay isteği yapan
+/// kullanıcıya göre süzülür (spec 0002 Req 18): kendi olayları + kullanıcısız sistem/ajan olayları.
 /// </summary>
 public sealed class SystemStatusService : SystemStatusServiceBase
 {
     private readonly IDatabaseProbe _probe;
-    private readonly ISystemEventReader _events;
+    private readonly ISystemEventRepository _events;
     private readonly IAgentStatusReader _agent;
     private readonly IProductVersionProvider _version;
+    private readonly ICurrentUser _currentUser;
 
     /// <summary>Initializes a new instance of the <see cref="SystemStatusService"/> class.</summary>
     /// <param name="probe">Veritabanı yoklaması.</param>
-    /// <param name="events">Olay kaydı okuyucusu.</param>
+    /// <param name="events">Olay deposu.</param>
     /// <param name="agent">Ajan durumu (AgentGateway Contracts).</param>
     /// <param name="version">Ürün versiyonu.</param>
-    public SystemStatusService(IDatabaseProbe probe, ISystemEventReader events, IAgentStatusReader agent, IProductVersionProvider version)
+    /// <param name="currentUser">İsteği yapan kullanıcı.</param>
+    public SystemStatusService(
+        IDatabaseProbe probe,
+        ISystemEventRepository events,
+        IAgentStatusReader agent,
+        IProductVersionProvider version,
+        ICurrentUser currentUser)
     {
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
         _events = events ?? throw new ArgumentNullException(nameof(events));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _version = version ?? throw new ArgumentNullException(nameof(version));
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
     }
 
     /// <inheritdoc />
@@ -36,8 +45,11 @@ public sealed class SystemStatusService : SystemStatusServiceBase
         _probe.CanConnectAsync(cancellationToken);
 
     /// <inheritdoc />
-    protected override Task<SystemEventDto?> ReadLastEventAsync(CancellationToken cancellationToken) =>
-        _events.GetLatestAsync(cancellationToken);
+    protected override async Task<SystemEventDto?> ReadLastEventAsync(CancellationToken cancellationToken)
+    {
+        var e = await _events.GetLatestVisibleAsync(_currentUser.UserId, cancellationToken).ConfigureAwait(false);
+        return e is null ? null : new SystemEventDto(e.Id, e.Type, (SystemEventLevel)e.Level, e.Message, e.OccurredAt, e.UserId);
+    }
 
     /// <inheritdoc />
     protected override string ReadVersion() => _version.Version;

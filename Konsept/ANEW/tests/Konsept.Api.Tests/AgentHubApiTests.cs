@@ -31,7 +31,7 @@ public sealed class AgentHubApiTests : IClassFixture<FastApiFactory>
     public async Task AgentConnection_ConnectDisconnect_StatusWithin10s()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateAuthenticatedClientAsync(ct);
         var agent = _factory.CreateAgentConnection();
         await using (agent.ConfigureAwait(false))
         {
@@ -54,7 +54,7 @@ public sealed class AgentHubApiTests : IClassFixture<FastApiFactory>
     public async Task TestAgent_ConnectedAgentAnswers_ReturnsVersionAndMachine()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateAuthenticatedClientAsync(ct);
         var agent = _factory.CreateAgentConnection();
         await using (agent.ConfigureAwait(false))
         {
@@ -77,7 +77,7 @@ public sealed class AgentHubApiTests : IClassFixture<FastApiFactory>
     public async Task TestAgent_NoAgent_ReturnsNotConnectedProblem()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var client = _factory.CreateClient();
+        using var client = await _factory.CreateAuthenticatedClientAsync(ct);
         await Eventually.WithinAsync(async () => !await IsAgentConnectedAsync(client, ct), StatusLimit, ct);
 
         using var response = await client.PostAsync(new Uri("/api/agent/test", UriKind.Relative), null, ct);

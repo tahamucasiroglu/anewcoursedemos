@@ -1,5 +1,6 @@
 using Konsept.Api.Tests.Fakes;
 using Konsept.Modules.AgentGateway.Contracts;
+using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;
@@ -12,13 +13,23 @@ namespace Konsept.Api.Tests.Support;
 
 /// <summary>
 /// Hızlı profil için API: veritabanı yerine bellek depoları (olay ve teknik log) ve ayarlanabilir veritabanı
-/// yoklaması; açılış migration'ı kapalı; örneğe özel log klasörü ve test servis anahtarı. Gerçek PostgreSQL testleri
+/// yoklaması, bellek kullanıcı/oturum depoları; açılış migration'ı kapalı; örneğe özel log klasörü, test servis anahtarı ve
+/// JWT imza anahtarı. Gerçek PostgreSQL testleri
 /// <c>Category=Integration</c> altında ayrıdır.
 /// </summary>
 public sealed class FastApiFactory : WebApplicationFactory<Program>
 {
     /// <summary>Testlerde kullanılan servis anahtarı.</summary>
     public const string ServiceKey = "test-service-key-0008";
+
+    /// <summary>Testlerde kullanılan JWT imza anahtarı (≥ 32 bayt; bilinen sır olarak kaydedilir).</summary>
+    public const string SigningKey = "test-signing-key-0002-abcdefghijklmnop";
+
+    /// <summary>Gets bellek kullanıcı deposu.</summary>
+    public InMemoryUserRepository Users { get; } = new();
+
+    /// <summary>Gets bellek oturum deposu.</summary>
+    public InMemorySessionRepository Sessions { get; } = new();
 
     /// <summary>Gets bellek olay deposu.</summary>
     public InMemorySystemEventRepository Events { get; } = new();
@@ -42,6 +53,12 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
                 options.Transports = HttpTransportType.LongPolling;
             })
             .Build();
+
+    /// <summary>Gerçek kayıt + giriş uçlarıyla kimlikli (Bearer) istemci açar (default-deny, plan 0002).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>İstemci.</returns>
+    public Task<HttpClient> CreateAuthenticatedClientAsync(CancellationToken cancellationToken) =>
+        AuthenticatedClient.CreateAsync(this, cancellationToken);
 
     /// <summary>Log klasöründeki tüm log metnini okur (dosya Serilog tarafından açıkken de).</summary>
     /// <returns>Metin.</returns>
@@ -90,8 +107,13 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Database:MigrateOnStartup", "false");
         builder.UseSetting("Logging:Directory", LogDirectory);
         builder.UseSetting("Internal:ServiceKey", ServiceKey);
+        builder.UseSetting("Auth:SigningKey", SigningKey);
         builder.ConfigureServices(services =>
         {
+            services.RemoveAll<IUserRepository>();
+            services.RemoveAll<ISessionRepository>();
+            services.AddSingleton<IUserRepository>(Users);
+            services.AddSingleton<ISessionRepository>(Sessions);
             services.RemoveAll<ISystemEventRepository>();
             services.RemoveAll<IDatabaseProbe>();
             services.RemoveAll<ITechnicalLogRepository>();
