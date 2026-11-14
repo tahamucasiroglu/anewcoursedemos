@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { bindAuthForms, focusFirstInvalid } from '../auth-form.js';
+import { bindAuthForms, bindSubmitOnceForms, focusFirstInvalid } from '../auth-form.js';
 
 function formHtml(invalidField = null) {
   const invalid = (name) => (invalidField === name ? 'aria-invalid="true"' : '');
@@ -52,6 +52,29 @@ describe('auth-form.js — gönderim koruması ve odak (AC-16, AC-18)', () => {
 
     expect(second.defaultPrevented).toBe(true);
     expect(sent).toBe(1);
+  });
+
+  it('çıkış formu tek gönderim yapar: çift tıklamada ikinci POST /cikis gitmez (review R12-1)', () => {
+    document.body.innerHTML = `
+      <form class="user-menu__logout" method="post" action="/cikis" data-submit-once>
+        <button type="submit">Çıkış yap</button>
+      </form>`;
+    bindSubmitOnceForms(document);
+    const form = document.querySelector('form');
+    let sent = 0;
+    form.addEventListener('submit', (event) => {
+      if (!event.defaultPrevented) {
+        sent += 1;
+      }
+    });
+
+    submit(form);
+    const second = submit(form);
+
+    expect(second.defaultPrevented).toBe(true);
+    expect(sent).toBe(1);
+    expect(form.querySelector('button').disabled).toBe(true);
+    expect(form.querySelector('button').textContent).toBe('Çıkış yap');
   });
 
   it('alan hatası yoksa odak form düzeyi mesaja gider (ekran okuyucu okur)', () => {

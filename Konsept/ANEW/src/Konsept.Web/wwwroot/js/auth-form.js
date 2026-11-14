@@ -35,6 +35,15 @@ export function bindAuthForms(doc) {
 }
 
 /**
+ * Tek gönderimlik formları bağlar (ör. üst bardaki "Çıkış yap"; review R12-1): çift tıklamada ikinci POST gitmez, böylece
+ * bilerek çıkan kullanıcı "Oturumunuz sona erdi" görmez. Aynı koruma; data-text-sending yoksa düğme metni değişmez.
+ * @param {Document} doc Belge.
+ */
+export function bindSubmitOnceForms(doc) {
+  doc.querySelectorAll('form[data-submit-once]').forEach((form) => bindAuthForm(form));
+}
+
+/**
  * İlk hatalı alana odaklanır (sunucu autofocus'u desteklemeyen tarayıcılar için); hatalı alan yoksa sunucunun işaretlediği
  * öğeye — ör. alan hatası olmayan form düzeyi mesaj (tabindex="-1") — odaklanır.
  * @param {Document} doc Belge.

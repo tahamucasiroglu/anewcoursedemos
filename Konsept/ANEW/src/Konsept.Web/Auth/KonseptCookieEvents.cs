@@ -166,7 +166,9 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
         var login = HttpMethods.IsGet(request.Method)
             ? context.RedirectUri
             : $"{request.PathBase}{context.Options.LoginPath}";
-        var target = request.Cookies.ContainsKey(CookieName)
+        // Çift tıklanan "Çıkış yap"ın ikinci POST'u oturumsuz gelir (review R12-1): bilerek çıkan kullanıcıya "oturum bitti" denmez.
+        var deliberateLogout = HttpMethods.IsPost(request.Method) && request.Path.Equals(context.Options.LogoutPath, StringComparison.OrdinalIgnoreCase);
+        var target = request.Cookies.ContainsKey(CookieName) && !deliberateLogout
             ? QueryHelpers.AddQueryString(login, SessionEndedQuery, SessionEndedValue)
             : login;
         context.Response.Redirect(target);

@@ -5,7 +5,7 @@
         <span class="user-menu__name" title="@User.Identity?.Name">@User.Identity?.Name</span>
     </summary>
     <div class="user-menu__panel">
-        <form class="user-menu__logout" method="post" action="/cikis" asp-antiforgery="true">
+        <form class="user-menu__logout" method="post" action="/cikis" asp-antiforgery="true" data-submit-once>
             <button type="submit" class="user-menu__item">@UiText.Logout</button>
         </form>
     </div>

@@ -533,7 +533,10 @@ public sealed class AuthAccessTests
         await factory.Api.DidNotReceive().RegisterAsync(Arg.Any<RegisterApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
-    /// <summary>Düşmüş oturumla gönderilen POST (ör. <c>/cikis</c>) girişe dönüş adresi olmadan gider; yalnızca GET dönüş adresi olur.</summary>
+    /// <summary>
+    /// Düşmüş oturumla gönderilen (Ajax olmayan) POST girişe dönüş adresi olmadan gider; yalnızca GET dönüş adresi olur.
+    /// (<c>POST /cikis</c> özel durumu — "oturum bitti" bilgisi yok — <see cref="LoggedOutSession_SecondLogoutPost_PlainLoginRedirect"/>; plan A-10.)
+    /// </summary>
     /// <returns>Görev.</returns>
     [Fact]
     public async Task RevokedSession_PostRequest_RedirectsWithoutReturnUrl()
@@ -547,13 +550,37 @@ public sealed class AuthAccessTests
             .Returns(Result<CurrentUserResponse>.Failure(new("identity.session_invalid", "Oturumunuz sona erdi.", ErrorType.Unauthorized)));
 
         using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
-        using var logout = await client.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct);
+        using var logout = await client.PostAsync(new Uri("/system/agent-test", UriKind.Relative), content, ct);
 
         logout.StatusCode.ShouldBe(HttpStatusCode.Redirect);
         logout.Headers.Location!.OriginalString.ShouldStartWith("/giris");
         var query = QueryHelpers.ParseQuery(new Uri(new Uri("http://localhost"), logout.Headers.Location).Query);
         query.ContainsKey("returnUrl").ShouldBeFalse();
         query["oturum"].ToString().ShouldBe("bitti");
+    }
+
+    /// <summary>
+    /// "Çıkış yap"a çift tıklanınca ikinci <c>POST /cikis</c> artık oturumsuz gelir (review R12-1): bilerek çıkış yapan kullanıcı
+    /// "Oturumunuz sona erdi" görmez, düz giriş sayfasına gider.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task LoggedOutSession_SecondLogoutPost_PlainLoginRedirect()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        var page = await WebFactory.GetDocumentAsync(client, "/", ct);
+        var token = page.QuerySelector("form.user-menu__logout input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+        factory.Api.GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Result<CurrentUserResponse>.Failure(new("identity.session_invalid", "Oturumunuz sona erdi.", ErrorType.Unauthorized)));
+
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
+        using var second = await client.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct);
+
+        page.QuerySelector("form.user-menu__logout")!.HasAttribute("data-submit-once").ShouldBeTrue(); // main.js tek gönderim koruması.
+        second.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        second.Headers.Location!.OriginalString.ShouldBe("/giris");
     }
 
     private static void AssertLoginRedirectWithSessionEnded(HttpResponseMessage response, string returnUrl)
