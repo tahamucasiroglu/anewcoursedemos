@@ -65,7 +65,7 @@ public sealed class AgentSettingsStore : JsonFileStoreBase<AgentSettings>, IAgen
     private AgentSettings LoadOrCreate()
     {
         var stored = Read();
-        var completed = Complete(stored ?? new AgentSettings());
+        var completed = Complete(stored ?? new AgentSettings { VideoServerPort = _options.VideoServerPort });
         if (stored is null || completed != stored)
         {
             Write(completed);
