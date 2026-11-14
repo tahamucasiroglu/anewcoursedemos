@@ -26,7 +26,7 @@ testleri (`Konsept.ArchitectureTests`) korur.
 Bağlayıcı ayrıntılar (`docs/architecture.md`'de tam hali):
 - Modül → modül iletişimi yalnızca karşı modülün `Contracts` arayüzü (aynı süreç içinde) ya da
   commit sonrası yayınlanan olay üzerinden.
-- Tek PostgreSQL 18; her modülün kendi şeması ve kendi `DbContext`'i; şemalar arası FK/join yok
+- Tek PostgreSQL 17 (Pi'deki mevcut kurulum; spec 0001 D1); her modülün kendi şeması ve kendi `DbContext`'i; şemalar arası FK/join yok
   (Y-4).
 - Arka plan kuyruğu PostgreSQL üzerinde; Redis/RabbitMQ yok.
 - SignalR yalnızca API ↔ ajan arasında (.NET istemcisi, bağlantıyı ajan açar); tarayıcı canlı

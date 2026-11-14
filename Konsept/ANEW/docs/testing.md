@@ -14,7 +14,7 @@
 | Assert | **Shouldly** | MIT. FluentAssertions v8 ticari lisans → kabul edilmez. |
 | Mock | **NSubstitute** | Interface tabanlı mimariye (K-2) uyar. |
 | API ve MVC entegrasyon | **WebApplicationFactory** + **AngleSharp** | Süreç içi gerçek HTTP akışı; Razor çıktısı HTML üzerinden doğrulanır. |
-| Veritabanı entegrasyon | **Testcontainers (PostgreSQL 18)** | Her çalıştırma temiz, gerçek bir PostgreSQL ile başlar. Docker gerektirir. |
+| Veritabanı entegrasyon | **Testcontainers (PostgreSQL 17)** | Her çalıştırma temiz, gerçek bir PostgreSQL ile başlar. Docker gerektirir; Docker kurulana kadar geçici yöntem plan 0001'de (spec 0001 D4: şimdilik Docker'sız). |
 | Mimari testleri | **ArchUnitNET** | Y-1…Y-8, K-1 (iç içe tip), K-2, K-4. |
 | Ajan arayüzü | **Avalonia.Headless.XUnit** | Avalonia ekranları pencere açmadan. |
 | Web JS (tema, modallar, `api.js` Ajax sarmalayıcı) | **Vitest + jsdom** | Tarayıcı açmadan. |

@@ -29,7 +29,7 @@
 | Masaüstü ajanı | **Avalonia 12.x**, ilk hedef **Windows** | Linux/macOS kapsam dışı (şimdilik). |
 | Ajan ↔ API | **SignalR** (.NET istemcisi, yalnızca ajan tarafında) | Bağlantıyı ajan açar. |
 | Tarayıcıda canlı akış | **Ajax polling** (2–3 sn) | SignalR tarayıcı istemcisi `fetch` kullandığı için yok. |
-| Veritabanı | **PostgreSQL 18** + **EF Core 10** (Npgsql) | Tek DB, modül başına şema + `DbContext`. |
+| Veritabanı | **PostgreSQL 17** + **EF Core 10** (Npgsql) | Pi'de kurulu PostgreSQL 17 kullanılır (spec 0001 kararı D1, 2026-11-14); ayrı `anewconcept` veritabanı ve kullanıcısı. Tek DB, modül başına şema + `DbContext`. |
 | Doğrulama | **FluentValidation** | Generic validation filter ile (K-4). |
 | Loglama | **Serilog** (dosya + DB sink) | Yerel log rotasyonu 1 hafta. |
 | Sunucu | **Raspberry Pi 5**, `linux-arm64` | |
