@@ -1,0 +1,10 @@
+# Kök .gitignore 'Source/' kuralını bu proje için geri al (14 Kas 2026 kararı): ikon/tasarım görselleri depoya girer
+!source/
+# Büyük ikili dosyalar depoya girmez
+source/**/*.mp4
+source/**/*.mov
+source/**/*.mkv
+source/**/*.wav
+source/**/*.gguf
+source/**/*.onnx
+source/**/*.safetensors

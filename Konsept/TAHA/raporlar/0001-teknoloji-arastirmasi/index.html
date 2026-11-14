@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teknoloji Araştırması — Taha Konsept</title>
+<meta name="description" content="Taha Konsept için video motoru, TTS, görsel üretimi, LLM ve mimari teknoloji araştırması (14 Kasım 2026).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+(function(){try{var t=localStorage.getItem('tk-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<style>
+:root{
+  --bg:#fbf5ec; --bg-2:#f5e9d8; --surface:#fffaf3; --surface-2:#fdf1e2;
+  --text:#3b2416; --text-2:#6b4a35; --muted:#8c6c56;
+  --accent:#d9731f; --accent-2:#b85a12; --accent-soft:#fbe1c6;
+  --border:#ead6bf; --shadow:0 1px 2px rgba(80,45,20,.06),0 8px 24px rgba(80,45,20,.07);
+  --ok:#3f7d3a; --ok-bg:#e4f1df; --warn:#a6620b; --warn-bg:#fdecd2; --bad:#a83a2a; --bad-bg:#f8dfd9; --info:#5d4a8a; --info-bg:#ebe5f6;
+  --code-bg:#f3e4d0;
+  --radius:14px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c140f; --bg-2:#241a13; --surface:#2a1f17; --surface-2:#33261c;
+    --text:#f3e6d6; --text-2:#d8c2aa; --muted:#a8907a;
+    --accent:#f08f3c; --accent-2:#ffab5e; --accent-soft:#4a2f1a;
+    --border:#45342a; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    --ok:#9bd08f; --ok-bg:#24361f; --warn:#f2bb6b; --warn-bg:#3d2c14; --bad:#f39a8a; --bad-bg:#40221c; --info:#c3b4ec; --info-bg:#2d2640;
+    --code-bg:#3a2b20;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c140f; --bg-2:#241a13; --surface:#2a1f17; --surface-2:#33261c;
+  --text:#f3e6d6; --text-2:#d8c2aa; --muted:#a8907a;
+  --accent:#f08f3c; --accent-2:#ffab5e; --accent-soft:#4a2f1a;
+  --border:#45342a; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --ok:#9bd08f; --ok-bg:#24361f; --warn:#f2bb6b; --warn-bg:#3d2c14; --bad:#f39a8a; --bad-bg:#40221c; --info:#c3b4ec; --info-bg:#2d2640;
+  --code-bg:#3a2b20;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-2);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--accent)}
+code{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:.86em;background:var(--code-bg);padding:.1em .38em;border-radius:6px;word-break:break-word}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.2;color:var(--text)}
+h2{font-size:1.65rem;margin:0 0 .4rem}
+h3{font-size:1.15rem;margin:1.6rem 0 .6rem}
+p{margin:.5rem 0 1rem}
+
+.hero{background:linear-gradient(135deg,var(--bg-2),var(--accent-soft));border-bottom:1px solid var(--border)}
+.hero-inner{max-width:1240px;margin:0 auto;padding:44px 24px 36px;position:relative}
+.eyebrow{display:inline-block;font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-2);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:999px}
+.hero h1{font-size:clamp(1.9rem,4.4vw,3rem);margin:.7rem 0 .4rem}
+.hero p{max-width:760px;color:var(--text-2);margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:.9rem;color:var(--muted)}
+.theme-btn{position:absolute;top:20px;right:24px;width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--accent-2);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow)}
+.theme-btn:hover{color:var(--accent)}
+.theme-btn svg{width:20px;height:20px}
+.theme-btn .moon{display:none}
+:root[data-theme="dark"] .theme-btn .sun{display:none}
+:root[data-theme="dark"] .theme-btn .moon{display:block}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .theme-btn .sun{display:none}:root:not([data-theme="light"]) .theme-btn .moon{display:block}}
+
+.layout{max-width:1240px;margin:0 auto;padding:28px 24px 64px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:36px}
+.toc{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;box-shadow:var(--shadow)}
+.toc strong{display:block;font-family:Fraunces,serif;font-size:1rem;margin:0 6px 8px}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}
+.toc li{counter-increment:t}
+.toc a{display:flex;gap:8px;padding:6px 8px;border-radius:8px;color:var(--text-2);text-decoration:none;font-size:.92rem}
+.toc a::before{content:counter(t,decimal-leading-zero);color:var(--accent);font-family:"JetBrains Mono",monospace;font-size:.78rem;padding-top:2px}
+.toc a:hover{background:var(--surface-2);color:var(--text)}
+
+section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px 26px 18px;margin-bottom:24px;box-shadow:var(--shadow)}
+.lead{color:var(--text-2)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:14px}
+.card{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 16px 12px;border-top:4px solid var(--accent)}
+.card .k{font-size:.74rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.card .v{font-family:Fraunces,serif;font-size:1.16rem;font-weight:700;margin:4px 0 6px;color:var(--text)}
+.card p{font-size:.9rem;color:var(--text-2);margin:0 0 6px}
+
+.table-wrap{overflow-x:auto;margin:10px 0 18px;border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}
+th{background:var(--surface-2);color:var(--text-2);font-weight:600;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+td:first-child{font-weight:600;color:var(--text)}
+
+.pill{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.p-bad{background:var(--bad-bg);color:var(--bad)}
+.p-info{background:var(--info-bg);color:var(--info)}
+
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0 16px;color:var(--text)}
+.callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+.callout strong{color:var(--accent-2)}
+.callout.warn strong{color:var(--warn)}
+
+.pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 14px}
+.step{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:.88rem;font-weight:500}
+.step.hot{border-color:var(--accent);color:var(--accent-2)}
+.arrow{color:var(--accent)}
+
+ul.clean,ol.clean{padding-left:1.25rem;margin:.4rem 0 1rem}
+ul.clean li,ol.clean li{margin:.3rem 0}
+ol.questions{counter-reset:q;list-style:none;padding:0;margin:8px 0}
+ol.questions li{counter-increment:q;position:relative;padding:10px 12px 10px 48px;border-bottom:1px dashed var(--border)}
+ol.questions li::before{content:counter(q);position:absolute;left:8px;top:9px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:600;font-size:.82rem;display:grid;place-items:center}
+.qgroup{font-family:Fraunces,serif;font-weight:700;color:var(--accent-2);margin:18px 0 2px}
+
+.sources{columns:2 300px;column-gap:28px;font-size:.88rem}
+.sources h4{break-after:avoid;margin:12px 0 4px;font-size:.9rem;color:var(--text-2)}
+.sources ul{margin:0 0 8px;padding-left:1.1rem}
+.sources li{break-inside:avoid;margin:3px 0;word-break:break-all}
+
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 16px 40px}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:20px 16px 48px;gap:18px}
+  .toc{position:static;max-height:none}
+  .toc ol{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+  .hero-inner{padding:56px 16px 28px}
+  .theme-btn{top:14px;right:16px}
+  section{padding:20px 16px 12px}
+}
+@media (max-width:480px){.toc ol{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Açık/koyu tema değiştir" title="Tema değiştir">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></svg>
+    </button>
+    <span class="eyebrow">Rapor 0001</span>
+    <h1>Teknoloji Araştırması — Taha Konsept</h1>
+    <p>Konsept üretiminden render'a kadar tüm hattın teknoloji seçimi: video motoru, seslendirme, görsel üretimi, LLM sağlayıcıları ve web, agent, Raspberry Pi mimarisi. Beş araştırma raporu ile bir çapraz denetim birleştirildi; çelişkilerde denetçinin düzeltmeleri esas alındı.</p>
+    <div class="meta"><span>14 Kasım 2026</span><span>Fiyatlar ve sürümler bu tarihe ait</span><span>Doğrulanmayan bilgiler ayrıca listelendi</span></div>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="İçindekiler">
+  <strong>İçindekiler</strong>
+  <ol>
+    <li><a href="#ozet">Kısa karar özeti</a></li>
+    <li><a href="#hat">Önerilen hat</a></li>
+    <li><a href="#video">Video motorları</a></li>
+    <li><a href="#tts">Seslendirme (TTS)</a></li>
+    <li><a href="#gorsel">Görsel üretimi</a></li>
+    <li><a href="#llm">LLM sağlayıcıları</a></li>
+    <li><a href="#mimari">Mimari</a></li>
+    <li><a href="#duzeltmeler">Denetim düzeltmeleri</a></li>
+    <li><a href="#eksikler">Eksikler</a></li>
+    <li><a href="#sorular">Açık sorular</a></li>
+    <li><a href="#dogrulanmayan">Doğrulanmayanlar</a></li>
+    <li><a href="#kaynaklar">Kaynaklar</a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="ozet">
+  <h2>Kısa karar özeti</h2>
+  <p class="lead">Her alan için önerilen varsayılan seçim. Ayrıntılar ve alternatifler aşağıdaki bölümlerde.</p>
+  <div class="cards">
+    <div class="card"><div class="k">Video motoru</div><div class="v">HyperFrames 0.9.43</div><p>Apache-2.0, HTML+CSS+GSAP, Windows'ta resmi destek. Sürüm sabitlenir, telemetri kapatılır.</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">İkinci motor</div><div class="v">Remotion 4.0.543</div><p>LLM'in kodu yazıp servisin render etmesi izinli. 4+ kişilik şirkette render başına $0.01, aylık min $100.</p><span class="pill p-warn">Lisans uyarılı</span></div>
+    <div class="card"><div class="k">Altyazı ve ses</div><div class="v">ffmpeg + libass</div><p>ASS karaoke, drawbox progress bar, ses remux. Tüm motorlarda ortak son aşama.</p><span class="pill p-ok">Ortak aşama</span></div>
+    <div class="card"><div class="k">Yerel TTS</div><div class="v">Supertonic 3</div><p>31 dil, Türkçede lider, CPU'da, Python'suz C#. Repo arşivlendi: ağırlıkları kendi aynanızda tutun.</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">Türkçe alternatif</div><div class="v">EMA Lightning</div><p>Apache-2.0, 34 MB, sadece Türkçe, en doğal açık model.</p><span class="pill p-info">Alternatif</span></div>
+    <div class="card"><div class="k">Online TTS</div><div class="v">ElevenLabs v4 Turbo</div><p>Kelime zamanı hazır gelir. Ucuz seçenek Gemini 3.8 Flash TTS, yedek Azure. OpenAI Türkçede zayıf.</p><span class="pill p-warn">Onay gerekli</span></div>
+    <div class="card"><div class="k">Yerel görsel</div><div class="v">Z-Image-Turbo Q4</div><p>stable-diffusion.cpp ile Python'suz, 6 GB VRAM. Düzenleme için FLUX.2 klein 4B.</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">Online görsel</div><div class="v">Nano Banana 2.1</div><p>1K görsel $0.0336. Ucuz toplu üretim fal Z-Image Turbo (~$0.01).</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">LLM</div><div class="v">Claude 5.5 ailesi</div><p>Konsept Sonnet, video kodu Opus (sahne başına, streaming), fikir ve fact-sheet Haiku.</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">Web ↔ agent</div><div class="v">SignalR Hub</div><p>Agent dışarıya WSS ile bağlanır. Tarayıcı localhost'a hiç gitmez.</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">Installer</div><div class="v">Velopack 1.2.161</div><p>Admin'siz kurulum ve delta güncelleme. Node, ffmpeg, Python portable indirilir. Ollama çıkarıldı.</p><span class="pill p-ok">Varsayılan</span></div>
+    <div class="card"><div class="k">Sunucu</div><div class="v">.NET 10 LTS on Pi 5</div><p>apt ile arm64 runtime, iki systemd servisi, Caddy ile HTTPS/WSS, PostgreSQL 17 + EF Core 10.</p><span class="pill p-ok">Varsayılan</span></div>
+  </div>
+</section>
+
+<section id="hat">
+  <h2>Önerilen hat ve aşama izolasyonu</h2>
+  <p>İki rapor aşama sırasında çelişiyordu: biri sahneyi seslendirmeden önce render ediyor, diğeri sonra. Sahne süresi seslendirme süresine bağlı olduğu için önerilen sıra şu:</p>
+  <div class="pipeline">
+    <span class="step">Konsept</span><span class="arrow">→</span><span class="step">Kod</span><span class="arrow">→</span><span class="step">Görsel</span><span class="arrow">→</span><span class="step hot">TTS</span><span class="arrow">→</span><span class="step hot">Hizalama</span><span class="arrow">→</span><span class="step">Sahne render (sessiz)</span><span class="arrow">→</span><span class="step hot">Altyazı + progress</span><span class="arrow">→</span><span class="step hot">Mux</span><span class="arrow">→</span><span class="step">Önizleme</span>
+  </div>
+  <ul class="clean">
+    <li>Her aşamanın bir <code>input_hash</code> değeri var. Bir ayar değişince yalnızca hash'i değişen aşama ve sonrası yeniden çalışır.</li>
+    <li><strong>Yalnızca TTS değişirse:</strong> sabit sahne slotu (ses pad/atempo ile sığdırılır) seçilmişse sahne render cache'den gelir. TTS → hizalama → altyazı → mux çalışır.</li>
+    <li>Karaoke zamanları TTS'ten geldiği için altyazı aşaması da yeniden çalışır ve video yeniden encode edilir. <code>-c:v copy</code> yalnızca altyazısız videoda geçerli.</li>
+    <li>Ortak kelime-zaman formatı: Remotion Caption JSON <code>{text,startMs,endMs,timestampMs,confidence}</code>.</li>
+  </ul>
+  <div class="callout"><strong>Görsel tarafında Python yok.</strong> stable-diffusion.cpp seçildiği için Z-Image/FLUX için PyTorch venv'i kurulmaz. Gömülü Python (3.11) yalnızca Chatterbox, EMA Lightning ve hizalama için gerekir.</div>
+</section>
+
+<section id="video">
+  <h2>Video motorları</h2>
+  <p class="lead">LLM'in yazdığı kodu son kullanıcının Windows PC'sinde render eden motorlar.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Motor</th><th>Lisans</th><th>Türkçe</th><th>Bağımlılıklar</th><th>Fiyat</th><th>Karar</th></tr></thead>
+    <tbody>
+      <tr><td>HyperFrames v0.9.43 (13.11.2026)</td><td>Apache-2.0</td><td>Metin font ile tam; yerleşik TTS ve Parakeet'te Türkçe yok, whisper gerekir</td><td>Node 22+, FFmpeg, Chrome, ≥2 GB disk, worker başı ~256 MB RAM</td><td>Ücretsiz</td><td><span class="pill p-ok">Varsayılan</span></td></tr>
+      <tr><td>Remotion v4.0.543 (11.11.2026)</td><td>Remotion License</td><td>Font ile tam</td><td>Node, gömülü FFmpeg, Chrome Headless Shell, ~950 MB node_modules</td><td>≤3 kişi ücretsiz; Automators $0.01/render, min $100/ay</td><td><span class="pill p-warn">Destekli</span></td></tr>
+      <tr><td>Revideo v0.11.0</td><td>MIT</td><td>Font ile</td><td>Node, FFmpeg, Chromium</td><td>Ücretsiz</td><td><span class="pill p-info">Deneysel</span></td></tr>
+      <tr><td>Manim CE v0.22.1</td><td>MIT</td><td>–</td><td>Python, FFmpeg</td><td>Ücretsiz</td><td><span class="pill p-info">İleride</span></td></tr>
+      <tr><td>Motion Canvas v3.17.2</td><td>MIT</td><td>–</td><td>Headless render resmi değil</td><td>–</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>MoviePy v2.2.1</td><td>MIT</td><td>–</td><td>Python, FFmpeg</td><td>–</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>editly</td><td>MIT</td><td>–</td><td>Node, headless-gl (durgun)</td><td>–</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>Rendervid</td><td>Atıf lisansı (doğrulanmadı)</td><td>–</td><td>Node, Chrome</td><td>–</td><td><span class="pill p-info">Bekle</span></td></tr>
+      <tr><td>Sadece ffmpeg</td><td>LGPL / GPL</td><td>libass + font</td><td>ffmpeg.exe</td><td>–</td><td><span class="pill p-ok">Son aşama</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Remotion lisansı (düzeltildi):</strong> Lisans SSS'si, kodu yapay zekânın yazıp servisin render ettiği modeli açıkça izinli sayıyor; gri alan değil. Yasak olan, kullanıcının kendi Remotion projesini yükletmesi. <code>npx remotion render</code> da otomasyon sayıldığı için son kullanıcı PC'sindeki render'lar da faturalanabilir. Tarayıcı render'ında telemetri kapatılamıyor, v5'te şirket lisansında zorunlu.</div>
+  <ul class="clean">
+    <li>HyperFrames: <code>--variables</code> ile JSON parametre, <code>--json</code> çıktılar, <code>doctor --json</code> kurulum kontrolü, <code>--gpu</code> ile NVENC/AMF/QSV. Local render için progress akışı belgelenmemiş.</li>
+    <li>Hızı en çok <code>filter: blur</code>, <code>backdrop-filter</code> ve ağır gölgeler düşürür; prompt'ta sınırlanmalı.</li>
+    <li>Tahmini kod boyutu (doğrulanmadı): HyperFrames 6k–18k, Remotion 10k–25k output token.</li>
+  </ul>
+</section>
+
+<section id="tts">
+  <h2>Seslendirme (TTS)</h2>
+  <div class="callout warn"><strong>Ollama TTS kullanılamaz.</strong> Yalnızca Apple Silicon'da çalışıyor, Türkçe yok, 40M modeller ticari değil (CC BY-NC). <strong>Supertonic</strong> (repo 09.09.2026'da arşivlendi) ve <strong>Chatterbox</strong> (Ağustos 2026'dan beri bakımsız) kullanılabilir, ama hata düzeltmesi gelmeyecek.</div>
+  <h3>Yerel modeller</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Lisans</th><th>Türkçe</th><th>VRAM / bağımlılık</th><th>Kelime zamanı</th><th>Karar</th></tr></thead>
+    <tbody>
+      <tr><td>Supertonic 3</td><td>Kod MIT, model OpenRAIL-M (ticari, kısıtlı)</td><td>Var, WER 1.72 (1.)</td><td>~99M, CPU, ONNX Runtime C#</td><td>Yok</td><td><span class="pill p-ok">Varsayılan</span></td></tr>
+      <tr><td>EMA Lightning</td><td>Apache-2.0</td><td>Sadece TR; WER %0.92 (bağımsız %1.10)</td><td>34 MB, CPU ~6x gerçek zaman</td><td>Yok</td><td><span class="pill p-info">TR alternatifi</span></td></tr>
+      <tr><td>Chatterbox Multilingual V3</td><td>MIT, Perth watermark</td><td>Var (23 veya 25 dil)</td><td>~3.5–4 GB VRAM, Python 3.11 + CUDA</td><td>Yok</td><td><span class="pill p-warn">Klonlama</span></td></tr>
+      <tr><td>Ahenk / Ahenk Cep</td><td>CC BY 4.0</td><td>Sadece TR</td><td>Cep CPU; Ahenk 2B GPU</td><td>Yok</td><td><span class="pill p-info">İzle</span></td></tr>
+      <tr><td>VoxCPM2</td><td>Apache-2.0</td><td>Var</td><td>~8 GB, 6 GB'a sığmaz</td><td>Yok</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>OmniVoice</td><td>Belirsiz</td><td>Var</td><td>Hafif</td><td>Yok</td><td><span class="pill p-bad">Lisans net değil</span></td></tr>
+      <tr><td>XTTS-v2, F5-TTS, Fish S2, Piper TR, MMS</td><td>Ticari kullanım yasak</td><td>Zayıf–iyi</td><td>Değişken</td><td>Yok</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>Kokoro-82M, Chatterbox Turbo/Nano</td><td>Apache / MIT</td><td>Yok</td><td>CPU</td><td>–</td><td><span class="pill p-bad">Hayır</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Online servisler</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Servis</th><th>Türkçe (Dolphy /100)</th><th>Fiyat (14.11.2026)</th><th>Kelime zamanı</th><th>Karar</th></tr></thead>
+    <tbody>
+      <tr><td>Cartesia Sonic 3.6</td><td>92.9</td><td>Doğrulanmadı</td><td>Doğrulanmadı</td><td><span class="pill p-info">İzle</span></td></tr>
+      <tr><td>ElevenLabs v4 / v4 Turbo</td><td>90.0</td><td>$0.08 / $0.04 per 1K karakter</td><td><code>/with-timestamps</code></td><td><span class="pill p-ok">Önerilen</span></td></tr>
+      <tr><td>Gemini 3.8 Flash TTS (preview)</td><td>89.8</td><td>$0.50 girdi / $9 ses (1M token); 1 Ocak 2027'den sonra $1 / $18</td><td>Yok</td><td><span class="pill p-info">Ucuz</span></td></tr>
+      <tr><td>Azure Neural</td><td>Test edilmedi</td><td>~$15–16 / 1M karakter</td><td>WordBoundary</td><td><span class="pill p-info">Yedek</span></td></tr>
+      <tr><td>OpenAI gpt-4o-mini-tts-2025-12-15</td><td>55.1</td><td>$0.60 metin / $12 ses (1M token)</td><td>Yok</td><td><span class="pill p-warn">Zayıf TR</span></td></tr>
+    </tbody>
+  </table></div>
+  <ul class="clean">
+    <li>Kelime zamanı veren yerel model yok. Ayrı bir hizalama aşaması gerekli: ilk sürümde cümle bazlı sentez ve orantılı dağıtım, sonra CTC forced alignment (WhisperX, MMS_FA veya Whisper.net).</li>
+    <li>Her motorun önüne Türkçe metin normalizasyonu (sayı, ₺, %, tarih) konmalı.</li>
+    <li>6 GB VRAM'de Chatterbox ve görsel modeli aynı anda yüklenemez: agent'ta GPU kuyruğu gerekli.</li>
+  </ul>
+</section>
+
+<section id="gorsel">
+  <h2>Görsel üretimi</h2>
+  <h3>Yerel (6 GB VRAM hedefi)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Lisans</th><th>Görselde Türkçe yazı</th><th>6 GB durumu</th><th>Karar</th></tr></thead>
+    <tbody>
+      <tr><td>Z-Image-Turbo (6B)</td><td>Apache-2.0</td><td>Garanti değil</td><td>GGUF Q4_0 3.68 GB, CPU offload ile</td><td><span class="pill p-ok">Varsayılan</span></td></tr>
+      <tr><td>FLUX.2 klein 4B</td><td>Apache-2.0</td><td>–</td><td>GGUF Q4_K_M ~2.6 GB, 4 adım, çoklu referans</td><td><span class="pill p-info">Düzenleme</span></td></tr>
+      <tr><td>FLUX.2 klein 9B</td><td>Non-Commercial</td><td>–</td><td>Zor</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>FLUX.3 Image Klein</td><td>Kommunity (&lt;$5M gelir, bağlı şirketler dahil)</td><td>–</td><td>Resmi minimum INT8 ile 8 GB</td><td><span class="pill p-warn">Lisans okunmalı</span></td></tr>
+      <tr><td>Qwen-Image-2.1</td><td>Araştırma lisansı</td><td>–</td><td>12–16 GB</td><td><span class="pill p-bad">Hayır</span></td></tr>
+      <tr><td>SDXL-Lightning</td><td>OpenRAIL++ (doğrulanmadı)</td><td>–</td><td>Rahat</td><td><span class="pill p-info">≤4 GB yedeği</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>Çalıştırma ortamı: <strong>stable-diffusion.cpp</strong> <code>sd-server.exe</code> (CUDA veya Vulkan, OpenAI uyumlu <code>/v1/images/generations</code>). ComfyUI yalnızca opsiyonel gelişmiş mod.</p>
+  <h3>Online</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Fiyat</th><th>Not</th><th>Karar</th></tr></thead>
+    <tbody>
+      <tr><td><code>gemini-nano-banana-2.1</code></td><td>1K $0.0336 · 2K $0.0504 · 4K $0.113</td><td>Batch yarı fiyat, SynthID</td><td><span class="pill p-ok">Varsayılan</span></td></tr>
+      <tr><td><code>gemini-3.1-flash-lite-image</code></td><td>1K $0.0336</td><td><code>gemini-2.5-flash-image</code> için Google'ın önerdiği geçiş (eski model 15.03.2027'de kapanıyor)</td><td><span class="pill p-info">Yedek</span></td></tr>
+      <tr><td>fal <code>fal-ai/z-image/turbo</code></td><td>$0.005/MP (~$0.01/görsel)</td><td>Queue API, webhook</td><td><span class="pill p-ok">Ucuz toplu</span></td></tr>
+      <tr><td><code>gpt-image-2</code></td><td>Token bazlı: $8 görsel girdi, $30 görsel çıktı, $5 metin (1M)</td><td>Görsel başı fiyatlar yeniden kontrol edilmeli</td><td><span class="pill p-info">Yazılı görsel</span></td></tr>
+      <tr><td><code>gemini-3-pro-image</code></td><td>1K/2K $0.134</td><td>Yüksek kalite</td><td><span class="pill p-info">Opsiyonel</span></td></tr>
+      <tr><td>Z.ai <code>glm-image</code> / <code>cogview-4</code></td><td>$0.015 / $0.01</td><td>GLM ekosistemi</td><td><span class="pill p-info">Opsiyonel</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Yazı politikası:</strong> Görsellere metin yazdırılmaz. Türkçe başlık ve altyazılar video katmanında render edilir. 60 sn / 8 sahnelik video: Nano Banana 2.1 ≈ $0.27, fal Z-Image ≈ $0.08, yerel $0.</div>
+</section>
+
+<section id="llm">
+  <h2>LLM sağlayıcıları</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Girdi / çıktı ($/MTok)</th><th>Max çıktı / context</th><th>Görev</th></tr></thead>
+    <tbody>
+      <tr><td><code>claude-opus-5-5</code></td><td>$4 / $20 (cache okuma $0.20)</td><td>128K / 1M</td><td>Video kodu (effort high, streaming)</td></tr>
+      <tr><td><code>claude-sonnet-5-5</code></td><td>$2 / $10</td><td>128K / 1M</td><td>Konsept (effort medium, JSON şema, web arama)</td></tr>
+      <tr><td><code>claude-haiku-5-5</code></td><td>$0.10 / $0.50 (100K üstü prompt'ta 5 kat)</td><td>128K / 1M</td><td>Konu fikri, fact-sheet</td></tr>
+      <tr><td>Claude Fable 5.2</td><td>$8 / $40</td><td>–</td><td>Değerlendirilmedi; karmaşık kod adayı</td></tr>
+      <tr><td><code>gpt-6.1-sol</code></td><td>$2 / $10</td><td>128K / 1.05M</td><td>Alternatif</td></tr>
+      <tr><td>GLM-5.3</td><td>$1.40 / $4.40</td><td>128K / 1M</td><td>Fiyat/performans alternatifi</td></tr>
+      <tr><td>Kimi K3</td><td>$3 / $15 (3. taraf)</td><td>~128K / 1M</td><td>Zayıf; K2.x emekliye ayrılıyor</td></tr>
+      <tr><td>OpenRouter</td><td>Upstream fiyatı</td><td>Modele bağlı</td><td>Tek anahtar, yanıtta <code>usage.cost</code></td></tr>
+    </tbody>
+  </table></div>
+  <ul class="clean">
+    <li>Mimari: <code>AnthropicProvider</code> (resmi C# SDK) ve OpenAI, OpenRouter, GLM, Kimi için ortak <code>OpenAiCompatibleProviderBase</code>.</li>
+    <li>Opus 5.5'te thinking kapatılamaz; <code>temperature</code>, prefill ve zorunlu <code>tool_choice</code> 400 hatası verir.</li>
+    <li>Token tasarrufu: framework başına cache'li sabit önek (cache okuma 0.05x), sahne başına kod üretimi, JSON şema, tekrar önlemek için kısa konu parmak izleri, gece Batch (%50).</li>
+    <li>Maliyet sayacı LLM ile sınırlı kalmamalı: TTS, görsel ve Remotion render da aynı tabloya yazılmalı.</li>
+  </ul>
+</section>
+
+<section id="mimari">
+  <h2>Mimari</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Konu</th><th>Karar</th><th>Not</th></tr></thead>
+    <tbody>
+      <tr><td>Web ↔ agent</td><td>SignalR Hub (API üzerinde)</td><td>Chrome Local Network Access nedeniyle localhost yolu yok</td></tr>
+      <tr><td>Video oynatma</td><td>Pi'ye 480p önizleme + poster</td><td>Tam kalite agent'ta; istenirse kotalı, parçalı upload</td></tr>
+      <tr><td>Online TTS/görsel çağrıları</td><td>Pi üzerinden (öneri)</td><td>Anahtarlar Windows'a inmez; Pi bant genişliği harcanır</td></tr>
+      <tr><td>Kimlik doğrulama</td><td>MVC cookie + BFF, JWT 15 dk + dönen refresh token</td><td>Agent için RFC 8628 cihaz kodu eşleme</td></tr>
+      <tr><td>API anahtarları</td><td>AES-256-GCM envelope</td><td>Data Protection key'leri dosyaya persist</td></tr>
+      <tr><td>Parola</td><td>PBKDF2-SHA512, 210k iterasyon</td><td>Argon2id ve passkey sonraki adım</td></tr>
+      <tr><td>Installer</td><td>Velopack, packId <code>TahaKonsept.Agent</code></td><td>Bağımlılıklar <code>%LocalAppData%\TahaKonsept\</code> altında</td></tr>
+      <tr><td>Ön gereksinimler</td><td>Portable Node 22, ffmpeg, uv + Python 3.11, chrome-headless-shell</td><td>winget yok, Ollama çıkarıldı, VC++ için tek UAC</td></tr>
+      <tr><td>Pi sunucu</td><td>.NET 10 LTS, framework-dependent, 2 systemd servis</td><td>.NET 8/9 desteği 10.11.2026'da bitti</td></tr>
+      <tr><td>Reverse proxy</td><td>Caddy (trixie-backports 2.11.x)</td><td>CGNAT varsa Cloudflare Tunnel</td></tr>
+      <tr><td>Veritabanı</td><td>PostgreSQL 17 + Npgsql EF Core 10</td><td>Modül başına şema ve DbContext, efbundle ile migration</td></tr>
+      <tr><td>Kod yapısı</td><td>Modular monolith, modül başına Clean Architecture</td><td>Outbox, ArchitectureTests, Admin = Web Areas/Admin + Chart.js</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="duzeltmeler">
+  <h2>Denetim düzeltmeleri</h2>
+  <p class="lead">Araştırma raporlarındaki şu bilgiler, çapraz denetimle düzeltildi.</p>
+  <ul class="clean">
+    <li><strong>Remotion:</strong> "gri alan" değil, LLM ile üretilen kodu servisin render etmesi açıkça izinli. Son kullanıcı PC'sindeki render'lar da faturalanabilir.</li>
+    <li><strong>Supertonic:</strong> repo 09.09.2026'da arşivlendi. OpenRAIL-M kısıtları yeniden dağıtımda da geçerli; lisans metni dağıtıma eklenmeli.</li>
+    <li><strong>Chatterbox:</strong> dil sayısı çelişkili (23 / 25); Türkçe ikisinde de var.</li>
+    <li><strong>Gemini 3.8 Flash TTS:</strong> 1 Ocak 2027'de metin girdisi de iki katına çıkıyor ($0.50 → $1.00). Model hâlâ preview.</li>
+    <li><strong>gpt-image-2:</strong> resmi sayfada token bazlı fiyatlı. Gemini 2.5 Flash Image'ın önerilen geçişi Nano Banana 2.1 değil, <code>gemini-3.1-flash-lite-image</code>.</li>
+    <li><strong>OpenAI TTS:</strong> sabit id olarak <code>gpt-4o-mini-tts-2025-12-15</code> kullanılmalı.</li>
+    <li><strong>Anthropic:</strong> Claude Fable 5.2 değerlendirilmemiş; Haiku 5.5'te 100K token üstü prompt 5 kat pahalı.</li>
+    <li><strong>FLUX.3 Klein:</strong> 5 milyon dolar eşiğine bağlı şirket geliri dahil; 8 GB yalnızca INT8 için.</li>
+    <li><strong>HyperFrames:</strong> güncel sürüm 0.9.43; mimari raporundaki "0.4.x" eski.</li>
+    <li><strong>EMA Lightning:</strong> bağımsız WER ölçümü %1.10.</li>
+    <li><strong>Çelişkiler çözüldü:</strong> görsel runtime = sd.cpp (Python yok), Python 3.11, Ollama kurulumdan çıkarıldı, aşama sırası TTS → render.</li>
+  </ul>
+</section>
+
+<section id="eksikler">
+  <h2>Eksikler (yapılacaklar)</h2>
+  <ol class="clean">
+    <li>LLM'in ürettiği HTML/JS için sandbox: ağ kapalı, <code>file://</code> yok, CSP, izinli CDN listesi, lint kapısı, prompt injection önlemi.</li>
+    <li>FFmpeg GPL/LGPL dağıtım yükümlülükleri.</li>
+    <li>Yapay zekâ içerik şeffaflığı: EU AI Act madde 50 (02.08.2026'dan beri), Perth/SynthID filigranları, "AI üretimi" etiketi.</li>
+    <li>Maliyet sayacına TTS, görsel ve Remotion render ücretlerinin eklenmesi.</li>
+    <li>Türkçe font (Noto, OFL) seçimi ve <code>text-transform: uppercase</code> ile i/İ hatası (<code>lang="tr"</code>).</li>
+    <li>Türkçe forced alignment testi.</li>
+    <li>AMD/Intel GPU kullanıcıları için TTS yedeği.</li>
+    <li>Arka plan müziği, telifsiz kaynak ve ducking aşaması.</li>
+    <li>Bakımı biten modellerin ağırlık aynası (Pi mi, CDN mi?).</li>
+    <li>Pi depolaması (NVMe/SSD), güncelleme paketleri, Cloudflare 100 MB limiti.</li>
+    <li>TikTok, Reels ve Shorts için çıktı profilleri (kodek, bitrate, süre, güvenli alan).</li>
+  </ol>
+</section>
+
+<section id="sorular">
+  <h2>Açık sorular</h2>
+  <p class="lead">Karar verilmeden ilerlenemeyecek konular. Yanıtlar bir sonraki rapora işlenecek.</p>
+  <div class="qgroup">Video ve hat</div>
+  <ol class="questions">
+    <li>Ürünü kaç kişilik bir ekip işletecek? 4 ve üzeriyse Remotion için aylık en az $100 gerekir. Remotion destekli listede kalsın mı?</li>
+    <li>Altyazı ffmpeg/ASS ile ayrı aşamada mı basılsın (önerilen), yoksa motorun animasyonlu caption bloklarıyla mı?</li>
+    <li>TTS süresi değişince sahne süresi de değişsin mi (yeniden render), yoksa sabit slot + pad/atempo mu?</li>
+    <li>Video kodu tek HTML + <code>--variables</code> ile mi, sahne başına ayrı çağrıyla mı üretilsin?</li>
+    <li>HyperFrames sürümü sabitlenip site üzerinden kontrollü mü güncellensin?</li>
+    <li>Manim ileride ayrı bir "eğitim" stili olarak eklensin mi?</li>
+  </ol>
+  <div class="qgroup">Seslendirme</div>
+  <ol class="questions">
+    <li>Yerel varsayılan Supertonic 3 mü, Türkçeye özel EMA Lightning mi?</li>
+    <li>Ses klonlama ilk sürümde olacak mı? Chatterbox için ~3–5 GB gömülü Python ve Perth watermark kabul mü?</li>
+    <li>Online varsayılan: proje tanımındaki OpenAI mı, ElevenLabs v4 Turbo mu, Gemini 3.8 Flash TTS mi, Azure mı?</li>
+    <li>Karaoke hizalaması ilk sürümde gerçek forced alignment mı, cümle bazlı yaklaşık zamanlama mı?</li>
+    <li>Ürün ticari mi? OpenRAIL-M kısıtları kullanıcı sözleşmesine aktarılabilir mi?</li>
+  </ol>
+  <div class="qgroup">Görsel</div>
+  <ol class="questions">
+    <li>Yerel varsayılan Z-Image-Turbo mu, FLUX.2 klein 4B mi? FLUX.3 Klein 8 GB+ kullanıcılara sunulsun mu?</li>
+    <li>Online varsayılan Nano Banana 2.1 mi, fal Z-Image Turbo mu? Görsellere metin yazdırmak tamamen yasak mı?</li>
+    <li>ComfyUI opsiyonel backend olsun mu? GPU'su olmayan veya ≤4 GB kullanıcılar otomatik online'a mı düşsün?</li>
+    <li>Görseller doğrudan 1080×1920 mi üretilsin, düşük çözünürlükte üretilip upscale mi edilsin?</li>
+  </ol>
+  <div class="qgroup">LLM ve maliyet</div>
+  <ol class="questions">
+    <li>Sonnet / Opus / Haiku dağılımı onaylanıyor mu? Claude Fable 5.2 denensin mi?</li>
+    <li>Aylık bütçe aşılınca çağrılar engellensin mi, yalnızca uyarı mı? Limit sağlayıcı bazında mı, toplam mı?</li>
+    <li>İlk sürümde Anthropic + OpenRouter yeterli mi, diğerleri doğrudan mı entegre edilsin?</li>
+    <li>Web aramalı doğrulama hangi kategorilerde zorunlu? Kaynak domain listesi düzenlenebilir mi? Gece Batch üretimi istenir mi?</li>
+    <li>API anahtarları kullanıcı başına mı (BYOK), tek sistem anahtarı mı?</li>
+  </ol>
+  <div class="qgroup">Mimari ve dağıtım</div>
+  <ol class="questions">
+    <li>Online TTS ve görsel çağrıları Pi üzerinden mi (önerilen), agent'tan mı yapılsın?</li>
+    <li>Web'den çıkış agent'ı da düşürsün mü? ("Tüm cihazlardan çık" ayrı buton önerisi.)</li>
+    <li>Tarayıcıda SignalR JS client'a izin var mı, yoksa yalnızca jQuery polling mi?</li>
+    <li>Tam kalite videolar Pi'ye yüklensin mi? Kota ve silme süresi? Pi'de NVMe/SSD var mı?</li>
+    <li>Site internete nasıl açılacak: port yönlendirme + Caddy mi, Cloudflare Tunnel/Tailscale mi? CGNAT var mı?</li>
+    <li>Kod imzalama sertifikası alınacak mı? Güncellemeler Pi'den mi, GitHub'dan mı dağıtılsın?</li>
+    <li>Argon2id ve passkey ilk sürümde gerekli mi? MediatR mi, lisanssız alternatif mi?</li>
+    <li>Tek seferlik UAC onayı (VC++ Redist) kabul edilebilir mi?</li>
+    <li>Videolara "AI üretimi" etiketi eklensin mi? Arka plan müziği istenir mi?</li>
+  </ol>
+</section>
+
+<section id="dogrulanmayan">
+  <h2>Doğrulanmayan bilgiler</h2>
+  <ul class="clean">
+    <li>HyperFrames minimum Node sürümü, local render progress akışı, gerçek render süreleri, token tahminleri, whisper ile Türkçe kelime zamanı kalitesi.</li>
+    <li>Remotion "$100'a 10.000 render dahil" bilgisi (yalnızca 3. taraf), v5 tarihi ve Node 18 minimumu. Rendervid lisansı. gyan.dev build'inde libass.</li>
+    <li>Supertone şirket durumu, Supertonic hız değerleri, Chatterbox VRAM ve dil sayısı, OmniVoice lisansı, WhisperX Türkçe hizalama modeli.</li>
+    <li>Cartesia fiyatı, ElevenLabs resmi fiyatı ve <code>/with-timestamps</code>'in v4 uyumu, Azure fiyatı ve tr-TR ses adları.</li>
+    <li>6 GB'ta görsel üretim hızları, FLUX.3 Klein lisans ayrıntıları, BFL ve fal "per unit" fiyatları, <code>gpt-image-2</code> görsel başı fiyatları, Gemini REST biçimi.</li>
+    <li>Kimi K3 fiyat ve özellikleri, GLM-5.3 structured output biçimi, OpenRouter ücretleri.</li>
+    <li>Chrome 147+ WebSocket kısıtı, Avalonia 12 ayrıntıları, Velopack + .NET 10 uyumu, .NET 10 ve Npgsql son patch sürümleri, MediatR lisansı, Cloudflare 100 MB limiti, Pi'de hash süreleri.</li>
+  </ul>
+</section>
+
+<section id="kaynaklar">
+  <h2>Kaynaklar</h2>
+  <div class="sources">
+    <h4>Video motorları</h4>
+    <ul>
+      <li><a href="https://github.com/heygen-com/hyperframes">github.com/heygen-com/hyperframes</a></li>
+      <li><a href="https://hyperframes.heygen.com/faq.md">HyperFrames SSS</a></li>
+      <li><a href="https://hyperframes.heygen.com/packages/cli.md">HyperFrames CLI</a></li>
+      <li><a href="https://hyperframes.heygen.com/guides/hyperframes-vs-remotion.md">HyperFrames vs Remotion</a></li>
+      <li><a href="https://www.remotion.dev/docs/license/faq">Remotion lisans SSS</a></li>
+      <li><a href="https://www.remotion.dev/docs/license/pricing">Remotion fiyatlandırma</a></li>
+      <li><a href="https://www.remotion.dev/docs/captions/create-tiktok-style-captions">Remotion captions</a></li>
+      <li><a href="https://github.com/redotvideo/revideo">Revideo</a></li>
+    </ul>
+    <h4>Seslendirme</h4>
+    <ul>
+      <li><a href="https://ollama.com/blog/speech-models">Ollama speech models</a></li>
+      <li><a href="https://github.com/supertone-inc/supertonic">Supertonic GitHub</a></li>
+      <li><a href="https://huggingface.co/Supertone/supertonic-3">Supertonic 3 (HF)</a></li>
+      <li><a href="https://github.com/resemble-ai/chatterbox">Chatterbox GitHub</a></li>
+      <li><a href="https://www.resemble.ai/resources/chatterbox-multilingual-v3-tts-with-embedded-watermarking-for-25-languages">Chatterbox Multilingual V3</a></li>
+      <li><a href="https://huggingface.co/canberkkkkkk/ema-lightning">EMA Lightning</a></li>
+      <li><a href="https://paperswithcode.co/benchmark/open-tts-leaderboard-turkish">Open TTS Leaderboard (TR)</a></li>
+      <li><a href="https://dolphydesk.com/blog/turkce-text-to-speech-karsilastirmasi">Dolphy Türkçe TTS karşılaştırması</a></li>
+      <li><a href="https://elevenlabs.io/pricing/api">ElevenLabs API fiyatları</a></li>
+      <li><a href="https://aistudio.google.com/docs/pricing">Google AI Studio fiyatları</a></li>
+      <li><a href="https://developers.openai.com/blog/updates-audio-models">OpenAI audio güncellemeleri</a></li>
+      <li><a href="https://azure.microsoft.com/en-us/pricing/details/speech/">Azure Speech fiyatları</a></li>
+    </ul>
+    <h4>Görsel</h4>
+    <ul>
+      <li><a href="https://huggingface.co/Tongyi-MAI/Z-Image-Turbo">Z-Image-Turbo</a></li>
+      <li><a href="https://huggingface.co/leejet/Z-Image-Turbo-GGUF">Z-Image-Turbo GGUF</a></li>
+      <li><a href="https://bfl.ai/blog/flux2-klein-towards-interactive-visual-intelligence">FLUX.2 klein</a></li>
+      <li><a href="https://bfl.ai/blog/flux-3-image-klein">FLUX.3 Image Klein</a></li>
+      <li><a href="https://github.com/leejet/stable-diffusion.cpp">stable-diffusion.cpp</a></li>
+      <li><a href="https://fal.ai/pricing">fal.ai fiyatları</a></li>
+      <li><a href="https://developers.openai.com/api/docs/pricing.md">OpenAI fiyatları</a></li>
+      <li><a href="https://docs.z.ai/guides/overview/pricing">Z.ai fiyatları</a></li>
+    </ul>
+    <h4>LLM</h4>
+    <ul>
+      <li><a href="https://platform.claude.com/docs/en/about-claude/pricing.md">Claude fiyatları</a></li>
+      <li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching.md">Claude prompt caching</a></li>
+      <li><a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol.md">gpt-6.1-sol</a></li>
+      <li><a href="https://openrouter.ai/docs/use-cases/usage-accounting">OpenRouter usage accounting</a></li>
+      <li><a href="https://docs.z.ai/guides/llm/glm-5.3">GLM-5.3</a></li>
+      <li><a href="https://platform.kimi.ai/docs/pricing/chat">Kimi fiyatları</a></li>
+    </ul>
+    <h4>Mimari</h4>
+    <ul>
+      <li><a href="https://developer.chrome.com/blog/local-network-access">Chrome Local Network Access</a></li>
+      <li><a href="https://learn.microsoft.com/aspnet/core/signalr/dotnet-client">SignalR .NET client</a></li>
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc8628">RFC 8628</a></li>
+      <li><a href="https://docs.velopack.io/packaging/installer">Velopack installer</a></li>
+      <li><a href="https://avaloniaui.net/blog/avalonia-12">Avalonia 12</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian">.NET on Debian</a></li>
+      <li><a href="https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core">.NET destek politikası</a></li>
+      <li><a href="https://tracker.debian.org/pkg/caddy">Caddy (Debian)</a></li>
+      <li><a href="https://www.npgsql.org/efcore/release-notes/10.0.html">Npgsql EF Core 10</a></li>
+    </ul>
+  </div>
+  <p style="font-size:.88rem;color:var(--muted)">Tam kaynak listesi <code>rapor.md</code> dosyasında.</p>
+</section>
+</main>
+</div>
+<footer>Taha Konsept · Teknoloji Araştırması · 14 Kasım 2026</footer>
+
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  function current(){
+    var t=root.getAttribute('data-theme');
+    if(t) return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  btn.addEventListener('click',function(){
+    var next=current()==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('tk-theme',next);}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
