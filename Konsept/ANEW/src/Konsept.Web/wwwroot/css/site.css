@@ -303,6 +303,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  max-width: 14rem;
   padding: 0.35rem 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: 6px;
@@ -310,6 +311,14 @@ body {
   color: var(--color-text);
   cursor: pointer;
   list-style: none;
+}
+
+/* Uzun, boşluksuz ad (≤ 100 karakter) dar ekranda üst barı taşırmaz (review R11-1): tek satır, "…" ile kısalır; tam ad title'da. */
+.user-menu__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-menu__toggle::-webkit-details-marker {

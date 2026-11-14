@@ -2,7 +2,7 @@
    <details>/<summary> klavyeyle açılır (Enter/Space); çıkış CSRF belirteçli POST formudur. *@
 <details class="user-menu">
     <summary class="user-menu__toggle" title="@UiText.UserMenuLabel">
-        <span class="user-menu__name">@User.Identity?.Name</span>
+        <span class="user-menu__name" title="@User.Identity?.Name">@User.Identity?.Name</span>
     </summary>
     <div class="user-menu__panel">
         <form class="user-menu__logout" method="post" action="/cikis" asp-antiforgery="true">

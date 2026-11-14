@@ -321,6 +321,37 @@ public sealed class AuthPageTests
     }
 
     /// <summary>
+    /// Uzun ve boşluksuz kullanıcı adı (≤ 100 karakter) dar ekranda üst barı taşırmaz (review R11-1): menü düğmesi en fazla
+    /// 14rem, ad tek satır ve "…" ile kısalır; tam ad (kodlanmış) <c>title</c>'da.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task UserMenu_LongName_EllipsisWithFullNameTitle()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        var longName = "<b>" + new string('x', 97);
+        factory.Api.LoginAsync(Arg.Any<LoginApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Result<AuthSessionResponse>.Success(new AuthSessionResponse("jwt-login", DateTimeOffset.UtcNow.AddMinutes(15), "knr_login", WebFactory.UserId, longName)));
+        using var client = await factory.CreateSignedInClientAsync(ct);
+
+        var page = await WebFactory.GetDocumentAsync(client, "/", ct);
+        var css = File.ReadAllText(Path.Combine(WebPaths.WebProject, "wwwroot", "css", "site.css"));
+
+        var name = page.QuerySelector(".user-menu__name")!;
+        name.GetAttribute("title").ShouldBe(longName);
+        name.TextContent.ShouldBe(longName);
+        page.QuerySelector(".user-menu b").ShouldBeNull();
+        var toggle = System.Text.RegularExpressions.Regex.Match(css, @"\n\.user-menu__toggle \{(?<body>[^}]*)\}").Groups["body"].Value;
+        toggle.ShouldContain("max-width: 14rem");
+        var nameRule = System.Text.RegularExpressions.Regex.Match(css, @"\n\.user-menu__name \{(?<body>[^}]*)\}").Groups["body"].Value;
+        nameRule.ShouldContain("overflow: hidden");
+        nameRule.ShouldContain("text-overflow: ellipsis");
+        nameRule.ShouldContain("white-space: nowrap");
+        nameRule.ShouldContain("min-width: 0");
+    }
+
+    /// <summary>
     /// Sunucuya ulaşılamazsa form "Şu an işleminizi yapamıyoruz (hata no: …)" gösterir, iç ayrıntı göstermez, girilen ad/e-posta
     /// kalır; korelasyon numarası Web logunda bulunur.
     /// </summary>
