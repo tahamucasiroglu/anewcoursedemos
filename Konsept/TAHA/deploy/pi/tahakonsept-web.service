@@ -1,0 +1,53 @@
+# Taha Konsept — deploy/pi/install-release.sh yazar (elle düzenleme bir sonraki kurulumda ezilir).
+[Unit]
+Description=Taha Konsept Web (MVC/BFF) — port 7110
+After=network-online.target tahakonsept-api.service
+Wants=network-online.target tahakonsept-api.service
+
+[Service]
+Type=simple
+User=tahakonsept
+Group=tahakonsept
+WorkingDirectory=/opt/tahakonsept/current/web
+ExecStart=/opt/tahakonsept/current/web/TahaKonsept.Web
+Environment=ASPNETCORE_ENVIRONMENT=Pi
+Environment=DOTNET_gcServer=0
+Environment=DOTNET_NOLOGO=1
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Environment=HOME=/var/lib/tahakonsept
+Environment=TAHAKONSEPT_DATA=/var/lib/tahakonsept/App_Data
+Environment=TAHAKONSEPT_LOG_DIR=/var/lib/tahakonsept/logs
+# DB parolası vb. gizli değerler (chmod 600, sahibi tahakonsept). Bkz. docs/DEPLOY.md.
+EnvironmentFile=-/var/lib/tahakonsept/tahakonsept.env
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+# Sertleştirme: yetkisiz kullanıcı + yalnız /var/lib/tahakonsept'e yazma + çekirdek/aygıt/ad alanı kısıtları.
+# MemoryDenyWriteExecute YOK: .NET çalışırken kod üretir (JIT). SystemCallFilter yok: .NET'in sistem çağrısı listesi
+# sürüme göre değişir, kırılırsa servis sessizce düşer. AF_NETLINK: .NET ağ arayüzü/adres değişikliği bildirimi.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+RemoveIPC=yes
+UMask=0077
+ReadWritePaths=/var/lib/tahakonsept
+
+[Install]
+WantedBy=multi-user.target
