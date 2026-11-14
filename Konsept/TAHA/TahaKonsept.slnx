@@ -33,6 +33,12 @@
     <Project Path="src/Modules/Diagnostics/TahaKonsept.Modules.Diagnostics.Infrastructure/TahaKonsept.Modules.Diagnostics.Infrastructure.csproj" />
     <Project Path="src/Modules/Diagnostics/TahaKonsept.Modules.Diagnostics.Api/TahaKonsept.Modules.Diagnostics.Api.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Agents/">
+    <Project Path="src/Modules/Agents/TahaKonsept.Modules.Agents.Domain/TahaKonsept.Modules.Agents.Domain.csproj" />
+    <Project Path="src/Modules/Agents/TahaKonsept.Modules.Agents.Application/TahaKonsept.Modules.Agents.Application.csproj" />
+    <Project Path="src/Modules/Agents/TahaKonsept.Modules.Agents.Infrastructure/TahaKonsept.Modules.Agents.Infrastructure.csproj" />
+    <Project Path="src/Modules/Agents/TahaKonsept.Modules.Agents.Api/TahaKonsept.Modules.Agents.Api.csproj" />
+  </Folder>
   <Folder Name="/src/Hosts/">
     <Project Path="src/Hosts/TahaKonsept.Api/TahaKonsept.Api.csproj" />
     <Project Path="src/Hosts/TahaKonsept.Web/TahaKonsept.Web.csproj" />
@@ -47,6 +53,7 @@
     <Project Path="tests/TahaKonsept.Agent.Engines.Speech.Tests/TahaKonsept.Agent.Engines.Speech.Tests.csproj" />
     <Project Path="tests/TahaKonsept.ArchitectureTests/TahaKonsept.ArchitectureTests.csproj" />
     <Project Path="tests/TahaKonsept.IntegrationTests/TahaKonsept.IntegrationTests.csproj" />
+    <Project Path="tests/TahaKonsept.Modules.Agents.Tests/TahaKonsept.Modules.Agents.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Diagnostics.Tests/TahaKonsept.Modules.Diagnostics.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Identity.Tests/TahaKonsept.Modules.Identity.Tests.csproj" />
     <Project Path="tests/TahaKonsept.Modules.Profiles.Tests/TahaKonsept.Modules.Profiles.Tests.csproj" />

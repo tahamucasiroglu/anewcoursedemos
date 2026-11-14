@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Agents modülü uygulama katmanı: cihaz eşleme, cihaz listesi, hub servis mantığı, IAgentGateway (diğer modüllerin ajana erişimi),
+    IArtifactStore, IAgentStageEventHandler / IAgentLogSink uzatma noktaları, IAgentTokenIssuer (Identity adaptörü için).
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Agents.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Modules.Agents.Domain\TahaKonsept.Modules.Agents.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Agents.Tests" />
+  </ItemGroup>
+
+</Project>

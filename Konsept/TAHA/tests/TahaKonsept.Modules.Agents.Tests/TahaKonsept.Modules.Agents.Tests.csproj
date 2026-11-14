@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Agents modülü birim testleri: eşleme durum makinesi, eşleme servisi (EF InMemory), hub servisi, ajan kapısı, adres üretimi. DB gerekmez. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Agents.Tests</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Agents\TahaKonsept.Modules.Agents.Infrastructure\TahaKonsept.Modules.Agents.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

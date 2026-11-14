@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Agents altyapısı: AgentsDbContext (şema "agents"), depolar, dosya sistemi artefakt deposu (App_Data/artifacts),
+    Identity köprüleri (IdentityAgentTokenIssuer, AgentSessionRevocationNotifier), Serilog günlük alıcısı, DI kaydı.
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Agents.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Infrastructure\TahaKonsept.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\TahaKonsept.Modules.Agents.Application\TahaKonsept.Modules.Agents.Application.csproj" />
+    <ProjectReference Include="..\..\Identity\TahaKonsept.Modules.Identity.Application\TahaKonsept.Modules.Identity.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Agents.Tests" />
+  </ItemGroup>
+
+</Project>

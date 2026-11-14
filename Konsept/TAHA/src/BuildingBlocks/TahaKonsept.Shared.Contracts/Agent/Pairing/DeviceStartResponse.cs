@@ -15,6 +15,9 @@ public sealed record DeviceStartResponse
     /// <summary>Kullanıcının kodu onaylayacağı web adresi.</summary>
     public string VerificationUrl { get; init; } = string.Empty;
 
+    /// <summary>Kodu önceden doldurulmuş onay adresi (ajan tarayıcıyı doğrudan bununla açabilir).</summary>
+    public string VerificationUrlComplete { get; init; } = string.Empty;
+
     /// <summary>Yoklama aralığı (saniye).</summary>
     public int IntervalSeconds { get; init; } = 5;
 

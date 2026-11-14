@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Agents API katmanı: api/agents/* controller'ları, SignalR AgentHub (/hubs/agent), AgentsModule (IModule). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Agents.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Agents.Infrastructure\TahaKonsept.Modules.Agents.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Api\TahaKonsept.BuildingBlocks.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Agents.Tests" />
+  </ItemGroup>
+
+</Project>

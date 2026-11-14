@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Agents modülü domain'i: eşlenmiş cihaz, cihaz eşleme durum makinesi, geçici artefakt kaydı. -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Agents.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Domain\TahaKonsept.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
