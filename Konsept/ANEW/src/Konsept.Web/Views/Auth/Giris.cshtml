@@ -6,6 +6,9 @@
     var focus = Model.FirstInvalidField ?? (Model.Message is not null ? "Password" : null);
     var emailError = Model.ErrorFor("Email");
     var passwordError = Model.ErrorFor("Password");
+
+    // Form düzeyi mesaj, odaklanan alanın açıklamasına bağlanır: odak geldiğinde ekran okuyucu mesajı okur (review R1-7).
+    string DescribedBy(string field) => alert is not null && focus == field ? $"{field}-error form-message" : $"{field}-error";
 }
 <h1 class="auth__title">@UiText.LoginTitle</h1>
 @if (Model.Notice is not null)
@@ -19,14 +22,14 @@
     <div class="auth__field">
         <label class="auth__label" for="Email">@UiText.EmailLabel</label>
         <input class="auth__input" id="Email" name="Email" type="email" autocomplete="username" value="@Model.Email"
-               aria-describedby="Email-error" aria-invalid="@(emailError is null ? null : "true")"
+               aria-describedby="@DescribedBy("Email")" aria-invalid="@(emailError is null ? null : "true")"
                autofocus="@(focus == "Email" ? "autofocus" : null)" />
         <span class="auth__error" id="Email-error">@emailError</span>
     </div>
     <div class="auth__field">
         <label class="auth__label" for="Password">@UiText.PasswordLabel</label>
         <input class="auth__input" id="Password" name="Password" type="password" autocomplete="current-password"
-               aria-describedby="Password-error" aria-invalid="@(passwordError is null ? null : "true")"
+               aria-describedby="@DescribedBy("Password")" aria-invalid="@(passwordError is null ? null : "true")"
                autofocus="@(focus == "Password" ? "autofocus" : null)" />
         <span class="auth__error" id="Password-error">@passwordError</span>
     </div>

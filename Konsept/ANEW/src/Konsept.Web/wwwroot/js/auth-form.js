@@ -35,12 +35,13 @@ export function bindAuthForms(doc) {
 }
 
 /**
- * İlk hatalı alana odaklanır (sunucu autofocus'u desteklemeyen tarayıcılar için).
+ * İlk hatalı alana odaklanır (sunucu autofocus'u desteklemeyen tarayıcılar için); hatalı alan yoksa sunucunun işaretlediği
+ * öğeye — ör. alan hatası olmayan form düzeyi mesaj (tabindex="-1") — odaklanır.
  * @param {Document} doc Belge.
- * @returns {Element|null} Odaklanan alan.
+ * @returns {Element|null} Odaklanan öğe.
  */
 export function focusFirstInvalid(doc) {
-  const field = doc.querySelector('form[data-auth-form] [aria-invalid="true"]') || doc.querySelector('form[data-auth-form] [autofocus]');
+  const field = doc.querySelector('form[data-auth-form] [aria-invalid="true"]') || doc.querySelector('[autofocus]');
   if (field && typeof field.focus === 'function') {
     field.focus();
   }

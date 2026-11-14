@@ -159,6 +159,9 @@ public sealed class AuthPageTests
         second.GetElementById("form-message")!.TextContent.ShouldBe("Yanlış girdiniz, 1 hakkınız kaldı");
         locked.GetElementById("form-message")!.TextContent.ShouldBe("Çok fazla yanlış deneme. Hesabınız 12:15'de açılacak");
         locked.GetElementById("Password")!.HasAttribute("autofocus").ShouldBeTrue();
+        first.GetElementById("Password")!.GetAttribute("aria-describedby")!.Split(' ').ShouldContain("form-message");
+        locked.GetElementById("Password")!.GetAttribute("aria-describedby")!.Split(' ').ShouldContain("form-message");
+        locked.GetElementById("Email")!.GetAttribute("aria-describedby")!.Split(' ').ShouldNotContain("form-message");
         locked.GetElementById("Email")!.GetAttribute("value").ShouldBe("a@x.com");
     }
 
@@ -266,6 +269,7 @@ public sealed class AuthPageTests
         invalid.GetElementById("Password")!.HasAttribute("autofocus").ShouldBeFalse();
         invalid.GetElementById("Email")!.GetAttribute("aria-invalid").ShouldBe("true");
         invalid.GetElementById("Email-error")!.TextContent.ShouldBe("E-posta adresinizi girin.");
+        invalid.GetElementById("Email")!.GetAttribute("aria-describedby")!.Split(' ').ShouldBe(["Email-error", "form-message"]);
         invalid.GetElementById("form-message")!.TextContent.ShouldBe("Lütfen işaretli alanları düzeltin.");
     }
 
@@ -327,6 +331,16 @@ public sealed class AuthPageTests
         if (path == "/kayit")
         {
             page.GetElementById("Name")!.GetAttribute("value").ShouldBe("Ayşe");
+
+            // Alan hatası yok: odak mesajın kendisine gider, ekran okuyucu okur (review R1-7).
+            var live = page.GetElementById("form-message")!;
+            live.HasAttribute("autofocus").ShouldBeTrue();
+            live.GetAttribute("tabindex").ShouldBe("-1");
+            page.QuerySelectorAll("input[autofocus]").ShouldBeEmpty();
+        }
+        else
+        {
+            page.GetElementById("Password")!.GetAttribute("aria-describedby")!.Split(' ').ShouldContain("form-message");
         }
 
         await Eventually(() => factory.ReadLogText().Contains(correlation, StringComparison.Ordinal), ct);

@@ -54,6 +54,15 @@ describe('auth-form.js — gönderim koruması ve odak (AC-16, AC-18)', () => {
     expect(sent).toBe(1);
   });
 
+  it('alan hatası yoksa odak form düzeyi mesaja gider (ekran okuyucu okur)', () => {
+    document.body.innerHTML = `<p id="form-message" role="alert" tabindex="-1" autofocus>Şu an işleminizi yapamıyoruz (hata no: x)</p>${formHtml()}`;
+
+    const focused = focusFirstInvalid(document);
+
+    expect(focused.id).toBe('form-message');
+    expect(document.activeElement.id).toBe('form-message');
+  });
+
   it('hata sonrası odak ilk hatalı alana gider', () => {
     document.body.innerHTML = formHtml('Email');
 
