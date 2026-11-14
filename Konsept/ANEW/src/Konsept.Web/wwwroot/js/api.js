@@ -1,8 +1,11 @@
 // Tarayıcının tek istek yolu: jQuery $.ajax (K-6 — başka istek API'si yasak). Tarayıcı → MVC controller → API.
-// POST isteklerinde CSRF belirteci başlıkta gönderilir (docs/security.md).
+// POST isteklerinde CSRF belirteci başlıkta gönderilir (docs/security.md). Oturum düştüyse (401) işlem sessizce
+// başarısız olmaz: tarayıcı "Oturumunuz sona erdi" bilgisiyle giriş sayfasına gider (spec 0002 Req 13, AC-13/14).
 
 const TOKEN_HEADER = 'RequestVerificationToken';
 const DEFAULT_TIMEOUT_MS = 15000;
+
+let navigation = globalThis.location;
 
 function jq() {
   const $ = globalThis.jQuery;
@@ -10,6 +13,24 @@ function jq() {
     throw new Error('jQuery yüklenmedi');
   }
   return $;
+}
+
+/**
+ * Yönlendirmede kullanılacak konumu değiştirir (testler için; varsayılan window.location).
+ * @param {{ pathname: string, search?: string, assign: (url: string) => void }} target Konum.
+ */
+export function setNavigation(target) {
+  navigation = target;
+}
+
+/**
+ * Oturum düşünce gidilecek giriş adresi: bulunulan sayfa dönüş adresi olur.
+ * @param {{ pathname: string, search?: string }} location Bulunulan konum.
+ * @returns {string} Giriş adresi.
+ */
+export function loginRedirectUrl(location) {
+  const back = `${location.pathname || '/'}${location.search || ''}`;
+  return `/giris?oturum=bitti&returnUrl=${encodeURIComponent(back)}`;
 }
 
 /**
@@ -38,7 +59,13 @@ function request(method, url, data) {
   return new Promise((resolve, reject) => {
     $.ajax(settings)
       .done((body) => resolve(body))
-      .fail((xhr) => reject({ status: xhr ? xhr.status : 0, body: xhr && xhr.responseJSON ? xhr.responseJSON : null }));
+      .fail((xhr) => {
+        const status = xhr ? xhr.status : 0;
+        if (status === 401 && navigation) {
+          navigation.assign(loginRedirectUrl(navigation));
+        }
+        reject({ status, body: xhr && xhr.responseJSON ? xhr.responseJSON : null });
+      });
   });
 }
 
