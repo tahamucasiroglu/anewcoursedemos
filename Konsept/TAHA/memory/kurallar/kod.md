@@ -33,3 +33,8 @@
 
 ## Türkçe seslendirme (14 Kas 2026)
 - TTS'e giden metin her zaman Normalize aşamasından geçer: yazılış (ekran/altyazı) ile okunuş (ses) ayrı tutulur. Yabancı kelimeler Türkçe okunuşla (Google → Gugıl), sayılar/tarihler/romen rakamları/kısaltmalar açık yazıyla okunur. Ayrıntı: PLAN.md §3.1.
+
+## Önce GPU (14 Kas 2026 — kullanıcı: "ekran kartı ile yapılabilenleri orada yap, boşa işlemci ile vakit kaybetme; bu program için de geçerli")
+- Ekran kartında çalışabilen her iş GPU'da çalışır: yerel ses (torch → CUDA tekerlekleri, ONNX → GPU sağlayıcısı), yerel görsel (sd.cpp CUDA), video kodlama (NVENC), tarayıcı tabanlı render (GPU hızlandırma açık).
+- CPU yalnız yedek: GPU yoksa / VRAM yetmezse / sürücü hatasında otomatik düşer ve bu loglanır. CPU'ya düşüş sessiz olmaz.
+- Testlerde ve geliştirme sırasında da aynı: GPU ile yapılabilecek denemeyi CPU'da koşturma.
