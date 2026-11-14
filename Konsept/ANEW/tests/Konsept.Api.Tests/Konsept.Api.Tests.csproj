@@ -6,5 +6,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Testing\Konsept.Testing.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Api\Konsept.Api.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Agent.Infrastructure\Konsept.Agent.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

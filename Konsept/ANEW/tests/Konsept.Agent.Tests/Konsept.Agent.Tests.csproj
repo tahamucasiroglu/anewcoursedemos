@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless.XUnit" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Testing\Konsept.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Agent\Konsept.Agent.csproj" />
+  </ItemGroup>
+</Project>

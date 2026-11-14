@@ -19,5 +19,9 @@
     <ProjectReference Include="..\..\src\Konsept.Api\Konsept.Api.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Web.ApiClient\Konsept.Web.ApiClient.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Web\Konsept.Web.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Agent.Domain\Konsept.Agent.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Agent.Application\Konsept.Agent.Application.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Agent.Infrastructure\Konsept.Agent.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Agent\Konsept.Agent.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,5 @@
+{
+  "serverUrl": "http://localhost:8001/",
+  "siteUrl": "http://localhost:8000/",
+  "reconnectDelaySeconds": 3
+}

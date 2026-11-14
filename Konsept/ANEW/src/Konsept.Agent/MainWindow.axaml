@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Konsept.Agent.MainWindow"
+        Width="420" Height="200"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/tray-placeholder.png">
+  <StackPanel Margin="20" Spacing="8">
+    <TextBlock x:Name="StateText" FontSize="16" FontWeight="SemiBold" />
+    <TextBlock x:Name="ServerText" />
+    <TextBlock x:Name="VersionText" />
+    <TextBlock x:Name="HintText" TextWrapping="Wrap" Opacity="0.8" />
+  </StackPanel>
+</Window>

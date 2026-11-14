@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Ajan use-case soyutlamaları: sunucu bağlantısı, ajan bilgisi, tarayıcı açma. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Agent.Domain\Konsept.Agent.Domain.csproj" />
+  </ItemGroup>
+</Project>

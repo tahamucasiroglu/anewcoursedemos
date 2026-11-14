@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Masaüstü ajanı (Avalonia, Windows öncelikli): tray uygulaması; pencere kapatmak uygulamayı kapatmaz. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Agent.Infrastructure\Konsept.Agent.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+    <None Update="agentsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="agentsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('agentsettings.Local.json')" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Arayüz metinleri yalnızca resx'te; derlemede tipli AgentText sınıfı üretilir. -->
+    <EmbeddedResource Update="Resources\AgentText.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)AgentText.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Konsept.Agent.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>AgentText</StronglyTypedClassName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Konsept.Agent.Tests" />
+  </ItemGroup>
+</Project>

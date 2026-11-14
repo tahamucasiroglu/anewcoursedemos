@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Ajan altyapısı: SignalR istemcisi (yalnızca ajan tarafında), ayar dosyası, tarayıcı açma. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Agent.Application\Konsept.Agent.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
+  </ItemGroup>
+</Project>
