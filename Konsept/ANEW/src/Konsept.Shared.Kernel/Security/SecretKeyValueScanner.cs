@@ -104,7 +104,7 @@ internal static class SecretKeyValueScanner
 
         var lineEndOfValue = LineEnd(text, valueStart);
         var unquoted = QuoteLength(text, valueStart) == 0 && valueStart < text.Length && text[valueStart] is not ('{' or '[');
-        if (unquoted && (IsPathContinuation(text, valueStart, apiKey) || IsSqlParameter(text, valueStart)))
+        if (unquoted && (IsPathContinuation(text, valueStart, apiKey) || IsSqlParameter(text, keyStart, keyEnd, valueStart)))
         {
             // Ai:ApiKeys:OpenRouter yolu (sağlayıcı adı değer değildir; sonraki bölüm yol kuralıyla okunur) ve
             // EF SQL'deki "Token" = @__token_0 parametre adı (hunt r5, hasar).
@@ -154,7 +154,9 @@ internal static class SecretKeyValueScanner
         }
 
         var next = Emit(text, start, end, apiKey, output);
-        if (text[start] is '{' or '[' && end == lineEndOfValue)
+
+        // Yalnızca satırda kapanmayan ayraç sonraki girintili satırlara uzanır; "Credentials: [none]" yığın izini silmesin (hunt r6).
+        if (text[start] is '{' or '[' && end == lineEndOfValue && MatchingBracket(text, start, lineEndOfValue) < 0)
         {
             next = Math.Max(next, MaskIndentedLines(text, keyStart, lineEndOfValue, output));
         }
@@ -219,13 +221,25 @@ internal static class SecretKeyValueScanner
             p++;
         }
 
-        return p == text.Length || !IsKeyChar(text[p]);
+        // Sağlayıcı adları kısadır; 20+ harflik değer yol bölümü sayılmaz (review r5, I-1).
+        return p - valueStart < 20 && (p == text.Length || !IsKeyChar(text[p]));
     }
 
-    /// <summary>Değer bir SQL parametre adı mı (<c>@__token_0</c>, <c>@p0</c>).</summary>
-    private static bool IsSqlParameter(string text, int valueStart)
+    /// <summary>
+    /// Değer bir EF/ADO SQL parametre adı mı: anahtar çift tırnaklı SQL tanımlayıcısı (<c>"Token" = @__token_0</c>) ve
+    /// ad <c>@__…</c> ya da <c>@p&lt;rakam&gt;</c>. Yalnızca biçime bakmak <c>Password=@dmin2024</c>'ü açık bırakıyordu (review r5, M-1).
+    /// </summary>
+    private static bool IsSqlParameter(string text, int keyStart, int keyEnd, int valueStart)
     {
-        if (text[valueStart] != '@' || valueStart + 1 >= text.Length || !(char.IsLetter(text[valueStart + 1]) || text[valueStart + 1] == '_'))
+        if (keyStart == 0 || text[keyStart - 1] != '"' || keyEnd >= text.Length || text[keyEnd] != '"'
+            || text[valueStart] != '@' || valueStart + 2 >= text.Length)
+        {
+            return false;
+        }
+
+        var efName = text[valueStart + 1] == '_' && text[valueStart + 2] == '_';
+        var adoName = text[valueStart + 1] == 'p' && char.IsAsciiDigit(text[valueStart + 2]);
+        if (!efName && !adoName)
         {
             return false;
         }
@@ -236,7 +250,38 @@ internal static class SecretKeyValueScanner
             p++;
         }
 
-        return p == text.Length || char.IsWhiteSpace(text[p]) || text[p] is ')' or ',' or ';';
+        return p == text.Length || char.IsWhiteSpace(text[p]) || text[p] is ')' or ',';
+    }
+
+    /// <summary>Anahtar, her bölümü büyük harfle başlayan noktalı bir tip adının son bölümü mü ve ardından ": " mi geliyor.</summary>
+    private static bool IsQualifiedTypeName(string text, int keyStart, int keyEnd)
+    {
+        if (keyStart < 2 || text[keyStart - 1] != '.' || !char.IsUpper(text[keyStart]) || keyEnd + 1 >= text.Length
+            || text[keyEnd] != ':' || text[keyEnd + 1] != ' ')
+        {
+            return false;
+        }
+
+        var p = keyStart - 1;
+        var segments = 0;
+        while (p > 0 && text[p] == '.')
+        {
+            var segEnd = p;
+            p--;
+            while (p >= 0 && (char.IsLetterOrDigit(text[p]) || text[p] == '_'))
+            {
+                p--;
+            }
+
+            if (segEnd - p - 1 == 0 || !char.IsUpper(text[p + 1]))
+            {
+                return false;
+            }
+
+            segments++;
+        }
+
+        return segments >= 1;
     }
 
     private static readonly HashSet<string> ValueWords =
@@ -554,6 +599,13 @@ internal static class SecretKeyValueScanner
             return keyStart > 0 && text[keyStart - 1] == ':' && PathHasSecretSegment(text, keyStart, out apiKey);
         }
 
+        if (IsQualifiedTypeName(text, keyStart, keyEnd))
+        {
+            // "Konsept.Api.Auth.PasswordPolicyException: mesaj", "….PasswordResetService: mesaj": tip/kategori adıdır,
+            // ardındaki metin değer değildir (hunt r6, hasar). Küçük harfli özellik yolları (db.password=) etkilenmez.
+            return false;
+        }
+
         var name = SecretMasker.NormalizeFieldName(text[keyStart..keyEnd]);
         if (name.Length == 0 || SecretMasker.IsConnectionStringFieldName(name))
         {
@@ -816,7 +868,8 @@ internal static class SecretKeyValueScanner
             return ReadQuoted(text, pos, text[pos]);
         }
 
-        if (text[pos] is '{' or '[')
+        // Bağlantı dizesinde '{' sıradan karakterdir (Password={abc}def123; → ';'e kadar, hunt r6).
+        if (text[pos] is '{' or '[' && !connectionString)
         {
             // Satırda eşleşen kapanışa kadar (tek satırlık JSON'da sonraki alanlar korunsun, hunt r4); yoksa satır sonu.
             var lineEnd = LineEnd(text, pos);

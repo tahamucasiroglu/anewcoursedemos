@@ -178,6 +178,17 @@ public sealed class SecretMaskerTests
         { "Request starting HTTP/1.1 GET http://localhost:5000/api/users/by-email/ali@example.com - -", "Request starting HTTP/1.1 GET http://localhost:5000/api/users/by-email/ali@example.com - -", "\u0000" },
         { "Ai:ApiKeys:Groq=\"gsk_live_9f8e7d6c5b4a3210fedcba\"", "Ai:ApiKeys:Groq=\"…cba\"", "9f8e7d6c5b4a" },
         { "Token value: abc123def456ghi", "Token value: ***", "abc123def456" },
+
+        // Review r5 / hunt r6 (fix-7): '@' ile başlayan şifre, tip adları, kapalı ayraç, IPv6, bağlantı dizesinde '{'.
+        { "Host=db;Username=app;Password=@dmin2024;Database=k", "Host=db;Username=app;Password=***;Database=k", "dmin2024" },
+        { "Smtp password=@Sup3rS3cret, retrying", "Smtp password=***", "Sup3rS3cret" },
+        { "Konsept.Api.Auth.PasswordPolicyException: Password must be at least 8 characters.", "Konsept.Api.Auth.PasswordPolicyException: Password must be at least 8 characters.", "\u0000" },
+        { "Konsept.Api.Services.PasswordResetService: Reset link sent to user 42", "Konsept.Api.Services.PasswordResetService: Reset link sent to user 42", "\u0000" },
+        { "spring.datasource.password=Hunter2Pass", "spring.datasource.password=***", "Hunter2Pass" },
+        { "System.Exception: Credentials: [none]\n   at A.B()\n   at C.D()", "System.Exception: Credentials: ***\n   at A.B()\n   at C.D()", "[none]" },
+        { "GET http://[::1]:5000/api/users/ali@example.com - -", "GET http://[::1]:5000/api/users/ali@example.com - -", "\u0000" },
+        { "Host=db;Username=k;Password={abc}def123;Database=x", "Host=db;Username=k;Password=***;Database=x", "def123" },
+        { "x-api-key:AbCdEfGhIjKlMnOpQrStUv", "x-api-key:…tUv", "AbCdEfGhIjKl" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>

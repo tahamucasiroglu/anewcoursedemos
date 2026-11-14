@@ -145,7 +145,8 @@ public static partial class SecretMasker
                 return;
             }
 
-            _knownSecretForms = [.. _knownSecretForms, SecretValueSet.Forms(value)];
+            // Uzun olan önce: bir sır diğerinin öneki olsa da kuyruğu açıkta kalmasın (review r5, I-4).
+            _knownSecretForms = [.. _knownSecretForms.Append(SecretValueSet.Forms(value)).OrderByDescending(f => f[0].Length)];
         }
     }
 
@@ -483,7 +484,8 @@ public static partial class SecretMasker
             // Şifrede '/', '?', '#' olabilir (amqp://guest:gu#S3CRET@rabbit): ilk ayraçtan önce ':' varsa yetki
             // bölümü sert sınıra kadar uzatılır; fazla maskeleme güvenli taraftır (hunt r2).
             // ':' sonrası ilk ayraca kadar yalnızca rakamsa port'tur (http://localhost:5000/…/ali@x), şifre değil (hunt r5).
-            var firstColon = text.IndexOf(':', start, hardEnd - start);
+            var hostStart = start < hardEnd && text[start] == '[' && text.IndexOf(']', start, hardEnd - start) is var bracket and > 0 ? bracket : start; // IPv6 [::1]
+            var firstColon = text.IndexOf(':', hostStart, hardEnd - hostStart);
             var colonIsPort = firstColon >= 0 && softEnd > firstColon + 1 && IsDigits(text, firstColon + 1, softEnd);
             var end = softEnd >= 0 && (colonIsPort || !(firstColon >= 0 && firstColon < softEnd)) ? softEnd : hardEnd;
             var at = end > start ? text.LastIndexOf('@', end - 1, end - start) : -1;
