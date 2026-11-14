@@ -238,6 +238,20 @@ function copySpeech(jobId) {
   return false;
 }
 
+/** İşin images/ klasörünü yöntem klasörüne kopyalar ve her görselin boyutunu döner. */
+function copyImages(jobId) {
+  const src = path.join(AGENT_ROOT, 'Workspace', String(jobId).replace(/-/g, ''), 'images');
+  const dst = path.join(OUT, 'images');
+  try { fs.rmSync(dst, { recursive: true, force: true }); } catch { /* yok */ }
+  if (!fs.existsSync(src)) { return []; }
+  fs.mkdirSync(dst, { recursive: true });
+  return fs.readdirSync(src).filter(f => /\.(png|jpe?g|webp)$/i.test(f) && !/partial/i.test(f)).sort().map(f => {
+    fs.copyFileSync(path.join(src, f), path.join(dst, f));
+    const st = (ffprobe(path.join(dst, f)).streams || [])[0] || {};
+    return { name: f, width: st.width, height: st.height };
+  });
+}
+
 /* ------------------------------------------------------------------ doğrulama */
 function ffprobe(file) {
   const out = execFileSync(FFPROBE, ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], { encoding: 'utf8' });
@@ -316,6 +330,17 @@ async function verify(videoId, run, settings) {
     log('speech.wav bulunamadı; ses izi audio-from-video.wav olarak çıkarıldı');
   }
 
+  // Görseller: kapalıyken hiç üretilmez; yerel/online'da sahne başına bir görsel, dikey 9:16 en-boy.
+  const images = detail.jobId ? copyImages(detail.jobId) : [];
+  if (combo.imageMode === 'Off') {
+    check('görsel kapalı: görsel üretilmedi', images.length === 0, `${images.length} görsel`);
+  } else {
+    const sceneCount = (detail.scenes || []).length;
+    check(`görsel sayısı = sahne sayısı (${sceneCount})`, images.length === sceneCount, images.map(i => `${i.name} ${i.width}x${i.height}`));
+    check('görseller dikey 9:16 (±2%)', images.length > 0 && images.every(i => i.width && i.height && Math.abs(i.width / i.height - W / H) <= 0.02 * (W / H)),
+      images.map(i => `${i.width}x${i.height}`));
+  }
+
   const fr = frames(mp4, dur);
   check('4 kare çıkarıldı', fr.every(f => f.ok), fr.map(f => path.basename(f.file)));
 
@@ -349,7 +374,7 @@ async function verify(videoId, run, settings) {
     }
   }
 
-  return { checks, detail, whisper, probe: { durationSec: dur, video: { codec: v.codec_name, width: v.width, height: v.height, fps: v.r_frame_rate }, audio: { codec: a.codec_name, sampleRate: a.sample_rate } }, volume: vol, speech, frames: fr, spoken };
+  return { checks, detail, whisper, probe: { durationSec: dur, video: { codec: v.codec_name, width: v.width, height: v.height, fps: v.r_frame_rate }, audio: { codec: a.codec_name, sampleRate: a.sample_rate } }, volume: vol, speech, frames: fr, spoken, images };
 }
 
 /* ------------------------------------------------------------------ ana akış */
@@ -399,7 +424,7 @@ async function verify(videoId, run, settings) {
     }
     result.videoId = videoId;
     const ver = await verify(videoId, null, settings);
-    Object.assign(result, { checks: ver.checks, whisper: ver.whisper ? { wordRecall: ver.whisper.wordRecall, transcript: ver.whisper.transcript } : null, probe: ver.probe, volume: ver.volume, speech: ver.speech, frames: (ver.frames || []).map(f => path.relative(OUT, f.file)) });
+    Object.assign(result, { checks: ver.checks, whisper: ver.whisper ? { wordRecall: ver.whisper.wordRecall, transcript: ver.whisper.transcript } : null, probe: ver.probe, volume: ver.volume, speech: ver.speech, images: ver.images, frames: (ver.frames || []).map(f => path.relative(OUT, f.file)) });
     result.passed = ver.checks.every(c => c.ok);
     result.status = result.passed ? 'ok' : 'checks-failed';
     code = result.passed ? 0 : 1;
