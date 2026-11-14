@@ -1,0 +1,22 @@
+# ANEW Konsept API — Pi (spec 0001 AC-10). Port 8001 (D2). Gizli bilgiler /etc/anewconcept/api.env'de (repoda yok).
+[Unit]
+Description=ANEW Konsept API
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=anewconcept
+Group=anewconcept
+WorkingDirectory=/opt/anewconcept/api
+ExecStart=/opt/anewconcept/api/Konsept.Api
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:8001
+Environment=Logging__Directory=/var/log/anewconcept
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+EnvironmentFile=/etc/anewconcept/api.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

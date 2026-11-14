@@ -25,3 +25,6 @@ obj/
 node_modules/
 TestResults/
 *.user
+
+# Ajanın yerel ayarı (geliştiricinin Pi adresi gibi).
+agentsettings.Local.json

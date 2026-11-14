@@ -1,0 +1,22 @@
+# ANEW Konsept Web — Pi (spec 0001 AC-10). Port 8000 (D2). Web veritabanına bağlanmaz; API'ye localhost'tan gider.
+[Unit]
+Description=ANEW Konsept Web
+After=network-online.target anewconcept-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=anewconcept
+Group=anewconcept
+WorkingDirectory=/opt/anewconcept/web
+ExecStart=/opt/anewconcept/web/Konsept.Web
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:8000
+Environment=Api__BaseUrl=http://127.0.0.1:8001/
+Environment=Logging__Directory=/var/log/anewconcept
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

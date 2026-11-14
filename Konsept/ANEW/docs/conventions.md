@@ -24,7 +24,7 @@
 |---|---|---|
 | Dil / runtime | C# · **.NET 10 LTS** (10.0.x) | .NET 11 (STS) bilinçli olarak alınmadı; destek süresi aynı (Kasım 2028). |
 | Web | **ASP.NET Core MVC** (Razor), HTML, CSS, JS | `Konsept.Web` (BFF); DB'ye dokunmaz. |
-| Tarayıcı istekleri | **jQuery `$.ajax`** — `fetch` yasak (K-6) | jQuery versiyonu walking skeleton'da sabitlenecek. |
+| Tarayıcı istekleri | **jQuery 3.7.1 `$.ajax`** — `fetch` yasak (K-6) | `src/Konsept.Web/wwwroot/lib/jquery/` (npm `jquery@3.7.1`'den, lisansıyla); tek sarmalayıcı `wwwroot/js/api.js` (plan 0001). |
 | API | **ASP.NET Core Web API** | `Konsept.Api`, modüler monolit. |
 | Masaüstü ajanı | **Avalonia 12.x**, ilk hedef **Windows** | Linux/macOS kapsam dışı (şimdilik). |
 | Ajan ↔ API | **SignalR** (.NET istemcisi, yalnızca ajan tarafında) | Bağlantıyı ajan açar. |
