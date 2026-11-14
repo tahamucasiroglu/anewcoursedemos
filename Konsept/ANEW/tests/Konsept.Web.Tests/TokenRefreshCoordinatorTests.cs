@@ -43,6 +43,33 @@ public sealed class TokenRefreshCoordinatorTests
     }
 
     /// <summary>
+    /// Api refresh'i <see cref="Konsept.Web.Auth.Base.TokenRefreshCoordinatorBase.RefreshTimeout"/>'u aşarsa zaman aşımı
+    /// istisna olarak kaçmaz, "API erişilemiyor" döner (review R8-1); sonuç paylaşılmaz, kilit kalır (R2-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Refresh_ApiHangsPastTimeout_ReturnsUnavailable_NotShared()
+    {
+        var api = Substitute.For<IKonseptApiClient>();
+        api.RefreshAsync("knr_old", Arg.Any<CancellationToken>()).Returns(async call =>
+        {
+            await Task.Delay(Timeout.Infinite, call.Arg<CancellationToken>());
+            return Result<AuthSessionResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable);
+        });
+        var time = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var coordinator = new TokenRefreshCoordinator(cache, time);
+
+        var pending = coordinator.RefreshAsync(api, "knr_old", TestContext.Current.CancellationToken);
+        time.Advance(Konsept.Web.Auth.Base.TokenRefreshCoordinatorBase.RefreshTimeout + TimeSpan.FromSeconds(1));
+        var result = await pending.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
+        result.Error!.Code.ShouldBe(Konsept.Web.ApiClient.ApiClientErrors.UnavailableCode);
+        coordinator.TryGetRotated("knr_old", out _).ShouldBeFalse();
+        coordinator.ActiveGateCount.ShouldBe(1);
+    }
+
+    /// <summary>
     /// Lider geçici hatayla düşer, kuyruktaki çağıran dönüşü yaparken yeni bir çağıran gelir: ikinci eşzamanlı dönüş başlamaz
     /// (eski token Api'de 401 verirdi), iki çağıran da yeni çifti alır ve önbellekte başarı kalır (review R2-1).
     /// </summary>

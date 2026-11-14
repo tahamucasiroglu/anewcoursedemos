@@ -156,6 +156,53 @@ public sealed class AuthAccessTests
     }
 
     /// <summary>
+    /// Api refresh'i zaman aşımına kadar yanıt vermezse (review R8-1) 500 olmaz: dolmuş token'la sayfa oturumu korur (token'sız
+    /// yol, cookie silinmez), çıkış korelasyonlu 503 verir ve oturum kalır.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task RefreshHangsPastTimeout_PageKeepsSession_LogoutReturns503()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        var home = await WebFactory.GetDocumentAsync(client, "/", ct);
+        var token = home.QuerySelector("form.user-menu__logout input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+        using var entered = new SemaphoreSlim(0);
+        factory.Api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(async call =>
+        {
+            entered.Release();
+            await Task.Delay(Timeout.Infinite, call.Arg<CancellationToken>());
+            return Result<AuthSessionResponse>.Failure(Konsept.Web.ApiClient.ApiClientErrors.Unavailable);
+        });
+        time.Advance(TimeSpan.FromMinutes(20));
+
+        async Task<HttpResponseMessage> CompleteAsync(Task<HttpResponseMessage> request)
+        {
+            // Her asılı refresh çağrısında saat zaman aşımının ötesine ilerletilir.
+            while (!request.IsCompleted)
+            {
+                if (await entered.WaitAsync(TimeSpan.FromMilliseconds(50), ct))
+                {
+                    time.Advance(TimeSpan.FromSeconds(16));
+                }
+            }
+
+            return await request;
+        }
+
+        using var page = await CompleteAsync(client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct));
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token });
+        using var logout = await CompleteAsync(client.PostAsync(new Uri("/cikis", UriKind.Relative), content, ct));
+
+        page.StatusCode.ShouldBe(HttpStatusCode.OK);
+        page.Headers.Contains("Set-Cookie").ShouldBeFalse();
+        logout.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        logout.Headers.Contains("Set-Cookie").ShouldBeFalse();
+    }
+
+    /// <summary>
     /// Örtüşen iki istek (review R7-1): eski token'larla başlayan istek, araya giren istek refresh yapıp çifti döndürdükten
     /// sonra biterse yenilediği bilet eski çifti değil yeni çifti taşır; paylaşım penceresi bittikten sonra da oturum geçerli.
     /// </summary>

@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Konsept.Shared.Kernel.Enums;
 using Konsept.Shared.Kernel.Results;
+using Konsept.Web.ApiClient;
 using Konsept.Web.ApiClient.Abstract;
 using Konsept.Web.ApiClient.Dtos;
 using Konsept.Web.Auth.Abstract;
@@ -48,8 +49,20 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
 
             // Api tarafında dönüş bir kez olur: tarayıcı isteği kesilse de lider çağrıyı bitirip sonucu paylaşır, yoksa yeni çift
             // kaybolur ve kullanıcı düşer (review R1-1). Yalnızca zaman aşımıyla iptal edilir; bekleyenler kendi isteğiyle çıkabilir.
-            using var detached = new CancellationTokenSource(RefreshTimeout);
-            var result = await api.RefreshAsync(refreshToken, detached.Token).ConfigureAwait(false);
+            using var detached = new CancellationTokenSource(RefreshTimeout, Time);
+            Result<AuthSessionResponse> result;
+            try
+            {
+                result = await api.RefreshAsync(refreshToken, detached.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (detached.IsCancellationRequested)
+            {
+                // Kendi zaman aşımımız HttpClient'ınkinden önce dolabilir; istemci bu iptali "çağıranın iptali" sanıp istisnayı
+                // geçirir (review R8-1). Geçici hatadır: "API erişilemiyor", paylaşılmaz, kilit kalır (R2-1) — sayfa oturumu
+                // korur (R2-2/R3-2), çıkış 503 verir (R3-1).
+                return Result<AuthSessionResponse>.Failure(ApiClientErrors.Unavailable);
+            }
+
             if (result.IsSuccess || result.Error!.Type == ErrorType.Unauthorized)
             {
                 // Başarı kazanır (review R2-1): paylaşılmış bir başarının üstüne 401 yazılmaz.
@@ -86,6 +99,9 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
 
     /// <summary>Gets tutulan refresh kilidi sayısı (kesin sonuçla biten uçuşların kilitleri tutulmaz; geçici hatada kilit kalır).</summary>
     public int ActiveGateCount => _gates.Count;
+
+    /// <summary>Gets refresh zaman aşımının saat kaynağı.</summary>
+    protected abstract TimeProvider Time { get; }
 
     /// <summary>Paylaşılan sonucu okur.</summary>
     /// <param name="key">Eski token'ın hash'i.</param>
