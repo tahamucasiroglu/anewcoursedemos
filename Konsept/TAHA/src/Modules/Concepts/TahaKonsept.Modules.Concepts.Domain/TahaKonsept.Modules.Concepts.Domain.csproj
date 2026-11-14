@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Concepts modülü: alan katmanı (Concept aggregate'i, konu hafızası, kullanıcı ayarları, durum geçişleri, sınırlar). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Concepts.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Domain\TahaKonsept.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.Shared.Contracts\TahaKonsept.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

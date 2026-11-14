@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Concepts modülü: uygulama katmanı (konu önerisi, konsept üretimi, arka plan iş kuyruğu, düzeltme adayları,
+       kelime tekrar denetimi, konu hafızası, gömülü sistem promptları + şablon işleyici, doğrulayıcılar). -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Modules.Concepts.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Modules.Concepts.Domain\TahaKonsept.Modules.Concepts.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\TahaKonsept.BuildingBlocks.Application\TahaKonsept.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\..\Profiles\TahaKonsept.Modules.Profiles.Application\TahaKonsept.Modules.Profiles.Application.csproj" />
+    <ProjectReference Include="..\..\Providers\TahaKonsept.Modules.Providers.Application\TahaKonsept.Modules.Providers.Application.csproj" />
+    <ProjectReference Include="..\..\Diagnostics\TahaKonsept.Modules.Diagnostics.Application\TahaKonsept.Modules.Diagnostics.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Prompts\*.md" LogicalName="TahaKonsept.Modules.Concepts.Application.Prompts.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Modules.Concepts.Tests" />
+  </ItemGroup>
+
+</Project>

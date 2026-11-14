@@ -9,6 +9,9 @@ public sealed record ConceptDocument
     /// <summary>Video başlığı.</summary>
     public string Title { get; init; } = string.Empty;
 
+    /// <summary>İlk 2 saniyede söylenen / gösterilen kanca cümlesi (eklendi: dalga 2; eski belgelerde boş).</summary>
+    public string Hook { get; init; } = string.Empty;
+
     /// <summary>Kısa özet.</summary>
     public string Summary { get; init; } = string.Empty;
 
