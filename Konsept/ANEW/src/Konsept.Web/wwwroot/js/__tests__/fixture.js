@@ -18,7 +18,8 @@ export function layoutHtml() {
          data-text-agent-disconnected="Ajan bağlı değil" data-text-journal-empty="Henüz kayıt yok">
       <span id="status-version"></span><span id="status-api"></span><span id="status-db"></span><span id="status-agent"></span>
     </div>
-    <button id="agent-test-button" data-text-sending="Gönderiliyor…" data-text-failed="Ajana ulaşılamadı">Ajanı test et</button>
+    <button id="agent-test-button" data-text-sending="Gönderiliyor…" data-text-failed="Ajana ulaşılamadı"
+            data-text-agent-not-connected="Ajan bağlı değil" data-text-agent-timeout="Zaman aşımı" data-text-api-unavailable="API erişilemiyor">Ajanı test et</button>
     <span id="agent-test-result"></span>`;
 }
 

@@ -23,8 +23,8 @@ describe('"Ajanı test et" (AC-7)', () => {
     expect(result().dataset.state).toBe('ok');
   });
 
-  it('ajan bağlı değilse API\'nin mesajı görünür', async () => {
-    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 503, { code: 'agent.not_connected', message: 'Ajan bağlı değil' }));
+  it('ajan bağlı değilse resx metni görünür (sunucu metni değil)', async () => {
+    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 503, { code: 'agent.not_connected', message: 'server text' }));
 
     await runAgentTest(document);
 
@@ -33,11 +33,21 @@ describe('"Ajanı test et" (AC-7)', () => {
   });
 
   it('zaman aşımında "Zaman aşımı" görünür', async () => {
-    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 504, { code: 'agent.timeout', message: 'Zaman aşımı' }));
+    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 504, { code: 'agent.timeout', message: 'server text' }));
 
     await runAgentTest(document);
 
     expect(result().textContent).toBe('Zaman aşımı');
+  });
+
+  it('API erişilemezse resx metni, bilinmeyen hatada genel metin görünür', async () => {
+    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 502, { code: 'api.unavailable', message: 'server text' }));
+    await runAgentTest(document);
+    expect(result().textContent).toBe('API erişilemiyor');
+
+    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 500, null));
+    await runAgentTest(document);
+    expect(result().textContent).toBe('Ajana ulaşılamadı');
   });
 
   it('POST isteği CSRF belirteciyle gider ve gönderilirken düğme pasiftir', async () => {
