@@ -95,7 +95,7 @@ node tests/e2e/stack.cjs stop everything
 Test betiğinin kendi hataları (seçiciler, aynı adımın tekrar koşulmasında eski sıra kaydını bulma, kutuya iki kez "mock" yazma) ürün hatası değildir. Bunlar betikte düzeltildi.
 
 ## Gözlemler (düzeltilmedi, karar gerekebilir)
-- **Süre tahmini:** konsept üretimi 2,4 kelime/sn varsayıyor (~21 sn). Supertonic 3 (1,0× hız) aynı metni 29 sn'de okudu. Hedef süre 20 sn olan profilde video ~%40 uzun çıkıyor. Ses modeline göre kelime/sn katsayısı ya da hızın otomatik ayarı düşünülebilir.
+- **Süre tahmini:** konsept üretimi 2,4 kelime/sn varsayıyor (~21 sn). Supertonic 3 (1,0× hız) aynı metni 29 sn'de okudu. Hedef süre 20 sn olan profilde video ~%40 uzun çıkıyor. Ses modeline göre kelime/sn katsayısı ya da hızın otomatik ayarı düşünülebilir. **Çözüldü (14 Kas 2026):** katalogda model başına `wordsPerSecond` (Supertonic 3 = 1,7, bu ölçümden: 50 kelime / 29,23 sn); konsept üretimi kullanıcının üretimdeki ses modelinin hızını kullanır, her videodan sonra gerçek hız kaydedilip ortalaması tercih edilir; ScenePlan tahmini hedefi %15 aşarsa işlem günlüğünde uyarı.
 - **Gerçek bilgi:** "Tarih" profilinde otomatik açık. Yerel LLM web araması yapamadığı halde prompt kaynak istiyor. Modelin `supportsWebSearch=false` olduğu durumda bu seçeneği kapatmak ya da uyarmak gerekebilir; aksi halde uydurma kaynak riski var.
 - **Eşleme doğrulama adresi:** sunucu yapılandırmasından gelir (`Agents:WebPort`, varsayılan 7110). e2e'de `Agents__WebPort=7190` ile düzeltildi. Pi'de 7110 doğru.
 
