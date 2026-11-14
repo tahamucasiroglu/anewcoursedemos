@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <None Update="PythonWorkers\**\*.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="PythonWorkers\assets\*.wav" CopyToOutputDirectory="PreserveNewest" />
     <None Remove="PythonWorkers\**\__pycache__\**" />
   </ItemGroup>
 

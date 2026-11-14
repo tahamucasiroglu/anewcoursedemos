@@ -9,6 +9,7 @@ using TahaKonsept.Agent.Abstractions.Speech;
 using TahaKonsept.Agent.Abstractions.Speech.Abstract;
 using TahaKonsept.Agent.Abstractions.Tools;
 using TahaKonsept.Agent.Abstractions.Tools.Abstract;
+using TahaKonsept.Agent.Engines.Speech.Audio;
 using TahaKonsept.Agent.Engines.Speech.Base;
 using TahaKonsept.Agent.Engines.Speech.Concrete;
 using TahaKonsept.Agent.Engines.Speech.Concrete.Python;
@@ -201,6 +202,21 @@ public sealed class SpeechEngineCatalogTests
         using var xtts = new XttsV2SpeechEngine(TestEnvironment.CreateServices(new TestAgentPaths(TestEnvironment.NewTempDir("xtts"))));
 
         xtts.Requirements.ShouldContain("six");
+    }
+
+    /// <summary>
+    /// F5-TTS Türkçe, referans ses verilmezse ajanla gelen Türkçe referans klibini kullanır (İngilizce örnek klip anlatımı yavaş ve
+    /// aksanlı yapıyordu: e2e'de 31 yerine 44 sn). Klip çıktı klasörüne kopyalanır ve adapter onu varsayılan olarak gösterir.
+    /// </summary>
+    [Fact]
+    public void F5_default_turkish_reference_is_shipped_with_worker()
+    {
+        var workers = Path.Combine(AppContext.BaseDirectory, "PythonWorkers");
+        var clip = Path.Combine(workers, "assets", "f5_ref_tr.wav");
+
+        File.Exists(clip).ShouldBeTrue();
+        WavFile.GetDurationSec(clip).ShouldNotBeNull().ShouldBeInRange(3.0, 12.0);
+        File.ReadAllText(Path.Combine(workers, "adapters", "f5_tts.py")).ShouldContain("f5_ref_tr.wav");
     }
 
     /// <summary>Kokoro Türkçe desteklemez (etiket "Türkçe yok"); Türkçe destekli motorlar tr-TR'yi kabul eder.</summary>
