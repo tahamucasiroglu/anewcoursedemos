@@ -44,10 +44,10 @@ Adımlar: `VERSION` okunur → `dotnet publish -c Release -r linux-arm64 --self-
 1. `releases/<sürüm>` oluşturur, unit dosyalarını değiştiyse kurar + `daemon-reload`.
 2. Veri klasörlerini garanti eder, env dosyasının izinlerini düzeltir (yoksa uyarır).
 3. `current`'ı yeni sürüme çevirir, eskisini `previous` yapar; servisleri `enable` + `restart` eder.
-4. `http://127.0.0.1:7111/api/health` ve `http://127.0.0.1:7110/` için 90 sn sağlık kontrolü; **başarısızsa otomatik önceki sürüme döner** ve hata verir.
+4. `http://127.0.0.1:7111/api/health` ve `http://127.0.0.1:7110/` için 90 sn (`HEALTH_TIMEOUT`) sağlık kontrolü. API'de yalnız HTTP 200 yetmez: `status=ok`, `database=ready` ve `version=<yeni sürüm>` beklenir (`degraded` = veritabanı hazır değil → başarı sayılmaz, süre içinde beklenir). **Başarısızsa otomatik önceki sürüme döner** ve hata verir.
 5. Son 5 sürümü tutar (`KEEP_RELEASES`), `current`/`previous` asla silinmez.
 
-Sonra betik bu bilgisayardan `http://192.168.1.102:7111/api/health` ve `http://192.168.1.102:7110/` doğrular.
+Sonra betik bu bilgisayardan `http://192.168.1.102:7111/api/health` (aynı koşullar: ok + ready + sürüm, değilse hata) ve `http://192.168.1.102:7110/` doğrular.
 
 ## 3. Geri dönüş (rollback)
 
@@ -90,5 +90,6 @@ ssh tmpi sudo systemctl restart tahakonsept-api
 | 2026-11-14 05:46 | `0.1.0-20261114-054614` | HEAD `e392960` (F0 host'ları; modüller henüz yok) | Kuruldu. `api/health` → `{"status":"ok","version":"0.1.0","environment":"Pi","database":"ready"}`; Web `/` → 302 `/Account/Login` (200 sonrası). |
 | 2026-11-14 05:47 | `0.1.0-20261114-054659` | aynı çıktı (`-SkipPublish`) | Kuruldu (sürüm dönüşü testi). `rollback.sh` → 054614 ve geri 054659 denendi, ikisi de sağlıklı. **Etkin: 054659.** |
 | 2026-11-14 07:58 | `0.2.0-20261114-075813` | HEAD `f6b047c` (dalga 2: Concepts + Production modülleri, yeni sayfalar; ajan indirmeleri çalışma klasöründen eklendi) | Kuruldu. `api/health` → `ok`, `0.2.0`, `database: ready`; Web `/` → 302 `/Account/Login`; `/downloads/TahaKonsept.Agent-win-Setup.exe` → 200. **Etkin: 075813.** |
+| 2026-11-14 10:00 | `0.2.1-20261114-095859` | HEAD `43e4d3d` (E2E + 24 inceleme düzeltmesi; 2 yeni migration: Identity `RefreshTokenConcurrency`, Agents `DevicePairingConcurrency`; ajan kurulumu 0.2.1 olarak yeniden paketlendi; `install-release.sh` artık `degraded` sağlığı başarı saymıyor) | Kuruldu. `api/health` → `ok`, `0.2.1`, `database: ready`; Web `/` → 302 `/Account/Login`; `/downloads/TahaKonsept.Agent-win-Setup.exe` → 200 (88 003 397 bayt, yereldekiyle aynı). Gerçek DB'deki `diagnostics.error_reports` duman testi satırı (`Smoke test: kurulum hatasi…`) silindi. **Etkin: 095859.** |
 
 Bilinen: çalışma klasöründen yayın denemesi o an başka bir ajanın yarım `Shared.Contracts` değişikliği (`ImagePromptItem` yok) yüzünden derlenmedi → `-Source Head` eklendi. Web'in çağırdığı `api/identity/setup/status` Identity modülü gelene kadar 404 döner (beklenen).
