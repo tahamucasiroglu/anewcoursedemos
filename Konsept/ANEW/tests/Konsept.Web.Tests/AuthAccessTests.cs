@@ -130,6 +130,32 @@ public sealed class AuthAccessTests
     }
 
     /// <summary>
+    /// Bilet yalnızca token yenilendiğinde değil, kullanıldıkça (dakikada en çok bir kez) yenilenir (review R4-1, Req 13): 14
+    /// günlük süre son kullanımdan sayılır, son refresh'ten değil.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task SlidingSession_CountsFromLastUse_NotLastRefresh()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+
+        time.Advance(TimeSpan.FromMinutes(14.5));
+        using var refreshed = await client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+        time.Advance(TimeSpan.FromMinutes(14));
+        using var used = await client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+        await factory.Api.Received(1).RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()); // İkinci kullanım refresh'siz.
+        time.Advance(TimeSpan.FromDays(14).Subtract(TimeSpan.FromMinutes(5)));
+        using var later = await client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+
+        refreshed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        used.StatusCode.ShouldBe(HttpStatusCode.OK);
+        later.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    /// <summary>
     /// Tarayıcı cookie'si biletten uzun yaşar (max-age &gt; 14 gün): 14 gün boşta kalan gerçek tarayıcı cookie'yi hâlâ gönderir,
     /// sunucu süresi dolmuş bileti görür ve giriş sayfası "Oturumunuz sona erdi" bilgisini gösterir (AC-13 sayfa yolu).
     /// </summary>

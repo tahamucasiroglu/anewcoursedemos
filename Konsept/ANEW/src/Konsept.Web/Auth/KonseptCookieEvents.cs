@@ -54,6 +54,12 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
     /// <summary>Erişim token'ı bu süreden az kaldıysa önceden yenilenir.</summary>
     public static readonly TimeSpan RefreshAhead = TimeSpan.FromSeconds(60);
 
+    /// <summary>
+    /// Bilet bu süreden eskiyse kullanımda yenilenir (review R4-1): 14 günlük kayan süre son kullanımdan sayılır. Api'deki
+    /// oturum dokunma eşiğiyle (Identity <c>SessionPolicy.TouchThreshold</c>, 1 dk) aynıdır.
+    /// </summary>
+    public static readonly TimeSpan TicketRenewAfter = TimeSpan.FromMinutes(1);
+
     /// <summary>Token çiftini bilete yazar.</summary>
     /// <param name="properties">Bilet özellikleri.</param>
     /// <param name="session">Token çifti.</param>
@@ -123,6 +129,14 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
         {
             await RejectAsync(context).ConfigureAwait(false);
             return;
+        }
+
+        // Bilet yalnızca token yenilenince değil, kullanıldıkça (dakikada en çok bir kez) yenilenir (review R4-1, Req 13);
+        // aksi halde süre son refresh'ten sayılır ve oturum son kullanımdan ~14 dk erken düşerdi. Token'sız korunan oturum
+        // (yukarıdaki R2-2 yolu) yenilenmez.
+        if (context.Properties.IssuedUtc is not { } issued || timeProvider.GetUtcNow() - issued >= TicketRenewAfter)
+        {
+            context.ShouldRenew = true;
         }
 
         // Api erişilemiyorsa oturum düşürülmez: sayfa "API erişilemiyor" gösterir.
