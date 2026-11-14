@@ -133,13 +133,30 @@ public sealed partial class WelcomeSectionTests : IClassFixture<WebFactory>
             ("--color-text", "--color-surface-alt"),
         ];
 
+        // Metin dışı öğeler (WCAG 1.4.11, review R5-2): alan kenarlığı yüzeye ve alanın zeminine (--color-bg), odak halkası
+        // yüzeye karşı ≥ 3:1.
+        (string Part, string Background)[] nonText =
+        [
+            ("--color-input-border", "--color-surface"),
+            ("--color-input-border", "--color-bg"),
+            ("--color-focus", "--color-surface"),
+        ];
+
         foreach (var theme in blocks)
         {
             foreach (var (text, background) in pairs)
             {
                 Contrast(theme[text], theme[background]).ShouldBeGreaterThanOrEqualTo(4.5, $"{text} / {background}");
             }
+
+            foreach (var (part, background) in nonText)
+            {
+                theme.ShouldContainKey(part);
+                Contrast(theme[part], theme[background]).ShouldBeGreaterThanOrEqualTo(3.0, $"{part} / {background}");
+            }
         }
+
+        css.ShouldContain("border: 1px solid var(--color-input-border)");
     }
 
     private static string ReadCss() => File.ReadAllText(Path.Combine(WebPaths.WebProject, "wwwroot", "css", "site.css"));
