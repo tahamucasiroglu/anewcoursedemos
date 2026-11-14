@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LeaveManager.Api/LeaveManager.Api.csproj" />
+    <Project Path="src/LeaveManager.Application/LeaveManager.Application.csproj" />
+    <Project Path="src/LeaveManager.Domain/LeaveManager.Domain.csproj" />
+    <Project Path="src/LeaveManager.Infrastructure/LeaveManager.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LeaveManager.Application.Tests/LeaveManager.Application.Tests.csproj" />
+    <Project Path="tests/LeaveManager.ArchitectureTests/LeaveManager.ArchitectureTests.csproj" />
+    <Project Path="tests/LeaveManager.Domain.Tests/LeaveManager.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,23 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Version>0.1.0</Version>
+    <!-- resource hygiene / security: only high+ advisories fail restore; offline audit is not an error (docs/conventions.md) -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1900;NU1905</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <!-- "now/today" only through TimeProvider (docs/conventions.md, Data rules) -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+</Project>
