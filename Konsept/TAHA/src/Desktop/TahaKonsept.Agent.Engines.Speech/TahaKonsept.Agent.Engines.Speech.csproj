@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Yerel seslendirme motorları (ISpeechEngine): Supertonic 3 (ONNX Runtime, doğrudan C#) ve
+    gömülü Python + uv venv + PythonWorkers/tts_worker.py (JSON-lines) üzerinden çalışan Python motorları.
+    Kayıt: services.AddSpeechEngines().
+  -->
+  <PropertyGroup>
+    <RootNamespace>TahaKonsept.Agent.Engines.Speech</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TahaKonsept.Agent.Abstractions\TahaKonsept.Agent.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="PythonWorkers\**\*.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Remove="PythonWorkers\**\__pycache__\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TahaKonsept.Agent.Engines.Speech.Tests" />
+  </ItemGroup>
+
+</Project>
