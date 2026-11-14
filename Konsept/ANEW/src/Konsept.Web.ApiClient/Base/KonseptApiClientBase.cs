@@ -190,6 +190,11 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             {
                 return Result<T>.Failure(ApiClientErrors.Unavailable);
             }
+            catch (Exception ex) when (ex is JsonException or NotSupportedException)
+            {
+                // Başarılı durum koduyla bozuk/JSON olmayan gövde (review R3-3): istisna sayfayı çökertmez, "API erişilemiyor" olur.
+                return Result<T>.Failure(ApiClientErrors.Unavailable);
+            }
         }
     }
 }

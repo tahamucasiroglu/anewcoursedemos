@@ -70,6 +70,20 @@ public sealed class ApiClientAuthTests
         expired.Error!.Type.ShouldBe(ErrorType.Unauthorized);
     }
 
+    /// <summary>
+    /// Başarılı durum koduyla bozuk gövde (ör. araya giren vekilin HTML'i) istisna fırlatmaz, "API erişilemiyor" olur (review
+    /// R3-3): giriş sayfası çökmek yerine korelasyonlu hatayı gösterir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task MalformedSuccessBody_MapsToUnavailable()
+    {
+        var result = await Create(new RecordingHandler("<html>vekil</html>")).LoginAsync(new LoginApiRequest("a@x.com", "Sifre1234"), null, TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.Error!.Code.ShouldBe(ApiClientErrors.UnavailableCode);
+    }
+
     /// <summary>Oturum ve çıkış çağrıları verilen token'ı taşır; diğer çağrılara token kaynağından Bearer eklenir.</summary>
     /// <returns>Görev.</returns>
     [Fact]

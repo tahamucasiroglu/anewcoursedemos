@@ -22,9 +22,10 @@ namespace Konsept.Web.Tests;
 /// </summary>
 public sealed class AuthAccessTests
 {
-    private static readonly string[] AnonymousAllowList = ["GET giris", "GET kayit", "POST giris", "POST kayit"];
+    // "/hata" giriş/kayıt akışının hata sayfasıdır (plan A-9, review R3-3): her fiille ve kimliksiz açılır, kullanıcı verisi göstermez.
+    private static readonly string[] AnonymousAllowList = ["ANY hata", "GET giris", "GET kayit", "POST giris", "POST kayit"];
 
-    private static readonly string[] Pages = ["/", "/konseptten-video", "/uretilenler", "/silinenler", "/yayinlama", "/hata"];
+    private static readonly string[] Pages = ["/", "/konseptten-video", "/uretilenler", "/silinenler", "/yayinlama"];
 
     /// <summary>
     /// Kimliksiz açılabilen uçlar yalnızca giriş ve kayıttır; giriş yapmamış biri her sayfadan giriş sayfasına, istediği
@@ -40,7 +41,7 @@ public sealed class AuthAccessTests
 
         var anonymous = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.Metadata.GetMetadata<IAllowAnonymous>() is not null)
-            .Select(e => $"{e.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods[0]} {e.RoutePattern.RawText!.TrimStart('/')}");
+            .Select(e => $"{e.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods[0] ?? "ANY"} {e.RoutePattern.RawText!.TrimStart('/')}");
         anonymous.Order(StringComparer.Ordinal).ShouldBe(AnonymousAllowList);
 
         foreach (var page in Pages)
@@ -262,6 +263,36 @@ public sealed class AuthAccessTests
         ajax.StatusCode.ShouldBe(HttpStatusCode.OK);
         body.GetProperty("apiAvailable").GetBoolean().ShouldBeFalse();
         await factory.Api.DidNotReceive().GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Kimliksiz bir giriş isteği beklenmedik biçimde çökerse boş giriş sayfası değil genel hata sayfası gösterilir (AC-19,
+    /// review R3-3): hata sayfası kimliksiz ve her fiille açılır; ayrıntı ve kullanıcı verisi (girilen e-posta, kullanıcı
+    /// menüsü) göstermez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AnonymousLoginCrash_ShowsGenericErrorWithoutUserData()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        using var client = SignedInClient.CreateAnonymous(factory);
+        factory.Api.LoginAsync(Arg.Any<LoginApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns<Task<Result<AuthSessionResponse>>>(_ => throw new InvalidOperationException("beklenmedik"));
+
+        using var response = await SignedInClient.PostFormAsync(
+            client, "/giris", new Dictionary<string, string> { ["Email"] = "cokme-ozel@ornek.com", ["Password"] = "Sifre12345" }, ct);
+        var html = await response.Content.ReadAsStringAsync(ct);
+        var page = await WebFactory.ParseAsync(html, ct);
+        using var direct = await client.GetAsync(new Uri("/hata", UriKind.Relative), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        page.QuerySelector("[role=alert]")!.TextContent.ShouldBe("Beklenmeyen bir hata oluştu. Lütfen biraz sonra tekrar deneyin.");
+        page.QuerySelector("form[data-auth-form]").ShouldBeNull();
+        page.QuerySelector(".user-menu").ShouldBeNull();
+        html.ShouldNotContain("cokme-ozel@ornek.com");
+        html.ShouldNotContain("beklenmedik");
+        direct.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     /// <summary>

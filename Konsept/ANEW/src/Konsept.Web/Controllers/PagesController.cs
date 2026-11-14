@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Konsept.Web.Controllers;
@@ -32,8 +33,14 @@ public sealed class PagesController : Controller
     [HttpGet("/yayinlama")]
     public IActionResult Yayinlama() => View();
 
-    /// <summary>Beklenmeyen hata sayfası (ayrıntı göstermez).</summary>
+    /// <summary>
+    /// Beklenmeyen hata sayfası (ayrıntı göstermez). Hata işleyicisi isteği özgün fiiliyle yeniden çalıştırdığından her fiille
+    /// ve kimliksiz açılır (AC-19, review R3-3, plan A-9): ör. kimliksiz POST /giris çökerse de genel hata görünür. Durum
+    /// değiştirmez; CSRF doğrulaması gerekmez.
+    /// </summary>
     /// <returns>Sayfa.</returns>
-    [HttpGet("/hata")]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    [Route("/hata")]
     public IActionResult Hata() => View();
 }

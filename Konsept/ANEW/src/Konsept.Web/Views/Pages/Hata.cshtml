@@ -1,4 +1,7 @@
+@* Genel hata sayfası (AC-19): ayrıntı göstermez. Kimliksiz açıldığında (ör. giriş isteği çöktü) kullanıcı verisi ve Api
+   yoklaması olan ana düzen yerine giriş/kayıt düzeni kullanılır (review R3-3). *@
 @{
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_AuthLayout";
     ViewData["Title"] = UiText.AppName;
     var message = ViewData["ErrorMessage"] as string ?? UiText.ErrorPage;
 }
