@@ -21,6 +21,7 @@ public sealed class DeployLogDirectoryTests
             .ShouldHaveSingleItem()
             .ShouldBe($"Environment=Logging__Directory=/opt/anewconcept/logs/{app}");
         string.Join('\n', unit).ShouldNotContain("/var/log");
+        unit.ShouldContain("Environment=Logging__Console=false");
     }
 
     /// <summary>Kurulum betiği log klasörlerini <c>/opt/anewconcept/logs</c> altında oluşturur, başka log klasörü açmaz.</summary>

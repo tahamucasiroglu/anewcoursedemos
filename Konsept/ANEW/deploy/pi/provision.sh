@@ -43,6 +43,7 @@ if ! grep -q '^Internal__ServiceKey=' /etc/anewconcept/api.env; then
   printf 'Internal__ServiceKey=%s\n' "$(openssl rand -hex 32)" >> /etc/anewconcept/api.env
 fi
 umask 027
+# web.env her kurulumda api.env'deki anahtardan yeniden yazılır; buraya elle değişken eklemeyin (review I-4).
 grep '^Internal__ServiceKey=' /etc/anewconcept/api.env > /etc/anewconcept/web.env
 chown root:anewconcept /etc/anewconcept/web.env
 chmod 640 /etc/anewconcept/web.env

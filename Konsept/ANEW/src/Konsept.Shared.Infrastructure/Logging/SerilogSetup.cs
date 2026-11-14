@@ -32,8 +32,14 @@ public static class SerilogSetup
             logger
                 .ReadFrom.Configuration(builder.Configuration)
                 .WithKonseptEnrichment(application)
-                .WriteTo.Console(KonseptLogging.CreateFormatter())
                 .WriteToKonseptFile(directory, filePrefix);
+
+            // Pi'de konsol journald'a gider ve orada /opt/anewconcept dışında, kendi saklamasıyla kalır (review M-4);
+            // üretimde Logging__Console=false ile kapatılır.
+            if (builder.Configuration.GetValue("Logging:Console", defaultValue: true))
+            {
+                logger.WriteTo.Console(KonseptLogging.CreateFormatter());
+            }
             configureSinks?.Invoke(logger, services);
         },
         preserveStaticLogger: true); // Logger bu host'a ait; statik Log.Logger'a bağlanmaz (testlerde paralel host'lar).
