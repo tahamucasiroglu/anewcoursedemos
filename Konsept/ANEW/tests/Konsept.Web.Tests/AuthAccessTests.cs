@@ -264,6 +264,40 @@ public sealed class AuthAccessTests
         await factory.Api.DidNotReceive().GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Anonim çizilmiş giriş/kayıt formu, başka sekmede giriş yapıldıktan sonra gönderilince ham 400 (CSRF) yerine Konseptler'e
+    /// yönlendirilir; Api'ye ikinci giriş/kayıt gitmez.
+    /// </summary>
+    /// <param name="path">Form.</param>
+    /// <returns>Görev.</returns>
+    [Theory]
+    [InlineData("/giris")]
+    [InlineData("/kayit")]
+    public async Task StaleAnonymousForm_AfterSignInElsewhere_RedirectsToConcepts(string path)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        using var client = SignedInClient.CreateAnonymous(factory);
+        var stale = await WebFactory.GetDocumentAsync(client, path, ct);
+        var token = stale.QuerySelector("form[data-auth-form] input[name='__RequestVerificationToken']")!.GetAttribute("value")!;
+        (await SignedInClient.PostFormAsync(client, "/giris", new Dictionary<string, string> { ["Email"] = SignedInClient.Email, ["Password"] = SignedInClient.Password }, ct)).Dispose();
+        factory.Api.ClearReceivedCalls();
+
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["Name"] = "Ayşe",
+            ["Email"] = "ayse@x.com",
+            ["Password"] = "Sifre1234",
+        });
+        using var response = await client.PostAsync(new Uri(path, UriKind.Relative), content, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.ShouldBe("/");
+        await factory.Api.DidNotReceive().LoginAsync(Arg.Any<LoginApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        await factory.Api.DidNotReceive().RegisterAsync(Arg.Any<RegisterApiRequest>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
     /// <summary>Düşmüş oturumla gönderilen POST (ör. <c>/cikis</c>) girişe dönüş adresi olmadan gider; yalnızca GET dönüş adresi olur.</summary>
     /// <returns>Görev.</returns>
     [Fact]

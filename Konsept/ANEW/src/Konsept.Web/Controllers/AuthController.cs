@@ -1,3 +1,4 @@
+using Konsept.Web.Auth;
 using Konsept.Web.Auth.Abstract;
 using Konsept.Web.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,7 @@ public sealed class AuthController : Controller
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Yönlendirme ya da hatalı form.</returns>
     [AllowAnonymous]
+    [RedirectSignedIn]
     [HttpPost("/giris")]
     public Task<IActionResult> Giris([FromForm] LoginForm form, CancellationToken cancellationToken) => _pages.LoginAsync(this, form, cancellationToken);
 
@@ -48,6 +50,7 @@ public sealed class AuthController : Controller
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Yönlendirme ya da hatalı form.</returns>
     [AllowAnonymous]
+    [RedirectSignedIn]
     [HttpPost("/kayit")]
     public Task<IActionResult> Kayit([FromForm] RegisterForm form, CancellationToken cancellationToken) => _pages.RegisterAsync(this, form, cancellationToken);
 
