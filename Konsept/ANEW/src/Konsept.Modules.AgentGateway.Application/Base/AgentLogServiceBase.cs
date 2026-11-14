@@ -1,0 +1,49 @@
+using Konsept.Modules.AgentGateway.Application.Abstract;
+using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Modules.AgentGateway.Domain.Entities;
+using Konsept.Modules.Monitoring.Contracts.Dtos;
+using Konsept.Modules.Monitoring.Contracts.Enums;
+
+namespace Konsept.Modules.AgentGateway.Application.Base;
+
+/// <summary>
+/// Ajan log özeti kabul kuralları: kayıtlı bağlantı, yalnızca Error (4) / Critical (5), dakikalık kota, mesaj sınırı.
+/// Yazma alt sınıftadır.
+/// </summary>
+/// <param name="registry">Bağlı ajan kaydı.</param>
+/// <param name="quota">Dakikalık kota.</param>
+/// <param name="timeProvider">Saat kaynağı.</param>
+public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, AgentLogQuota quota, TimeProvider timeProvider) : IAgentLogService
+{
+    /// <summary>Kabul edilen en uzun mesaj.</summary>
+    public const int MaxMessageLength = 4000;
+
+    /// <inheritdoc />
+    public async Task<bool> ReportAsync(string connectionId, AgentLogSummary summary, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+        var session = registry.Current;
+        if (session is null || session.ConnectionId != connectionId
+            || summary.Level is not ((int)LogEntryLevel.Error or (int)LogEntryLevel.Critical)
+            || !quota.TryConsume(timeProvider.GetUtcNow()))
+        {
+            return false;
+        }
+
+        var message = summary.Message.Length > MaxMessageLength ? summary.Message[..MaxMessageLength] : summary.Message;
+        var entry = new TechnicalLogEntry(
+            summary.OccurredAt,
+            (LogEntryLevel)summary.Level,
+            LogEntrySource.Agent,
+            message,
+            AgentVersion: string.IsNullOrWhiteSpace(summary.AgentVersion) ? session.AgentVersion : summary.AgentVersion);
+        await WriteAsync(entry, cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <summary>Kaydı teknik loga yazar.</summary>
+    /// <param name="entry">Kayıt.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    protected abstract Task WriteAsync(TechnicalLogEntry entry, CancellationToken cancellationToken);
+}

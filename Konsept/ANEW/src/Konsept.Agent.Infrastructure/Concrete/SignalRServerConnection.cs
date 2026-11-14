@@ -6,6 +6,7 @@ using Konsept.Agent.Infrastructure.Connection;
 using Konsept.Modules.AgentGateway.Contracts;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Microsoft.AspNetCore.SignalR.Client;
+using Serilog;
 
 namespace Konsept.Agent.Infrastructure.Concrete;
 
@@ -19,6 +20,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly AgentSettings _settings;
     private readonly IAgentInfoProvider _info;
     private readonly Func<HttpMessageHandler>? _handlerFactory;
+    private readonly ILogger _logger;
     private readonly CancellationTokenSource _lifetime = new();
     private HubConnection? _hub;
     private Task _connectLoop = Task.CompletedTask;
@@ -28,8 +30,10 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="settings">Ajan ayarları.</param>
     /// <param name="info">Ajan bilgisi.</param>
     /// <param name="handlerFactory">Testte HTTP yolunu değiştirmek için; normalde <c>null</c>.</param>
-    public SignalRServerConnection(AgentSettings settings, IAgentInfoProvider info, Func<HttpMessageHandler>? handlerFactory = null)
+    /// <param name="logger">Ajan teknik logu (spec 0008); verilmezse log yazılmaz.</param>
+    public SignalRServerConnection(AgentSettings settings, IAgentInfoProvider info, Func<HttpMessageHandler>? handlerFactory = null, ILogger? logger = null)
     {
+        _logger = (logger ?? Serilog.Core.Logger.None).ForContext<SignalRServerConnection>();
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _info = info ?? throw new ArgumentNullException(nameof(info));
         _handlerFactory = handlerFactory;
@@ -54,6 +58,30 @@ public sealed class SignalRServerConnection : ServerConnectionBase
 
         await _connectLoop.ConfigureAwait(false);
         SetState(ConnectionState.Disconnected);
+    }
+
+    /// <inheritdoc />
+    public override async Task<bool> TryReportLogAsync(LogSummary summary, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+        if (State != ConnectionState.Connected || _hub is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return await _hub.InvokeAsync<bool>(
+                AgentHubContract.ReportLog,
+                new AgentLogSummary(summary.Critical ? 5 : 4, summary.OccurredAt, summary.Message, _info.Version),
+                cancellationToken).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // Özet gönderimi en iyi çabadır; hatası loglanmaz (döngü olmasın) ve ajanı etkilemez.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return false;
+        }
     }
 
     /// <inheritdoc />
@@ -151,8 +179,9 @@ public sealed class SignalRServerConnection : ServerConnectionBase
                 await RegisterAsync(cancellationToken).ConfigureAwait(false);
                 return;
             }
-            catch (Exception) when (!cancellationToken.IsCancellationRequested)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
+                _logger.Warning(ex, "Sunucuya bağlanılamadı ya da kayıt olunamadı; {Delay} sonra yeniden denenecek", _settings.ReconnectDelay);
                 SetState(_hub!.State == HubConnectionState.Connected ? ConnectionState.Connecting : ConnectionState.Disconnected);
             }
             catch (OperationCanceledException)
@@ -178,5 +207,6 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             new AgentRegistration(_info.MachineName, _info.Version),
             cancellationToken).ConfigureAwait(false);
         SetState(ConnectionState.Connected);
+        _logger.Information("Sunucuya bağlanıldı ve kayıt olundu: {Server}", _settings.ServerUrl);
     }
 }

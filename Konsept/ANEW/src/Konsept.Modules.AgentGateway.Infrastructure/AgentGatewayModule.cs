@@ -2,6 +2,7 @@ using Konsept.Modules.AgentGateway.Application.Abstract;
 using Konsept.Modules.AgentGateway.Application.Concrete;
 using Konsept.Modules.AgentGateway.Contracts;
 using Konsept.Modules.AgentGateway.Contracts.Abstract;
+using Konsept.Modules.AgentGateway.Domain.Entities;
 using Konsept.Modules.AgentGateway.Infrastructure.Concrete;
 using Konsept.Modules.AgentGateway.Infrastructure.Hubs;
 using Microsoft.AspNetCore.Builder;
@@ -26,6 +27,8 @@ public static class AgentGatewayModule
         services.AddScoped<IAgentPresenceService, AgentPresenceService>();
         services.AddScoped<IAgentStatusReader>(sp => sp.GetRequiredService<IAgentPresenceService>());
         services.AddScoped<IAgentTestService, AgentTestService>();
+        services.AddSingleton<AgentLogQuota>();
+        services.AddScoped<IAgentLogService, AgentLogService>();
         return services;
     }
 

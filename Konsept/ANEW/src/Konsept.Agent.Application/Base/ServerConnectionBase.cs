@@ -1,4 +1,5 @@
 using Konsept.Agent.Application.Abstract;
+using Konsept.Agent.Domain.Entities;
 using Konsept.Agent.Domain.Enums;
 
 namespace Konsept.Agent.Application.Base;
@@ -21,6 +22,9 @@ public abstract class ServerConnectionBase : IServerConnection
 
     /// <inheritdoc />
     public abstract Task StopAsync(CancellationToken cancellationToken);
+
+    /// <inheritdoc />
+    public abstract Task<bool> TryReportLogAsync(LogSummary summary, CancellationToken cancellationToken);
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

@@ -13,4 +13,7 @@ public static class AgentHubContract
 
     /// <summary>API → ajan: "Ajanı test et" komutu; ajan sürümünü ve makine adını döndürür.</summary>
     public const string Ping = "Ping";
+
+    /// <summary>Ajan → API: Error/Critical log özeti (spec 0008 Req 7); yalnızca kayıtlı bağlantıdan kabul edilir.</summary>
+    public const string ReportLog = "ReportLog";
 }
