@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using TahaKonsept.Agent.Abstractions.Paths.Abstract;
+using TahaKonsept.Agent.Core.Execution.Abstract;
 using TahaKonsept.Agent.Core.Shell.Abstract;
 using TahaKonsept.Agent.Core.Videos.Abstract;
 using TahaKonsept.Agent.Core.Videos.Base;
@@ -15,9 +16,10 @@ public sealed class VideoLibrary : VideoLibraryBase
     /// <param name="index">Video dizini.</param>
     /// <param name="shell">Kabuk başlatıcı.</param>
     /// <param name="paths">Ajan klasörleri.</param>
+    /// <param name="usage">Çalışma alanı kullanım izleyicisi.</param>
     /// <param name="logger">Logger.</param>
-    public VideoLibrary(IVideoIndex index, IShellLauncher shell, IAgentPaths paths, ILogger<VideoLibrary> logger)
-        : base(index, shell, paths)
+    public VideoLibrary(IVideoIndex index, IShellLauncher shell, IAgentPaths paths, IWorkspaceUsage usage, ILogger<VideoLibrary> logger)
+        : base(index, shell, paths, usage)
     {
         _logger = logger;
     }

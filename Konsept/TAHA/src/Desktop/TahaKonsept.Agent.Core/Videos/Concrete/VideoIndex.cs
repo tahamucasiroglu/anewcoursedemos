@@ -4,7 +4,11 @@ using TahaKonsept.Agent.Core.Videos.Abstract;
 
 namespace TahaKonsept.Agent.Core.Videos.Concrete;
 
-/// <summary><c>Videos/index.json</c> tabanlı video dizini (bellekte önbellekli, her değişiklikte atomik yazılır).</summary>
+/// <summary>
+/// <c>Videos/index.json</c> tabanlı video dizini (bellekte önbellekli, her değişiklikte atomik yazılır). Dosya okunamazsa (kilitli) sonuç
+/// önbelleğe alınmaz: okumalar o an boş liste görür, değişiklikler <see cref="IOException"/> ile reddedilir — böylece tek yeni kayıtla
+/// dizinin üzerine yazılıp önceki videolar kaybolmaz.
+/// </summary>
 public sealed class VideoIndex : JsonFileStoreBase<List<VideoEntry>>, IVideoIndex
 {
     /// <summary>Dizin dosyasının adı.</summary>
@@ -24,7 +28,7 @@ public sealed class VideoIndex : JsonFileStoreBase<List<VideoEntry>>, IVideoInde
     {
         lock (Gate)
         {
-            return Entries().FirstOrDefault(e => e.VideoId == videoId);
+            return Snapshot().FirstOrDefault(e => e.VideoId == videoId);
         }
     }
 
@@ -33,7 +37,7 @@ public sealed class VideoIndex : JsonFileStoreBase<List<VideoEntry>>, IVideoInde
     {
         lock (Gate)
         {
-            return Entries().OrderByDescending(e => e.CreatedAtUtc).ToList();
+            return Snapshot().OrderByDescending(e => e.CreatedAtUtc).ToList();
         }
     }
 
@@ -66,5 +70,28 @@ public sealed class VideoIndex : JsonFileStoreBase<List<VideoEntry>>, IVideoInde
         }
     }
 
-    private List<VideoEntry> Entries() => _entries ??= Read() ?? [];
+    private List<VideoEntry> Snapshot()
+    {
+        if (_entries is not null)
+        {
+            return _entries;
+        }
+
+        return TryRead(out var stored) ? _entries = stored ?? [] : [];
+    }
+
+    private List<VideoEntry> Entries()
+    {
+        if (_entries is null)
+        {
+            if (!TryRead(out var stored))
+            {
+                throw new IOException("Video dizini (" + FileName + ") okunamadı; üzerine yazılmadı. Dosyayı kilitleyen programı kapatıp yeniden deneyin.");
+            }
+
+            _entries = stored ?? [];
+        }
+
+        return _entries;
+    }
 }

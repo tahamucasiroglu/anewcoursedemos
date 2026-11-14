@@ -108,6 +108,7 @@ public static class AgentCoreServiceCollectionExtensions
         services.AddSingleton<IStageExecutor, ComposeStageExecutor>();
         services.AddSingleton<IStageExecutor, MuxStageExecutor>();
         services.AddSingleton<IStageExecutorDispatcher, StageExecutorDispatcher>();
+        services.AddSingleton<IWorkspaceUsage, WorkspaceUsage>();
         services.AddSingleton<IJobRunner, JobRunner>();
         services.AddSingleton<IVideoServer, LocalVideoServer>();
 

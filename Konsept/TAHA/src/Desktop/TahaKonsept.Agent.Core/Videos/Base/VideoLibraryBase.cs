@@ -1,4 +1,5 @@
 using TahaKonsept.Agent.Abstractions.Paths.Abstract;
+using TahaKonsept.Agent.Core.Execution.Abstract;
 using TahaKonsept.Agent.Core.Shell.Abstract;
 using TahaKonsept.Agent.Core.Videos.Abstract;
 using TahaKonsept.BuildingBlocks.Domain.Results;
@@ -7,23 +8,27 @@ namespace TahaKonsept.Agent.Core.Videos.Base;
 
 /// <summary>
 /// Video kütüphanesi tabanı: dizin (<see cref="IVideoIndex"/>) + kabuk (<see cref="IShellLauncher"/>) üzerinden işlemler.
-/// Silme sırasında kilitli dosya hatası <c>agent.delete_failed</c> döner; kayıt yine de kaldırılır.
+/// Silme sırasında kilitli dosya hatası <c>agent.delete_failed</c> döner; kayıt yine de kaldırılır. Çalışma alanı (<c>Workspace/&lt;JobId&gt;</c>)
+/// yalnız başka bir video kaydı aynı alanı paylaşmıyorsa ve kuyrukta/çalışan aşama kullanmıyorsa silinir (yeni sürümler alanı paylaşır).
 /// </summary>
 public abstract class VideoLibraryBase : IVideoLibrary
 {
     private readonly IVideoIndex _index;
     private readonly IShellLauncher _shell;
     private readonly IAgentPaths _paths;
+    private readonly IWorkspaceUsage _usage;
 
     /// <summary>Oluşturur.</summary>
     /// <param name="index">Video dizini.</param>
     /// <param name="shell">Kabuk başlatıcı.</param>
     /// <param name="paths">Ajan klasörleri.</param>
-    protected VideoLibraryBase(IVideoIndex index, IShellLauncher shell, IAgentPaths paths)
+    /// <param name="usage">Çalışma alanı kullanım izleyicisi.</param>
+    protected VideoLibraryBase(IVideoIndex index, IShellLauncher shell, IAgentPaths paths, IWorkspaceUsage usage)
     {
         _index = index;
         _shell = shell;
         _paths = paths;
+        _usage = usage ?? throw new ArgumentNullException(nameof(usage));
     }
 
     /// <inheritdoc />
@@ -54,7 +59,7 @@ public abstract class VideoLibraryBase : IVideoLibrary
             TryDeleteFile(entry.ThumbnailPath, failures);
         }
 
-        if (entry.JobId != Guid.Empty)
+        if (entry.JobId != Guid.Empty && !IsWorkspaceShared(entry))
         {
             TryDeleteDirectory(Path.Combine(_paths.WorkspaceDir, entry.JobId.ToString("N")), failures);
         }
@@ -72,6 +77,9 @@ public abstract class VideoLibraryBase : IVideoLibrary
     protected virtual void OnDeleted(VideoEntry entry, IReadOnlyList<string> failures)
     {
     }
+
+    private bool IsWorkspaceShared(VideoEntry entry) =>
+        _usage.IsInUse(entry.JobId) || _index.GetAll().Any(e => e.VideoId != entry.VideoId && e.JobId == entry.JobId);
 
     private Result WithEntry(Guid videoId, Func<VideoEntry, Result> action)
     {

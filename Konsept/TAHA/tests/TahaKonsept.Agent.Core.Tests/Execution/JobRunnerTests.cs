@@ -131,6 +131,52 @@ public sealed class JobRunnerTests : IDisposable
         Directory.Exists(Path.Combine(_paths.WorkspaceDir, command.JobId.ToString("N"))).ShouldBeFalse();
     }
 
+    /// <summary>
+    /// Paylaşılan çalışma alanında aynı adlı girdi farklı artefaktsa yeniden indirilir (eski sürümün görseli kullanılmaz);
+    /// aynı artefakt ise indirme atlanır.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Inputs_are_cached_by_artifact_id_not_name()
+    {
+        var contents = new Queue<string>(["eski", "yeni"]);
+        _api.DownloadFileAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IProgress<double>?>(), Arg.Any<CancellationToken>()).Returns(async call =>
+        {
+            await File.WriteAllTextAsync(call.ArgAt<string>(1), contents.Dequeue(), CancellationToken.None);
+            return Result.Success(3L);
+        });
+        var seen = new List<string>();
+        _dispatcher.DispatchAsync(Arg.Any<StageExecutionContext>(), Arg.Any<CancellationToken>()).Returns(async call =>
+        {
+            seen.Add(await File.ReadAllTextAsync(call.Arg<StageExecutionContext>().FindInput("scene-1.png")!, CancellationToken.None));
+            return Result.Success(new StageExecutionOutput([]));
+        });
+        var runner = CreateRunner();
+        var workspace = Guid.NewGuid();
+        var first = Guid.NewGuid();
+
+        var submitted = 0;
+        foreach (var artifactId in new[] { first, first, Guid.NewGuid() })
+        {
+            runner.Submit(Command(PipelineStage.SceneRender) with
+            {
+                JobId = workspace,
+                Artifacts = [new ArtifactDownload { ArtifactId = artifactId, Name = "scene-1.png", Url = "http://pi/a/" + artifactId }],
+            });
+            submitted++;
+            for (var wait = 0; _reporter.Completed.Count + _reporter.Failed.Count < submitted && wait < 200; wait++)
+            {
+                await Task.Delay(50, TestContext.Current.CancellationToken);
+            }
+        }
+
+        _reporter.Failed.ShouldBeEmpty();
+
+        await runner.StopAsync(TestContext.Current.CancellationToken);
+        seen.ShouldBe(["eski", "eski", "yeni"]);
+        await _api.Received(2).DownloadFileAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IProgress<double>?>(), Arg.Any<CancellationToken>());
+    }
+
     private static StageCommand Command(PipelineStage stage) => new()
     {
         CommandId = Guid.NewGuid(),
@@ -141,5 +187,5 @@ public sealed class JobRunnerTests : IDisposable
     };
 
     private JobRunner CreateRunner() =>
-        new(_dispatcher, _reporter, _api, _paths, TimeProvider.System, new AgentOptions(), NullLogger<JobRunner>.Instance);
+        new(_dispatcher, _reporter, _api, _paths, new WorkspaceUsage(), TimeProvider.System, new AgentOptions(), NullLogger<JobRunner>.Instance);
 }

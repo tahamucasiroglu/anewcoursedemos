@@ -13,7 +13,7 @@ namespace TahaKonsept.Agent.Core.Execution.Base;
 
 /// <summary>
 /// İş çalıştırıcı tabanı: sınırsız kanal + <c>maxConcurrency</c> işçi (ilk komutta başlar). Her komut için: iş denetimi
-/// (<see cref="JobControl"/>) + kapanış belirteci bağlanır, girdiler <c>inputs/</c>'a indirilir (var olanlar atlanır), dağıtıcı çalışır,
+/// (<see cref="JobControl"/>) + kapanış belirteci bağlanır, girdiler <c>inputs/</c>'a indirilir (yalnız aynı artefakt kimliğiyle — <c>girdiler <c>inputs/</c>'a indirilir (var olanlar atlanır), dağıtıcı çalışır,lt;adgirdiler <c>inputs/</c>'a indirilir (var olanlar atlanır), dağıtıcı çalışır,gt;.id</c> — indirilmiş olanlar atlanır), dağıtıcı çalışır,
 /// sonuç raporlanır. İlerleme raporları 500 ms'de bir seyreltilir. Durdurma nedenleri <see cref="JobStopReason"/> ile raporlanır.
 /// </summary>
 public abstract class JobRunnerBase : IJobRunner
@@ -24,6 +24,7 @@ public abstract class JobRunnerBase : IJobRunner
     private readonly IAgentReporter _reporter;
     private readonly IAgentApiClient _api;
     private readonly IAgentPaths _paths;
+    private readonly IWorkspaceUsage _usage;
     private readonly TimeProvider _time;
     private readonly int _maxConcurrency;
     private readonly ConcurrentDictionary<Guid, JobControl> _jobs = new();
@@ -40,14 +41,16 @@ public abstract class JobRunnerBase : IJobRunner
     /// <param name="reporter">Raporlayıcı (hub).</param>
     /// <param name="api">API istemcisi (artefakt indirme).</param>
     /// <param name="paths">Ajan klasörleri.</param>
+    /// <param name="usage">Çalışma alanı kullanım izleyicisi (kuyruktaki/çalışan aşamaların alanları).</param>
     /// <param name="time">Zaman sağlayıcı.</param>
     /// <param name="maxConcurrency">Aynı anda çalışan en fazla aşama.</param>
-    protected JobRunnerBase(IStageExecutorDispatcher dispatcher, IAgentReporter reporter, IAgentApiClient api, IAgentPaths paths, TimeProvider time, int maxConcurrency)
+    protected JobRunnerBase(IStageExecutorDispatcher dispatcher, IAgentReporter reporter, IAgentApiClient api, IAgentPaths paths, IWorkspaceUsage usage, TimeProvider time, int maxConcurrency)
     {
         _dispatcher = dispatcher;
         _reporter = reporter;
         _api = api;
         _paths = paths;
+        _usage = usage ?? throw new ArgumentNullException(nameof(usage));
         _time = time;
         _maxConcurrency = Math.Max(1, maxConcurrency);
     }
@@ -71,7 +74,12 @@ public abstract class JobRunnerBase : IJobRunner
 
         var control = _jobs.AddOrUpdate(command.JobId, _ => new JobControl(), (_, existing) => existing.IsStopped ? new JobControl() : existing);
         Interlocked.Increment(ref _queued);
-        queue.Writer.TryWrite(new QueuedStage(command, control));
+        _usage.Enter(command.JobId);
+        if (!queue.Writer.TryWrite(new QueuedStage(command, control)))
+        {
+            _usage.Exit(command.JobId);
+        }
+
         OnSubmitted(command);
     }
 
@@ -128,6 +136,7 @@ public abstract class JobRunnerBase : IJobRunner
         while (queue.Reader.TryRead(out var item))
         {
             Interlocked.Decrement(ref _queued);
+            _usage.Exit(item.Command.JobId);
             await ReportStoppedAsync(item.Command, JobStopReason.Shutdown, 0);
         }
 
@@ -184,7 +193,14 @@ public abstract class JobRunnerBase : IJobRunner
                 while (!shutdown.IsCancellationRequested && reader.TryRead(out var item))
                 {
                     Interlocked.Decrement(ref _queued);
-                    await RunItemAsync(item, shutdown);
+                    try
+                    {
+                        await RunItemAsync(item, shutdown);
+                    }
+                    finally
+                    {
+                        _usage.Exit(item.Command.JobId);
+                    }
                 }
             }
         }
@@ -295,8 +311,11 @@ public abstract class JobRunnerBase : IJobRunner
             var artifact = command.Artifacts[i];
             var name = FileNameSanitizer.Sanitize(artifact.Name, artifact.ArtifactId.ToString("N"));
             var path = Path.Combine(directory, name);
-            if (!File.Exists(path) || new FileInfo(path).Length == 0)
+            if (!IsCachedInput(path, artifact.ArtifactId))
             {
+                // Paylaşılan çalışma alanında (yeni sürüm) aynı adlı dosya başka artefakta ait olabilir: yalnız kimlik eşleşirse yeniden kullanılır.
+                DeleteIfExists(path);
+                DeleteIfExists(InputIdMarker(path));
                 var url = string.IsNullOrWhiteSpace(artifact.Url) ? AgentApiRoutes.Artifact(artifact.ArtifactId) : artifact.Url;
                 var index = i;
                 var progress = new InlineProgress<double>(p =>
@@ -306,12 +325,33 @@ public abstract class JobRunnerBase : IJobRunner
                 {
                     return Error.Failure("agent.download_failed", "Girdi indirilemedi (" + name + "): " + downloaded.Error.Message);
                 }
+
+                await File.WriteAllTextAsync(InputIdMarker(path), artifact.ArtifactId.ToString("N"), CancellationToken.None);
             }
 
             inputs[name] = path;
         }
 
         return inputs;
+    }
+
+    private static string InputIdMarker(string path) => path + ".id";
+
+    private static bool IsCachedInput(string path, Guid artifactId)
+    {
+        var marker = InputIdMarker(path);
+        return File.Exists(path)
+            && new FileInfo(path).Length > 0
+            && File.Exists(marker)
+            && string.Equals(File.ReadAllText(marker).Trim(), artifactId.ToString("N"), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void DeleteIfExists(string path)
+    {
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
     }
 
     private void UpdateActive(StageCommand command, double percent, string message, bool force)

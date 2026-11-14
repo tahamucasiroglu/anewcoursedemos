@@ -19,6 +19,7 @@ public sealed class JobRunner : JobRunnerBase
     /// <param name="reporter">Raporlayıcı.</param>
     /// <param name="api">API istemcisi.</param>
     /// <param name="paths">Ajan klasörleri.</param>
+    /// <param name="usage">Çalışma alanı kullanım izleyicisi.</param>
     /// <param name="time">Zaman sağlayıcı.</param>
     /// <param name="options">Seçenekler.</param>
     /// <param name="logger">Logger.</param>
@@ -27,10 +28,11 @@ public sealed class JobRunner : JobRunnerBase
         IAgentReporter reporter,
         IAgentApiClient api,
         IAgentPaths paths,
+        IWorkspaceUsage usage,
         TimeProvider time,
         AgentOptions options,
         ILogger<JobRunner> logger)
-        : base(dispatcher, reporter, api, paths, time, options.MaxConcurrentStages)
+        : base(dispatcher, reporter, api, paths, usage, time, options.MaxConcurrentStages)
     {
         _logger = logger;
     }
