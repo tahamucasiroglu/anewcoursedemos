@@ -15,7 +15,8 @@ namespace TahaKonsept.Modules.Concepts.Application.Base;
 
 /// <summary>
 /// <see cref="IConceptJobProcessor"/> ortak davranışı. Akış: bağlam → plan (<see cref="PlanAsync"/>: başlıklar ya da fikirden N açı) →
-/// her öğe: üret → (açıksa) kelime denetimi → kaydet → hafıza → ilerleme. Anahtar eksik / bütçe aşımı / model yok gibi
+/// her öğe: bütçe denetimi (<c>IBudgetGuard</c>; iş kanalda beklemiş olabilir, her konsept ayrı ücretli çağrı) → üret → (açıksa) kelime denetimi →
+/// kaydet → hafıza → ilerleme. Bütçe aşılınca iş durur, kalanlar üretilemedi sayılır. Anahtar eksik / model yok gibi
 /// <see cref="IsFatal"/> hatalarda iş durur; diğer hatalarda öğe atlanır. Sonunda "N konsept üretildi ($x) — süre …" günlüğe yazılır.
 /// </summary>
 public abstract class ConceptJobProcessorBase : IConceptJobProcessor
@@ -67,14 +68,34 @@ public abstract class ConceptJobProcessorBase : IConceptJobProcessor
                 return;
             }
 
+            var allowed = await Services.Budget.EnsureCanStartProductionAsync(job.UserId, cancellationToken);
+            if (allowed.IsFailure)
+            {
+                await FinishAsync(job, started, 0, 0, 0, allowed.Error.Message, false);
+                return;
+            }
+
             var context = contextResult.Value;
             var plan = await PlanAsync(job, context, cancellationToken);
             cost += plan.CostUsd;
             Services.Tracker.Update(job.Id, d => d with { Total = plan.Briefs.Count, CostUsd = cost });
 
-            foreach (var brief in plan.Briefs)
+            for (var index = 0; index < plan.Briefs.Count; index++)
             {
+                var brief = plan.Briefs[index];
                 cancellationToken.ThrowIfCancellationRequested();
+                var budget = await Services.Budget.EnsureCanStartProductionAsync(job.UserId, cancellationToken);
+                if (budget.IsFailure)
+                {
+                    failed += plan.Briefs.Count - index;
+                    lastError = budget.Error.Message;
+                    var stoppedFailures = failed;
+                    var stoppedMessage = lastError;
+                    Services.Tracker.Update(job.Id, d => d with { Failed = stoppedFailures, Message = stoppedMessage });
+                    Services.Logger.LogWarning("Bütçe aşıldı; konsept işi durdu {JobId}: {Message}", job.Id, lastError);
+                    break;
+                }
+
                 Services.Tracker.Update(job.Id, d => d with { CurrentTitle = brief.DisplayName });
                 var item = await ProduceAsync(job, context, brief, cancellationToken);
                 if (item.IsSuccess)

@@ -199,13 +199,27 @@ public abstract class ConceptRevisionServiceBase : IConceptRevisionService
             return result.Error;
         }
 
-        var others = Candidates.RemoveForConcept(id).Where(c => c.CandidateId != candidateId).ToList();
-        foreach (var other in others)
+        var removed = Candidates.RemoveForConcept(id);
+        foreach (var other in removed.Where(c => c.CandidateId != candidateId))
         {
             concept.AddUsage(other.InputTokens, other.OutputTokens, other.CostUsd);
         }
 
-        await Repository.UnitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await Repository.UnitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            // Kayıt başarısız (DB hatası ya da istemci koptu): ücreti ödenmiş adaylar kaybolmasın, kullanıcı yeniden seçebilsin.
+            foreach (var back in removed)
+            {
+                Candidates.Add(back);
+            }
+
+            throw;
+        }
+
         await Memory.MarkConceptAsync(userId, concept.ProfileId, concept.Id, concept.Title, TopicMemoryKind.Generated, false, cancellationToken);
         await Activity.InformationAsync(ActivitySources.Concepts, $"Düzeltilmiş sürüm seçildi: {concept.Title}", userId: userId, cancellationToken: cancellationToken);
         return concept.ToDetail();

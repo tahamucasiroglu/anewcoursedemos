@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Shouldly;
+using TahaKonsept.BuildingBlocks.Application.Abstract;
+using TahaKonsept.Modules.Concepts.Application.Abstract;
+using TahaKonsept.Modules.Concepts.Application.Concrete;
 using TahaKonsept.Modules.Concepts.Domain.Errors;
 using TahaKonsept.Modules.Concepts.Tests.Support;
 using TahaKonsept.Shared.Contracts.Concepts;
@@ -34,6 +39,26 @@ public sealed class ConceptRevisionServiceTests : IDisposable
         accepted.Value.Title.ShouldBe("İkinci aday");
         accepted.Value.CostUsd.ShouldBe(0.02m + 0.03m + 0.04m);
         (await service.AcceptAsync(concept.Id, first.CandidateId, TestContext.Current.CancellationToken)).Error.ShouldBe(ConceptErrors.CandidateNotFound);
+    }
+
+    /// <summary>Kabul kaydı başarısız olursa adaylar depoya geri konur (ücreti ödenmiş aday kaybolmaz, yeniden seçilebilir).</summary>
+    [Fact]
+    public async Task Failed_accept_save_keeps_candidates()
+    {
+        var concept = await _ctx.SeedConceptAsync();
+        _ctx.Gateway.Enqueue(ConceptsTestContext.SampleOutput("Aday"), 0.03m);
+        var candidate = (await _ctx.CreateRevisionService().ReviseAsync(concept.Id, new ReviseConceptRequest { Instruction = "x" }, TestContext.Current.CancellationToken)).Value;
+        var tracked = await _ctx.Concepts.GetForUserTrackedAsync(concept.Id, _ctx.UserId, TestContext.Current.CancellationToken);
+        var failing = Substitute.For<IConceptRepository>();
+        failing.GetForUserTrackedAsync(concept.Id, _ctx.UserId, Arg.Any<CancellationToken>()).Returns(tracked);
+        var unitOfWork = Substitute.For<IUnitOfWork>();
+        unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new InvalidOperationException("DB yok"));
+        failing.UnitOfWork.Returns(unitOfWork);
+        var service = new ConceptRevisionService(failing, _ctx.CurrentUser, _ctx.Budget, _ctx.Contexts, _ctx.Generator, _ctx.WordCheck, _ctx.Candidates, _ctx.Memory, _ctx.Clock, _ctx.Activity);
+
+        await Should.ThrowAsync<InvalidOperationException>(() => service.AcceptAsync(concept.Id, candidate.CandidateId, TestContext.Current.CancellationToken));
+
+        _ctx.Candidates.Find(_ctx.UserId, concept.Id, candidate.CandidateId).ShouldNotBeNull();
     }
 
     /// <summary>Atma: aday silinir, harcanan maliyet konsepte yazılır, belge değişmez.</summary>

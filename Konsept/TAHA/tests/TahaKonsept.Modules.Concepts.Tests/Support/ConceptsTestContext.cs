@@ -144,7 +144,7 @@ public sealed class ConceptsTestContext : IDisposable
     /// <summary>İş çalıştırıcısı kurar.</summary>
     /// <returns>Çalıştırıcı.</returns>
     public ConceptJobProcessor CreateProcessor() =>
-        new(Contexts, Generator, Topics, WordCheck, Memory, Concepts, Tracker, Activity, Clock, NullLogger<ConceptJobProcessor>.Instance);
+        new(Contexts, Generator, Topics, WordCheck, Memory, Concepts, Tracker, Budget, Activity, Clock, NullLogger<ConceptJobProcessor>.Instance);
 
     /// <summary>Konsept servisi kurar.</summary>
     /// <returns>Servis.</returns>

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using Shouldly;
 using TahaKonsept.BuildingBlocks.Domain.Results;
 using TahaKonsept.Modules.Concepts.Application.Llm;
@@ -99,6 +100,41 @@ public sealed class ConceptJobProcessorTests : IDisposable
         state.Completed.ShouldBe(1);
         state.Failed.ShouldBe(1);
         state.Message!.ShouldContain("1 konsept üretilemedi");
+    }
+
+    /// <summary>Bütçe iş sürerken aşılırsa sonraki konseptler üretilmez; kalanlar başarısız sayılır, mesaj bütçe hatasıdır.</summary>
+    [Fact]
+    public async Task Budget_exceeded_mid_job_stops_remaining_items()
+    {
+        var job = Register(ConceptJobKind.Topics, ["A", "B", "C"], null, 3);
+        _ctx.Gateway.Enqueue(ConceptsTestContext.SampleOutput("A"));
+        _ctx.Gateway.Enqueue(ConceptsTestContext.SampleOutput("B"));
+        _ctx.Gateway.Enqueue(ConceptsTestContext.SampleOutput("C"));
+        _ctx.Budget.EnsureCanStartProductionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result.Success()), Task.FromResult(Result.Success()), Task.FromResult(Result.Failure(Error.Conflict("providers.budget_exceeded", "Aylık bütçe aşıldı."))));
+
+        await _ctx.CreateProcessor().ProcessAsync(job, CancellationToken.None);
+
+        _ctx.Gateway.Calls.Count.ShouldBe(1);
+        var state = _ctx.Tracker.GetCurrent(_ctx.UserId);
+        state.Status.ShouldBe(ConceptJobStatus.Completed);
+        state.Completed.ShouldBe(1);
+        state.Failed.ShouldBe(2);
+        state.Message!.ShouldContain("Aylık bütçe aşıldı.");
+    }
+
+    /// <summary>İş kanalda beklerken bütçe aşıldıysa hiç LLM çağrısı yapılmaz.</summary>
+    [Fact]
+    public async Task Budget_exceeded_before_start_makes_no_calls()
+    {
+        var job = Register(ConceptJobKind.Topics, ["A"], null, 1);
+        _ctx.Budget.EnsureCanStartProductionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result.Failure(Error.Conflict("providers.budget_exceeded", "Aylık bütçe aşıldı."))));
+
+        await _ctx.CreateProcessor().ProcessAsync(job, CancellationToken.None);
+
+        _ctx.Gateway.Calls.ShouldBeEmpty();
+        _ctx.Tracker.GetCurrent(_ctx.UserId).Status.ShouldBe(ConceptJobStatus.Failed);
     }
 
     /// <summary>İptal edilmiş belirteçle iş Cancelled biter.</summary>
