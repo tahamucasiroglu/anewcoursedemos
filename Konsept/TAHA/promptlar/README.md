@@ -18,3 +18,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0012 | 2026-11-14 13:40 | Önce GPU | [0012_2026-11-14_1340_once-gpu.md](0012_2026-11-14_1340_once-gpu.md) |
 | 0013 | 2026-11-14 15:22 | Durum nedir | [0013_2026-11-14_1522_durum.md](0013_2026-11-14_1522_durum.md) |
 | 0014 | 2026-11-14 17:08 | Benim kullanımıma hazır mı | [0014_2026-11-14_1708_kullanima-hazir-mi.md](0014_2026-11-14_1708_kullanima-hazir-mi.md) |
+| 0015 | 2026-11-14 17:15 | Siteden indirme ve karşılama ekranı | [0015_2026-11-14_1715_indirme-karsilama.md](0015_2026-11-14_1715_indirme-karsilama.md) |
