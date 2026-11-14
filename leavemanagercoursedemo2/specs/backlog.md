@@ -13,3 +13,6 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   — Recommendation: <the reviewer's action> — Deferred by: <name>, <YYYY-MM-DD>, <why>
   A decision deferred at bootstrap (its REPORT) uses Source: bootstrap <YYYY-MM-DD>.
 -->
+
+- **B-1** — "Tekrar dene"ye basılınca düğme DOM'dan kalkar, klavye odağı `body`'ye düşer — Source: spec 0001, review round 1 (`frontend/src/features/health/HealthStatus.tsx:50`) — Severity: Info
+  — Recommendation: ilk gerçek form feature'ında odak yönetimini (odak status bölgesine ya da yeniden düğmeye) ele al — Deferred by: tahamucasiroglu, 2026-11-14, spec ihlali değil, iskelette kapsam dışı
