@@ -35,7 +35,7 @@ public static partial class SecretMasker
         var result = JwtPattern().Replace(text, JwtPlaceholder);
         result = BearerPattern().Replace(result, m => m.Groups["token"].Value == JwtPlaceholder ? m.Value : $"{m.Groups["scheme"].Value} {Hidden}");
         result = ApiKeyPattern().Replace(result, m => MaskApiKey(m.Value));
-        result = MaskKeyValues(result);
+        result = KeyValuePattern().Replace(result, MaskKeyValue);
         return result;
     }
 
@@ -100,48 +100,43 @@ public static partial class SecretMasker
     private static partial Regex BearerPattern();
 
     /// <summary>
-    /// Serbest metindeki <c>anahtar=değer</c> / <c>anahtar: değer</c> çiftinde anahtar gizli bir alansa değeri maskeler
-    /// (review round 1, M-1): kayıt <c>ToString</c> (<c>NewPassword = x</c>), JSON (<c>"password":"x"</c>), YAML
-    /// (<c>password: x</c>), bağlantı dizesi (<c>Pwd=x</c>), sorgu dizesi (<c>access_token=x</c>), tırnaklı değer. Karar
-    /// alan tablosuyla aynıdır (<see cref="IsSecretField"/>); tek kaynak. Gizli olmayan bir anahtarın eşleşmesi metni
-    /// tüketmez: arama o anahtarın hemen ardından sürer (<c>Exception: Password=x</c> içindeki şifre de bulunur).
+    /// Serbest metindeki gizli <c>anahtar=değer</c> / <c>anahtar: değer</c> çiftlerinin değerini maskeler (review round 1
+    /// M-1, round 2 M-1/L-1): kayıt <c>ToString</c> (<c>NewPassword = x y }</c>), JSON (<c>"password":"x"</c>, kaçışlı
+    /// tırnak, iç içe değer), YAML (<c>password: x</c>), bağlantı dizesi (<c>Password=ab,cd;</c> — yalnızca <c>;</c>
+    /// bitirir), sorgu dizesi (<c>access_token=x&amp;</c>), <c>:=</c>, kapanmamış tırnak. Desen yalnızca gizli anahtar
+    /// soneklerini eşler (metin doğrusal taranır); son karar alan tablosuyla aynıdır (<see cref="IsSecretField"/>).
+    /// Tırnaksız değer alanın sonuna kadar gider: <c>;</c>, satır sonu, sonraki <c>, Ad =</c>, <c> }</c> ya da <c>&amp;ad=</c>.
     /// </summary>
-    /// <param name="text">Metin.</param>
-    /// <returns>Maskelenmiş metin.</returns>
-    private static string MaskKeyValues(string text)
+    /// <param name="match">Eşleşme.</param>
+    /// <returns>Değeri maskelenmiş eşleşme metni.</returns>
+    private static string MaskKeyValue(Match match)
     {
-        var output = new System.Text.StringBuilder(text.Length);
-        var copied = 0;
-        var match = KeyValuePattern().Match(text);
-        while (match.Success)
+        var name = Normalize(match.Groups["key"].Value);
+        var value = match.Groups["val"];
+        if (!(IsApiKeyField(name) || IsHiddenField(name)) || value.Length == 0)
         {
-            var key = match.Groups["key"];
-            var value = match.Groups["val"];
-            var name = Normalize(key.Value);
-            if ((IsApiKeyField(name) || IsHiddenField(name)) && value.Length > 0)
-            {
-                // Önceki adımda maskelenmiş key (sk-…xyz) olduğu gibi kalır.
-                var masked = IsApiKeyField(name)
-                    ? value.Value.Contains(Ellipsis, StringComparison.Ordinal) || value.Value == Hidden ? value.Value : MaskApiKey(value.Value)
-                    : Hidden;
-                output.Append(text, copied, value.Index - copied).Append(masked);
-                copied = value.Index + value.Length;
-                match = KeyValuePattern().Match(text, copied);
-            }
-            else
-            {
-                match = KeyValuePattern().Match(text, key.Index + key.Length);
-            }
+            return match.Value;
         }
 
-        return copied == 0 ? text : output.Append(text, copied, text.Length - copied).ToString();
+        // Önceki adımda maskelenmiş key (sk-…xyz) olduğu gibi kalır; "…" içeren ama bu biçimde olmayan değer maskelenir.
+        var masked = !IsApiKeyField(name) || value.Value == Hidden
+            ? Hidden
+            : AlreadyMaskedKey().IsMatch(value.Value) ? value.Value : MaskApiKey(value.Value);
+
+        var start = value.Index - match.Index;
+        return string.Concat(match.Value.AsSpan(0, start), masked, match.Value.AsSpan(start + value.Length));
     }
+
+    [GeneratedRegex(@"^(?:sk-(?:ant-|or-)?)?…[A-Za-z0-9_\-]{3}$", RegexOptions.CultureInvariant)]
+    private static partial Regex AlreadyMaskedKey();
 
     [GeneratedRegex(@"(?<![A-Za-z0-9])sk-[A-Za-z0-9_\-]{8,}", RegexOptions.CultureInvariant)]
     private static partial Regex ApiKeyPattern();
 
     [GeneratedRegex(
-        @"(?<![\w\-])(?<key>[A-Za-z][\w\-]*)[""']?\s*[:=]\s*(?:""(?<val>[^""]*)""|'(?<val>[^']*)'|(?<val>[^;,&\s""'}\)\]]+))",
-        RegexOptions.CultureInvariant)]
+        @"(?<![\w\-])(?<key>(?:[A-Za-z][\w\-]*?)?(?:pass[_\-]*w(?:or)?d|pwd|secret|token|pairing[_\-]*code|service[_\-]*key|private[_\-]*key|credentials?|api[_\-]*key))(?![\w\-])[""']?\s*(?::=|=|:)\s*"
+        + @"(?:""(?<val>(?:\\.|[^""\\\r\n])*)""|'(?<val>(?:\\.|[^'\\\r\n])*)'|[""'](?<val>[^\r\n]*)|(?<val>[\{\[][^\r\n]*)"
+        + @"|(?<val>(?:(?!;|\r|\n|,\s*[""']?[A-Za-z][\w\-]*[""']?\s*(?::=|=|:)|\s+\}|\}\s*(?:$|[,;\r\n])|&[A-Za-z][\w\-]*=|\s*$).)+))",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex KeyValuePattern();
 }

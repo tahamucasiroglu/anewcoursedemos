@@ -33,7 +33,18 @@ public sealed class SecretMaskerTests
         { "ApiClientOptions { ServiceKey = 0123abcd4567ef }", "ApiClientOptions { ServiceKey = *** }", "0123abcd4567ef" },
         { "ApiKey = sk-proj-AbCdEf123456789a3f", "ApiKey = sk-…a3f", "AbCdEf123456789" },
         { "OpenAiApiKey: abcdefghijklmnopq9z", "OpenAiApiKey: …q9z", "abcdefghijklmnop" },
-        { "System.InvalidOperationException: Password=exc-pw-1 reddedildi", "System.InvalidOperationException: Password=*** reddedildi", "exc-pw-1" },
+        { "System.InvalidOperationException: Password=exc-pw-1 reddedildi", "System.InvalidOperationException: Password=***", "exc-pw-1" },
+        { "Req { NewPassword = hun ter2 }", "Req { NewPassword = *** }", "ter2" },
+        { "Host=pi;Password=ab,cd&ef;Username=u", "Host=pi;Password=***;Username=u", "cd&ef" },
+        { "{\"password\":\"pa\\\"ss word\"}", "{\"password\":\"***\"}", "ss word" },
+        { "PairingCode = 123 456", "PairingCode = ***", "456" },
+        { "Password := abc-def", "Password := ***", "abc-def" },
+        { "NewPassword=\"unterminated secret", "NewPassword=\"***", "secret" },
+        { "{\"password\": {\"value\":\"nested-pw\"}}", "{\"password\": ***", "nested-pw" },
+        { "{\"password\":[\"arr-pw\"]}", "{\"password\":***", "arr-pw" },
+        { "refresh_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc", "refresh_token=***", "]" },
+        { "ApiKey=abc…realsecret", "ApiKey=…ret", "realsec" },
+        { "user_id=42, password=p4ss, role=admin", "user_id=42, password=***, role=admin", "p4ss" },
         { "Hata: bağlantı koptu (https://pi:8001/)", "Hata: bağlantı koptu (https://pi:8001/)", "\u0000" },
     };
 
@@ -84,6 +95,28 @@ public sealed class SecretMaskerTests
         SecretMasker.IsSecretField("MachineName").ShouldBeFalse();
         SecretMasker.MaskField("Message", "düz metin").ShouldBe("düz metin");
         SecretMasker.MaskField("Message", "key sk-proj-AbCdEf123456789xyz").ShouldBe("key sk-…xyz");
+    }
+
+    /// <summary>
+    /// Maskeleme girdi boyuyla doğrusal kalır: 32 KB'lık kötü niyetli metin (çok sayıda <c>a=a=</c> ve gizli anahtar)
+    /// 1 sn'nin çok altında işlenir (review round 2, L-1).
+    /// </summary>
+    /// <param name="unit">Tekrarlanan parça.</param>
+    [Theory]
+    [InlineData("a=a=")]
+    [InlineData("a:a:")]
+    [InlineData("password=a ")]
+    [InlineData("x, token: ")]
+    public void Mask_LargeAdversarialInput_StaysFast(string unit)
+    {
+        var text = string.Concat(Enumerable.Repeat(unit, (32 * 1024) / unit.Length));
+        SecretMasker.Mask(text);
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        SecretMasker.Mask(text);
+        watch.Stop();
+
+        watch.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(1));
     }
 
     /// <summary>Çok kısa key'in uzunluğu bile sızmaz; tamamen gizlenir.</summary>
