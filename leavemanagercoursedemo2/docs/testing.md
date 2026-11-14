@@ -12,7 +12,8 @@
   e2e testleri **kapsam dışıdır**. Sonuç: HTTP/kalıcılık katmanı ve UI durumları testle değil, VERIFY'da çalışan uygulamanın
   gözlemi ve ekran görüntüleriyle (Evidence for UI criteria) kanıtlanır. Bu katmanlara test eklemek yeni bir karardır (ADR).
 - Backend: xUnit v3. `backend/tests/LeaveManager.Domain.Tests` (BR'ler, değişmezler), `backend/tests/LeaveManager.Application.Tests`
-  (senaryolar, yetki; sahte port'lar + `FakeTimeProvider`), `backend/tests/LeaveManager.ArchitectureTests` (NetArchTest).
+  (senaryolar, yetki; sahte port'lar + `FakeTimeProvider`), `backend/tests/LeaveManager.ArchitectureTests` (ArchUnitNET).
+  Koşucu: Microsoft.Testing.Platform (kök `global.json`); test projesi sıfır test koşarsa adım düşer (çıkış 8) — test-sayısı koruması.
   Testler veritabanına dokunmaz.
 - Frontend: Vitest, **yalnız gerektiğinde** — kural taşıyan saf mantık (ör. iş günü hesabı) için; bileşen render eden test yok.
   Dosya, test ettiği modülün yanında: `<modül>.test.ts`.

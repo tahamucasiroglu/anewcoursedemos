@@ -13,11 +13,12 @@
 - Sınırda (Api) DTO şekil doğrulaması (zorunlu alan, tip, format) → 400. İş kuralları (BR) Domain'de → 422.
 - Hata yanıtları yalnız ProblemDetails + BR kodu taşır; stack trace, SQL, bağlantı dizesi, iç tip adı asla sızmaz.
 - Loglara parola, token ve hastalık notu yazılmaz.
-- Frontend: React'in varsayılan kaçışlaması korunur; `dangerouslySetInnerHTML` yasak (ESLint `react/no-danger`).
+- Frontend: React'in varsayılan kaçışlaması korunur; `dangerouslySetInnerHTML` yasak (ESLint `no-restricted-syntax`, `frontend/eslint.config.js`).
 - EF Core parametreli sorgular; ham SQL string birleştirme yasak.
 
 ## AuthN / AuthZ
-- **Varsayılan reddet:** her uç nokta kimlik doğrulama ister (fallback authorization policy); yalnız giriş uç noktası `AllowAnonymous`.
+- **Varsayılan reddet:** her uç nokta kimlik doğrulama ister (fallback authorization policy); istisnalar yalnız giriş ve sağlık (`GET /api/health`, yalnız durum + sürüm döner) uç noktaları, `AllowAnonymous`.
+  Fallback politika (`RequireAuthenticatedUser`) kimlik doğrulama şemasıyla birlikte giriş feature'ında eklenir; o güne kadar tek uç nokta sağlıktır (plan 0001, R-6).
 - Kimlik doğrulama: demo JWT (kısa ömürlü, ör. 1 saat; refresh token yok). Parolalar ASP.NET Core Identity `PasswordHasher` ile.
 - Roller: `Employee`, `Manager`, `HR`.
 - Yetki **Application katmanında** denetlenir (Api'deki öznitelikler yalnız ek kat): onay/ret yalnız talep sahibinin yöneticisi, yöneticisi yoksa İK (BR-5),

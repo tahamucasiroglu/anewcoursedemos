@@ -36,7 +36,7 @@ frontend/
 - Frontend → backend: yalnız `shared/` içindeki API istemcisi üzerinden.
 
 ## Forbidden dependencies (make them testable)
-Mimari testleri (`LeaveManager.ArchitectureTests`, NetArchTest) ilk dördünü; ESLint (`import/no-restricted-paths`) beşincisini denetler.
+Mimari testleri (`LeaveManager.ArchitectureTests`, ArchUnitNET + derleme referansları) ilk dördünü; ESLint (`import-x/no-restricted-paths`, `frontend/eslint.config.js`) beşincisini denetler.
 1. `Domain` başka hiçbir projeye ve altyapı paketine (`Microsoft.EntityFrameworkCore*`, `Microsoft.AspNetCore*`) bağımlı olamaz.
 2. `Application` yalnız `Domain`'e bağlıdır; `Infrastructure` ve `Api`'ye bağımlı olamaz, EF Core/ASP.NET tiplerini kullanamaz.
 3. `Infrastructure` → yalnız `Application` + `Domain`; `Api`'ye bağımlı olamaz.
