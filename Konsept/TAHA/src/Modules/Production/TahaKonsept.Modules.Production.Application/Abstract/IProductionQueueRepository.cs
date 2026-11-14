@@ -1,5 +1,6 @@
 using TahaKonsept.BuildingBlocks.Application.Abstract;
 using TahaKonsept.Modules.Production.Domain.Entities;
+using TahaKonsept.Shared.Contracts.Production;
 
 namespace TahaKonsept.Modules.Production.Application.Abstract;
 
@@ -18,4 +19,10 @@ public interface IProductionQueueRepository : IRepository<ProductionQueue>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Sonuç.</returns>
     Task<IReadOnlyList<Guid>> ListNonIdleUserIdsAsync(CancellationToken cancellationToken);
+
+    /// <summary>Kullanıcının sıra çalışma durumunu takipsiz okur (kontrol noktasında duraklatma denetimi).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum ya da <c>null</c>.</returns>
+    Task<QueueRunState?> GetRunStateAsync(Guid userId, CancellationToken cancellationToken);
 }

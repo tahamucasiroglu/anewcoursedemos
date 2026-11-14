@@ -12,6 +12,7 @@ public interface IReusePlanner
     /// <summary>Planı çıkarır (bağlamdaki çıktı görünümü yok sayılır).</summary>
     /// <param name="context">Yeni işin bağlamı.</param>
     /// <param name="baseRuns">Kaynak işin çalıştırmaları.</param>
-    /// <returns>Sonuç.</returns>
-    ReusePlan Plan(PipelineContext context, IReadOnlyList<StageRun> baseRuns);
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Plan.</returns>
+    Task<ReusePlan> PlanAsync(PipelineContext context, IReadOnlyList<StageRun> baseRuns, CancellationToken cancellationToken);
 }

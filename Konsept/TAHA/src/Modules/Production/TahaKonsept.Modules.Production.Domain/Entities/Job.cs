@@ -129,6 +129,13 @@ public sealed class Job : AggregateRoot, IHasUser, IAuditable
         return job;
     }
 
+    /// <summary>Ajan çalışma alanını paylaşıyor mu (yeni sürümde kaynak işin alanı).</summary>
+    public bool SharesWorkspace => WorkspaceId != Id;
+
+    /// <summary>Kaynak işin ajan çalışma alanını kullanır (değişmeyen dosyaları ajan atlar).</summary>
+    /// <param name="workspaceId">Paylaşılacak alan.</param>
+    public void ShareWorkspace(Guid workspaceId) => WorkspaceId = workspaceId == Guid.Empty ? Id : workspaceId;
+
     /// <summary>Çalıştırma ekler.</summary>
     /// <param name="stage">Aşama.</param>
     /// <param name="sceneIndex">Sahne.</param>
