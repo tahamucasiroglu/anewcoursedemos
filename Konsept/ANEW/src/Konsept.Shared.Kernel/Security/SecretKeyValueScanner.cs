@@ -119,8 +119,11 @@ internal static class SecretKeyValueScanner
             // API key ve URL sorgu değeri boşluk içermez: tırnaksız değer ilk boşlukta (ya da ayraçta) biter, tarama
             // sonrasında sürer (H3-A; hunt r11: "?access_token=x - 10 ms" satırın kalanı korunur); satır sonuna kadar
             // okunmaz (hunt r4, perf).
+            // Sorgu değeri yalnızca boşluk/&/#'te biter (",;')" bir şifrede olabilir, hunt r12); API key ayrıca ayraçlarda.
+            var query = !apiKey;
             start = end = valueStart;
-            while (end < text.Length && !char.IsWhiteSpace(text[end]) && text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')'))
+            while (end < text.Length && !char.IsWhiteSpace(text[end])
+                && (query ? text[end] is not ('&' or '#') : text[end] is not ('&' or ';' or ',' or '"' or '\'' or '<' or '>' or ')')))
             {
                 end++;
             }
@@ -915,7 +918,11 @@ internal static class SecretKeyValueScanner
         var bracketClose = bracketLineEnd > pos ? MatchingBracket(text, pos, bracketScanEnd) : -1;
         var quotedByBracket = bracketClose >= 0
             && (bracketClose + 1 >= bracketLineEnd || char.IsWhiteSpace(text[bracketClose + 1]) || text[bracketClose + 1] is ';' or '"' or '\'');
-        if (text[pos] is '{' or '[' && (!connectionString || quotedByBracket))
+        // Serbest metinde de kapanış değeri bitirmiyorsa ("Password = {Hunter}2024") ayraç alıntı değildir (hunt r12).
+        var closesValue = bracketClose >= 0
+            && (bracketClose + 1 >= bracketLineEnd || char.IsWhiteSpace(text[bracketClose + 1])
+                || text[bracketClose + 1] is ';' or ',' or '"' or '\'' or '}' or ']' or ')');
+        if (text[pos] is '{' or '[' && (connectionString ? quotedByBracket : bracketClose < 0 || closesValue))
         {
             var lineEnd = bracketLineEnd;
             var close = bracketClose;

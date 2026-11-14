@@ -240,6 +240,13 @@ public sealed class SecretMaskerTests
         { "User 42 signed in; SessionId=7f3a9c2e1b4d, ExpiresUtc=2026-11-28T10:00:00Z, Ip=192.168.1.10", "User 42 signed in; SessionId=***, ExpiresUtc=2026-11-28T10:00:00Z, Ip=192.168.1.10", "7f3a9c2e1b4d" },
         { "GET http://localhost:5000/hubs/agent?id=abc123&access_token=svc_9f8e7d6c5b4a3210 - 101 ms", "GET http://localhost:5000/hubs/agent?id=abc123&access_token=*** - 101 ms", "svc_9f8e7d6c" },
         { "q=user%253Dbob%2526password%253DSupersecretpw", "q=user%253Dbob%2526password%253D***", "Supersecretpw" },
+
+        // Review r11 / hunt r12 (fix-13): kaçış sonrası tam sözcük; kodlu harf-yalnız değer; sorgu değerinde ",;"; köşeli değer kuyruğu.
+        { "{\"password\":\"Sunshine\",\"history\":\"attempt1\\nSunshine again\"}", "{\"password\":\"***\",\"history\":\"attempt1\\n*** again\"}", "Sunshine" },
+        { "{\"body\":\"{\\\"\\u015Fifre\\\":\\\"G\\u00FCne\\u015Fli\\\"}\"}", "{\"body\":\"{\\\"\\u015Fifre\\\":\\\"***\\\"}\"}", "ne\\u015Fli" },
+        { "GET /cb?password=Pa,ss123 HTTP/1.1", "GET /cb?password=*** HTTP/1.1", "ss123" },
+        { "RegisterCommand { Name = Ali, Password = {Hunter}2024 }", "RegisterCommand { Name = Ali, Password = *** }", "2024" },
+        { "Login: email=ali@x.com, password=[Hunter]2024, ip=192.168.1.20", "Login: email=ali@x.com, password=***, ip=192.168.1.20", "2024" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>

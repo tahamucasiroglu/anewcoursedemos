@@ -47,11 +47,16 @@ internal sealed class SecretValueSet
     {
         foreach (var (value, replacement) in _values.OrderByDescending(v => v.Key.Length))
         {
-            // Yalnızca harften oluşan değer ("Password", "Sunshine") yalnızca tam sözcük olarak yayılır: "PasswordPolicy"
-            // gibi tanımlayıcılar bozulmaz, etiketsiz tekrar yine gizlenir (hunt r10/r11).
-            if (value.All(char.IsLetter))
+            // Yalnızca harften oluşan kısa değer ("Password", "Sunshine") her biçimiyle ama yalnızca tam sözcük olarak yayılır:
+            // "PasswordPolicy" bozulmaz, etiketsiz tekrar yine gizlenir (hunt r10–r12). 15 harften uzun değer tanımlayıcı
+            // olamayacak kadar özgüldür; alt dize olarak değiştirilir (review r11, L-1).
+            if (value.Length <= 15 && value.All(char.IsLetter))
             {
-                text = ReplaceWholeWord(text, value, replacement);
+                foreach (var form in Forms(value))
+                {
+                    text = ReplaceWholeWord(text, form, replacement);
+                }
+
                 continue;
             }
 
@@ -64,9 +69,24 @@ internal sealed class SecretValueSet
         return text;
     }
 
-    /// <summary>Konumdan hemen önce (en fazla 9 karakter) yalnızca onaltılık rakam ve '%' içeren bir kaçış dizisi var mı.</summary>
-    private static bool AfterPercentEscape(string text, int index)
+    /// <summary>
+    /// Konumdan hemen önce bir kaçış dizisi var mı: <c>%XX</c> (iç içe <c>%253D</c> dahil), JSON <c>\n</c>/<c>\t</c>/<c>\r</c>/
+    /// <c>\b</c>/<c>\f</c> ya da <c>\uXXXX</c> — bunların son karakteri harf/rakam olsa da sözcük sınırıdır (review r11, L-1).
+    /// </summary>
+    private static bool AfterEscape(string text, int index)
     {
+        if (index >= 2 && text[index - 2] == '\\' && text[index - 1] is 'n' or 't' or 'r' or 'b' or 'f')
+        {
+            return true;
+        }
+
+        if (index >= 6 && text[index - 6] == '\\' && text[index - 5] == 'u'
+            && char.IsAsciiHexDigit(text[index - 4]) && char.IsAsciiHexDigit(text[index - 3])
+            && char.IsAsciiHexDigit(text[index - 2]) && char.IsAsciiHexDigit(text[index - 1]))
+        {
+            return true;
+        }
+
         for (var p = index - 1; p >= 0 && index - p <= 9; p--)
         {
             if (text[p] == '%')
@@ -96,7 +116,7 @@ internal sealed class SecretValueSet
         while (index >= 0)
         {
             var end = index + word.Length;
-            var boundaryBefore = index == 0 || !char.IsLetterOrDigit(text[index - 1]) || AfterPercentEscape(text, index); // %3D, %253D…
+            var boundaryBefore = index == 0 || !char.IsLetterOrDigit(text[index - 1]) || AfterEscape(text, index);
             var boundaryAfter = end == text.Length || !char.IsLetterOrDigit(text[end]);
             if (boundaryBefore && boundaryAfter)
             {
