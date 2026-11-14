@@ -12,7 +12,10 @@ public static class ApiClientRegistration
     /// <summary>"Ajanı test et" 10 sn bekleyebildiği için istek süresi bundan uzun tutulur.</summary>
     public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
 
-    /// <summary>API istemcisini kaydeder.</summary>
+    /// <summary>
+    /// API istemcisini kaydeder. Kayıtlı bir <see cref="IAccessTokenSource"/> varsa her çağrıya kullanıcının erişim token'ı
+    /// Bearer olarak eklenir (<see cref="AccessTokenHandler"/>).
+    /// </summary>
     /// <param name="services">Servis koleksiyonu.</param>
     /// <param name="baseUrl">API'nin taban adresi (ör. <c>http://localhost:8001/</c>).</param>
     /// <param name="serviceKey">İç uçlar için paylaşılan servis anahtarı (yoksa iç uçlar 401 döner).</param>
@@ -24,7 +27,8 @@ public static class ApiClientRegistration
         {
             client.BaseAddress = baseUrl;
             client.Timeout = RequestTimeout;
-        });
+        })
+            .AddHttpMessageHandler(sp => new AccessTokenHandler(sp.GetService<IAccessTokenSource>()));
         return services;
     }
 }
