@@ -19,7 +19,8 @@ public static partial class SecretMasker
 
     private static readonly string[] KnownKeyPrefixes = ["sk-ant-", "sk-or-", "sk-"];
 
-    private static readonly string[] HiddenFieldSuffixes = ["password", "passwd", "secret", "token", "pairingcode"];
+    private static readonly string[] HiddenFieldSuffixes =
+        ["password", "passwd", "secret", "token", "pairingcode", "servicekey", "privatekey", "credential", "credentials"];
 
     /// <summary>Serbest metindeki bilinen gizli bilgi biçimlerini maskeler.</summary>
     /// <param name="text">Metin (hata mesajı, kullanıcı metni, log satırı).</param>
@@ -34,7 +35,7 @@ public static partial class SecretMasker
         var result = JwtPattern().Replace(text, JwtPlaceholder);
         result = BearerPattern().Replace(result, m => m.Groups["token"].Value == JwtPlaceholder ? m.Value : $"{m.Groups["scheme"].Value} {Hidden}");
         result = ApiKeyPattern().Replace(result, m => MaskApiKey(m.Value));
-        result = ConnectionPasswordPattern().Replace(result, m => $"{m.Groups["key"].Value}={Hidden}");
+        result = MaskKeyValues(result);
         return result;
     }
 
@@ -98,9 +99,49 @@ public static partial class SecretMasker
     [GeneratedRegex(@"(?<scheme>\bBearer)\s+(?<token>[A-Za-z0-9._~+/=\-\[\]]{8,})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex BearerPattern();
 
-    [GeneratedRegex(@"\bsk-[A-Za-z0-9_\-]{8,}", RegexOptions.CultureInvariant)]
+    /// <summary>
+    /// Serbest metindeki <c>anahtar=değer</c> / <c>anahtar: değer</c> çiftinde anahtar gizli bir alansa değeri maskeler
+    /// (review round 1, M-1): kayıt <c>ToString</c> (<c>NewPassword = x</c>), JSON (<c>"password":"x"</c>), YAML
+    /// (<c>password: x</c>), bağlantı dizesi (<c>Pwd=x</c>), sorgu dizesi (<c>access_token=x</c>), tırnaklı değer. Karar
+    /// alan tablosuyla aynıdır (<see cref="IsSecretField"/>); tek kaynak. Gizli olmayan bir anahtarın eşleşmesi metni
+    /// tüketmez: arama o anahtarın hemen ardından sürer (<c>Exception: Password=x</c> içindeki şifre de bulunur).
+    /// </summary>
+    /// <param name="text">Metin.</param>
+    /// <returns>Maskelenmiş metin.</returns>
+    private static string MaskKeyValues(string text)
+    {
+        var output = new System.Text.StringBuilder(text.Length);
+        var copied = 0;
+        var match = KeyValuePattern().Match(text);
+        while (match.Success)
+        {
+            var key = match.Groups["key"];
+            var value = match.Groups["val"];
+            var name = Normalize(key.Value);
+            if ((IsApiKeyField(name) || IsHiddenField(name)) && value.Length > 0)
+            {
+                // Önceki adımda maskelenmiş key (sk-…xyz) olduğu gibi kalır.
+                var masked = IsApiKeyField(name)
+                    ? value.Value.Contains(Ellipsis, StringComparison.Ordinal) || value.Value == Hidden ? value.Value : MaskApiKey(value.Value)
+                    : Hidden;
+                output.Append(text, copied, value.Index - copied).Append(masked);
+                copied = value.Index + value.Length;
+                match = KeyValuePattern().Match(text, copied);
+            }
+            else
+            {
+                match = KeyValuePattern().Match(text, key.Index + key.Length);
+            }
+        }
+
+        return copied == 0 ? text : output.Append(text, copied, text.Length - copied).ToString();
+    }
+
+    [GeneratedRegex(@"(?<![A-Za-z0-9])sk-[A-Za-z0-9_\-]{8,}", RegexOptions.CultureInvariant)]
     private static partial Regex ApiKeyPattern();
 
-    [GeneratedRegex(@"(?<key>\b(?:password|pwd))\s*=\s*[^;""'\s]*", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
-    private static partial Regex ConnectionPasswordPattern();
+    [GeneratedRegex(
+        @"(?<![\w\-])(?<key>[A-Za-z][\w\-]*)[""']?\s*[:=]\s*(?:""(?<val>[^""]*)""|'(?<val>[^']*)'|(?<val>[^;,&\s""'}\)\]]+))",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex KeyValuePattern();
 }

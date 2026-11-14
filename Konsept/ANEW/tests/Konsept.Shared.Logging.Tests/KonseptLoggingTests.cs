@@ -108,6 +108,9 @@ public sealed class KonseptLoggingTests
         try
         {
             var logs = Path.Combine(root.FullName, "logs");
+            var defaultLogs = Path.Combine(AppContext.BaseDirectory, "logs");
+            var defaultBefore = Snapshot(defaultLogs);
+            var tempBefore = Snapshot(Path.GetTempPath(), "web-*.log");
             using (var logger = new LoggerConfiguration().WithKonseptEnrichment(LogSources.Web).WriteToKonseptFile(logs, "web").CreateLogger())
             {
                 logger.Warning("uyarı");
@@ -115,12 +118,45 @@ public sealed class KonseptLoggingTests
 
             Directory.GetFiles(root.FullName, "*", SearchOption.AllDirectories)
                 .ShouldAllBe(f => Path.GetDirectoryName(f) == logs && Path.GetFileName(f).StartsWith("web-", StringComparison.Ordinal));
+            Directory.GetFiles(logs).Length.ShouldBe(1);
+            Snapshot(defaultLogs).ShouldBe(defaultBefore);
+            Snapshot(Path.GetTempPath(), "web-*.log").ShouldBe(tempBefore);
         }
         finally
         {
             root.Delete(recursive: true);
         }
     }
+
+    /// <summary>
+    /// <c>@</c> olmadan (ToString ile) loglanan kayıttaki şifre alanları da dosyada düz metin görünmez (review round 1,
+    /// M-1: serbest metin anahtar=değer deseni).
+    /// </summary>
+    [Fact]
+    public void Masking_RecordLoggedWithoutDestructuring_PasswordsHidden()
+    {
+        var dir = Directory.CreateTempSubdirectory("anewconcept-log-");
+        try
+        {
+            using (var logger = new LoggerConfiguration().WithKonseptEnrichment(LogSources.Api).WriteToKonseptFile(dir.FullName, "api").CreateLogger())
+            {
+                logger.Warning("Şifre değişimi reddedildi {Request}", new ChangePasswordRequest("a@b.c", "old-pw-1", "new-pw-2"));
+            }
+
+            var text = File.ReadAllText(Directory.GetFiles(dir.FullName).Single());
+            text.ShouldContain("a@b.c");
+            text.ShouldNotContain("old-pw-1");
+            text.ShouldNotContain("new-pw-2");
+            text.ShouldContain("NewPassword = ***");
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    private static string[] Snapshot(string directory, string pattern = "*") =>
+        Directory.Exists(directory) ? [.. Directory.GetFiles(directory, pattern).Order(StringComparer.Ordinal)] : [];
 
     /// <summary>7 günlük log dosyası korunur, 8 günlük silinir; diğer adlar ve uzantılar dokunulmaz (AC-4).</summary>
     /// <param name="prefix">Uygulama öneki.</param>

@@ -20,8 +20,21 @@ public sealed class SecretMaskerTests
         { "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc", "Authorization: Bearer [jwt]", "eyJhbGciOiJIUzI1NiJ9" },
         { "Authorization: Bearer opaqueToken123456", "Authorization: Bearer ***", "opaqueToken123456" },
         { "Host=x;Password=gizli-sifre;Username=u", "Host=x;Password=***;Username=u", "gizli-sifre" },
-        { "Server=db;PWD = s3cr3t;Database=k", "Server=db;PWD=***;Database=k", "s3cr3t" },
+        { "Server=db;PWD = s3cr3t;Database=k", "Server=db;PWD = ***;Database=k", "s3cr3t" },
         { "Npgsql hatası: sk-ant-api03-ZZZZZZZZZZZZ-abc reddedildi", "Npgsql hatası: sk-ant-…abc reddedildi", "ZZZZZZZZZZZZ" },
+        { "ChangePasswordRequest { CurrentPassword = old-pw-1, NewPassword = new-pw-2 }", "ChangePasswordRequest { CurrentPassword = ***, NewPassword = *** }", "pw-" },
+        { "{\"user\":\"a\",\"password\":\"hunter2\"}", "{\"user\":\"a\",\"password\":\"***\"}", "hunter2" },
+        { "password: hunter2", "password: ***", "hunter2" },
+        { "Password='a b;c' sonra", "Password='***' sonra", "a b;c" },
+        { "db_password=s3cret", "db_password=***", "s3cret" },
+        { "PairingSecret = xyz-1, AccessToken = opaque-1", "PairingSecret = ***, AccessToken = ***", "opaque-1" },
+        { "key_sk-proj-AbCdEf123456789xyz", "key_sk-…xyz", "AbCdEf123456789" },
+        { "/cb?access_token=abc123def&x=1", "/cb?access_token=***&x=1", "abc123def" },
+        { "ApiClientOptions { ServiceKey = 0123abcd4567ef }", "ApiClientOptions { ServiceKey = *** }", "0123abcd4567ef" },
+        { "ApiKey = sk-proj-AbCdEf123456789a3f", "ApiKey = sk-…a3f", "AbCdEf123456789" },
+        { "OpenAiApiKey: abcdefghijklmnopq9z", "OpenAiApiKey: …q9z", "abcdefghijklmnop" },
+        { "System.InvalidOperationException: Password=exc-pw-1 reddedildi", "System.InvalidOperationException: Password=*** reddedildi", "exc-pw-1" },
+        { "Hata: bağlantı koptu (https://pi:8001/)", "Hata: bağlantı koptu (https://pi:8001/)", "\u0000" },
     };
 
     /// <summary>Serbest metne gömülü her biçim maskelenir; gizli parça çıktıda geçmez.</summary>
@@ -54,6 +67,8 @@ public sealed class SecretMaskerTests
     [InlineData("PairingCode", "123456", "***")]
     [InlineData("PairingSecret", "very-secret", "***")]
     [InlineData("StreamToken", "stream-abc", "***")]
+    [InlineData("ServiceKey", "0123abcd4567ef", "***")]
+    [InlineData("Internal__ServiceKey", "0123abcd4567ef", "***")]
     [InlineData("ConnectionString", "Host=pi;Password=gizli;Username=u", "Host=pi;Password=***;Username=u")]
     public void MaskField_NamedSecret_MaskedByKind(string field, string value, string expected)
     {
