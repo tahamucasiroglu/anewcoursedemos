@@ -14,7 +14,7 @@
 | Assert | **Shouldly** | MIT. FluentAssertions v8 ticari lisans → kabul edilmez. |
 | Mock | **NSubstitute** | Interface tabanlı mimariye (K-2) uyar. |
 | API ve MVC entegrasyon | **WebApplicationFactory** + **AngleSharp** | Süreç içi gerçek HTTP akışı; Razor çıktısı HTML üzerinden doğrulanır. |
-| Veritabanı entegrasyon | **Testcontainers (PostgreSQL 17)** | Her çalıştırma temiz, gerçek bir PostgreSQL ile başlar. Docker gerektirir; Docker kurulana kadar geçici yöntem plan 0001'de (spec 0001 D4: şimdilik Docker'sız). |
+| Veritabanı entegrasyon | **Taşınabilir PostgreSQL 17** (şimdilik) → Testcontainers (Docker kurulunca, B-1) | Docker yokken (spec 0001 D4) `scripts/test-db/run-integration.sh` repo dışına kurulu taşınabilir PostgreSQL 17 ile rastgele portta geçici bir cluster açar, testleri çalıştırır, her durumda durdurup siler; her test sınıfı `PostgresTestDatabase` ile kendi geçici veritabanını açar ve siler (plan 0001, R-1). Kurulum: `sh scripts/test-db/install.sh`. |
 | Mimari testleri | **ArchUnitNET** | Y-1…Y-8, K-1 (iç içe tip), K-2, K-4. |
 | Ajan arayüzü | **Avalonia.Headless.XUnit** | Avalonia ekranları pencere açmadan. |
 | Web JS (tema, modallar, `api.js` Ajax sarmalayıcı) | **Vitest + jsdom** | Tarayıcı açmadan. |
@@ -32,8 +32,9 @@
 | **fast** | derleme + birim testleri + architecture testleri + format ve lint + `fetch(`/`style="` aramaları + Vitest |
 | **full** (fast'e ek) | PostgreSQL entegrasyon testleri (Testcontainers) + API/MVC entegrasyon testleri (WebApplicationFactory) + ajan render entegrasyonu (FFmpeg/Node gerektirir) |
 
-- Fast/full ayrımı "Two speeds" kural 4'e göre bir **seçiciyle** (xUnit trait/kategori filtresi ve
-  tersi) yapılır, proje listesiyle değil. Seçicinin adı walking skeleton planında belirlenir.
+- Fast/full ayrımı "Two speeds" kural 4'e göre bir **seçiciyle** yapılır, proje listesiyle değil:
+  xUnit trait `Category=Integration`. fast `--filter "Category!=Integration"`, full ek olarak
+  `--filter "Category=Integration"` çalıştırır; böylece her test iki profilden birinde koşar.
 - `scripts/check.conf` içinde `requires integration: docker info` (ve `dotnet --version`,
   `node --version` gibi) satırları bulunur. **Docker şu an kurulu değil**; kurulum walking skeleton
   PLAN gate'inden önce yapılacak → `specs/backlog.md` (`Source: bootstrap 2026-11-14`). Kurulana kadar
