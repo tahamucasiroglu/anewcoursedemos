@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>ANEW Konsept</title>
+  <g fill="#4A2C1D" stroke="#4A2C1D" stroke-width="48" stroke-linejoin="round">
+    <path d="M184 384V340C184 300 88 280 88 200A168 168 0 0 1 424 200C424 280 328 300 328 340V384Z"/>
+    <rect x="192" y="424" width="128" height="56" rx="24"/>
+  </g>
+  <g fill="#E8772E">
+    <path d="M184 384V340C184 300 88 280 88 200A168 168 0 0 1 424 200C424 280 328 300 328 340V384Z"/>
+    <rect x="192" y="424" width="128" height="56" rx="24"/>
+  </g>
+  <path d="M208 120L208 280L346.6 200Z" fill="#FFF4E6" stroke="#FFF4E6" stroke-width="32" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>ANEW Konsept</title>
+  <rect width="512" height="512" rx="112" fill="#FFF4E6"/>
+  <rect x="4" y="4" width="504" height="504" rx="108" fill="none" stroke="#C8813A" stroke-opacity="0.18" stroke-width="8"/>
+  <path d="M100 198H72M412 198H440M146 88L126 68M366 88L386 68" fill="none" stroke="#C8813A" stroke-width="22" stroke-linecap="round"/>
+  <path d="M204 332V314C204 290 136 264 136 198A120 120 0 0 1 376 198C376 264 308 290 308 314V332Z" fill="#E8772E"/>
+  <path d="M226 146L226 250L316.1 198Z" fill="#FFF4E6" stroke="#FFF4E6" stroke-width="30" stroke-linejoin="round"/>
+  <g fill="#4A2C1D">
+    <rect x="198" y="348" width="116" height="28" rx="14"/>
+    <rect x="210" y="388" width="92" height="28" rx="14"/>
+    <path d="M232 428H280Q272 448 256 448Q240 448 232 428Z"/>
+  </g>
+</svg>
