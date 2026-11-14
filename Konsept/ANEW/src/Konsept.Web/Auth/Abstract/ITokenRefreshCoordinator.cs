@@ -16,4 +16,12 @@ public interface ITokenRefreshCoordinator
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Yeni token çifti ya da hata.</returns>
     Task<Result<AuthSessionResponse>> RefreshAsync(IKonseptApiClient api, string refreshToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Bu refresh token başka bir istekte zaten döndürüldüyse paylaşılan yeni çifti verir (Api çağrısı yapmaz; review R7-1).
+    /// </summary>
+    /// <param name="refreshToken">Biletteki refresh token.</param>
+    /// <param name="session">Yeni token çifti.</param>
+    /// <returns>Bilinen bir dönüş varsa <c>true</c>.</returns>
+    bool TryGetRotated(string refreshToken, out AuthSessionResponse? session);
 }

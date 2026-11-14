@@ -156,6 +156,56 @@ public sealed class AuthAccessTests
     }
 
     /// <summary>
+    /// Örtüşen iki istek (review R7-1): eski token'larla başlayan istek, araya giren istek refresh yapıp çifti döndürdükten
+    /// sonra biterse yenilediği bilet eski çifti değil yeni çifti taşır; paylaşım penceresi bittikten sonra da oturum geçerli.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task OverlappingRequests_StaleRenewal_CarriesRotatedPair()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
+        await using var factory = new WebFactory(time);
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        var staleEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseStale = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var signedIn = Result<CurrentUserResponse>.Success(new CurrentUserResponse(WebFactory.UserId, WebFactory.UserName, SignedInClient.Email));
+        factory.Api.GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(async call =>
+        {
+            if (call.ArgAt<string>(0) == "jwt-login")
+            {
+                staleEntered.TrySetResult();
+                await releaseStale.Task;
+            }
+
+            return signedIn;
+        });
+        var rotations = 0;
+        factory.Api.RefreshAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(call =>
+            call.ArgAt<string>(0) == "knr_login" && Interlocked.Increment(ref rotations) > 1
+                ? Result<AuthSessionResponse>.Failure(new("identity.session_invalid", "Oturumunuz sona erdi.", ErrorType.Unauthorized))
+                : Result<AuthSessionResponse>.Success(new AuthSessionResponse("jwt-yeni", time.GetUtcNow().AddMinutes(15), "knr_yeni", WebFactory.UserId, WebFactory.UserName)));
+
+        time.Advance(TimeSpan.FromMinutes(13.5));
+        var staleTask = client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+        await staleEntered.Task.WaitAsync(ct);
+        time.Advance(TimeSpan.FromMinutes(1));
+        using var refreshing = await client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+        releaseStale.SetResult();
+        using var stale = await staleTask;
+
+        // Paylaşım penceresi (60 sn) biter: eski refresh token artık hiçbir yoldan çalışmaz.
+        ((Microsoft.Extensions.Caching.Memory.MemoryCache)factory.Services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()).Compact(1.0);
+        time.Advance(TimeSpan.FromSeconds(61));
+        using var later = await client.GetAsync(new Uri("/uretilenler", UriKind.Relative), ct);
+
+        refreshing.StatusCode.ShouldBe(HttpStatusCode.OK);
+        stale.StatusCode.ShouldBe(HttpStatusCode.OK);
+        stale.Headers.Contains("Set-Cookie").ShouldBeTrue();
+        later.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    /// <summary>
     /// Tarayıcı cookie'si biletten uzun yaşar (max-age &gt; 14 gün): 14 gün boşta kalan gerçek tarayıcı cookie'yi hâlâ gönderir,
     /// sunucu süresi dolmuş bileti görür ve giriş sayfası "Oturumunuz sona erdi" bilgisini gösterir (AC-13 sayfa yolu).
     /// </summary>

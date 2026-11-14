@@ -29,7 +29,7 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
     {
         ArgumentNullException.ThrowIfNull(api);
         ArgumentException.ThrowIfNullOrEmpty(refreshToken);
-        var key = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+        var key = KeyOf(refreshToken);
         if (TryGetShared(key, out var shared))
         {
             return shared!;
@@ -76,6 +76,14 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
         }
     }
 
+    /// <inheritdoc />
+    public bool TryGetRotated(string refreshToken, out AuthSessionResponse? session)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(refreshToken);
+        session = TryGetShared(KeyOf(refreshToken), out var shared) && shared is { IsSuccess: true } ? shared.Value : null;
+        return session is not null;
+    }
+
     /// <summary>Gets tutulan refresh kilidi sayısı (kesin sonuçla biten uçuşların kilitleri tutulmaz; geçici hatada kilit kalır).</summary>
     public int ActiveGateCount => _gates.Count;
 
@@ -89,4 +97,6 @@ public abstract class TokenRefreshCoordinatorBase : ITokenRefreshCoordinator
     /// <param name="key">Eski token'ın hash'i.</param>
     /// <param name="result">Sonuç.</param>
     protected abstract void Share(string key, Result<AuthSessionResponse> result);
+
+    private static string KeyOf(string refreshToken) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 }

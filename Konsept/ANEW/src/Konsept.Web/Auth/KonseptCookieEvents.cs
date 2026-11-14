@@ -133,8 +133,15 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
 
         // Bilet yalnızca token yenilenince değil, kullanıldıkça (dakikada en çok bir kez) yenilenir (review R4-1, Req 13);
         // aksi halde süre son refresh'ten sayılır ve oturum son kullanımdan ~14 dk erken düşerdi. Token'sız korunan oturum
-        // (yukarıdaki R2-2 yolu) yenilenmez.
-        if (context.Properties.IssuedUtc is not { } issued || timeProvider.GetUtcNow() - issued >= TicketRenewAfter)
+        // (yukarıdaki R2-2 yolu) yenilenmez. Biletteki refresh token'ı örtüşen başka bir istek bu arada döndürdüyse (review
+        // R7-1) bilet o yeni çiftle yenilenir: geç biten istek eski çifti yazıp tazesini ezmesin; dönüşü bilinen token'la
+        // asla yenilenmez.
+        if (coordinator.TryGetRotated(context.Properties.GetTokenValue(RefreshTokenName)!, out var rotated))
+        {
+            StoreSession(context.Properties, rotated!);
+            context.ShouldRenew = true;
+        }
+        else if (context.Properties.IssuedUtc is not { } issued || timeProvider.GetUtcNow() - issued >= TicketRenewAfter)
         {
             context.ShouldRenew = true;
         }
