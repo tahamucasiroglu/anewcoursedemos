@@ -11,7 +11,9 @@ public sealed class KonseptApiClient : KonseptApiClientBase
 
     /// <summary>Initializes a new instance of the <see cref="KonseptApiClient"/> class.</summary>
     /// <param name="http">Taban adresi ayarlanmış HTTP istemcisi.</param>
-    public KonseptApiClient(HttpClient http)
+    /// <param name="options">İstemci ayarları.</param>
+    public KonseptApiClient(HttpClient http, ApiClientOptions options)
+        : base(options)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }

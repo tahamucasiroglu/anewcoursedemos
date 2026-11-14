@@ -17,4 +17,10 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Ajan bilgisi ya da hata.</returns>
     Task<Result<AgentTestResponse>> TestAgentAsync(CancellationToken cancellationToken);
+
+    /// <summary>Web'in Warning+ loglarını veritabanındaki teknik loga iletir (servis anahtarıyla).</summary>
+    /// <param name="logs">Kayıtlar.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Yazılan kayıt sayısı ya da hata.</returns>
+    Task<Result<int>> ForwardLogsAsync(IReadOnlyList<ForwardedLogRequest> logs, CancellationToken cancellationToken);
 }

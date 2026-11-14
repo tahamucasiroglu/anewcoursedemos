@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Konsept.Shared.Kernel.Enums;
 using Konsept.Shared.Kernel.Results;
+using Konsept.Shared.Kernel.Security;
 using Konsept.Web.ApiClient.Abstract;
 using Konsept.Web.ApiClient.Dtos;
 
@@ -12,7 +13,8 @@ namespace Konsept.Web.ApiClient.Base;
 /// API çağrılarının ortak HTTP mantığı: başarıda JSON gövdesini okur; ProblemDetails'i
 /// <see cref="Error"/>'a çevirir; ağ hatası ve zaman aşımı <see cref="ApiClientErrors.Unavailable"/> olur.
 /// </summary>
-public abstract class KonseptApiClientBase : IKonseptApiClient
+/// <param name="options">İstemci ayarları (servis anahtarı).</param>
+public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptApiClient
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -23,6 +25,18 @@ public abstract class KonseptApiClientBase : IKonseptApiClient
     /// <inheritdoc />
     public Task<Result<AgentTestResponse>> TestAgentAsync(CancellationToken cancellationToken) =>
         SendAsync<AgentTestResponse>(new HttpRequestMessage(HttpMethod.Post, "api/agent/test"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<int>> ForwardLogsAsync(IReadOnlyList<ForwardedLogRequest> logs, CancellationToken cancellationToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "api/internal/logs") { Content = JsonContent.Create(logs, options: Json) };
+        if (!string.IsNullOrEmpty(options?.ServiceKey))
+        {
+            request.Headers.Add(ServiceKeyHeader.Name, options.ServiceKey);
+        }
+
+        return SendAsync<int>(request, cancellationToken);
+    }
 
     /// <summary>İsteği API'ye gönderir.</summary>
     /// <param name="request">HTTP isteği.</param>

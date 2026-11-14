@@ -15,9 +15,11 @@ public static class ApiClientRegistration
     /// <summary>API istemcisini kaydeder.</summary>
     /// <param name="services">Servis koleksiyonu.</param>
     /// <param name="baseUrl">API'nin taban adresi (ör. <c>http://localhost:8001/</c>).</param>
+    /// <param name="serviceKey">İç uçlar için paylaşılan servis anahtarı (yoksa iç uçlar 401 döner).</param>
     /// <returns>Aynı koleksiyon.</returns>
-    public static IServiceCollection AddKonseptApiClient(this IServiceCollection services, Uri baseUrl)
+    public static IServiceCollection AddKonseptApiClient(this IServiceCollection services, Uri baseUrl, string? serviceKey = null)
     {
+        services.AddSingleton(new ApiClientOptions(serviceKey));
         services.AddHttpClient<IKonseptApiClient, KonseptApiClient>(client =>
         {
             client.BaseAddress = baseUrl;

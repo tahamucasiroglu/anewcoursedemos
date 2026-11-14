@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Web.ApiClient\Konsept.Web.ApiClient.csproj" />
     <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Logging\Konsept.Shared.Logging.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Serilog.AspNetCore" />
