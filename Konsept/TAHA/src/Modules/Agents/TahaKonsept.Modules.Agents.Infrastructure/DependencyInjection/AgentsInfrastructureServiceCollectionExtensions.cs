@@ -21,7 +21,7 @@ namespace TahaKonsept.Modules.Agents.Infrastructure.DependencyInjection;
 /// Agents modülü servis kaydı (Api katmanındaki <c>IAgentClientProvider</c> ve <c>IVerificationUrlProvider</c> hariç).
 /// Singleton: bağlantı izleyici, önizleme eşleyici, adres/kod üreticileri, <see cref="AgentsOptions"/>. Scoped: DbContext, depolar, servisler,
 /// <see cref="IAgentGateway"/>, <see cref="IArtifactStore"/>. Uzatma noktaları TryAdd ile (önce kaydeden kazanır):
-/// <see cref="IAgentStageEventHandler"/> (no-op), <see cref="IAgentLogSink"/> (Serilog). Identity köprüleri: <see cref="IAgentTokenIssuer"/>,
+/// <see cref="IAgentStageEventHandler"/> (no-op), <see cref="IAgentLogSink"/> (Serilog + Diagnostics işlem günlüğü). Identity köprüleri: <see cref="IAgentTokenIssuer"/>,
 /// <see cref="ISessionRevocationNotifier"/> (enumerable).
 /// </summary>
 public static class AgentsInfrastructureServiceCollectionExtensions
@@ -60,7 +60,8 @@ public static class AgentsInfrastructureServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Scoped<ISessionRevocationNotifier, AgentSessionRevocationNotifier>());
 
         services.TryAddScoped<IAgentStageEventHandler, NullAgentStageEventHandler>();
-        services.TryAddScoped<IAgentLogSink, LoggingAgentLogSink>();
+        services.TryAddScoped<LoggingAgentLogSink>();
+        services.TryAddScoped<IAgentLogSink, ActivityAgentLogSink>();
 
         services.AddScoped<IValidator<DeviceStartRequest>, DeviceStartRequestValidator>();
         services.AddScoped<IValidator<DeviceTokenRequest>, DeviceTokenRequestValidator>();

@@ -1,7 +1,9 @@
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using TahaKonsept.BuildingBlocks.Infrastructure.Persistence;
+using TahaKonsept.Modules.Diagnostics.Application.Abstract;
 using TahaKonsept.Modules.Providers.Application.Abstract;
 using TahaKonsept.Modules.Providers.Application.Concrete;
 using TahaKonsept.Modules.Providers.Application.Validators;
@@ -11,6 +13,7 @@ using TahaKonsept.Modules.Providers.Infrastructure.Persistence;
 using TahaKonsept.Modules.Providers.Infrastructure.Persistence.Repositories.Concrete;
 using TahaKonsept.Modules.Providers.Infrastructure.Recording.Concrete;
 using TahaKonsept.Modules.Providers.Infrastructure.Security.Concrete;
+using TahaKonsept.Modules.Providers.Infrastructure.Stats.Concrete;
 using TahaKonsept.Modules.Providers.Infrastructure.TextModels.Concrete;
 using TahaKonsept.Shared.Contracts.Providers;
 
@@ -19,7 +22,7 @@ namespace TahaKonsept.Modules.Providers.Infrastructure.DependencyInjection;
 /// <summary>
 /// Providers modülünün DI kaydı. Tekil: katalog, maliyet hesaplayıcı, çağrı kaydedici, anahtar kasası, model fabrikası,
 /// <see cref="IProviderGateway"/> (arka plan servislerinden de doğrudan kullanılabilir). Kapsamlı: depolar, anahtar/kullanım/bütçe
-/// servisleri, <see cref="IBudgetGuard"/>, doğrulayıcılar.
+/// servisleri, <see cref="IBudgetGuard"/>, doğrulayıcılar, yönetim paneli harcama katkıcısı (<c>ProvidersStatsContributor</c>).
 /// </summary>
 public static class ProvidersInfrastructureServiceCollectionExtensions
 {
@@ -54,6 +57,9 @@ public static class ProvidersInfrastructureServiceCollectionExtensions
 
         services.AddScoped<IValidator<SaveApiKeyRequest>, SaveApiKeyRequestValidator>();
         services.AddScoped<IValidator<BudgetSettings>, BudgetSettingsValidator>();
+
+        // Yönetim paneli harcama istatistikleri (Diagnostics katkıcısı).
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IStatsContributor, ProvidersStatsContributor>());
         return services;
     }
 }
