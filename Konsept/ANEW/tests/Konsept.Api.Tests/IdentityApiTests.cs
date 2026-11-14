@@ -210,6 +210,15 @@ public sealed class IdentityApiTests : IClassFixture<IdentityApiFactory>
 
         using var rejected = await AuthenticatedClient.PostAsync(client, _factory.Services, $"/api/auth/{endpoint}", Body(endpoint, endpoint == "login" ? email : AuthenticatedClient.NewEmail()), ct, ip);
         var problem = await rejected.Content.ReadFromJsonAsync<JsonElement>(ct);
+        if (endpoint == "login")
+        {
+            // Hız sınırına takılan yanlış şifreli deneme de hak sayacına/kilide dokunmaz (review R4-2, AC-10).
+            using var rejectedWrong = await AuthenticatedClient.PostAsync(client, _factory.Services, "/api/auth/login", new { email, password = "Yanlis12345" }, ct, ip);
+            rejectedWrong.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+            _factory.Users.Get(email).FailedLoginCount.ShouldBe(0);
+            _factory.Users.Get(email).LockedUntil.ShouldBeNull();
+        }
+
         _factory.Time.Advance(TimeSpan.FromSeconds(61));
         using var reopened = await AuthenticatedClient.PostAsync(client, _factory.Services, $"/api/auth/{endpoint}", Body(endpoint, endpoint == "login" ? email : AuthenticatedClient.NewEmail()), ct, ip);
 
