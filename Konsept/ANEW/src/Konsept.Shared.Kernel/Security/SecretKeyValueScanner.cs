@@ -132,6 +132,13 @@ internal static class SecretKeyValueScanner
 
             after = end;
         }
+        else if (unquoted && TryJsonLiteral(text, keyStart, keyEnd, valueStart, out var literalEnd))
+        {
+            // Tırnaklı JSON anahtarından sonra null/true/false/sayı: değer ',' '}' ']'de biter (JSON dilbilgisi bu
+            // karakterlere izin vermez); sıkı JSON'da sonraki alanlar korunur (hunt r15, hasar).
+            start = valueStart;
+            end = after = literalEnd;
+        }
         else
         {
             (start, end, after) = ReadValue(text, valueStart, ConnectionStringContext(text, keyStart), urlEncoded);
@@ -326,6 +333,38 @@ internal static class SecretKeyValueScanner
         }
 
         return end < text.Length && char.IsLetter(text[end]) ? -1 : end;
+    }
+
+    /// <summary>
+    /// Anahtar çift tırnaklı ve ':' ile ayrılmışsa (<c>"agentToken":null</c>) ve değer bir JSON değişmeziyse (null, true,
+    /// false, sayı) ve hemen ardından ',' '}' ']' boşluk ya da son geliyorsa değişmezin sonu.
+    /// </summary>
+    private static bool TryJsonLiteral(string text, int keyStart, int keyEnd, int valueStart, out int literalEnd)
+    {
+        literalEnd = valueStart;
+        var colon = keyEnd + 1 < text.Length ? SkipInlineSpace(text, keyEnd + 1) : text.Length;
+        if (keyStart == 0 || text[keyStart - 1] != '"' || keyEnd >= text.Length || text[keyEnd] != '"'
+            || colon >= text.Length || text[colon] != ':')
+        {
+            return false;
+        }
+
+        var p = valueStart;
+        while (p < text.Length && (char.IsAsciiLetterLower(text[p]) || char.IsAsciiDigit(text[p]) || text[p] is '-' or '.' or '+'))
+        {
+            p++;
+        }
+
+        var token = text.AsSpan(valueStart, p - valueStart);
+        var isLiteral = token is "null" or "true" or "false"
+            || (token.Length is > 0 and <= 32 && double.TryParse(token, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _));
+        if (!isLiteral || !(p == text.Length || char.IsWhiteSpace(text[p]) || text[p] is ',' or '}' or ']'))
+        {
+            return false;
+        }
+
+        literalEnd = p;
+        return true;
     }
 
     /// <summary>Konumdaki '"' bir JSON dizesini kapatıyor mu: ardından , } ] boşluk ya da metin sonu.</summary>

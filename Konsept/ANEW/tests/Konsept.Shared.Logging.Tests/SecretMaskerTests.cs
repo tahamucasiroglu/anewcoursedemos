@@ -264,6 +264,12 @@ public sealed class SecretMaskerTests
         { "Session cookie issued: konsept_session=Zx9Yw8Vu7Ts6Rq5Po4; HttpOnly; Secure", "Session cookie issued: konsept_session=***", "Zx9Yw8Vu7" },
         { "Ticket for user 42 renewed: ticket=CfDJ8NrAkS1abc", "Ticket for user 42 renewed: ticket=***", "CfDJ8NrAk" },
         { "Salt=Zm9vYmFyYmF6cXV4MTIz, Iterations=600000", "Salt=***, Iterations=600000", "Zm9vYmFy" },
+
+        // Hunt r15 (fix-16): sıkı JSON'da değişmez değer (null/true/false/sayı) sonraki alanları silmez; sayısal sır yine gizli.
+        { "Pairing status: {\"status\":\"Pending\",\"agentToken\":null,\"expiresInSeconds\":240,\"machineName\":\"DESKTOP-01\"}", "Pairing status: {\"status\":\"Pending\",\"agentToken\":***,\"expiresInSeconds\":240,\"machineName\":\"DESKTOP-01\"}", "\u0000" },
+        { "{\"token\":null,\"error\":\"invalid_credentials\",\"remainingAttempts\":2}", "{\"token\":***,\"error\":\"invalid_credentials\",\"remainingAttempts\":2}", "\u0000" },
+        { "{\"pairingCode\":482913,\"agentId\":7}", "{\"pairingCode\":***,\"agentId\":7}", "482913" },
+        { "{\"password\":nullable123,\"x\":1}", "{\"password\":***}", "nullable123" },
     };
 
     /// <summary>64 KB üstü kesilen satırın sonundaki satır sonu korunur; sonraki kayıt aynı satıra yapışmaz (review r4, L-1).</summary>
