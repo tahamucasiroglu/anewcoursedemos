@@ -1,5 +1,5 @@
 # kurgu30 Yöntem Testleri — Taha Konsept
-Tarih: 2026-11-14. Rapor no: 0002. Sürüm: 0.2.2 → 0.2.3.
+Tarih: 2026-11-14. Rapor no: 0002. Sürüm: 0.2.2 → 0.2.3; GPU turu 0.2.4 (sonda).
 Okuyucu notu (AI için): Her satır gerçek hattan geçti (Web/API kuyruğu → orkestratör → `agent --headless`), sahte LLM (`tests/e2e/mock-llm/kurgu30.cjs`, 4 sahne, 51 kelime, İstanbul'un fethi), DB yalnız `tahakonsept_e2e`. Ayrıntılı ölçüm ve komutlar: `docs/E2E-RAPORU.md`. Çıktılar (gitignore): `tests/e2e/out/kurgu30/<etiket>/`.
 
 ## Her başarılı koşuda denetlenen
@@ -80,3 +80,32 @@ Süre = video saniyesi; Render = kuyruktan bitişe toplam (soğuk = ilk kurulum/
 - Kokoro mesajının son metni canlı koşulmadı; web uyarısı tarayıcıda görülmedi.
 - Chatterbox/XTTS modelleri teşhis sırasında indirildi; ses süreleri indirme içermez. FLUX.2 9B için Whisper koşulmadı.
 - Altyazısız / ilerleme çubuksuz kombinasyonlar ve online sağlayıcılar bu turda koşulmadı.
+
+## GPU turu (0.2.4) — 14 Kas 2026
+Önce GPU (4166d09, 52d3c1f) gerçek RTX 3060 Laptop 6 GB'ta kurgu30 ile doğrulandı. Aynı koşucu ve denetimler (ffprobe, 4 kare, volumedetect, 5 okunuş, Whisper small). Cihaz kanıtı: ajan logu + Windows GPU sayaçları (süreç başına adaptör LUID'i; RTX = `0x10357`, Intel UHD ayrı) + `nvidia-smi` (0,5 sn; `tests/e2e/out/kurgu30/logs/vram-gpu-*.csv`, `gpuproc-*.csv`). VRAM tepe = masaüstü dahil toplam (boşta ~0,6–1,0 GB).
+
+| Yöntem | Kullanılan cihaz | Render önce → sonra (s) | Aşama önce → sonra | VRAM tepe | Sonuç |
+|---|---|---|---|---|---|
+| HyperFrames + Supertonic 3 | Supertonic DirectML (RTX, log adı + LUID); Chrome ANGLE/D3D11 RTX (`browserGpuMode probe → hardware`); Compose `h264_nvenc` | 80.2 → 69.8 | SceneRender 62.6 → 54.4, Compose 9.6 → 7.4, Speech 7.4 → 7.2 | 1.68 GB | geçti, WR 0.846 |
+| Remotion + Supertonic 3 | Chrome `--gl=angle` (3D motoru RTX'te); Compose NVENC | 91.4 → 70.9 | SceneRender 71.5 → 60.0, Compose 10.6 → 7.2 | 1.75 GB | geçti, WR 0.865 |
+| Revideo + Supertonic 3 | Chrome ANGLE/D3D11 RTX (düzeltmeyle; önce SwiftShader'daydı); Compose NVENC | 53.3 → 28.6 | SceneRender 24.5 → 14.8, Compose 17.4 → 7.6 | 1.74 GB | düzeltildi+geçti, WR 0.865; ağ yasağı iki kipte doğrulandı |
+| MMS-TTS tr | cuda (düzeltmeyle; ilk koşu CPU tekerleğinde kaldı) | 93.4 → 153.8 soğuk / 85.5 sıcak | Speech 13.1 → 73.7 soğuk (CUDA torch 57 s) / 15.3 sıcak | 1.92 GB | düzeltildi+geçti, WR 0.731–0.75 (CPU 0.673) |
+| EMA Lightning | cuda, düz yol (düzeltmeyle) | 240.2 soğuk → 301.3 soğuk (lightning) → 70.8 | Speech 127.5 soğuk → 232 (lightning soğuk) / 36 (lightning sıcak) → 4.5 | 5.76 → 1.38 GB | düzeltildi; tek başarısız denetim bilinen 25 s alt sınırı (23.00 s, CPU'daki gibi); WR 0.846 |
+| Ahenk Cep | cuda | 193.6 → 150.8 soğuk / 69.5 sıcak | Speech 102.2 → 84.3 soğuk (CUDA torch 73 s) / 6.2 sıcak | 1.37 GB | geçti, WR 0.808–0.827 |
+| FLUX.2 klein 4B + Supertonic 3 | sd.cpp CUDA (sd-cli 4.3 GB, RTX), Supertonic DirectML, Compose NVENC | 214.4 → 222.5 | Images 119 → 138 (görsel ~33 s, Standard) | 5.54 GB | geçti, WR 0.846; NVENC + sd.cpp sığdı (sıralı aşamalar) |
+| FLUX.2 4B, Supertonic açık kalmışken | aynı | 229.7 | boş VRAM 5.25 → 4.6–4.8 GB | 5.71 GB | geçti ama sınırda → düzeltildi (aşağıda) |
+| FLUX.2 4B, düzeltmeden sonra | aynı | 219.0 | boş VRAM 5.48–5.50 GB (ilk görsel 4.83, geçici) | 5.47 GB | geçti, WR 0.865; logda "DirectML oturumu kapatıldı" |
+
+Notlar: sıcak = ortam kurulu, model önbellekte; GPU işçisi her işten sonra kapandığı için her iş torch içe aktarma + CUDA başlatmayı öder (MMS sıcak Speech 15.3 s, CPU 13.1 s — kazanç yok; diğer hafif sesler 4–6 s). Görsel zaten CUDA'daydı, FLUX süresi değişmedi. SceneRender'da koşular arası ±10 s oynama var (son taban koşusu 70.3 s). Hiçbir yöntemde (MMS'in düzeltme öncesi koşusu hariç) CPU'ya düşüş uyarısı yok.
+
+### GPU turunda düzeltilenler (5)
+1. Revideo Chrome GPU'yu hiç kullanmıyordu: chrome-headless-shell `--enable-gpu` olmadan rasterleştirmeyi `disabled_software` (SwiftShader) bırakıyor; eklendi. GPU açılınca WebCodecs donanım kodlayıcısı mp4-wasm süresini bozuyordu (`t: N/A`) → `--disable-accelerated-video-encode` (çizim GPU'da). Gerçek Chrome testi (SystemInfo) (7d6f3d7).
+2. Hafif Python sesleri CPU torch'ta kalıyordu: `torch==2.8.0` isteğini yüklü `2.8.0+cpu` karşıladığı için uv CUDA tekerleğini kurmuyordu; CUDA dizininde `==2.8.0+cu128` sabitlenir, parmak izi değişir (8d79f60).
+3. Supertonic logu kartı göstermiyordu: DXGI yüksek performans sırasıyla "GPU: NVIDIA GeForce RTX 3060 Laptop GPU" yazılır (31b3c95).
+4. EMA Lightning `lightning()` CUDA grafikleri her işte ~28 s (ilk ~170 s) ve 2.9–5.7 GB VRAM harcayıp 0.8 s kazandırıyordu → düz CUDA varsayılan (4a2c481).
+5. Supertonic DirectML oturumu işler arasında ~0.5 GB VRAM tutuyordu → Speech sonunda ReleaseAsync kapatır (ac08df6).
+
+### GPU turunda doğrulanmayanlar
+- Remotion'ın sahne içi kodlaması (`--hardware-acceleration=if-possible`) Windows'ta NVENC'e geçiyor mu ölçülmedi; son kodlama zaten birleştiricide NVENC.
+- CPU yedek yolları (GPU'suz makine, sürücü hatası, VRAM yetmemesi) bu turda canlı tetiklenmedi; birim testli. GPU modunda GPU'ya özgü olmayan bir render hatası CPU'ya düşmez (yalnız log GPU kaynaklı görünürse).
+- Revideo/Remotion görselli koşu ve motorların soğuk kurulumu yine koşulmadı.
