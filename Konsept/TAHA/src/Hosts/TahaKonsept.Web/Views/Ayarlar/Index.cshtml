@@ -60,9 +60,20 @@
                     </div>
                 </header>
                 <div class="tk-card-body">
+                    <ol class="tk-muted" style="margin:0 0 14px;padding-left:20px;line-height:1.7">
+                        <li>Kurulum dosyasını indirip bu bilgisayara kurun (gerekli araçları kurulum ekranı kendisi indirir).</li>
+                        <li>Program açılınca ekranda <strong>XXXX-XXXX</strong> biçiminde bir kod gösterir (kod 10 dakika geçerlidir).</li>
+                        <li>Kodu aşağıya yazıp <strong>Onayla</strong>'ya basın; program birkaç saniye içinde bağlanır ve görev çubuğunda çalışır.</li>
+                    </ol>
+                    <div class="tk-row" style="margin-bottom:16px;align-items:center;gap:10px">
+                        <a class="tk-btn tk-btn-secondary" id="st-agent-download" href="~/downloads/TahaKonsept.Agent-win-Setup.exe" download>
+                            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-monitor"></use></svg> Windows kurulum dosyasını indir
+                        </a>
+                        <span class="tk-hint">Kurulum dosyası henüz yayınlanmadıysa bağlantı çalışmaz; masaüstü programı sürümüyle birlikte eklenecek.</span>
+                    </div>
                     <div class="tk-alert" style="margin-bottom:14px">
                         <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-info"></use></svg>
-                        <span>Masaüstü programını açın; ekranda <strong>XXXX-XXXX</strong> biçiminde bir kod görünecek. Kodu aşağıya yazıp onaylayın.</span>
+                        <span>Kodu gir: masaüstü programındaki <strong>XXXX-XXXX</strong> kodunu yazın. Web'den çıkış yaparsanız program da yetkisini kaybeder ve yeniden eşlemeniz gerekir.</span>
                     </div>
                     <form class="tk-row" id="st-agent-form" autocomplete="off">
                         <input class="tk-input tk-code-input" name="userCode" placeholder="ABCD-1234" maxlength="9" aria-label="Eşleme kodu" />
@@ -130,4 +141,5 @@
 
 @section Scripts {
     <script src="~/js/pages/ayarlar.js" asp-append-version="true"></script>
+    <script src="~/js/pages/settings-agent.js" asp-append-version="true"></script>
 }

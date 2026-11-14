@@ -1,8 +1,8 @@
 /**
  * TK.ayarlar — Ayarlar sayfası: API anahtarları (ekle/değiştir/sil; maskeli gösterim), okunuş sözlüğü (ekle, sil, dinle),
- * masaüstü programı eşleme (kod onayı + eşlenmiş bilgisayarlar, 10 sn polling), önerileri sıfırla, tema, bütçe limiti.
+ * önerileri sıfırla, tema, bütçe limiti. Masaüstü programı bölümü ayrı modüldedir: settings-agent.js (TK.settingsAgent).
  * Bölüm menüsü kaydırmayla senkron. MVC uçları: /Ayarlar/{ApiAnahtarlari, ApiAnahtari, ApiAnahtariSil, Sozluk, SozlukSil,
- * SozlukDinle, Ajanlar, CihazOnayla, AjanKaldir, OnerileriSifirla, Butce}. Tek modül (IIFE).
+ * SozlukDinle, OnerileriSifirla, Butce}. Tek modül (IIFE).
  */
 (function (window, $) {
     'use strict';
@@ -73,23 +73,6 @@
         });
     }
 
-    /* ---------------- Masaüstü programı ---------------- */
-    function renderAgents(items) {
-        var $a = $('#st-agents');
-        if (!items.length) { $a.html(U.empty('monitor', 'Eşlenmiş bilgisayar yok', 'Masaüstü programını kurup yukarıdaki kodla eşleyin.')); return; }
-        var html = '<ul class="tk-list">';
-        $.each(items, function (_, a) {
-            var online = !!(a.isOnline || a.online);
-            html += '<li class="tk-list-item" style="cursor:default" data-id="' + U.escape(a.id) + '">' +
-                '<span class="tk-thumb" style="width:40px;aspect-ratio:1">' + U.icon('monitor', 'tk-ic-sm') + '</span>' +
-                '<div class="tk-list-main"><div class="tk-list-title">' + U.escape(a.machineName || a.name || 'Bilgisayar') + '</div>' +
-                '<div class="tk-list-sub">' + U.escape([a.version ? 's' + a.version : '', a.gpuName || '', a.vramGb ? a.vramGb + ' GB VRAM' : '', a.lanIp || ''].filter(Boolean).join(' · ')) + '</div></div>' +
-                '<span class="tk-badge ' + (online ? 'is-success">Çevrimiçi' : '">Çevrimdışı') + '</span>' +
-                '<button type="button" class="tk-mini-btn is-danger" data-act="unpair" title="Eşlemeyi kaldır" aria-label="Eşlemeyi kaldır">' + U.icon('x') + '</button></li>';
-        });
-        $a.html(html + '</ul>');
-    }
-
     /* ---------------- Bütçe ---------------- */
     function loadBudget() {
         TK.api.get('/Ayarlar/Butce', null, { silent: true }).done(function (b) {
@@ -149,28 +132,6 @@
             }
         });
 
-        $('#st-agent-form [name=userCode]').on('input', function () {
-            var v = $(this).val().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
-            $(this).val(v.length > 4 ? v.slice(0, 4) + '-' + v.slice(4) : v);
-        });
-        $('#st-agent-form').on('submit', function (e) {
-            e.preventDefault();
-            var code = $(this).find('[name=userCode]').val();
-            if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) { TK.toast.warning('Kod XXXX-XXXX biçiminde olmalı.'); return; }
-            var $form = $(this);
-            U.busy($form.find('[type=submit]'), TK.api.post('/Ayarlar/CihazOnayla', { userCode: code })).done(function () {
-                TK.toast.success('Bilgisayar eşlendi. Masaüstü programı birkaç saniye içinde bağlanacak.');
-                $form[0].reset();
-                if (TK.ayarlar.agentPoller) { TK.ayarlar.agentPoller.now(); }
-            });
-        });
-        $('#st-agents').on('click', '[data-act=unpair]', function () {
-            var id = $(this).closest('[data-id]').attr('data-id');
-            TK.modal.confirm('Eşlemeyi kaldır', 'Bu bilgisayarın erişimi iptal edilecek; tekrar kullanmak için yeniden eşlemeniz gerekir.', 'Kaldır').done(function () {
-                TK.api.del('/Ayarlar/AjanKaldir/' + encodeURIComponent(id)).done(function () { TK.ayarlar.agentPoller.now(); });
-            });
-        });
-
         $('#st-reset').on('click', function () {
             var $btn = $(this);
             TK.modal.confirm('Önerileri sıfırla', 'Konu önerisi hafızası temizlenecek. Devam edilsin mi?', 'Sıfırla').done(function () {
@@ -198,17 +159,14 @@
         if (!$('#tk-ayarlar').length) { return; }
         U = TK.util;
         $('#st-keys').html('<div style="padding:16px">' + U.skeleton(4) + '</div>');
-        $('#st-dict, #st-agents').html(U.skeleton(2));
+        $('#st-dict').html(U.skeleton(2));
         bind();
         loadKeys();
         loadDict();
         loadBudget();
-        TK.ayarlar.agentPoller = TK.poll('/Ayarlar/Ajanlar', 10000, function (d) { renderAgents(U.items(d)); }, {
-            onError: function () { $('#st-agents').html(U.empty('alert', 'Bilgisayar listesi alınamadı', 'API şu an yanıt vermiyor.')); }
-        });
         if (window.location.hash) { syncNav(); }
     }
 
-    TK.ayarlar = { init: init, agentPoller: null };
+    TK.ayarlar = { init: init };
     $(init);
 })(window, window.jQuery);
