@@ -35,10 +35,10 @@
 - Fast/full ayrımı "Two speeds" kural 4'e göre bir **seçiciyle** yapılır, proje listesiyle değil:
   xUnit trait `Category=Integration`. fast `--filter "Category!=Integration"`, full ek olarak
   `--filter "Category=Integration"` çalıştırır; böylece her test iki profilden birinde koşar.
-- `scripts/check.conf` içinde `requires integration: docker info` (ve `dotnet --version`,
-  `node --version` gibi) satırları bulunur. **Docker şu an kurulu değil**; kurulum walking skeleton
-  PLAN gate'inden önce yapılacak → `specs/backlog.md` (`Source: bootstrap 2026-11-14`). Kurulana kadar
-  full profil bu makinede çalışamaz ve `scripts/doctor` bunu gösterir.
+- `scripts/check.conf` içindeki önkoşullar: `requires build: dotnet --version`, `requires js-test`
+  (Node ≥ 22) ve `requires integration: sh scripts/test-db/run-integration.sh --check` (taşınabilir
+  PostgreSQL 17 kurulu mu; kurulum `sh scripts/test-db/install.sh`). Docker şu an kullanılmıyor (spec 0001
+  D4); kurulunca entegrasyon testleri Testcontainers'a geçer → `specs/backlog.md` B-1.
 
 **Belirlenimcilik (bu stack'te nasıl)**
 - **Saat:** üretim kodu `DateTime.Now`/`UtcNow` yerine `TimeProvider` kullanır; testlerde

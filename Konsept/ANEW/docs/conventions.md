@@ -63,7 +63,7 @@
 |---|---|---|
 | K-1 | **Bir dosyada tek nesne** (class, interface, record, enum); iç içe tip yasak; dosya adı = tip adı | StyleCop **SA1402 + SA1649 hata** + iç içe tip için architecture test |
 | K-2 | **Çıplak class yok:** davranış taşıyan her tip (servis, motor, sağlayıcı, repository) `I…` (`Abstract/`) → `…Base` (`Base/`) → somut sınıf (`Concrete/`) zinciriyle kurulur | Architecture test: `Concrete/` altındaki her sınıf bir `Base`'den türer ve bir `Abstract/` interface'ini uygular |
-| K-2 istisnaları | Davranış taşımayan tipler: DTO/record, entity, enum, EF konfigürasyonları, migration'lar, `Program.cs`, testler. Controller'lar (`ControllerBase`) ve validator'lar (`AbstractValidator`) zaten bir base'den türer. | Architecture testteki istisna listesi |
+| K-2 istisnaları | Davranış taşımayan tipler: DTO/record, entity, enum, EF konfigürasyonları, migration'lar, `Program.cs`, testler. Controller'lar (`ControllerBase`) ve validator'lar (`AbstractValidator`) zaten bir base'den türer. Çerçeve adaptörleri: çerçevenin kendi sözleşmesini uygulayan ince sınıflar — middleware, MVC filter (`IAsyncActionFilter`), SignalR hub, `IRetryPolicy`, `ICommand`, `IDesignTimeDbContextFactory`; mantık taşımazlar, mantık bir servise gider. | Architecture testteki istisna listesi (davranış adı taşımayan sınıflar `Concrete/` dışında kalabilir) |
 | K-3 | **Her tipin başında summary** (amacı, önemli üyeleri); her public üyede summary | Derleyici **CS1591 hata** |
 | K-4 | **Controller tek satır:** doğrulama generic validation filter ile otomatik; gövde yalnızca `return await _service.X(request).ToActionResult();` | Architecture test (Y-6) + review |
 | K-5 | **DRY:** aynı mantık birden fazla yerdeyse generic metoda ya da base sınıfa toplanır | Review |
@@ -123,8 +123,8 @@
 ## Enforced by tooling
 <!-- List what the compiler/linter/analyzers already enforce, so review doesn't re-litigate it.
 Wire new rules into `scripts/check` whenever possible — prose is advice, tooling is law. -->
-Greenfield: aşağıdaki adımlar `scripts/check.conf` içinde yorum satırı olarak planlıdır ve walking
-skeleton'da etkinleştirilir. Etkinleşenler review'da yeniden tartışılmaz.
+Aşağıdaki kurallar walking skeleton'da (plan 0001) `scripts/check.conf` adımlarıyla etkinleşti; review'da
+yeniden tartışılmaz.
 
 | Kural | Araç |
 |---|---|
