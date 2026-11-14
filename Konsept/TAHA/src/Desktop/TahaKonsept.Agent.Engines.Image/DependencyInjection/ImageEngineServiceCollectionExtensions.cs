@@ -47,6 +47,8 @@ public static class ImageEngineServiceCollectionExtensions
         services.TryAddSingleton<IGpuCapabilityProbe, WindowsGpuCapabilityProbe>();
         services.TryAddSingleton<ISdCppInstaller, GitHubSdCppInstaller>();
         services.TryAddSingleton<ISdCppArgumentBuilder, SdCppArgumentBuilder>();
+        services.TryAddSingleton<ISdCppMemoryPlanner, SdCppMemoryPlanner>();
+        services.TryAddSingleton<IGpuMemoryProbe, NvidiaSmiGpuMemoryProbe>();
         services.TryAddSingleton<IComfyUiClient, ComfyUiHttpClient>();
         services.TryAddSingleton<IComfyUiWorkflowProvider, EmbeddedComfyUiWorkflowProvider>();
 

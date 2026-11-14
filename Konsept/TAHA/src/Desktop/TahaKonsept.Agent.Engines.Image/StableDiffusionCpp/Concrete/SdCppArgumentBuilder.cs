@@ -12,7 +12,7 @@ public sealed class SdCppArgumentBuilder : SdCppArgumentBuilderBase
     private static readonly string[] LowVram = ["--offload-to-cpu", "--flash-attn", "auto,diffusion=on", "--vae-tiling"];
 
     /// <inheritdoc />
-    protected override IReadOnlyList<string> LowVramArgs => LowVram;
+    public override IReadOnlyList<string> LowVramArgs => LowVram;
 
     /// <inheritdoc />
     protected override string FlagFor(ImageModelFileRole role) => role switch

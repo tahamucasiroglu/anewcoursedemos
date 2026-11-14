@@ -7,14 +7,22 @@ namespace TahaKonsept.Agent.Engines.Image.StableDiffusionCpp.Base;
 
 /// <summary>
 /// sd-cli argüman üreticisi tabanı. Sıra: model dosyaları (rol → bayrak, <see cref="FlagFor"/>) → istem → boyut/tohum/adım →
-/// örnekleme (cfg, sampler, scheduler, flow-shift) → modele özgü ek argümanlar → düşük VRAM bayrakları (<see cref="LowVramArgs"/>) → çıktı.
+/// örnekleme (cfg, sampler, scheduler, flow-shift) → modele özgü ek argümanlar → bellek bayrakları (planlayıcıdan ya da <see cref="LowVramArgs"/>) → çıktı.
 /// Sayılar her zaman <see cref="CultureInfo.InvariantCulture"/> ile yazılır (Türkçe kültürde ondalık virgül sorunu olmasın).
 /// </summary>
 public abstract class SdCppArgumentBuilderBase : ISdCppArgumentBuilder
 {
     /// <inheritdoc />
-    public IReadOnlyList<string> Build(ImageModelDefinition model, Func<ImageModelFile, string> resolvePath, ImageRequest request, bool lowVram)
+    public IReadOnlyList<string> Build(ImageModelDefinition model, Func<ImageModelFile, string> resolvePath, ImageRequest request, bool lowVram) =>
+        Build(model, resolvePath, request, lowVram ? LowVramArgs : []);
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> Build(ImageModelDefinition model, Func<ImageModelFile, string> resolvePath, ImageRequest request, IReadOnlyList<string> memoryArgs)
     {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(resolvePath);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(memoryArgs);
         var args = new List<string>();
         foreach (var file in model.Files)
         {
@@ -48,17 +56,14 @@ public abstract class SdCppArgumentBuilderBase : ISdCppArgumentBuilder
         }
 
         args.AddRange(model.ExtraArgs);
-        if (lowVram)
-        {
-            args.AddRange(LowVramArgs);
-        }
+        args.AddRange(memoryArgs);
 
         args.AddRange(["-o", request.OutputPath]);
         return args;
     }
 
-    /// <summary>Düşük VRAM (≈6 GB) için eklenen bayraklar.</summary>
-    protected abstract IReadOnlyList<string> LowVramArgs { get; }
+    /// <summary>Düşük VRAM (≈6 GB) için eklenen standart bayraklar.</summary>
+    public abstract IReadOnlyList<string> LowVramArgs { get; }
 
     /// <summary>Dosya rolünün sd-cli bayrağı.</summary>
     /// <param name="role">Rol.</param>

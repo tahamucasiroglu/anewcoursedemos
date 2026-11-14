@@ -51,20 +51,25 @@ public static class EngineFactory
     /// <param name="handler">HTTP işleyicisi (isteğe bağlı; yoksa her istek 404).</param>
     /// <param name="options">Ayarlar (isteğe bağlı).</param>
     /// <param name="catalog">Katalog (isteğe bağlı; varsayılan gömülü katalog).</param>
+    /// <param name="gpuMemory">Boş VRAM yoklaması (isteğe bağlı; varsayılan "bilinmiyor").</param>
     /// <returns>Motor.</returns>
-    public static StableDiffusionCppImageEngine CreateSdCpp(IAgentPaths paths, IProcessRunner runner, HttpMessageHandler? handler = null, ImageEngineOptions? options = null, IImageModelCatalog? catalog = null)
+    public static StableDiffusionCppImageEngine CreateSdCpp(IAgentPaths paths, IProcessRunner runner, HttpMessageHandler? handler = null, ImageEngineOptions? options = null, IImageModelCatalog? catalog = null, IGpuMemoryProbe? gpuMemory = null)
     {
+        var builder = new SdCppArgumentBuilder();
+        var probe = gpuMemory ?? Substitute.For<IGpuMemoryProbe>();
         var opts = options ?? new ImageEngineOptions();
         var http = handler ?? new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
         return new StableDiffusionCppImageEngine(
             catalog ?? new EmbeddedImageModelCatalog(),
             CreateDownloader(http, opts),
             CreateInstaller(paths, http, options: opts),
-            new SdCppArgumentBuilder(),
+            builder,
             runner,
             paths,
             MsOptions.Create(opts),
-            NullLogger<StableDiffusionCppImageEngine>.Instance);
+            NullLogger<StableDiffusionCppImageEngine>.Instance,
+            new SdCppMemoryPlanner(builder),
+            probe);
     }
 
     /// <summary>ComfyUI motoru.</summary>

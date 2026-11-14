@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using Shouldly;
 using TahaKonsept.Agent.Abstractions.Image;
+using TahaKonsept.Agent.Engines.Image.Gpu.Concrete;
 using TahaKonsept.Agent.Engines.Image.Options;
 using TahaKonsept.Agent.Engines.Image.Tests.Support;
 using Xunit;
@@ -13,8 +14,12 @@ namespace TahaKonsept.Agent.Engines.Image.Tests.Integration;
 /// </summary>
 public sealed class RealStableDiffusionCppTests
 {
-    /// <summary>Z-Image-Turbo Q3_K (difüzyon ≈3 GB + hesap tamponları) için gereken asgari boş VRAM; 4,3 GB boşta OOM gözlendi.</summary>
-    private const int MinFreeVramMiB = 5000;
+    /// <summary>
+    /// Asgari boş VRAM. Eski sabit bayraklarla (<c>--offload-to-cpu</c>) 4,3 GB boşta CUDA OOM gözlendi (eşik 5000 idi); motor artık boş VRAM'e
+    /// göre azaltılmış kipe geçiyor (metin kodlayıcı CPU'da + <c>--max-vram</c>): 3,65 GB boşta 512x768 ≈24 sn'de üretildi. Altında en agresif
+    /// kip bile çok yavaşlar / sığmayabilir.
+    /// </summary>
+    private const int MinFreeVramMiB = 3500;
 
     /// <summary>İkili çalışıyor: <c>--help</c> 0 ile döner ve beklenen bayrakları listeler.</summary>
     [Fact]
@@ -36,7 +41,7 @@ public sealed class RealStableDiffusionCppTests
         }
     }
 
-    /// <summary>Z-Image-Turbo ile gerçek 512x768 görsel üretir (RTX 3060 Laptop 6 GB'ta ≈30 sn).</summary>
+    /// <summary>Z-Image-Turbo ile gerçek 512x768 görsel üretir (RTX 3060 Laptop 6 GB'ta ≈25–30 sn; boş VRAM'e göre bellek kipi otomatik).</summary>
     [Fact]
     public async Task Generates_real_z_image_turbo_512x768()
     {
@@ -44,12 +49,17 @@ public sealed class RealStableDiffusionCppTests
         Assert.SkipWhen(toolsDev is null || FindCli() is null, "sd-cli.exe .tools-dev altında yok");
 
         var paths = new FakeAgentPaths(toolsDev!, toolsDir: toolsDev, modelsDir: Path.Combine(toolsDev!, "models"));
-        var engine = EngineFactory.CreateSdCpp(paths, new LocalProcessRunner(), options: new ImageEngineOptions { AutoDownloadModels = false });
+        var runner = new LocalProcessRunner();
+        var engine = EngineFactory.CreateSdCpp(
+            paths,
+            runner,
+            options: new ImageEngineOptions { AutoDownloadModels = false },
+            gpuMemory: new NvidiaSmiGpuMemoryProbe(runner, new WindowsGpuCapabilityProbe()));
         Assert.SkipUnless(engine.IsModelInstalled("z-image-turbo"), "Z-Image-Turbo dosyaları .tools-dev/models/image altında yok");
         var freeMiB = GpuMemoryProbe.FreeMiB();
         Assert.SkipWhen(
             freeMiB is < MinFreeVramMiB,
-            $"Boş VRAM {freeMiB} MiB < {MinFreeVramMiB} MiB (başka uygulamalar GPU belleğini tutuyor); Z-Image-Turbo CUDA OOM verir.");
+            $"Boş VRAM {freeMiB} MiB < {MinFreeVramMiB} MiB (başka uygulamalar GPU belleğini tutuyor); düşük bellek kipinde bile Z-Image-Turbo sığmaz.");
 
         var output = Path.Combine(toolsDev!, "out", "engine-test.png");
         var request = new ImageRequest(

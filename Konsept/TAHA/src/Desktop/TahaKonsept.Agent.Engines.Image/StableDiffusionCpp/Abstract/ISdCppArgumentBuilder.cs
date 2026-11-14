@@ -13,4 +13,15 @@ public interface ISdCppArgumentBuilder
     /// <param name="lowVram">Düşük VRAM bayrakları eklensin mi.</param>
     /// <returns>Argümanlar.</returns>
     IReadOnlyList<string> Build(ImageModelDefinition model, Func<ImageModelFile, string> resolvePath, ImageRequest request, bool lowVram);
+
+    /// <summary>Argüman listesini verilen bellek bayraklarıyla üretir (bellek planlayıcısı seçer).</summary>
+    /// <param name="model">Model tanımı.</param>
+    /// <param name="resolvePath">Katalog dosyasını yerel tam yola çevirir.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="memoryArgs">Bellek bayrakları (çıktıdan önce eklenir).</param>
+    /// <returns>Argümanlar.</returns>
+    IReadOnlyList<string> Build(ImageModelDefinition model, Func<ImageModelFile, string> resolvePath, ImageRequest request, IReadOnlyList<string> memoryArgs);
+
+    /// <summary>Standart düşük VRAM (≈6 GB) bayrakları.</summary>
+    IReadOnlyList<string> LowVramArgs { get; }
 }

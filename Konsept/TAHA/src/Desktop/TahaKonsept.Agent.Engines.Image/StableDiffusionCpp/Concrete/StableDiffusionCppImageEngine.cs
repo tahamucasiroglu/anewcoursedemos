@@ -9,6 +9,7 @@ using TahaKonsept.Agent.Engines.Image.Base;
 using TahaKonsept.Agent.Engines.Image.Catalog;
 using TahaKonsept.Agent.Engines.Image.Catalog.Abstract;
 using TahaKonsept.Agent.Engines.Image.Downloads.Abstract;
+using TahaKonsept.Agent.Engines.Image.Gpu.Abstract;
 using TahaKonsept.Agent.Engines.Image.Options;
 using TahaKonsept.Agent.Engines.Image.StableDiffusionCpp.Abstract;
 using TahaKonsept.BuildingBlocks.Domain.Results;
@@ -20,6 +21,9 @@ namespace TahaKonsept.Agent.Engines.Image.StableDiffusionCpp.Concrete;
 /// RTX 3060 Laptop 6 GB'ta Z-Image-Turbo Q3_K 512x768 8 adım ≈25 sn ölçüldü).
 /// <see cref="EnsureReadyAsync"/>: ikiliyi kurar + varsayılan modeli (<see cref="ImageEngineOptions.DefaultModelKey"/>) indirir.
 /// Üretimde eksik model dosyaları <see cref="ImageEngineOptions.AutoDownloadModels"/> açıksa indirilir.
+/// Bellek: üretimden hemen önce boş VRAM okunur (<see cref="IGpuMemoryProbe"/>) ve kip seçilir (<see cref="ISdCppMemoryPlanner"/>:
+/// standart / azaltılmış — metin kodlayıcı CPU'da + <c>--max-vram</c>); CUDA bellek hatasında (<see cref="IsOutOfMemory"/>) bir kez en agresif
+/// kiple (metin kodlayıcı + VAE CPU'da) yeniden denenir.
 /// </summary>
 public sealed class StableDiffusionCppImageEngine : ImageEngineBase
 {
@@ -31,6 +35,13 @@ public sealed class StableDiffusionCppImageEngine : ImageEngineBase
     private readonly ISdCppInstaller _installer;
     private readonly ISdCppArgumentBuilder _argumentBuilder;
     private readonly IProcessRunner _processRunner;
+    private readonly ISdCppMemoryPlanner _memoryPlanner;
+    private readonly IGpuMemoryProbe _gpuMemory;
+
+    private static readonly string[] OutOfMemoryMarkers =
+    [
+        "out of memory", "cannot make enough memory available", "workspace capacity check", "cudamalloc", "failed to allocate", "alloc_buffer",
+    ];
 
     /// <summary>Motoru oluşturur.</summary>
     /// <param name="catalog">Model kataloğu.</param>
@@ -41,6 +52,8 @@ public sealed class StableDiffusionCppImageEngine : ImageEngineBase
     /// <param name="paths">Ajan klasörleri.</param>
     /// <param name="options">Ayarlar.</param>
     /// <param name="logger">Günlükleyici.</param>
+    /// <param name="memoryPlanner">Bellek kipi planlayıcısı.</param>
+    /// <param name="gpuMemory">Boş VRAM yoklaması.</param>
     public StableDiffusionCppImageEngine(
         IImageModelCatalog catalog,
         IModelFileDownloader downloader,
@@ -49,12 +62,16 @@ public sealed class StableDiffusionCppImageEngine : ImageEngineBase
         IProcessRunner processRunner,
         IAgentPaths paths,
         IOptions<ImageEngineOptions> options,
-        ILogger<StableDiffusionCppImageEngine> logger)
+        ILogger<StableDiffusionCppImageEngine> logger,
+        ISdCppMemoryPlanner memoryPlanner,
+        IGpuMemoryProbe gpuMemory)
         : base(catalog, downloader, paths, options.Value, logger)
     {
         _installer = installer;
         _argumentBuilder = argumentBuilder;
         _processRunner = processRunner;
+        _memoryPlanner = memoryPlanner ?? throw new ArgumentNullException(nameof(memoryPlanner));
+        _gpuMemory = gpuMemory ?? throw new ArgumentNullException(nameof(gpuMemory));
     }
 
     /// <inheritdoc />
@@ -110,12 +127,24 @@ public sealed class StableDiffusionCppImageEngine : ImageEngineBase
             File.Delete(outputPath);
         }
 
-        var arguments = _argumentBuilder.Build(model, GetModelFilePath, request with { OutputPath = outputPath }, Options.LowVram);
-        var tail = new Queue<string>(TailLineCount);
-        var spec = new ProcessSpec(executable.Value, arguments, Path.GetDirectoryName(executable.Value), Timeout: Options.GenerationTimeout);
+        var targeted = request with { OutputPath = outputPath };
+        var plan = _memoryPlanner.Plan(model, await _gpuMemory.GetFreeVramMiBAsync(ct).ConfigureAwait(false), Options.LowVram, aggressive: false);
+        var (result, details) = await RunOnceAsync(executable.Value, model, targeted, plan, ct).ConfigureAwait(false);
+        if (!result.TimedOut && !result.Succeeded && plan.Level != SdCppMemoryLevel.Minimal && IsOutOfMemory(details))
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
 
-        Logger.LogInformation("sd.cpp üretimi başlıyor: {Model} {Width}x{Height} tohum {Seed}", model.Key, request.Width, request.Height, request.Seed);
-        var result = await _processRunner.RunAsync(spec, line => OnOutput(line, tail), ct).ConfigureAwait(false);
+            var retry = _memoryPlanner.Plan(model, await _gpuMemory.GetFreeVramMiBAsync(ct).ConfigureAwait(false), Options.LowVram, aggressive: true);
+            Logger.LogWarning(
+                "sd.cpp GPU belleği yetmedi ({Level}, boş {Free} MiB); en agresif kiple yeniden deneniyor (boş {RetryFree} MiB)",
+                plan.Level,
+                plan.FreeVramMiB,
+                retry.FreeVramMiB);
+            (result, details) = await RunOnceAsync(executable.Value, model, targeted, retry, ct).ConfigureAwait(false);
+        }
 
         if (result.TimedOut)
         {
@@ -124,18 +153,48 @@ public sealed class StableDiffusionCppImageEngine : ImageEngineBase
 
         if (!result.Succeeded || !File.Exists(outputPath))
         {
-            string details;
-            lock (tail)
-            {
-                details = string.Join(Environment.NewLine, tail);
-            }
-
             Logger.LogError("sd.cpp başarısız (çıkış {ExitCode}): {Details}", result.ExitCode, details);
-            return Error.Failure("image.sdcpp.failed", $"stable-diffusion.cpp görsel üretemedi (çıkış kodu {result.ExitCode}). Son çıktı:{Environment.NewLine}{details}");
+            var hint = IsOutOfMemory(details) ? " GPU belleği yetmedi; GPU kullanan uygulamaları (tarayıcı, OBS, oyun) kapatıp tekrar deneyin." : string.Empty;
+            return Error.Failure("image.sdcpp.failed", $"stable-diffusion.cpp görsel üretemedi (çıkış kodu {result.ExitCode}).{hint} Son çıktı:{Environment.NewLine}{details}");
         }
 
         Logger.LogInformation("sd.cpp görseli üretildi: {Path} ({Seconds:0.0} sn)", outputPath, result.Duration.TotalSeconds);
         return new ImageOutput(outputPath);
+    }
+
+    /// <summary>Çıktı CUDA/GPU bellek yetersizliğini mi gösteriyor.</summary>
+    /// <param name="output">Son çıktı satırları.</param>
+    /// <returns>Bellek hatası mı.</returns>
+    public static bool IsOutOfMemory(string? output) =>
+        !string.IsNullOrEmpty(output) && OutOfMemoryMarkers.Any(m => output.Contains(m, StringComparison.OrdinalIgnoreCase));
+
+    private async Task<(ProcessResult Result, string Details)> RunOnceAsync(
+        string executable,
+        ImageModelDefinition model,
+        ImageRequest request,
+        SdCppMemoryPlan plan,
+        CancellationToken ct)
+    {
+        var arguments = _argumentBuilder.Build(model, GetModelFilePath, request, plan.Arguments);
+        var tail = new Queue<string>(TailLineCount);
+        var spec = new ProcessSpec(executable, arguments, Path.GetDirectoryName(executable), Timeout: Options.GenerationTimeout);
+
+        Logger.LogInformation(
+            "sd.cpp üretimi başlıyor: {Model} {Width}x{Height} tohum {Seed}, bellek kipi {Level} (boş VRAM {Free} MiB)",
+            model.Key,
+            request.Width,
+            request.Height,
+            request.Seed,
+            plan.Level,
+            plan.FreeVramMiB);
+        var result = await _processRunner.RunAsync(spec, line => OnOutput(line, tail), ct).ConfigureAwait(false);
+        string details;
+        lock (tail)
+        {
+            details = string.Join(Environment.NewLine, tail);
+        }
+
+        return (result, details);
     }
 
     private void OnOutput(string line, Queue<string> tail)
