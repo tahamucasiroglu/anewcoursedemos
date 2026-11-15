@@ -86,6 +86,19 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 - **Varsayılan: kapalı (default-deny).** Her API endpoint'i giriş ister; yalnızca login ve kayıt gibi açıkça
   işaretlenmiş uçlar açıktır.
 - **Yetki tabanlı politikalar:** örn. `admin.panel`, `publish.use`, `model.use:<model>`; roller bu yetkilerin paketidir.
+- **Roller (0011):** iki rol — `user` (varsayılan, yetkisiz) ve `admin` (`admin.panel`); `identity.users.role` sütununda (check
+  constraint). **Yetki her istekte veritabanından okunur, JWT'de rol/yetki taşınmaz:** Api'nin her istekteki oturum doğrulaması
+  (`sid`) aynı sorguda rolü de alır ve principal'a `konsept.perm` claim'lerini ekler; token'dan gelen aynı adlı claim'ler önce
+  silinir (sahte claim işe yaramaz). Rol değişikliği bir sonraki istekte geçerlidir, yeniden giriş gerekmez. Web de yetkileri her
+  istekte `GET api/auth/session` yanıtından yeniden kurar; Api erişilemezse hiç yetki yoktur (kapalı başarısızlık). Yetkisiz sayfa
+  `/yetkisiz` (403, "Bu sayfaya erişim yetkiniz yok"), yetkisiz Ajax 403 JSON (`auth.forbidden`, "Bu işlem için yetkiniz yok"),
+  Api'de 403 ve gövdede admin verisi yok.
+- **İlk admin (0011):** yalnızca **`Identity:AdminEmail`** ayarı (Pi'de `/etc/anewconcept/api.env` → `Identity__AdminEmail`;
+  gizli bilgi değil, repoda değeri yok — `appsettings.json`'da boş). Karşılaştırma 0002 kuralıyla (kırpma + kültürden bağımsız
+  büyük harf, ordinal). Kayıtta eşleşen hesap admin olur; **açılış senkronu** (arka planda, DB hazır değilse 30 sn arayla yeniden
+  dener, migrate-on-startup kapalı olsa da çalışır) ayarı tek doğruluk kaynağı yapar: eşleşen hesap admin, diğer her hesap `user`;
+  ayar boşsa kimse admin değildir. İstekteki hiçbir alan (kayıt formuna eklenen `role` vb.) rolü etkilemez; rol yönetim arayüzü
+  yoktur. `deploy/pi/provision.sh` bu satırı yazmaz, silmez, ezmez (`DeployAdminEmailTests`).
 - **Asıl yetki kontrolü API'dedir.** Web yetkisiz butonları gizler ama karar her zaman API'nindir.
 - **Sahiplik (BR-1):** EF Core global query filter ile her sorgu otomatik olarak `UserId`'ye göre filtrelenir.
 - **Rate limiting:** login ve üretim uçlarında. Giriş/kayıt sınırı (0002) **yalnızca Api'de**: istemci IP'si başına 60 sn'de

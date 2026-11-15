@@ -47,6 +47,10 @@ if ! grep -q '^Auth__SigningKey=' /etc/anewconcept/api.env; then
   umask 027
   printf 'Auth__SigningKey=%s\n' "$(openssl rand -hex 32)" >> /etc/anewconcept/api.env
 fi
+# İlk admin e-postası (spec 0011, plan 0011 Risk 8): Identity__AdminEmail satırı api.env'e elle (ya da kurulumu yapan
+# orkestratörce) eklenir; gizli bilgi değildir ama repoda değeri yoktur. Bu betik o satırı yazmaz, silmez, ezmez; api.env
+# yalnızca yoksa oluşturulur ve yalnızca eksik satırlar eklenir. Satır yoksa ya da boşsa hiçbir hesap admin olmaz; Api her
+# açılışta rolleri bu ayara eşitler.
 # Web çerez şifreleme anahtarları (plan 0002, B-46): kalıcı klasör; silinirse tüm oturumlar düşer.
 install -d -o anewconcept -g anewconcept -m 700 /opt/anewconcept/keys /opt/anewconcept/keys/web
 umask 027
