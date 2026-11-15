@@ -14,7 +14,7 @@
 | Veri (yazılabilir tek yer) | `/var/lib/tahakonsept` (kullanıcı `tahakonsept`, 0750) |
 | App_Data | `/var/lib/tahakonsept/App_Data` (`keys/` 0700: `jwt.key`, `master.key`, `web-dataprotection/`; `artifacts/`) |
 | Loglar (Serilog, günlük, 7 gün) | `/var/lib/tahakonsept/logs/api-YYYYMMDD.log`, `web-YYYYMMDD.log` + journald |
-| Gizli ortam | `/var/lib/tahakonsept/tahakonsept.env` (0600, sahibi `tahakonsept`): `TAHAKONSEPT_DB_PASSWORD=...` |
+| Gizli ortam | `/var/lib/tahakonsept/tahakonsept.env` (0600, sahibi `tahakonsept`): `TAHAKONSEPT_DB_PASSWORD`, `TAHAKONSEPT_ADMIN_EMAIL`, `TAHAKONSEPT_ADMIN_PASSWORD_HASH` (her deploy'da `TAHA/.env`'den yazılır, bkz. §5) |
 | Servisler | `tahakonsept-api.service` (0.0.0.0:7111, LAN — masaüstü ajanı bağlanır), `tahakonsept-web.service` (0.0.0.0:7110) |
 | Veritabanı | PostgreSQL 17, `localhost:5432`, DB/rol `tahakonsept` |
 
@@ -70,12 +70,13 @@ curl http://192.168.1.102:7111/api/health
 
 ## 5. Gizli ortam dosyası
 
-Bir kez yazıldı (14 Kas 2026). Yeniden yazmak için (parola `TAHA/.env` içinde):
-```bash
-pw=$(grep '^TAHAKONSEPT_DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\r')
-printf 'TAHAKONSEPT_DB_PASSWORD=%s\n' "$pw" | ssh tmpi 'sudo install -m 0600 -o tahakonsept -g tahakonsept /dev/stdin /var/lib/tahakonsept/tahakonsept.env'
-ssh tmpi sudo systemctl restart tahakonsept-api
-```
+0.4.0'dan beri `publish-pi.ps1` her deploy'da (kurulumdan önce) `TAHA/.env`'deki üç anahtarı okuyup dosyayı baştan yazar:
+`TAHAKONSEPT_DB_PASSWORD`, `TAHAKONSEPT_ADMIN_EMAIL`, `TAHAKONSEPT_ADMIN_PASSWORD_HASH` (değerler ekrana yazılmaz, ssh stdin'inden gider, uzakta CR temizlenir).
+Biri eksikse deploy durur. Atlamak için `-SkipSecrets`. Dosyaya elle başka anahtar eklenirse betiğin `$secretKeys` listesine de eklenmeli, yoksa sonraki deploy siler.
+
+**Yönetici tohumu:** API açılışta (migration'lardan sonra) `TAHAKONSEPT_ADMIN_EMAIL` ile kullanıcı yoksa onu `Admin` rolünde oluşturur; kullanıcı adı = e-posta,
+`PasswordHash` = `TAHAKONSEPT_ADMIN_PASSWORD_HASH` (önceden hesaplanmış ASP.NET Identity v3 özeti, olduğu gibi saklanır; parola hiçbir yerde yok). Kullanıcı varsa dokunmaz.
+Yönetici normal giriş sayfasından e-postasıyla girer. Kayıt ol sayfası her zaman **normal kullanıcı** açar.
 İleride: `TAHAKONSEPT_MASTER_KEY` (base64, AES-GCM) da buraya eklenebilir; yoksa `App_Data/keys/master.key` ilk kullanımda üretilir — **bu dosya kaybolursa şifreli API key'ler okunamaz, yedekleyin.**
 
 ## 6. Geliştirme betikleri

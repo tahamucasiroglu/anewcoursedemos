@@ -25,7 +25,7 @@ public static class IdentityErrors
 
     /// <summary>Kullanıcı yasaklı.</summary>
     public static readonly Error UserBanned =
-        Error.Forbidden("identity.user_banned", "Hesabınız engellenmiş.");
+        Error.Forbidden("identity.user_banned", "Hesabınız devre dışı bırakılmış. Yöneticiye başvurun.");
 
     /// <summary>Refresh token geçersiz, süresi dolmuş ya da iptal edilmiş.</summary>
     public static readonly Error InvalidRefreshToken =

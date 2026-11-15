@@ -12,7 +12,7 @@ Bu rapor, uygulamanın uçtan uca nasıl denendiğini, bulunan hataları ve düz
 scripts/dev-tunnel.ps1 -Background          # 5433 → Pi PostgreSQL
 dotnet build TahaKonsept.slnx
 node tests/e2e/stack.cjs start everything   # mock LLM 7199, API 7191, Web 7190, ajan --headless (video 7120)
-node tests/e2e/e2e.cjs a b c d e f g h pages i
+node tests/e2e/e2e.cjs a b c d e f g h pages i uyelik
 node tests/e2e/stack.cjs stop everything
 ```
 
@@ -49,6 +49,7 @@ node tests/e2e/stack.cjs stop everything
 | h | Yönetim paneli: konsept/video sayıları, etkinlik günlüğü sekmesi; alt Günlük şeridi + açılır panel; Hata bildir penceresi gönderildi (200) ve rapor panelde görünüyor | ✅ | `h-admin`, `h-admin-gunluk`, `h-gunluk`, `h-hata-bildir`, `h-admin-hatalar` |
 | pages / mobile | Tüm sayfalar açık/koyu tema + 390 px; dar ekranda üst bar araçları taşmıyor | ✅ (hata düzeltildi, bkz. #9) | `pages-*.png`, `mobile-topbar` |
 | i | Web'den Çıkış yap (logout-all) → giriş sayfası; ajan logunda "Sunucu hub bağlantısını hemen kapattı … token yenileniyor" → "Token yenileme reddedildi" → "yeniden eşleme gerekiyor" → yeni eşleme kodu | ✅ (hata düzeltildi, bkz. #7) | `i-cikis`, `out/i-agent-log.txt` |
+| uyelik (15 Kas, 0.4.0) | Oturumsuz `/` → Giriş, `/Kurulum` → Kayıt ol, giriş ↔ kayıt bağlantıları; A kayıt → Başlangıç → profil → çıkış → giriş; B kayıt → A profilini listede görmez, kimlikle açamaz/silemez (404), Yönetim paneline ve kayıt ayarına giremez (403); SAHTE e2e yöneticisi (`tests/e2e/lib/e2e-admin.cjs`, rastgele parola + Identity v3 özeti) normal giriş sayfasından e-postayla girer; kullanıcı listesi; "Yeni kayıtlara izin ver" kapat → Kayıt ol mesajı + Ajax kayıt 403 → aç; B devre dışı → giriş reddi → etkinleştir; yönetici kendini devre dışı bırakamaz; açık/koyu + 390 px (taşma yok) | ✅ 34/34 | `uyelik-giris-*`, `uyelik-kayit-*`, `uyelik-a-baslangic`, `uyelik-admin-kullanicilar-*`, `uyelik-kayit-kapali` |
 
 ## Bulunan hatalar ve düzeltmeler
 

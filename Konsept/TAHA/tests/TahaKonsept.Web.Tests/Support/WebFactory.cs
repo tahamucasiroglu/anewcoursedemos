@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using TahaKonsept.Web.Models;
+using TahaKonsept.Web.Services.Account.Abstract;
 using TahaKonsept.Web.Services.Downloads.Abstract;
 using TahaKonsept.Web.Services.Onboarding.Abstract;
 
@@ -24,6 +25,9 @@ public sealed class WebFactory : WebApplicationFactory<TahaKonsept.Web.Program>
 
     /// <summary>Sahte kontrol listesi servisi.</summary>
     public IOnboardingService Onboarding { get; } = Substitute.For<IOnboardingService>();
+
+    /// <summary>Sahte oturum servisi (kayıt durumu vb.).</summary>
+    public IAccountService Account { get; } = Substitute.For<IAccountService>();
 
     /// <summary>Kimliği doğrulanmış istemci (yönlendirmeleri izlemez).</summary>
     /// <param name="user">Kullanıcı adı.</param>
@@ -45,6 +49,7 @@ public sealed class WebFactory : WebApplicationFactory<TahaKonsept.Web.Program>
             services.PostConfigure<AuthenticationOptions>(o => o.DefaultAuthenticateScheme = TestAuthHandler.SchemeName);
             services.AddSingleton(Releases);
             services.AddSingleton(Onboarding);
+            services.AddSingleton(Account);
         });
     }
 

@@ -7,9 +7,11 @@
     2. Her iki host'u 'dotnet publish -c Release -r linux-arm64 --self-contained' ile yayınlar
        (ayrı --artifacts-path: diğer derlemelerin obj/bin klasörlerine dokunmaz).
     3. api/ + web/ + pi/ (kurulum betiği, unit'ler, rollback) klasörlerini tek tar.gz yapar.
-    4. scp ile Pi'ye kopyalar, deploy/pi/install-release.sh'ı sudo ile çalıştırır:
+    4. TAHA/.env'deki gizli anahtarları (DB parolası, yönetici tohumu e-posta + parola özeti) Pi'deki
+       /var/lib/tahakonsept/tahakonsept.env dosyasına yazar (-SkipSecrets ile atlanır; değerler ekrana yazılmaz).
+    5. scp ile Pi'ye kopyalar, deploy/pi/install-release.sh'ı sudo ile çalıştırır:
        /opt/tahakonsept/releases/<sürüm-adı>, current sembolik bağı, önceki sürüm geri dönüş için saklanır.
-    5. Bu bilgisayardan http://<PiAddress>:7111/api/health ve http://<PiAddress>:7110/ doğrular.
+    6. Bu bilgisayardan http://<PiAddress>:7111/api/health ve http://<PiAddress>:7110/ doğrular.
 
 .EXAMPLE
     pwsh -File deploy/publish-pi.ps1
@@ -31,8 +33,13 @@ param(
     # Kaynak: WorkingTree (çalışma klasörü, varsayılan) ya da Head (son commit; 'git archive' ile temiz kopya —
     # paralel yarım kalmış değişiklikler yayını bozmasın).
     [ValidateSet('WorkingTree', 'Head')]
-    [string]$Source = 'WorkingTree'
+    [string]$Source = 'WorkingTree',
+    # Pi gizli ortam dosyasını (DB parolası, yönetici tohumu) TAHA/.env'den yeniden yazmayı atla.
+    [switch]$SkipSecrets
 )
+
+# Pi gizli ortam dosyasına TAHA/.env'den taşınan anahtarlar (tahakonsept.env bu anahtarlarla baştan yazılır).
+$secretKeys = @('TAHAKONSEPT_DB_PASSWORD', 'TAHAKONSEPT_ADMIN_EMAIL', 'TAHAKONSEPT_ADMIN_PASSWORD_HASH')
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -138,6 +145,31 @@ Write-Step "Pi'ye kopyalanıyor ($SshHost)"
 $remoteTar = "/tmp/$tarName"
 $remoteDir = "/tmp/tahakonsept-deploy-$release"
 Invoke-Native 'scp' @('-q', '-o', 'BatchMode=yes', $tarPath, "${SshHost}:$remoteTar")
+
+if (-not $SkipSecrets) {
+    # Gizli ortam: TAHA/.env (git dışı) → Pi /var/lib/tahakonsept/tahakonsept.env (0600, tahakonsept). Değerler ekrana/loga yazılmaz;
+    # ssh stdin'inden aktarılır, uzakta CR temizlenir (PowerShell 5.1 boruya CRLF ekler).
+    Write-Step "Gizli ortam dosyası güncelleniyor ($($secretKeys -join ', '))"
+    $envPath = Join-Path $root '.env'
+    if (-not (Test-Path $envPath)) { throw "Gizli ortam kaynağı yok: $envPath" }
+    $envValues = @{}
+    foreach ($line in [System.IO.File]::ReadAllLines($envPath)) {
+        $trimmed = $line.Trim()
+        if ($trimmed.Length -eq 0 -or $trimmed.StartsWith('#')) { continue }
+        $eq = $trimmed.IndexOf('=')
+        if ($eq -le 0) { continue }
+        $envValues[$trimmed.Substring(0, $eq).Trim()] = $trimmed.Substring($eq + 1).Trim().Trim('"')
+    }
+    $envLines = foreach ($key in $secretKeys) {
+        if (-not $envValues.ContainsKey($key) -or [string]::IsNullOrWhiteSpace($envValues[$key])) { throw "$envPath içinde $key yok ya da boş." }
+        "$key=$($envValues[$key])"
+    }
+    $envTarget = '/var/lib/tahakonsept/tahakonsept.env'
+    ($envLines -join "`n") + "`n" | & ssh -o BatchMode=yes $SshHost "tr -d '\r' | sudo install -m 0600 -o tahakonsept -g tahakonsept /dev/stdin '$envTarget'"
+    if ($LASTEXITCODE -ne 0) { throw "Gizli ortam dosyası yazılamadı (çıkış kodu $LASTEXITCODE)." }
+    Remove-Variable envValues, envLines
+    Write-Host "    $envTarget güncellendi ($($secretKeys.Count) anahtar)."
+}
 
 Write-Step 'Uzak kurulum (install-release.sh)'
 # Tek satır (ssh argümanı olarak satır sonu/CRLF sorunu olmasın); yalnız tek tırnak kullanılır.

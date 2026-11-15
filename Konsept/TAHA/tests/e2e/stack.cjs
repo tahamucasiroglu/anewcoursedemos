@@ -9,6 +9,7 @@
  * Portlar: mock LLM 7199, API 7191, Web 7190. Veri klasörü: tests/e2e/out/appdata-{api,web} (git dışı).
  * Bağlantı: Host=localhost;Port=5433;Database=tahakonsept_e2e;Username=tahakonsept — parola host tarafından TAHA/.env'den
  * eklenir (bu betik okumaz, yazdırmaz). Gerçek 'tahakonsept' veritabanı ASLA kullanılmaz (aşağıdaki koruma).
+ * Yönetici tohumu: API'ye SAHTE e2e yöneticisi verilir (lib/e2e-admin.cjs → out/e2e-admin.json); gerçek .env özeti kullanılmaz.
  * Önkoşul: `dotnet build TahaKonsept.slnx` (Debug) ve 5433 tüneli (scripts/dev-tunnel.ps1).
  */
 'use strict';
@@ -16,6 +17,7 @@ const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const { e2eAdmin } = require('./lib/e2e-admin.cjs');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const OUT = path.join(__dirname, 'out');
@@ -41,6 +43,9 @@ const SERVICES = {
       Kestrel__Endpoints__Http__Url: 'http://0.0.0.0:7191',
       App__DataDirectory: path.join(OUT, 'appdata-api'),
       Agents__WebPort: '7190',
+      // SAHTE e2e yöneticisi (out/e2e-admin.json); gerçek .env yöneticisi e2e veritabanına girmesin diye her zaman verilir.
+      TAHAKONSEPT_ADMIN_EMAIL: e2eAdmin().email,
+      TAHAKONSEPT_ADMIN_PASSWORD_HASH: e2eAdmin().hash,
     },
     health: 'http://127.0.0.1:7191/api/health',
   },
