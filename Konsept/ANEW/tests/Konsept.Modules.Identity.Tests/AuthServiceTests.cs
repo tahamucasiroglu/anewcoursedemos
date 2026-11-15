@@ -4,6 +4,7 @@ using Konsept.Modules.Identity.Application.Base;
 using Konsept.Modules.Identity.Application.Concrete;
 using Konsept.Modules.Identity.Application.Dtos;
 using Konsept.Modules.Identity.Domain.Entities;
+using Konsept.Modules.Identity.Domain.Enums;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Contracts.Enums;
@@ -176,6 +177,7 @@ public sealed class AuthServiceTests
         current.UserId.Returns(_user.Id);
         var session = UserSession.Open(_user.Id, "h", _time.GetUtcNow());
         _sessions.FindAsync(session.Id, Arg.Any<CancellationToken>()).Returns(session);
+        _sessions.FindWithRoleAsync(session.Id, Arg.Any<CancellationToken>()).Returns(((UserSession, Role)?)(session, Role.User)); // test kurulumu: rol (plan 0011)
         _sessions.RevokeAllAsync(_user.Id, Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
             .Returns(c => { session.Revoke(c.ArgAt<DateTimeOffset>(1)); return 1; });
         var service = new SessionService(Dependencies(), current, NullLogger<SessionService>.Instance);
@@ -203,6 +205,86 @@ public sealed class AuthServiceTests
         factory.Hash(a).ShouldNotContain(a[4..]);
         factory.Hash(a).Length.ShouldBe(64);
         SecretMasker.Mask($"token {a}").ShouldBe("token ***");
+    }
+
+    /// <summary>
+    /// Kayıtta rol yalnızca ayardaki e-postadan çıkar (spec 0011 AC-4, servis düzeyi): başka harf biçimiyle yazılan ayar
+    /// e-postası admin olur, başka e-posta kullanıcı kalır; ayar verilmezse kimse admin olmaz.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Register_AdminEmailOtherCase_Admin_OtherEmailUser_NoOptionsNobody()
+    {
+        var added = new List<User>();
+        _users.TryAddAsync(Arg.Do<User>(added.Add), Arg.Any<CancellationToken>()).Returns(true);
+        var options = new IdentityOptions { AdminEmail = " Admin@Ornek.Test " };
+        var ct = TestContext.Current.CancellationToken;
+
+        await new RegistrationService(Dependencies(), options).RegisterAsync(new RegisterRequest("Admin", "ADMIN@ornek.test", "sifre123"), ct);
+        await new RegistrationService(Dependencies(), options).RegisterAsync(new RegisterRequest("Başka", "baska@ornek.test", "sifre123"), ct);
+        await new RegistrationService(Dependencies()).RegisterAsync(new RegisterRequest("Ayarsız", "admin2@ornek.test", "sifre123"), ct);
+        await new RegistrationService(Dependencies(), new IdentityOptions { AdminEmail = "admin2@ornek.test" })
+            .RegisterAsync(new RegisterRequest("İkinci", "admın2@ornek.test", "sifre123"), ct);
+
+        added.Select(u => u.Role).ShouldBe([Role.Admin, Role.User, Role.User, Role.User]);
+    }
+
+    /// <summary>
+    /// Oturum doğrulaması rolü depodan (tek sorgu) döndürür; oturum yoksa ya da iptal edildiyse geçersizdir. Geçerli kullanıcı
+    /// yanıtı rolün yetkilerini taşır (spec 0011, plan Risk 1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ValidateSession_ReturnsRole_GetCurrent_PermissionsFromRole()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var admin = User.Register("Admin", "admin@ornek.test", "HASH", _time.GetUtcNow(), Role.Admin);
+        var session = UserSession.Open(admin.Id, "h", _time.GetUtcNow());
+        _sessions.FindWithRoleAsync(session.Id, Arg.Any<CancellationToken>()).Returns(((UserSession, Role)?)(session, Role.Admin));
+        _users.FindByIdAsync(admin.Id, Arg.Any<CancellationToken>()).Returns(admin);
+        var current = Substitute.For<ICurrentUser>();
+        current.UserId.Returns(admin.Id);
+        var service = new SessionService(Dependencies(), current, NullLogger<SessionService>.Instance);
+
+        var valid = await service.ValidateSessionAsync(session.Id, ct);
+        var missing = await service.ValidateSessionAsync(Guid.NewGuid(), ct);
+        var me = await service.GetCurrentAsync(ct);
+        current.UserId.Returns(_user.Id);
+        var plain = await service.GetCurrentAsync(ct);
+        session.Revoke(_time.GetUtcNow());
+        var revoked = await service.ValidateSessionAsync(session.Id, ct);
+
+        valid.ShouldBe(new SessionValidation(true, Role.Admin));
+        missing.IsValid.ShouldBeFalse();
+        me.Value.Permissions.ShouldBe(["admin.panel"]);
+        plain.Value.Permissions.ShouldBeEmpty();
+        revoked.IsValid.ShouldBeFalse();
+    }
+
+    /// <summary>Açılış senkronu ayardaki e-postayı normalleştirip depoya verir; ayar boşsa <c>null</c> (kimse admin değil).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AdminRoleSync_PassesNormalizedEmail_EmptySettingPassesNull()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _users.SyncAdminRoleAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(1);
+
+        var changed = await new AdminRoleSync(_users, new IdentityOptions { AdminEmail = " admin@ornek.test " }, NullLogger<AdminRoleSync>.Instance).SyncAsync(ct);
+        await new AdminRoleSync(_users, new IdentityOptions { AdminEmail = "  " }, NullLogger<AdminRoleSync>.Instance).SyncAsync(ct);
+
+        changed.ShouldBe(1);
+        await _users.Received(1).SyncAdminRoleAsync("ADMIN@ORNEK.TEST", Arg.Any<CancellationToken>());
+        await _users.Received(1).SyncAdminRoleAsync(null, Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Admin özeti iskelettir: bölüm listesi boş (spec 0011 Req 4).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AdminOverview_Skeleton_EmptySections()
+    {
+        var result = await new AdminOverviewService().GetOverviewAsync(TestContext.Current.CancellationToken);
+
+        result.Value.Sections.ShouldBeEmpty();
     }
 
     private LoginService Login() => new(Dependencies());

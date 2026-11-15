@@ -1,5 +1,6 @@
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Identity.Domain.Entities;
+using Konsept.Modules.Identity.Domain.Enums;
 using Konsept.Modules.Identity.Domain.Rules;
 using Konsept.Shared.Infrastructure.Persistence.Base;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,20 @@ public sealed class SessionRepository : EfRepositoryBase<IdentityModuleDbContext
     /// <inheritdoc />
     public Task<UserSession?> FindAsync(Guid sessionId, CancellationToken cancellationToken) =>
         Context.Sessions.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<(UserSession Session, Role Role)?> FindWithRoleAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        // Oturum ve rol tek sorguda (aynı şema içinde JOIN; spec 0011 plan Risk 1): her Api isteğinde ek gidiş-dönüş yok.
+        var row = await (
+            from session in Context.Sessions.AsNoTracking()
+            join user in Context.Users.AsNoTracking() on session.UserId equals user.Id
+            where session.Id == sessionId
+            select new { Session = session, user.Role })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return row is null ? null : (row.Session, row.Role);
+    }
 
     /// <inheritdoc />
     public Task TouchAsync(Guid sessionId, DateTimeOffset now, CancellationToken cancellationToken)

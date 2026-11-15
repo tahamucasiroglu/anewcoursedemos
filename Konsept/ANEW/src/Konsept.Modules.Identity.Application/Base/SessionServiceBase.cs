@@ -11,7 +11,8 @@ namespace Konsept.Modules.Identity.Application.Base;
 /// <summary>
 /// Oturum yaşam döngüsü (spec 0002 Req 13, 15): refresh token atomik döner (eski token ikinci kez çalışmaz, plan Risk 4);
 /// her Api isteğinde oturum doğrulanır ve son kullanım en fazla dakikada bir kaydırılır; çıkış kullanıcının tüm
-/// oturumlarını iptal eder ve <c>identity.logged_out</c> olayını yazar. Token değerleri asla loglanmaz.
+/// oturumlarını iptal eder ve <c>identity.logged_out</c> olayını yazar. Token değerleri asla loglanmaz. Doğrulama
+/// kullanıcının o anki rolünü de aynı sorguyla döndürür; geçerli kullanıcı yanıtı rolün yetkilerini taşır (spec 0011).
 /// </summary>
 public abstract partial class SessionServiceBase : AuthServiceBase, ISessionService
 {
@@ -59,21 +60,25 @@ public abstract partial class SessionServiceBase : AuthServiceBase, ISessionServ
     }
 
     /// <inheritdoc />
-    public async Task<bool> ValidateAsync(Guid sessionId, CancellationToken cancellationToken)
+    public async Task<bool> ValidateAsync(Guid sessionId, CancellationToken cancellationToken) =>
+        (await ValidateSessionAsync(sessionId, cancellationToken).ConfigureAwait(false)).IsValid;
+
+    /// <inheritdoc />
+    public async Task<SessionValidation> ValidateSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         var now = Now;
-        var session = await Dependencies.Sessions.FindAsync(sessionId, cancellationToken).ConfigureAwait(false);
-        if (session is null || !session.IsActive(now))
+        var found = await Dependencies.Sessions.FindWithRoleAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        if (found is not { } current || !current.Session.IsActive(now))
         {
-            return false;
+            return SessionValidation.Invalid;
         }
 
-        if (SessionPolicy.ShouldTouch(session.LastUsedAt, now))
+        if (SessionPolicy.ShouldTouch(current.Session.LastUsedAt, now))
         {
             await Dependencies.Sessions.TouchAsync(sessionId, now, cancellationToken).ConfigureAwait(false);
         }
 
-        return true;
+        return new SessionValidation(true, current.Role);
     }
 
     /// <inheritdoc />
@@ -100,7 +105,7 @@ public abstract partial class SessionServiceBase : AuthServiceBase, ISessionServ
         var user = await Dependencies.Users.FindByIdAsync(userId, cancellationToken).ConfigureAwait(false);
         return user is null
             ? Result<CurrentUserDto>.Failure(IdentityErrors.SessionInvalid)
-            : Result<CurrentUserDto>.Success(new CurrentUserDto(user.Id, user.Name, user.Email));
+            : Result<CurrentUserDto>.Success(new CurrentUserDto(user.Id, user.Name, user.Email) { Permissions = RolePermissions.For(user.Role) });
     }
 
     /// <inheritdoc />

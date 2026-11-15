@@ -5,6 +5,7 @@ using Konsept.Modules.Identity.Domain.Rules;
 using Konsept.Shared.Infrastructure.Persistence.Base;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace Konsept.Modules.Identity.Infrastructure.Persistence.Concrete;
 
@@ -23,6 +24,12 @@ public sealed class UserRepository : EfRepositoryBase<IdentityModuleDbContext>, 
         "locked_until = CASE WHEN failed_login_count + 1 >= @max THEN @lock_until ELSE locked_until END " +
         "WHERE id = @id AND (locked_until IS NULL OR locked_until <= @now) " +
         "RETURNING failed_login_count, locked_until";
+
+    // Açılış rol senkronu (spec 0011, plan Risk 2) tek ifade: eşleşen hesap admin, diğer her hesap kullanıcı; parametre NULL
+    // ise (ayar boş) eşitlik hiçbir satırda doğru olmaz, herkes kullanıcıdır. Yalnızca rolü değişen satırlar yazılır.
+    private const string SyncAdminRoleSql =
+        "UPDATE identity.users SET role = CASE WHEN normalized_email = @admin_email THEN 'admin' ELSE 'user' END " +
+        "WHERE role <> CASE WHEN normalized_email = @admin_email THEN 'admin' ELSE 'user' END";
 
     /// <summary>Initializes a new instance of the <see cref="UserRepository"/> class.</summary>
     /// <param name="context">Identity veritabanı bağlamı.</param>
@@ -99,6 +106,13 @@ public sealed class UserRepository : EfRepositoryBase<IdentityModuleDbContext>, 
             .ConfigureAwait(false);
         return updated == 1;
     }
+
+    /// <inheritdoc />
+    public Task<int> SyncAdminRoleAsync(string? normalizedAdminEmail, CancellationToken cancellationToken) =>
+        Context.Database.ExecuteSqlRawAsync(
+            SyncAdminRoleSql,
+            [new NpgsqlParameter("admin_email", NpgsqlDbType.Varchar) { Value = (object?)normalizedAdminEmail ?? DBNull.Value }],
+            cancellationToken);
 
     private static async Task<LockoutOutcome?> ReadOutcomeAsync(DbCommand command, CancellationToken cancellationToken)
     {

@@ -22,6 +22,15 @@ public interface ISessionService : ISessionRevoker
     /// <returns>Geçerliyse <c>true</c>.</returns>
     Task<bool> ValidateAsync(Guid sessionId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Oturumu doğrular ve kullanıcının o anki rolünü döndürür (spec 0011): geçerliyse son kullanımı kaydırır. Api her
+    /// istekte bunu çağırır; yetkiler bu rolden kurulur, JWT'den değil.
+    /// </summary>
+    /// <param name="sessionId">Oturum (<c>sid</c>).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Geçerlilik ve rol.</returns>
+    Task<SessionValidation> ValidateSessionAsync(Guid sessionId, CancellationToken cancellationToken);
+
     /// <summary>Geçerli kullanıcının tüm oturumlarını kapatır.</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>İptal edilen oturum sayısı.</returns>

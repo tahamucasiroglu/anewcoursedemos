@@ -40,4 +40,14 @@ public interface IUserRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Uygulandıysa <c>true</c>.</returns>
     Task<bool> RegisterSuccessfulLoginAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Rolleri ayardaki admin e-postasına göre tek atomik işlemle eşitler (spec 0011 Req 5, plan Risk 2): normalleştirilmiş
+    /// e-postası eşleşen hesap admin, diğer her hesap kullanıcı olur; <paramref name="normalizedAdminEmail"/> <c>null</c>
+    /// ise kimse admin değildir.
+    /// </summary>
+    /// <param name="normalizedAdminEmail">Ayardaki e-postanın normalleştirilmiş biçimi ya da <c>null</c>.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Rolü değişen hesap sayısı.</returns>
+    Task<int> SyncAdminRoleAsync(string? normalizedAdminEmail, CancellationToken cancellationToken);
 }

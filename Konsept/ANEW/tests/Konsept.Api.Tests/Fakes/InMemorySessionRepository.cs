@@ -1,5 +1,6 @@
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Identity.Domain.Entities;
+using Konsept.Modules.Identity.Domain.Enums;
 
 namespace Konsept.Api.Tests.Fakes;
 
@@ -7,7 +8,9 @@ namespace Konsept.Api.Tests.Fakes;
 /// Hızlı profil için bellekte oturum deposu; her işlem tek kilit altında (gerçek deponun tek ifadelik UPDATE'lerinin
 /// eşdeğeri): yalnızca etkin oturumun refresh token'ı döner, eski token ikinci kez dönmez.
 /// </summary>
-public sealed class InMemorySessionRepository : ISessionRepository
+/// <param name="users">Rolün okunacağı kullanıcı deposu (gerçek deponun <c>JOIN users</c> karşılığı); verilmezse her oturumun
+/// rolü kullanıcıdır.</param>
+public sealed class InMemorySessionRepository(InMemoryUserRepository? users = null) : ISessionRepository
 {
     private readonly Lock _gate = new();
     private readonly List<UserSession> _sessions = [];
@@ -42,6 +45,24 @@ public sealed class InMemorySessionRepository : ISessionRepository
         {
             return Task.FromResult(_sessions.FirstOrDefault(s => s.Id == sessionId));
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<(UserSession Session, Role Role)?> FindWithRoleAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        var session = await FindAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        if (session is null)
+        {
+            return null;
+        }
+
+        if (users is null)
+        {
+            return (session, Role.User);
+        }
+
+        var user = await users.FindByIdAsync(session.UserId, cancellationToken).ConfigureAwait(false);
+        return user is null ? null : (session, user.Role);
     }
 
     /// <inheritdoc />

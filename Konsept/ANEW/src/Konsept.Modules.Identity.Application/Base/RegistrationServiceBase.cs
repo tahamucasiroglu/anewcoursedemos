@@ -10,9 +10,13 @@ namespace Konsept.Modules.Identity.Application.Base;
 /// <summary>
 /// Kayıt (spec 0002 Req 1–4): e-posta normalleştirilmiş biçimiyle tekildir (eşzamanlı kayıtta tekil indeks karar verir),
 /// şifre hash'lenir, kayıt zamanı yazılır, kullanıcı giriş yapmış sayılır ve <c>identity.registered</c> olayı yazılır.
+/// Rol yalnızca <see cref="AdminEmailPolicy"/>'den çıkar (spec 0011 Req 5): ayardaki e-postayla kayıt olan admin, diğer
+/// herkes kullanıcıdır; istekteki hiçbir alan rolü etkilemez (<see cref="RegisterRequest"/>'te rol alanı yoktur).
 /// </summary>
 /// <param name="dependencies">Ortak bağımlılıklar.</param>
-public abstract class RegistrationServiceBase(AuthServiceDependencies dependencies) : AuthServiceBase(dependencies), IRegistrationService
+/// <param name="options">Identity ayarları (ilk admin e-postası); verilmezse kimse admin olmaz.</param>
+public abstract class RegistrationServiceBase(AuthServiceDependencies dependencies, IdentityOptions? options = null)
+    : AuthServiceBase(dependencies), IRegistrationService
 {
     /// <inheritdoc />
     public async Task<Result<AuthSessionDto>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -25,7 +29,8 @@ public abstract class RegistrationServiceBase(AuthServiceDependencies dependenci
             return Result<AuthSessionDto>.Failure(IdentityErrors.EmailTaken);
         }
 
-        var user = User.Register(request.Name!, request.Email!, Dependencies.Passwords.Hash(request.Password!), now);
+        var role = AdminEmailPolicy.RoleForNormalized(AdminEmailPolicy.NormalizedAdminEmail(options?.AdminEmail), normalized);
+        var user = User.Register(request.Name!, request.Email!, Dependencies.Passwords.Hash(request.Password!), now, role);
         if (!await Dependencies.Users.TryAddAsync(user, cancellationToken).ConfigureAwait(false))
         {
             return Result<AuthSessionDto>.Failure(IdentityErrors.EmailTaken);

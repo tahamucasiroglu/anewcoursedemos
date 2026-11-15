@@ -1,4 +1,5 @@
 using Konsept.Modules.Identity.Domain.Entities;
+using Konsept.Modules.Identity.Domain.Enums;
 
 namespace Konsept.Modules.Identity.Application.Abstract;
 
@@ -16,6 +17,15 @@ public interface ISessionRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Oturum ya da <c>null</c>.</returns>
     Task<UserSession?> FindAsync(Guid sessionId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Oturumu kullanıcısının o anki rolüyle birlikte tek sorguda bulur (spec 0011, plan Risk 1): her Api isteğinin oturum
+    /// doğrulaması rolü de buradan alır, ek gidiş-dönüş olmaz.
+    /// </summary>
+    /// <param name="sessionId">Oturum.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Oturum ve rol; oturum ya da kullanıcısı yoksa <c>null</c>.</returns>
+    Task<(UserSession Session, Role Role)?> FindWithRoleAsync(Guid sessionId, CancellationToken cancellationToken);
 
     /// <summary>Son kullanım zamanını günceller.</summary>
     /// <param name="sessionId">Oturum.</param>

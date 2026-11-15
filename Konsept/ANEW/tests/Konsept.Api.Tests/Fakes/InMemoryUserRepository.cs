@@ -12,6 +12,7 @@ public sealed class InMemoryUserRepository : IUserRepository
 {
     private readonly Lock _gate = new();
     private readonly List<User> _users = [];
+    private int _syncCalls;
 
     /// <summary>Gets kayıtlı kullanıcıların anlık kopyası.</summary>
     public IReadOnlyList<User> Users
@@ -83,6 +84,28 @@ public sealed class InMemoryUserRepository : IUserRepository
         lock (_gate)
         {
             return Task.FromResult(_users.Single(u => u.Id == userId).ApplySuccessfulLogin(now));
+        }
+    }
+
+    /// <summary>Gets rol senkronunun kaç kez çalıştığı (açılış senkronunu beklemek için; plan 0011).</summary>
+    public int SyncCalls
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _syncCalls;
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<int> SyncAdminRoleAsync(string? normalizedAdminEmail, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _syncCalls++;
+            return Task.FromResult(_users.Count(u => u.SyncAdminRole(normalizedAdminEmail)));
         }
     }
 }
