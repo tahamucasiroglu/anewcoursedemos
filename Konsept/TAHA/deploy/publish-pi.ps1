@@ -165,8 +165,20 @@ if (-not $SkipSecrets) {
         "$key=$($envValues[$key])"
     }
     $envTarget = '/var/lib/tahakonsept/tahakonsept.env'
-    ($envLines -join "`n") + "`n" | & ssh -o BatchMode=yes $SshHost "tr -d '\r' | sudo install -m 0600 -o tahakonsept -g tahakonsept /dev/stdin '$envTarget'"
-    if ($LASTEXITCODE -ne 0) { throw "Gizli ortam dosyası yazılamadı (çıkış kodu $LASTEXITCODE)." }
+    # PowerShell 5.1 boruya $OutputEncoding ile yazar; UTF-8 BOM'u ilk anahtarın adını bozar (systemd 'TAHAKONSEPT_DB_PASSWORD'u görmez).
+    # BOM'suz UTF-8 kullanılır ve uzakta yine de olası BOM/CR temizlenir.
+    $previousEncoding = $OutputEncoding
+    $OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    try {
+        ($envLines -join "`n") + "`n" | & ssh -o BatchMode=yes $SshHost "sed '1s/^\xEF\xBB\xBF//' | tr -d '\r' | sudo install -m 0600 -o tahakonsept -g tahakonsept /dev/stdin '$envTarget'"
+        if ($LASTEXITCODE -ne 0) { throw "Gizli ortam dosyası yazılamadı (çıkış kodu $LASTEXITCODE)." }
+    }
+    finally {
+        $OutputEncoding = $previousEncoding
+    }
+    # Doğrulama: anahtar adları (değerler değil) beklenenle aynı mı.
+    $remoteKeys = @(& ssh -o BatchMode=yes $SshHost "sudo cut -d= -f1 '$envTarget'" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if (Compare-Object $remoteKeys $secretKeys) { throw "Gizli ortam dosyasındaki anahtar adları beklenen değil: $($remoteKeys -join ', ')" }
     Remove-Variable envValues, envLines
     Write-Host "    $envTarget güncellendi ($($secretKeys.Count) anahtar)."
 }
