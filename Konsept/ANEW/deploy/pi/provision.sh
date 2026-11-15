@@ -42,6 +42,13 @@ if ! grep -q '^Internal__ServiceKey=' /etc/anewconcept/api.env; then
   umask 027
   printf 'Internal__ServiceKey=%s\n' "$(openssl rand -hex 32)" >> /etc/anewconcept/api.env
 fi
+# JWT imza anahtarı (plan 0002, B-46): bir kez üretilir, yalnızca api.env'de durur; değişirse tüm oturumlar düşer.
+if ! grep -q '^Auth__SigningKey=' /etc/anewconcept/api.env; then
+  umask 027
+  printf 'Auth__SigningKey=%s\n' "$(openssl rand -hex 32)" >> /etc/anewconcept/api.env
+fi
+# Web çerez şifreleme anahtarları (plan 0002, B-46): kalıcı klasör; silinirse tüm oturumlar düşer.
+install -d -o anewconcept -g anewconcept -m 700 /opt/anewconcept/keys /opt/anewconcept/keys/web
 umask 027
 # web.env her kurulumda api.env'deki anahtardan yeniden yazılır; buraya elle değişken eklemeyin (review I-4).
 grep '^Internal__ServiceKey=' /etc/anewconcept/api.env > /etc/anewconcept/web.env

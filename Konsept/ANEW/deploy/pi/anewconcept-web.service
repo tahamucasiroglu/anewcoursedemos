@@ -17,6 +17,8 @@ Environment=Api__BaseUrl=http://127.0.0.1:8001/
 Environment=Logging__Directory=/opt/anewconcept/logs/web
 # Konsol kapalı: journald (Pi'de kalıcı, 3 ay) /opt/anewconcept dışında log tutmasın (spec 0008 AC-5, review M-4).
 Environment=Logging__Console=false
+# Çerez şifreleme anahtarları kalıcı klasörde (plan 0002, B-46); provision.sh oluşturur.
+Environment=DataProtection__KeysDirectory=/opt/anewconcept/keys/web
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
 EnvironmentFile=/etc/anewconcept/web.env
 Restart=always
