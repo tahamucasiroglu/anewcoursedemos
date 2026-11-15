@@ -35,7 +35,7 @@
 ## Kullanım kapsamı (14 Kas 2026 — kullanıcı uyarısı)
 - Program **tek kullanıcılı, şahsi, ticari değil.** Lisans/ticari kullanım konusunu **tekrar soru olarak açma**; kişisel kullanıma izin veren her model eklenir. Sadece teknik engel (VRAM, platform) belirtilir.
 - "Şu an sadece ben gibi" geliştir; Pi dışarı açılmaz.
-- **Üyelik sistemi VAR (15 Kas 2026 — kullanıcı düzeltmesi: "register - login kısmı lazım … local dedikte üyelik sistemi de olsun").** Ayrı Kayıt ol + Giriş yap sayfaları; tek seferlik "ilk kurulum" ile yetinme. İlk kayıt olan yönetici olur; her kullanıcının verisi (anahtar, profil, konsept, video, ajan) kendine ait.
+- **Üyelik sistemi VAR (15 Kas 2026 — kullanıcı düzeltmesi: "register - login kısmı lazım … local dedikte üyelik sistemi de olsun").** Ayrı Kayıt ol + Giriş yap sayfaları; tek seferlik "ilk kurulum" ile yetinme. Admin hesabı AYRI ve tohumlanır (seed): e-posta + önceden hesaplanmış Identity hash'i yalnız `.env`/Pi gizli ortamında; düz parola hiçbir yerde tutulmaz, repoya girmez. Kayıt ol yalnız normal kullanıcı açar ("ilk kayıt admin olur" YOK). Admin de normal giriş sayfasından girer (e-posta ya da kullanıcı adı). Her kullanıcının verisi (anahtar, profil, konsept, video, ajan) kendine ait.
 
 ## Test ayrımı (14 Kas 2026 — kullanıcı)
 - Gerçek kullanım testleri (online anahtarlarla, uzun videolar) **kullanıcıda**. Claude yöntemleri **kısa ~30 saniyelik sabit bir kurgu** ile gerçek olarak dener (her video motoru / yerel ses / yerel görsel yöntemi), maliyetsiz (yerel/sahte LLM).
