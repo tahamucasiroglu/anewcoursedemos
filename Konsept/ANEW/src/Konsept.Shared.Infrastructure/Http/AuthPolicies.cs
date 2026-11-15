@@ -14,4 +14,13 @@ public static class AuthPolicies
 
     /// <summary>Giriş ve kayıt uçlarının IP başına hız sınırı politikası (spec 0002 Req 9).</summary>
     public const string AuthRateLimit = "auth";
+
+    /// <summary>
+    /// Yetki claim'inin adı (spec 0011). Token'da taşınmaz: Api her istekte oturumu doğrularken rolü veritabanından okur ve
+    /// bu claim'leri principal'a ekler; token'dan gelen aynı adlı claim'ler önce silinir.
+    /// </summary>
+    public const string PermissionClaim = "konsept.perm";
+
+    /// <summary>Admin alanı politikası; adı ve gerektirdiği yetki <c>admin.panel</c>'dir (Identity <c>Permissions.AdminPanel</c>).</summary>
+    public const string AdminPanel = "admin.panel";
 }

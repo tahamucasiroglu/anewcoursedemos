@@ -5,6 +5,15 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Konsept.Api.Tests.Support;
 using Konsept.Modules.Identity.Application;
+using Konsept.Modules.Identity.Domain.Entities;
+using Konsept.Modules.Identity.Domain.Enums;
+using Konsept.Modules.Identity.Domain.Rules;
+using Konsept.Modules.Identity.Infrastructure.Persistence;
+using Konsept.Modules.Identity.Infrastructure.Persistence.Concrete;
+using Konsept.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
 using Shouldly;
 
@@ -153,6 +162,83 @@ public sealed class IdentityIntegrationTests : IClassFixture<IntegrationApiFacto
         statusA.GetProperty("lastEvent").GetProperty("userId").GetGuid().ShouldBe(userA);
         (await CountAsync($"SELECT count(*) FROM monitoring.system_events WHERE \"UserId\" = '{userA}'")).ShouldBe(2);
     }
+
+    /// <summary>
+    /// <c>AddUserRole</c> migration'ı mevcut satırları <c>user</c> yapar (spec 0011 AC-1): migration öncesi eklenen hesap
+    /// sonrasında kullanıcı rolündedir; sütun yalnızca <c>user</c>/<c>admin</c> kabul eder.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Migration_AddUserRole_ExistingRowsUser()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var database = new PostgresTestDatabase();
+        await database.InitializeAsync();
+        await using var context = CreateContext(database);
+        var migrator = context.GetService<IMigrator>();
+
+        await migrator.MigrateAsync("20261114183027_InitialIdentity", ct);
+        await database.ScalarAsync(
+            "INSERT INTO identity.users (id, name, email, normalized_email, password_hash, failed_login_count, registered_at) " +
+            "VALUES (gen_random_uuid(), 'Eski', 'eski@ornek.test', 'ESKI@ORNEK.TEST', 'h', 0, now())");
+        await migrator.MigrateAsync(cancellationToken: ct);
+
+        (await database.ScalarAsync("SELECT role FROM identity.users WHERE normalized_email = 'ESKI@ORNEK.TEST'")).ShouldBe("user");
+        var invalid = await Should.ThrowAsync<PostgresException>(() => database.ScalarAsync("UPDATE identity.users SET role = 'root'"));
+        invalid.SqlState.ShouldBe("23514");
+    }
+
+    /// <summary>
+    /// Gerçek veritabanında açılış senkronu (spec 0011 AC-4): ayardaki e-postanın hesabı admin olur, eski admin kullanıcıya
+    /// döner, ayar boşken (<c>null</c>) kimse admin kalmaz; oturum doğrulama sorgusu rolü aynı sorguda döndürür.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AdminRoleSync_RealDatabase_PromotesAndDemotes()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var database = new PostgresTestDatabase();
+        await database.InitializeAsync();
+        await using var context = CreateContext(database);
+        await context.Database.MigrateAsync(ct);
+        var users = new UserRepository(context);
+        var sessions = new SessionRepository(context);
+        var now = DateTimeOffset.UtcNow;
+        var target = User.Register("Hedef", "Admin@Ornek.Test", "h", now);
+        var former = User.Register("Eski", "eski@ornek.test", "h", now, Role.Admin);
+        var plain = User.Register("Düz", "duz@ornek.test", "h", now);
+        foreach (var user in new[] { target, former, plain })
+        {
+            (await users.TryAddAsync(user, ct)).ShouldBeTrue();
+        }
+
+        var session = UserSession.Open(target.Id, "hash-0011", now);
+        await sessions.AddAsync(session, ct);
+
+        var changed = await users.SyncAdminRoleAsync(AdminEmailPolicy.NormalizedAdminEmail("admin@ornek.test"), ct);
+        var again = await users.SyncAdminRoleAsync(AdminEmailPolicy.NormalizedAdminEmail("admin@ornek.test"), ct);
+        var withRole = await sessions.FindWithRoleAsync(session.Id, ct);
+        var roles = await RolesAsync(database);
+        var cleared = await users.SyncAdminRoleAsync(null, ct);
+        var rolesAfterClear = await RolesAsync(database);
+
+        changed.ShouldBe(2);
+        again.ShouldBe(0);
+        withRole!.Value.Role.ShouldBe(Role.Admin);
+        withRole.Value.Session.Id.ShouldBe(session.Id);
+        roles.ShouldBe("ADMIN@ORNEK.TEST=admin,DUZ@ORNEK.TEST=user,ESKI@ORNEK.TEST=user");
+        cleared.ShouldBe(1);
+        rolesAfterClear.ShouldBe("ADMIN@ORNEK.TEST=user,DUZ@ORNEK.TEST=user,ESKI@ORNEK.TEST=user");
+        (await sessions.FindWithRoleAsync(Guid.NewGuid(), ct)).ShouldBeNull();
+    }
+
+    private static IdentityModuleDbContext CreateContext(PostgresTestDatabase database) =>
+        new(new DbContextOptionsBuilder<IdentityModuleDbContext>()
+            .UseNpgsql(database.ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", IdentityModuleDbContext.SchemaName))
+            .Options);
+
+    private static async Task<string?> RolesAsync(PostgresTestDatabase database) =>
+        (string?)await database.ScalarAsync("SELECT string_agg(normalized_email || '=' || role, ',' ORDER BY normalized_email) FROM identity.users");
 
     private Task<object?> ScalarAsync(string sql) => _factory.Database.ScalarAsync(sql);
 

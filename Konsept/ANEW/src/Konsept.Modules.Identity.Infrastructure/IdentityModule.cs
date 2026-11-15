@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
+using Konsept.Modules.Identity.Application;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Identity.Application.Base;
 using Konsept.Modules.Identity.Application.Concrete;
@@ -8,6 +9,7 @@ using Konsept.Modules.Identity.Application.Dtos;
 using Konsept.Modules.Identity.Application.Validators;
 using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Modules.Identity.Infrastructure.Authentication;
+using Konsept.Modules.Identity.Infrastructure.Hosting;
 using Konsept.Modules.Identity.Infrastructure.Persistence;
 using Konsept.Modules.Identity.Infrastructure.Persistence.Concrete;
 using Konsept.Modules.Identity.Infrastructure.RateLimiting;
@@ -28,8 +30,8 @@ using Microsoft.IdentityModel.Tokens;
 namespace Konsept.Modules.Identity.Infrastructure;
 
 /// <summary>
-/// Identity modülünün servis kaydı (kalıcılık, servisler, JWT + servis anahtarı kimlik şemaları, giriş/kayıt hız sınırı)
-/// ve açılış migration'ı.
+/// Identity modülünün servis kaydı (kalıcılık, servisler, JWT + servis anahtarı kimlik şemaları, giriş/kayıt hız sınırı,
+/// ilk admin ayarı ve açılış rol senkronu) ve açılış migration'ı.
 /// </summary>
 public static class IdentityModule
 {
@@ -41,7 +43,7 @@ public static class IdentityModule
     /// <summary>Modülün servislerini kaydeder.</summary>
     /// <param name="services">Servis koleksiyonu.</param>
     /// <param name="connectionString">PostgreSQL bağlantı metni.</param>
-    /// <param name="configuration">Yapılandırma (<c>Auth:SigningKey</c>).</param>
+    /// <param name="configuration">Yapılandırma (<c>Auth:SigningKey</c>, <c>Identity:AdminEmail</c>).</param>
     /// <param name="isDevelopment">Development ortamı mı (imza anahtarı yoksa rastgele üretilir; değilse açılış hatası).</param>
     /// <returns>Aynı koleksiyon.</returns>
     public static IServiceCollection AddIdentityModule(this IServiceCollection services, string connectionString, IConfiguration configuration, bool isDevelopment)
@@ -62,6 +64,12 @@ public static class IdentityModule
         services.AddScoped<ILoginService, LoginService>();
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ISessionRevoker>(sp => sp.GetRequiredService<ISessionService>());
+
+        // İlk admin (spec 0011 Req 5): ayar her açılışta okunur; açılış senkronu arka planda rolleri ayara eşitler.
+        services.AddSingleton(new IdentityOptions { AdminEmail = configuration[IdentityOptions.AdminEmailConfigurationKey] });
+        services.AddScoped<IAdminRoleSync, AdminRoleSync>();
+        services.AddScoped<IAdminOverviewService, AdminOverviewService>();
+        services.AddHostedService<AdminRoleSyncHostedService>();
         services.AddSingleton<IValidator<RegisterRequest>, RegisterRequestValidator>();
         services.AddSingleton<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddHttpContextAccessor();
