@@ -103,6 +103,32 @@ public sealed class ApiKeyServiceTests : IDisposable
         _db.ApiKeys.Single().LastTestSucceeded.ShouldBe(true);
     }
 
+    /// <summary>
+    /// Kullanıcı ayrımı: A'nın anahtarı B'nin listesinde "yapılandırılmamış" görünür; B silemez/test edemez, kasa B için anahtar vermez;
+    /// B'nin kaydı A'nın satırını değiştirmez.
+    /// </summary>
+    [Fact]
+    public async Task Other_user_cannot_see_use_or_delete_key()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await _service.SaveAsync(new SaveApiKeyRequest { Platform = "anthropic", ApiKey = PlainKey }, ct);
+        var other = new TestCurrentUser();
+        var protector = TestFixtures.Protector();
+        var vault = new RepositoryVault(_repository, protector);
+        var asOther = new ApiKeyService(other, _repository, protector, vault, _tester, new FixedClock());
+
+        (await asOther.ListAsync(ct)).Value.ShouldAllBe(k => !k.Configured && k.Last4 == null);
+        (await asOther.DeleteAsync("anthropic", ct)).Error.Code.ShouldBe(ProviderErrorCodes.NotFound);
+        (await asOther.TestAsync("anthropic", ct)).Error.Code.ShouldBe(ProviderErrorCodes.KeyMissing);
+        (await vault.GetCredentialAsync(other.GetRequiredUserId(), "anthropic", ct)).Error.Code.ShouldBe(ProviderErrorCodes.KeyMissing);
+        await _tester.DidNotReceive().TestAsync(Arg.Any<ProviderCredential>(), Arg.Any<CancellationToken>());
+
+        await asOther.SaveAsync(new SaveApiKeyRequest { Platform = "anthropic", ApiKey = "sk-other-77778888" }, ct);
+        _db.ApiKeys.Count().ShouldBe(2);
+        (await vault.GetCredentialAsync(_user.GetRequiredUserId(), "anthropic", ct)).Value.ApiKey.ShouldBe(PlainKey);
+        (await _service.ListAsync(ct)).Value.Single(k => k.Platform == ProviderPlatforms.Anthropic).Last4.ShouldBe("abcd");
+    }
+
     /// <inheritdoc />
     public void Dispose() => _db.Dispose();
 }

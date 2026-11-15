@@ -13,7 +13,8 @@ namespace TahaKonsept.Modules.Diagnostics.Application.Concrete;
 
 /// <summary>
 /// <see cref="IActivityLogService"/> uygulaması: şerit için son kayıtlar, güne/seviyeye/kaynağa göre sayfalı arama ve istemci olayı yazma.
-/// Yönetici herkesin kayıtlarını, diğer kullanıcılar kendi + sistem kayıtlarını görür.
+/// Yönetici herkesin kayıtlarını, diğer kullanıcılar yalnız kendi kayıtlarını görür (sistem kayıtları başka kullanıcıların işlerinden
+/// bilgi taşıyabileceği için yalnız yöneticiye açıktır).
 /// </summary>
 public sealed class ActivityLogService : DiagnosticsServiceBase, IActivityLogService
 {
@@ -89,7 +90,7 @@ public sealed class ActivityLogService : DiagnosticsServiceBase, IActivityLogSer
         var hasOwner = owner.HasValue;
         var ownerId = owner ?? Guid.Empty;
 
-        return l => (!hasOwner || l.UserId == ownerId || l.UserId == Guid.Empty)
+        return l => (!hasOwner || (ownerId != Guid.Empty && l.UserId == ownerId))
             && (from == null || l.CreatedAtUtc >= from)
             && (to == null || l.CreatedAtUtc < to)
             && (level == null || l.Level == level)

@@ -29,12 +29,14 @@ public sealed class ActivityLogRepository : Repository<ActivityLog>, IActivityLo
         var query = QueryNoTracking();
         if (ownerId is { } owner)
         {
-            query = query.Where(l => l.UserId == owner || l.UserId == Guid.Empty);
+            // Sistem (Guid.Empty) kayıtları yalnız yöneticiye: başka kullanıcıların işlerinden bilgi taşıyabilir.
+            query = owner == Guid.Empty ? query.Where(_ => false) : query.Where(l => l.UserId == owner);
         }
 
         if (afterId is { } anchorId)
         {
-            var anchor = await QueryNoTracking()
+            // Çapa da kapsam içinde aranır: başkasının kayıt kimliği çapa olarak verilirse yok sayılır.
+            var anchor = await query
                 .Where(l => l.Id == anchorId)
                 .Select(l => (DateTimeOffset?)l.CreatedAtUtc)
                 .FirstOrDefaultAsync(cancellationToken);

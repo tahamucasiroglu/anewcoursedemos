@@ -7,6 +7,7 @@ using TahaKonsept.BuildingBlocks.Application.Abstract;
 using TahaKonsept.BuildingBlocks.Application.Security;
 using TahaKonsept.Modules.Identity.Application.Abstract;
 using TahaKonsept.Modules.Identity.Application.DependencyInjection;
+using TahaKonsept.Modules.Identity.Application.Models;
 using TahaKonsept.Modules.Identity.Domain.Entities;
 using TahaKonsept.Modules.Identity.Infrastructure.DependencyInjection;
 using TahaKonsept.Shared.Contracts.Identity;
@@ -16,7 +17,8 @@ namespace TahaKonsept.Modules.Identity.Tests.Support;
 /// <summary>
 /// Identity modülünü gerçek DI kaydıyla (EF InMemory, her örnek kendi veritabanı) kuran test ana makinesi.
 /// <see cref="Clock"/>, <see cref="CurrentUser"/>, <see cref="Notifier"/> ve <see cref="SigningKey"/> testten erişilebilir.
-/// Yardımcılar: <see cref="RunAsync{TService, TResult}"/> (yeni scope'ta servis çağırır), <see cref="SetupAdminAsync"/>, <see cref="CreateUserAsync"/>.
+/// Yardımcılar: <see cref="RunAsync{TService, TResult}"/> (yeni scope'ta servis çağırır), <see cref="SetupAdminAsync"/> (Admin rolünde kullanıcı +
+/// giriş), <see cref="CreateUserAsync"/>, <see cref="RegisterAsync"/>. Yönetici tohumu ayarı yapıcıdan verilebilir (varsayılan: yapılandırılmamış).
 /// </summary>
 public sealed class IdentityTestHost : IAsyncDisposable
 {
@@ -29,7 +31,8 @@ public sealed class IdentityTestHost : IAsyncDisposable
     private readonly ServiceProvider _provider;
 
     /// <summary>Servisleri kurar.</summary>
-    public IdentityTestHost()
+    /// <param name="adminSeed">Yönetici tohumu ayarı (verilmezse boş: tohum atlanır).</param>
+    public IdentityTestHost(AdminSeedOptions? adminSeed = null)
     {
         var keyProvider = Substitute.For<IJwtSigningKeyProvider>();
         keyProvider.GetSigningKey().Returns(SigningKey);
@@ -41,6 +44,7 @@ public sealed class IdentityTestHost : IAsyncDisposable
         services.AddSingleton(keyProvider);
         services.AddSingleton<ICurrentUser>(CurrentUser);
         services.AddSingleton<ISessionRevocationNotifier>(Notifier);
+        services.AddSingleton(adminSeed ?? new AdminSeedOptions());
 
         var databaseName = "identity-tests-" + Guid.NewGuid().ToString("N");
         services.AddIdentityInfrastructure(new ConfigurationBuilder().Build(), options => options.UseInMemoryDatabase(databaseName));
@@ -75,20 +79,25 @@ public sealed class IdentityTestHost : IAsyncDisposable
         return await call(scope.ServiceProvider.GetRequiredService<TService>());
     }
 
-    /// <summary>Kurulumu yapar ve yönetici kimliğini döner.</summary>
+    /// <summary>Admin rolünde test yöneticisini oluşturur, giriş yapar ve token + kimliği döner.</summary>
     /// <returns>Token yanıtı ve kullanıcı kimliği.</returns>
     public async Task<(TokenResponse Tokens, Guid UserId)> SetupAdminAsync()
     {
-        var result = await RunAsync<IAuthService, BuildingBlocks.Domain.Results.Result<TokenResponse>>(
-            s => s.SetupAsync(new SetupRequest { UserName = AdminUserName, Password = Password }));
-        if (result.IsFailure)
-        {
-            throw new InvalidOperationException(result.Error.Message);
-        }
-
-        var id = await RunAsync<UserManager<AppUser>, Guid>(async m => (await m.FindByNameAsync(AdminUserName))!.Id);
-        return (result.Value, id);
+        var id = await CreateUserAsync(AdminUserName);
+        await RunAsync<RoleManager<AppRole>, bool>(async r => (await r.RoleExistsAsync(RoleNames.Admin)) || (await r.CreateAsync(new AppRole(RoleNames.Admin))).Succeeded);
+        await RunAsync<UserManager<AppUser>, bool>(async m => (await m.AddToRoleAsync((await m.FindByIdAsync(id.ToString()))!, RoleNames.Admin)).Succeeded);
+        var login = await RunAsync<IAuthService, BuildingBlocks.Domain.Results.Result<TokenResponse>>(
+            s => s.LoginAsync(new LoginRequest { UserName = AdminUserName, Password = Password }));
+        return login.IsSuccess ? (login.Value, id) : throw new InvalidOperationException(login.Error.Message);
     }
+
+    /// <summary>Kayıt servisiyle hesap açar.</summary>
+    /// <param name="userName">Kullanıcı adı.</param>
+    /// <param name="password">Parola (verilmezse <see cref="Password"/>).</param>
+    /// <returns>Sonuç.</returns>
+    public Task<BuildingBlocks.Domain.Results.Result<TokenResponse>> RegisterAsync(string userName, string? password = null) =>
+        RunAsync<IAuthService, BuildingBlocks.Domain.Results.Result<TokenResponse>>(
+            s => s.RegisterAsync(new RegisterRequest { UserName = userName, Password = password ?? Password }));
 
     /// <summary>Yönetici olmayan ek kullanıcı oluşturur (yasak testleri için).</summary>
     /// <param name="userName">Kullanıcı adı.</param>

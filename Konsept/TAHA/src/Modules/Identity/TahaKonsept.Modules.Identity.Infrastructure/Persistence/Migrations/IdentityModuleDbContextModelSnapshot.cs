@@ -290,6 +290,29 @@ namespace TahaKonsept.Modules.Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("users", "identity");
                 });
 
+            modelBuilder.Entity("TahaKonsept.Modules.Identity.Domain.Entities.IdentitySetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key")
+                        .HasName("pk_settings");
+
+                    b.ToTable("settings", "identity");
+                });
+
             modelBuilder.Entity("TahaKonsept.Modules.Identity.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")

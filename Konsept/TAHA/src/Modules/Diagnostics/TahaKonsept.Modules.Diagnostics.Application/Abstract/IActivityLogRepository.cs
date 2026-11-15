@@ -15,7 +15,7 @@ public interface IActivityLogRepository : IRepository<ActivityLog>
     /// </summary>
     /// <param name="afterId">Son görülen kayıt.</param>
     /// <param name="take">En çok kayıt.</param>
-    /// <param name="ownerId">Yalnızca bu kullanıcının ve sistemin kayıtları; <c>null</c> ise hepsi (yönetici).</param>
+    /// <param name="ownerId">Yalnızca bu kullanıcının kayıtları (sistem/başka kullanıcı kayıtları hariç; <see cref="Guid.Empty"/> hiçbir şey döndürmez); <c>null</c> ise hepsi (yönetici).</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Kayıtlar.</returns>
     Task<IReadOnlyList<ActivityLog>> GetRecentAsync(Guid? afterId, int take, Guid? ownerId, CancellationToken cancellationToken = default);

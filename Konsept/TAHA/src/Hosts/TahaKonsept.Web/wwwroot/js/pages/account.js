@@ -1,5 +1,5 @@
 /**
- * TK.account — giriş (/Account/Login) ve ilk kurulum (/Kurulum) formları. Formlar jQuery Ajax ile JSON gönderir;
+ * TK.account — giriş (/Account/Login; kullanıcı adı ya da e-posta) ve kayıt (/Account/Register) formları. Formlar jQuery Ajax ile JSON gönderir;
  * başarılı cevap { redirectUrl } ile yönlendirir, hatayı form içindeki uyarı kutusunda gösterir. Tek modül (IIFE).
  */
 (function (window, $) {
@@ -26,7 +26,7 @@
             e.preventDefault();
             var userName = $.trim($form.find('[name=userName]').val());
             var password = $form.find('[name=password]').val();
-            if (!userName || !password) { showError($box, 'Kullanıcı adı ve parola gerekli.'); return; }
+            if (!userName || !password) { showError($box, 'Kullanıcı adı (ya da e-posta) ve parola gerekli.'); return; }
             submit($form, $box, {
                 userName: userName,
                 password: password,
@@ -36,10 +36,10 @@
         });
     }
 
-    function initSetup() {
-        var $form = $('#tk-setup-form');
+    function initRegister() {
+        var $form = $('#tk-register-form');
         if (!$form.length) { return; }
-        var $box = $('#tk-setup-error');
+        var $box = $('#tk-register-error');
         $form.on('submit', function (e) {
             e.preventDefault();
             var userName = $.trim($form.find('[name=userName]').val());
@@ -52,6 +52,6 @@
         });
     }
 
-    TK.account = { initLogin: initLogin, initSetup: initSetup };
-    $(function () { initLogin(); initSetup(); });
+    TK.account = { initLogin: initLogin, initRegister: initRegister };
+    $(function () { initLogin(); initRegister(); });
 })(window, window.jQuery);

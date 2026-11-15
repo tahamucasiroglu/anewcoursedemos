@@ -73,7 +73,7 @@ public abstract class ConceptContextProviderBase : IConceptContextProvider
         ProfileDto? profile = null;
         if (profileId is { } pid)
         {
-            profile = await Profiles.GetAsync(pid, cancellationToken);
+            profile = await Profiles.GetAsync(userId, pid, cancellationToken);
         }
 
         profile ??= await Profiles.GetActiveAsync(userId, cancellationToken);

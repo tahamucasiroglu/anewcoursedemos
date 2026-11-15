@@ -37,7 +37,8 @@ public sealed class ProductionTestHarness : IAsyncDisposable
         services.AddDbContext<ProductionDbContext>(o => o.UseInMemoryDatabase(database));
         services.AddProductionCore();
         services.AddSingleton<IClock>(Clock);
-        services.AddSingleton<ICurrentUser>(new TestCurrentUser(UserId));
+        User = new TestCurrentUser(UserId);
+        services.AddSingleton<ICurrentUser>(User);
         services.AddSingleton<IProviderGateway>(Provider);
         services.AddSingleton<IMediaGateway>(Media);
         services.AddSingleton<IAgentGateway>(Agent);
@@ -52,6 +53,9 @@ public sealed class ProductionTestHarness : IAsyncDisposable
 
     /// <summary>Test kullanıcısı.</summary>
     public Guid UserId { get; } = Guid.CreateVersion7();
+
+    /// <summary>Oturum kullanıcısı (<see cref="TestCurrentUser.Current"/> ile başka kullanıcıya geçilebilir).</summary>
+    public TestCurrentUser User { get; }
 
     /// <summary>Saat.</summary>
     public FakeClock Clock { get; } = new();

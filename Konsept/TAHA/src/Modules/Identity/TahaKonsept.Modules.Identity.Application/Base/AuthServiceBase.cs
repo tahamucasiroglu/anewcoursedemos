@@ -8,8 +8,9 @@ using TahaKonsept.Shared.Contracts.Identity;
 namespace TahaKonsept.Modules.Identity.Application.Base;
 
 /// <summary>
-/// <see cref="IAuthService"/> tabanı: kullanıcı yöneticisini tutar ve <see cref="IdentityResult"/> → <see cref="Error"/>
-/// dönüşümünü (<see cref="ToError"/>) sağlar. Akışlar türetilen sınıftadır.
+/// <see cref="IAuthService"/> tabanı: kullanıcı yöneticisini tutar, <see cref="IdentityResult"/> → <see cref="Error"/>
+/// dönüşümünü (<see cref="ToError"/>) ve kullanıcı adı ya da e-postayla kullanıcı bulmayı (<see cref="FindByLoginAsync"/>) sağlar.
+/// Akışlar türetilen sınıftadır.
 /// </summary>
 public abstract class AuthServiceBase : IAuthService
 {
@@ -24,10 +25,10 @@ public abstract class AuthServiceBase : IAuthService
     protected UserManager<AppUser> Users { get; }
 
     /// <inheritdoc />
-    public abstract Task<Result<SetupStatusResponse>> GetSetupStatusAsync(CancellationToken ct = default);
+    public abstract Task<Result<RegistrationStatusResponse>> GetRegistrationStatusAsync(CancellationToken ct = default);
 
     /// <inheritdoc />
-    public abstract Task<Result<TokenResponse>> SetupAsync(SetupRequest request, CancellationToken ct = default);
+    public abstract Task<Result<TokenResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default);
 
     /// <inheritdoc />
     public abstract Task<Result<TokenResponse>> LoginAsync(LoginRequest request, CancellationToken ct = default);
@@ -45,5 +46,14 @@ public abstract class AuthServiceBase : IAuthService
     {
         ArgumentNullException.ThrowIfNull(result);
         return IdentityErrors.IdentityFailed(result.Errors.Select(e => e.Description));
+    }
+
+    /// <summary>Önce kullanıcı adıyla, bulunamazsa (ve metin <c>@</c> içeriyorsa) e-postayla kullanıcı arar.</summary>
+    /// <param name="login">Kullanıcı adı ya da e-posta (kırpılmış).</param>
+    /// <returns>Kullanıcı ya da <c>null</c>.</returns>
+    protected async Task<AppUser?> FindByLoginAsync(string login)
+    {
+        var user = await Users.FindByNameAsync(login);
+        return user is null && login.Contains('@', StringComparison.Ordinal) ? await Users.FindByEmailAsync(login) : user;
     }
 }

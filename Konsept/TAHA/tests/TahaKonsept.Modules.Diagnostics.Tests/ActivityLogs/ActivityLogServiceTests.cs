@@ -47,7 +47,7 @@ public sealed class ActivityLogServiceTests : IDisposable
         latestTwo.Select(l => l.Id).ShouldBe(ids.Skip(3));
     }
 
-    /// <summary>Normal kullanıcı yalnızca kendi + sistem kayıtlarını görür; yönetici hepsini.</summary>
+    /// <summary>Normal kullanıcı yalnızca kendi kayıtlarını görür (başka kullanıcı ve sistem kayıtları hariç); yönetici hepsini.</summary>
     [Fact]
     public async Task Recent_scopes_by_owner_unless_admin()
     {
@@ -57,11 +57,42 @@ public sealed class ActivityLogServiceTests : IDisposable
 
         var mine = (await new ActivityLogService(new ActivityLogRepository(_db), TestUsers.Regular(_me))
             .GetRecentAsync(null, null, TestContext.Current.CancellationToken)).Value;
-        mine.Select(l => l.UserId).ShouldBe([_me, Guid.Empty], ignoreOrder: true);
+        mine.Select(l => l.UserId).ShouldBe([_me]);
 
         var all = (await new ActivityLogService(new ActivityLogRepository(_db), TestUsers.Admin(_me))
             .GetRecentAsync(null, null, TestContext.Current.CancellationToken)).Value;
         all.Count.ShouldBe(3);
+    }
+
+    /// <summary>Arama da kapsamlıdır: B kullanıcısı A'nın ve sistemin kayıtlarını aramayla da göremez.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Search_does_not_return_other_users_entries()
+    {
+        await AddAsync(_me, LogLevelKind.Information, "A'nın gizli işi");
+        await AddAsync(Guid.Empty, LogLevelKind.Error, "sistem hatası");
+        await AddAsync(_other, LogLevelKind.Information, "B'nin işi");
+
+        var asOther = new ActivityLogService(new ActivityLogRepository(_db), TestUsers.Regular(_other));
+        var page = (await asOther.SearchAsync(new ActivityLogQuery(), TestContext.Current.CancellationToken)).Value;
+
+        page.TotalCount.ShouldBe(1);
+        page.Items.ShouldHaveSingleItem().Message.ShouldBe("B'nin işi");
+        (await asOther.SearchAsync(new ActivityLogQuery { Search = "gizli" }, TestContext.Current.CancellationToken)).Value.TotalCount.ShouldBe(0);
+    }
+
+    /// <summary>Başka kullanıcının kayıt kimliği çapa (afterId) olarak verilirse yok sayılır; yalnız kendi kayıtları gelir.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Recent_ignores_other_users_anchor()
+    {
+        var mine = await SeedAsync(_other, 2);
+        var foreign = await SeedAsync(_me, 1);
+
+        var asOther = new ActivityLogService(new ActivityLogRepository(_db), TestUsers.Regular(_other));
+        var result = (await asOther.GetRecentAsync(foreign[0], null, TestContext.Current.CancellationToken)).Value;
+
+        result.Select(l => l.Id).ShouldBe(mine);
     }
 
     /// <summary>Gün filtresi Türkiye saatine göre çalışır; seviye filtresi uygulanır; en yeni önce.</summary>

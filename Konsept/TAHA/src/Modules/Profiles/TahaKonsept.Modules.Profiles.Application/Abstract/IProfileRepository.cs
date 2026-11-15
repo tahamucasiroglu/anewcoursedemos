@@ -41,9 +41,10 @@ public interface IProfileRepository : IRepository<Profile>
     /// <returns>Profil ya da <c>null</c>.</returns>
     Task<Profile?> GetActiveAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    /// <summary>Kimliğe göre profili takipsiz getirir (kullanıcı filtresi yok).</summary>
+    /// <summary>Kullanıcıya ait profili kimliğe göre takipsiz getirir.</summary>
     /// <param name="id">Profil kimliği.</param>
+    /// <param name="userId">Kullanıcı.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Profil ya da <c>null</c>.</returns>
-    Task<Profile?> FindAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Profile?> FindForUserAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
 }

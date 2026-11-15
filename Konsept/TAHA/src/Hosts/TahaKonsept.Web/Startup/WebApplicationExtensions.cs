@@ -7,7 +7,7 @@ namespace TahaKonsept.Web.Startup;
 
 /// <summary>
 /// Web host'un HTTP ara katman sırası. <see cref="UseTahaWeb"/>: hata sayfası, durum kodu sayfaları, tr-TR kültürü,
-/// statik dosyalar (ajan güncellemesi için <c>.nupkg</c> eşlemesi dahil), Serilog istek günlüğü, kimlik doğrulama/yetkilendirme ve rotalar (Admin alanı + varsayılan
+/// statik dosyalar (ajan güncellemesi için <c>.nupkg</c> eşlemesi dahil), Serilog istek günlüğü, istek sınırlayıcı (giriş/kayıt), kimlik doğrulama/yetkilendirme ve rotalar (Admin alanı + varsayılan
 /// <c>{controller=Konseptler}/{action=Index}/{id?}</c>).
 /// </summary>
 public static class WebApplicationExtensions
@@ -41,6 +41,7 @@ public static class WebApplicationExtensions
                 : context.Request.Path.StartsWithSegments("/Gunluk") ? Serilog.Events.LogEventLevel.Verbose : Serilog.Events.LogEventLevel.Information);
 
         app.UseRouting();
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();
 

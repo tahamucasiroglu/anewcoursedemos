@@ -246,7 +246,8 @@ public sealed class AgentHubService : AgentsServiceBase, IAgentHubService
     public Task SpeechPreviewCompletedAsync(AgentCallContext context, SpeechPreviewResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
-        _previews.Complete(result);
+        ArgumentNullException.ThrowIfNull(context);
+        _previews.Complete(context.UserId, result);
         return Task.CompletedTask;
     }
 

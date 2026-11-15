@@ -84,3 +84,7 @@
 @media (max-width: 520px) {
     .tk-ad-stats { grid-template-columns: 1fr; }
 }
+
+/* Yönetim paneli — kayıt anahtarı kartı */
+.tk-ad-registration { margin-bottom: 16px; }
+.tk-ad-registration .tk-card-head { flex-wrap: wrap; border-bottom: 0; }

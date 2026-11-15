@@ -7,8 +7,8 @@
 <form id="tk-login-form" class="tk-auth-form" data-url="@Url.Action("Login", "Account")" novalidate autocomplete="on">
     <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
     <div class="tk-field">
-        <label for="login-user">Kullanıcı adı</label>
-        <input id="login-user" name="userName" class="tk-input" autocomplete="username" required autofocus maxlength="64" />
+        <label for="login-user">Kullanıcı adı veya e-posta</label>
+        <input id="login-user" name="userName" class="tk-input" autocomplete="username" required autofocus maxlength="256" />
     </div>
     <div class="tk-field">
         <label for="login-pass">Parola</label>
@@ -25,3 +25,4 @@
         <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-lock"></use></svg> Giriş yap
     </button>
 </form>
+<p class="tk-auth-switch">Hesabın yok mu? <a href="@Url.Action("Register", "Account")" id="tk-to-register">Kayıt ol</a></p>

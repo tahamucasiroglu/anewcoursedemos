@@ -97,6 +97,34 @@ public sealed class ProfileServiceTests : IDisposable
         (await _ctx.Service.ListAsync(ct)).Value.ShouldBeEmpty();
     }
 
+    /// <summary>B kullanıcısı A'nın profilini güncelleyemez; A'nın kaydı değişmeden kalır.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Other_user_cannot_update_profile()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var aProfile = (await _ctx.Service.CreateAsync(ProfileTestContext.Request("A kanalı"), ct)).Value;
+
+        _ctx.UseUser(_ctx.UserB);
+        var result = await _ctx.Service.UpdateAsync(aProfile.Id, ProfileTestContext.Request("Ele geçirildi"), ct);
+
+        result.Error.Type.ShouldBe(ErrorType.NotFound);
+        (await _ctx.Reader.GetAsync(_ctx.UserA, aProfile.Id, ct))!.Name.ShouldBe("A kanalı");
+    }
+
+    /// <summary>Modüller arası okuyucu da kullanıcıya göre filtreler: B'nin kimliğiyle A'nın profili <c>null</c> döner.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Reader_does_not_return_other_users_profile_by_id()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var aProfile = (await _ctx.Service.CreateAsync(ProfileTestContext.Request("A kanalı"), ct)).Value;
+
+        (await _ctx.Reader.GetAsync(_ctx.UserB, aProfile.Id, ct)).ShouldBeNull();
+        (await _ctx.Reader.GetActiveAsync(_ctx.UserB, ct)).ShouldBeNull();
+        (await _ctx.Reader.GetAsync(_ctx.UserA, aProfile.Id, ct)).ShouldNotBeNull();
+    }
+
     /// <summary>Aktif profil silinince en yeni kalan profil aktifleşir.</summary>
     /// <returns>Görev.</returns>
     [Fact]
@@ -156,7 +184,7 @@ public sealed class ProfileServiceTests : IDisposable
         result.Value.DefaultTone.ShouldBeNull();
         result.Value.DefaultAudience.ShouldBe("öğrenciler");
         result.Value.IsActive.ShouldBeTrue();
-        (await _ctx.Reader.GetAsync(created.Id, ct))!.Name.ShouldBe("Yeni Ad");
+        (await _ctx.Reader.GetAsync(_ctx.UserA, created.Id, ct))!.Name.ShouldBe("Yeni Ad");
     }
 
     /// <summary>Profil yoksa okuyucu null döner.</summary>
@@ -166,7 +194,7 @@ public sealed class ProfileServiceTests : IDisposable
     {
         var ct = TestContext.Current.CancellationToken;
         (await _ctx.Reader.GetActiveAsync(_ctx.UserA, ct)).ShouldBeNull();
-        (await _ctx.Reader.GetAsync(Guid.CreateVersion7(), ct)).ShouldBeNull();
+        (await _ctx.Reader.GetAsync(_ctx.UserA, Guid.CreateVersion7(), ct)).ShouldBeNull();
     }
 
     /// <summary>Kaynakları bırakır.</summary>

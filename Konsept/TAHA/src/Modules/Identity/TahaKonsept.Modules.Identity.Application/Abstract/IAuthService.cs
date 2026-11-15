@@ -5,23 +5,29 @@ using TahaKonsept.Shared.Contracts.Identity;
 namespace TahaKonsept.Modules.Identity.Application.Abstract;
 
 /// <summary>
-/// Kimlik doğrulama akışları (API <c>api/identity/*</c>): kurulum durumu ve tek seferlik kurulum, giriş, token yenileme,
-/// tüm oturumlardan çıkış. Tek kullanıcı modu: kayıt yoktur; kullanıcı yalnızca veritabanı boşken kurulumla açılır.
+/// Kimlik doğrulama akışları (API <c>api/identity/*</c>): kayıt durumu + kayıt (her zaman normal kullanıcı; yönetici hesabı
+/// <see cref="IAdminSeeder"/> ile yapılandırmadan tohumlanır, yönetici kayıtları kapatabilir), kullanıcı adı ya da e-posta ile giriş,
+/// token yenileme, tüm oturumlardan çıkış.
 /// </summary>
 public interface IAuthService : IApplicationService
 {
-    /// <summary>Kurulum gerekli mi (hiç kullanıcı yoksa true).</summary>
+    /// <summary>Kayıt durumu: yeni kayıt açık mı.</summary>
     /// <param name="ct">İptal belirteci.</param>
-    /// <returns>Kurulum durumu.</returns>
-    Task<Result<SetupStatusResponse>> GetSetupStatusAsync(CancellationToken ct = default);
+    /// <returns>Kayıt durumu.</returns>
+    Task<Result<RegistrationStatusResponse>> GetRegistrationStatusAsync(CancellationToken ct = default);
 
-    /// <summary>Hiç kullanıcı yokken tek yönetici hesabını oluşturur ve web token çifti döner; aksi halde Conflict.</summary>
+    /// <summary>
+    /// Yeni normal kullanıcı hesabı açar ve web token çifti döner; yönetici kayıtları kapattıysa Forbidden
+    /// (<c>identity.registration_closed</c>). Hiç kullanıcı yokken de çalışır (ilk kayıt yönetici OLMAZ).
+    /// </summary>
     /// <param name="request">Kullanıcı adı + parola.</param>
     /// <param name="ct">İptal belirteci.</param>
     /// <returns>Token çifti.</returns>
-    Task<Result<TokenResponse>> SetupAsync(SetupRequest request, CancellationToken ct = default);
+    Task<Result<TokenResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default);
 
-    /// <summary>Kullanıcı adı + parola ile giriş; yasaklı / kilitli kullanıcı reddedilir. Başarıda web token çifti.</summary>
+    /// <summary>
+    /// Kullanıcı adı ya da e-posta + parola ile giriş; yasaklı (devre dışı) / kilitli kullanıcı reddedilir. Başarıda web token çifti.
+    /// </summary>
     /// <param name="request">Giriş bilgileri.</param>
     /// <param name="ct">İptal belirteci.</param>
     /// <returns>Token çifti.</returns>

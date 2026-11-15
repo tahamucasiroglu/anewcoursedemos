@@ -26,10 +26,11 @@ public abstract class ProfileReaderBase : IProfileReader
     public virtual async Task<ProfileDto?> GetActiveAsync(Guid userId, CancellationToken cancellationToken = default) =>
         (await Repository.GetActiveAsync(userId, cancellationToken))?.ToDto();
 
-    /// <summary>Kimliğe göre profil.</summary>
+    /// <summary>Kullanıcıya ait profil (kimliğe göre).</summary>
+    /// <param name="userId">Sahip kullanıcı.</param>
     /// <param name="id">Profil kimliği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Profil ya da <c>null</c>.</returns>
-    public virtual async Task<ProfileDto?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        (await Repository.FindAsync(id, cancellationToken))?.ToDto();
+    public virtual async Task<ProfileDto?> GetAsync(Guid userId, Guid id, CancellationToken cancellationToken = default) =>
+        (await Repository.FindForUserAsync(id, userId, cancellationToken))?.ToDto();
 }

@@ -540,6 +540,9 @@ body.tk-modal-open { overflow: hidden; }
 .tk-auth-brand img { width: 60px; height: 60px; border-radius: 18px; box-shadow: 0 10px 26px -10px var(--tk-accent); }
 .tk-auth-brand p { color: var(--tk-text-muted); margin: 0; }
 .tk-auth-foot { display: flex; justify-content: center; margin-top: 16px; }
+.tk-auth-switch { margin: 16px 0 0; text-align: center; color: var(--tk-text-muted); font-size: .95rem; }
+.tk-auth-switch a { color: var(--tk-accent); font-weight: 700; text-decoration: none; }
+.tk-auth-switch a:hover, .tk-auth-switch a:focus-visible { text-decoration: underline; }
 
 /* ------------------------------------------------------------ Yayınlama — Çok yakında */
 .tk-soon { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--tk-topbar-h) - var(--tk-journal-h) - 60px); }

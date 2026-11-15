@@ -49,7 +49,7 @@ public sealed class ConceptsTestContext : IDisposable
         };
         Profiles = Substitute.For<IProfileReader>();
         Profiles.GetActiveAsync(UserId, Arg.Any<CancellationToken>()).Returns(_ => Task.FromResult<ProfileDto?>(Profile));
-        Profiles.GetAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(ci => Task.FromResult(ci.Arg<Guid>() == Profile.Id ? Profile : null));
+        Profiles.GetAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(ci => Task.FromResult(ci.ArgAt<Guid>(0) == UserId && ci.ArgAt<Guid>(1) == Profile.Id ? Profile : null));
 
         Budget = Substitute.For<IBudgetGuard>();
         Budget.EnsureCanStartProductionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(Result.Success()));

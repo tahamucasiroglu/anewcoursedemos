@@ -1,0 +1,40 @@
+@model RegisterPageModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Kayıt ol";
+    ViewData["Subtitle"] = "Yeni hesap oluşturun; verileriniz yalnızca size görünür.";
+}
+@if (!Model.RegistrationOpen)
+{
+    <div class="tk-alert is-warning" id="tk-register-closed" role="status">
+        <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-lock"></use></svg>
+        <span>Yeni kayıtlar şu an kapalı. Hesap açmak için yöneticiye başvurun.</span>
+    </div>
+}
+else
+{
+    <form id="tk-register-form" class="tk-auth-form" data-url="@Url.Action("Register", "Account")" novalidate autocomplete="off">
+        <div class="tk-field">
+            <label for="register-user">Kullanıcı adı</label>
+            <input id="register-user" name="userName" class="tk-input" autocomplete="username" required minlength="3" maxlength="64" autofocus />
+            <span class="tk-hint">3-64 karakter; harf, rakam ve <code>- . _ @@ +</code> kullanılabilir.</span>
+        </div>
+        <div class="tk-field">
+            <label for="register-pass">Parola</label>
+            <input id="register-pass" name="password" type="password" class="tk-input" autocomplete="new-password" required minlength="8" maxlength="128" />
+            <span class="tk-hint">En az 8 karakter.</span>
+        </div>
+        <div class="tk-field">
+            <label for="register-pass2">Parola (tekrar)</label>
+            <input id="register-pass2" name="passwordConfirm" type="password" class="tk-input" autocomplete="new-password" required maxlength="128" />
+        </div>
+        <div class="tk-alert is-danger" id="tk-register-error" hidden>
+            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-alert"></use></svg>
+            <span></span>
+        </div>
+        <button type="submit" class="tk-btn tk-btn-primary tk-btn-block" style="margin-top:8px">
+            <svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-check"></use></svg> Hesabı oluştur
+        </button>
+    </form>
+}
+<p class="tk-auth-switch">Zaten hesabın var mı? <a href="@Url.Action("Login", "Account")" id="tk-to-login">Giriş yap</a></p>

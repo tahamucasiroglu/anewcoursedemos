@@ -84,6 +84,33 @@ public sealed class BudgetAndUsageTests : IDisposable
         (await guard.EnsureCanStartProductionAsync(userId, ct)).IsSuccess.ShouldBeTrue();
     }
 
+    /// <summary>
+    /// Kullanıcı ayrımı: A'nın bütçe ayarı ve harcaması B'nin bütçesine/harcamasına yansımaz; A'nın limit aşımı B'yi engellemez;
+    /// B'nin bütçe kaydı A'nınkini değiştirmez.
+    /// </summary>
+    [Fact]
+    public async Task Budget_and_usage_are_per_user()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var userA = _user.GetRequiredUserId();
+        var other = new TestCurrentUser();
+        await new BudgetService(_user, _budgets, _clock).SaveAsync(new BudgetSettings { MonthlyLimitUsd = 1m, StopOnExceed = true, WarnAtPercent = 50 }, ct);
+        await AddCallAsync(userA, "anthropic", 3m, _clock.UtcNow.AddHours(-1));
+
+        var otherBudget = new BudgetService(other, _budgets, _clock);
+        (await otherBudget.GetAsync(ct)).Value.MonthlyLimitUsd.ShouldBe(0m);
+        var otherUsage = (await new UsageService(other, _calls, _budgets, _clock).GetMonthlyAsync(ct)).Value;
+        otherUsage.TotalUsd.ShouldBe(0m);
+        otherUsage.ByPlatform.ShouldBeEmpty();
+        otherUsage.Exceeded.ShouldBeFalse();
+        var guard = new BudgetGuard(_calls, _budgets, _clock);
+        (await guard.EnsureCanStartProductionAsync(other.GetRequiredUserId(), ct)).IsSuccess.ShouldBeTrue();
+        (await guard.EnsureCanStartProductionAsync(userA, ct)).IsFailure.ShouldBeTrue();
+
+        await otherBudget.SaveAsync(new BudgetSettings { MonthlyLimitUsd = 50m, StopOnExceed = false, WarnAtPercent = 90 }, ct);
+        (await new BudgetService(_user, _budgets, _clock).GetAsync(ct)).Value.MonthlyLimitUsd.ShouldBe(1m);
+    }
+
     /// <inheritdoc />
     public void Dispose() => _db.Dispose();
 

@@ -4,7 +4,7 @@ namespace TahaKonsept.Modules.Diagnostics.Application.Models;
 
 /// <summary>
 /// Günlük arama filtresi (<c>GET api/diagnostics/activity-logs?day=2026-11-14&amp;level=Error&amp;source=Production&amp;page=1&amp;pageSize=50</c>).
-/// <see cref="Day"/> Türkiye saatine göre gündür. Yönetici tüm kullanıcıları, diğerleri yalnızca kendi + sistem kayıtlarını görür.
+/// <see cref="Day"/> Türkiye saatine göre gündür. Yönetici tüm kullanıcıları, diğerleri yalnızca kendi kayıtlarını görür.
 /// </summary>
 public sealed record ActivityLogQuery
 {

@@ -7,7 +7,7 @@ using TahaKonsept.Modules.Identity.Domain.Entities;
 namespace TahaKonsept.Modules.Identity.Infrastructure.Persistence;
 
 /// <summary>
-/// Identity modülünün DbContext'i: ASP.NET Core Identity tabloları + <see cref="RefreshTokens"/>. <c>IdentityDbContext</c>'ten
+/// Identity modülünün DbContext'i: ASP.NET Core Identity tabloları + <see cref="RefreshTokens"/> + <see cref="Settings"/>. <c>IdentityDbContext</c>'ten
 /// türediği için <c>ModuleDbContextBase</c> kullanılamaz; şema (<see cref="SchemaName"/>) ve yapılandırmalar burada uygulanır.
 /// Tablo adları kısaltılır (<c>users</c>, <c>roles</c>, <c>user_roles</c>…); sütunlar snake_case (kayıtta <c>UseSnakeCaseNamingConvention</c>).
 /// <see cref="IIdentityUnitOfWork"/> olarak da kullanılır.
@@ -26,6 +26,9 @@ public class IdentityModuleDbContext : IdentityDbContext<AppUser, AppRole, Guid>
 
     /// <summary>Refresh token'lar.</summary>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    /// <summary>Sunucu tarafı ayarlar (ör. yeni kayıtlara izin).</summary>
+    public DbSet<IdentitySetting> Settings => Set<IdentitySetting>();
 
     /// <summary>Kaydeder; eşzamanlılık çakışmasında izlenen değişiklikleri atıp <c>false</c> döner.</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>

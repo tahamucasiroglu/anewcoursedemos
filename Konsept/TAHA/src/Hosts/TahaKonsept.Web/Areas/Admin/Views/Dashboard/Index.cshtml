@@ -86,11 +86,23 @@
 
     @* ---------------------------------------------------------------- Kullanıcılar *@
     <section class="tk-tab-panel" data-panel="kullanicilar" role="tabpanel">
+        <section class="tk-card tk-ad-registration" id="ad-registration">
+            <header class="tk-card-head">
+                <div class="tk-card-title">
+                    <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-shield"></use></svg></span>
+                    <div><h2>Kayıt</h2><small class="tk-muted">Kapalıyken Kayıt ol sayfası mesaj gösterir ve API yeni hesabı reddeder</small></div>
+                </div>
+                <label class="tk-switch">
+                    <input type="checkbox" id="ad-registration-open" disabled />
+                    <span class="tk-switch-track"></span> Yeni kayıtlara izin ver
+                </label>
+            </header>
+        </section>
         <section class="tk-card">
             <header class="tk-card-head">
                 <div class="tk-card-title">
                     <span class="tk-card-icon"><svg class="tk-ic" aria-hidden="true"><use href="/img/icons.svg#i-user"></use></svg></span>
-                    <div><h2>Kullanıcılar</h2><small class="tk-muted">Yasaklanan kullanıcının tüm oturumları kapatılır</small></div>
+                    <div><h2>Kullanıcılar</h2><small class="tk-muted">Devre dışı bırakılan kullanıcı giriş yapamaz, tüm oturumları kapatılır; son etkin yönetici devre dışı bırakılamaz</small></div>
                 </div>
             </header>
             <div class="tk-card-body is-flush tk-ad-table-wrap" id="ad-users-list"></div>

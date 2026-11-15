@@ -97,7 +97,7 @@ public abstract class JobFactoryBase : IJobFactory
         var format = document.Format;
         if (profileId is Guid pid)
         {
-            var profile = await _profiles.GetAsync(pid, cancellationToken);
+            var profile = await _profiles.GetAsync(userId, pid, cancellationToken);
             format = profile?.Format ?? format;
         }
 

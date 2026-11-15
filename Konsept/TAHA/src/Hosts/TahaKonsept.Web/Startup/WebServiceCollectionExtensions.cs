@@ -11,6 +11,7 @@ using TahaKonsept.Web.Infrastructure.Auth;
 using TahaKonsept.Web.Infrastructure.Auth.Abstract;
 using TahaKonsept.Web.Infrastructure.Auth.Concrete;
 using TahaKonsept.Web.Infrastructure.Options;
+using TahaKonsept.Web.Infrastructure.RateLimiting;
 using TahaKonsept.Web.Services.Account.Abstract;
 using TahaKonsept.Web.Services.Account.Concrete;
 using TahaKonsept.Web.Services.Downloads.Abstract;
@@ -22,7 +23,7 @@ namespace TahaKonsept.Web.Startup;
 
 /// <summary>
 /// Web host'un DI kaydı. <see cref="AddTahaWeb"/>: MVC (global antiforgery + varsayılan olarak giriş zorunlu),
-/// cookie kimlik doğrulama (BFF; Ajax isteklerinde yönlendirme yerine 401/403), admin policy, Data Protection anahtarları
+/// cookie kimlik doğrulama (BFF; Ajax isteklerinde yönlendirme yerine 401/403), admin policy, giriş/kayıt istek sınırları (AccountRateLimitPolicies), Data Protection anahtarları
 /// (yeniden başlatmada oturumlar düşmesin), API HttpClient'ları, token deposu/yenileyici, oturum servisi, Başlangıç kontrol listesi ve masaüstü programı sürüm bilgisi.
 /// </summary>
 public static class WebServiceCollectionExtensions
@@ -55,6 +56,7 @@ public static class WebServiceCollectionExtensions
             .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory));
 
         AddAuthentication(services);
+        services.AddRateLimiter(options => AccountRateLimitPolicies.Configure(options, configuration));
         AddApiClients(services);
 
         services.AddScoped<IAccountService, AccountService>();

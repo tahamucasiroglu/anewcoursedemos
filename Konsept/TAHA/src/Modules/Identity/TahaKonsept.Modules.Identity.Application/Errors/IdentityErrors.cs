@@ -7,9 +7,13 @@ namespace TahaKonsept.Modules.Identity.Application.Errors;
 /// </summary>
 public static class IdentityErrors
 {
-    /// <summary>Kurulum zaten yapılmış (kayıt kapalı).</summary>
-    public static readonly Error SetupCompleted =
-        Error.Conflict("identity.setup_completed", "Kurulum zaten tamamlanmış; yeni hesap açılamaz.");
+    /// <summary>Yönetici yeni kayıtları kapattı.</summary>
+    public static readonly Error RegistrationClosed =
+        Error.Forbidden("identity.registration_closed", "Yeni kayıtlar şu an kapalı. Hesap açmak için yöneticiye başvurun.");
+
+    /// <summary>İşlem yalnız yöneticiye açık.</summary>
+    public static readonly Error AdminRequired =
+        Error.Forbidden("identity.admin_required", "Bu işlem için yönetici yetkisi gerekiyor.");
 
     /// <summary>Kullanıcı adı ya da parola hatalı.</summary>
     public static readonly Error InvalidCredentials =

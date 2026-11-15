@@ -2,10 +2,10 @@
  * TK.adminDashboard — Yönetim paneli (Areas/Admin/Dashboard). Dört sekme (adres çubuğunda #genel, #kullanicilar, #hatalar, #gunluk):
  *  - Genel bakış: istatistik kutuları + Chart.js (günlük video — çizgi, günlük harcama — çubuk, seviyeye göre günlük kaydı — halka).
  *    Tek serili grafiklerde lejant yok (başlık adlandırır); halkada lejant + sayılar var. Tema değişince ('tk:theme') yeniden çizilir.
- *  - Kullanıcılar: tablo + Yasakla / Yasağı kaldır (onaylı).
+ *  - Kullanıcılar: "Yeni kayıtlara izin ver" anahtarı (sunucuda saklanır) + tablo + Devre dışı bırak / Etkinleştir (onaylı).
  *  - Hata bildirimleri: durum filtresi, sayfalama, satır içi durum seçimi (Yeni / Görüldü / Çözüldü), ayrıntı açılır.
  *  - Etkinlik günlüğü: gün / seviye / kaynak / metin filtresi, sayfalama.
- * MVC uçları: /Admin/Dashboard/{Istatistik, Kullanicilar, Yasakla/{id}, YasagiKaldir/{id}, HataBildirimleri, HataDurumu/{id}, Etkinlikler}.
+ * MVC uçları: /Admin/Dashboard/{Istatistik, Kullanicilar, KayitAyari (GET/PUT), Yasakla/{id}, YasagiKaldir/{id}, HataBildirimleri, HataDurumu/{id}, Etkinlikler}.
  * Tüm istekler TK.api ile. Tek modül (IIFE).
  */
 (function (window, $) {
@@ -184,17 +184,25 @@
                 return '<tr class="' + (u.isBanned ? 'tk-ad-row-muted' : '') + '">' +
                     '<td><span class="tk-ad-user"><span class="tk-avatar">' + U.escape(name.charAt(0).toLocaleUpperCase('tr-TR')) + '</span>' + U.escape(name) + '</span></td>' +
                     '<td>' + (u.isAdmin ? '<span class="tk-badge is-accent">Yönetici</span>' : '<span class="tk-badge">Kullanıcı</span>') + '</td>' +
-                    '<td>' + (u.isBanned ? '<span class="tk-badge is-danger">Yasaklı</span>' : '<span class="tk-badge is-success">Etkin</span>') + '</td>' +
+                    '<td>' + (u.isBanned ? '<span class="tk-badge is-danger">Devre dışı</span>' : '<span class="tk-badge is-success">Etkin</span>') + '</td>' +
                     '<td class="tk-ad-time">' + U.escape(U.dateTime(u.createdAt) || '—') + '</td>' +
                     '<td class="tk-ad-time">' + U.escape(U.dateTime(u.lastLoginAt) || '—') + '</td>' +
                     '<td class="tk-ad-actions">' + (u.isBanned
-                        ? '<button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-unban="' + U.escape(u.id) + '">' + U.icon('check', 'tk-ic-sm') + ' Yasağı kaldır</button>'
-                        : '<button type="button" class="tk-btn tk-btn-danger tk-btn-sm" data-ban="' + U.escape(u.id) + '" data-name="' + U.escape(name) + '">' + U.icon('lock', 'tk-ic-sm') + ' Yasakla</button>') +
+                        ? '<button type="button" class="tk-btn tk-btn-secondary tk-btn-sm" data-unban="' + U.escape(u.id) + '">' + U.icon('check', 'tk-ic-sm') + ' Etkinleştir</button>'
+                        : '<button type="button" class="tk-btn tk-btn-danger tk-btn-sm" data-ban="' + U.escape(u.id) + '" data-name="' + U.escape(name) + '">' + U.icon('lock', 'tk-ic-sm') + ' Devre dışı bırak</button>') +
                     '</td></tr>';
             }).join('') + '</tbody></table>');
     }
 
+    function loadRegistration() {
+        var $t = $('#ad-registration-open').prop('disabled', true);
+        return TK.api.get('/Admin/Dashboard/KayitAyari', null, { silent: true })
+            .done(function (d) { $t.prop('checked', !!(d && d.registrationOpen)).prop('disabled', false); })
+            .fail(function (xhr) { TK.toast.error('Kayıt ayarı alınamadı: ' + TK.api.errorMessage(xhr)); });
+    }
+
     function loadUsers() {
+        loadRegistration();
         $('#ad-users-list').html('<div class="tk-card-body">' + U.skeleton(3) + '</div>');
         return TK.api.get('/Admin/Dashboard/Kullanicilar', null, { silent: true })
             .done(function (d) { renderUsers(U.items(d)); })
@@ -321,16 +329,26 @@
 
         $('#ad-users-list').on('click', '[data-ban]', function () {
             var $b = $(this);
-            TK.modal.confirm('Kullanıcıyı yasakla', '"' + $b.data('name') + '" yasaklansın mı? Tüm oturumları (masaüstü ajanı dahil) kapatılır.', 'Yasakla')
+            TK.modal.confirm('Kullanıcıyı devre dışı bırak', '"' + $b.data('name') + '" devre dışı bırakılsın mı? Giriş yapamaz; tüm oturumları (masaüstü ajanı dahil) kapatılır.', 'Devre dışı bırak')
                 .done(function () {
                     U.busy($b, TK.api.post('/Admin/Dashboard/Yasakla/' + encodeURIComponent($b.data('ban'))))
-                        .done(function () { TK.toast.success('Kullanıcı yasaklandı.'); loadUsers(); });
+                        .done(function () { TK.toast.success('Kullanıcı devre dışı bırakıldı.'); loadUsers(); });
                 });
         });
         $('#ad-users-list').on('click', '[data-unban]', function () {
             var $b = $(this);
             U.busy($b, TK.api.post('/Admin/Dashboard/YasagiKaldir/' + encodeURIComponent($b.data('unban'))))
-                .done(function () { TK.toast.success('Yasak kaldırıldı.'); loadUsers(); });
+                .done(function () { TK.toast.success('Kullanıcı etkinleştirildi.'); loadUsers(); });
+        });
+
+        $('#ad-registration-open').on('change', function () {
+            var $t = $(this);
+            var open = $t.is(':checked');
+            $t.prop('disabled', true);
+            TK.api.put('/Admin/Dashboard/KayitAyari', { registrationOpen: open })
+                .done(function () { TK.toast.success(open ? 'Yeni kayıtlar açıldı.' : 'Yeni kayıtlar kapatıldı.'); })
+                .fail(function () { $t.prop('checked', !open); })
+                .always(function () { $t.prop('disabled', false); });
         });
 
         $('#ad-report-status').on('change', function () { reportsPage = 1; loadReports(); });

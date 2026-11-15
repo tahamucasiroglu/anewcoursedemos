@@ -40,12 +40,12 @@ public sealed class PreferencesTests
         result.IsValid.ShouldBeFalse();
     }
 
-    /// <summary>Kurulum doğrulayıcısı kısa kullanıcı adı ve parolayı reddeder.</summary>
+    /// <summary>Kayıt doğrulayıcısı kısa kullanıcı adı ve parolayı reddeder.</summary>
     [Fact]
-    public void Setup_validator_rejects_short_values()
+    public void Register_validator_rejects_short_values()
     {
-        var result = new SetupRequestValidator().Validate(new SetupRequest { UserName = "ab", Password = "1234567" });
+        var result = new RegisterRequestValidator().Validate(new RegisterRequest { UserName = "ab", Password = "1234567" });
 
-        result.Errors.Select(e => e.PropertyName).ShouldBe([nameof(SetupRequest.UserName), nameof(SetupRequest.Password)], ignoreOrder: true);
+        result.Errors.Select(e => e.PropertyName).ShouldBe([nameof(RegisterRequest.UserName), nameof(RegisterRequest.Password)], ignoreOrder: true);
     }
 }

@@ -1,9 +1,9 @@
 namespace TahaKonsept.Web.Models;
 
-/// <summary>Tarayıcıdan gelen ilk kurulum isteği (Ajax JSON): kullanıcı adı, parola ve tekrarı.</summary>
-public sealed record SetupRequest
+/// <summary>Tarayıcıdan gelen kayıt isteği (Ajax JSON): kullanıcı adı, parola ve tekrarı.</summary>
+public sealed record RegisterRequest
 {
-    /// <summary>Kullanıcı adı.</summary>
+    /// <summary>Kullanıcı adı (e-posta biçiminde de olabilir).</summary>
     public string UserName { get; init; } = string.Empty;
 
     /// <summary>Parola.</summary>

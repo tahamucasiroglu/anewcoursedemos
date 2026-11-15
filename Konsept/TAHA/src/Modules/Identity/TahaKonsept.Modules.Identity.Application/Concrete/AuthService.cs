@@ -11,16 +11,14 @@ using TahaKonsept.Shared.Contracts.Identity;
 namespace TahaKonsept.Modules.Identity.Application.Concrete;
 
 /// <summary>
-/// Kimlik doğrulama akışları. Kurulum yalnızca hiç kullanıcı yokken çalışır (süreç içi kilitle yarış önlenir) ve
-/// hesabı <see cref="RoleNames.Admin"/> rolüne ekler. Giriş: kilit → parola → yasak kontrolü; başarıda son giriş kaydı +
-/// web token ailesi. Yenileme <see cref="IRefreshTokenRotator"/>'a, çıkış <see cref="ITokenRevoker.RevokeAllAsync"/>'e devredilir.
+/// Kimlik doğrulama akışları. Kayıt: kayıt ayarı açıksa (<see cref="IRegistrationSettingsService"/>) normal kullanıcı açılır — hiçbir
+/// kayıt yönetici olmaz (yönetici <see cref="IAdminSeeder"/> ile tohumlanır); kullanıcı adı benzersizliğini Identity/veritabanı korur.
+/// Giriş: kullanıcı adı ya da e-posta → kilit → parola → yasak kontrolü; başarıda son giriş kaydı + web token ailesi.
+/// Yenileme <see cref="IRefreshTokenRotator"/>'a, çıkış <see cref="ITokenRevoker.RevokeAllAsync"/>'e devredilir.
 /// </summary>
 public sealed class AuthService : AuthServiceBase
 {
-    private static readonly SemaphoreSlim SetupLock = new(1, 1);
-
-    private readonly RoleManager<AppRole> _roles;
-    private readonly IUserReadRepository _userQueries;
+    private readonly IRegistrationSettingsService _registration;
     private readonly ITokenIssuer _issuer;
     private readonly IRefreshTokenRotator _rotator;
     private readonly ITokenRevoker _revoker;
@@ -30,8 +28,7 @@ public sealed class AuthService : AuthServiceBase
 
     /// <summary>Bağımlılıkları alır.</summary>
     /// <param name="users">Kullanıcı yöneticisi.</param>
-    /// <param name="roles">Rol yöneticisi.</param>
-    /// <param name="userQueries">Kullanıcı sorguları.</param>
+    /// <param name="registration">Kayıt ayarı.</param>
     /// <param name="issuer">Token verici.</param>
     /// <param name="rotator">Refresh rotasyonu.</param>
     /// <param name="revoker">Token iptali.</param>
@@ -40,8 +37,7 @@ public sealed class AuthService : AuthServiceBase
     /// <param name="logger">Günlükleyici.</param>
     public AuthService(
         UserManager<AppUser> users,
-        RoleManager<AppRole> roles,
-        IUserReadRepository userQueries,
+        IRegistrationSettingsService registration,
         ITokenIssuer issuer,
         IRefreshTokenRotator rotator,
         ITokenRevoker revoker,
@@ -50,8 +46,7 @@ public sealed class AuthService : AuthServiceBase
         ILogger<AuthService> logger)
         : base(users)
     {
-        _roles = roles;
-        _userQueries = userQueries;
+        _registration = registration;
         _issuer = issuer;
         _rotator = rotator;
         _revoker = revoker;
@@ -61,59 +56,40 @@ public sealed class AuthService : AuthServiceBase
     }
 
     /// <inheritdoc />
-    public override async Task<Result<SetupStatusResponse>> GetSetupStatusAsync(CancellationToken ct = default) =>
-        new SetupStatusResponse { SetupRequired = await _userQueries.CountAsync(ct) == 0 };
+    public override async Task<Result<RegistrationStatusResponse>> GetRegistrationStatusAsync(CancellationToken ct = default) =>
+        new RegistrationStatusResponse { RegistrationOpen = await _registration.IsRegistrationOpenAsync(ct) };
 
     /// <inheritdoc />
-    public override async Task<Result<TokenResponse>> SetupAsync(SetupRequest request, CancellationToken ct = default)
+    public override async Task<Result<TokenResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await SetupLock.WaitAsync(ct);
-        try
+        if (!await _registration.IsRegistrationOpenAsync(ct))
         {
-            if (await _userQueries.CountAsync(ct) > 0)
-            {
-                return IdentityErrors.SetupCompleted;
-            }
-
-            var roleResult = await EnsureAdminRoleAsync();
-            if (roleResult.IsFailure)
-            {
-                return roleResult.Error;
-            }
-
-            var user = new AppUser(request.UserName.Trim(), _clock.UtcNow);
-            var created = await Users.CreateAsync(user, request.Password);
-            if (!created.Succeeded)
-            {
-                return ToError(created);
-            }
-
-            var inRole = await Users.AddToRoleAsync(user, RoleNames.Admin);
-            if (!inRole.Succeeded)
-            {
-                return ToError(inRole);
-            }
-
-            user.RecordLogin(_clock.UtcNow);
-            await Users.UpdateAsync(user);
-            _logger.LogInformation("İlk kurulum tamamlandı: yönetici {UserName} oluşturuldu.", user.UserName);
-            return (await _issuer.IssueAsync(user.Id, TokenClientKind.Web, ct)).Map(t => t.Tokens);
+            _logger.LogWarning("Kayıt reddedildi: yeni kayıtlar kapalı.");
+            return IdentityErrors.RegistrationClosed;
         }
-        finally
+
+        var user = new AppUser(request.UserName.Trim(), _clock.UtcNow);
+        var created = await Users.CreateAsync(user, request.Password);
+        if (!created.Succeeded)
         {
-            SetupLock.Release();
+            return ToError(created);
         }
+
+        user.RecordLogin(_clock.UtcNow);
+        await Users.UpdateAsync(user);
+        _logger.LogInformation("Yeni hesap açıldı: {UserId}.", user.Id);
+        return (await _issuer.IssueAsync(user.Id, TokenClientKind.Web, ct)).Map(t => t.Tokens);
     }
 
     /// <inheritdoc />
     public override async Task<Result<TokenResponse>> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var user = await Users.FindByNameAsync(request.UserName.Trim());
+        var user = await FindByLoginAsync(request.UserName.Trim());
         if (user is null)
         {
-            _logger.LogWarning("Başarısız giriş: bilinmeyen kullanıcı adı.");
+            _logger.LogWarning("Başarısız giriş: bilinmeyen kullanıcı adı / e-posta.");
             return IdentityErrors.InvalidCredentials;
         }
 
@@ -159,16 +135,5 @@ public sealed class AuthService : AuthServiceBase
 
         var result = await _revoker.RevokeAllAsync(userId, ct);
         return result.IsSuccess ? Result.Success() : result.Error;
-    }
-
-    private async Task<Result> EnsureAdminRoleAsync()
-    {
-        if (await _roles.RoleExistsAsync(RoleNames.Admin))
-        {
-            return Result.Success();
-        }
-
-        var created = await _roles.CreateAsync(new AppRole(RoleNames.Admin));
-        return created.Succeeded ? Result.Success() : ToError(created);
     }
 }

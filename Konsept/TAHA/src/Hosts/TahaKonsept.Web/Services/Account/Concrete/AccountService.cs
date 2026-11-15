@@ -6,20 +6,20 @@ using TahaKonsept.Web.Infrastructure.Auth.Abstract;
 using TahaKonsept.Web.Models;
 using TahaKonsept.Web.Services.Account.Base;
 using ApiLoginRequest = TahaKonsept.Shared.Contracts.Identity.LoginRequest;
-using ApiSetupRequest = TahaKonsept.Shared.Contracts.Identity.SetupRequest;
+using ApiRegisterRequest = TahaKonsept.Shared.Contracts.Identity.RegisterRequest;
 using LoginRequest = TahaKonsept.Web.Models.LoginRequest;
-using SetupRequest = TahaKonsept.Web.Models.SetupRequest;
+using RegisterRequest = TahaKonsept.Web.Models.RegisterRequest;
 
 namespace TahaKonsept.Web.Services.Account.Concrete;
 
 /// <summary>
 /// API Identity uçlarına bağlı oturum servisi:
-/// <c>GET api/identity/setup/status</c>, <c>POST api/identity/setup</c>, <c>POST api/identity/login</c>,
-/// <c>POST api/identity/logout-all</c>. Kurulum başarılı olunca <see cref="WelcomeUrl"/> (Başlangıç) sayfasına yönlendirir.
+/// <c>GET api/identity/registration/status</c>, <c>POST api/identity/register</c>, <c>POST api/identity/login</c>,
+/// <c>POST api/identity/logout-all</c>. Kayıt başarılı olunca <see cref="WelcomeUrl"/> (Başlangıç) sayfasına yönlendirir.
 /// </summary>
 public sealed class AccountService : AccountServiceBase
 {
-    /// <summary>İlk kurulumdan sonra açılan karşılama sayfası (Başlangıç kontrol listesi).</summary>
+    /// <summary>Kayıttan sonra açılan karşılama sayfası (Başlangıç kontrol listesi).</summary>
     public const string WelcomeUrl = "/Baslangic";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -33,10 +33,10 @@ public sealed class AccountService : AccountServiceBase
     }
 
     /// <inheritdoc />
-    public override async Task<bool> IsSetupRequiredAsync(CancellationToken ct = default)
+    public override async Task<bool> IsRegistrationOpenAsync(CancellationToken ct = default)
     {
-        var result = await Api.GetAsync<SetupStatusResponse>("api/identity/setup/status", ct);
-        return result.IsSuccess && result.Data?.SetupRequired == true;
+        var result = await Api.GetAsync<RegistrationStatusResponse>("api/identity/registration/status", ct);
+        return !result.IsSuccess || result.Data?.RegistrationOpen != false;
     }
 
     /// <inheritdoc />
@@ -44,7 +44,7 @@ public sealed class AccountService : AccountServiceBase
     {
         if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrEmpty(request.Password))
         {
-            return Invalid("Kullanıcı adı ve parola gerekli.");
+            return Invalid("Kullanıcı adı (ya da e-posta) ve parola gerekli.");
         }
 
         var result = await Api.PostAsync<ApiLoginRequest, TokenResponse>(
@@ -55,7 +55,7 @@ public sealed class AccountService : AccountServiceBase
         if (!result.IsSuccess)
         {
             return result.StatusCode is StatusCodes.Status400BadRequest or StatusCodes.Status401Unauthorized
-                ? Invalid("Kullanıcı adı ya da parola hatalı.")
+                ? Invalid("Kullanıcı adı / e-posta ya da parola hatalı.")
                 : result.CastFailure<RedirectResponse>();
         }
 
@@ -65,7 +65,7 @@ public sealed class AccountService : AccountServiceBase
     }
 
     /// <inheritdoc />
-    public override async Task<ApiCallResult<RedirectResponse>> SetupAsync(SetupRequest request, CancellationToken ct = default)
+    public override async Task<ApiCallResult<RedirectResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.UserName) || request.UserName.Trim().Length < 3)
         {
@@ -82,9 +82,9 @@ public sealed class AccountService : AccountServiceBase
             return Invalid("Parolalar eşleşmiyor.");
         }
 
-        var result = await Api.PostAsync<ApiSetupRequest, JsonElement>(
-            "api/identity/setup",
-            new ApiSetupRequest { UserName = request.UserName.Trim(), Password = request.Password },
+        var result = await Api.PostAsync<ApiRegisterRequest, JsonElement>(
+            "api/identity/register",
+            new ApiRegisterRequest { UserName = request.UserName.Trim(), Password = request.Password },
             ct);
 
         if (!result.IsSuccess)

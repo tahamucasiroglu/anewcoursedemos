@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TahaKonsept.BuildingBlocks.Infrastructure.Persistence;
 using TahaKonsept.Modules.Identity.Application.Abstract;
+using TahaKonsept.Modules.Identity.Application.Models;
 using TahaKonsept.Modules.Identity.Domain.Entities;
 using TahaKonsept.Modules.Identity.Infrastructure.Localization.Concrete;
 using TahaKonsept.Modules.Identity.Infrastructure.Persistence;
@@ -15,7 +16,7 @@ namespace TahaKonsept.Modules.Identity.Infrastructure.DependencyInjection;
 /// <summary>
 /// Identity altyapı kaydı: <see cref="IdentityModuleDbContext"/> (şema <c>identity</c>, snake_case, migration geçmişi şemada),
 /// ASP.NET Core Identity çekirdeği (PBKDF2; parola ≥ 8, karmaşıklık zorunlu değil; 10 hatalı denemede 5 dk kilit; Türkçe harfli kullanıcı adı),
-/// depolar, iş birimi ve <see cref="JwtAccessTokenFactory"/>. Testler <c>configureDb</c> ile başka sağlayıcı (InMemory/SQLite) verebilir.
+/// depolar (kullanıcı, refresh token, <c>identity.settings</c>), yönetici tohumu ayarları (<see cref="AdminSeedOptions"/>), iş birimi ve <see cref="JwtAccessTokenFactory"/>. Testler <c>configureDb</c> ile başka sağlayıcı (InMemory/SQLite) verebilir.
 /// </summary>
 public static class IdentityInfrastructureServiceCollectionExtensions
 {
@@ -67,7 +68,25 @@ public static class IdentityInfrastructureServiceCollectionExtensions
         services.TryAddScoped<IIdentityUnitOfWork>(sp => sp.GetRequiredService<IdentityModuleDbContext>());
         services.TryAddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.TryAddScoped<IUserReadRepository, UserReadRepository>();
+        services.TryAddScoped<IIdentitySettingRepository, IdentitySettingRepository>();
+        services.TryAddSingleton(_ => ResolveAdminSeed(configuration));
         services.TryAddSingleton<IAccessTokenFactory, JwtAccessTokenFactory>();
         return services;
+    }
+
+    /// <summary>
+    /// Yönetici tohumu ayarlarını okur: önce yapılandırma, yoksa ortam değişkeni (geliştirmede <c>.env</c> yapılandırma kurulduktan sonra
+    /// ortama yüklendiği için ortam da ayrıca okunur).
+    /// </summary>
+    private static AdminSeedOptions ResolveAdminSeed(IConfiguration configuration) => new()
+    {
+        Email = Read(configuration, AdminSeedOptions.EmailKey),
+        PasswordHash = Read(configuration, AdminSeedOptions.PasswordHashKey),
+    };
+
+    private static string? Read(IConfiguration configuration, string key)
+    {
+        var value = configuration[key];
+        return string.IsNullOrWhiteSpace(value) ? Environment.GetEnvironmentVariable(key) : value;
     }
 }

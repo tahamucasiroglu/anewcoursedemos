@@ -5,7 +5,7 @@ using TahaKonsept.Web.Infrastructure.Auth.Abstract;
 using TahaKonsept.Web.Models;
 using TahaKonsept.Web.Services.Account.Abstract;
 using LoginRequest = TahaKonsept.Web.Models.LoginRequest;
-using SetupRequest = TahaKonsept.Web.Models.SetupRequest;
+using RegisterRequest = TahaKonsept.Web.Models.RegisterRequest;
 
 namespace TahaKonsept.Web.Services.Account.Base;
 
@@ -32,13 +32,13 @@ public abstract class AccountServiceBase : IAccountService
     }
 
     /// <inheritdoc />
-    public abstract Task<bool> IsSetupRequiredAsync(CancellationToken ct = default);
+    public abstract Task<bool> IsRegistrationOpenAsync(CancellationToken ct = default);
 
     /// <inheritdoc />
     public abstract Task<ApiCallResult<RedirectResponse>> LoginAsync(LoginRequest request, CancellationToken ct = default);
 
     /// <inheritdoc />
-    public abstract Task<ApiCallResult<RedirectResponse>> SetupAsync(SetupRequest request, CancellationToken ct = default);
+    public abstract Task<ApiCallResult<RedirectResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default);
 
     /// <inheritdoc />
     public abstract Task<ApiCallResult<RedirectResponse>> LogoutAsync(CancellationToken ct = default);

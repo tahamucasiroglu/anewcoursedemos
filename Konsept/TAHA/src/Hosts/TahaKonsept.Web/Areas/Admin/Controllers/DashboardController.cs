@@ -7,9 +7,9 @@ using TahaKonsept.Web.Infrastructure.Auth;
 namespace TahaKonsept.Web.Areas.Admin.Controllers;
 
 /// <summary>
-/// Yönetim paneli (yalnızca <c>admin.access</c> yetkisi): genel bakış (istatistik kutuları + Chart.js), kullanıcılar (yasakla),
+/// Yönetim paneli (yalnızca <c>admin.access</c> yetkisi): genel bakış (istatistik kutuları + Chart.js), kullanıcılar (kayıt anahtarı, devre dışı bırak / etkinleştir),
 /// hata bildirimleri (durum değiştir) ve etkinlik günlüğü (filtreli). API rotaları (Diagnostics modülü):
-/// <c>GET api/diagnostics/admin/stats</c>, <c>GET api/diagnostics/admin/users</c>, <c>POST api/diagnostics/admin/users/{id}/ban|unban</c>,
+/// <c>GET api/diagnostics/admin/stats</c>, <c>GET api/diagnostics/admin/users</c>, <c>GET|PUT api/identity/admin/registration</c>, <c>POST api/diagnostics/admin/users/{id}/ban|unban</c>,
 /// <c>GET api/diagnostics/error-reports?status=&amp;page=&amp;pageSize=</c>, <c>PUT api/diagnostics/error-reports/{id}/status</c>,
 /// <c>GET api/diagnostics/activity-logs?day=&amp;level=&amp;source=&amp;search=&amp;page=&amp;pageSize=</c>.
 /// </summary>
@@ -48,6 +48,20 @@ public sealed class DashboardController : WebControllerBase
     [HttpGet]
     public Task<IActionResult> Kullanicilar(CancellationToken ct) =>
         ProxyAsync(c => c.GetAsync<JsonElement>("api/diagnostics/admin/users", ct));
+
+    /// <summary>Kayıt ayarı (<c>RegistrationSettingsDto</c>: yeni kayıtlara izin).</summary>
+    /// <param name="ct">İptal belirteci.</param>
+    [HttpGet]
+    public Task<IActionResult> KayitAyari(CancellationToken ct) =>
+        ProxyAsync(c => c.GetAsync<JsonElement>("api/identity/admin/registration", ct));
+
+    /// <summary>Kayıt ayarını kaydeder (<c>{ registrationOpen }</c>).</summary>
+    /// <param name="body">Yeni ayar.</param>
+    /// <param name="ct">İptal belirteci.</param>
+    [HttpPut]
+    [ActionName("KayitAyari")]
+    public Task<IActionResult> KayitAyariKaydet([FromBody] JsonElement body, CancellationToken ct) =>
+        ProxyAsync(c => c.PutAsync<JsonElement, JsonElement>("api/identity/admin/registration", body, ct));
 
     /// <summary>Kullanıcıyı yasaklar.</summary>
     /// <param name="id">Kullanıcı.</param>

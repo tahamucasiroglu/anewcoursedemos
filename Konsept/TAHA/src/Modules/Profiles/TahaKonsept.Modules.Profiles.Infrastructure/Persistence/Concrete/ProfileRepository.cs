@@ -57,10 +57,11 @@ public sealed class ProfileRepository(ProfilesDbContext context) : Repository<Pr
             .OrderByDescending(p => p.UpdatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
-    /// <summary>Kimliğe göre profili takipsiz getirir.</summary>
+    /// <summary>Kullanıcıya ait profili kimliğe göre takipsiz getirir.</summary>
     /// <param name="id">Profil kimliği.</param>
+    /// <param name="userId">Kullanıcı.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Profil ya da <c>null</c>.</returns>
-    public Task<Profile?> FindAsync(Guid id, CancellationToken cancellationToken = default) =>
-        QueryNoTracking().FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+    public Task<Profile?> FindForUserAsync(Guid id, Guid userId, CancellationToken cancellationToken = default) =>
+        QueryNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId, cancellationToken);
 }

@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TahaKonsept.BuildingBlocks.Api.Controllers.Base;
+using TahaKonsept.Modules.Identity.Api.RateLimiting;
 using TahaKonsept.Modules.Identity.Application.Abstract;
 using TahaKonsept.Shared.Contracts.Identity;
 
 namespace TahaKonsept.Modules.Identity.Api.Controllers;
 
 /// <summary>
-/// Kimlik doğrulama uçları (<c>api/identity</c>): <c>GET setup/status</c> (anonim), <c>POST setup</c> (anonim, yalnızca hiç
-/// kullanıcı yokken; <see cref="TokenResponse"/>), <c>POST login</c> (anonim), <c>POST refresh</c> (anonim, rotasyon),
-/// <c>POST logout-all</c> (oturum gerekli; ajan dahil tüm token'lar iptal, 204).
+/// Kimlik doğrulama uçları (<c>api/identity</c>): <c>GET registration/status</c> (anonim), <c>POST register</c> (anonim, IP başına sınırlı;
+/// normal kullanıcı açar, <see cref="TokenResponse"/>; kayıt kapalıysa 403), <c>POST login</c> (anonim; kullanıcı adı ya da e-posta),
+/// <c>POST refresh</c> (anonim, rotasyon), <c>POST logout-all</c> (oturum gerekli; ajan dahil tüm token'lar iptal, 204).
 /// </summary>
 [Route("api/identity")]
 public sealed class AuthController : ApiControllerBase
@@ -20,23 +22,24 @@ public sealed class AuthController : ApiControllerBase
     /// <param name="auth">Kimlik doğrulama servisi.</param>
     public AuthController(IAuthService auth) => _auth = auth;
 
-    /// <summary>Kurulum gerekli mi.</summary>
+    /// <summary>Kayıt durumu.</summary>
     /// <param name="ct">İptal belirteci.</param>
-    /// <returns><see cref="SetupStatusResponse"/>.</returns>
+    /// <returns><see cref="RegistrationStatusResponse"/>.</returns>
     [AllowAnonymous]
-    [HttpGet("setup/status")]
-    public async Task<IActionResult> SetupStatus(CancellationToken ct) => ToActionResult(await _auth.GetSetupStatusAsync(ct));
+    [HttpGet("registration/status")]
+    public async Task<IActionResult> RegistrationStatus(CancellationToken ct) => ToActionResult(await _auth.GetRegistrationStatusAsync(ct));
 
-    /// <summary>Tek yönetici hesabını oluşturur ve oturum açar.</summary>
+    /// <summary>Yeni normal kullanıcı hesabı açar ve oturum açar.</summary>
     /// <param name="request">Kullanıcı adı + parola.</param>
     /// <param name="ct">İptal belirteci.</param>
     /// <returns><see cref="TokenResponse"/>.</returns>
     [AllowAnonymous]
-    [HttpPost("setup")]
-    public async Task<IActionResult> Setup([FromBody] SetupRequest request, CancellationToken ct) => ToActionResult(await _auth.SetupAsync(request, ct));
+    [EnableRateLimiting(IdentityRateLimitPolicies.RegisterPolicy)]
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken ct) => ToActionResult(await _auth.RegisterAsync(request, ct));
 
-    /// <summary>Giriş.</summary>
-    /// <param name="request">Kullanıcı adı + parola.</param>
+    /// <summary>Giriş (kullanıcı adı ya da e-posta).</summary>
+    /// <param name="request">Kullanıcı adı / e-posta + parola.</param>
     /// <param name="ct">İptal belirteci.</param>
     /// <returns><see cref="TokenResponse"/>.</returns>
     [AllowAnonymous]

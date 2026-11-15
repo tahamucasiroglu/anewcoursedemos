@@ -3,13 +3,17 @@ using TahaKonsept.BuildingBlocks.Application.Abstract;
 namespace TahaKonsept.Modules.Production.Tests.Support;
 
 /// <summary>
-/// Sabit kimlikli oturum kullanıcısı (testler).
+/// Oturum kullanıcısı (testler). Varsayılan kimlik kurucudan gelir; <see cref="Current"/> ile başka kullanıcıya geçilebilir
+/// (kullanıcı ayrımı testleri).
 /// </summary>
 /// <param name="userId">Kullanıcı.</param>
 public sealed class TestCurrentUser(Guid userId) : ICurrentUser
 {
+    /// <summary>Şu anki oturum kullanıcısı (testler değiştirebilir).</summary>
+    public Guid Current { get; set; } = userId;
+
     /// <inheritdoc />
-    public Guid? UserId => userId;
+    public Guid? UserId => Current;
 
     /// <inheritdoc />
     public string? UserName => "taha";
@@ -24,5 +28,5 @@ public sealed class TestCurrentUser(Guid userId) : ICurrentUser
     public bool HasPermission(string permission) => true;
 
     /// <inheritdoc />
-    public Guid GetRequiredUserId() => userId;
+    public Guid GetRequiredUserId() => Current;
 }

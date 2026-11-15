@@ -7,7 +7,7 @@ namespace TahaKonsept.Modules.Diagnostics.Application.Base;
 
 /// <summary>
 /// Diagnostics servislerinin ortak tabanı: oturum kullanıcısı, yönetici kontrolü (<see cref="RequireAdmin"/>),
-/// görünürlük kapsamı (<see cref="OwnerScope"/>: yönetici → hepsi, diğerleri → kendisi + sistem) ve sayfa boyutu sıkıştırma.
+/// görünürlük kapsamı (<see cref="OwnerScope"/>: yönetici → hepsi, diğerleri → yalnız kendi kayıtları) ve sayfa boyutu sıkıştırma.
 /// </summary>
 public abstract class DiagnosticsServiceBase
 {

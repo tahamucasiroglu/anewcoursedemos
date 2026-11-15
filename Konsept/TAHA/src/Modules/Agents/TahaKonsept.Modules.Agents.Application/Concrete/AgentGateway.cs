@@ -156,7 +156,7 @@ public sealed class AgentGateway : AgentGatewayBase, IAgentGateway
         }
 
         var request = command.RequestId == Guid.Empty ? command with { RequestId = Guid.CreateVersion7() } : command;
-        var pending = _previews.Register(request.RequestId);
+        var pending = _previews.Register(userId, request.RequestId);
         var sent = await InvokeAsync(connection.Value, c => c.PreviewSpeech(request), cancellationToken);
         if (sent.IsFailure)
         {

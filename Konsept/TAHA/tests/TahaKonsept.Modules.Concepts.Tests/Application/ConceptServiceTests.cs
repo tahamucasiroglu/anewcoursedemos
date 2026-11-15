@@ -87,6 +87,48 @@ public sealed class ConceptServiceTests : IDisposable
         (await reader.GetPronunciationsAsync(Guid.NewGuid(), concept.Id, TestContext.Current.CancellationToken)).ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// Kullanıcı ayrımı: B'nin konsepti (silinmiş olanı dahil) A'nın listelerinde görünmez; getir/onayla/sil/geri al/kalıcı sil
+    /// NotFound döner (varlığı sızdırılmaz) ve B'nin kaydı değişmeden kalır.
+    /// </summary>
+    [Fact]
+    public async Task Other_users_concepts_are_invisible_and_untouchable()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var service = _ctx.CreateConceptService();
+        var userB = Guid.CreateVersion7();
+        var active = await _ctx.SeedConceptAsync("B aktif", userB);
+        var deleted = await _ctx.SeedConceptAsync("B silinmiş", userB);
+        var tracked = await _ctx.Db.Concepts.FindAsync([deleted.Id], ct);
+        tracked!.MarkDeleted(_ctx.Clock.UtcNow);
+        await _ctx.Db.SaveChangesAsync(ct);
+        _ctx.Db.ChangeTracker.Clear();
+
+        (await service.ListAsync(null, ct)).Value.ShouldBeEmpty();
+        (await service.ListDeletedAsync(ct)).Value.ShouldBeEmpty();
+        (await service.GetAsync(active.Id, ct)).Error.ShouldBe(ConceptErrors.NotFound);
+        (await service.ApproveAsync(active.Id, ct)).Error.ShouldBe(ConceptErrors.NotFound);
+        (await service.DeleteAsync(active.Id, ct)).Error.ShouldBe(ConceptErrors.NotFound);
+        (await service.RestoreAsync(deleted.Id, ct)).Error.ShouldBe(ConceptErrors.NotFound);
+        (await service.PurgeAsync(deleted.Id, ct)).Error.ShouldBe(ConceptErrors.NotFound);
+
+        (await _ctx.Concepts.GetForUserAsync(active.Id, userB, ct))!.Status.ShouldBe(ConceptStatus.Generated);
+        (await _ctx.Concepts.GetForUserAsync(deleted.Id, userB, ct))!.Status.ShouldBe(ConceptStatus.Deleted);
+    }
+
+    /// <summary>Bağlam kurucu başka kullanıcının profil kimliğini kullanmaz: okuyucu ona <c>null</c> verir, kendi aktif profiline düşer.</summary>
+    [Fact]
+    public async Task Context_ignores_profile_id_of_other_user()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var userB = Guid.CreateVersion7();
+
+        var context = await _ctx.Contexts.ResolveAsync(userB, _ctx.Profile.Id, ct);
+
+        context.Error.ShouldBe(ConceptErrors.NoProfile);
+        (await _ctx.Contexts.ResolveAsync(_ctx.UserId, _ctx.Profile.Id, ct)).Value.ProfileId.ShouldBe(_ctx.Profile.Id);
+    }
+
     /// <summary>Kaynakları bırakır.</summary>
     public void Dispose() => _ctx.Dispose();
 }
