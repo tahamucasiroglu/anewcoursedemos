@@ -25,4 +25,7 @@ public enum ErrorType
 
     /// <summary>Çok fazla deneme; bir süre sonra tekrar denenmeli (429).</summary>
     TooManyRequests,
+
+    /// <summary>Kimlik geçerli ama işlem için yetki yok (403; spec 0011 Req 3).</summary>
+    Forbidden,
 }
