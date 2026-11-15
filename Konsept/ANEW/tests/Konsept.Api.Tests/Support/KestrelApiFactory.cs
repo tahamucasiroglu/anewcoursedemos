@@ -71,8 +71,9 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<IUserRepository>();
             services.RemoveAll<ISessionRepository>();
-            services.AddSingleton<IUserRepository>(new InMemoryUserRepository());
-            services.AddSingleton<ISessionRepository>(new InMemorySessionRepository());
+            var users = new InMemoryUserRepository();
+            services.AddSingleton<IUserRepository>(users);
+            services.AddSingleton<ISessionRepository>(new InMemorySessionRepository(users));
             services.RemoveAll<ITechnicalLogRepository>();
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
             services.RemoveAll<ISystemEventRepository>();

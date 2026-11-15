@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Konsept.Api.Tests.Fakes;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
@@ -12,7 +13,7 @@ namespace Konsept.Api.Tests.Support;
 /// <summary>
 /// Kimlik testleri için hızlı API (plan 0002): saat <see cref="FakeTimeProvider"/> (kilit süresi, 14 günlük oturum, hız
 /// sınırı penceresi, JWT ömrü aynı saatten), bellek kullanıcı/oturum/olay/teknik log depoları, örneğe özel log klasörü,
-/// test servis ve imza anahtarları.
+/// test servis ve imza anahtarları, ilk admin e-postası <see cref="AdminEmail"/> (plan 0011).
 /// </summary>
 public sealed class IdentityApiFactory : WebApplicationFactory<Program>
 {
@@ -22,8 +23,36 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek kullanıcı deposu.</summary>
     public InMemoryUserRepository Users { get; } = new();
 
+    /// <summary>Testlerdeki ilk admin e-postası (<c>Identity:AdminEmail</c>; örnek adres, gerçek kişi değil — plan 0011).</summary>
+    public const string AdminEmail = "admin@ornek.test";
+
+    /// <summary>Initializes a new instance of the <see cref="IdentityApiFactory"/> class.</summary>
+    public IdentityApiFactory()
+    {
+        Sessions = new InMemorySessionRepository(Users); // test kurulumu: rol (plan 0011) — oturum doğrulaması rolü kullanıcıdan okur.
+    }
+
     /// <summary>Gets bellek oturum deposu.</summary>
-    public InMemorySessionRepository Sessions { get; } = new();
+    public InMemorySessionRepository Sessions { get; }
+
+    /// <summary>
+    /// Admin oturumlu (Bearer) istemci (plan 0011): <see cref="AdminEmail"/> hesabı yoksa gerçek kayıt ucuyla açılır (ayar
+    /// gereği admin olur), sonra gerçek giriş ucuyla token alınır.
+    /// </summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>İstemci.</returns>
+    public async Task<HttpClient> CreateAdminClientAsync(CancellationToken cancellationToken)
+    {
+        var client = CreateClient();
+        if (!Users.Users.Any(u => u.NormalizedEmail == AdminEmail.ToUpperInvariant()))
+        {
+            await AuthenticatedClient.RegisterAsync(client, Services, AdminEmail, AuthenticatedClient.Password, "Admin", cancellationToken).ConfigureAwait(false);
+        }
+
+        var session = await AuthenticatedClient.LoginAsync(client, Services, AdminEmail, AuthenticatedClient.Password, cancellationToken).ConfigureAwait(false);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("accessToken").GetString());
+        return client;
+    }
 
     /// <summary>Gets bellek olay deposu.</summary>
     public InMemorySystemEventRepository Events { get; } = new();
@@ -64,6 +93,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Logging:Directory", LogDirectory);
         builder.UseSetting("Internal:ServiceKey", FastApiFactory.ServiceKey);
         builder.UseSetting("Auth:SigningKey", FastApiFactory.SigningKey);
+        builder.UseSetting("Identity:AdminEmail", AdminEmail);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();

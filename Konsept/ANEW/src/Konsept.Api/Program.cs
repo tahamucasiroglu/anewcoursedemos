@@ -47,6 +47,13 @@ builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).RequireAuthenticatedUser().Build();
     options.AddPolicy(AuthPolicies.InternalService, policy => policy.AddAuthenticationSchemes(AuthPolicies.ServiceKeyScheme).RequireAuthenticatedUser());
+
+    // Yetki tabanlı politika (spec 0011): yetki claim'i token'dan değil, her istekte veritabanındaki rolden gelir
+    // (SessionValidatingJwtEvents); kimliksiz istek 401, yetkisiz 403.
+    options.AddPolicy(AuthPolicies.AdminPanel, policy => policy
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim(AuthPolicies.PermissionClaim, AuthPolicies.AdminPanel));
 });
 
 var app = builder.Build();

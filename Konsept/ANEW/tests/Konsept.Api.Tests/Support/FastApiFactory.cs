@@ -28,8 +28,14 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek kullanıcı deposu.</summary>
     public InMemoryUserRepository Users { get; } = new();
 
+    /// <summary>Initializes a new instance of the <see cref="FastApiFactory"/> class.</summary>
+    public FastApiFactory()
+    {
+        Sessions = new InMemorySessionRepository(Users); // test kurulumu: rol (plan 0011) — oturum doğrulaması rolü kullanıcıdan okur.
+    }
+
     /// <summary>Gets bellek oturum deposu.</summary>
-    public InMemorySessionRepository Sessions { get; } = new();
+    public InMemorySessionRepository Sessions { get; }
 
     /// <summary>Gets bellek olay deposu.</summary>
     public InMemorySystemEventRepository Events { get; } = new();
