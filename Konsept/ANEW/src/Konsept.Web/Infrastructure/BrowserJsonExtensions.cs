@@ -56,9 +56,12 @@ public static class BrowserJsonExtensions
         }
 
         var error = result.Error!;
-        return error.Type == ErrorType.Unauthorized
-            ? SessionExpired()
-            : new JsonResult(new { code = error.Code, message = error.Message }) { StatusCode = StatusOf(error) };
+        return error.Type switch
+        {
+            ErrorType.Unauthorized => SessionExpired(),
+            ErrorType.Forbidden => Forbidden(), // Api yetkiyi reddetti (spec 0011): metin resx'ten, Api'nin gövdesi taşınmaz.
+            _ => new JsonResult(new { code = error.Code, message = error.Message }) { StatusCode = StatusOf(error) },
+        };
     }
 
     // Oturum kullanılabilir token olmadan korunduysa (refresh geçici hata + dolmuş token) Api'nin token'sız isteğe 401'i
@@ -73,6 +76,9 @@ public static class BrowserJsonExtensions
 
     private static JsonResult SessionExpired() =>
         new(new { code = KonseptCookieEvents.SessionExpiredCode, message = UiText.SessionExpired }) { StatusCode = StatusCodes.Status401Unauthorized };
+
+    private static JsonResult Forbidden() =>
+        new(new { code = WebPolicies.ForbiddenCode, message = UiText.ActionForbidden }) { StatusCode = StatusCodes.Status403Forbidden };
 
     private static int StatusOf(Error error) => error.Type switch
     {

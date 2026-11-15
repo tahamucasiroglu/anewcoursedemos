@@ -1,0 +1,12 @@
+@* Admin iskeleti (spec 0011 Req 4): yalnızca admin.panel yetkisiyle açılır; içerik 0010, 0024 ve 0025'te gelir. Özet
+   admin.js ile /admin/ozet'ten yüklenir; bölüm yokken boş durum metni kalır. *@
+@{
+    ViewData["Title"] = UiText.Admin;
+}
+<h1 class="page__title">@UiText.Admin</h1>
+<section class="admin" id="admin" data-overview-url="/admin/ozet"
+         data-text-forbidden="@UiText.ActionForbidden" data-text-failed="@UiText.AdminLoadFailed">
+    <p class="empty-state admin__empty" id="admin-empty">@UiText.AdminEmpty</p>
+    <ul class="admin__sections" id="admin-sections" hidden></ul>
+    <p class="admin__message" id="admin-message" role="alert" hidden></p>
+</section>

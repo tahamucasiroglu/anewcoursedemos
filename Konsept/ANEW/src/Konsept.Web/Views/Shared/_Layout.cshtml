@@ -16,6 +16,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+    <meta name="text-action-forbidden" content="@UiText.ActionForbidden" />
     <title>@ViewData["Title"] · @UiText.AppName</title>
     <link rel="icon" type="image/svg+xml" href="~/img/logo-placeholder.svg" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -54,6 +55,15 @@
                     aria-label="@UiText.Settings" data-tooltip="@UiText.ComingSoon">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" /></svg>
             </button>
+            @* Admin girişi (spec 0011 Req 4): "Ayarlar"ın hemen yanında, yalnızca admin.panel yetkisi varsa. Yetki her istekte Api'den
+               kurulur; gizleme yalnızca kolaylıktır, karar sunucudadır. *@
+            @if (User.HasClaim(WebPolicies.PermissionClaim, WebPolicies.AdminPanel))
+            {
+                <a class="icon-button admin-link" href="/admin" aria-label="@UiText.Admin" title="@UiText.Admin"
+                   aria-current="@(path.StartsWith("/admin", StringComparison.Ordinal) ? "page" : null)">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3z" /><path d="M9 12l2 2 4-4" /></svg>
+                </a>
+            }
             <button type="button" id="theme-toggle" class="icon-button theme-toggle" aria-label="@UiText.ThemeToggle">
                 <svg class="theme-toggle__sun" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" /></svg>
                 <svg class="theme-toggle__moon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11z" /></svg>

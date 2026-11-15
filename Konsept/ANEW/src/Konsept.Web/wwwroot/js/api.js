@@ -1,6 +1,7 @@
 // Tarayıcının tek istek yolu: jQuery $.ajax (K-6 — başka istek API'si yasak). Tarayıcı → MVC controller → API.
 // POST isteklerinde CSRF belirteci başlıkta gönderilir (docs/security.md). Oturum düştüyse (401) işlem sessizce
 // başarısız olmaz: tarayıcı "Oturumunuz sona erdi" bilgisiyle giriş sayfasına gider (spec 0002 Req 13, AC-13/14).
+// Yetkisiz işlem (403) yönlendirilmez; hata "Bu işlem için yetkiniz yok" metniyle döner (spec 0011 Req 3).
 
 const TOKEN_HEADER = 'RequestVerificationToken';
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -43,6 +44,25 @@ export function csrfToken(doc = globalThis.document) {
   return meta ? meta.getAttribute('content') || '' : '';
 }
 
+/**
+ * Yetkisiz işlem metni (spec 0011 Req 3): resx'ten, düzenin meta etiketiyle gelir.
+ * @param {Document} doc Belge.
+ * @returns {string} "Bu işlem için yetkiniz yok" (yoksa boş).
+ */
+export function forbiddenText(doc = globalThis.document) {
+  const meta = doc.querySelector('meta[name="text-action-forbidden"]');
+  return meta ? meta.getAttribute('content') || '' : '';
+}
+
+function failureBody(status, xhr) {
+  const body = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+  if (status !== 403) {
+    return body;
+  }
+  // Yetkisiz işlem sessizce başarısız olmaz; yönlendirme de yapılmaz: çağıran "Bu işlem için yetkiniz yok" gösterir.
+  return { ...(body || {}), code: 'auth.forbidden', message: forbiddenText() || (body && body.message) || '' };
+}
+
 function request(method, url, data) {
   const $ = jq();
   const settings = {
@@ -64,7 +84,7 @@ function request(method, url, data) {
         if (status === 401 && navigation) {
           navigation.assign(loginRedirectUrl(navigation));
         }
-        reject({ status, body: xhr && xhr.responseJSON ? xhr.responseJSON : null });
+        reject({ status, body: failureBody(status, xhr) });
       });
   });
 }

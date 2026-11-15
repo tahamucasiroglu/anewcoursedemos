@@ -58,6 +58,10 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     public Task<Result<CurrentUserResponse>> GetSessionAsync(string accessToken, CancellationToken cancellationToken) =>
         SendAsync<CurrentUserResponse>(WithBearer(new HttpRequestMessage(HttpMethod.Get, "api/auth/session"), accessToken), cancellationToken);
 
+    /// <inheritdoc />
+    public Task<Result<AdminOverviewResponse>> GetAdminOverviewAsync(CancellationToken cancellationToken) =>
+        SendAsync<AdminOverviewResponse>(new HttpRequestMessage(HttpMethod.Get, "api/admin/overview"), cancellationToken);
+
     /// <summary>İsteği API'ye gönderir.</summary>
     /// <param name="request">HTTP isteği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
@@ -74,6 +78,7 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     {
         HttpStatusCode.BadRequest => ErrorType.Validation,
         HttpStatusCode.Unauthorized => ErrorType.Unauthorized,
+        HttpStatusCode.Forbidden => ErrorType.Forbidden,
         HttpStatusCode.NotFound => ErrorType.NotFound,
         HttpStatusCode.Conflict => ErrorType.Conflict,
         HttpStatusCode.TooManyRequests => ErrorType.TooManyRequests,
@@ -98,9 +103,13 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         }
         catch (JsonException)
         {
-            return type is ErrorType.Unauthorized or ErrorType.TooManyRequests
-                ? new Error("api.error", ApiClientErrors.Unavailable.Message, type)
-                : ApiClientErrors.Unavailable;
+            // Gövdesiz 401/403/429 (ör. yetki politikasının 403'ü) türünü korur: "API erişilemiyor" sayılmaz.
+            return type switch
+            {
+                ErrorType.Forbidden => ApiClientErrors.Forbidden,
+                ErrorType.Unauthorized or ErrorType.TooManyRequests => new Error("api.error", ApiClientErrors.Unavailable.Message, type),
+                _ => ApiClientErrors.Unavailable,
+            };
         }
     }
 

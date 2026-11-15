@@ -210,6 +210,29 @@ body {
   text-align: center;
 }
 
+/* Admin iskeleti ve yetkisiz durum (spec 0011): renkler yalnızca tema değişkenlerinden (K-7). */
+.admin-link[aria-current="page"] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.admin__sections {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin__message {
+  color: var(--color-error);
+  background: var(--color-surface);
+}
+
+.forbidden {
+  color: var(--color-error);
+  background: var(--color-surface);
+  font-weight: 600;
+}
+
 .empty-state--announce {
   color: var(--color-accent);
   font-size: 1.3rem;

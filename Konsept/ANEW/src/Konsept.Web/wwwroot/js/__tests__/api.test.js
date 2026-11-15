@@ -50,6 +50,22 @@ describe('api.js — oturum düşünce girişe yönlendirme (AC-13, AC-14)', () 
     expect(location.assign).not.toHaveBeenCalled();
   });
 
+  it('403 alan istek yönlendirmez; hata "Bu işlem için yetkiniz yok" metniyle döner (spec 0011 AC-2)', async () => {
+    document.head.innerHTML = '<meta name="text-action-forbidden" content="Bu işlem için yetkiniz yok" />';
+    const location = fakeLocation('/admin');
+    setNavigation(location);
+    vi.spyOn($, 'ajax').mockReturnValueOnce(ajaxRejecting($, 403, null));
+    await expect(get('/admin/ozet')).rejects.toEqual({
+      status: 403,
+      body: { code: 'auth.forbidden', message: 'Bu işlem için yetkiniz yok' },
+    });
+    vi.spyOn($, 'ajax').mockReturnValueOnce(ajaxRejecting($, 403, { code: 'auth.forbidden', message: 'sunucu metni' }));
+    await expect(post('/system/agent-test')).rejects.toMatchObject({ status: 403, body: { message: 'Bu işlem için yetkiniz yok' } });
+
+    expect(location.assign).not.toHaveBeenCalled();
+    document.head.innerHTML = '';
+  });
+
   it('giriş adresi bulunulan sayfayı kodlanmış dönüş adresi yapar', () => {
     expect(loginRedirectUrl({ pathname: '/silinenler', search: '' })).toBe('/giris?oturum=bitti&returnUrl=%2Fsilinenler');
   });

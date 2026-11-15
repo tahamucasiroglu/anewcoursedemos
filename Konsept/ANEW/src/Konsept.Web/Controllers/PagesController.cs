@@ -1,3 +1,5 @@
+using Konsept.Web.Auth;
+using Konsept.Web.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,6 +34,14 @@ public sealed class PagesController : Controller
     /// <returns>Sayfa.</returns>
     [HttpGet("/yayinlama")]
     public IActionResult Yayinlama() => View();
+
+    /// <summary>
+    /// Yetkisiz sayfa (spec 0011 Req 3): "Bu sayfaya erişim yetkiniz yok", 403 durum koduyla. Oturumlu her kullanıcıya açıktır;
+    /// yetki politikası reddedince çerez şeması buraya yönlendirir.
+    /// </summary>
+    /// <returns>Sayfa (403).</returns>
+    [HttpGet(WebPolicies.ForbiddenPath)]
+    public IActionResult Yetkisiz() => View().WithStatusCode(StatusCodes.Status403Forbidden);
 
     /// <summary>
     /// Beklenmeyen hata sayfası (ayrıntı göstermez). Hata işleyicisi isteği özgün fiiliyle yeniden çalıştırdığından her fiille

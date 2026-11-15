@@ -68,4 +68,9 @@
   <data name="WelcomeIntro" xml:space="preserve"><value>ANEW Konsept, yapay zekâyla senin için video konseptleri önerir. Beğendiğin konsepti onaylarsın, bilgisayarındaki masaüstü ajanı onu senin yerine videoya dönüştürür. Üretilen videolar senin bilgisayarında kalır.</value></data>
   <data name="WelcomeAgentNote" xml:space="preserve"><value>Masaüstü ajanını giriş yaptıktan sonra Ayarlar'dan indirebilirsin.</value></data>
   <data name="WelcomeLogoAlt" xml:space="preserve"><value>ANEW Konsept logosu</value></data>
+  <data name="Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="AdminEmpty" xml:space="preserve"><value>Admin alanı henüz boş. İstatistikler, kullanıcılar ve hata bildirimleri ileride burada görünecek.</value></data>
+  <data name="AdminLoadFailed" xml:space="preserve"><value>Admin özeti şu an yüklenemedi</value></data>
+  <data name="PageForbidden" xml:space="preserve"><value>Bu sayfaya erişim yetkiniz yok</value></data>
+  <data name="ActionForbidden" xml:space="preserve"><value>Bu işlem için yetkiniz yok</value></data>
 </root>

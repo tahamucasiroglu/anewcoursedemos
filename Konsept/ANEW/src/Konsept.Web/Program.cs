@@ -73,13 +73,18 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
         options.LoginPath = "/giris";
         options.LogoutPath = "/cikis";
-        options.AccessDeniedPath = "/giris";
+        options.AccessDeniedPath = WebPolicies.ForbiddenPath;
         options.ReturnUrlParameter = "returnUrl";
         options.EventsType = typeof(KonseptCookieEvents);
     });
 
 // Default-deny (spec 0002 Req 11): yalnızca [AllowAnonymous] işaretli giriş/kayıt sayfaları kimliksiz açılır.
-builder.Services.AddAuthorization(options => options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+// Yetki politikası (spec 0011): yetki claim'i her istekte Api'nin oturum yanıtından kurulur; asıl karar Api'dedir.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    options.AddPolicy(WebPolicies.AdminPanel, policy => policy.RequireAuthenticatedUser().RequireClaim(WebPolicies.PermissionClaim, WebPolicies.AdminPanel));
+});
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 builder.Services.AddControllersWithViews(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 

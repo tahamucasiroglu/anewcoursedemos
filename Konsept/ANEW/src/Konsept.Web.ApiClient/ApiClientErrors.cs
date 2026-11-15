@@ -39,6 +39,12 @@ public static class ApiClientErrors
     /// <summary>Ek bilgi anahtarı: Api'nin korelasyon numarası.</summary>
     public const string CorrelationIdKey = "correlationId";
 
+    /// <summary>Hata kodu: yetki yok (Api 403; spec 0011).</summary>
+    public const string ForbiddenCode = "auth.forbidden";
+
     /// <summary>Gets API'ye ulaşılamadı.</summary>
     public static Error Unavailable { get; } = new(UnavailableCode, "API erişilemiyor", ErrorType.Unavailable);
+
+    /// <summary>Gets yetki yok (gövdesiz 403). Kullanıcıya gösterilen metin Web'in resx'inden gelir.</summary>
+    public static Error Forbidden { get; } = new(ForbiddenCode, "Yetki yok", ErrorType.Forbidden);
 }

@@ -76,6 +76,25 @@ public sealed class WebFactory : WebApplicationFactory<Program>
     public Task<HttpClient> CreateSignedInClientAsync(CancellationToken cancellationToken) =>
         SignedInClient.CreateAsync(this, cancellationToken);
 
+    /// <summary>
+    /// Admin oturumlu istemci (plan 0011): sahte API'nin oturum yanıtı bundan sonra <c>admin.panel</c> yetkisini taşır, sonra
+    /// gerçek giriş akışıyla oturum açılır. Yetki her istekte oturum yanıtından kurulduğu için <see cref="UseSessionPermissions"/>
+    /// ile istek arasında değiştirilebilir.
+    /// </summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>İstemci.</returns>
+    public Task<HttpClient> CreateAdminClientAsync(CancellationToken cancellationToken)
+    {
+        UseSessionPermissions("admin.panel");
+        return SignedInClient.CreateAsync(this, cancellationToken);
+    }
+
+    /// <summary>Sahte API'nin oturum yanıtının taşıyacağı yetkileri ayarlar (Api'deki rol değişikliğinin karşılığı).</summary>
+    /// <param name="permissions">Yetkiler.</param>
+    public void UseSessionPermissions(params string[] permissions) =>
+        Api.GetSessionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Result<CurrentUserResponse>.Success(new CurrentUserResponse(UserId, UserName, SignedInClient.Email) { Permissions = permissions }));
+
     /// <summary>Sayfayı getirir ve AngleSharp belgesine çevirir.</summary>
     /// <param name="client">HTTP istemcisi.</param>
     /// <param name="path">Sayfa yolu.</param>

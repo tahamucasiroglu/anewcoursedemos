@@ -5,7 +5,7 @@ namespace Konsept.Web.ApiClient.Abstract;
 
 /// <summary>
 /// Web'in API'ye yaptığı çağrılar. API'ye ulaşılamazsa <c>api.unavailable</c> hatası döner; 401 → Unauthorized,
-/// 429 → TooManyRequests türünde hata.
+/// 403 → Forbidden, 429 → TooManyRequests türünde hata.
 /// </summary>
 public interface IKonseptApiClient
 {
@@ -56,4 +56,9 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Kullanıcı ya da Unauthorized (oturum iptal/süresi dolmuş).</returns>
     Task<Result<CurrentUserResponse>> GetSessionAsync(string accessToken, CancellationToken cancellationToken);
+
+    /// <summary>Admin alanının özetini getirir (yalnızca <c>admin.panel</c> yetkisiyle; Api karar verir).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Özet ya da hata (403 → Forbidden).</returns>
+    Task<Result<AdminOverviewResponse>> GetAdminOverviewAsync(CancellationToken cancellationToken);
 }

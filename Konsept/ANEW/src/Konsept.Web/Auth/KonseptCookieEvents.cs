@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using Konsept.Shared.Kernel.Enums;
 using Konsept.Web.ApiClient.Abstract;
 using Konsept.Web.ApiClient.Dtos;
@@ -14,8 +15,9 @@ namespace Konsept.Web.Auth;
 /// Web oturum cookie'sinin olayları (spec 0002 Req 11, 13, 15): her istekte oturum Api'ye doğrulatılır — iptal edilmiş ya da
 /// süresi dolmuş oturum bir sonraki istekte düşer (diğer tarayıcıdan çıkış dahil); erişim token'ı bitmek üzereyse tek uçuşlu
 /// refresh yapılır; giriş gerektiren istekte sayfa giriş sayfasına (oturum düştüyse "Oturumunuz sona erdi" bilgisiyle),
-/// Ajax isteği 401 JSON'a gider — hiçbir işlem sessizce başarısız olmaz. Çerçeve adaptörü; token'lar yalnızca şifreli
-/// cookie biletinde durur.
+/// Ajax isteği 401 JSON'a gider — hiçbir işlem sessizce başarısız olmaz. Yetki claim'leri (spec 0011) her istekte oturum
+/// yanıtındaki yetkilerle yeniden kurulur (Api erişilemezse hiç yetki yok); yetkisiz sayfa "/yetkisiz"e, yetkisiz Ajax
+/// 403 JSON'a gider. Çerçeve adaptörü; token'lar yalnızca şifreli cookie biletinde durur.
 /// </summary>
 /// <param name="coordinator">Refresh koordinatörü.</param>
 /// <param name="timeProvider">Saat kaynağı.</param>
@@ -90,6 +92,14 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
     {
         ArgumentNullException.ThrowIfNull(context);
         var http = context.HttpContext;
+
+        // Kapalı başarısızlık (spec 0011): cookie'deki yetki claim'leri hiçbir zaman kullanılmaz; yetkiler yalnızca bu istekte
+        // Api'nin oturum yanıtından kurulur. Api erişilemezse kullanıcının hiçbir yetkisi yoktur.
+        if (context.Principal is { } signedIn)
+        {
+            context.ReplacePrincipal(WithPermissions(signedIn, []));
+        }
+
         var access = context.Properties.GetTokenValue(AccessTokenName);
         var refresh = context.Properties.GetTokenValue(RefreshTokenName);
         if (string.IsNullOrEmpty(access) || string.IsNullOrEmpty(refresh))
@@ -129,6 +139,11 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
         {
             await RejectAsync(context).ConfigureAwait(false);
             return;
+        }
+
+        if (session.IsSuccess)
+        {
+            context.ReplacePrincipal(WithPermissions(context.Principal!, session.Value.Permissions ?? []));
         }
 
         // Bilet yalnızca token yenilenince değil, kullanıldıkça (dakikada en çok bir kez) yenilenir (review R4-1, Req 13);
@@ -173,6 +188,39 @@ public sealed class KonseptCookieEvents(ITokenRefreshCoordinator coordinator, Ti
             : login;
         context.Response.Redirect(target);
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Yetkisiz işlem (spec 0011 Req 3): Ajax isteği yönlendirilmez, 403 JSON + "Bu işlem için yetkiniz yok" alır; sayfa
+        // isteği "/yetkisiz" sayfasına (403, "Bu sayfaya erişim yetkiniz yok") gider.
+        if (IsAjax(context.Request))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return context.Response.WriteAsJsonAsync(new { code = WebPolicies.ForbiddenCode, message = UiText.ActionForbidden });
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    }
+
+    private static ClaimsPrincipal WithPermissions(ClaimsPrincipal principal, IEnumerable<string> permissions)
+    {
+        var source = principal.Identity as ClaimsIdentity;
+        var identity = new ClaimsIdentity(
+            principal.Claims.Where(c => c.Type != WebPolicies.PermissionClaim).Select(c => new Claim(c.Type, c.Value, c.ValueType, c.Issuer)),
+            source?.AuthenticationType ?? CookieAuthenticationDefaults.AuthenticationScheme,
+            source?.NameClaimType ?? ClaimsIdentity.DefaultNameClaimType,
+            source?.RoleClaimType ?? ClaimsIdentity.DefaultRoleClaimType);
+        foreach (var permission in permissions.Distinct(StringComparer.Ordinal))
+        {
+            identity.AddClaim(new Claim(WebPolicies.PermissionClaim, permission));
+        }
+
+        return new ClaimsPrincipal(identity);
     }
 
     private static async Task RejectAsync(CookieValidatePrincipalContext context)
