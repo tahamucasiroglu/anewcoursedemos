@@ -74,6 +74,9 @@ public abstract class ProductionPipelineBase(
     private static readonly Action<ILogger, Guid, string, Exception?> StageFailedLog = LoggerMessage.Define<Guid, string>(
         LogLevel.Warning, new EventId(5302, "ProductionStageFailed"), "Üretim aşaması hata verdi: {JobId} {Stage}");
 
+    private static readonly Action<ILogger, Guid, Exception?> JobCrashed = LoggerMessage.Define<Guid>(
+        LogLevel.Error, new EventId(5306, "ProductionJobCrashed"), "Üretim işi beklenmeyen hatayla durdu: {JobId}");
+
     private static readonly Action<ILogger, Guid, Exception?> GpuFailedLog = LoggerMessage.Define<Guid>(
         LogLevel.Error, new EventId(5303, "ProductionGpuUnavailable"), "Yerel aşama ekran kartını kullanamadı (CPU'ya düşülmedi): {JobId}");
 
@@ -111,7 +114,19 @@ public abstract class ProductionPipelineBase(
         }
 
         (_job, _fix, _caller, _stop) = (job, job.FixedSettings, caller, stop);
-        var outcome = await RunJobAsync().ConfigureAwait(false);
+        PipelineOutcome outcome;
+        try
+        {
+            outcome = await RunJobAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !stop.IsCancellationRequested)
+        {
+            // Beklenmeyen hata aşamayı Hata yapar ve sayaca girer; iş Üretiliyor'da takılıp ücretli aşamayı yeniden koşmaz (review r1 M-4).
+            JobCrashed(logger, job.Id, ex);
+            var stage = _progress.Stages.FirstOrDefault(s => s.State == StageState.Running)?.Stage ?? Next(_progress) ?? PipelineStage.Analysis;
+            outcome = await FailAsync(stage, ProductionText.PipelineUnexpected).ConfigureAwait(false);
+        }
+
         switch (outcome)
         {
             case PipelineOutcome.Completed:
@@ -172,7 +187,10 @@ public abstract class ProductionPipelineBase(
         }
 
         _content = content;
-        var hash = PipelineRules.Hash(JsonSerializer.Serialize(new { content.Title, content.Scenes }, Json));
+        // Metin ve çıktıyı etkileyen sabit ayarlar (review r1 M-2): ayar değişirse eski kod/ses/render yeniden kullanılmaz.
+        var hash = PipelineRules.Hash(JsonSerializer.Serialize(
+            new { content.Title, content.Scenes, _fix.CodeModel, _fix.Language, _fix.Format, _fix.Engine, _fix.ImageModel, _fix.AudioModel },
+            Json));
         var stored = await outputsStore.GetAsync(_job.UserId, _job.ConceptId, CancellationToken.None).ConfigureAwait(false);
         _outputs = stored is not null && string.Equals(stored.TextHash, hash, StringComparison.Ordinal)
             ? stored
@@ -427,6 +445,11 @@ public abstract class ProductionPipelineBase(
         }
 
         var now = time.GetUtcNow();
+        if (!await jobs.TransitionAsync(_job.UserId, _job.Id, Producing, ProductionJobStatus.Completed, now, CancellationToken.None).ConfigureAwait(false))
+        {
+            return new StageResult(PipelineOutcome.Stopped); // Bu arada Durdur: kayıt yok, sıra ilerlemez (review r1 M-1).
+        }
+
         _progress = _progress.With(PipelineStage.Merge, StageState.Done, result.Device) with { EndedAt = now };
         await SaveProgressAsync().ConfigureAwait(false);
         await videos.AddAsync(
@@ -451,7 +474,6 @@ public abstract class ProductionPipelineBase(
                 EndedAt = now,
             },
             CancellationToken.None).ConfigureAwait(false);
-        await jobs.TransitionAsync(_job.UserId, _job.Id, Producing, ProductionJobStatus.Completed, now, CancellationToken.None).ConfigureAwait(false);
         await concepts.ChangeAsync(_job.UserId, _job.ConceptId, ConceptQueueStage.Producing, ConceptQueueStage.VideoReady, CancellationToken.None).ConfigureAwait(false);
         var start = _progress.StartedAt ?? now;
         await WriteEventAsync(

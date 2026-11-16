@@ -25,7 +25,7 @@ public sealed class LocalVideoServer(Func<string> videoFolder, TimeProvider time
 
     private const int MaxHeaderBytes = 8192;
 
-    private static readonly string[] CommonHeaders = ["Access-Control-Allow-Origin: *", "Access-Control-Allow-Private-Network: true", "Connection: close"];
+    private static readonly string[] CommonHeaders = ["Access-Control-Allow-Private-Network: true", "Connection: close"];
 
     private readonly ILogger _logger = (logger ?? Serilog.Core.Logger.None).ForContext<LocalVideoServer>();
     private readonly CancellationTokenSource _stop = new();
@@ -178,7 +178,7 @@ public sealed class LocalVideoServer(Func<string> videoFolder, TimeProvider time
 
                 if (request[0] == "OPTIONS")
                 {
-                    await WriteHeadAsync(stream, 204, "No Content", ["Access-Control-Allow-Methods: GET, HEAD", "Access-Control-Allow-Headers: Range", "Content-Length: 0"], cancellationToken)
+                    await WriteHeadAsync(stream, 204, "No Content", ["Access-Control-Allow-Origin: *", "Access-Control-Allow-Methods: GET, HEAD", "Access-Control-Allow-Headers: Range", "Content-Length: 0"], cancellationToken)
                         .ConfigureAwait(false);
                     return;
                 }

@@ -30,6 +30,7 @@ public static class PipelineRules
 
     private static readonly Dictionary<string, string> ToolNames = new(StringComparer.Ordinal)
     {
+        ["agent"] = "ajan sürümü (ajanı güncelleyin)",
         ["node"] = "Node.js",
         ["ffmpeg"] = "FFmpeg",
         ["chromium"] = "Chromium",

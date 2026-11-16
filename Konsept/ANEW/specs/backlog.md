@@ -135,7 +135,8 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   koşucuları ekle; sahne başına `voice.wav` + gerçek ses süresi (altyazı zamanlaması onunla) — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
 - **B-117** — 0017 Req 14a / AC-31 GPU ayrıntısı: aygıt tespiti (0009 Req 8, B-74), yerel model aşamalarında CUDA sağlayıcısı yüklenemezse
   "Ekran kartı kullanılamadı: <model>", VRAM yetmezse boştaki modelleri boşaltıp tek yeniden deneme yok; yalnızca birleştirmedeki NVENC kodlaması
-  CPU'ya düşmeden hata verir ve aşama kaydı aygıtı tutar — Source: plan 0017 Risk 1 — Severity: Medium — Recommendation: B-116 koşucularıyla aynı
+  CPU'ya düşmeden hata verir ve aşama kaydı aygıtı tutar. Kodlayıcı sabit `h264_nvenc`: NVIDIA olmayan makinede her iş "Ekran kartı
+  kullanılamadı: FFmpeg" ile Hata olur; ajanın bildirdiği aygıt değerleri (gpu/cpu) sabit yazılıdır, gerçek tespit yok (review r1 I-2, L-2) — Source: plan 0017 Risk 1 — Severity: Medium — Recommendation: B-116 koşucularıyla aynı
   yerde; `AgentStageReply.GpuUnavailable` sözleşmesi ve Pi tarafı (hata metni, Error log) hazır — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
 - **B-118** — 0017 render: HyperFrames CLI çağrısı (`components\hyperframes\node_modules\hyperframes\dist\cli.js render <dir> --output clip.mp4
   --fps 30`) gerçek kurulumla doğrulanmadı; HyperFrames ajana kurulmuyor (B-73) ve LLM kodu 0018'in kısıtlı ortamında çalışmalı (spec: 0017, 0018
@@ -153,3 +154,6 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   (sunucu kaydı tamamlandığında istemci durumu henüz `Connecting`; yeniden koşuda 3/3 yeşil) — Source: plan 0017 step-2 fast CHECK — Severity: Low —
   Recommendation: testte `Eventually` koşuluna `connection.State == Connected` ekle (assert zayıflatılmaz, yarış penceresi beklenir) — Deferred by:
   tahamucasiroglu, 2026-11-16, standing approval
+- **B-122** — 0017 AC-29 sonradan değişmezlik adımı test edilmedi (kayıt alanları test ediliyor; `production.videos` için güncelleme yolu yok,
+  kayıt yalnızca eklenir) — Source: plan 0017 review r1 L-2 — Severity: Low — Recommendation: 0020 (yeni sürüm) ile birlikte konsept metni ve
+  profil ayarı değiştirildikten sonra kaydın aynı kaldığını assert eden test — Deferred by: tahamucasiroglu, 2026-11-16, standing approval

@@ -45,6 +45,7 @@
   <data name="EventStarted" xml:space="preserve"><value>Video üretimi başladı: {0}</value></data>
   <data name="EventCompleted" xml:space="preserve"><value>Video hazırlandı: {0} — {1} ({2})</value></data>
   <data name="EventFailed" xml:space="preserve"><value>Video üretimi hata verdi: {0} — {1} ({2}): {3}</value></data>
+  <data name="PipelineUnexpected" xml:space="preserve"><value>Beklenmeyen bir hata oluştu; Kaldığı yerden devam et ile yeniden deneyin.</value></data>
   <data name="VideoNotFound" xml:space="preserve"><value>Video bulunamadı.</value></data>
   <data name="StreamAgentOffline" xml:space="preserve"><value>Videoyu izlemek için ajan bağlı olmalı</value></data>
   <data name="StreamFileMissing" xml:space="preserve"><value>Video dosyası bulunamadı</value></data>

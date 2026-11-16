@@ -548,6 +548,84 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
         (await offline.Content.ReadAsStringAsync(ct)).ShouldContain("Videoyu izlemek için ajan bağlı olmalı");
     }
 
+    /// <summary>
+    /// Review r1 M-1: ajan birleştirmeyi tam Durdur anında bitirse de iş Durduruldu kalır — video kaydı, Video oldu ve sıradaki iş yok.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_StopDuringMerge_NoRecord_NextNotStarted()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct);
+        _factory.Agent.Stage = async (conn, cmd, token) =>
+        {
+            if (cmd.Stage == AgentStageCommand.Merge)
+            {
+                (await client.PostAsJsonAsync("/api/production/stop", new { profileId = profile }, CancellationToken.None)).EnsureSuccessStatusCode();
+            }
+
+            return await FakeAgentChannel.DefaultStage(conn, cmd, CancellationToken.None);
+        };
+        var first = Seed(profile, user, "Son Anda");
+        var second = Seed(profile, user, "Bekleyecek");
+        await EnqueueAndStartAsync(client, profile, [first, second], ct);
+        await Eventually.WithinAsync(() => Task.FromResult(_factory.Agent.Count("RunStage", AgentStageCommand.Merge) == 1), Limit, ct);
+        await Task.Delay(500, ct);
+
+        Job(first).Status.ShouldBe(ProductionJobStatus.Stopped);
+        Job(second).Status.ShouldBe(ProductionJobStatus.Queued);
+        Concept(first).Status.ShouldNotBe(ConceptStatus.VideoReady);
+        _factory.Videos.Rows.ShouldNotContain(v => v.UserId == user);
+    }
+
+    /// <summary>
+    /// Review r1 M-3 (H-3): ajan işleyicisi hata verirse (bağlantı kopması değil) iş "Ajan bekleniyor" döngüsüne girmez, Hata olur; ücretli
+    /// online görsel yalnızca bir kez üretilir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_AgentHandlerError_FailsOnce_NoPaidRetry()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct, image: "openai/gpt-image-1");
+        _factory.Agent.Stage = (conn, cmd, token) => throw new Microsoft.AspNetCore.SignalR.HubException("işleyici yok");
+        var concept = Seed(profile, user, "Uyumsuz Ajan");
+        await EnqueueAndStartAsync(client, profile, [concept], ct);
+        await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
+        await Task.Delay(TimeSpan.FromSeconds(4), ct); // Bir tarama süresinden uzun.
+
+        _factory.Provider.CallsOf(CallRole.Image).Count.ShouldBe(1);
+        Job(concept).Status.ShouldBe(ProductionJobStatus.Failed);
+        Job(concept).Progress!.Error.ShouldBe("Görseller üretiliyor aşaması tamamlanamadı.");
+    }
+
+    /// <summary>
+    /// Review r1 M-4 (H-3): hatta beklenmeyen bir altyapı hatası iş Üretiliyor'da takılıp ücretli aşamayı her taramada yeniden çalıştırmaz;
+    /// iş sade bir açıklamayla Hata olur.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_UnexpectedError_FailsJob_NoRerun()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct);
+        _factory.Outputs.FailWrites = true;
+        try
+        {
+            var concept = Seed(profile, user, "Kırık Depo");
+            await EnqueueAndStartAsync(client, profile, [concept], ct);
+            await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
+            await Task.Delay(TimeSpan.FromSeconds(4), ct);
+
+            _factory.Provider.CallsOf(CallRole.Analysis).Count.ShouldBe(1);
+            Job(concept).Progress!.Error.ShouldBe("Beklenmeyen bir hata oluştu; Kaldığı yerden devam et ile yeniden deneyin.");
+        }
+        finally
+        {
+            _factory.Outputs.FailWrites = false;
+        }
+    }
+
     private static void InterlockedMax(ref int target, int value)
     {
         int current;

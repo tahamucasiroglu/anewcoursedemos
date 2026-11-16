@@ -10,5 +10,5 @@ public sealed class AgentCommands(IAgentConnectionRegistry registry, IAgentChann
 {
     /// <inheritdoc />
     protected override bool IsConnectionLost(Exception exception) =>
-        true; // Ajan işleyicisi kendi hatasını cevapla bildirir; gönderimde fırlayan her hata bağlantı sorunudur.
+        exception is IOException or InvalidOperationException or ObjectDisposedException; // Hub hatası (işleyici/sözleşme) kopma değildir.
 }

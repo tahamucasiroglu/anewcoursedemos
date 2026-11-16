@@ -45,6 +45,15 @@ public abstract class VideoStreamHostBase(Func<string> videoFolder, TimeProvider
             return new AgentStreamReply(null, AgentStreamReply.NotFound);
         }
 
+        var now = time.GetUtcNow();
+        foreach (var (key, old) in _grants)
+        {
+            if (old.LastUse is { } last ? now - last > IdleWindow : now > old.OpenUntil)
+            {
+                _grants.TryRemove(key, out _); // Süresi dolan yetkiler birikmez (review r1 L-3).
+            }
+        }
+
         var token = Base64Url(RandomNumberGenerator.GetBytes(32));
         _grants[token] = new StreamGrant(request.VideoId, path, time.GetUtcNow() + OpenWindow);
         return new AgentStreamReply(

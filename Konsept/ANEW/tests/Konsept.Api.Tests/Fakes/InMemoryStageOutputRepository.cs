@@ -9,6 +9,9 @@ public sealed class InMemoryStageOutputRepository : IStageOutputRepository
 {
     private readonly ConcurrentDictionary<Guid, StageOutputs> _rows = new();
 
+    /// <summary>Gets or sets a value indicating whether yazımlar hata fırlatır (beklenmeyen altyapı hatası testi).</summary>
+    public bool FailWrites { get; set; }
+
     /// <inheritdoc />
     public Task<StageOutputs?> GetAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken) =>
         Task.FromResult(_rows.TryGetValue(conceptId, out var o) && o.UserId == userId ? o : null);
@@ -17,6 +20,11 @@ public sealed class InMemoryStageOutputRepository : IStageOutputRepository
     public Task UpsertAsync(StageOutputs outputs, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(outputs);
+        if (FailWrites)
+        {
+            throw new InvalidOperationException("veritabanı yazılamadı");
+        }
+
         _rows.AddOrUpdate(outputs.ConceptId, outputs, (_, old) => old.UserId == outputs.UserId ? outputs : old);
         return Task.CompletedTask;
     }
