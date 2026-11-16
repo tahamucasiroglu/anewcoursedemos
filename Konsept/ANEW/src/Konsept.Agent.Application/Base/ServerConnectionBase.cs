@@ -33,6 +33,12 @@ public abstract class ServerConnectionBase : IServerConnection
     public abstract Task<bool> TryReportLogAsync(LogSummary summary, CancellationToken cancellationToken);
 
     /// <inheritdoc />
+    public abstract Task<Guid?> TryGetAccountAsync(CancellationToken cancellationToken);
+
+    /// <inheritdoc />
+    public abstract Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken);
+
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         await DisposeCoreAsync().ConfigureAwait(false);

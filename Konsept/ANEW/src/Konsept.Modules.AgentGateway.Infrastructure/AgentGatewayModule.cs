@@ -33,6 +33,7 @@ public static class AgentGatewayModule
         services.AddScoped<IAgentTestService, AgentTestService>();
         services.AddSingleton<AgentLogQuota>();
         services.AddScoped<IAgentLogService, AgentLogService>();
+        services.AddScoped<IAgentErrorReportService, AgentErrorReportService>();
         return services;
     }
 

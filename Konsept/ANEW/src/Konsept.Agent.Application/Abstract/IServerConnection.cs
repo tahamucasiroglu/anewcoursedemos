@@ -35,6 +35,19 @@ public interface IServerConnection : IAsyncDisposable
     /// <returns>API kabul ettiyse <c>true</c>.</returns>
     Task<bool> TryReportLogAsync(LogSummary summary, CancellationToken cancellationToken);
 
+    /// <summary>Bağlıysa ajanın eşleştiği hesabı sorar (spec 0022 Req 8); bağlı değilse ya da hata olursa <c>null</c>.</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Hesap kimliği ya da <c>null</c>.</returns>
+    Task<Guid?> TryGetAccountAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Bağlıysa hata bildirimini gönderir (spec 0022 Req 4); bağlı değilse ya da iletilemezse <c>null</c> (çağıran bekletir). Hata fırlatmaz.
+    /// </summary>
+    /// <param name="report">Rapor (hesabı doldurulmuş).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sonuç ya da <c>null</c>.</returns>
+    Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken);
+
     /// <summary>Bağlantıyı yeniden başlatılabilir biçimde kapatır (oturum kapandı; yeni eşleştirmeden sonra <see cref="StartAsync"/>).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>

@@ -1,3 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Ajan domain tipleri; altyapıya bağımlı değil. -->
+  <!-- Ajan domain tipleri; altyapıya bağımlı değil. Yalnızca Shared.Kernel (0008 maskelemesi, spec 0022 rapor metni). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
 </Project>

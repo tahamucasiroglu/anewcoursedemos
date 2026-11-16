@@ -18,13 +18,16 @@ public sealed class AgentHub : Hub
     private readonly IAgentPresenceService _presence;
     private readonly IAgentLogService _logs;
     private readonly IAgentConnectionTracker _tracker;
+    private readonly IAgentErrorReportService _errors;
 
     /// <summary>Initializes a new instance of the <see cref="AgentHub"/> class.</summary>
     /// <param name="presence">Ajan varlık servisi.</param>
     /// <param name="logs">Ajan log özeti servisi.</param>
     /// <param name="tracker">Açık bağlantılar (iptalde kesmek için).</param>
-    public AgentHub(IAgentPresenceService presence, IAgentLogService logs, IAgentConnectionTracker tracker)
+    /// <param name="errors">Ajan hata bildirimi servisi (spec 0022).</param>
+    public AgentHub(IAgentPresenceService presence, IAgentLogService logs, IAgentConnectionTracker tracker, IAgentErrorReportService errors)
     {
+        _errors = errors ?? throw new ArgumentNullException(nameof(errors));
         _presence = presence ?? throw new ArgumentNullException(nameof(presence));
         _logs = logs ?? throw new ArgumentNullException(nameof(logs));
         _tracker = tracker ?? throw new ArgumentNullException(nameof(tracker));
@@ -56,6 +59,21 @@ public sealed class AgentHub : Hub
     /// <returns>Kabul edildiyse <c>true</c>.</returns>
     public Task<bool> ReportLog(AgentLogSummary summary) =>
         _logs.ReportAsync(Context.ConnectionId, summary, Context.ConnectionAborted);
+
+    /// <summary>
+    /// Kullanıcının ajanda seçtiği hata bildirimi (spec 0022 Req 4, 8): sahip hub kimliğinden; iptal edilmiş oturumdan reddedilir.
+    /// </summary>
+    /// <param name="request">Bildirim.</param>
+    /// <returns>Sonuç.</returns>
+    public Task<AgentErrorReportReply> ReportError(AgentErrorReportRequest request) =>
+        _tracker.Contains(Context.ConnectionId)
+            ? _errors.ReportAsync(Owner().UserId, request, Context.ConnectionAborted)
+            : throw new HubException("Ajan oturumu kapandı.");
+
+    /// <summary>Ajanın eşleştiği hesap (spec 0022 Req 8): bekleyen bildirimleri hesaba bağlamak için; iptal edilmiş oturumdan reddedilir.</summary>
+    /// <returns>Kullanıcı kimliği.</returns>
+    public Guid WhoAmI() =>
+        _tracker.Contains(Context.ConnectionId) ? Owner().UserId : throw new HubException("Ajan oturumu kapandı.");
 
     /// <inheritdoc />
     public override async Task OnDisconnectedAsync(Exception? exception)

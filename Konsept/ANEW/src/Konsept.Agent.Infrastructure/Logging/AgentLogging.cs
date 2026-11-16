@@ -16,10 +16,12 @@ public sealed class AgentLogging : IDisposable
 {
     private readonly LogFileCleanupScheduler _cleanup;
 
-    private AgentLogging(Logger logger, HubLogSummarySink summarySink, LogFileCleanupScheduler cleanup, string directory)
+    private AgentLogging(Logger logger, HubLogSummarySink summarySink, RecentLogBuffer recentLogs, ErrorAlertSink alertSink, LogFileCleanupScheduler cleanup, string directory)
     {
         Logger = logger;
         SummarySink = summarySink;
+        RecentLogs = recentLogs;
+        AlertSink = alertSink;
         _cleanup = cleanup;
         Directory = directory;
     }
@@ -29,6 +31,12 @@ public sealed class AgentLogging : IDisposable
 
     /// <summary>Gets özet sink'i (bağlantı oluşturulunca <see cref="HubLogSummarySink.Attach"/> ile bağlanır).</summary>
     public HubLogSummarySink SummarySink { get; }
+
+    /// <summary>Gets son Warning+ satırlar (spec 0022: hata raporuna eklenir).</summary>
+    public RecentLogBuffer RecentLogs { get; }
+
+    /// <summary>Gets hata uyarısı sink'i (merkez oluşturulunca <see cref="ErrorAlertSink.Attach"/> ile bağlanır).</summary>
+    public ErrorAlertSink AlertSink { get; }
 
     /// <summary>Gets log klasörü.</summary>
     public string Directory { get; }
@@ -41,14 +49,18 @@ public sealed class AgentLogging : IDisposable
     {
         var directory = Path.Combine(agentDirectory, "logs");
         var sink = new HubLogSummarySink();
+        var recent = new RecentLogBuffer();
+        var alert = new ErrorAlertSink();
         var logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .WithKonseptEnrichment(LogSources.Agent)
             .WriteToKonseptFile(directory, "agent")
+            .WriteTo.Sink(recent, LogEventLevel.Warning)
+            .WriteTo.Sink(alert, LogEventLevel.Error)
             .WriteTo.Sink(sink, new BatchingOptions { BatchSizeLimit = 20, BufferingTimeLimit = TimeSpan.FromSeconds(1), QueueLimit = 1000 }, LogEventLevel.Error)
             .CreateLogger();
         var cleanup = new LogFileCleanupScheduler(new LogFileJanitor(timeProvider), directory, timeProvider).Start();
-        return new AgentLogging(logger, sink, cleanup, directory);
+        return new AgentLogging(logger, sink, recent, alert, cleanup, directory);
     }
 
     /// <inheritdoc />

@@ -22,4 +22,10 @@ public static class AgentHubContract
 
     /// <summary>Ajan → API: Error/Critical log özeti (spec 0008 Req 7); yalnızca kayıtlı bağlantıdan kabul edilir.</summary>
     public const string ReportLog = "ReportLog";
+
+    /// <summary>Ajan → API: kullanıcının seçtiği hata bildirimi (spec 0022 Req 4); yalnızca geçerli ajan oturumundan.</summary>
+    public const string ReportError = "ReportError";
+
+    /// <summary>Ajan → API: ajanın eşleştiği hesabın kimliği (spec 0022 Req 8; bekleyen bildirimi hesaba bağlamak için).</summary>
+    public const string WhoAmI = "WhoAmI";
 }

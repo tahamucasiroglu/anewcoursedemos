@@ -114,6 +114,57 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         }
     }
 
+    /// <inheritdoc />
+    public override async Task<Guid?> TryGetAccountAsync(CancellationToken cancellationToken)
+    {
+        if (State != ConnectionState.Connected || _hub is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _hub.InvokeAsync<Guid>(AgentHubContract.WhoAmI, cancellationToken).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // Hesap okunamazsa bildirim bekletilir; ajanı etkilemez.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public override async Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (State != ConnectionState.Connected || _hub is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var reply = await _hub.InvokeAsync<AgentErrorReportReply>(
+                AgentHubContract.ReportError,
+                new AgentErrorReportRequest(report.AccountId, report.Summary, report.AgentVersion, report.OperatingSystem, report.Component, report.Step, report.LogLines),
+                cancellationToken).ConfigureAwait(false);
+            return reply.Result switch
+            {
+                AgentErrorReportResult.Sent => ReportOutcome.Sent,
+                AgentErrorReportResult.RateLimited => ReportOutcome.RateLimited,
+                AgentErrorReportResult.OtherAccount => ReportOutcome.OtherAccount,
+                _ => ReportOutcome.Rejected,
+            };
+        }
+#pragma warning disable CA1031 // İletilemeyen bildirim bekletilir (spec 0022 Req 7); hata ajanı etkilemez.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return null;
+        }
+    }
+
     /// <summary>Hata, sunucunun ajan oturumunu reddettiği anlamına mı geliyor (401).</summary>
     /// <param name="exception">Hata.</param>
     /// <returns>Reddedildiyse <c>true</c>.</returns>
