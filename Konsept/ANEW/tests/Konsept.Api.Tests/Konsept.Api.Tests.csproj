@@ -9,5 +9,6 @@
     <ProjectReference Include="..\..\src\Konsept.Api\Konsept.Api.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Agent.Infrastructure\Konsept.Agent.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.AiGateway.Application\Konsept.Modules.AiGateway.Application.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Concepts.Domain\Konsept.Modules.Concepts.Domain.csproj" />
   </ItemGroup>
 </Project>

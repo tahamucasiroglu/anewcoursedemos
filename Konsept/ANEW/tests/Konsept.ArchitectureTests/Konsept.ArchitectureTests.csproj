@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\Konsept.Modules.Profiles.Application\Konsept.Modules.Profiles.Application.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.Profiles.Infrastructure\Konsept.Modules.Profiles.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.Profiles.Presentation\Konsept.Modules.Profiles.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.Concepts.Domain\Konsept.Modules.Concepts.Domain.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Api\Konsept.Api.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Web.ApiClient\Konsept.Web.ApiClient.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Web\Konsept.Web.csproj" />

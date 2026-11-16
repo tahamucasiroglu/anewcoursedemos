@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Concepts iş kuralları (başlık anahtarı, öneri biçimi, kelime tekrarı, süre uyumu, talimatlar, çıktı ayrıştırma); yalnızca Shared.Kernel'e bağımlı (Y-2). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>
