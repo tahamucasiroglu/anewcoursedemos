@@ -47,8 +47,14 @@ public sealed class SystemStatusService : SystemStatusServiceBase
     /// <inheritdoc />
     protected override async Task<SystemEventDto?> ReadLastEventAsync(CancellationToken cancellationToken)
     {
-        var e = await _events.GetLatestVisibleAsync(_currentUser.UserId, cancellationToken).ConfigureAwait(false);
-        return e is null ? null : new SystemEventDto(e.Id, e.Type, (SystemEventLevel)e.Level, e.Message, e.OccurredAt, e.UserId);
+        // Günlük şeridi yalnızca kullanıcının kendi kaydını gösterir (spec 0021 Req 7; 0002'deki kullanıcısız olay istisnası kalktı).
+        if (_currentUser.UserId is not { } userId)
+        {
+            return null;
+        }
+
+        var e = await _events.GetLatestOwnedAsync(userId, cancellationToken).ConfigureAwait(false);
+        return e is null ? null : SystemEventServiceBase.ToDto(e);
     }
 
     /// <inheritdoc />

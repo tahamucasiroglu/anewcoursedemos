@@ -31,7 +31,7 @@ public abstract class SystemEventServiceBase : ISystemEventService
             (EventLevel)entry.Level,
             entry.Message,
             TimeProvider.GetUtcNow(),
-            entry.UserId);
+            entry.UserId).WithDetails(entry.StartedAt, entry.EndedAt, entry.ProfileId, entry.ProfileName);
         OnEventCreated(systemEvent);
         await PersistAsync(systemEvent, cancellationToken).ConfigureAwait(false);
         return ToDto(systemEvent);
@@ -62,6 +62,12 @@ public abstract class SystemEventServiceBase : ISystemEventService
     /// <returns>Olay ya da <c>null</c>.</returns>
     protected abstract Task<SystemEvent?> LoadLatestAsync(CancellationToken cancellationToken);
 
-    private static SystemEventDto ToDto(SystemEvent e) =>
-        new(e.Id, e.Type, (SystemEventLevel)e.Level, e.Message, e.OccurredAt, e.UserId);
+    /// <summary>Domain olayını Contracts karşılığına çevirir (Günlük şeridi ve geçmişi de kullanır).</summary>
+    /// <param name="e">Olay.</param>
+    /// <returns>DTO.</returns>
+    public static SystemEventDto ToDto(SystemEvent e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+        return new(e.Id, e.Type, (SystemEventLevel)e.Level, e.Message, e.OccurredAt, e.UserId, e.StartedAt, e.EndedAt, e.ProfileName);
+    }
 }

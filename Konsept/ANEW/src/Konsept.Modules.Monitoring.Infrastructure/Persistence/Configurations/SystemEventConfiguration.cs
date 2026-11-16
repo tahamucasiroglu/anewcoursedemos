@@ -22,5 +22,7 @@ public sealed class SystemEventConfiguration : IEntityTypeConfiguration<SystemEv
         builder.Property(e => e.OccurredAt).IsRequired();
         builder.HasIndex(e => e.OccurredAt);
         builder.HasIndex(e => e.UserId);
+        builder.Property(e => e.ProfileName).HasMaxLength(SystemEvent.ProfileNameMaxLength);
+        builder.HasIndex(e => new { e.UserId, e.OccurredAt }); // Günlük geçmişi: kullanıcı + gün aralığı (spec 0021).
     }
 }

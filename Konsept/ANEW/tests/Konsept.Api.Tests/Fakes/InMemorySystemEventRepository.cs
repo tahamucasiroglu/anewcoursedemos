@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Monitoring.Domain.Entities;
+using Konsept.Modules.Monitoring.Domain.Enums;
 
 namespace Konsept.Api.Tests.Fakes;
 
@@ -32,4 +33,33 @@ public sealed class InMemorySystemEventRepository : ISystemEventRepository
             .OrderByDescending(e => e.OccurredAt)
             .ThenByDescending(e => e.Id)
             .FirstOrDefault());
+
+    /// <inheritdoc />
+    public Task<SystemEvent?> GetLatestOwnedAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(_events
+            .Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.OccurredAt)
+            .ThenByDescending(e => e.Id)
+            .FirstOrDefault());
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<SystemEvent>> ListOwnedAsync(
+        Guid userId,
+        DateTimeOffset fromUtc,
+        DateTimeOffset toUtc,
+        IReadOnlyList<EventLevel>? levels,
+        int skip,
+        int take,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<SystemEvent>>(_events
+            .Where(e => e.UserId == userId && e.OccurredAt >= fromUtc && e.OccurredAt < toUtc && (levels is null || levels.Contains(e.Level)))
+            .OrderByDescending(e => e.OccurredAt)
+            .ThenByDescending(e => e.Id)
+            .Skip(skip)
+            .Take(take)
+            .ToList());
+
+    /// <inheritdoc />
+    public Task<DateTimeOffset?> GetEarliestOwnedAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(_events.Where(e => e.UserId == userId).Select(e => (DateTimeOffset?)e.OccurredAt).Min());
 }

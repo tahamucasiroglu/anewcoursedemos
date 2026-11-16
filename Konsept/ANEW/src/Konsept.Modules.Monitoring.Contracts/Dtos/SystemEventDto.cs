@@ -11,10 +11,16 @@ namespace Konsept.Modules.Monitoring.Contracts.Dtos;
 /// <param name="Message">Türkçe metin.</param>
 /// <param name="OccurredAt">Olay zamanı (UTC).</param>
 /// <param name="UserId">Olayın ait olduğu kullanıcı; sistem olayında <c>null</c>.</param>
+/// <param name="StartedAt">Süreli işlemin başlangıcı (UTC); süresizse <c>null</c>.</param>
+/// <param name="EndedAt">Süreli işlemin bitişi (UTC); süresizse <c>null</c>.</param>
+/// <param name="ProfileName">Profil etiketi; profile ait değilse <c>null</c>.</param>
 public sealed record SystemEventDto(
     Guid Id,
     string Type,
     SystemEventLevel Level,
     string Message,
     DateTimeOffset OccurredAt,
-    Guid? UserId);
+    Guid? UserId,
+    DateTimeOffset? StartedAt = null,
+    DateTimeOffset? EndedAt = null,
+    string? ProfileName = null);

@@ -29,6 +29,7 @@ public static class MonitoringModule
         services.AddScoped<ISystemEventWriter>(sp => sp.GetRequiredService<ISystemEventService>());
         services.AddScoped<ISystemEventReader>(sp => sp.GetRequiredService<ISystemEventService>());
         services.AddScoped<ISystemStatusService, SystemStatusService>();
+        services.AddScoped<IJournalService, JournalService>();
         services.AddScoped<ITechnicalLogRepository, TechnicalLogRepository>();
         services.AddScoped<ITechnicalLogService, TechnicalLogService>();
         services.AddScoped<ITechnicalLogWriter>(sp => sp.GetRequiredService<ITechnicalLogService>());

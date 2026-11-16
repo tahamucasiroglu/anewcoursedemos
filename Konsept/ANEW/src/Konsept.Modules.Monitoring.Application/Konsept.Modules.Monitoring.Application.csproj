@@ -7,5 +7,7 @@
     <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Monitoring.Domain\Konsept.Modules.Monitoring.Domain.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
+    <!-- Günlük geçmişinin ilk günü: hesabın açıldığı gün (spec 0021 Req 6; Y-1, yalnızca Contracts). -->
+    <ProjectReference Include="..\Konsept.Modules.Identity.Contracts\Konsept.Modules.Identity.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -28,6 +28,9 @@ namespace Konsept.Modules.Monitoring.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -37,6 +40,16 @@ namespace Konsept.Modules.Monitoring.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(1000)");
 
                     b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProfileName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Type")
@@ -52,6 +65,8 @@ namespace Konsept.Modules.Monitoring.Infrastructure.Persistence.Migrations
                     b.HasIndex("OccurredAt");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "OccurredAt");
 
                     b.ToTable("system_events", "monitoring");
                 });
