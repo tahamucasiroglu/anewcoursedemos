@@ -327,4 +327,35 @@
   <data name="ConceptSceneNarration" xml:space="preserve"><value>Seslendirme</value></data>
   <data name="ConceptSceneDuration" xml:space="preserve"><value>Süre: {0} sn</value></data>
   <data name="ConceptDetailFailed" xml:space="preserve"><value>Konsept alınamadı.</value></data>
+  <data name="ConceptEdit" xml:space="preserve"><value>Düzenle: {0}</value></data>
+  <data name="ConceptEditLockedQueue" xml:space="preserve"><value>Önce üretim sırasından çıkarın</value></data>
+  <data name="ConceptEditLockedVideo" xml:space="preserve"><value>Bu konseptin videosu var; metin değişikliği Üretilen Videolar'daki 'Yeniden üret' ile yapılır</value></data>
+  <data name="ConceptLinkNotFound" xml:space="preserve"><value>Konsept bulunamadı.</value></data>
+  <data name="EditScene" xml:space="preserve"><value>Sahne {0}</value></data>
+  <data name="EditSceneTitle" xml:space="preserve"><value>Sahne başlığı</value></data>
+  <data name="EditSceneDuration" xml:space="preserve"><value>Süre (saniye)</value></data>
+  <data name="EditTitleRequired" xml:space="preserve"><value>Sahne başlığını yazın.</value></data>
+  <data name="EditNarrationRequired" xml:space="preserve"><value>Seslendirme metnini yazın.</value></data>
+  <data name="EditDurationInvalid" xml:space="preserve"><value>Süre pozitif tam saniye olmalı.</value></data>
+  <data name="EditInvalid" xml:space="preserve"><value>Bazı alanlar geçersiz; alanların yanındaki uyarılara bakın.</value></data>
+  <data name="EditSaving" xml:space="preserve"><value>Kaydediliyor…</value></data>
+  <data name="EditSaved" xml:space="preserve"><value>Kaydedildi.</value></data>
+  <data name="EditSaveFailed" xml:space="preserve"><value>Kaydedilemedi. Metniniz korundu; biraz sonra tekrar deneyin.</value></data>
+  <data name="EditSave" xml:space="preserve"><value>Kaydet</value></data>
+  <data name="EditClose" xml:space="preserve"><value>Düzenlemeyi kapat</value></data>
+  <data name="EditInstructionLabel" xml:space="preserve"><value>Ne düzeltilsin? (online modelle yeniden üretim)</value></data>
+  <data name="EditInstructionRequired" xml:space="preserve"><value>Neyin düzeltilmesini istediğinizi yazın.</value></data>
+  <data name="EditRegenerate" xml:space="preserve"><value>Yeniden üret</value></data>
+  <data name="EditRegenerating" xml:space="preserve"><value>Yeniden üretiliyor…</value></data>
+  <data name="EditRegenerateFailed" xml:space="preserve"><value>Yeniden üretilemedi; konsept değişmedi.</value></data>
+  <data name="EditUnsavedWarning" xml:space="preserve"><value>Kaydedilmemiş değişiklikler kaybolacak.</value></data>
+  <data name="EditDiscardChanges" xml:space="preserve"><value>Değişiklikleri at</value></data>
+  <data name="RevisionTitle" xml:space="preserve"><value>Konsept revizyonu</value></data>
+  <data name="RevisionApprove" xml:space="preserve"><value>Onayla</value></data>
+  <data name="RevisionDiscard" xml:space="preserve"><value>Sil</value></data>
+  <data name="RevisionAgain" xml:space="preserve"><value>Tekrar düzenle</value></data>
+  <data name="RevisionAgainLabel" xml:space="preserve"><value>Yeni talimat (Tekrar düzenle)</value></data>
+  <data name="RevisionConfirmDiscard" xml:space="preserve"><value>Revizyon silinsin mi?</value></data>
+  <data name="RevisionConfirmOk" xml:space="preserve"><value>Evet, sil</value></data>
+  <data name="RevisionApproved" xml:space="preserve"><value>Revizyon onaylandı; konsept güncellendi.</value></data>
 </root>

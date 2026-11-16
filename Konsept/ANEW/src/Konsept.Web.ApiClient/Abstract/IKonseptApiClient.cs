@@ -178,6 +178,20 @@ public interface IKonseptApiClient
     /// <returns>JSON ya da hata.</returns>
     Task<Result<JsonElement>> GetConceptAsync(Guid conceptId, CancellationToken cancellationToken);
 
+    /// <summary>Konsept düzenleme komutu (sahneleri kaydet, yeniden üret, revizyonu onayla/sil; spec 0015). Doğrulama Api'dedir.</summary>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="command">Komut.</param>
+    /// <param name="body">Tarayıcının gövdesi.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (alan hataları dahil).</returns>
+    Task<Result<JsonElement>> SendConceptEditAsync(Guid conceptId, ConceptEditCommand command, JsonElement? body, CancellationToken cancellationToken);
+
+    /// <summary>Konseptin revizyon durumu (spec 0015).</summary>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata.</returns>
+    Task<Result<JsonElement>> GetConceptRevisionAsync(Guid conceptId, CancellationToken cancellationToken);
+
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
     /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>

@@ -1,8 +1,9 @@
-// Sayfa giriş noktası: pasif kontroller, "Hata bildir", "Ajanı test et", durum yoklaması, Günlük geçmişi, tek gönderimlik çıkış formu, admin özeti, Ayarlar, "Ajanı eşleştir", profiller, Konseptler şeridi ve aylık harcama.
+// Sayfa giriş noktası: pasif kontroller, "Hata bildir", "Ajanı test et", durum yoklaması, Günlük geçmişi, tek gönderimlik çıkış formu, admin özeti, Ayarlar, "Ajanı eşleştir", profiller, Konseptler şeridi, düzenleme döngüsü ve aylık harcama.
 import { loadAdminOverview } from './admin.js';
 import { initPairing } from './agent-pairing.js';
 import { bindAgentTest } from './agent-test.js';
 import { bindSubmitOnceForms } from './auth-form.js';
+import { initConceptEdit } from './concept-edit.js';
 import { initConceptWork } from './concept-work.js';
 import { initConcepts } from './concepts.js';
 import { initErrorReport } from './error-report.js';
@@ -23,6 +24,7 @@ loadAdminOverview(document);
 initSettings(document);
 initPairing(document);
 initConcepts(document); // profiles.js'in 'profile:selected' olayından önce dinlemeye başlar.
+initConceptEdit(document); // Düzenleme döngüsü (spec 0015); concept-work.js'in olaylarını dinler.
 initConceptWork(document); // Konseptler'in dört alanı (spec 0014); aynı olayı dinler.
 initProfiles(document);
 initSpend(document);

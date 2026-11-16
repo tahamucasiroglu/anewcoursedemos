@@ -165,6 +165,24 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/{conceptId:D}"), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<JsonElement>> SendConceptEditAsync(Guid conceptId, ConceptEditCommand command, JsonElement? body, CancellationToken cancellationToken)
+    {
+        var path = command switch
+        {
+            ConceptEditCommand.SaveScenes => $"api/concepts/{conceptId:D}/scenes",
+            ConceptEditCommand.Regenerate => $"api/concepts/{conceptId:D}/regenerate",
+            ConceptEditCommand.ApproveRevision => $"api/concepts/{conceptId:D}/revision/approve",
+            _ => $"api/concepts/{conceptId:D}/revision/discard",
+        };
+        HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
+        return SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Post, path) { Content = content }, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> GetConceptRevisionAsync(Guid conceptId, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/{conceptId:D}/revision"), cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken) =>
         SendAsync<JournalDayResponse>(
             new HttpRequestMessage(

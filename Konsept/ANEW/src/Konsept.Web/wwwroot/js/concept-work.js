@@ -334,6 +334,24 @@ export function initConceptWork(doc, timers = {}) {
     return list;
   }
 
+  // Kalem (spec 0015 Req 1): Üretildi/Onaylandı'da etkin; Sırada/Üretiliyor/Video oldu'da pasif (aria-disabled, odaklanabilir) ve
+  // açıklaması ekran okuyucuya okunur (aria-describedby).
+  function editButton(concept) {
+    const pencil = node('button', 'icon-button concept-row__edit', '✎');
+    pencil.type = 'button';
+    pencil.dataset.edit = concept.id;
+    pencil.setAttribute('aria-label', fill(text.textEdit || '{0}', concept.title));
+    pencil.title = pencil.getAttribute('aria-label');
+    if (concept.status === 'generated' || concept.status === 'approved') {
+      return [pencil];
+    }
+    const reason = node('span', 'concept-row__locked', concept.status === 'video_ready' ? text.textEditLockedVideo : text.textEditLockedQueue);
+    reason.id = `concept-locked-${concept.id}`;
+    pencil.setAttribute('aria-disabled', 'true');
+    pencil.setAttribute('aria-describedby', reason.id);
+    return [pencil, reason];
+  }
+
   function renderList(result) {
     const items = result.items || [];
     el('concepts-status').textContent = '';
@@ -367,6 +385,7 @@ export function initConceptWork(doc, timers = {}) {
         toggle.title = toggle.getAttribute('aria-label');
         row.append(toggle);
       }
+      row.append(...editButton(concept));
       return row;
     }));
     const pages = Math.max(1, Math.ceil((result.total || 0) / (result.pageSize || 50)));
@@ -416,6 +435,13 @@ export function initConceptWork(doc, timers = {}) {
     const approve = event.target.closest('[data-approve]');
     if (approve) {
       changeApproval([approve.closest('[data-id]').dataset.id], approve.dataset.approve === 'undo');
+      return;
+    }
+    const edit = event.target.closest('[data-edit]');
+    if (edit) {
+      if (edit.getAttribute('aria-disabled') !== 'true') {
+        openDetail(edit.dataset.edit, true);
+      }
       return;
     }
     const open = event.target.closest('[data-open]');
@@ -470,20 +496,37 @@ export function initConceptWork(doc, timers = {}) {
     const head = node('div', 'concept-detail__badges');
     head.append(...badges(concept));
     article.replaceChildren(node('h3', 'concept-detail__title', concept.title), head, scenes);
-    article.hidden = false;
+    article.dataset.id = concept.id;
+    article.hidden = article.dataset.editing === 'true'; // Düzenlenirken düzenleme formu görünür (spec 0015, concept-edit.js).
     el('concept-detail-hint').hidden = true;
   }
 
-  async function openDetail(id) {
+  // Başka konsepte geçmeden önce düzenleme alanına sorulur (spec 0015 Req 5): kaydedilmemiş değişiklik varsa concept-edit.js olayı
+  // iptal eder, uyarıyı gösterir ve onaylanırsa proceed ile geçişi sürdürür.
+  async function openDetail(id, edit = false, failText = text.textDetailFailed) {
+    const proceed = () => openDetail(id, edit, failText);
+    if (!doc.dispatchEvent(new CustomEvent('concept:before-open', { cancelable: true, detail: { id, edit, proceed } }))) {
+      return;
+    }
     try {
-      renderDetail(await get(`/konseptler/detay/${encodeURIComponent(id)}`));
-      el('concept-detail').focus();
+      const concept = await get(`/konseptler/detay/${encodeURIComponent(id)}`);
+      renderDetail(concept);
+      doc.dispatchEvent(new CustomEvent('concept:opened', { detail: { concept, edit } }));
+      if (!edit) {
+        el('concept-detail').focus();
+      }
     } catch {
       el('concept-detail').hidden = true;
       el('concept-detail-hint').hidden = false;
-      el('concept-detail-hint').textContent = text.textDetailFailed;
+      el('concept-detail-hint').textContent = failText;
     }
   }
+
+  // Düzenleme kaydedildi ya da revizyon onaylandı: detay ve liste yeni içeriği gösterir (spec 0015 AC-2, AC-6).
+  doc.addEventListener('concept:changed', (event) => {
+    renderDetail(event.detail.concept);
+    loadList();
+  });
 
   function select(profileId) {
     state.profileId = profileId;
@@ -504,6 +547,12 @@ export function initConceptWork(doc, timers = {}) {
   const bar = el('profile-bar');
   if (bar && bar.dataset.selectedId) {
     select(bar.dataset.selectedId);
+  }
+  // Konsept bağlantısı (spec 0015 Req 2, Ç-11): /?konsept=<id> o konsepti düzenleme alanında açar (filtreden bağımsız); bulunamazsa
+  // ya da başkasınınsa sade mesaj, sayfa normal açılır.
+  const linked = new URLSearchParams((doc.location && doc.location.search) || '').get('konsept');
+  if (linked) {
+    openDetail(linked, true, text.textLinkNotFound || text.textDetailFailed);
   }
   return { state, loadWork, loadList, openDetail };
 }

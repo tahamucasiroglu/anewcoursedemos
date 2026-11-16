@@ -98,7 +98,9 @@
      data-text-scene-duration="@UiText.ConceptSceneDuration" data-text-detail-failed="@UiText.ConceptDetailFailed"
      data-text-status-generated="@UiText.ConceptStatusGenerated" data-text-status-approved="@UiText.ConceptStatusApproved"
      data-text-status-queued="@UiText.ConceptStatusQueued" data-text-status-producing="@UiText.ConceptStatusProducing"
-     data-text-status-video_ready="@UiText.ConceptStatusVideoReady">
+     data-text-status-video_ready="@UiText.ConceptStatusVideoReady" data-text-edit="@UiText.ConceptEdit"
+     data-text-edit-locked-queue="@UiText.ConceptEditLockedQueue" data-text-edit-locked-video="@UiText.ConceptEditLockedVideo"
+     data-text-link-not-found="@UiText.ConceptLinkNotFound">
     <section class="concept-area" id="concept-topic" aria-labelledby="area-topic-title">
         <h2 class="concept-area__title" id="area-topic-title">@UiText.AreaTopic</h2>
         <p class="concept-work__notready" data-not-ready="topics" hidden>
@@ -182,6 +184,34 @@
         <h2 class="concept-area__title" id="area-edit-title">@UiText.AreaEdit</h2>
         <p class="concept-area__hint" id="concept-detail-hint">@UiText.AreaEditHint</p>
         <article class="concept-detail" id="concept-detail" tabindex="-1" hidden></article>
+        @* Düzenleme döngüsü (spec 0015): kalemle açılır; sahne ekleme/silme/sıralama kontrolü yoktur (G-20). concept-edit.js. *@
+        <div class="concept-editor" id="concept-editor" hidden
+             data-text-scene="@UiText.EditScene" data-text-title="@UiText.EditSceneTitle" data-text-visual="@UiText.ConceptSceneVisual"
+             data-text-narration="@UiText.ConceptSceneNarration" data-text-duration="@UiText.EditSceneDuration"
+             data-text-title-required="@UiText.EditTitleRequired" data-text-narration-required="@UiText.EditNarrationRequired"
+             data-text-duration-invalid="@UiText.EditDurationInvalid" data-text-invalid="@UiText.EditInvalid"
+             data-text-saving="@UiText.EditSaving" data-text-saved="@UiText.EditSaved" data-text-save-failed="@UiText.EditSaveFailed"
+             data-text-instruction-required="@UiText.EditInstructionRequired" data-text-regenerating="@UiText.EditRegenerating"
+             data-text-regenerate-failed="@UiText.EditRegenerateFailed" data-text-request-failed="@UiText.WorkRequestFailed"
+             data-text-approved="@UiText.RevisionApproved" data-text-scene-heading="@UiText.ConceptSceneHeading"
+             data-text-scene-duration="@UiText.ConceptSceneDuration">
+            <h3 class="concept-detail__title" id="concept-edit-heading"></h3>
+            <form class="concept-editor__form" id="concept-edit-form" novalidate aria-labelledby="concept-edit-heading">
+                <div id="concept-edit-scenes"></div>
+                <p class="concept-editor__status" id="concept-edit-status" role="status" aria-live="polite"></p>
+                <div class="concept-editor__actions">
+                    <button type="submit" class="button button--primary" id="concept-edit-save">@UiText.EditSave</button>
+                    <button type="button" class="button" id="concept-edit-close">@UiText.EditClose</button>
+                </div>
+            </form>
+            <div class="concept-editor__instruction">
+                <label class="field__label" for="concept-instruction">@UiText.EditInstructionLabel</label>
+                <textarea class="field__input" id="concept-instruction" rows="3" maxlength="2000" aria-describedby="concept-instruction-error"></textarea>
+                <p class="field__error" id="concept-instruction-error" role="alert"></p>
+                <button type="button" class="button" id="concept-regenerate">@UiText.EditRegenerate</button>
+                <p class="concept-editor__status" id="concept-regen-status" role="status" aria-live="polite"></p>
+            </div>
+        </div>
     </section>
 </div>
 
@@ -213,5 +243,42 @@
             </div>
         }
         <p class="concept-models__status" id="concept-models-status" role="status" aria-live="polite"></p>
+    </div>
+</div>
+
+@* Revizyon modalı (spec 0015 Req 8–9): sayfanın üstünde; dışına tıklama kapatmaz, Esc "Revizyon silinsin mi?" sorar. *@
+<div class="dialog-backdrop" id="revision-modal" hidden>
+    <div class="dialog profile-modal revision-modal" role="dialog" aria-modal="true" aria-labelledby="revision-title">
+        <h2 class="profile-modal__title" id="revision-title" tabindex="-1">@UiText.RevisionTitle</h2>
+        <p class="badge badge--warning" id="revision-warning" hidden>@UiText.ConceptWarningWords</p>
+        <p class="badge badge--warning" id="revision-duration-warning" hidden>@UiText.ConceptWarningDuration</p>
+        <ol class="concept-detail__scenes" id="revision-scenes"></ol>
+        <p class="concept-editor__status" id="revision-status" role="status" aria-live="polite"></p>
+        <div class="dialog__actions">
+            <button type="button" class="button button--primary" id="revision-approve">@UiText.RevisionApprove</button>
+            <button type="button" class="button button--danger" id="revision-discard">@UiText.RevisionDiscard</button>
+        </div>
+        <div class="concept-editor__instruction">
+            <label class="field__label" for="revision-instruction">@UiText.RevisionAgainLabel</label>
+            <textarea class="field__input" id="revision-instruction" rows="3" maxlength="2000" aria-describedby="revision-instruction-error"></textarea>
+            <p class="field__error" id="revision-instruction-error" role="alert"></p>
+            <button type="button" class="button" id="revision-again">@UiText.RevisionAgain</button>
+        </div>
+        <div class="revision-confirm" id="revision-confirm" role="alertdialog" aria-modal="true" aria-labelledby="revision-confirm-text" hidden>
+            <p class="dialog__text" id="revision-confirm-text">@UiText.RevisionConfirmDiscard</p>
+            <div class="dialog__actions">
+                <button type="button" class="button" id="revision-confirm-cancel">@UiText.ProfileCancel</button>
+                <button type="button" class="button button--danger" id="revision-confirm-ok">@UiText.RevisionConfirmOk</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="dialog-backdrop dialog-backdrop--confirm" id="concept-leave" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="concept-leave-text">
+        <p class="dialog__text" id="concept-leave-text">@UiText.EditUnsavedWarning</p>
+        <div class="dialog__actions">
+            <button type="button" class="button" id="concept-leave-cancel">@UiText.ProfileCancel</button>
+            <button type="button" class="button button--danger" id="concept-leave-ok">@UiText.EditDiscardChanges</button>
+        </div>
     </div>
 </div>

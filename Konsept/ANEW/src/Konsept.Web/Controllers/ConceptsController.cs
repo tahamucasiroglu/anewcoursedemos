@@ -95,4 +95,46 @@ public sealed class ConceptsController : Controller
     [HttpPost("/konseptler/onayi-geri-al")]
     public Task<IActionResult> Unapprove([FromBody] JsonElement? body, CancellationToken cancellationToken) =>
         _api.SendConceptCommandAsync(ConceptCommand.Unapprove, body, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Doğrudan düzenleme: sahneleri kaydet (spec 0015).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="body">Gövde (<c>scenes</c>).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/konseptler/{id:guid}/sahneler")]
+    public Task<IActionResult> SaveScenes(Guid id, [FromBody] JsonElement? body, CancellationToken cancellationToken) =>
+        _api.SendConceptEditAsync(id, ConceptEditCommand.SaveScenes, body, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Talimatla yeniden üret / Tekrar düzenle (spec 0015).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="body">Gövde (<c>instruction</c>, isteğe bağlı <c>scenes</c>).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/konseptler/{id:guid}/yeniden-uret")]
+    public Task<IActionResult> Regenerate(Guid id, [FromBody] JsonElement? body, CancellationToken cancellationToken) =>
+        _api.SendConceptEditAsync(id, ConceptEditCommand.Regenerate, body, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Revizyon durumu (Ajax yoklama).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpGet("/konseptler/{id:guid}/revizyon")]
+    public Task<IActionResult> Revision(Guid id, CancellationToken cancellationToken) =>
+        _api.GetConceptRevisionAsync(id, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Revizyonu onayla.</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/konseptler/{id:guid}/revizyon/onayla")]
+    public Task<IActionResult> ApproveRevision(Guid id, CancellationToken cancellationToken) =>
+        _api.SendConceptEditAsync(id, ConceptEditCommand.ApproveRevision, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Revizyonu sil.</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/konseptler/{id:guid}/revizyon/sil")]
+    public Task<IActionResult> DiscardRevision(Guid id, CancellationToken cancellationToken) =>
+        _api.SendConceptEditAsync(id, ConceptEditCommand.DiscardRevision, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
 }

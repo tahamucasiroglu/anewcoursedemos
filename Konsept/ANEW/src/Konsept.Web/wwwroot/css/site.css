@@ -1491,3 +1491,69 @@ body {
     justify-self: start;
   }
 }
+
+/* Konsept düzenleme döngüsü (spec 0015): kalem, düzenleme formu, talimat alanı ve revizyon modalı; renkler tema değişkenlerinden (K-7). */
+.concept-row__edit[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.concept-row__locked {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.concept-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.concept-editor[hidden],
+.revision-confirm[hidden] {
+  display: none;
+}
+
+.concept-editor__scene {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.concept-editor__scene legend {
+  font-weight: 600;
+}
+
+.concept-editor__actions,
+.concept-editor__instruction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.concept-editor__instruction .field__input {
+  width: 100%;
+}
+
+.concept-editor__status[data-kind="error"] {
+  color: var(--color-error);
+}
+
+.revision-modal {
+  width: min(44rem, 94vw);
+  max-width: 44rem;
+}
+
+.revision-confirm {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-alt);
+}
