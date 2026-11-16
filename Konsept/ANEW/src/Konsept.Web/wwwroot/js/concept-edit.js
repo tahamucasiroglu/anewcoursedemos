@@ -549,6 +549,13 @@ export function initConceptEdit(doc, options = {}) {
         stopEdit();
       }
     }],
+    [doc, 'concept:deleted', (event) => {
+      if (state.concept && state.concept.id === event.detail.id) {
+        stopEdit(); // Silinen konseptin düzenleyicisi kapanır (spec 0016).
+        el('concept-detail').hidden = true;
+        state.concept = null;
+      }
+    }],
     [doc, 'profile:selected', () => {
       stopEdit();
       state.concept = null;

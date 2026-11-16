@@ -20,4 +20,7 @@ public enum ConceptCommand
 
     /// <summary>Onayı geri al (<c>POST api/concepts/unapprove</c>).</summary>
     Unapprove,
+
+    /// <summary>Önerileri sıfırla (<c>POST api/concepts/suggestions/reset</c>; spec 0016).</summary>
+    ResetSuggestions,
 }

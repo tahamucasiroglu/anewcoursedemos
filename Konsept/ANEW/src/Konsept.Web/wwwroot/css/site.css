@@ -1557,3 +1557,54 @@ body {
   border-radius: 8px;
   background: var(--color-surface-alt);
 }
+
+/* Silinenler ve önerileri sıfırla (spec 0016): kırmızı çöp ikonu, sekmeler, Silinenler satırı; renkler tema değişkenlerinden (K-7). */
+.concept-row__delete {
+  color: var(--color-error);
+}
+
+.concept-row__delete[aria-disabled="true"],
+#suggestion-reset-button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.tabs__tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tabs__tab[aria-selected="true"] {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.tabs__tab:focus-visible,
+.tabs__panel:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.tabs__panel[hidden] {
+  display: none;
+}
+
+.concept-row__meta {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}

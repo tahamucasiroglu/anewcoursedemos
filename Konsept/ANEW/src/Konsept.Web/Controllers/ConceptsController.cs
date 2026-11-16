@@ -8,7 +8,7 @@ namespace Konsept.Web.Controllers;
 
 /// <summary>
 /// Konseptler sayfasının üretim ve Üretilenler Ajax uçları (spec 0014): üretim durumu, Konu üret, Seçtiklerini üret, fikirden Üret,
-/// Durdur, liste, detay, onayla, onayı geri al. Giriş ister (default-deny), POST CSRF korumalıdır; kurallar ve sahiplik Api'dedir
+/// Durdur, liste, detay, onayla, onayı geri al; düzenleme (0015); silme, Silinenler, kalıcı silme ve önerileri sıfırla (0016). Giriş ister (default-deny), POST CSRF korumalıdır; kurallar ve sahiplik Api'dedir
 /// (Web yalnızca iletir, K-6).
 /// </summary>
 public sealed class ConceptsController : Controller
@@ -137,4 +137,45 @@ public sealed class ConceptsController : Controller
     [HttpPost("/konseptler/{id:guid}/revizyon/sil")]
     public Task<IActionResult> DiscardRevision(Guid id, CancellationToken cancellationToken) =>
         _api.SendConceptEditAsync(id, ConceptEditCommand.DiscardRevision, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Konsepti Silinenler'e taşı (spec 0016).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/konseptler/{id:guid}/sil")]
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+        _api.SendConceptEditAsync(id, ConceptEditCommand.Delete, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Silinenler: profilin silinmiş konseptleri (spec 0016).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="sayfa">Sayfa.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpGet("/silinenler/konseptler/{profileId:guid}")]
+    public Task<IActionResult> Deleted(Guid profileId, [FromQuery] int sayfa, CancellationToken cancellationToken) =>
+        _api.ListDeletedConceptsAsync(profileId, sayfa, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Silinmiş konseptin tamamı (salt okunur).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpGet("/silinenler/konseptler/detay/{id:guid}")]
+    public Task<IActionResult> DeletedDetail(Guid id, CancellationToken cancellationToken) =>
+        _api.GetDeletedConceptAsync(id, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Kalıcı sil (spec 0016).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/silinenler/konseptler/{id:guid}/kalici-sil")]
+    public Task<IActionResult> Purge(Guid id, CancellationToken cancellationToken) =>
+        _api.SendConceptEditAsync(id, ConceptEditCommand.Purge, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Önerileri sıfırla (spec 0016).</summary>
+    /// <param name="body">Gövde (<c>profileId</c>).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/oneriler/sifirla")]
+    public Task<IActionResult> ResetSuggestions([FromBody] JsonElement? body, CancellationToken cancellationToken) =>
+        _api.SendConceptCommandAsync(ConceptCommand.ResetSuggestions, body, cancellationToken).ToDetailedBrowserJson(HttpContext);
 }

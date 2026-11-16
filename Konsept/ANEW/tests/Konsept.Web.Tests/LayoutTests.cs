@@ -24,7 +24,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
         { "/", "Konseptler", "Henüz konsept yok." },
         { "/konseptten-video", "Konseptten Video", "Henüz videoya hazır konsept yok." },
         { "/uretilenler", "Üretilenler", "Henüz üretilmiş video yok." },
-        { "/silinenler", "Silinenler", "Silinen bir şey yok." },
+        { "/silinenler", "Silinenler", "Henüz silinmiş konsept yok" }, // Spec 0016 Req 3 (plan 0016 A-1): Konseptler sekmesinin boş durumu.
         { "/yayinlama", "Yayınlama", "Çok yakında sizlerleyiz" },
     };
 

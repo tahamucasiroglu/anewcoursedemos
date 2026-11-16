@@ -3,6 +3,7 @@
 // yoklanır (tarayıcıda SignalR yok). Tüm istekler api.js ($.ajax, K-6). Model çıktısı güvenilmeyen veridir: yalnızca textContent ile
 // yazılır, HTML olarak yorumlanmaz (AC-25). Kurallar (adet, fikir, hazır olma, sahiplik) sunucudadır; burada ön doğrulama ve gösterim.
 import { get, post } from './api.js';
+import { confirmDialog } from './confirm-dialog.js';
 
 const POLL_MS = 2000;
 const MAX_COUNT = 100;
@@ -352,6 +353,49 @@ export function initConceptWork(doc, timers = {}) {
     return [pencil, reason];
   }
 
+  // Çöp (spec 0016 Req 1): Üretildi/Onaylandı'da etkin; Sırada/Üretiliyor/Video oldu'da pasif (aria-disabled, odaklanabilir) ve
+  // açıklaması title + aria-describedby ile verilir.
+  function deleteButton(concept) {
+    const trash = node('button', 'icon-button concept-row__delete', '🗑');
+    trash.type = 'button';
+    trash.dataset.delete = concept.id;
+    trash.dataset.title = concept.title;
+    trash.setAttribute('aria-label', fill(text.textDelete || '{0}', concept.title));
+    trash.title = trash.getAttribute('aria-label');
+    if (concept.status === 'generated' || concept.status === 'approved') {
+      return [trash];
+    }
+    const reason = node('span', 'visually-hidden', concept.status === 'video_ready' ? text.textDeleteLockedVideo : text.textEditLockedQueue);
+    reason.id = `concept-delete-locked-${concept.id}`;
+    trash.setAttribute('aria-disabled', 'true');
+    trash.setAttribute('aria-describedby', reason.id);
+    trash.title = reason.textContent;
+    return [trash, reason];
+  }
+
+  // Onaydan sonra Silinenler'e taşır; vazgeçilirse istek gitmez. Hata → sade mesaj, konsept yerinde (AC-10).
+  async function removeConcept(button) {
+    const id = button.dataset.delete;
+    if (!(await confirmDialog(el('concept-delete-dialog'), button))) {
+      return;
+    }
+    el('concepts-status').textContent = text.textDeleting;
+    try {
+      await post(`/konseptler/${encodeURIComponent(id)}/sil`, {});
+      state.checkedConcepts.delete(id);
+      if (el('concept-detail').dataset.id === id) {
+        el('concept-detail').hidden = true;
+        delete el('concept-detail').dataset.id;
+        el('concept-detail-hint').hidden = false;
+      }
+      doc.dispatchEvent(new CustomEvent('concept:deleted', { detail: { id } }));
+      await loadList();
+      el('concepts-status').textContent = text.textDeleted;
+    } catch (error) {
+      el('concepts-status').textContent = (error && error.body && error.body.message) || text.textDeleteFailed;
+    }
+  }
+
   function renderList(result) {
     const items = result.items || [];
     el('concepts-status').textContent = '';
@@ -385,7 +429,7 @@ export function initConceptWork(doc, timers = {}) {
         toggle.title = toggle.getAttribute('aria-label');
         row.append(toggle);
       }
-      row.append(...editButton(concept));
+      row.append(...editButton(concept), ...deleteButton(concept));
       return row;
     }));
     const pages = Math.max(1, Math.ceil((result.total || 0) / (result.pageSize || 50)));
@@ -435,6 +479,13 @@ export function initConceptWork(doc, timers = {}) {
     const approve = event.target.closest('[data-approve]');
     if (approve) {
       changeApproval([approve.closest('[data-id]').dataset.id], approve.dataset.approve === 'undo');
+      return;
+    }
+    const trash = event.target.closest('[data-delete]');
+    if (trash) {
+      if (trash.getAttribute('aria-disabled') !== 'true') {
+        removeConcept(trash);
+      }
       return;
     }
     const edit = event.target.closest('[data-edit]');

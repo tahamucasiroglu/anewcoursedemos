@@ -11,6 +11,26 @@
     <p class="settings__intro">@UiText.SettingsAgentIntro</p>
     <a class="button button--primary agent-download" id="settings-agent-download" href="/ajan/indir" download>@UiText.AgentDownload</a>
 </section>
+@* Öneriler (spec 0016 Req 9): seçili profilin önerilip seçilmemiş başlık hafızasını onaydan sonra siler; profil yokken pasif
+   (suggestion-reset.js, /oneriler/sifirla). *@
+<section class="settings__section" id="suggestion-reset" aria-labelledby="settings-suggestions-title"
+         data-text-no-profile="@UiText.SuggestionsResetNoProfile" data-text-resetting="@UiText.SuggestionsResetting"
+         data-text-done="@UiText.SuggestionsResetDone" data-text-failed="@UiText.SuggestionsResetFailed">
+    <h2 class="settings__title" id="settings-suggestions-title">@UiText.SettingsSuggestions</h2>
+    <p class="settings__intro">@UiText.SuggestionsResetIntro</p>
+    <button type="button" class="button button--danger" id="suggestion-reset-button" aria-disabled="true"
+            aria-describedby="suggestion-reset-status">@UiText.SuggestionsReset</button>
+    <p class="settings__status" id="suggestion-reset-status" role="status" aria-live="polite"></p>
+    <div class="dialog-backdrop dialog-backdrop--confirm" id="suggestion-reset-dialog" hidden>
+        <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="suggestion-reset-text">
+            <p class="dialog__text" id="suggestion-reset-text">@UiText.SuggestionsResetConfirm</p>
+            <div class="dialog__actions">
+                <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
+                <button type="button" class="button button--danger" data-confirm-ok>@UiText.SuggestionsResetOk</button>
+            </div>
+        </div>
+    </div>
+</section>
 <div class="settings" id="settings" data-keys-url="/ayarlar/api-keyler" data-models-url="/ayarlar/modeller"
      data-text-not-set="@UiText.KeyNotSet" data-text-verified="@UiText.KeyVerified" data-text-unverified="@UiText.KeyUnverified"
      data-text-unreadable="@UiText.KeyUnreadable" data-text-just-now="@UiText.KeyUpdatedJustNow" data-text-updated-at="@UiText.KeyUpdatedAt"

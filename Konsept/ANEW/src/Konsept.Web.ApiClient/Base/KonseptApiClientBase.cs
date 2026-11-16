@@ -145,6 +145,7 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ConceptCommand.FromIdea => "api/concepts/from-idea",
             ConceptCommand.Stop => "api/concepts/jobs/stop",
             ConceptCommand.Approve => "api/concepts/approve",
+            ConceptCommand.ResetSuggestions => "api/concepts/suggestions/reset",
             _ => "api/concepts/unapprove",
         };
         // Yalnızca JSON nesnesi iletilir; başka her şey boş nesne olur (Api doğrular, Web yorumlamaz).
@@ -172,6 +173,8 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ConceptEditCommand.SaveScenes => $"api/concepts/{conceptId:D}/scenes",
             ConceptEditCommand.Regenerate => $"api/concepts/{conceptId:D}/regenerate",
             ConceptEditCommand.ApproveRevision => $"api/concepts/{conceptId:D}/revision/approve",
+            ConceptEditCommand.Delete => $"api/concepts/{conceptId:D}/delete",
+            ConceptEditCommand.Purge => $"api/concepts/deleted/{conceptId:D}/purge",
             _ => $"api/concepts/{conceptId:D}/revision/discard",
         };
         HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
@@ -181,6 +184,18 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     /// <inheritdoc />
     public Task<Result<JsonElement>> GetConceptRevisionAsync(Guid conceptId, CancellationToken cancellationToken) =>
         SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/{conceptId:D}/revision"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> ListDeletedConceptsAsync(Guid profileId, int page, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                $"api/concepts/deleted?profileId={profileId:D}&page={Math.Max(1, page).ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> GetDeletedConceptAsync(Guid conceptId, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/deleted/{conceptId:D}"), cancellationToken);
 
     /// <inheritdoc />
     public Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken) =>

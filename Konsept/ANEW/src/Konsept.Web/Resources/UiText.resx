@@ -358,4 +358,35 @@
   <data name="RevisionConfirmDiscard" xml:space="preserve"><value>Revizyon silinsin mi?</value></data>
   <data name="RevisionConfirmOk" xml:space="preserve"><value>Evet, sil</value></data>
   <data name="RevisionApproved" xml:space="preserve"><value>Revizyon onaylandı; konsept güncellendi.</value></data>
+  <data name="ConceptDelete" xml:space="preserve"><value>Sil: {0}</value></data>
+  <data name="ConceptDeleteLockedVideo" xml:space="preserve"><value>Videosu olan konsept burada silinemez</value></data>
+  <data name="ConceptDeleteConfirm" xml:space="preserve"><value>Konsept Silinenler'e taşınacak; geri yükleme yok.</value></data>
+  <data name="ConceptDeleteOk" xml:space="preserve"><value>Sil</value></data>
+  <data name="ConceptDeleting" xml:space="preserve"><value>Siliniyor…</value></data>
+  <data name="ConceptDeleted" xml:space="preserve"><value>Konsept Silinenler'e taşındı.</value></data>
+  <data name="ConceptDeleteFailed" xml:space="preserve"><value>Konsept silinemedi; yerinde kaldı.</value></data>
+  <data name="DeletedTabsLabel" xml:space="preserve"><value>Silinenler sekmeleri</value></data>
+  <data name="DeletedTabConcepts" xml:space="preserve"><value>Konseptler</value></data>
+  <data name="DeletedTabVideos" xml:space="preserve"><value>Videolar</value></data>
+  <data name="DeletedEmptyConcepts" xml:space="preserve"><value>Henüz silinmiş konsept yok</value></data>
+  <data name="DeletedEmptyVideos" xml:space="preserve"><value>Henüz silinmiş video yok</value></data>
+  <data name="DeletedLoading" xml:space="preserve"><value>Silinenler yükleniyor…</value></data>
+  <data name="DeletedLoadFailed" xml:space="preserve"><value>Silinenler alınamadı. Biraz sonra tekrar deneyin.</value></data>
+  <data name="DeletedAt" xml:space="preserve"><value>Silinme: {0}</value></data>
+  <data name="DeletedDetailHint" xml:space="preserve"><value>Okumak için silinmiş bir konsept seçin.</value></data>
+  <data name="DeletedPurge" xml:space="preserve"><value>Kalıcı sil: {0}</value></data>
+  <data name="DeletedPurgeConfirm" xml:space="preserve"><value>Konsept kalıcı olarak silinecek, geri alınamaz.</value></data>
+  <data name="DeletedPurgeOk" xml:space="preserve"><value>Kalıcı sil</value></data>
+  <data name="DeletedPurging" xml:space="preserve"><value>Kalıcı siliniyor…</value></data>
+  <data name="DeletedPurged" xml:space="preserve"><value>Konsept kalıcı olarak silindi.</value></data>
+  <data name="DeletedPurgeFailed" xml:space="preserve"><value>Konsept kalıcı silinemedi; yerinde kaldı.</value></data>
+  <data name="SettingsSuggestions" xml:space="preserve"><value>Öneriler</value></data>
+  <data name="SuggestionsResetIntro" xml:space="preserve"><value>Önerilip seçmediğin başlıklar tekrar önerilmez. Sıfırlarsan seçili profilde yeniden önerilebilir olurlar.</value></data>
+  <data name="SuggestionsReset" xml:space="preserve"><value>Önerileri sıfırla</value></data>
+  <data name="SuggestionsResetNoProfile" xml:space="preserve"><value>Önce bir profil seçin</value></data>
+  <data name="SuggestionsResetConfirm" xml:space="preserve"><value>Seçili profilde önerilip seçmediğin başlıklar yeniden önerilebilir olacak; üretilmiş ve silinmiş konseptler etkilenmez.</value></data>
+  <data name="SuggestionsResetOk" xml:space="preserve"><value>Sıfırla</value></data>
+  <data name="SuggestionsResetting" xml:space="preserve"><value>Sıfırlanıyor…</value></data>
+  <data name="SuggestionsResetDone" xml:space="preserve"><value>Öneriler sıfırlandı</value></data>
+  <data name="SuggestionsResetFailed" xml:space="preserve"><value>Öneriler sıfırlanamadı; hiçbir şey değişmedi.</value></data>
 </root>

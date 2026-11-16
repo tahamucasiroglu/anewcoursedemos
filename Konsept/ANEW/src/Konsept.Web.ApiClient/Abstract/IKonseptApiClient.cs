@@ -192,6 +192,19 @@ public interface IKonseptApiClient
     /// <returns>JSON ya da hata.</returns>
     Task<Result<JsonElement>> GetConceptRevisionAsync(Guid conceptId, CancellationToken cancellationToken);
 
+    /// <summary>Silinenler: profilin silinmiş konseptleri (<c>GET api/concepts/deleted</c>; spec 0016).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sayfa (Api gövdesi aynen).</returns>
+    Task<Result<JsonElement>> ListDeletedConceptsAsync(Guid profileId, int page, CancellationToken cancellationToken);
+
+    /// <summary>Silinmiş konseptin tamamı (<c>GET api/concepts/deleted/{id}</c>; salt okunur).</summary>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Detay (Api gövdesi aynen).</returns>
+    Task<Result<JsonElement>> GetDeletedConceptAsync(Guid conceptId, CancellationToken cancellationToken);
+
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
     /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>
