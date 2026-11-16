@@ -14,8 +14,8 @@
   <data name="NavProduced" xml:space="preserve"><value>Üretilenler</value></data>
   <data name="NavDeleted" xml:space="preserve"><value>Silinenler</value></data>
   <data name="NavPublishing" xml:space="preserve"><value>Yayınlama</value></data>
-  <data name="ProfileSelect" xml:space="preserve"><value>Profil seçimi</value></data>
-  <data name="EditProfile" xml:space="preserve"><value>Profili düzenle</value></data>
+  <data name="ProfileSelect" xml:space="preserve"><value>Profil seç</value></data>
+  <data name="EditProfile" xml:space="preserve"><value>Seçili profili düzenle</value></data>
   <data name="NewProfile" xml:space="preserve"><value>Yeni profil</value></data>
   <data name="ReportError" xml:space="preserve"><value>Hata bildir</value></data>
   <data name="Settings" xml:space="preserve"><value>Ayarlar</value></data>
@@ -119,4 +119,47 @@
   <data name="PairRejected" xml:space="preserve"><value>Reddedildi. Ajan yeni kod alabilir.</value></data>
   <data name="PairFailed" xml:space="preserve"><value>İşlem tamamlanamadı, tekrar deneyin.</value></data>
   <data name="PairCodeRequired" xml:space="preserve"><value>Ajan penceresindeki kodu girin.</value></data>
+  <data name="ProfilesLoading" xml:space="preserve"><value>Profiller yükleniyor…</value></data>
+  <data name="ProfilesLoadFailed" xml:space="preserve"><value>Profiller yüklenemedi</value></data>
+  <data name="ProfileCreateFirst" xml:space="preserve"><value>Profil oluşturun</value></data>
+  <data name="ProfileRequired" xml:space="preserve"><value>Önce bir profil oluşturun</value></data>
+  <data name="ProfileEditNoSelection" xml:space="preserve"><value>Düzenlemek için önce bir profil oluşturun</value></data>
+  <data name="ProfileEditUnavailable" xml:space="preserve"><value>Profiller yüklenmeden düzenlenemez</value></data>
+  <data name="ProfileLimit" xml:space="preserve"><value>En fazla {0} profil oluşturabilirsiniz</value></data>
+  <data name="ProfileModalNew" xml:space="preserve"><value>Yeni profil</value></data>
+  <data name="ProfileModalEdit" xml:space="preserve"><value>Profili düzenle</value></data>
+  <data name="ProfileClose" xml:space="preserve"><value>Kapat</value></data>
+  <data name="ProfileTemplate" xml:space="preserve"><value>Hazır şablon</value></data>
+  <data name="ProfileTemplateNone" xml:space="preserve"><value>Şablon seçin</value></data>
+  <data name="ProfileName" xml:space="preserve"><value>Kanal adı</value></data>
+  <data name="ProfileLanguage" xml:space="preserve"><value>Video dili</value></data>
+  <data name="LanguageTurkish" xml:space="preserve"><value>Türkçe</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>İngilizce</value></data>
+  <data name="ProfileFormat" xml:space="preserve"><value>Biçim</value></data>
+  <data name="FormatLandscape" xml:space="preserve"><value>Yatay</value></data>
+  <data name="FormatPortrait" xml:space="preserve"><value>Dikey</value></data>
+  <data name="ProfileDuration" xml:space="preserve"><value>Hedef süre</value></data>
+  <data name="ProfileMinutes" xml:space="preserve"><value>Dakika</value></data>
+  <data name="ProfileSeconds" xml:space="preserve"><value>Saniye</value></data>
+  <data name="ProfileContent" xml:space="preserve"><value>Kanal içeriği</value></data>
+  <data name="ProfileContentHint" xml:space="preserve"><value>Kanalın odak konusu, dönemi ya da tarih aralığı gibi bilgiler.</value></data>
+  <data name="ProfileSave" xml:space="preserve"><value>Kaydet</value></data>
+  <data name="ProfileSaving" xml:space="preserve"><value>Kaydediliyor…</value></data>
+  <data name="ProfileCancel" xml:space="preserve"><value>Vazgeç</value></data>
+  <data name="ProfileDelete" xml:space="preserve"><value>Sil</value></data>
+  <data name="ProfileDeleteBlocked" xml:space="preserve"><value>Bu profilin konseptleri olduğu için silinemez</value></data>
+  <data name="ConfirmOk" xml:space="preserve"><value>Onayla</value></data>
+  <data name="ConfirmTemplate" xml:space="preserve"><value>Doldurduğunuz alanlar şablonla değiştirilecek</value></data>
+  <data name="ConfirmDiscard" xml:space="preserve"><value>Değişiklikler kaydedilmeyecek</value></data>
+  <data name="ConfirmDelete" xml:space="preserve"><value>Bu profil kalıcı olarak silinecek</value></data>
+  <data name="ProfileSaveFailed" xml:space="preserve"><value>Profil şu an kaydedilemedi (hata no: {0})</value></data>
+  <data name="ProfileDeleteFailed" xml:space="preserve"><value>Profil şu an silinemedi (hata no: {0})</value></data>
+  <data name="ProfileSelectFailed" xml:space="preserve"><value>Profil seçilemedi (hata no: {0})</value></data>
+  <data name="ProfileNameRequired" xml:space="preserve"><value>Kanal adını girin.</value></data>
+  <data name="ProfileNameTooLong" xml:space="preserve"><value>Kanal adı en fazla 80 karakter olabilir.</value></data>
+  <data name="ProfileLanguageRequired" xml:space="preserve"><value>Listeden bir video dili seçin.</value></data>
+  <data name="ProfileFormatRequired" xml:space="preserve"><value>Yatay ya da dikey biçimi seçin.</value></data>
+  <data name="ProfileDurationInvalid" xml:space="preserve"><value>Hedef süre 15 saniye ile 15 dakika arasında olmalı.</value></data>
+  <data name="ProfileContentRequired" xml:space="preserve"><value>Kanal içeriğini girin.</value></data>
+  <data name="ProfileContentTooLong" xml:space="preserve"><value>Kanal içeriği en fazla 2000 karakter olabilir.</value></data>
 </root>

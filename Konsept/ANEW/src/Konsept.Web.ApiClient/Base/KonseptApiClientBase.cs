@@ -91,6 +91,26 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     public Task<Result<ApiKeyStatusResponse>> DeleteApiKeyAsync(string provider, CancellationToken cancellationToken) =>
         SendAsync<ApiKeyStatusResponse>(new HttpRequestMessage(HttpMethod.Delete, "api/ai/keys/" + Uri.EscapeDataString(provider ?? string.Empty)), cancellationToken);
 
+    /// <inheritdoc />
+    public Task<Result<ProfileListResponse>> GetProfilesAsync(CancellationToken cancellationToken) =>
+        SendAsync<ProfileListResponse>(new HttpRequestMessage(HttpMethod.Get, "api/profiles"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ProfileResponse>> CreateProfileAsync(SaveProfileApiRequest? request, CancellationToken cancellationToken) =>
+        SendAsync<ProfileResponse>(new HttpRequestMessage(HttpMethod.Post, "api/profiles") { Content = JsonContent.Create(request, options: Json) }, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ProfileResponse>> UpdateProfileAsync(Guid id, SaveProfileApiRequest? request, CancellationToken cancellationToken) =>
+        SendAsync<ProfileResponse>(new HttpRequestMessage(HttpMethod.Put, "api/profiles/" + id.ToString("D")) { Content = JsonContent.Create(request, options: Json) }, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ProfileListResponse>> DeleteProfileAsync(Guid id, CancellationToken cancellationToken) =>
+        SendAsync<ProfileListResponse>(new HttpRequestMessage(HttpMethod.Delete, "api/profiles/" + id.ToString("D")), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ProfileResponse>> SelectProfileAsync(Guid? id, CancellationToken cancellationToken) =>
+        SendAsync<ProfileResponse>(new HttpRequestMessage(HttpMethod.Put, "api/profiles/selected") { Content = JsonContent.Create(new { profileId = id }, options: Json) }, cancellationToken);
+
     /// <summary>İsteği API'ye gönderir.</summary>
     /// <param name="request">HTTP isteği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

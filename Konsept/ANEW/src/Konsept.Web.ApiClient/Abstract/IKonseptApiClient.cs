@@ -95,4 +95,34 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>"Girilmemiş" satırı ya da hata.</returns>
     Task<Result<ApiKeyStatusResponse>> DeleteApiKeyAsync(string provider, CancellationToken cancellationToken);
+
+    /// <summary>Profiller, seçili profil, sınır ve şablonlar (spec 0003).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Liste ya da hata.</returns>
+    Task<Result<ProfileListResponse>> GetProfilesAsync(CancellationToken cancellationToken);
+
+    /// <summary>Profil oluşturur (yeni profil seçili olur).</summary>
+    /// <param name="request">Alanlar.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Profil ya da hata (alan hataları / sınır).</returns>
+    Task<Result<ProfileResponse>> CreateProfileAsync(SaveProfileApiRequest? request, CancellationToken cancellationToken);
+
+    /// <summary>Profili düzenler.</summary>
+    /// <param name="id">Profil.</param>
+    /// <param name="request">Alanlar.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Profil ya da hata.</returns>
+    Task<Result<ProfileResponse>> UpdateProfileAsync(Guid id, SaveProfileApiRequest? request, CancellationToken cancellationToken);
+
+    /// <summary>Profili kalıcı siler.</summary>
+    /// <param name="id">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Yeni liste ya da hata.</returns>
+    Task<Result<ProfileListResponse>> DeleteProfileAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Seçili profili değiştirir (sunucuda hatırlanır).</summary>
+    /// <param name="id">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Seçilen profil ya da hata.</returns>
+    Task<Result<ProfileResponse>> SelectProfileAsync(Guid? id, CancellationToken cancellationToken);
 }

@@ -43,8 +43,10 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
         bar.QuerySelector(".topbar__name")!.TextContent.ShouldBe("ANEW Konsept");
         bar.QuerySelectorAll(".topbar__nav a").Select(a => a.TextContent).ShouldBe(
             ["Konseptler", "Konseptten Video", "Üretilenler", "Silinenler", "Yayınlama"]);
+        // Spec 0003 AC-18 (plan 0003 Risk 2, A-1): profil seçimi gerçek bir <select> ("Profil seç"), sıranın ilk öğesi; kalem "Seçili profili düzenle".
+        bar.QuerySelector(".topbar__actions")!.FirstElementChild!.QuerySelector("select")!.GetAttribute("aria-label").ShouldBe("Profil seç");
         bar.QuerySelectorAll(".topbar__actions > button").Select(b => b.GetAttribute("aria-label")).ShouldBe(
-            ["Profil seçimi", "Profili düzenle", "Yeni profil", "Hata bildir", "Ayarlar", "Açık/koyu temayı değiştir"]);
+            ["Seçili profili düzenle", "Yeni profil", "Hata bildir", "Ayarlar", "Açık/koyu temayı değiştir"]);
     }
 
     /// <summary>Her sayfa bağlantısı kendi sayfasını açar ve boş durum metnini gösterir.</summary>
@@ -88,7 +90,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         var passive = doc.QuerySelectorAll(".passive").ToList();
-        passive.Count.ShouldBe(5); // Spec 0004 Req 14: "Ayarlar" artık pasif değil (plan 0004 Risk 3, A-1); yeni davranış SettingsPageTests'te.
+        passive.Count.ShouldBe(2); // Spec 0004 Req 14: "Ayarlar" (plan 0004 A-1) ve spec 0003: profil seçimi, kalem, artı artık pasif değil (plan 0003 A-1); yeni davranış ProfileBarTests'te.
         foreach (var control in passive)
         {
             control.GetAttribute("aria-disabled").ShouldBe("true");

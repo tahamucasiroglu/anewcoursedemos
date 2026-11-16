@@ -1,5 +1,6 @@
 @{
+    ViewData["RequiresProfile"] = true;
     ViewData["Title"] = UiText.NavDeleted;
 }
 <h1 class="page__title">@UiText.NavDeleted</h1>
-<p class="empty-state">@UiText.EmptyDeleted</p>
+<p class="empty-state" data-requires-profile>@UiText.EmptyDeleted</p>

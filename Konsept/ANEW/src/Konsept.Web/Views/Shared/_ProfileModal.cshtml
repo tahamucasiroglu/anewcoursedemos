@@ -1,0 +1,80 @@
+@* Profil modalı ve ortak onay penceresi (spec 0003 Req 3–7, 14). Yeni profilde hazır şablonlar görünür, düzenlemede gizlidir ve
+   Sil eylemi vardır. Her alanın görünür etiketi vardır; hata metni alana aria-describedby ile bağlıdır. Davranış profiles.js'te. *@
+<div class="dialog-backdrop" id="profile-modal" hidden
+     data-text-new="@UiText.ProfileModalNew" data-text-edit="@UiText.ProfileModalEdit" data-text-save="@UiText.ProfileSave"
+     data-text-saving="@UiText.ProfileSaving" data-text-save-failed="@UiText.ProfileSaveFailed"
+     data-text-delete-failed="@UiText.ProfileDeleteFailed" data-text-delete-blocked="@UiText.ProfileDeleteBlocked"
+     data-text-confirm-template="@UiText.ConfirmTemplate" data-text-confirm-discard="@UiText.ConfirmDiscard"
+     data-text-confirm-delete="@UiText.ConfirmDelete" data-text-forbidden="@UiText.ActionForbidden"
+     data-text-name-required="@UiText.ProfileNameRequired" data-text-name-too-long="@UiText.ProfileNameTooLong"
+     data-text-language-required="@UiText.ProfileLanguageRequired" data-text-format-required="@UiText.ProfileFormatRequired"
+     data-text-duration-invalid="@UiText.ProfileDurationInvalid" data-text-content-required="@UiText.ProfileContentRequired"
+     data-text-content-too-long="@UiText.ProfileContentTooLong">
+    <div class="dialog profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+        <div class="profile-modal__head">
+            <h2 class="profile-modal__title" id="profile-modal-title">@UiText.ProfileModalNew</h2>
+            <button type="button" class="icon-button" id="profile-modal-close" aria-label="@UiText.ProfileClose" title="@UiText.ProfileClose">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+        </div>
+        <form class="profile-form" id="profile-form" novalidate autocomplete="off">
+            <div class="field" id="profile-template-field">
+                <label class="field__label" for="profile-template">@UiText.ProfileTemplate</label>
+                <select class="field__input" id="profile-template">
+                    <option value="">@UiText.ProfileTemplateNone</option>
+                </select>
+            </div>
+            <div class="field">
+                <label class="field__label" for="profile-name">@UiText.ProfileName</label>
+                <input class="field__input" id="profile-name" name="channelName" type="text" aria-describedby="profile-name-error" />
+                <p class="field__error" id="profile-name-error"></p>
+            </div>
+            <div class="field">
+                <label class="field__label" for="profile-language">@UiText.ProfileLanguage</label>
+                <select class="field__input" id="profile-language" name="language" aria-describedby="profile-language-error">
+                    <option value="tr">@UiText.LanguageTurkish</option>
+                    <option value="en">@UiText.LanguageEnglish</option>
+                </select>
+                <p class="field__error" id="profile-language-error"></p>
+            </div>
+            <fieldset class="field" aria-describedby="profile-format-error">
+                <legend class="field__label">@UiText.ProfileFormat</legend>
+                <label class="field__choice"><input type="radio" name="format" value="landscape" id="profile-format-landscape" /> @UiText.FormatLandscape</label>
+                <label class="field__choice"><input type="radio" name="format" value="portrait" id="profile-format-portrait" /> @UiText.FormatPortrait</label>
+                <p class="field__error" id="profile-format-error"></p>
+            </fieldset>
+            <fieldset class="field" aria-describedby="profile-duration-error">
+                <legend class="field__label">@UiText.ProfileDuration</legend>
+                <label class="field__choice" for="profile-minutes">@UiText.ProfileMinutes</label>
+                <input class="field__input field__input--short" id="profile-minutes" type="number" min="0" max="15" step="1" inputmode="numeric"
+                       aria-describedby="profile-duration-error" />
+                <label class="field__choice" for="profile-seconds">@UiText.ProfileSeconds</label>
+                <input class="field__input field__input--short" id="profile-seconds" type="number" min="0" max="59" step="1" inputmode="numeric"
+                       aria-describedby="profile-duration-error" />
+                <p class="field__error" id="profile-duration-error"></p>
+            </fieldset>
+            <div class="field">
+                <label class="field__label" for="profile-content">@UiText.ProfileContent</label>
+                <textarea class="field__input" id="profile-content" name="content" rows="5" aria-describedby="profile-content-hint profile-content-error"></textarea>
+                <p class="field__hint" id="profile-content-hint">@UiText.ProfileContentHint</p>
+                <p class="field__error" id="profile-content-error"></p>
+            </div>
+            <p class="field__error" id="profile-form-error" role="alert"></p>
+            <div class="dialog__actions profile-form__actions">
+                <button type="button" class="button button--danger" id="profile-delete" aria-describedby="profile-delete-reason">@UiText.ProfileDelete</button>
+                <span class="field__hint" id="profile-delete-reason" hidden>@UiText.ProfileDeleteBlocked</span>
+                <button type="button" class="button" id="profile-cancel">@UiText.ProfileCancel</button>
+                <button type="submit" class="button button--primary" id="profile-save">@UiText.ProfileSave</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="dialog-backdrop dialog-backdrop--confirm" id="confirm-dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
+        <p class="dialog__text" id="confirm-text"></p>
+        <div class="dialog__actions">
+            <button type="button" class="button" id="confirm-cancel">@UiText.ProfileCancel</button>
+            <button type="button" class="button button--primary" id="confirm-ok">@UiText.ConfirmOk</button>
+        </div>
+    </div>
+</div>

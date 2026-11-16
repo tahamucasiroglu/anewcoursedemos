@@ -37,14 +37,22 @@
             }
         </nav>
         <div class="topbar__actions">
-            <button type="button" class="topbar__profile passive" aria-disabled="true"
-                    aria-label="@UiText.ProfileSelect" data-tooltip="@UiText.ComingSoon">@UiText.ProfileSelect ▾</button>
-            <button type="button" class="icon-button passive" aria-disabled="true"
-                    aria-label="@UiText.EditProfile" data-tooltip="@UiText.ComingSoon">
+            @* Profil seçimi · kalem · artı (spec 0003): liste profiles.js ile /profiller'den yüklenir (yükleniyor → liste / boş durum /
+               hata). Kalem seçili profil yokken aria-disabled'dır ve nedenini söyler; seçim sunucuda hatırlanır. *@
+            <div class="profile-bar" id="profile-bar" data-state="loading" data-url="/profiller"
+                 data-text-loading="@UiText.ProfilesLoading" data-text-failed="@UiText.ProfilesLoadFailed"
+                 data-text-edit-none="@UiText.ProfileEditNoSelection" data-text-edit-unavailable="@UiText.ProfileEditUnavailable"
+                 data-text-limit="@UiText.ProfileLimit" data-text-select-failed="@UiText.ProfileSelectFailed">
+                <span class="profile-bar__status" id="profile-status" role="status" aria-live="polite">@UiText.ProfilesLoading</span>
+                <select class="topbar__profile" id="profile-select" aria-label="@UiText.ProfileSelect" hidden></select>
+                <button type="button" class="button profile-bar__create" id="profile-create" hidden>@UiText.ProfileCreateFirst</button>
+                <span class="profile-bar__alert" id="profile-alert" aria-live="assertive"></span>
+            </div>
+            <button type="button" class="icon-button profile-edit" id="profile-edit" aria-disabled="true"
+                    aria-label="@UiText.EditProfile" title="@UiText.ProfileEditUnavailable" data-reason="@UiText.ProfileEditUnavailable">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" /></svg>
             </button>
-            <button type="button" class="icon-button passive" aria-disabled="true"
-                    aria-label="@UiText.NewProfile" data-tooltip="@UiText.ComingSoon">
+            <button type="button" class="icon-button" id="profile-new" aria-label="@UiText.NewProfile" title="@UiText.NewProfile">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
             </button>
             <button type="button" class="icon-button passive" aria-disabled="true"
@@ -75,8 +83,14 @@
     <form id="settings-nav" method="get" action="/ayarlar" hidden></form>
 
     <main id="main" class="page">
+        @if (ViewData["RequiresProfile"] is true)
+        {
+            @* Profil gerektiren sayfa (spec 0003 Req 12): profil yoksa bu boş durum görünür, sayfanın listesi gizlenir. *@
+            <p class="profile-required" id="profile-required" hidden>@UiText.ProfileRequired</p>
+        }
         @RenderBody()
     </main>
+    <partial name="_ProfileModal" />
 
     <footer class="bottombar">
         <div class="journal" id="journal" data-level="info">

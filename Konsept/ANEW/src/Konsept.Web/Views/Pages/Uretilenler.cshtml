@@ -1,5 +1,6 @@
 @{
+    ViewData["RequiresProfile"] = true;
     ViewData["Title"] = UiText.NavProduced;
 }
 <h1 class="page__title">@UiText.NavProduced</h1>
-<p class="empty-state">@UiText.EmptyProduced</p>
+<p class="empty-state" data-requires-profile>@UiText.EmptyProduced</p>
