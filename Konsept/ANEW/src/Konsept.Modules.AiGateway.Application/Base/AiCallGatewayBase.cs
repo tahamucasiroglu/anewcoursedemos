@@ -98,7 +98,7 @@ public abstract class AiCallGatewayBase(
 
     private static int? ClampOutput(int? requested, int? limit) => (requested, limit) switch
     {
-        (null, _) => limit,
+        (null or <= 0, _) => limit, // 0 ya da negatif istek geçersizdir: sağlayıcıya gitmez, katalog limiti kullanılır (review r1 L-3).
         (_, null) => requested,
         ({ } r, { } l) => Math.Min(r, l),
     };

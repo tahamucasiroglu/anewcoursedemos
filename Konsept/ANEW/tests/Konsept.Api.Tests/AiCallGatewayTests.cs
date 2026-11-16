@@ -100,11 +100,14 @@ public sealed class AiCallGatewayTests
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 64001 });
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 64000 });
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 1000 });
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 1 });
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 0 });
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = -5 });
         var changed = _h.Gateway(GatewayHarness.Seed(s => GatewayHarness.Model(s, Sonnet)["outputTokenLimit"] = 5000));
         await _h.CallAsync(changed, GatewayHarness.Request(_user, Sonnet));
         await _h.CallAsync(changed, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 9000 });
 
-        _h.Provider.Calls.Select(c => c.Call.MaxOutputTokens).ShouldBe([64000, 64000, 64000, 1000, 5000, 5000]);
+        _h.Provider.Calls.Select(c => c.Call.MaxOutputTokens).ShouldBe([64000, 64000, 64000, 1000, 1, 64000, 64000, 5000, 5000]);
     }
 
     /// <summary>AC-4: sınıra takılan çıktı "yarım kaldı" olarak döner ve kaydedilir; sağlayıcı tam 1 kez çağrılır (devam/tekrar yok).</summary>
