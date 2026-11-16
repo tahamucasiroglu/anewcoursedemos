@@ -115,11 +115,20 @@ public abstract class ConceptWorkServiceBase(
         }
 
         // Seçilenler üretime gider; listedeki seçilmeyenler "önerilip seçilmemiş" olur ve listeden kalkar (Req 7).
+        var selectedIds = selected.Select(s => s.Id).ToList();
         await PrepareAsync(job, async () =>
         {
-            await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, [.. selected.Select(s => s.Id)], SuggestionState.Selected, CancellationToken.None)
-                .ConfigureAwait(false);
-            await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, null, SuggestionState.Rejected, CancellationToken.None).ConfigureAwait(false);
+            await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, selectedIds, SuggestionState.Selected, CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, null, SuggestionState.Rejected, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                // İkinci yazım başarısızsa seçilenler listeye geri döner (review r2).
+                await suggestions.RestoreSelectedAsync(who.UserId, context.ProfileId, selectedIds, CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
         }).ConfigureAwait(false);
         launcher.Launch(job, new ConceptJobInput(who, context, selected.Count, null, selected));
         return Result<ConceptWorkDto>.Success(await WorkAsync(who, context, cancellationToken).ConfigureAwait(false));

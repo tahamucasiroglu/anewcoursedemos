@@ -171,15 +171,15 @@ public abstract class ConceptJobExecutorBase(
     {
         // Konsepte çevrilemeyen (durdurulan ya da hata veren) öneriler listeye geri döner; kullanıcı isterse elle yeniden üretir
         // (otomatik tekrar yok, review r1 M-4).
-        var unsaved = new List<Guid>();
+        // Kaydedilmeyen = tümü − kaydedilenler: istisnada da (review r2) süren ve sonraki öneriler geri döner.
+        var saved = new HashSet<Guid>();
         try
         {
             foreach (var topic in input.Topics)
             {
                 if (job.StopRequested)
                 {
-                    unsaved.Add(topic.Id); // Sıradakiler başlamaz (G-3).
-                    continue;
+                    continue; // Sıradakiler başlamaz (G-3).
                 }
 
                 var outcome = await GenerateAsync(
@@ -189,17 +189,18 @@ public abstract class ConceptJobExecutorBase(
                 if (outcome.Error is { } error)
                 {
                     job.Fail(topic.Title, error);
-                    unsaved.Add(topic.Id);
                     continue;
                 }
 
                 // Başlık seçilen önerininkidir: geçmiş ve "seçilen konular" bu başlıkla tutarlı kalır (BR-4).
                 await concepts.AddAsync(Build(input, topic.Title, outcome, ConceptSource.Topic), CancellationToken.None).ConfigureAwait(false);
+                saved.Add(topic.Id);
                 job.Succeed();
             }
         }
         finally
         {
+            var unsaved = input.Topics.Select(t => t.Id).Where(id => !saved.Contains(id)).ToList();
             if (unsaved.Count > 0)
             {
                 await suggestions.RestoreSelectedAsync(input.Caller.UserId, input.Context.ProfileId, unsaved, CancellationToken.None).ConfigureAwait(false);

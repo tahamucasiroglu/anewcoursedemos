@@ -595,6 +595,38 @@ public sealed class ConceptGenerationTests : IClassFixture<ConceptsApiFactory>
         _factory.Provider.CallsOf(CallRole.Concept).Count.ShouldBe(2);
     }
 
+    /// <summary>
+    /// Review r2 (M-4'ün hata yolu): seçilen konunun çağrısı hata verirse ya da üretim istisnayla kesilirse kaydedilmeyen öneriler listeye
+    /// döner; ek çağrı yapılmaz.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReviewR2_FailedOrCrashedTopics_ReturnToList()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var profile = await ReadyProfileAsync(client, ct);
+        _factory.Provider.Handler = (_, role, n) => role switch
+        {
+            CallRole.Topics => Ok(TopicsJson(("Konu A", "Özet."), ("Konu B", "Özet."), ("Konu C", "Özet."))),
+            CallRole.Concept when n == 1 => Ok(ConceptJson("A", [60])),
+            CallRole.Concept when n == 2 => Task.FromResult(ProviderAttempt.Failed(400)),
+            CallRole.Concept => throw new InvalidOperationException("Beklenmeyen hata"),
+            _ => Duplicates(),
+        };
+        (await PostAsync(client, "/api/concepts/topics", new { profileId = profile, count = 3 }, ct)).EnsureSuccessStatusCode();
+        await WaitJobAsync(client, profile, "topicJob", ct);
+        var ids = (await WorkAsync(client, profile, ct)).GetProperty("suggestions").EnumerateArray().Select(s => s.GetProperty("id").GetGuid()).ToArray();
+
+        (await PostAsync(client, "/api/concepts/from-topics", new { profileId = profile, suggestionIds = ids }, ct)).EnsureSuccessStatusCode();
+        await WaitJobAsync(client, profile, "topicJob", ct);
+
+        (await WorkAsync(client, profile, ct)).GetProperty("suggestions").EnumerateArray().Select(s => s.GetProperty("title").GetString())
+            .ShouldBe(["Konu B", "Konu C"]);
+        _factory.Concepts.Rows.Where(c => c.ProfileId == profile).Select(c => c.Title).ShouldBe(["Konu A"]);
+        _factory.Provider.CallsOf(CallRole.Concept).Count.ShouldBe(3);
+    }
+
     /// <summary>Review r1 M-3: üretim sürerken profil (henüz konsepti olmasa da) silinemez; iş bitince silinebilir.</summary>
     /// <returns>Görev.</returns>
     [Fact]
