@@ -4,6 +4,7 @@ using TahaKonsept.Agent.DependencyInjection;
 using TahaKonsept.Agent.Headless;
 using TahaKonsept.Agent.Headless.Abstract;
 using TahaKonsept.Agent.SingleInstance.Concrete;
+using TahaKonsept.Agent.Startup.Concrete;
 using Velopack;
 
 namespace TahaKonsept.Agent;
@@ -24,7 +25,10 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        VelopackApp.Build().Run();
+        // Kaldırılırken Windows başlangıç (HKCU Run) kaydı da silinir; yoksa silinmiş exe'yi gösteren kayıt kalır.
+        VelopackApp.Build()
+            .OnBeforeUninstallFastCallback(_ => new RegistryStartupRegistration().SetEnabled(false))
+            .Run();
 
         using var guard = new NamedMutexSingleInstanceGuard(SingleInstanceName);
         if (!guard.TryAcquire())

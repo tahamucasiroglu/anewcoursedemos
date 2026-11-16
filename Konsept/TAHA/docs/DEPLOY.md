@@ -101,3 +101,10 @@ Yönetici normal giriş sayfasından e-postasıyla girer. Kayıt ol sayfası her
 Bilinen: çalışma klasöründen yayın denemesi o an başka bir ajanın yarım `Shared.Contracts` değişikliği (`ImagePromptItem` yok) yüzünden derlenmedi → `-Source Head` eklendi. Web'in çağırdığı `api/identity/setup/status` Identity modülü gelene kadar 404 döner (beklenen).
 
 Not (14 Kas 2026): `publish-pi.ps1` PowerShell'den çalıştırılmalı. Git Bash içinden `powershell -File …` ile çağrılınca PATH'te önce `/usr/bin/tar` (GNU tar) bulunur, `C:\…` yolunu uzak makine sanır ("Cannot connect to C: resolve failed"); Windows `tar` (bsdtar) ile sorun yok.
+
+## 2026-11-16 — Pi'den tamamen kaldırıldı (kullanıcı isteği)
+- `tahakonsept-api` / `tahakonsept-web` servisleri durduruldu, unit dosyaları silindi.
+- `/opt/tahakonsept` (tüm sürümler) ve `/var/lib/tahakonsept` (gizli env dahil) silindi.
+- PostgreSQL: `tahakonsept` ve `tahakonsept_e2e` veritabanları ile `tahakonsept` rolü silindi; PostgreSQL ve .NET kurulu kaldı.
+- `tahakonsept` sistem kullanıcısı/grubu silindi.
+- Yeniden kurulum: provision + `deploy/publish-pi.ps1 -Source Head` (PowerShell'den). Admin seed `.env`'deki hash ile yeniden oluşur.

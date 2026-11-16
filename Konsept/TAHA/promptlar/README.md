@@ -24,3 +24,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0018 | 2026-11-15 18:05 | Admin hesabı (şifreli) + admin hesaplar ayrı | [0018_2026-11-15_1805_admin-hesabi.md](0018_2026-11-15_1805_admin-hesabi.md) |
 | 0019 | 2026-11-16 10:30 | Restart sonrası Pi bağlantısı ve test hazırlığı | [0019_2026-11-16_1030_restart-sonrasi-pi-kontrol.md](0019_2026-11-16_1030_restart-sonrasi-pi-kontrol.md) |
 | 0020 | 2026-11-16 10:40 | Admin sayfası var mı | [0020_2026-11-16_1040_admin-sayfasi-var-mi.md](0020_2026-11-16_1040_admin-sayfasi-var-mi.md) |
+| 0021 | 2026-11-16 11:00 | Bilgisayardan ve Pi'den kurulumları kaldır | [0021_2026-11-16_1100_kurulumlari-kaldir.md](0021_2026-11-16_1100_kurulumlari-kaldir.md) |
