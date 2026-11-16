@@ -88,7 +88,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         var passive = doc.QuerySelectorAll(".passive").ToList();
-        passive.Count.ShouldBe(6);
+        passive.Count.ShouldBe(5); // Spec 0004 Req 14: "Ayarlar" artık pasif değil (plan 0004 Risk 3, A-1); yeni davranış SettingsPageTests'te.
         foreach (var control in passive)
         {
             control.GetAttribute("aria-disabled").ShouldBe("true");

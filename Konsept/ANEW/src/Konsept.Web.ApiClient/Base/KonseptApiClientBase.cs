@@ -62,6 +62,24 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     public Task<Result<AdminOverviewResponse>> GetAdminOverviewAsync(CancellationToken cancellationToken) =>
         SendAsync<AdminOverviewResponse>(new HttpRequestMessage(HttpMethod.Get, "api/admin/overview"), cancellationToken);
 
+    /// <inheritdoc />
+    public Task<Result<CatalogResponse>> GetCatalogAsync(CancellationToken cancellationToken) =>
+        SendAsync<CatalogResponse>(new HttpRequestMessage(HttpMethod.Get, "api/ai/catalog"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<IReadOnlyList<ApiKeyStatusResponse>>> GetApiKeysAsync(CancellationToken cancellationToken) =>
+        SendAsync<IReadOnlyList<ApiKeyStatusResponse>>(new HttpRequestMessage(HttpMethod.Get, "api/ai/keys"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ApiKeyStatusResponse>> SaveApiKeyAsync(string provider, string? apiKey, CancellationToken cancellationToken) =>
+        SendAsync<ApiKeyStatusResponse>(
+            new HttpRequestMessage(HttpMethod.Put, "api/ai/keys/" + Uri.EscapeDataString(provider ?? string.Empty)) { Content = JsonContent.Create(new { apiKey }, options: Json) },
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ApiKeyStatusResponse>> DeleteApiKeyAsync(string provider, CancellationToken cancellationToken) =>
+        SendAsync<ApiKeyStatusResponse>(new HttpRequestMessage(HttpMethod.Delete, "api/ai/keys/" + Uri.EscapeDataString(provider ?? string.Empty)), cancellationToken);
+
     /// <summary>İsteği API'ye gönderir.</summary>
     /// <param name="request">HTTP isteği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

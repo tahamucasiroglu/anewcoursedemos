@@ -61,4 +61,27 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Özet ya da hata (403 → Forbidden).</returns>
     Task<Result<AdminOverviewResponse>> GetAdminOverviewAsync(CancellationToken cancellationToken);
+
+    /// <summary>Model kataloğunu (kullanıcıya göre etiketli) getirir (spec 0004).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Katalog ya da hata.</returns>
+    Task<Result<CatalogResponse>> GetCatalogAsync(CancellationToken cancellationToken);
+
+    /// <summary>Kullanıcının sağlayıcı satırlarını (maskeli key'ler) getirir.</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Satırlar ya da hata.</returns>
+    Task<Result<IReadOnlyList<ApiKeyStatusResponse>>> GetApiKeysAsync(CancellationToken cancellationToken);
+
+    /// <summary>Key'i doğrulatıp kaydeder (varsa eskisinin yerine).</summary>
+    /// <param name="provider">Sağlayıcı kimliği.</param>
+    /// <param name="apiKey">Key (yalnızca istek gövdesinde gider).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Yeni satır ya da hata (biçim / sağlayıcı reddi alan hatasında).</returns>
+    Task<Result<ApiKeyStatusResponse>> SaveApiKeyAsync(string provider, string? apiKey, CancellationToken cancellationToken);
+
+    /// <summary>Key'i kalıcı siler.</summary>
+    /// <param name="provider">Sağlayıcı kimliği.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>"Girilmemiş" satırı ya da hata.</returns>
+    Task<Result<ApiKeyStatusResponse>> DeleteApiKeyAsync(string provider, CancellationToken cancellationToken);
 }

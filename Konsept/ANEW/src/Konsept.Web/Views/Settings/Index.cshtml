@@ -1,0 +1,58 @@
+@* Ayarlar (spec 0004 Req 14): "API key'ler" ve salt okunur "Modeller" bölümleri; sonraki spec'ler aynı sayfaya <section> ekler
+   (ör. ajan 0009, önerileri sıfırla 0016). İçerik settings.js ile /ayarlar/api-keyler ve /ayarlar/modeller'den yüklenir; metinler
+   resx'ten data-text-* öznitelikleriyle gelir. Tam key hiçbir zaman sayfaya gelmez. *@
+@{
+    ViewData["Title"] = UiText.Settings;
+}
+<h1 class="page__title">@UiText.Settings</h1>
+<div class="settings" id="settings" data-keys-url="/ayarlar/api-keyler" data-models-url="/ayarlar/modeller"
+     data-text-not-set="@UiText.KeyNotSet" data-text-verified="@UiText.KeyVerified" data-text-unverified="@UiText.KeyUnverified"
+     data-text-unreadable="@UiText.KeyUnreadable" data-text-just-now="@UiText.KeyUpdatedJustNow" data-text-updated-at="@UiText.KeyUpdatedAt"
+     data-text-add="@UiText.KeyAdd" data-text-change="@UiText.KeyChange" data-text-delete="@UiText.KeyDelete"
+     data-text-save="@UiText.KeySave" data-text-cancel="@UiText.KeyCancel" data-text-saving="@UiText.KeySaving"
+     data-text-input-label="@UiText.KeyInputLabel" data-text-saved="@UiText.KeySaved" data-text-deleted="@UiText.KeyDeleted"
+     data-text-delete-confirm="@UiText.KeyDeleteConfirm" data-text-failed="@UiText.KeyActionFailed"
+     data-text-load-failed="@UiText.SettingsLoadFailed" data-text-models-failed="@UiText.ModelsLoadFailed"
+     data-text-kind-text="@UiText.KindText" data-text-kind-image="@UiText.KindImage"
+     data-text-available="@UiText.AvailabilityAvailable" data-text-no-key="@UiText.AvailabilityNoKey"
+     data-text-key-unreadable="@UiText.AvailabilityUnreadable" data-text-forbidden="@UiText.ActionForbidden">
+    <section class="settings__section" aria-labelledby="settings-keys-title">
+        <h2 class="settings__title" id="settings-keys-title">@UiText.SettingsApiKeys</h2>
+        <p class="settings__intro">@UiText.SettingsApiKeysIntro</p>
+        <p class="settings__loading" id="keys-loading" role="status">@UiText.SettingsLoading</p>
+        <ul class="key-list" id="key-list" hidden></ul>
+        <p class="settings__error" id="keys-error" role="alert" hidden></p>
+    </section>
+
+    <section class="settings__section" aria-labelledby="settings-models-title">
+        <h2 class="settings__title" id="settings-models-title">@UiText.SettingsModels</h2>
+        <div class="model-filters">
+            <label class="model-filters__label" for="model-kind">@UiText.ModelsKindFilter</label>
+            <select class="model-filters__select" id="model-kind">
+                <option value="">@UiText.FilterAll</option>
+                <option value="text">@UiText.KindText</option>
+                <option value="image">@UiText.KindImage</option>
+            </select>
+            <label class="model-filters__label" for="model-provider">@UiText.ModelsProviderFilter</label>
+            <select class="model-filters__select" id="model-provider">
+                <option value="">@UiText.FilterAll</option>
+            </select>
+        </div>
+        <p class="settings__loading" id="models-loading" role="status">@UiText.SettingsLoading</p>
+        <ul class="model-list" id="model-list" hidden></ul>
+        <p class="empty-state" id="models-empty" hidden>@UiText.ModelsEmpty</p>
+        <p class="settings__error" id="models-error" role="alert" hidden></p>
+    </section>
+
+    <p class="toast" id="settings-toast" role="status" aria-live="polite" hidden></p>
+
+    <div class="dialog-backdrop" id="delete-dialog" hidden>
+        <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-dialog-text">
+            <p class="dialog__text" id="delete-dialog-text"></p>
+            <div class="dialog__actions">
+                <button type="button" class="button" id="delete-cancel">@UiText.KeyCancel</button>
+                <button type="button" class="button button--danger" id="delete-confirm">@UiText.KeyDelete</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -73,4 +73,36 @@
   <data name="AdminLoadFailed" xml:space="preserve"><value>Admin özeti şu an yüklenemedi</value></data>
   <data name="PageForbidden" xml:space="preserve"><value>Bu sayfaya erişim yetkiniz yok</value></data>
   <data name="ActionForbidden" xml:space="preserve"><value>Bu işlem için yetkiniz yok</value></data>
+  <data name="SettingsApiKeys" xml:space="preserve"><value>API key'ler</value></data>
+  <data name="SettingsApiKeysIntro" xml:space="preserve"><value>Online modelleri kendi API key'lerinle kullanırsın. Key'ler şifreli saklanır; kaydettikten sonra yalnızca maskeli hali görünür.</value></data>
+  <data name="SettingsModels" xml:space="preserve"><value>Modeller</value></data>
+  <data name="SettingsLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="SettingsLoadFailed" xml:space="preserve"><value>Ayarlar şu an yüklenemedi</value></data>
+  <data name="ModelsLoadFailed" xml:space="preserve"><value>Modeller şu an yüklenemedi</value></data>
+  <data name="ModelsEmpty" xml:space="preserve"><value>Bu filtrede model yok</value></data>
+  <data name="ModelsKindFilter" xml:space="preserve"><value>Tür</value></data>
+  <data name="ModelsProviderFilter" xml:space="preserve"><value>Sağlayıcı</value></data>
+  <data name="FilterAll" xml:space="preserve"><value>Tümü</value></data>
+  <data name="KindText" xml:space="preserve"><value>Metin</value></data>
+  <data name="KindImage" xml:space="preserve"><value>Görsel</value></data>
+  <data name="AvailabilityAvailable" xml:space="preserve"><value>Kullanılabilir</value></data>
+  <data name="AvailabilityNoKey" xml:space="preserve"><value>Key yok</value></data>
+  <data name="AvailabilityUnreadable" xml:space="preserve"><value>Key okunamıyor</value></data>
+  <data name="KeyNotSet" xml:space="preserve"><value>Girilmemiş</value></data>
+  <data name="KeyVerified" xml:space="preserve"><value>Doğrulandı</value></data>
+  <data name="KeyUnverified" xml:space="preserve"><value>Doğrulanmadı</value></data>
+  <data name="KeyUnreadable" xml:space="preserve"><value>Key okunamıyor — lütfen yeniden girin</value></data>
+  <data name="KeyUpdatedJustNow" xml:space="preserve"><value>az önce güncellendi</value></data>
+  <data name="KeyUpdatedAt" xml:space="preserve"><value>{0} güncellendi</value></data>
+  <data name="KeyAdd" xml:space="preserve"><value>Ekle</value></data>
+  <data name="KeyChange" xml:space="preserve"><value>Değiştir</value></data>
+  <data name="KeyDelete" xml:space="preserve"><value>Sil</value></data>
+  <data name="KeySave" xml:space="preserve"><value>Kaydet</value></data>
+  <data name="KeyCancel" xml:space="preserve"><value>Vazgeç</value></data>
+  <data name="KeySaving" xml:space="preserve"><value>Doğrulanıyor…</value></data>
+  <data name="KeyInputLabel" xml:space="preserve"><value>{0} API key</value></data>
+  <data name="KeySaved" xml:space="preserve"><value>API key kaydedildi</value></data>
+  <data name="KeyDeleted" xml:space="preserve"><value>API key silindi</value></data>
+  <data name="KeyDeleteConfirm" xml:space="preserve"><value>Bu key silinecek; {0} modelleri kullanılamaz olacak. Sıradaki işler bu sağlayıcıyı kullanıyorsa duracak.</value></data>
+  <data name="KeyActionFailed" xml:space="preserve"><value>İşlem şu an yapılamadı (hata no: {0})</value></data>
 </root>

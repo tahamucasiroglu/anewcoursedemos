@@ -64,6 +64,34 @@ public static class BrowserJsonExtensions
         };
     }
 
+    /// <summary>
+    /// <see cref="ToBrowserJson{T}"/> gibi; hatada ayrıca alan hatalarını (<c>errors</c>) ve korelasyon numarasını
+    /// (<c>correlationId</c>: Api'ninki, yoksa Web isteğininki) taşır (spec 0004 Req 8, AC-15). Gövde yalnızca Api'nin Türkçe
+    /// mesajlarını taşır; isteğin kendisi (ör. girilen key) asla yansıtılmaz.
+    /// </summary>
+    /// <typeparam name="T">Değer tipi.</typeparam>
+    /// <param name="resultTask">API çağrısı.</param>
+    /// <param name="http">Geçerli istek.</param>
+    /// <returns>JSON yanıtı.</returns>
+    public static async Task<IActionResult> ToDetailedBrowserJson<T>(this Task<Result<T>> resultTask, HttpContext http)
+    {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        var result = WithoutTokenlessUnauthorized(await resultTask.ConfigureAwait(false), http);
+        if (result.IsSuccess)
+        {
+            return new JsonResult(result.Value);
+        }
+
+        var error = result.Error!;
+        var correlationId = error.Metadata is not null && error.Metadata.TryGetValue(ApiClientErrors.CorrelationIdKey, out var id) ? id : http.TraceIdentifier;
+        return error.Type switch
+        {
+            ErrorType.Unauthorized => SessionExpired(),
+            ErrorType.Forbidden => Forbidden(),
+            _ => new JsonResult(new { code = error.Code, message = error.Message, errors = error.FieldErrors, correlationId }) { StatusCode = StatusOf(error) },
+        };
+    }
+
     // Oturum kullanılabilir token olmadan korunduysa (refresh geçici hata + dolmuş token) Api'nin token'sız isteğe 401'i
     // oturumun bittiğini göstermez (review R3-2): "API erişilemiyor" sayılır, yoksa Ajax 401 → /giris → / döngüsü olurdu.
     private static Result<T> WithoutTokenlessUnauthorized<T>(Result<T> result, HttpContext http)

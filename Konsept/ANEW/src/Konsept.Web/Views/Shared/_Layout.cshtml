@@ -51,8 +51,9 @@
                     aria-label="@UiText.ReportError" data-tooltip="@UiText.ComingSoon">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4zM12 10v4M12 17v1" /></svg>
             </button>
-            <button type="button" class="icon-button passive" aria-disabled="true"
-                    aria-label="@UiText.Settings" data-tooltip="@UiText.ComingSoon">
+            @* Ayarlar (spec 0004 Req 14): artık çalışır. Düğme aşağıdaki GET formunu gönderir — JS'siz, Enter/Space ile açılır. *@
+            <button type="submit" form="settings-nav" class="icon-button settings-link" title="@UiText.Settings"
+                    aria-label="@UiText.Settings" aria-current="@(path.StartsWith("/ayarlar", StringComparison.Ordinal) ? "page" : null)">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" /></svg>
             </button>
             @* Admin girişi (spec 0011 Req 4): "Ayarlar"ın hemen yanında, yalnızca admin.panel yetkisi varsa. Yetki her istekte Api'den
@@ -71,6 +72,7 @@
             <partial name="_UserMenu" />
         </div>
     </header>
+    <form id="settings-nav" method="get" action="/ayarlar" hidden></form>
 
     <main id="main" class="page">
         @RenderBody()

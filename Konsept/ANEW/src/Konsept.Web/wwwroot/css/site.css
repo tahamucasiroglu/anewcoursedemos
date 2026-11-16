@@ -239,6 +239,189 @@ body {
   font-weight: 600;
 }
 
+/* Ayarlar (spec 0004): API key satırları, Modeller listesi, silme onayı. Renkler yalnızca tema değişkenlerinden (K-7). */
+.settings-link[aria-current="page"] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.settings [hidden] {
+  display: none !important;
+}
+
+.settings__section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.settings__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.settings__intro,
+.settings__loading {
+  margin: 0 0 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.settings__error,
+.key-form__error,
+.key-row__status--error {
+  color: var(--color-error);
+}
+
+.key-list,
+.model-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.key-row,
+.model-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.key-row__name,
+.model-row__name {
+  min-width: 9rem;
+  font-weight: 600;
+}
+
+.key-row__status,
+.model-row__provider,
+.model-row__kind {
+  flex: 1;
+  color: var(--color-text-muted);
+}
+
+.key-row__actions,
+.dialog__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.key-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.key-form__input,
+.model-filters__select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.key-form__input {
+  flex: 1;
+  min-width: 14rem;
+}
+
+.key-form__error {
+  width: 100%;
+  margin: 0;
+}
+
+.button {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.button--danger {
+  border-color: var(--color-error);
+  color: var(--color-error);
+  background: var(--color-surface);
+}
+
+.model-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.badge {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: var(--color-surface);
+}
+
+.badge--available {
+  color: var(--color-success);
+}
+
+.badge--no_key {
+  color: var(--color-text-muted);
+}
+
+.badge--unreadable {
+  color: var(--color-error);
+}
+
+.toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 3.5rem;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  background: var(--color-tooltip-bg);
+  color: var(--color-tooltip-text);
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-alt);
+}
+
+.dialog {
+  max-width: 28rem;
+  padding: 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
 /* Alt şerit: Günlük · sistem durumu · Ajanı test et */
 .bottombar {
   display: flex;
