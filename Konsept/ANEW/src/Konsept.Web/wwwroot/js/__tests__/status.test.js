@@ -54,6 +54,18 @@ describe('durum alanı ve Günlük şeridi (AC-4, AC-6, AC-8)', () => {
     expect(text('status-agent')).toBe('Ajan bağlı değil');
   });
 
+  it('spec 0007: ajan durumu ve cihaz adı agent:status olayıyla sayfaya iletilir', () => {
+    const seen = [];
+    const listener = (event) => seen.push(event.detail);
+    document.addEventListener('agent:status', listener);
+    render(document, healthy);
+    render(document, { ...healthy, agent: { isConnected: false } });
+    render(document, { apiAvailable: false });
+    document.removeEventListener('agent:status', listener);
+
+    expect(seen).toEqual([{ connected: true, machineName: 'TAHA-PC' }, { connected: false, machineName: null }]);
+  });
+
   it('Günlük şeridi son olayı seviyesiyle gösterir', () => {
     render(document, { ...healthy, lastEvent: { ...healthy.lastEvent, level: 1, message: 'Ajan bağlantısı koptu: TAHA-PC' } });
 

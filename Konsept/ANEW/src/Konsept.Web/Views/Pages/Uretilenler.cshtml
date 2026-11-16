@@ -2,5 +2,58 @@
     ViewData["RequiresProfile"] = true;
     ViewData["Title"] = UiText.NavProduced;
 }
+@* Üretilen Videolar (spec 0007): solda seçili profilin videoları (50'şerli, "Daha fazla göster"), ortada izleme yeri (ajanın yerel akışı,
+   tarayıcının yerel kontrolleri; altında Klasörde aç / Sistem oynatıcısında aç), sağda seslendirme ve sahneler, konsept metni, ayrıntılar ve
+   ücret, video sürümleri. produced.js /uretilenler ve /uretim/video/{id}/izle uçlarını $.ajax ile kullanır (K-6); LLM metni yalnızca
+   textContent ile yazılır. Metinler resx'ten data-text-* ile gelir. *@
 <h1 class="page__title">@UiText.NavProduced</h1>
-<p class="empty-state" data-requires-profile>@UiText.EmptyProduced</p>
+<div class="produced" id="produced" data-requires-profile
+     data-text-loading="@UiText.ProducedLoading" data-text-load-failed="@UiText.ProducedLoadFailed" data-text-more-loading="@UiText.ProducedMoreLoading"
+     data-text-item-meta="@UiText.ProducedItemMeta" data-text-player="@UiText.ProducedPlayer" data-text-viewer-hint="@UiText.ProducedViewerHint"
+     data-text-agent-offline="@UiText.ProducedAgentOffline" data-text-other-device="@UiText.ProducedOtherDevice" data-text-device-unknown="@UiText.ProducedDeviceUnknown"
+     data-text-file-missing="@UiText.ProducedFileMissing" data-text-stream-error="@UiText.ProducedStreamError"
+     data-text-sending="@UiText.ProducedSending" data-text-opened-folder="@UiText.ProducedOpenedFolder" data-text-opened-player="@UiText.ProducedOpenedPlayer"
+     data-text-timeout="@UiText.ProducedTimeout" data-text-action-failed="@UiText.ProducedActionFailed"
+     data-text-reason-agent="@UiText.ProducedReasonAgent" data-text-reason-file="@UiText.ProducedReasonFile"
+     data-text-scene-title="@UiText.ProducedSceneTitle" data-text-scene-visual="@UiText.ProducedSceneVisual" data-text-scene-narration="@UiText.ProducedSceneNarration"
+     data-text-cost="@UiText.ProducedCost" data-text-total-cost="@UiText.ProducedTotalCost" data-text-free="@UiText.ProducedFree" data-text-exact-cost="@UiText.ProducedExactCost"
+     data-text-code-model="@UiText.ProducedCodeModel" data-text-engine="@UiText.ProducedEngine" data-text-image-model="@UiText.ProducedImageModel"
+     data-text-audio-model="@UiText.ProducedAudioModel" data-text-off="@UiText.ProducedOff" data-text-on="@UiText.ProducedOn"
+     data-text-subtitles="@UiText.ProducedSubtitles" data-text-progress-bar="@UiText.ProducedProgressBar" data-text-duration="@UiText.ProducedDuration"
+     data-text-format="@UiText.ProducedFormat" data-text-landscape="@UiText.ProducedLandscape" data-text-portrait="@UiText.ProducedPortrait"
+     data-text-started="@UiText.ProducedStarted" data-text-ended="@UiText.ProducedEnded" data-text-ai-voice="@UiText.ProducedAiVoice"
+     data-text-version="@UiText.ProducedVersion" data-text-version-label="@UiText.ProducedVersionLabel" data-text-status-completed="@UiText.JobCompleted"
+     data-text-second="@UiText.ProducedSecond" data-text-minute="@UiText.ProducedMinute" data-text-hour="@UiText.ProducedHour">
+    <section class="produced__list" aria-labelledby="produced-list-heading">
+        <h2 class="produced__heading" id="produced-list-heading">@UiText.ProducedListLabel</h2>
+        <p class="concept-list__status" id="produced-status" role="status" aria-live="polite"></p>
+        <button type="button" class="button" id="produced-retry" hidden>@UiText.ProducedRetry</button>
+        <p class="empty-state" id="produced-empty" data-requires-profile hidden>@UiText.EmptyProduced</p>
+        <ul class="produced-items" id="produced-list"></ul>
+        <button type="button" class="button produced__more" id="produced-more" hidden>@UiText.ProducedMore</button>
+    </section>
+    <section class="produced__viewer" aria-label="@UiText.ProducedViewerHint">
+        <p class="concept-area__hint" id="produced-viewer-status" role="status" aria-live="polite">@UiText.ProducedViewerHint</p>
+        <video class="produced__player" id="produced-player" controls preload="metadata" hidden></video>
+        <button type="button" class="button" id="produced-stream-retry" hidden>@UiText.ProducedRetry</button>
+        <div class="produced__actions" id="produced-actions" hidden>
+            <button type="button" class="button" id="produced-open-folder" data-action="folder" data-label="@UiText.ProducedOpenFolder">@UiText.ProducedOpenFolder</button>
+            <button type="button" class="button" id="produced-open-player" data-action="player" data-label="@UiText.ProducedOpenPlayer">@UiText.ProducedOpenPlayer</button>
+            <p class="produced__action-status" id="produced-action-status" role="status" aria-live="polite"></p>
+        </div>
+    </section>
+    <section class="produced__panel" aria-label="@UiText.ProducedDetailsHeading">
+        <p class="concept-area__hint" id="produced-panel-hint">@UiText.ProducedPanelHint</p>
+        <div id="produced-panel" hidden>
+            <h2 class="produced__heading" id="produced-title"></h2>
+            <h3 class="produced__subheading">@UiText.ProducedScenesHeading</h3>
+            <ol class="produced-scenes" id="produced-scenes"></ol>
+            <h3 class="produced__subheading">@UiText.ProducedConceptHeading</h3>
+            <div class="produced-concept" id="produced-concept"></div>
+            <h3 class="produced__subheading">@UiText.ProducedDetailsHeading</h3>
+            <dl class="produced-details" id="produced-details"></dl>
+            <h3 class="produced__subheading">@UiText.ProducedVersionsHeading</h3>
+            <ul class="produced-versions" id="produced-versions"></ul>
+        </div>
+    </section>
+</div>

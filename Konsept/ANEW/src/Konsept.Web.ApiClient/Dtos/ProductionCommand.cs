@@ -29,4 +29,10 @@ public enum ProductionCommand
 
     /// <summary>Videonun yerel akış adresi (kimlik: video; spec 0017).</summary>
     Stream,
+
+    /// <summary>Üretilen Videolar: videonun sürümleri (spec 0007).</summary>
+    ProducedVideo,
+
+    /// <summary>Üretilen Videolar: Klasörde aç / Sistem oynatıcısında aç (spec 0007).</summary>
+    OpenFile,
 }

@@ -462,4 +462,59 @@
   <data name="ProductionViewerHint" xml:space="preserve"><value>İzlemek için listeden bir video seçin</value></data>
   <data name="ProductionPlayer" xml:space="preserve"><value>{0} oynatıcısı</value></data>
   <data name="ProductionModelsKeyHint" xml:space="preserve"><value>"Key yok" etiketli online model için API key'i Ayarlar'dan ekleyin.</value></data>
+  <data name="ProducedListLabel" xml:space="preserve"><value>Üretilen videolar</value></data>
+  <data name="ProducedLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="ProducedLoadFailed" xml:space="preserve"><value>Videolar yüklenemedi. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ProducedRetry" xml:space="preserve"><value>Yeniden dene</value></data>
+  <data name="ProducedMore" xml:space="preserve"><value>Daha fazla göster</value></data>
+  <data name="ProducedMoreLoading" xml:space="preserve"><value>Daha fazla yükleniyor…</value></data>
+  <data name="ProducedItemMeta" xml:space="preserve"><value>{0} · {1} · {2} sürüm</value></data>
+  <data name="ProducedViewerHint" xml:space="preserve"><value>İzlemek için soldan bir video seçin</value></data>
+  <data name="ProducedPanelHint" xml:space="preserve"><value>Ayrıntılar için bir video seçin</value></data>
+  <data name="ProducedPlayer" xml:space="preserve"><value>{0} oynatıcısı</value></data>
+  <data name="ProducedAgentOffline" xml:space="preserve"><value>Videoyu izlemek için ajan bağlı olmalı</value></data>
+  <data name="ProducedOtherDevice" xml:space="preserve"><value>Bu video yalnızca ajanın kurulu olduğu bilgisayarda ({0}) izlenebilir</value></data>
+  <data name="ProducedDeviceUnknown" xml:space="preserve"><value>ajanın bilgisayarı</value></data>
+  <data name="ProducedFileMissing" xml:space="preserve"><value>Video dosyası bulunamadı</value></data>
+  <data name="ProducedStreamError" xml:space="preserve"><value>Akış hatası: video oynatılamadı.</value></data>
+  <data name="ProducedOpenFolder" xml:space="preserve"><value>Klasörde aç</value></data>
+  <data name="ProducedOpenPlayer" xml:space="preserve"><value>Sistem oynatıcısında aç</value></data>
+  <data name="ProducedSending" xml:space="preserve"><value>Gönderiliyor…</value></data>
+  <data name="ProducedOpenedFolder" xml:space="preserve"><value>Klasör açıldı.</value></data>
+  <data name="ProducedOpenedPlayer" xml:space="preserve"><value>Video sistem oynatıcısında açıldı.</value></data>
+  <data name="ProducedTimeout" xml:space="preserve"><value>Zaman aşımı</value></data>
+  <data name="ProducedActionFailed" xml:space="preserve"><value>İşlem yapılamadı. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ProducedReasonAgent" xml:space="preserve"><value>Ajan bağlı değil</value></data>
+  <data name="ProducedReasonFile" xml:space="preserve"><value>Video dosyası bulunamadı</value></data>
+  <data name="ProducedScenesHeading" xml:space="preserve"><value>Seslendirme ve sahneler</value></data>
+  <data name="ProducedConceptHeading" xml:space="preserve"><value>Konsept metni</value></data>
+  <data name="ProducedDetailsHeading" xml:space="preserve"><value>Ayrıntılar ve ücret</value></data>
+  <data name="ProducedVersionsHeading" xml:space="preserve"><value>Video sürümleri</value></data>
+  <data name="ProducedSceneTitle" xml:space="preserve"><value>{0}. {1}</value></data>
+  <data name="ProducedSceneVisual" xml:space="preserve"><value>Görsel</value></data>
+  <data name="ProducedSceneNarration" xml:space="preserve"><value>Seslendirme</value></data>
+  <data name="ProducedCost" xml:space="preserve"><value>Sürüm ücreti</value></data>
+  <data name="ProducedTotalCost" xml:space="preserve"><value>Tüm sürümlerin toplamı</value></data>
+  <data name="ProducedFree" xml:space="preserve"><value>Yerel — ücretsiz</value></data>
+  <data name="ProducedExactCost" xml:space="preserve"><value>Tam tutar: {0}</value></data>
+  <data name="ProducedCodeModel" xml:space="preserve"><value>Video kodu modeli</value></data>
+  <data name="ProducedEngine" xml:space="preserve"><value>Video motoru</value></data>
+  <data name="ProducedImageModel" xml:space="preserve"><value>Görsel modeli</value></data>
+  <data name="ProducedAudioModel" xml:space="preserve"><value>Ses motoru</value></data>
+  <data name="ProducedOff" xml:space="preserve"><value>Kapalı</value></data>
+  <data name="ProducedSubtitles" xml:space="preserve"><value>Altyazı</value></data>
+  <data name="ProducedProgressBar" xml:space="preserve"><value>İlerleme çubuğu</value></data>
+  <data name="ProducedOn" xml:space="preserve"><value>Açık</value></data>
+  <data name="ProducedDuration" xml:space="preserve"><value>Video süresi</value></data>
+  <data name="ProducedFormat" xml:space="preserve"><value>Biçim</value></data>
+  <data name="ProducedLandscape" xml:space="preserve"><value>Yatay</value></data>
+  <data name="ProducedPortrait" xml:space="preserve"><value>Dikey</value></data>
+  <data name="ProducedStarted" xml:space="preserve"><value>Başlangıç</value></data>
+  <data name="ProducedEnded" xml:space="preserve"><value>Bitiş</value></data>
+  <data name="ProducedAiVoice" xml:space="preserve"><value>Yapay zekâ ile üretilmiş ses</value></data>
+  <data name="ProducedVersion" xml:space="preserve"><value>Sürüm {0}</value></data>
+  <data name="ProducedVersionLabel" xml:space="preserve"><value>Sürüm {0}, {1}, {2}, {3}, {4}</value></data>
+  <data name="ProducedSecond" xml:space="preserve"><value>sn</value></data>
+  <data name="ProducedMinute" xml:space="preserve"><value>dk</value></data>
+  <data name="ProducedHour" xml:space="preserve"><value>sa</value></data>
 </root>

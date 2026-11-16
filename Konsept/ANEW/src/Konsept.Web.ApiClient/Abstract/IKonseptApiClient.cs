@@ -219,6 +219,13 @@ public interface IKonseptApiClient
     /// <returns>Profilin güncel durumu.</returns>
     Task<Result<JsonElement>> SendProductionAsync(ProductionCommand command, Guid? id, JsonElement? body, CancellationToken cancellationToken);
 
+    /// <summary>Üretilen Videolar: profilin videoları, 50'şerli (<c>GET api/produced</c>; spec 0007).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="skip">Atlanacak öğe.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Liste parçası (Api gövdesi aynen).</returns>
+    Task<Result<JsonElement>> ListProducedAsync(Guid profileId, int skip, CancellationToken cancellationToken);
+
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
     /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>

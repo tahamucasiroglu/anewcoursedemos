@@ -63,6 +63,8 @@ export function render(doc, status) {
   set(db, status.databaseAvailable ? t.dbOk : t.dbDown, status.databaseAvailable ? 'ok' : 'error');
   const connected = Boolean(status.agent && status.agent.isConnected);
   set(agent, connected ? t.agentConnected : t.agentDisconnected, connected ? 'ok' : 'off');
+  // Üretilen Videolar (spec 0007 Req 7–8): ajan durumu ve cihaz adı sayfaya olayla iletilir (ajan gelince oynatma yeniden denenir).
+  doc.dispatchEvent(new CustomEvent('agent:status', { detail: { connected, machineName: (status.agent && status.agent.machineName) || null } }));
   if (pair) {
     pair.hidden = connected;
   }
