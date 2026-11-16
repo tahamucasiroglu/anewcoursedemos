@@ -121,6 +121,15 @@ yerel ses/görsel koşucuları B-116) ve `LocalVideoServer` (yalnızca 127.0.0.1
 60 sn, açıldıktan sonra 30 dk boşta kalana kadar geçerli; Range; yetki loglanmaz). Web: `production.js` aşama listesi, maliyet, uyarılar, 3 sn
 yoklama, Üretilenler + izleme alanı (`/uretim/{profil}/videolar`, `/uretim/video/{id}/izle`); CSP `media-src 'self' http://127.0.0.1:*`.
 
+**Üretilen Videolar (0007):** Video = bir konseptin tamamlanmış sürüm kayıtları (`production.videos`; video kimliği konsept kimliği, sürüm
+numarası bitiş sırası). Kayıtta 0017 alanlarına ek süre (sahne planı toplamı), biçim ve sürümün online maliyeti (migration `AddVideoDetails`).
+`IProducedVideoService` (`api/produced`): profil başına liste (üretim tarihi = ilk sürümün bitişi, 50'şerli), sürüm ayrıntısı (önceki sürüme
+göre değişiklik özeti `VersionChanges`, maliyet + toplam, katalog adlarıyla modeller, sürümün kendi konsept metni), dosya eylemi. Dosya eylemi
+yeni ajan komutu `OpenFile` (`folder` → `explorer.exe /select,`; `player` → kabukla varsayılan uygulama; yalnızca video klasöründeki düz dosya
+adı) yalnızca sahibin ajanına, 10 sn zaman aşımı (504 "Zaman aşımı"); başkasının kaydı 404 ve ajana komut gitmez. Web: `Uretilenler.cshtml` +
+`produced.js` (`/uretilenler/{profil}/liste`, `/uretilenler/video/{id}`, `/uretilenler/surum/{id}/ac`; akış 0017 ucu), ajan durumu `status.js`'in
+`agent:status` olayından (cihaz adıyla), ses düzeyi `localStorage`.
+
 **Ajanda kısıtlı render (0018, [ADR-0004](decisions/0004-render-sandbox-fallback.md)):** Video kodu önce ortak yasaklı yapı kapısından
 (`AgentGateway.Contracts.Rules.RenderCodeGate`: URL/ağ API'leri, dinamik kod, kaçış dizileri, dolaylı erişim, yalnız `image.png`/`gsap.min.js`)
 Pi'de (kod yazımı/düzeltme sonrası) ve ajanda (render öncesi) geçer; ret tek düzeltmeye gider. Ajan `SandboxedSceneRenderer` sahne başına:
