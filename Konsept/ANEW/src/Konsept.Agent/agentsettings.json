@@ -1,5 +1,8 @@
 {
   "serverUrl": "http://localhost:8001/",
   "siteUrl": "http://localhost:8000/",
-  "reconnectDelaySeconds": 3
+  "reconnectDelaySeconds": 3,
+  "renderSceneTimeoutSeconds": 600,
+  "renderMemoryMb": 4096,
+  "renderMaxProcesses": 64
 }

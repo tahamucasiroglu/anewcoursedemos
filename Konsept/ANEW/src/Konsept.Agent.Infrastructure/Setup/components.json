@@ -52,5 +52,24 @@
     "checkExpect": null,
     "required": true,
     "mirrored": false
+  },
+  {
+    "id": "hyperframes",
+    "name": "HyperFrames",
+    "purpose": "Video kodunu karelere çeviren video motoru (kısıtlı ortamda çalışır)",
+    "license": "Apache-2.0",
+    "version": "0.9.43",
+    "url": "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.43.tgz",
+    "fileName": "hyperframes-0.9.43.tgz",
+    "sha256": "b90d3f8c45af4cf3b481bc035b8ccf7e8f25bd3526ea799e3f0d1cfeac3b1256",
+    "downloadBytes": 40000000,
+    "installedBytes": 115000000,
+    "archiveRoot": null,
+    "executable": "node_modules/hyperframes/bin/hyperframes.mjs",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": true,
+    "mirrored": false,
+    "installer": "npm"
   }
 ]

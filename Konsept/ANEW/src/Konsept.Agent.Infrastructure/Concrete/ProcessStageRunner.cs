@@ -1,29 +1,42 @@
 using System.Diagnostics;
 using System.Globalization;
 using Konsept.Agent.Application.Abstract;
+using Konsept.Agent.Domain.Entities;
+using Konsept.Agent.Domain.Enums;
 using Konsept.Agent.Domain.Rules;
 using Konsept.Agent.Infrastructure.Base;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Modules.AgentGateway.Contracts.Rules;
 using Serilog;
 
 namespace Konsept.Agent.Infrastructure.Concrete;
 
 /// <summary>
 /// Yerel aşamaları kurulu araçlarla çalıştırır (spec 0017). Çalışma klasörü konsept başınadır (<c>jobs\&lt;konsept&gt;\scene-N</c>; yeniden
-/// sıraya alınan iş aynı çıktıları kullanır). Online görsel Pi'den hazır gelir ve <c>image.png</c> olarak yazılır. Render HyperFrames CLI'si
-/// ile (bileşen <c>components\hyperframes</c>; kurulumu ve çağrı biçiminin doğrulanması B-73/B-118, LLM kodunun kısıtlı ortamı 0018).
-/// Birleştirme FFmpeg ile sabit şablondur (<see cref="MergeTemplate"/>): NVENC açılamazsa CPU'ya düşülmez (Req 14a). Yerel görsel/ses
-/// modelleri bugün kurulamaz (B-116): aşama "kurulu değil" döner (araç denetimi zaten durdurur). Süreç Durdur'da ağacıyla öldürülür.
+/// sıraya alınan iş aynı çıktıları kullanır). Online görsel Pi'den hazır gelir ve <c>image.png</c> olarak yazılır. Render (spec 0018): her sahne
+/// kodu önce yasaklı yapı kapısından geçer (<see cref="RenderCodeGate"/>; ret → <see cref="AgentStageReply.CodeRejected"/>), sonra kısıtlı ortamda
+/// (<see cref="ISceneRenderer"/>) render edilir; çıktı kapısından geçen sahnenin işareti (<see cref="SceneMarker"/>) devamda yeniden render'ı önler.
+/// Birleştirme FFmpeg ile sabit şablondur (<see cref="MergeTemplate"/>); kodlayıcı bir kez yoklanır (B-117): NVENC varsa NVENC (kodlama sırasında
+/// düşerse CPU'ya düşülmez, Req 14a), yoksa yazılım kodlayıcı <c>libopenh264</c> ve sahne klipleri WebM. Yerel görsel/ses modelleri bugün
+/// kurulamaz (B-116): aşama "kurulu değil" döner. Süreç Durdur'da ağacıyla öldürülür.
 /// </summary>
 /// <param name="setup">Kurulum durumu.</param>
 /// <param name="installRoot">Kurulum yeri.</param>
 /// <param name="videoFolder">Video klasörünü veren kaynak.</param>
+/// <param name="renderer">Kısıtlı sahne render'ı.</param>
 /// <param name="logger">Teknik log.</param>
-public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoot, Func<string> videoFolder, ILogger logger)
+public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoot, Func<string> videoFolder, ISceneRenderer renderer, ILogger logger)
     : StageRunnerBase(setup, logger)
 {
-    /// <summary>HyperFrames CLI'nin bileşen klasörüne göre yolu (B-118: kurulumla doğrulanacak).</summary>
-    public const string HyperFramesCli = "node_modules/hyperframes/dist/cli.js";
+    /// <summary>NVENC ile sahne klibi.</summary>
+    public const string Mp4Clip = "clip.mp4";
+
+    /// <summary>NVENC yokken sahne klibi (HyperFrames yazılım VP9).</summary>
+    public const string WebmClip = "clip.webm";
+
+    private Task<bool>? _nvenc;
+
+    private string Ffmpeg => Path.Combine(Components, "ffmpeg", "bin", "ffmpeg.exe");
 
     private string Components => Path.Combine(installRoot, "components");
 
@@ -48,33 +61,76 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
     protected override Task<AgentStageReply> VoiceAsync(AgentStageCommand command, CancellationToken cancellationToken) =>
         Task.FromResult(Missing(command.AudioModel ?? "audio")); // Yerel ses modeli koşucusu yok (B-116).
 
+    /// <summary>
+    /// NVENC kullanılabilir mi (B-117): ajan çalıştığı sürece bir kez, küçük bir deneme kodlamasıyla yoklanır. Kullanılamıyorsa yazılım
+    /// kodlayıcıya geçilir (pinli LGPL FFmpeg'de libx264 yok; <c>libopenh264</c>).
+    /// </summary>
+    /// <returns>Kullanılabilirse <c>true</c>.</returns>
+    public Task<bool> NvencAvailableAsync() =>
+        _nvenc ??= ProbeNvencAsync();
+
     /// <inheritdoc />
     protected override async Task<AgentStageReply> RenderAsync(AgentStageCommand command, CancellationToken cancellationToken)
     {
         var engine = command.Engine.Replace("local/", string.Empty, StringComparison.Ordinal);
-        var cli = Path.Combine(Components, engine, HyperFramesCli);
-        if (!IsInstalled(engine) || !File.Exists(cli))
+        foreach (var tool in new[] { engine, "node", "chromium", "ffmpeg" })
         {
-            return Missing(engine);
-        }
-
-        foreach (var scene in command.Scenes)
-        {
-            var dir = SceneDir(command, scene.Index);
-            await File.WriteAllTextAsync(Path.Combine(dir, "index.html"), scene.Code ?? string.Empty, cancellationToken).ConfigureAwait(false);
-            var (exit, error) = await RunAsync(
-                Path.Combine(Components, "node", "node.exe"),
-                [cli, "render", dir, "--output", Path.Combine(dir, "clip.mp4"), "--fps", "30"],
-                dir,
-                cancellationToken).ConfigureAwait(false);
-            if (exit != 0)
+            if (!IsInstalled(tool))
             {
-                Logger.Warning("Sahne render edilemedi: sahne {Scene}, çıkış {Exit}", scene.Index, exit);
-                return new AgentStageReply(false, AgentStageReply.RenderFailed, Summary(error), scene.Index);
+                return Missing(tool);
             }
         }
 
-        return new AgentStageReply(true, Device: "gpu");
+        var nvenc = await NvencAvailableAsync().ConfigureAwait(false);
+        var clipName = nvenc ? Mp4Clip : WebmClip;
+        var (width, height) = MergeTemplate.Size(command.Format);
+        var rendered = 0;
+        foreach (var scene in command.Scenes)
+        {
+            var code = RenderCodeGate.Normalize(scene.Code ?? string.Empty);
+            if (RenderCodeGate.Check(code) is { Ok: false } verdict)
+            {
+                Logger.Warning("Sahne kodu yasaklı yapı denetiminden geçmedi; render edilmedi: sahne {Scene}", scene.Index);
+                return new AgentStageReply(false, AgentStageReply.CodeRejected, verdict.Reason, scene.Index);
+            }
+
+            var dir = SceneDir(command, scene.Index);
+            var marker = SceneMarker.Of(code, command.Format, scene.DurationSeconds, clipName);
+            var markerFile = Path.Combine(dir, SceneMarker.FileName);
+            if (File.Exists(markerFile) && File.Exists(Path.Combine(dir, clipName))
+                && string.Equals(await File.ReadAllTextAsync(markerFile, cancellationToken).ConfigureAwait(false), marker, StringComparison.Ordinal))
+            {
+                continue; // Tamamlanmış sahne yeniden render edilmez (Req 5, AC-7).
+            }
+
+            foreach (var stale in new[] { markerFile, Path.Combine(dir, Mp4Clip), Path.Combine(dir, WebmClip) })
+            {
+                File.Delete(stale);
+            }
+
+            await File.WriteAllTextAsync(Path.Combine(dir, "index.html"), code, cancellationToken).ConfigureAwait(false);
+            var result = await renderer.RenderAsync(new SceneRenderRequest(WorkDir(command), dir, width, height, scene.DurationSeconds, clipName), cancellationToken)
+                .ConfigureAwait(false);
+            switch (result.Outcome)
+            {
+                case SceneRenderOutcome.Ok:
+                    await File.WriteAllTextAsync(markerFile, marker, cancellationToken).ConfigureAwait(false);
+                    rendered++;
+                    break;
+                case SceneRenderOutcome.LimitExceeded:
+                    return new AgentStageReply(false, AgentStageReply.RenderLimit, FailedScene: scene.Index);
+                case SceneRenderOutcome.OutputInvalid:
+                    return new AgentStageReply(false, AgentStageReply.OutputInvalid, result.Detail, scene.Index);
+                case SceneRenderOutcome.Unsafe:
+                    return new AgentStageReply(false, AgentStageReply.Failed);
+                default:
+                    Logger.Warning("Sahne render edilemedi: sahne {Scene}", scene.Index);
+                    return new AgentStageReply(false, AgentStageReply.RenderFailed, result.Detail, scene.Index);
+            }
+        }
+
+        Logger.Information("Render tamamlandı: {Rendered} sahne render edildi, {Kept} sahne korundu", rendered, command.Scenes.Count - rendered);
+        return new AgentStageReply(true, Device: nvenc ? "gpu" : "cpu");
     }
 
     /// <inheritdoc />
@@ -89,7 +145,8 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
         var (width, height) = MergeTemplate.Size(command.Format);
         var total = command.Scenes.Sum(s => (double)s.DurationSeconds);
         var clips = Path.Combine(work, "clips.txt");
-        await File.WriteAllTextAsync(clips, MergeTemplate.ConcatList(command.Scenes.Select(s => Path.Combine(SceneDir(command, s.Index), "clip.mp4"))), cancellationToken)
+        var nvenc = await NvencAvailableAsync().ConfigureAwait(false);
+        await File.WriteAllTextAsync(clips, MergeTemplate.ConcatList(command.Scenes.Select(s => ClipOf(SceneDir(command, s.Index)))), cancellationToken)
             .ConfigureAwait(false);
         string? audio = null;
         if (command.AudioModel is not null)
@@ -112,13 +169,13 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
         Directory.CreateDirectory(folder);
         var output = Path.Combine(folder, fileName);
         var (exit, error) = await RunAsync(
-            Path.Combine(Components, "ffmpeg", "bin", "ffmpeg.exe"),
-            MergeTemplate.Arguments(clips, audio, MergeTemplate.Filter(subtitles, command.ProgressBar, total, width), total, output),
+            Ffmpeg,
+            MergeTemplate.Arguments(clips, audio, MergeTemplate.Filter(subtitles, command.ProgressBar, total, width), total, output, nvenc ? MergeTemplate.Encoder : MergeTemplate.SoftwareEncoder),
             work,
             cancellationToken).ConfigureAwait(false);
         if (exit != 0)
         {
-            if (MergeTemplate.IsGpuFailure(error))
+            if (nvenc && MergeTemplate.IsGpuFailure(error))
             {
                 Logger.Error("Video kodlaması ekran kartında yapılamadı; CPU'ya düşülmedi (Req 14a)");
                 return new AgentStageReply(false, AgentStageReply.GpuUnavailable, "ffmpeg");
@@ -135,17 +192,26 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
         }
 
         Logger.Information("Video hazırlandı: {File}", fileName);
-        return new AgentStageReply(true, Device: "gpu", AiVoiceNotice: notice);
+        return new AgentStageReply(true, Device: nvenc ? "gpu" : "cpu", AiVoiceNotice: notice);
+    }
+
+    private static string ClipOf(string sceneDir) =>
+        File.Exists(Path.Combine(sceneDir, WebmClip)) && !File.Exists(Path.Combine(sceneDir, Mp4Clip)) ? Path.Combine(sceneDir, WebmClip) : Path.Combine(sceneDir, Mp4Clip);
+
+    private async Task<bool> ProbeNvencAsync()
+    {
+        if (!File.Exists(Ffmpeg))
+        {
+            return false;
+        }
+
+        var (exit, _) = await RunAsync(Ffmpeg, MergeTemplate.NvencProbeArguments, Components, CancellationToken.None).ConfigureAwait(false);
+        Logger.Information("Video kodlayıcı: {Encoder}", exit == 0 ? MergeTemplate.Encoder : MergeTemplate.SoftwareEncoder);
+        return exit == 0;
     }
 
     private static AgentStageReply Missing(string model) =>
         new(false, AgentStageReply.ToolMissing, model.Replace("local/", string.Empty, StringComparison.Ordinal));
-
-    private static string Summary(string error)
-    {
-        var line = error.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault() ?? "render hatası";
-        return line.Length > 400 ? line[..400] : line;
-    }
 
     private static async Task<(int Exit, string Error)> RunAsync(string exe, IReadOnlyList<string> args, string workingDirectory, CancellationToken cancellationToken)
     {

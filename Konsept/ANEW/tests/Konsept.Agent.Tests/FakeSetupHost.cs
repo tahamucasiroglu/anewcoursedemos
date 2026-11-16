@@ -109,4 +109,31 @@ public sealed class FakeSetupHost : ISetupHost
     /// <inheritdoc />
     public Task<string?> RunAsync(string executable, string arguments, CancellationToken cancellationToken) =>
         Task.FromResult(Run(executable, arguments));
+
+    /// <summary>Gets npm kurulum çağrıları (bileşen, kilit hash'i, Node klasörü).</summary>
+    public List<(string Id, string Lock, string Node)> PackageInstalls { get; } = [];
+
+    /// <summary>Gets or sets a value indicating whether npm kurulumu başarılı olur.</summary>
+    public bool PackagesSucceed { get; set; } = true;
+
+    /// <summary>npm bileşeni (spec 0018 / B-118).</summary>
+    /// <param name="id">Kimlik.</param>
+    /// <returns>Bileşen.</returns>
+    public SetupComponent AddNpm(string id) =>
+        new(id, id.ToUpperInvariant(), "amaç", "Apache-2.0", "0.9.43", new Uri($"https://registry.example.invalid/{id}.tgz"), id + ".tgz", new string('a', 64), 1000, 2000, null,
+            "bin/tool.mjs", null, null, true, false, SetupComponent.Npm);
+
+    /// <inheritdoc />
+    public async Task<bool> InstallPackagesAsync(string componentId, string lockSha256, string nodeDirectory, string destination, CancellationToken cancellationToken)
+    {
+        PackageInstalls.Add((componentId, lockSha256, nodeDirectory));
+        if (!PackagesSucceed)
+        {
+            return false;
+        }
+
+        Directory.CreateDirectory(Path.Combine(destination, "bin"));
+        await File.WriteAllTextAsync(Path.Combine(destination, "bin", "tool.mjs"), componentId + " cli", cancellationToken);
+        return true;
+    }
 }

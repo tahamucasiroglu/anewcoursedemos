@@ -6,4 +6,5 @@ namespace Konsept.Agent.Domain.Entities;
 /// <param name="ServerUrl">API adresi (ör. <c>http://&lt;pi&gt;:8001/</c>).</param>
 /// <param name="SiteUrl">Sitenin adresi (tray "Siteye git").</param>
 /// <param name="ReconnectDelay">Yeniden bağlanma denemeleri arasındaki bekleme.</param>
-public sealed record AgentSettings(Uri ServerUrl, Uri SiteUrl, TimeSpan ReconnectDelay);
+/// <param name="Render">Kısıtlı render sınırları (spec 0018); verilmezse yükleyicinin varsayılanları.</param>
+public sealed record AgentSettings(Uri ServerUrl, Uri SiteUrl, TimeSpan ReconnectDelay, RenderLimits? Render = null);

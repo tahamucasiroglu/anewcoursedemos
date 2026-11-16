@@ -353,10 +353,38 @@ public sealed class SetupCoordinatorTests : IDisposable
         center.DidNotReceiveWithAnyArgs().Raise(default!);
     }
 
-    private SetupCoordinator Create(ILogger? logger = null)
+    /// <summary>
+    /// Spec 0018 / B-118: npm bileşeni (HyperFrames) indirme/arşiv adımı olmadan, kurulu Node klasörü ve katalogdaki kilit hash'iyle kurulur;
+    /// yürütülebilir dosyası kaydedilir, Hazır olur. npm başarısızsa "kurulamadı", kısmi klasör kalmaz, Tekrar dene kurar.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Install_NpmComponent_UsesNodeAndLock_NoDownload()
+    {
+        var hf = _host.AddNpm("hyperframes");
+        _host.PackagesSucceed = false;
+        var setup = Create(components: [_alpha, hf]);
+        await setup.InspectAsync(TestContext.Current.CancellationToken);
+        await setup.RunAsync(TestContext.Current.CancellationToken);
+
+        State(setup, "hyperframes").Status.ShouldBe(ComponentStatus.Failed);
+        Directory.Exists(Path.Combine(Root, "components", "hyperframes.partial")).ShouldBeFalse();
+        setup.IsReady.ShouldBeFalse();
+
+        _host.PackagesSucceed = true;
+        await setup.RetryAsync("hyperframes", TestContext.Current.CancellationToken);
+
+        State(setup, "hyperframes").Status.ShouldBe(ComponentStatus.Installed);
+        _host.PackageInstalls.ShouldAllBe(p => p.Id == "hyperframes" && p.Lock == hf.Sha256 && p.Node == Path.Combine(Root, "components", "node"));
+        _host.Downloads.ShouldNotContain(hf.Url);
+        File.Exists(Path.Combine(Root, "components", "hyperframes", "bin", "tool.mjs")).ShouldBeTrue();
+        setup.IsReady.ShouldBeTrue();
+    }
+
+    private SetupCoordinator Create(ILogger? logger = null, IReadOnlyList<SetupComponent>? components = null)
     {
         var setup = new SetupCoordinator(
-            [_alpha, _beta],
+            components ?? [_alpha, _beta],
             _host,
             new FileSetupStateStore(Root),
             Root,

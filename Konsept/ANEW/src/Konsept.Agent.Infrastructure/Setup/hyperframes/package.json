@@ -1,0 +1,9 @@
+{
+  "name": "anewconcept-hyperframes",
+  "private": true,
+  "description": "ANEW Konsept ajanının video motoru (sabit sürüm, spec 0018 / B-118).",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "hyperframes": "0.9.43"
+  }
+}

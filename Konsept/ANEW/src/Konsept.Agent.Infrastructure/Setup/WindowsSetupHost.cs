@@ -22,6 +22,9 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
     /// <summary>Hazır denetiminde bir aracın en uzun çalışma süresi.</summary>
     public static readonly TimeSpan CheckTimeout = TimeSpan.FromSeconds(30);
 
+    /// <summary>npm bileşen kurulumunun en uzun süresi.</summary>
+    public static readonly TimeSpan PackageTimeout = TimeSpan.FromMinutes(10);
+
     /// <inheritdoc />
     public bool IsOnline() => NetworkInterface.GetIsNetworkAvailable();
 
@@ -111,6 +114,84 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
         {
             return null;
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> InstallPackagesAsync(string componentId, string lockSha256, string nodeDirectory, string destination, CancellationToken cancellationToken)
+    {
+        foreach (var name in new[] { "package.json", "package-lock.json" })
+        {
+            await using var source = typeof(WindowsSetupHost).Assembly.GetManifestResourceStream($"Konsept.Agent.Infrastructure.Setup.{componentId}.{name}");
+            if (source is null)
+            {
+                return false;
+            }
+
+            using var memory = new MemoryStream();
+            await source.CopyToAsync(memory, cancellationToken).ConfigureAwait(false);
+            var bytes = memory.ToArray();
+            if (name == "package-lock.json" && !string.Equals(LockSha256(bytes), lockSha256, StringComparison.OrdinalIgnoreCase))
+            {
+                return false; // Kilit dosyası katalogdaki hash'le uyuşmuyor (değiştirilmiş yapı).
+            }
+
+            await File.WriteAllBytesAsync(Path.Combine(destination, name), bytes, cancellationToken).ConfigureAwait(false);
+        }
+
+        var info = new ProcessStartInfo(Path.Combine(nodeDirectory, "node.exe"))
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = destination,
+        };
+        foreach (var arg in new[] { Path.Combine(nodeDirectory, "node_modules", Path.Combine("npm", "bin", "npm-cli.js")), "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error" })
+        {
+            info.ArgumentList.Add(arg);
+        }
+
+        info.Environment["HYPERFRAMES_NO_TELEMETRY"] = "1";
+        info.Environment["DO_NOT_TRACK"] = "1";
+        try
+        {
+            using var process = Process.Start(info);
+            if (process is null)
+            {
+                return false;
+            }
+
+            _ = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+            _ = process.StandardError.ReadToEndAsync(CancellationToken.None);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(PackageTimeout);
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill(entireProcessTree: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                return false;
+            }
+
+            return process.ExitCode == 0;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Kilit dosyasının satır sonundan bağımsız SHA-256'sı (CRLF → LF).</summary>
+    /// <param name="bytes">İçerik.</param>
+    /// <returns>Küçük harf onaltılık.</returns>
+    public static string LockSha256(byte[] bytes)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        var text = System.Text.Encoding.UTF8.GetString(bytes).Replace("\r\n", "\n", StringComparison.Ordinal);
+        return Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
     }
 
     private async Task<int> ReadWithTimeoutAsync(Stream stream, byte[] buffer, CancellationToken cancellationToken)

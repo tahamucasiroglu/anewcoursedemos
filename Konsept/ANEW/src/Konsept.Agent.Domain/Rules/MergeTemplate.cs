@@ -14,6 +14,16 @@ public static class MergeTemplate
     /// <summary>Video kodlayıcı (NVIDIA NVENC; Req 14a).</summary>
     public const string Encoder = "h264_nvenc";
 
+    /// <summary>NVENC yoksa yazılım kodlayıcı (B-117; pinli LGPL FFmpeg'de libx264 yok).</summary>
+    public const string SoftwareEncoder = "libopenh264";
+
+    /// <summary>Yazılım kodlayıcının hedef bit hızı.</summary>
+    public const string SoftwareBitrate = "8M";
+
+    /// <summary>NVENC yoklaması: küçük bir deneme kodlaması (çıkış 0 → kullanılabilir).</summary>
+    public static readonly IReadOnlyList<string> NvencProbeArguments =
+        ["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=black:s=256x256:d=0.2", "-frames:v", "3", "-c:v", Encoder, "-f", "null", "-"];
+
     /// <summary>İlerleme çubuğunun yüksekliği (piksel).</summary>
     public const int BarHeight = 12;
 
@@ -113,14 +123,21 @@ public static class MergeTemplate
     /// <param name="filter">Filtre grafiği.</param>
     /// <param name="totalSeconds">Süre.</param>
     /// <param name="output">Çıkış dosyası.</param>
+    /// <param name="encoder">Kodlayıcı (<see cref="Encoder"/> ya da NVENC yoksa <see cref="SoftwareEncoder"/>).</param>
     /// <returns>Argümanlar.</returns>
-    public static IReadOnlyList<string> Arguments(string clipList, string? audioList, string filter, double totalSeconds, string output)
+    public static IReadOnlyList<string> Arguments(string clipList, string? audioList, string filter, double totalSeconds, string output, string encoder = Encoder)
     {
         var args = new List<string> { "-y", "-hide_banner", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", clipList };
         args.AddRange(audioList is null
             ? new[] { "-f", "lavfi", "-t", totalSeconds.ToString("0.###", CultureInfo.InvariantCulture), "-i", "anullsrc=r=48000:cl=stereo" }
             : new[] { "-f", "concat", "-safe", "0", "-i", audioList });
-        args.AddRange(new[] { "-filter_complex", filter, "-map", "[v]", "-map", "1:a", "-c:v", Encoder, "-c:a", "aac", "-shortest", "-movflags", "+faststart", output });
+        args.AddRange(new[] { "-filter_complex", filter, "-map", "[v]", "-map", "1:a", "-c:v", encoder });
+        if (encoder == SoftwareEncoder)
+        {
+            args.AddRange(new[] { "-b:v", SoftwareBitrate });
+        }
+
+        args.AddRange(new[] { "-c:a", "aac", "-shortest", "-movflags", "+faststart", output });
         return args;
     }
 

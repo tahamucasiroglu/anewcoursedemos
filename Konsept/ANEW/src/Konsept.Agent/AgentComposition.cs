@@ -57,8 +57,16 @@ internal sealed record AgentComposition(
         var videoFolder = () => setupState.Load().VideoFolder ?? AgentPaths.DefaultVideoFolder;
         var streams = new LocalVideoServer(videoFolder, TimeProvider.System, logging.Logger);
         streams.Start(); // spec 0017 Req 21: yalnızca 127.0.0.1.
-        var stages = new ProcessStageRunner(setupState, root, videoFolder, logging.Logger);
-        var connection = new SignalRServerConnection(settings, info, logger: logging.Logger, accessToken: tokens.Read, stages: stages, streams: streams);
+        var renderer = new SandboxedSceneRenderer(root, settings.Render ?? throw new InvalidOperationException("Render sınırları yüklenemedi."), logging.Logger);
+        var stages = new ProcessStageRunner(setupState, root, videoFolder, renderer, logging.Logger);
+        var connection = new SignalRServerConnection(
+            settings,
+            info,
+            logger: logging.Logger,
+            accessToken: tokens.Read,
+            stages: stages,
+            streams: streams,
+            installedComponents: () => [.. setupState.Load().Installed.Keys]);
         logging.SummarySink.Attach(connection);
         var session = new AgentSessionCoordinator(
             connection,

@@ -40,4 +40,16 @@ public interface ISetupHost
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Standart çıktı + hata; çalıştırılamazsa <c>null</c>.</returns>
     Task<string?> RunAsync(string executable, string arguments, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// npm bileşenini kurar (spec 0018 / B-118): ajana gömülü <c>package.json</c> + <c>package-lock.json</c> hedefe yazılır, kilit dosyasının
+    /// SHA-256'sı <paramref name="lockSha256"/> ile karşılaştırılır, kurulu Node'un npm'iyle <c>npm ci --ignore-scripts</c> çalışır.
+    /// </summary>
+    /// <param name="componentId">Bileşen kimliği (gömülü dosyaların klasörü).</param>
+    /// <param name="lockSha256">Kilit dosyasının beklenen SHA-256'sı.</param>
+    /// <param name="nodeDirectory">Kurulu Node klasörü.</param>
+    /// <param name="destination">Hedef klasör.</param>
+    /// <param name="cancellationToken">İptal.</param>
+    /// <returns>Kurulduysa <c>true</c>.</returns>
+    Task<bool> InstallPackagesAsync(string componentId, string lockSha256, string nodeDirectory, string destination, CancellationToken cancellationToken);
 }

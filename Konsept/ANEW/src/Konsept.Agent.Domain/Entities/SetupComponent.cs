@@ -20,6 +20,9 @@ namespace Konsept.Agent.Domain.Entities;
 /// <param name="CheckExpect">Hazır denetimi çıktısında beklenen metin (sabit sürüm).</param>
 /// <param name="Required">Zorunlu çekirdek bileşen mi.</param>
 /// <param name="Mirrored">Pi'de aynası var mı.</param>
+/// <param name="Installer">Kurulum biçimi: <c>null</c> arşiv (indir → SHA-256 → aç); <c>npm</c> ajana gömülü kilit dosyasıyla kurulu Node'un npm'i
+/// (<c>npm ci --ignore-scripts</c>; her paketin bütünlüğü kilit dosyasındaki <c>integrity</c> ile, kilit dosyası <see cref="Sha256"/> ile doğrulanır;
+/// spec 0018 / B-118).</param>
 public sealed record SetupComponent(
     string Id,
     string Name,
@@ -36,4 +39,9 @@ public sealed record SetupComponent(
     string? CheckArguments,
     string? CheckExpect,
     bool Required,
-    bool Mirrored);
+    bool Mirrored,
+    string? Installer = null)
+{
+    /// <summary>npm kurulum biçimi.</summary>
+    public const string Npm = "npm";
+}

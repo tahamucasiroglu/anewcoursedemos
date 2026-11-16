@@ -17,6 +17,15 @@ public static class AgentSettingsLoader
     /// <summary>Varsayılan site adresi.</summary>
     public const string DefaultSiteUrl = "http://localhost:8000/";
 
+    /// <summary>Ayar dosyası yokken sahne render süresi sınırı (sn; plan 0018 ölçümü: 2 sn'lik sahne bu PC'de ~12 sn).</summary>
+    public const double DefaultRenderSceneTimeoutSeconds = 600;
+
+    /// <summary>Ayar dosyası yokken render bellek sınırı (MB).</summary>
+    public const long DefaultRenderMemoryMb = 4096;
+
+    /// <summary>Ayar dosyası yokken render süreç sınırı.</summary>
+    public const int DefaultRenderMaxProcesses = 64;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>Gömülü sunucu adresinin AssemblyMetadata anahtarı.</summary>
@@ -36,7 +45,11 @@ public static class AgentSettingsLoader
         var server = local?.ServerUrl ?? baseFile?.ServerUrl ?? Embedded(embedded, ServerUrlMetadata) ?? DefaultServerUrl;
         var site = local?.SiteUrl ?? baseFile?.SiteUrl ?? Embedded(embedded, SiteUrlMetadata) ?? DefaultSiteUrl;
         var delay = local?.ReconnectDelaySeconds ?? baseFile?.ReconnectDelaySeconds ?? 3;
-        return new AgentSettings(WithSlash(server), WithSlash(site), TimeSpan.FromSeconds(delay));
+        var render = new RenderLimits(
+            TimeSpan.FromSeconds(local?.RenderSceneTimeoutSeconds ?? baseFile?.RenderSceneTimeoutSeconds ?? DefaultRenderSceneTimeoutSeconds),
+            (local?.RenderMemoryMb ?? baseFile?.RenderMemoryMb ?? DefaultRenderMemoryMb) * 1024 * 1024,
+            local?.RenderMaxProcesses ?? baseFile?.RenderMaxProcesses ?? DefaultRenderMaxProcesses);
+        return new AgentSettings(WithSlash(server), WithSlash(site), TimeSpan.FromSeconds(delay), render);
     }
 
     /// <summary>Derlemenin AssemblyMetadata değerlerini okur.</summary>

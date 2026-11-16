@@ -27,6 +27,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly Func<string?>? _accessToken;
     private readonly IStageRunner? _stages;
     private readonly IVideoStreamHost? _streams;
+    private readonly Func<IReadOnlyList<string>>? _installedComponents;
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource _run;
     private HubConnection? _hub;
@@ -42,6 +43,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="accessToken">Ajan oturum belirtecini veren kaynak (spec 0012; <c>Authorization</c> başlığında gider, adreste değil).</param>
     /// <param name="stages">Yerel üretim aşamaları (spec 0017); verilmezse üretim komutlarına cevap verilmez.</param>
     /// <param name="streams">Yerel video akışı (spec 0017); verilmezse akış açılmaz.</param>
+    /// <param name="installedComponents">Kurulu bileşen kimlikleri (B-110; kayıtta gönderilir); verilmezse gönderilmez.</param>
     public SignalRServerConnection(
         AgentSettings settings,
         IAgentInfoProvider info,
@@ -49,8 +51,10 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         ILogger? logger = null,
         Func<string?>? accessToken = null,
         IStageRunner? stages = null,
-        IVideoStreamHost? streams = null)
+        IVideoStreamHost? streams = null,
+        Func<IReadOnlyList<string>>? installedComponents = null)
     {
+        _installedComponents = installedComponents;
         _stages = stages;
         _streams = streams;
         _accessToken = accessToken;
@@ -342,7 +346,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     {
         await _hub!.InvokeAsync(
             AgentHubContract.Register,
-            new AgentRegistration(_info.MachineName, _info.Version),
+            new AgentRegistration(_info.MachineName, _info.Version, _installedComponents?.Invoke()),
             cancellationToken).ConfigureAwait(false);
         SetState(ConnectionState.Connected);
         _logger.Information("Sunucuya bağlanıldı ve kayıt olundu: {Server}", _settings.ServerUrl);

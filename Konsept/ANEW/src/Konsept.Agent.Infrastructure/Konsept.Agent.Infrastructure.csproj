@@ -6,6 +6,10 @@
   <ItemGroup>
     <!-- Kurulum bileşen listesi (spec 0009): sabit sürüm, adres, SHA-256; ajana gömülü. -->
     <EmbeddedResource Include="Setup\components.json" LogicalName="Konsept.Agent.Infrastructure.Setup.components.json" />
+    <!-- Spec 0018: render ağ koruması (Node ön yükleme modülü) ve HyperFrames npm kilit dosyası (bütünlük: npm integrity). -->
+    <EmbeddedResource Include="Sandbox\render-guard.mjs" LogicalName="Konsept.Agent.Infrastructure.Sandbox.render-guard.mjs" />
+    <EmbeddedResource Include="Setup\hyperframes\package.json" LogicalName="Konsept.Agent.Infrastructure.Setup.hyperframes.package.json" />
+    <EmbeddedResource Include="Setup\hyperframes\package-lock.json" LogicalName="Konsept.Agent.Infrastructure.Setup.hyperframes.package-lock.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Agent.Application\Konsept.Agent.Application.csproj" />

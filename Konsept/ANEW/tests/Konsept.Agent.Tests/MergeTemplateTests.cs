@@ -111,7 +111,7 @@ public sealed partial class MergeTemplateTests
             ["ffmpeg"] = new("8.1.3", "y"),
         };
         store.Load().Returns(new SetupState(installed, null));
-        var runner = new ProcessStageRunner(store, Path.GetTempPath(), Path.GetTempPath, Serilog.Core.Logger.None);
+        var runner = new ProcessStageRunner(store, Path.GetTempPath(), Path.GetTempPath, Substitute.For<Konsept.Agent.Application.Abstract.ISceneRenderer>(), Serilog.Core.Logger.None);
 
         runner.CheckTools(new AgentToolCheckRequest(["node", "ffmpeg", "chromium", "hyperframes", "supertonic-3"])).Missing
             .ShouldBe(["chromium", "hyperframes", "supertonic-3"]);

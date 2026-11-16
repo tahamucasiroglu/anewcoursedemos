@@ -243,6 +243,12 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         try
         {
             _currentFraction = 0;
+            if (component.Installer == SetupComponent.Npm)
+            {
+                await InstallPackagesAsync(component, partial, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             SetStatus(component, ComponentStatus.Downloading);
             Directory.CreateDirectory(DownloadsDirectory);
             var failure = await DownloadAsync(component, archive, cancellationToken).ConfigureAwait(false);
@@ -272,19 +278,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
             Directory.Move(source, target);
             DeleteDirectory(partial);
             DeleteFile(archive);
-            var executable = ExecutablePath(component);
-            if (!File.Exists(executable))
-            {
-                Fail(component, SetupFailure.InstallFailed, InstallStep.Install, "kurulamadı (yürütülebilir dosya yok)");
-                return;
-            }
-
-            var executableHash = await _host.ComputeSha256Async(executable, cancellationToken).ConfigureAwait(false);
-            _installed[component.Id] = new InstalledComponent(component.Version, executableHash);
-            Persist();
-            _currentFraction = 0;
-            SetStatus(component, ComponentStatus.Installed);
-            WriteLog(AgentLogLevel.Information, "Kurulum: bileşen kuruldu: {Component} {Version}", component.Name, component.Version);
+            await RecordAsync(component, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -305,6 +299,46 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
             WriteLog(AgentLogLevel.Warning, "Kurulum ayrıntısı: {Component} {ExceptionType}: {ExceptionMessage}", component.Name, exception.GetType().Name, exception.Message);
             Fail(component, SetupFailure.InstallFailed, step, "kurulamadı");
         }
+    }
+
+    /// <summary>Kurulan bileşenin yürütülebilir dosyasını doğrular ve kaydeder.</summary>
+    private async Task RecordAsync(SetupComponent component, CancellationToken cancellationToken)
+    {
+        var executable = ExecutablePath(component);
+        if (!File.Exists(executable))
+        {
+            Fail(component, SetupFailure.InstallFailed, InstallStep.Install, "kurulamadı (yürütülebilir dosya yok)");
+            return;
+        }
+
+        var executableHash = await _host.ComputeSha256Async(executable, cancellationToken).ConfigureAwait(false);
+        _installed[component.Id] = new InstalledComponent(component.Version, executableHash);
+        Persist();
+        _currentFraction = 0;
+        SetStatus(component, ComponentStatus.Installed);
+        WriteLog(AgentLogLevel.Information, "Kurulum: bileşen kuruldu: {Component} {Version}", component.Name, component.Version);
+    }
+
+    /// <summary>
+    /// npm bileşeni (spec 0018 / B-118: HyperFrames): indirme/arşiv adımı yok; ajana gömülü kilit dosyasıyla kurulu Node'un npm'i kurar
+    /// (paket bütünlüğü npm <c>integrity</c> ile). Önce Node kurulu olmalı (liste sırası).
+    /// </summary>
+    private async Task InstallPackagesAsync(SetupComponent component, string partial, CancellationToken cancellationToken)
+    {
+        SetStatus(component, ComponentStatus.Installing);
+        DeleteDirectory(partial);
+        Directory.CreateDirectory(partial);
+        if (!await _host.InstallPackagesAsync(component.Id, component.Sha256, Path.Combine(ComponentsDirectory, "node"), partial, cancellationToken).ConfigureAwait(false))
+        {
+            DeleteDirectory(partial);
+            Fail(component, SetupFailure.InstallFailed, InstallStep.Install, "kurulamadı");
+            return;
+        }
+
+        var target = Path.Combine(ComponentsDirectory, component.Id);
+        DeleteDirectory(target);
+        Directory.Move(partial, target);
+        await RecordAsync(component, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<SetupFailure> DownloadAsync(SetupComponent component, string archive, CancellationToken cancellationToken)
