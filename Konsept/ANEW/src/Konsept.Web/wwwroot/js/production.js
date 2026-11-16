@@ -2,11 +2,28 @@
 // üretim sırası (Yukarı / Aşağı / ×), Sırayla üret / Durdur / Kaldığı yerden devam et. Kurallar (seçilebilir model, efor, pasiflik nedeni,
 // dil uyarısı) sunucudadır; her işlem profilin güncel durumunu döndürür ve sayfa onu çizer. Tüm istekler api.js ($.ajax, K-6) ile
 // /uretim ve /konseptler uçlarına. Konsept metni güvenilmeyen veridir: yalnızca textContent. Metinler resx'ten data-text-* ile gelir.
+// 0017: iş satırında aşamalar (metin + ikon, yalnızca renk değil), maliyet ve sade hata; "Ajan bağlı değil" ve "sıra durdu" uyarıları; iş
+// çalışırken 3 sn'de bir yoklama (durum ≤5 sn'de görünür); sağ sütunda Üretilenler listesi ve kesik çizginin sağında izleme alanı (ajanın
+// kısa ömürlü yerel akışı).
 import { get, lastCorrelationId, post } from './api.js';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), select:not([disabled]), input:not([disabled])';
 const RUNNING = ['producing', 'waiting_for_agent'];
 const RESUMABLE = ['stopped', 'failed'];
+export const POLL_MS = 3000;
+const STAGE_TEXT = { analysis: 'textStageAnalysis', code: 'textStageCode', images: 'textStageImages', voice: 'textStageVoice', render: 'textStageRender', merge: 'textStageMerge' };
+const STATE_TEXT = { pending: 'textStatePending', running: 'textStateRunning', done: 'textStateDone', skipped: 'textStateSkipped', failed: 'textStateFailed' };
+const STATE_ICON = { pending: '○', running: '◔', done: '✓', skipped: '–', failed: '✕' };
+
+/**
+ * Maliyet metni (USD; sentin altı da görünür).
+ * @param {number} usd Tutar.
+ * @returns {string} Metin.
+ */
+export function costText(usd) {
+  const value = Number(usd || 0);
+  return `$${value.toFixed(value > 0 && value < 0.01 ? 4 : 2).replace('.', ',')}`;
+}
 
 function fill(template, ...args) {
   return String(template || '').replace(/\{(\d+)\}/g, (_, index) => String(args[Number(index)] ?? ''));
@@ -40,7 +57,7 @@ export function optionLabel(model, text) {
  * @param {Document} doc Belge.
  * @returns {object|undefined} Denetleyici (testler için).
  */
-export function initProduction(doc) {
+export function initProduction(doc, timers = globalThis) {
   const root = doc.getElementById('production');
   if (!root) {
     return undefined;
@@ -48,7 +65,7 @@ export function initProduction(doc) {
   const text = root.dataset;
   const el = (id) => doc.getElementById(id);
   const modal = el('production-models-modal');
-  const state = { profileId: null, data: null, page: 1, checked: new Set(), opener: null, busy: false, approved: [] };
+  const state = { profileId: null, data: null, page: 1, checked: new Set(), opener: null, busy: false, approved: [], poll: null, live: '' };
 
   function node(tag, className, content) {
     const element = doc.createElement(tag);
@@ -122,6 +139,21 @@ export function initProduction(doc) {
       const label = node('span', 'production-queue__title', `${job.number}. ${job.title}`);
       const status = node('span', `production-queue__status production-queue__status--${job.status}`, text[`textStatus${job.status.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`] || job.status);
       item.append(label, status);
+      if ((job.stages || []).length) {
+        const stages = node('ol', 'production-stages');
+        stages.setAttribute('aria-label', fill(text.textStages, job.title));
+        stages.append(...job.stages.map((stage) => {
+          const row = node('li', `production-stages__item production-stages__item--${stage.state}`);
+          const icon = node('span', 'production-stages__icon', STATE_ICON[stage.state] || '○');
+          icon.setAttribute('aria-hidden', 'true');
+          row.append(icon, node('span', '', `${text[STAGE_TEXT[stage.stage]] || stage.stage}: ${text[STATE_TEXT[stage.state]] || stage.state}`));
+          return row;
+        }));
+        item.append(stages, node('span', 'production-queue__cost', fill(text.textCost, costText(job.costUsd))));
+      }
+      if (job.error) {
+        item.append(node('p', 'production-queue__error', job.error)); // Sade açıklama sunucudan (iç ayrıntı yok, Req 11).
+      }
       if (RESUMABLE.includes(job.status)) {
         const resume = node('button', 'button production-queue__resume', text.textResume);
         resume.type = 'button';
@@ -146,14 +178,119 @@ export function initProduction(doc) {
     start.disabled = Boolean(state.data.startBlock) || state.busy;
     el('production-block').textContent = state.data.startBlockMessage || '';
     el('production-stop').hidden = !state.data.runningHere;
+    const offline = el('production-agent-offline');
+    if (offline) {
+      offline.hidden = state.data.agentConnected !== false || !jobs.some((j) => j.status === 'waiting_for_agent'); // BR-11, Req 15.
+    }
+    const halted = el('production-halted');
+    if (halted) {
+      halted.hidden = !state.data.queueHalted;
+    }
+    announce(jobs);
+  }
+
+  // Çalışan işin aşaması değişince ekran okuyucuya kibarca duyurulur.
+  function announce(jobs) {
+    const live = el('production-live');
+    const running = jobs.find((j) => RUNNING.includes(j.status));
+    const stage = running && (running.stages || []).find((s) => s.state === 'running');
+    const message = stage ? `${running.title}: ${text[STAGE_TEXT[stage.stage]] || stage.stage}` : '';
+    if (live && message !== state.live) {
+      live.textContent = message;
+    }
+    state.live = message;
   }
 
   function render(data) {
+    const before = state.data;
     state.data = data;
     renderSettings();
     renderQueue();
     if (state.modalOpen) {
       fillModal();
+    }
+    const finished = before && (before.jobs || []).some((j) => RUNNING.includes(j.status) && !(data.jobs || []).some((n) => n.id === j.id));
+    if (finished) {
+      loadVideos(); // Biten iş Üretilenler'e düşer.
+    }
+    schedulePoll();
+  }
+
+  // Üretim tarayıcıdan bağımsızdır; sayfa açıkken çalışan iş varsa durum 3 sn'de bir yenilenir (Req 6, 8).
+  function schedulePoll() {
+    if (state.poll !== null) {
+      timers.clearTimeout(state.poll);
+      state.poll = null;
+    }
+    if (!state.data || !(state.data.jobs || []).some((j) => RUNNING.includes(j.status))) {
+      return;
+    }
+    const profileId = state.profileId;
+    state.poll = timers.setTimeout(async () => {
+      state.poll = null;
+      if (!root.isConnected || profileId !== state.profileId || state.busy) {
+        if (root.isConnected && profileId === state.profileId) {
+          schedulePoll();
+        }
+        return;
+      }
+      try {
+        const data = await get(`/uretim/${encodeURIComponent(profileId)}`);
+        if (profileId === state.profileId && !state.busy) {
+          render(data);
+        }
+      } catch {
+        schedulePoll(); // Geçici hata: bir sonraki yoklamada yeniden denenir.
+      }
+    }, POLL_MS);
+  }
+
+  // --- Üretilenler ve izleme alanı (0017 Req 20, 21) ---------------------------------------------------------------------------------
+  async function loadVideos() {
+    const list = el('production-videos');
+    if (!list) {
+      return;
+    }
+    const profileId = state.profileId;
+    el('production-videos-status').textContent = text.textLoading;
+    el('production-videos-empty').hidden = true;
+    try {
+      const videos = await get(`/uretim/${encodeURIComponent(profileId)}/videolar`);
+      if (profileId !== state.profileId) {
+        return;
+      }
+      el('production-videos-status').textContent = '';
+      el('production-videos-empty').hidden = videos.length > 0;
+      list.replaceChildren(...videos.map((video) => {
+        const item = node('li', 'production-videos__item');
+        const open = node('button', 'production-videos__open', video.title);
+        open.type = 'button';
+        open.setAttribute('aria-label', fill(text.textWatch, video.title));
+        open.addEventListener('click', () => watch(video));
+        item.append(open);
+        return item;
+      }));
+    } catch (error) {
+      if (profileId === state.profileId) {
+        el('production-videos-status').textContent = failText(error);
+      }
+    }
+  }
+
+  async function watch(video) {
+    const player = el('production-player');
+    const status = el('production-viewer-status');
+    status.textContent = text.textLoading;
+    try {
+      const result = await post(`/uretim/video/${encodeURIComponent(video.id)}/izle`, {});
+      player.src = result.url;
+      player.setAttribute('aria-label', fill(text.textPlayer, video.title));
+      player.hidden = false;
+      status.textContent = '';
+    } catch (error) {
+      player.hidden = true;
+      player.removeAttribute('src');
+      status.textContent = failText(error); // "Videoyu izlemek için ajan bağlı olmalı" · "Video dosyası bulunamadı".
     }
   }
 
@@ -420,6 +557,15 @@ export function initProduction(doc) {
     state.page = 1;
     state.checked.clear();
     state.data = null;
+    if (state.poll !== null) {
+      timers.clearTimeout(state.poll);
+      state.poll = null;
+    }
+    const player = el('production-player');
+    if (player) {
+      player.hidden = true;
+      player.removeAttribute('src');
+    }
     hideDetail();
     el('production-models-open').disabled = true;
     el('production-start').disabled = true;
@@ -435,10 +581,14 @@ export function initProduction(doc) {
         setStatus(failText(error));
       }
     }
-    await loadApproved();
+    await Promise.all([loadApproved(), loadVideos()]);
   }
 
-  doc.addEventListener('profile:selected', (event) => load(event.detail.id));
+  doc.addEventListener('profile:selected', (event) => {
+    if (root.isConnected) {
+      load(event.detail.id); // Sayfadan kaldırılmış eski denetleyici yeni profili yüklemez.
+    }
+  });
   const bar = el('profile-bar');
   if (bar && bar.dataset.selectedId) {
     load(bar.dataset.selectedId);

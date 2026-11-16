@@ -23,4 +23,10 @@ public enum ProductionCommand
 
     /// <summary>Kaldığı yerden devam et (kimlik: iş).</summary>
     Resume,
+
+    /// <summary>Üretilen videolar (kimlik: profil; spec 0017).</summary>
+    Videos,
+
+    /// <summary>Videonun yerel akış adresi (kimlik: video; spec 0017).</summary>
+    Stream,
 }

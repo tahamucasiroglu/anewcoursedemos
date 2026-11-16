@@ -110,6 +110,48 @@ public sealed class ProductionPageTests
         await factory.Api.Received(1).SendProductionAsync(ProductionCommand.Remove, job, Arg.Any<JsonElement?>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Spec 0017 AC-23/AC-24/AC-25: Üretilenler listesi ve "izle" uçları giriş ister, POST CSRF ister, Api'ye iletilir (Api'nin 409 "ajan bağlı
+    /// değil" cevabı taşınır); CSP videoyu yalnızca siteden ve bu bilgisayardaki ajanın yerel akışından (127.0.0.1) kabul eder.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ProductionVideoEndpoints_RequireAuthAndCsrf_CspAllowsOnlyLocalAgent()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        var profile = Guid.CreateVersion7();
+        var video = Guid.CreateVersion7();
+        using var list = JsonDocument.Parse("""[{"id":"00000000-0000-0000-0000-000000000001","title":"Kuşatma"}]""");
+        factory.Api.SendProductionAsync(ProductionCommand.Videos, profile, Arg.Any<JsonElement?>(), Arg.Any<CancellationToken>())
+            .Returns(Result<JsonElement>.Success(list.RootElement.Clone()));
+        factory.Api.SendProductionAsync(ProductionCommand.Stream, video, Arg.Any<JsonElement?>(), Arg.Any<CancellationToken>())
+            .Returns(Result<JsonElement>.Failure(new Error("production.agent_offline", "Videoyu izlemek için ajan bağlı olmalı", ErrorType.Conflict)));
+
+        using (var anonymous = SignedInClient.CreateAnonymous(factory))
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"/uretim/{profile}/videolar");
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            (await anonymous.SendAsync(request, ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        }
+
+        using var client = await factory.CreateSignedInClientAsync(ct);
+        (await client.PostAsJsonAsync($"/uretim/video/{video}/izle", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await factory.Api.DidNotReceive().SendProductionAsync(ProductionCommand.Stream, Arg.Any<Guid?>(), Arg.Any<JsonElement?>(), Arg.Any<CancellationToken>());
+
+        using var listed = await client.GetAsync(new Uri($"/uretim/{profile}/videolar", UriKind.Relative), ct);
+        listed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await listed.Content.ReadFromJsonAsync<JsonElement>(ct))[0].GetProperty("title").GetString().ShouldBe("Kuşatma");
+        using var offline = await PostAjaxAsync(client, $"/uretim/video/{video}/izle", new { }, ct);
+        offline.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await offline.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("message").GetString().ShouldBe("Videoyu izlemek için ajan bağlı olmalı");
+        await factory.Api.Received(1).SendProductionAsync(ProductionCommand.Stream, video, Arg.Any<JsonElement?>(), Arg.Any<CancellationToken>());
+
+        var csp = listed.Headers.GetValues("Content-Security-Policy").Single();
+        csp.ShouldContain("media-src 'self' http://127.0.0.1:*;");
+        csp.ShouldNotContain("media-src *");
+    }
+
     private static async Task<HttpResponseMessage> PostAjaxAsync(HttpClient client, string path, object body, CancellationToken ct)
     {
         var page = await WebFactory.GetDocumentAsync(client, "/yayinlama", ct);

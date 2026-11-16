@@ -213,8 +213,15 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ProductionCommand.Stop => (HttpMethod.Post, "api/production/stop"),
             ProductionCommand.Move => (HttpMethod.Post, $"api/production/jobs/{target:D}/move"),
             ProductionCommand.Remove => (HttpMethod.Post, $"api/production/jobs/{target:D}/remove"),
+            ProductionCommand.Videos => (HttpMethod.Get, $"api/production/videos?profileId={target:D}"),
+            ProductionCommand.Stream => (HttpMethod.Post, $"api/production/videos/{target:D}/stream"),
             _ => (HttpMethod.Post, $"api/production/jobs/{target:D}/resume"),
         };
+        if (method == HttpMethod.Get)
+        {
+            return SendAsync<JsonElement>(new HttpRequestMessage(method, path), cancellationToken);
+        }
+
         HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
         return SendAsync<JsonElement>(new HttpRequestMessage(method, path) { Content = content }, cancellationToken);
     }

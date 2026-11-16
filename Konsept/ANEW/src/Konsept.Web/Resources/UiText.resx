@@ -441,5 +441,25 @@
   <data name="ProductionEngine" xml:space="preserve"><value>Video motoru</value></data>
   <data name="ProductionImageModel" xml:space="preserve"><value>Görsel modeli</value></data>
   <data name="ProductionAudioModel" xml:space="preserve"><value>Ses modeli</value></data>
+  <data name="ProductionStageAnalysis" xml:space="preserve"><value>Konsept inceleniyor</value></data>
+  <data name="ProductionStageCode" xml:space="preserve"><value>Video kodu üretiliyor</value></data>
+  <data name="ProductionStageImages" xml:space="preserve"><value>Görseller üretiliyor</value></data>
+  <data name="ProductionStageVoice" xml:space="preserve"><value>Seslendirme yapılıyor</value></data>
+  <data name="ProductionStageRender" xml:space="preserve"><value>Video kodu videoya dönüştürülüyor (render)</value></data>
+  <data name="ProductionStageMerge" xml:space="preserve"><value>Birleştiriliyor</value></data>
+  <data name="ProductionStatePending" xml:space="preserve"><value>bekliyor</value></data>
+  <data name="ProductionStateRunning" xml:space="preserve"><value>çalışıyor</value></data>
+  <data name="ProductionStateDone" xml:space="preserve"><value>tamamlandı</value></data>
+  <data name="ProductionStateSkipped" xml:space="preserve"><value>atlandı</value></data>
+  <data name="ProductionStateFailed" xml:space="preserve"><value>hata</value></data>
+  <data name="ProductionStages" xml:space="preserve"><value>{0} aşamaları</value></data>
+  <data name="ProductionCost" xml:space="preserve"><value>Maliyet: {0}</value></data>
+  <data name="ProductionAgentOffline" xml:space="preserve"><value>Ajan bağlı değil</value></data>
+  <data name="ProductionQueueHalted" xml:space="preserve"><value>Art arda 3 iş hata verdi — sıra durduruldu</value></data>
+  <data name="ProductionProducedTitle" xml:space="preserve"><value>Üretilenler</value></data>
+  <data name="ProductionProducedEmpty" xml:space="preserve"><value>Henüz üretilmiş video yok</value></data>
+  <data name="ProductionWatch" xml:space="preserve"><value>{0} videosunu izle</value></data>
+  <data name="ProductionViewerHint" xml:space="preserve"><value>İzlemek için listeden bir video seçin</value></data>
+  <data name="ProductionPlayer" xml:space="preserve"><value>{0} oynatıcısı</value></data>
   <data name="ProductionModelsKeyHint" xml:space="preserve"><value>"Key yok" etiketli online model için API key'i Ayarlar'dan ekleyin.</value></data>
 </root>

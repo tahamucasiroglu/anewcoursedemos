@@ -3,8 +3,8 @@
     ViewData["Title"] = UiText.NavConceptToVideo;
 }
 @* Konseptten Video (spec 0006): üst şeritte model seçimi özeti (sol; tıklayınca modal) ve Altyazı / İlerleme çubuğu (sağ); altında solda
-   onaylanan konsept listesi + salt okunur ayrıntı ("Konseptler'de düzenle" bağlantısı, Ç-11), ortada üretim sırası. Sağ sütun (Üretilenler)
-   0017'dedir. production.js /uretim ve /konseptler uçlarını $.ajax ile kullanır (K-6); konsept metni yalnızca textContent ile yazılır.
+   onaylanan konsept listesi + salt okunur ayrıntı ("Konseptler'de düzenle" bağlantısı, Ç-11), ortada üretim sırası (0017: aşamalar, maliyet,
+   uyarılar), sağda Üretilenler: liste kesik çizginin solunda, izleme alanı sağında (ajanın yerel akışı). production.js /uretim ve /konseptler uçlarını $.ajax ile kullanır (K-6); konsept metni yalnızca textContent ile yazılır.
    Kurallar sunucudadır; metinler resx'ten data-text-* ile gelir. *@
 <h1 class="page__title">@UiText.NavConceptToVideo</h1>
 <div class="production" id="production" data-requires-profile
@@ -20,7 +20,14 @@
      data-text-resume="@UiText.ProductionResume" data-text-select="@UiText.ProductionSelect" data-text-page="@UiText.ConceptsPage"
      data-text-edit-in-concepts="@UiText.ProductionEditInConcepts"
      data-text-scene-heading="@UiText.ConceptSceneHeading" data-text-scene-visual="@UiText.ConceptSceneVisual"
-     data-text-scene-narration="@UiText.ConceptSceneNarration" data-text-scene-duration="@UiText.ConceptSceneDuration">
+     data-text-scene-narration="@UiText.ConceptSceneNarration" data-text-scene-duration="@UiText.ConceptSceneDuration"
+     data-text-stage-analysis="@UiText.ProductionStageAnalysis" data-text-stage-code="@UiText.ProductionStageCode"
+     data-text-stage-images="@UiText.ProductionStageImages" data-text-stage-voice="@UiText.ProductionStageVoice"
+     data-text-stage-render="@UiText.ProductionStageRender" data-text-stage-merge="@UiText.ProductionStageMerge"
+     data-text-state-pending="@UiText.ProductionStatePending" data-text-state-running="@UiText.ProductionStateRunning"
+     data-text-state-done="@UiText.ProductionStateDone" data-text-state-skipped="@UiText.ProductionStateSkipped"
+     data-text-state-failed="@UiText.ProductionStateFailed" data-text-stages="@UiText.ProductionStages" data-text-cost="@UiText.ProductionCost"
+     data-text-watch="@UiText.ProductionWatch" data-text-player="@UiText.ProductionPlayer">
     <section class="production__strip" aria-label="@UiText.ProductionStripLabel">
         <button type="button" class="concept-strip__models" id="production-models-open" aria-haspopup="dialog" aria-controls="production-models-modal"
                 title="@UiText.ProductionModelsOpen" disabled>
@@ -60,8 +67,25 @@
                 <button type="button" class="button" id="production-stop" hidden>@UiText.ProductionStop</button>
                 <span class="production__block" id="production-block" aria-live="polite"></span>
             </div>
+            <p class="production__warning" id="production-agent-offline" role="alert" hidden>@UiText.ProductionAgentOffline</p>
+            <p class="production__warning" id="production-halted" role="alert" hidden>@UiText.ProductionQueueHalted</p>
             <p class="production__queue-empty" id="production-queue-empty">@UiText.ProductionQueueEmpty</p>
             <ol class="production-queue" id="production-queue"></ol>
+            <p class="visually-hidden" id="production-live" aria-live="polite"></p>
+        </section>
+        <section class="production__produced" aria-labelledby="production-produced-title">
+            <h2 class="production__heading" id="production-produced-title">@UiText.ProductionProducedTitle</h2>
+            <div class="production__produced-body">
+                <div class="production__produced-list">
+                    <p class="concept-list__status" id="production-videos-status" role="status" aria-live="polite"></p>
+                    <p class="empty-state" id="production-videos-empty" hidden>@UiText.ProductionProducedEmpty</p>
+                    <ul class="production-videos" id="production-videos"></ul>
+                </div>
+                <div class="production__viewer">
+                    <p class="concept-area__hint" id="production-viewer-status" role="status" aria-live="polite">@UiText.ProductionViewerHint</p>
+                    <video class="production__player" id="production-player" controls preload="metadata" hidden></video>
+                </div>
+            </div>
         </section>
     </div>
 </div>

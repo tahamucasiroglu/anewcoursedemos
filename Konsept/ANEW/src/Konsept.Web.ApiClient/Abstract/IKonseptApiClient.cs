@@ -213,7 +213,7 @@ public interface IKonseptApiClient
 
     /// <summary>Konseptten Video komutu (spec 0006); gövde olduğu gibi iletilir, kurallar Api'dedir.</summary>
     /// <param name="command">Komut.</param>
-    /// <param name="id">Profil (ayarlar) ya da iş (taşı, çıkar, devam); diğerlerinde <c>null</c>.</param>
+    /// <param name="id">Profil (ayarlar, videolar), iş (taşı, çıkar, devam) ya da video (akış); diğerlerinde <c>null</c>.</param>
     /// <param name="body">Gövde.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Profilin güncel durumu.</returns>
