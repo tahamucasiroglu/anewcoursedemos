@@ -222,4 +222,58 @@
   <data name="ReportTooLong" xml:space="preserve"><value>Açıklama en fazla 4000 karakter olabilir.</value></data>
   <data name="ReportLink" xml:space="preserve"><value>Bildir</value></data>
   <data name="ReportLinkLabel" xml:space="preserve"><value>Bu hatayı bildir</value></data>
+  <!-- Konseptler sayfası: şerit, model modalı, ince ayar, kelime denetimi, dört alan (spec 0005). -->
+  <data name="ConceptStripLabel" xml:space="preserve"><value>Konsept ayarları</value></data>
+  <data name="ConceptSettingsLoading" xml:space="preserve"><value>Ayarlar yükleniyor…</value></data>
+  <data name="ConceptSettingsLoadFailed" xml:space="preserve"><value>Ayarlar alınamadı. Sayfayı yenileyip tekrar deneyin.</value></data>
+  <data name="ConceptSettingsSaving" xml:space="preserve"><value>Kaydediliyor…</value></data>
+  <data name="ConceptSettingsSaved" xml:space="preserve"><value>Kaydedildi</value></data>
+  <data name="ConceptSettingsSaveFailed" xml:space="preserve"><value>Kaydedilemedi, önceki seçim korundu. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ConceptNotSelected" xml:space="preserve"><value>seçilmedi</value></data>
+  <data name="ConceptUnspecified" xml:space="preserve"><value>Belirtilmedi</value></data>
+  <data name="ConceptModelsOpen" xml:space="preserve"><value>Model bilgisi: değiştirmek için açın</value></data>
+  <data name="ConceptModelsTitle" xml:space="preserve"><value>Model bilgisi</value></data>
+  <data name="ConceptModelsClose" xml:space="preserve"><value>Kapat ve kaydet</value></data>
+  <data name="ConceptModelsNone" xml:space="preserve"><value>Seçilebilir model yok. Kullanmak istediğiniz sağlayıcının API key'ini Ayarlar'dan ekleyin.</value></data>
+  <data name="ConceptModelsGoSettings" xml:space="preserve"><value>Ayarlar'a git</value></data>
+  <data name="ConceptRoleConcept" xml:space="preserve"><value>Konsept</value></data>
+  <data name="ConceptRoleDedupe" xml:space="preserve"><value>Tekrar denetimi</value></data>
+  <data name="ConceptRoleTopic" xml:space="preserve"><value>Konu önerisi</value></data>
+  <data name="ConceptModelConcept" xml:space="preserve"><value>Konsept üretimi modeli</value></data>
+  <data name="ConceptModelDedupe" xml:space="preserve"><value>Anlamca tekrar denetimi modeli</value></data>
+  <data name="ConceptModelTopic" xml:space="preserve"><value>Konu önerisi modeli</value></data>
+  <data name="ConceptEffortConcept" xml:space="preserve"><value>Konsept üretimi eforu</value></data>
+  <data name="ConceptEffortDedupe" xml:space="preserve"><value>Anlamca tekrar denetimi eforu</value></data>
+  <data name="ConceptEffortTopic" xml:space="preserve"><value>Konu önerisi eforu</value></data>
+  <data name="ConceptFineTune" xml:space="preserve"><value>İnce ayar</value></data>
+  <data name="ConceptFineTuneOpen" xml:space="preserve"><value>İnce ayar: değiştirmek için açın</value></data>
+  <data name="FineTuneTone" xml:space="preserve"><value>Ton</value></data>
+  <data name="FineTuneAudience" xml:space="preserve"><value>İzleyici</value></data>
+  <data name="FineTuneNarration" xml:space="preserve"><value>Anlatım biçimi</value></data>
+  <data name="ToneMysterious" xml:space="preserve"><value>Gizemli</value></data>
+  <data name="ToneEducational" xml:space="preserve"><value>Eğitici</value></data>
+  <data name="ToneDramatic" xml:space="preserve"><value>Dramatik</value></data>
+  <data name="ToneCalm" xml:space="preserve"><value>Sakin</value></data>
+  <data name="ToneDocumentary" xml:space="preserve"><value>Belgesel</value></data>
+  <data name="ToneHumorous" xml:space="preserve"><value>Esprili</value></data>
+  <data name="ToneInspiring" xml:space="preserve"><value>İlham verici</value></data>
+  <data name="ToneQuestioning" xml:space="preserve"><value>Sorgulayıcı</value></data>
+  <data name="AudienceBeginner" xml:space="preserve"><value>Konuya yeni başlayan</value></data>
+  <data name="AudienceCurious" xml:space="preserve"><value>Meraklı</value></data>
+  <data name="AudienceFamily" xml:space="preserve"><value>Aile ve çocuklara uygun</value></data>
+  <data name="AudienceExpert" xml:space="preserve"><value>Konuyu bilen</value></data>
+  <data name="NarrationSingleStory" xml:space="preserve"><value>Tek bir hikâye</value></data>
+  <data name="NarrationList" xml:space="preserve"><value>Sıralı liste</value></data>
+  <data name="NarrationMythOrFact" xml:space="preserve"><value>Efsane mi gerçek mi</value></data>
+  <data name="NarrationWhatIf" xml:space="preserve"><value>Ya olsaydı</value></data>
+  <data name="ConceptWordCheck" xml:space="preserve"><value>Kelime denetimi</value></data>
+  <data name="AreaTopic" xml:space="preserve"><value>Konudan üret</value></data>
+  <data name="AreaTopicHint" xml:space="preserve"><value>Konu önerileri ve seçtiğiniz konudan konsept üretimi burada yer alacak.</value></data>
+  <data name="AreaIdea" xml:space="preserve"><value>Fikirden üret</value></data>
+  <data name="AreaIdeaHint" xml:space="preserve"><value>Kendi fikrinizden konsept üretimi burada yer alacak.</value></data>
+  <data name="AreaProduced" xml:space="preserve"><value>Üretilenler</value></data>
+  <data name="AreaEdit" xml:space="preserve"><value>Düzenleme alanı</value></data>
+  <data name="AreaEditHint" xml:space="preserve"><value>Seçtiğiniz konsepti düzenlemek burada yer alacak.</value></data>
+  <data name="ConceptsNoProfileHint" xml:space="preserve"><value>Konseptlerle çalışmak için üst bardaki + düğmesiyle bir profil ekleyin.</value></data>
+  <data name="ConceptsNoProfileAction" xml:space="preserve"><value>Profil ekle</value></data>
 </root>

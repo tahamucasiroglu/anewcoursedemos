@@ -462,4 +462,19 @@ describe('Profiller (spec 0003)', () => {
     expect(modalShown()).toBe(false);
     expect(el('profile-name').getAttribute('aria-describedby')).toBe('profile-name-error');
   });
+  it('Spec 0005: seçili profil "profile:selected" olayıyla duyurulur; profil yokken + yönlendirmesi ([data-requires-no-profile]) görünür', async () => {
+    document.querySelector('main').insertAdjacentHTML('beforeend', '<div id="no-profile" data-requires-no-profile hidden>+</div>');
+    const seen = [];
+    document.addEventListener('profile:selected', (event) => seen.push(event.detail.id));
+    await start(listOf([profile('a', 'Alfa'), profile('b', 'Beta')], 'b'));
+    expect(seen).toEqual(['b']);
+    expect(el('profile-bar').dataset.selectedId).toBe('b');
+    expect(el('no-profile').hidden).toBe(true);
+
+    document.body.innerHTML = pageHtml();
+    document.querySelector('main').insertAdjacentHTML('beforeend', '<div id="no-profile" data-requires-no-profile hidden>+</div>');
+    await start(listOf([]));
+    expect(el('no-profile').hidden).toBe(false);
+    expect(seen).toEqual(['b']);
+  });
 });

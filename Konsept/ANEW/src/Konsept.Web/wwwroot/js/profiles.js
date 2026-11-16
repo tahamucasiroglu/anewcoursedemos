@@ -149,6 +149,16 @@ export async function initProfiles(doc, options = {}) {
       show(node, profileState === 'ready');
     }
     show(el('profile-required'), profileState === 'none');
+    // Profil yokken görünen yönlendirmeler (spec 0005 AC-7: Konseptler'de "+" ile profil ekleme).
+    for (const node of doc.querySelectorAll('[data-requires-no-profile]')) {
+      show(node, profileState === 'none');
+    }
+  }
+
+  // Seçili profil sayfaya duyurulur (spec 0005: Konseptler şeridi o profilin ayarlarını yükler).
+  function announceSelected(id) {
+    bar.dataset.selectedId = id;
+    doc.dispatchEvent(new CustomEvent('profile:selected', { detail: { id } }));
   }
 
   function selected() {
@@ -178,6 +188,7 @@ export async function initProfiles(doc, options = {}) {
     show(createButton, false);
     setEdit(true);
     setPageState('ready');
+    announceSelected(select.value);
   }
 
   async function load() {

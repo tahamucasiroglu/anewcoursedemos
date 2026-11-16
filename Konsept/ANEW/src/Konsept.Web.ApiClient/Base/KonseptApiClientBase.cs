@@ -122,6 +122,16 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         SendAsync<ProfileResponse>(new HttpRequestMessage(HttpMethod.Put, "api/profiles/selected") { Content = JsonContent.Create(new { profileId = id }, options: Json) }, cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<ConceptSettingsResponse>> GetConceptSettingsAsync(Guid profileId, CancellationToken cancellationToken) =>
+        SendAsync<ConceptSettingsResponse>(new HttpRequestMessage(HttpMethod.Get, $"api/profiles/{profileId:D}/concept-settings"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ConceptSettingsResponse>> SaveConceptSettingsAsync(Guid profileId, SaveConceptSettingsApiRequest? request, CancellationToken cancellationToken) =>
+        SendAsync<ConceptSettingsResponse>(
+            new HttpRequestMessage(HttpMethod.Put, $"api/profiles/{profileId:D}/concept-settings") { Content = JsonContent.Create(request, options: Json) },
+            cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken) =>
         SendAsync<JournalDayResponse>(
             new HttpRequestMessage(

@@ -1171,3 +1171,153 @@ body {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Konseptler (spec 0005): şerit (solda model bilgisi, sağ yarının başında ince ayar, sağda kelime denetimi), dört alan ve model
+   modalı. Renkler yalnızca tema değişkenlerinden (K-7). */
+.concept-strip {
+  display: grid;
+  grid-template-columns: 50% 1fr auto;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.concept-strip__models,
+.concept-strip__finetune {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  justify-self: start;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.concept-strip__models:disabled,
+.concept-strip__finetune:disabled {
+  cursor: default;
+  color: var(--color-text-muted);
+}
+
+.concept-strip__value {
+  font-weight: 600;
+}
+
+.concept-strip__label {
+  font-weight: 600;
+}
+
+.concept-strip__wordcheck {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-self: end;
+}
+
+.concept-strip__status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.concept-strip__status:empty {
+  display: none;
+}
+
+.concept-strip__status[data-kind="error"] {
+  color: var(--color-error);
+}
+
+.concept-finetune {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.concept-finetune[hidden],
+[data-requires-no-profile][hidden],
+.concept-models__empty[hidden],
+.concept-models__effort[hidden] {
+  display: none;
+}
+
+.concept-finetune__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.concept-finetune__group legend {
+  font-weight: 600;
+}
+
+.concept-areas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.concept-area {
+  min-height: 10rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.concept-area__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.concept-area__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.concepts-no-profile {
+  margin: 1rem 0;
+  color: var(--color-text);
+}
+
+.concept-models {
+  width: min(34rem, 94vw);
+  max-width: 34rem;
+}
+
+.concept-models__role {
+  margin-top: 0.75rem;
+}
+
+.concept-models__status {
+  min-height: 1.2rem;
+  margin: 0.75rem 0 0;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 720px) {
+  .concept-strip,
+  .concept-areas {
+    grid-template-columns: 1fr;
+  }
+
+  .concept-strip__wordcheck {
+    justify-self: start;
+  }
+}

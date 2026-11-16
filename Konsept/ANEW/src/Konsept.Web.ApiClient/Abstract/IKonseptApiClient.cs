@@ -137,6 +137,19 @@ public interface IKonseptApiClient
     /// <returns>Seçilen profil ya da hata.</returns>
     Task<Result<ProfileResponse>> SelectProfileAsync(Guid? id, CancellationToken cancellationToken);
 
+    /// <summary>Profilin Konseptler sayfası ayarları ve seçilebilir modeller (spec 0005).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Ayarlar ya da hata (404 başka kullanıcının profili).</returns>
+    Task<Result<ConceptSettingsResponse>> GetConceptSettingsAsync(Guid profileId, CancellationToken cancellationToken);
+
+    /// <summary>Profilin Konseptler sayfası ayarlarını kaydeder (spec 0005).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="request">Gövde.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Yeni ayarlar ya da hata (alan hataları / 404).</returns>
+    Task<Result<ConceptSettingsResponse>> SaveConceptSettingsAsync(Guid profileId, SaveConceptSettingsApiRequest? request, CancellationToken cancellationToken);
+
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
     /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>

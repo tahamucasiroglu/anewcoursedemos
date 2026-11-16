@@ -1,6 +1,129 @@
 @{
     ViewData["RequiresProfile"] = true;
     ViewData["Title"] = UiText.NavConcepts;
+    // Rol kodları ve ince ayar kodları Api'deki ConceptSettingsRules ile aynıdır; görünen metinler resx'te (spec 0005).
+    var roles = new (string Code, string Short, string ModelLabel, string EffortLabel)[]
+    {
+        ("concept", UiText.ConceptRoleConcept, UiText.ConceptModelConcept, UiText.ConceptEffortConcept),
+        ("dedupe", UiText.ConceptRoleDedupe, UiText.ConceptModelDedupe, UiText.ConceptEffortDedupe),
+        ("topic", UiText.ConceptRoleTopic, UiText.ConceptModelTopic, UiText.ConceptEffortTopic),
+    };
+    var groups = new (string Name, string Label, (string Code, string Text)[] Options)[]
+    {
+        ("tone", UiText.FineTuneTone, new[]
+        {
+            ("mysterious", UiText.ToneMysterious), ("educational", UiText.ToneEducational), ("dramatic", UiText.ToneDramatic),
+            ("calm", UiText.ToneCalm), ("documentary", UiText.ToneDocumentary), ("humorous", UiText.ToneHumorous),
+            ("inspiring", UiText.ToneInspiring), ("questioning", UiText.ToneQuestioning),
+        }),
+        ("audience", UiText.FineTuneAudience, new[]
+        {
+            ("beginner", UiText.AudienceBeginner), ("curious", UiText.AudienceCurious), ("family", UiText.AudienceFamily),
+            ("expert", UiText.AudienceExpert),
+        }),
+        ("narration", UiText.FineTuneNarration, new[]
+        {
+            ("single_story", UiText.NarrationSingleStory), ("list", UiText.NarrationList),
+            ("myth_or_fact", UiText.NarrationMythOrFact), ("what_if", UiText.NarrationWhatIf),
+        }),
+    };
 }
-<h1 class="page__title">@UiText.NavConcepts</h1>
-<p class="empty-state" data-requires-profile>@UiText.EmptyConcepts</p>
+@* Konseptler (spec 0005): üst barın altında şerit (solda model bilgisi, ortada ince ayar, sağda kelime denetimi) ve altında dört
+   alan. Ayarlar seçili profile aittir; concepts.js /konsept-ayarlari/{profil} uçlarını kullanır ($.ajax, K-6). Profil yokken şerit ve
+   alanlar gizlidir (profiles.js), "Önce bir profil oluşturun" ve + yönlendirmesi görünür. *@
+<h1 class="page__title visually-hidden">@UiText.NavConcepts</h1>
+<div class="concepts-no-profile" data-requires-no-profile hidden>
+    <p>@UiText.ConceptsNoProfileHint</p>
+    <button type="button" class="button button--primary" id="concepts-add-profile">@UiText.ConceptsNoProfileAction</button>
+</div>
+
+<section class="concept-strip" id="concept-strip" aria-label="@UiText.ConceptStripLabel" data-requires-profile data-state="loading"
+         data-url="/konsept-ayarlari" data-text-loading="@UiText.ConceptSettingsLoading"
+         data-text-load-failed="@UiText.ConceptSettingsLoadFailed" data-text-saving="@UiText.ConceptSettingsSaving"
+         data-text-saved="@UiText.ConceptSettingsSaved" data-text-save-failed="@UiText.ConceptSettingsSaveFailed"
+         data-text-not-selected="@UiText.ConceptNotSelected" data-text-unspecified="@UiText.ConceptUnspecified">
+    <button type="button" class="concept-strip__models" id="concept-models-open" aria-haspopup="dialog" aria-controls="concept-models-modal"
+            aria-label="@UiText.ConceptModelsOpen" title="@UiText.ConceptModelsOpen" disabled>
+        @foreach (var role in roles)
+        {
+            <span class="concept-strip__role" data-role="@role.Code">@role.Short: <span class="concept-strip__value" data-role-value>@UiText.ConceptNotSelected</span></span>
+        }
+    </button>
+    <button type="button" class="concept-strip__finetune" id="concept-finetune-toggle" aria-expanded="false" aria-controls="concept-finetune"
+            title="@UiText.ConceptFineTuneOpen" disabled>
+        <span class="concept-strip__label">@UiText.ConceptFineTune:</span>
+        @foreach (var group in groups)
+        {
+            <span class="concept-strip__group" data-group="@group.Name">@group.Label: <span class="concept-strip__value" data-group-value>@UiText.ConceptUnspecified</span></span>
+        }
+    </button>
+    <label class="concept-strip__wordcheck">
+        <input type="checkbox" id="concept-wordcheck" disabled />
+        @UiText.ConceptWordCheck
+    </label>
+    <p class="concept-strip__status" id="concept-settings-status" role="status" aria-live="polite">@UiText.ConceptSettingsLoading</p>
+
+    <div class="concept-finetune" id="concept-finetune" hidden>
+        @foreach (var group in groups)
+        {
+            <fieldset class="concept-finetune__group">
+                <legend>@group.Label</legend>
+                <label class="concept-finetune__option"><input type="radio" name="@group.Name" value="" checked /> @UiText.ConceptUnspecified</label>
+                @foreach (var option in group.Options)
+                {
+                    <label class="concept-finetune__option"><input type="radio" name="@group.Name" value="@option.Code" /> @option.Text</label>
+                }
+            </fieldset>
+        }
+    </div>
+</section>
+
+<div class="concept-areas" data-requires-profile>
+    <section class="concept-area" aria-labelledby="area-topic-title">
+        <h2 class="concept-area__title" id="area-topic-title">@UiText.AreaTopic</h2>
+        <p class="concept-area__hint">@UiText.AreaTopicHint</p>
+    </section>
+    <section class="concept-area" aria-labelledby="area-idea-title">
+        <h2 class="concept-area__title" id="area-idea-title">@UiText.AreaIdea</h2>
+        <p class="concept-area__hint">@UiText.AreaIdeaHint</p>
+    </section>
+    <section class="concept-area" aria-labelledby="area-produced-title">
+        <h2 class="concept-area__title" id="area-produced-title">@UiText.AreaProduced</h2>
+        <p class="empty-state" data-requires-profile>@UiText.EmptyConcepts</p>
+    </section>
+    <section class="concept-area" aria-labelledby="area-edit-title">
+        <h2 class="concept-area__title" id="area-edit-title">@UiText.AreaEdit</h2>
+        <p class="concept-area__hint">@UiText.AreaEditHint</p>
+    </section>
+</div>
+
+@* Model bilgisi modalı (spec 0005 Req 4–5): sayfanın üstünde ayrı pencere. Kapat düğmesi, dışına tıklama ya da Esc kapatır ve
+   seçimleri kaydeder; listede yalnızca seçilebilir metin modelleri (Api'den) vardır. *@
+<div class="dialog-backdrop" id="concept-models-modal" hidden>
+    <div class="dialog concept-models" role="dialog" aria-modal="true" aria-labelledby="concept-models-title">
+        <div class="profile-modal__head">
+            <h2 class="profile-modal__title" id="concept-models-title">@UiText.ConceptModelsTitle</h2>
+            <button type="button" class="icon-button" id="concept-models-close" aria-label="@UiText.ConceptModelsClose" title="@UiText.ConceptModelsClose">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+        </div>
+        <div class="concept-models__empty" id="concept-models-empty" hidden>
+            <p>@UiText.ConceptModelsNone</p>
+            <a class="button" href="/ayarlar">@UiText.ConceptModelsGoSettings</a>
+        </div>
+        @foreach (var role in roles)
+        {
+            <div class="field concept-models__role" data-role="@role.Code">
+                <label class="field__label" for="concept-model-@role.Code">@role.ModelLabel</label>
+                <select class="field__input" id="concept-model-@role.Code" data-model-select>
+                    <option value="">@UiText.ConceptNotSelected</option>
+                </select>
+                <span class="concept-models__effort" data-effort-field hidden>
+                    <label class="field__label" for="concept-effort-@role.Code">@role.EffortLabel</label>
+                    <select class="field__input" id="concept-effort-@role.Code" data-effort-select></select>
+                </span>
+            </div>
+        }
+        <p class="concept-models__status" id="concept-models-status" role="status" aria-live="polite"></p>
+    </div>
+</div>
