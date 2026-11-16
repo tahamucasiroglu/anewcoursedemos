@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- AiGateway iş kuralları (katalog girdileri, API key biçimi ve maskesi); yalnızca Shared.Kernel'e bağımlı (Y-2). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>
