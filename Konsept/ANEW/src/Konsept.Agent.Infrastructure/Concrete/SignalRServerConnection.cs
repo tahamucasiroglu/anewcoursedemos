@@ -1,3 +1,4 @@
+using System.Net;
 using Konsept.Agent.Application.Abstract;
 using Konsept.Agent.Application.Base;
 using Konsept.Agent.Domain.Entities;
@@ -13,7 +14,9 @@ namespace Konsept.Agent.Infrastructure.Concrete;
 /// <summary>
 /// API'ye SignalR ile bağlanır: sunucu kapalıysa açılana kadar dener, koparsa kendiliğinden yeniden
 /// bağlanır ve her bağlanmada kendini yeniden kaydeder (docs/conventions.md, Known traps). "Test et"
-/// komutuna versiyon ve makine adıyla cevap verir.
+/// komutuna versiyon ve makine adıyla cevap verir. Ajan oturum belirteci <c>Authorization</c> başlığında gider (spec 0012);
+/// sunucu "oturum kapandı" bildirirse ya da belirteci reddederse (401) yeniden denemez, <see cref="ServerConnectionBase.RaiseSessionRevoked"/>
+/// ile haber verir. <see cref="SuspendAsync"/> sonrası yeniden başlatılabilir.
 /// </summary>
 public sealed class SignalRServerConnection : ServerConnectionBase
 {
@@ -23,9 +26,11 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly ILogger _logger;
     private readonly Func<string?>? _accessToken;
     private readonly CancellationTokenSource _lifetime = new();
+    private CancellationTokenSource _run;
     private HubConnection? _hub;
     private Task _connectLoop = Task.CompletedTask;
     private int _loopRunning;
+    private volatile bool _suspended;
 
     /// <summary>Initializes a new instance of the <see cref="SignalRServerConnection"/> class.</summary>
     /// <param name="settings">Ajan ayarları.</param>
@@ -40,14 +45,36 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _info = info ?? throw new ArgumentNullException(nameof(info));
         _handlerFactory = handlerFactory;
+        _run = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
     }
 
     /// <inheritdoc />
     public override Task StartAsync(CancellationToken cancellationToken)
     {
         _hub ??= BuildHub();
+        if (_suspended)
+        {
+            _suspended = false;
+            _run.Dispose();
+            _run = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+        }
+
         EnsureConnectLoop();
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override async Task SuspendAsync(CancellationToken cancellationToken)
+    {
+        _suspended = true;
+        await _run.CancelAsync().ConfigureAwait(false);
+        if (_hub is not null)
+        {
+            await _hub.StopAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await _connectLoop.ConfigureAwait(false);
+        SetState(ConnectionState.Disconnected);
     }
 
     /// <inheritdoc />
@@ -87,6 +114,12 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         }
     }
 
+    /// <summary>Hata, sunucunun ajan oturumunu reddettiği anlamına mı geliyor (401).</summary>
+    /// <param name="exception">Hata.</param>
+    /// <returns>Reddedildiyse <c>true</c>.</returns>
+    internal static bool IsUnauthorized(Exception? exception) =>
+        exception is HttpRequestException { StatusCode: HttpStatusCode.Unauthorized };
+
     /// <inheritdoc />
     protected override async ValueTask DisposeCoreAsync()
     {
@@ -97,6 +130,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         }
 
         await _connectLoop.ConfigureAwait(false);
+        _run.Dispose();
         _lifetime.Dispose();
     }
 
@@ -119,6 +153,11 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             .Build();
 
         hub.On(AgentHubContract.Ping, () => new AgentPingReply(_info.MachineName, _info.Version));
+        hub.On(AgentHubContract.SessionClosed, () =>
+        {
+            _logger.Warning("Sunucu ajan oturumunu kapattı");
+            RaiseSessionRevoked();
+        });
         hub.Reconnecting += _ =>
         {
             SetState(ConnectionState.Connecting);
@@ -130,10 +169,17 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             EnsureConnectLoop();
             return Task.CompletedTask;
         };
-        hub.Closed += _ =>
+        hub.Closed += exception =>
         {
             SetState(ConnectionState.Disconnected);
-            if (!_lifetime.IsCancellationRequested)
+            if (IsUnauthorized(exception))
+            {
+                // Belirteç geçersiz (çıkış, yeni eşleştirme, 90 gün): eski oturumla yeniden denenmez (spec 0012 Req 6, 12).
+                RaiseSessionRevoked();
+                return Task.CompletedTask;
+            }
+
+            if (!_lifetime.IsCancellationRequested && !_suspended)
             {
                 EnsureConnectLoop();
             }
@@ -148,7 +194,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         // Aynı anda tek döngü: Closed ve Reconnected aynı anda tetiklense de ikinci bir döngü açılmaz.
         if (Interlocked.CompareExchange(ref _loopRunning, 1, 0) == 0)
         {
-            _connectLoop = RunConnectLoopAsync(_lifetime.Token);
+            _connectLoop = RunConnectLoopAsync(_run.Token);
         }
     }
 
@@ -185,6 +231,13 @@ public sealed class SignalRServerConnection : ServerConnectionBase
                 }
 
                 await RegisterAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            catch (Exception ex) when (IsUnauthorized(ex) && !cancellationToken.IsCancellationRequested)
+            {
+                _logger.Warning("Sunucu ajan oturumunu reddetti; yeniden eşleştirme gerekiyor");
+                SetState(ConnectionState.Disconnected);
+                RaiseSessionRevoked();
                 return;
             }
             catch (Exception ex) when (!cancellationToken.IsCancellationRequested)

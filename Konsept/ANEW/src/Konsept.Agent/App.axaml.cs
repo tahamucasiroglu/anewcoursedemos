@@ -53,7 +53,9 @@ public sealed partial class App : Avalonia.Application
             AttachTrayStatus(Composition);
             desktop.MainWindow = window;
             window.Show();
-            _ = Composition.Connection.StartAsync(CancellationToken.None);
+            _ = Composition.Session is { } session
+                ? session.StartAsync(CancellationToken.None)
+                : Composition.Connection.StartAsync(CancellationToken.None);
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -76,6 +78,11 @@ public sealed partial class App : Avalonia.Application
         {
             if (Composition is not null)
             {
+                if (Composition.Session is { } session)
+                {
+                    await session.StopAsync(CancellationToken.None).ConfigureAwait(true);
+                }
+
                 await Composition.Connection.StopAsync(CancellationToken.None).ConfigureAwait(true);
             }
         }
@@ -96,11 +103,33 @@ public sealed partial class App : Avalonia.Application
         }
     }
 
-    /// <summary>Tray menüsü başlığını bileşimin canlı bağlantı durumuna bağlar.</summary>
+    /// <summary>
+    /// Tray menüsünün en üstündeki tıklanamayan satır: oturum durumu (spec 0012 Req 15) — "Eşleşmedi" · "Eşleşti" · "Oturum
+    /// kapandı" · "Sunucuya ulaşılamıyor"; biçim 0009 Req 21a'daki başlıkla aynı ("ANEW Konsept · …").
+    /// </summary>
+    /// <param name="state">Oturum durumu.</param>
+    internal void ShowTraySession(AgentSessionState state)
+    {
+        if (TrayStatusItem is not null)
+        {
+            TrayStatusItem.Header = string.Format(CultureInfo.CurrentCulture, AgentText.TrayStatusFormat, MainWindow.TrayLabel(state));
+        }
+    }
+
+    /// <summary>
+    /// Tray menüsü başlığını bileşime bağlar: oturum akışı varsa oturum durumu (plan 0012 Risk 4), yoksa canlı bağlantı durumu.
+    /// </summary>
     /// <param name="composition">Ajan bileşimi.</param>
     internal void AttachTrayStatus(AgentComposition composition)
     {
         ArgumentNullException.ThrowIfNull(composition);
+        if (composition.Session is { } session)
+        {
+            ShowTraySession(session.Current.State);
+            session.Changed += (_, snapshot) => Dispatcher.UIThread.Post(() => ShowTraySession(snapshot.State));
+            return;
+        }
+
         ShowTrayStatus(composition.Connection.State);
         composition.Connection.StateChanged += (_, state) => Dispatcher.UIThread.Post(() => ShowTrayStatus(state));
     }

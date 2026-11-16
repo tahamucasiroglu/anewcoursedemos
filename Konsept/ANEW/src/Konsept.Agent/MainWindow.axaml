@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Konsept.Agent.MainWindow"
-        Width="420" Height="200"
+        Width="460" Height="340"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource KonseptWindowBackground}"
@@ -9,6 +9,15 @@
         Icon="/Assets/app-icon.png">
   <StackPanel Margin="20" Spacing="8">
     <TextBlock x:Name="StateText" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource KonseptAccentBrush}" />
+    <!-- Oturum ve eşleştirme (spec 0012): durum, büyük ve seçilip kopyalanabilir kod, geri sayım, "Yeni kod al", "Siteye git". -->
+    <TextBlock x:Name="SessionText" TextWrapping="Wrap" FontWeight="SemiBold" />
+    <SelectableTextBlock x:Name="CodeText" FontSize="34" FontWeight="Bold" FontFamily="Consolas, Menlo, monospace"
+                         Foreground="{DynamicResource KonseptAccentBrush}" IsVisible="False" />
+    <TextBlock x:Name="CountdownText" IsVisible="False" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button x:Name="NewCodeButton" IsVisible="False" />
+      <Button x:Name="OpenPairingButton" IsVisible="False" />
+    </StackPanel>
     <TextBlock x:Name="ServerText" />
     <TextBlock x:Name="VersionText" />
     <TextBlock x:Name="HintText" TextWrapping="Wrap" Opacity="0.8" />

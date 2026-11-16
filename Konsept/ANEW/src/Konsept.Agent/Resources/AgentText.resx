@@ -15,4 +15,16 @@
   <data name="ServerLabel" xml:space="preserve"><value>Sunucu</value></data>
   <data name="VersionLabel" xml:space="preserve"><value>Sürüm</value></data>
   <data name="CloseHint" xml:space="preserve"><value>Pencereyi kapatmak ajanı kapatmaz; çıkmak için tray menüsündeki "Çıkış"ı kullanın.</value></data>
+  <data name="SessionUnpaired" xml:space="preserve"><value>Eşleşmedi — bu kodu sitede "Ajanı eşleştir" sayfasına girin.</value></data>
+  <data name="SessionPaired" xml:space="preserve"><value>Eşleşti</value></data>
+  <data name="SessionClosed" xml:space="preserve"><value>Oturum kapandı — yeniden eşleştirmek için yeni kodu sitede girin.</value></data>
+  <data name="SessionCodeExpired" xml:space="preserve"><value>Kodun süresi doldu. Yeni kod alın.</value></data>
+  <data name="SessionRejected" xml:space="preserve"><value>Eşleştirme reddedildi. Yeni kod alabilirsiniz.</value></data>
+  <data name="SessionUnreachable" xml:space="preserve"><value>Sunucuya ulaşılamıyor, yeniden deneniyor</value></data>
+  <data name="CodeCountdownFormat" xml:space="preserve"><value>Kod {0} sonra geçersiz olur</value></data>
+  <data name="NewCode" xml:space="preserve"><value>Yeni kod al</value></data>
+  <data name="TrayUnpaired" xml:space="preserve"><value>Eşleşmedi</value></data>
+  <data name="TrayPaired" xml:space="preserve"><value>Eşleşti</value></data>
+  <data name="TraySessionClosed" xml:space="preserve"><value>Oturum kapandı</value></data>
+  <data name="TrayUnreachable" xml:space="preserve"><value>Sunucuya ulaşılamıyor</value></data>
 </root>
