@@ -28,8 +28,15 @@
             <img class="topbar__logo" src="~/img/logo-placeholder.svg" alt="" width="28" height="28" />
             <span class="topbar__name">@UiText.AppName</span>
         </div>
-        <span class="topbar__spend passive" role="button" tabindex="0" aria-disabled="true"
-              aria-label="@UiText.MonthlySpendLabel" data-tooltip="@UiText.ComingSoon">@UiText.MonthlySpend</span>
+        @* Aylık harcama (spec 0013 Req 15–18): yalnızca bilgi; tıklanmaz, odak almaz. spend.js 5 sn'de bir /harcama'dan yeniler;
+           biçim ($2,37) sunucuda. Yalnızca girişli kullanıcıya görünür. *@
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <span class="topbar__spend" id="monthly-spend" role="status" aria-live="off" data-state="loading" data-url="/harcama"
+                  data-text-failed="@UiText.MonthlySpend" data-text-failed-hint="@UiText.MonthlySpendFailedHint"
+                  data-label-failed="@UiText.MonthlySpendFailedLabel"
+                  aria-label="@UiText.MonthlySpendLoadingLabel">@UiText.MonthlySpendLoading</span>
+        }
         <nav class="topbar__nav" aria-label="@UiText.NavLabel">
             @foreach (var item in pages)
             {

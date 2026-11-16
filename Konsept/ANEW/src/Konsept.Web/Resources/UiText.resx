@@ -8,6 +8,12 @@
   <data name="AppName" xml:space="preserve"><value>ANEW Konsept</value></data>
   <data name="MonthlySpend" xml:space="preserve"><value>Bu ay: —</value></data>
   <data name="MonthlySpendLabel" xml:space="preserve"><value>Aylık harcama</value></data>
+  <data name="MonthlySpendLoading" xml:space="preserve"><value>Bu ay: …</value></data>
+  <data name="MonthlySpendLoadingLabel" xml:space="preserve"><value>Bu ayki harcama yükleniyor</value></data>
+  <data name="MonthlySpendValue" xml:space="preserve"><value>Bu ay: ${0}</value></data>
+  <data name="MonthlySpendValueLabel" xml:space="preserve"><value>Bu ayki harcama: {0} dolar</value></data>
+  <data name="MonthlySpendFailedHint" xml:space="preserve"><value>Harcama alınamadı</value></data>
+  <data name="MonthlySpendFailedLabel" xml:space="preserve"><value>Bu ayki harcama: Harcama alınamadı</value></data>
   <data name="NavLabel" xml:space="preserve"><value>Sayfalar</value></data>
   <data name="NavConcepts" xml:space="preserve"><value>Konseptler</value></data>
   <data name="NavConceptToVideo" xml:space="preserve"><value>Konseptten Video</value></data>
@@ -109,6 +115,14 @@
   <data name="AvailabilityAvailable" xml:space="preserve"><value>Kullanılabilir</value></data>
   <data name="AvailabilityNoKey" xml:space="preserve"><value>Key yok</value></data>
   <data name="AvailabilityUnreadable" xml:space="preserve"><value>Key okunamıyor</value></data>
+  <data name="AvailabilityNoPermission" xml:space="preserve"><value>Yetki yok</value></data>
+  <data name="ModelTrial" xml:space="preserve"><value>Dene</value></data>
+  <data name="ModelTrialLabel" xml:space="preserve"><value>{0} modelini dene (ücretli kısa çağrı)</value></data>
+  <data name="ModelTrialRunning" xml:space="preserve"><value>Deneniyor…</value></data>
+  <data name="ModelTrialResult" xml:space="preserve"><value>Yanıt: {0} · {1} giriş / {2} çıkış token · ${3}</value></data>
+  <data name="ModelTrialTruncated" xml:space="preserve"><value>(yarım kaldı)</value></data>
+  <data name="ModelTrialEstimated" xml:space="preserve"><value>(tahmini)</value></data>
+  <data name="ModelTrialFailed" xml:space="preserve"><value>Deneme yapılamadı. (Hata no: {0})</value></data>
   <data name="KeyNotSet" xml:space="preserve"><value>Girilmemiş</value></data>
   <data name="KeyVerified" xml:space="preserve"><value>Doğrulandı</value></data>
   <data name="KeyUnverified" xml:space="preserve"><value>Doğrulanmadı</value></data>

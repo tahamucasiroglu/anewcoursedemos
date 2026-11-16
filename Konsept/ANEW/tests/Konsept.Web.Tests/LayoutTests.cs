@@ -38,7 +38,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
 
         var bar = doc.QuerySelector("header.topbar")!;
         bar.Children.Select(c => c.ClassName).ShouldBe(
-            ["topbar__brand", "topbar__spend passive", "topbar__nav", "topbar__actions"]);
+            ["topbar__brand", "topbar__spend", "topbar__nav", "topbar__actions"]); // Spec 0013 Req 15: aylık harcama artık pasif değil (plan 0013 A-1).
         bar.QuerySelector(".topbar__logo").ShouldNotBeNull();
         bar.QuerySelector(".topbar__name")!.TextContent.ShouldBe("ANEW Konsept");
         bar.QuerySelectorAll(".topbar__nav a").Select(a => a.TextContent).ShouldBe(
@@ -90,7 +90,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         var passive = doc.QuerySelectorAll(".passive").ToList();
-        passive.Count.ShouldBe(1); // Spec 0004 Req 14: "Ayarlar" (plan 0004 A-1), spec 0003: profil seçimi, kalem, artı (plan 0003 A-1) ve spec 0022 Req 1: "Hata bildir" (plan 0022 A-2) artık pasif değil; yeni davranışlar kendi testlerinde.
+        passive.Count.ShouldBe(0); // Spec 0013 Req 15: aylık harcama (plan 0013 A-1), spec 0004 Req 14: "Ayarlar" (plan 0004 A-1), spec 0003: profil seçimi, kalem, artı (plan 0003 A-1) ve spec 0022 Req 1: "Hata bildir" (plan 0022 A-2) artık pasif değil; yeni davranışlar kendi testlerinde.
         foreach (var control in passive)
         {
             control.GetAttribute("aria-disabled").ShouldBe("true");

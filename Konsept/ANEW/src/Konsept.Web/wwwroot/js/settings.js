@@ -1,4 +1,5 @@
-// Ayarlar (spec 0004 Req 6–14): "API key'ler" satırları ve salt okunur "Modeller" listesi. Tüm istekler api.js ($.ajax, K-6).
+// Ayarlar (spec 0004 Req 6–14): "API key'ler" satırları ve salt okunur "Modeller" listesi; yetkisiz model "Yetki yok"
+// (spec 0013 Req 3) ve kullanılabilir metin modelinde "Dene" (kısa, ücretli deneme çağrısı; plan 0013 Risk 3). Tüm istekler api.js ($.ajax, K-6).
 // Kaydedilen key bir daha hiçbir yerde tam haliyle görünmez: sunucu yalnızca maskeli hali döndürür. Yazılmış ama kaydedilmemiş
 // key hiçbir yerde (localStorage, sessionStorage, çerez) saklanmaz; Vazgeç/Esc alanı temizler ve hiçbir istek göndermez.
 // Metinler resx'ten, #settings öğesinin data-text-* öznitelikleriyle gelir.
@@ -91,7 +92,12 @@ function renderModels(root, state) {
   const kind = root.querySelector('#model-kind').value;
   const provider = root.querySelector('#model-provider').value;
   const models = state.models.filter((m) => (!kind || m.kind === kind) && (!provider || m.providerId === provider));
-  const labels = { available: text.textAvailable, no_key: text.textNoKey, unreadable: text.textKeyUnreadable };
+  const labels = {
+    available: text.textAvailable,
+    no_key: text.textNoKey,
+    unreadable: text.textKeyUnreadable,
+    no_permission: text.textNoPermission,
+  };
   list.replaceChildren(...models.map((model) => {
     const item = el(doc, 'li', 'model-row');
     item.dataset.modelId = model.id;
@@ -101,10 +107,68 @@ function renderModels(root, state) {
       el(doc, 'span', 'model-row__kind', model.kind === 'image' ? text.textKindImage : text.textKindText),
       el(doc, 'span', `badge badge--${model.availability}`, labels[model.availability] || ''),
     );
+    if (model.kind === 'text' && model.availability === 'available') {
+      appendTrial(root, item, model);
+    }
     return item;
   }));
   show(list, models.length > 0);
   show(root.querySelector('#models-empty'), models.length === 0);
+}
+
+/**
+ * Deneme sonucunun metni: "Yanıt: … · 12 giriş / 34 çıkış token · $0,000810 (tahmini)".
+ * @param {object} result Sunucunun deneme sonucu.
+ * @param {DOMStringMap} text Metinler.
+ * @returns {string} Metin.
+ */
+export function trialText(result, text) {
+  const cost = Number(result.costUsd || 0).toFixed(6).replace('.', ',');
+  const line = (text.textTrialResult || '')
+    .replace('{0}', result.text || '')
+    .replace('{1}', result.inputTokens ?? '-')
+    .replace('{2}', result.outputTokens ?? '-')
+    .replace('{3}', cost);
+  return [line, result.truncated ? text.textTrialTruncated : '', result.isEstimated ? text.textTrialEstimated : '']
+    .filter(Boolean)
+    .join(' ');
+}
+
+function trialFailureText(failure, text) {
+  const body = (failure && failure.body) || {};
+  if (failure && failure.status === 403) {
+    return text.textForbidden;
+  }
+  if (failure && [400, 404, 409].includes(failure.status) && body.message) {
+    return body.message;
+  }
+  return format(text.textTrialFailed, body.correlationId || '-');
+}
+
+function appendTrial(root, item, model) {
+  const doc = root.ownerDocument;
+  const text = root.dataset;
+  const button = el(doc, 'button', 'button model-row__trial-button', text.textTrial);
+  button.type = 'button';
+  button.setAttribute('aria-label', format(text.textTrialLabel, model.name));
+  const result = el(doc, 'span', 'model-row__trial');
+  result.setAttribute('role', 'status');
+  result.setAttribute('aria-live', 'polite');
+  button.addEventListener('click', async () => {
+    if (button.disabled) {
+      return;
+    }
+    button.disabled = true;
+    result.textContent = text.textTrialRunning;
+    try {
+      result.textContent = trialText(await post(text.trialUrl, { modelId: model.id }), text);
+    } catch (failure) {
+      result.textContent = trialFailureText(failure, text);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  item.append(button, result);
 }
 
 /**

@@ -32,6 +32,14 @@ public sealed class SettingsController : Controller
     public Task<IActionResult> Models(CancellationToken cancellationToken) =>
         _api.GetCatalogAsync(cancellationToken).ToDetailedBrowserJson(HttpContext);
 
+    /// <summary>Bir metin modeliyle deneme çağrısı (Ajax, CSRF korumalı; plan 0013). Yetki ve key kararı Api'dedir.</summary>
+    /// <param name="form">Model.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/ayarlar/modeller/dene")]
+    public Task<IActionResult> Trial([FromBody] TrialCallForm? form, CancellationToken cancellationToken) =>
+        _api.TrialCallAsync(form?.ModelId, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
     /// <summary>Sağlayıcı satırları (Ajax; yalnızca maskeli key'ler).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>JSON.</returns>

@@ -96,6 +96,17 @@ public interface IKonseptApiClient
     /// <returns>"Girilmemiş" satırı ya da hata.</returns>
     Task<Result<ApiKeyStatusResponse>> DeleteApiKeyAsync(string provider, CancellationToken cancellationToken);
 
+    /// <summary>Bu ayki (İstanbul) harcama toplamını getirir (spec 0013).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Toplam ya da hata.</returns>
+    Task<Result<MonthlySpendResponse>> GetMonthlySpendAsync(CancellationToken cancellationToken);
+
+    /// <summary>Bir metin modeliyle deneme çağrısı yapar (plan 0013; kapının tüm kurallarıyla, maliyet kaydedilir).</summary>
+    /// <param name="modelId">Model kimliği.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sonuç ya da Türkçe nedenli hata.</returns>
+    Task<Result<TrialCallResponse>> TrialCallAsync(string? modelId, CancellationToken cancellationToken);
+
     /// <summary>Profiller, seçili profil, sınır ve şablonlar (spec 0003).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Liste ya da hata.</returns>

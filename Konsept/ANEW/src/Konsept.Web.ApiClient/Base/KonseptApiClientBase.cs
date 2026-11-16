@@ -88,6 +88,16 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<MonthlySpendResponse>> GetMonthlySpendAsync(CancellationToken cancellationToken) =>
+        SendAsync<MonthlySpendResponse>(new HttpRequestMessage(HttpMethod.Get, "api/ai/spend/month"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<TrialCallResponse>> TrialCallAsync(string? modelId, CancellationToken cancellationToken) =>
+        SendAsync<TrialCallResponse>(
+            new HttpRequestMessage(HttpMethod.Post, "api/ai/calls/trial") { Content = JsonContent.Create(new { modelId }, options: Json) },
+            cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<ApiKeyStatusResponse>> DeleteApiKeyAsync(string provider, CancellationToken cancellationToken) =>
         SendAsync<ApiKeyStatusResponse>(new HttpRequestMessage(HttpMethod.Delete, "api/ai/keys/" + Uri.EscapeDataString(provider ?? string.Empty)), cancellationToken);
 
