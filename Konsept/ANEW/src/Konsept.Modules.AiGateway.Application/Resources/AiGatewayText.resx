@@ -13,4 +13,18 @@
   <data name="ValidationFailed" xml:space="preserve"><value>Girilen bilgiler geçersiz.</value></data>
   <data name="UnknownProvider" xml:space="preserve"><value>Sağlayıcı bulunamadı.</value></data>
   <data name="SignInRequired" xml:space="preserve"><value>Oturumunuz sona erdi.</value></data>
+  <data name="ModelNotFound" xml:space="preserve"><value>Model bulunamadı.</value></data>
+  <data name="ModelNotCallable" xml:space="preserve"><value>Bu model şu an çağrılamıyor.</value></data>
+  <data name="CallNoKey" xml:space="preserve"><value>{0} için API key girilmemiş — Ayarlar</value></data>
+  <data name="CallKeyUnreadable" xml:space="preserve"><value>{0} key'i okunamıyor — Ayarlar'dan yeniden girin</value></data>
+  <data name="CallNoPermission" xml:space="preserve"><value>Bu modeli kullanma yetkiniz yok</value></data>
+  <data name="CallEffortUnsupported" xml:space="preserve"><value>Bu model seçilen efor seviyesini desteklemiyor.</value></data>
+  <data name="ProviderKeyRejected" xml:space="preserve"><value>Sağlayıcı API key'i reddetti</value></data>
+  <data name="ProviderBusy" xml:space="preserve"><value>Sağlayıcı şu an yoğun, tekrar denendi ama olmadı</value></data>
+  <data name="ProviderNoResponse" xml:space="preserve"><value>Sağlayıcıdan yanıt alınamadı</value></data>
+  <data name="ProviderUnreachable" xml:space="preserve"><value>Sağlayıcıya bağlanılamadı, tekrar denendi ama olmadı</value></data>
+  <data name="ProviderBalance" xml:space="preserve"><value>Sağlayıcı hesabında yeterli bakiye yok</value></data>
+  <data name="ProviderForbidden" xml:space="preserve"><value>Sağlayıcı bu isteğe izin vermedi</value></data>
+  <data name="ProviderRequestRejected" xml:space="preserve"><value>Sağlayıcı isteği kabul etmedi</value></data>
+  <data name="TrialPrompt" xml:space="preserve"><value>Kısaca kendini tanıt: tek cümle, Türkçe.</value></data>
 </root>

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using Konsept.Api.Tests.Fakes;
 using Konsept.Modules.AiGateway.Application.Abstract;
 using Konsept.Modules.AiGateway.Domain.Entities;
+using Konsept.Modules.AiGateway.Infrastructure.Providers.Concrete;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Microsoft.AspNetCore.Hosting;
@@ -33,6 +34,8 @@ public sealed class AiGatewayApiFactory : WebApplicationFactory<Program>
         Sessions = parent.Sessions;
         Keys = parent.Keys;
         Validator = parent.Validator;
+        Provider = parent.Provider;
+        Spend = parent.Spend;
     }
 
     /// <summary>Gets bellek kullanıcı deposu.</summary>
@@ -49,6 +52,24 @@ public sealed class AiGatewayApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Gets sahte sağlayıcı doğrulaması.</summary>
     public FakeProviderKeyValidator Validator { get; } = new();
+
+    /// <summary>Gets sahte sağlayıcı istemcisi (plan 0013; gerçek çağrı yok).</summary>
+    public FakeProviderClient Provider { get; } = new();
+
+    /// <summary>Gets bellek harcama deposu (plan 0013).</summary>
+    public InMemorySpendRepository Spend { get; } = new();
+
+    /// <summary>
+    /// Gets or sets kullanıcı rolünün model listesi (<c>Identity:ModelPermissions:User</c>, plan 0013); <c>null</c> → tümü. İlk
+    /// istekten önce ayarlanır.
+    /// </summary>
+    public string? UserModelPermissions { get; set; }
+
+    /// <summary>
+    /// Gets or sets gerçek <c>HttpProviderClient</c>'ın kullanacağı sahte HTTP işleyicisi; verilirse sahte istemci yerine gerçek
+    /// istemci bu işleyiciyle kullanılır (sızıntı testi, plan 0013). İlk istekten önce ayarlanır.
+    /// </summary>
+    public HttpMessageHandler? ProviderHandler { get; set; }
 
     /// <summary>Gets bellek olay deposu.</summary>
     public InMemorySystemEventRepository Events { get; } = new();
@@ -124,6 +145,11 @@ public sealed class AiGatewayApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Auth:SigningKey", FastApiFactory.SigningKey);
         builder.UseSetting("Identity:AdminEmail", IdentityApiFactory.AdminEmail);
         builder.UseSetting("DataProtection:KeysDirectory", KeysDirectory);
+        if (UserModelPermissions is { } models)
+        {
+            builder.UseSetting("Identity:ModelPermissions:User", models); // test kurulumu: model yetkisi (plan 0013).
+        }
+
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IUserRepository>();
@@ -142,6 +168,12 @@ public sealed class AiGatewayApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
             services.AddSingleton<IApiKeyRepository>(Keys);
             services.AddSingleton<IProviderKeyValidator>(Validator);
+            services.RemoveAll<IProviderClient>(); // test kurulumu: sahte sağlayıcı ve harcama deposu (plan 0013).
+            services.RemoveAll<ISpendRepository>();
+            services.AddSingleton<ISpendRepository>(Spend);
+            services.AddSingleton<IProviderClient>(ProviderHandler is { } handler
+                ? new HttpProviderClient(new StubHttpClientFactory(handler))
+                : Provider);
             if (Catalog is { } seed)
             {
                 services.RemoveAll<ICatalogSource>();

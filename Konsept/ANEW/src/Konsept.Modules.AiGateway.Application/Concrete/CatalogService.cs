@@ -6,4 +6,6 @@ namespace Konsept.Modules.AiGateway.Application.Concrete;
 /// <summary>Katalog servisi.</summary>
 /// <param name="catalog">Katalog.</param>
 /// <param name="keys">Kullanıcının key durumları.</param>
-public sealed class CatalogService(ICatalogSource catalog, IApiKeyService keys) : CatalogServiceBase(catalog, keys);
+/// <param name="permissions">Kullanıcının yetkileri.</param>
+public sealed class CatalogService(ICatalogSource catalog, IApiKeyService keys, ICallerPermissions permissions)
+    : CatalogServiceBase(catalog, keys, permissions);

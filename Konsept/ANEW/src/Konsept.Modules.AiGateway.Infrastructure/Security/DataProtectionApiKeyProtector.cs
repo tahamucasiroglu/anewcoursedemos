@@ -21,20 +21,22 @@ public sealed class DataProtectionApiKeyProtector(IDataProtectionProvider provid
     public string Protect(string key) => _protector.Protect(key);
 
     /// <inheritdoc />
-    public bool CanUnprotect(string ciphertext)
+    public bool CanUnprotect(string ciphertext) => TryUnprotect(ciphertext) is not null;
+
+    /// <inheritdoc />
+    public string? TryUnprotect(string ciphertext)
     {
         try
         {
-            _ = _protector.Unprotect(ciphertext);
-            return true;
+            return _protector.Unprotect(ciphertext);
         }
         catch (CryptographicException)
         {
-            return false;
+            return null;
         }
         catch (FormatException)
         {
-            return false;
+            return null;
         }
     }
 }

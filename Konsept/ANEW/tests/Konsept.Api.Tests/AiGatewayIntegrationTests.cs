@@ -2,6 +2,9 @@ using System.Net.Http.Json;
 using Konsept.Api.Tests.Fakes;
 using Konsept.Api.Tests.Support;
 using Konsept.Modules.AiGateway.Application.Abstract;
+using Konsept.Modules.AiGateway.Domain.Entities;
+using Konsept.Modules.AiGateway.Domain.Enums;
+using Konsept.Modules.AiGateway.Domain.Rules;
 using Konsept.Modules.AiGateway.Infrastructure.Persistence;
 using Konsept.Modules.AiGateway.Infrastructure.Persistence.Concrete;
 using Microsoft.AspNetCore.Hosting;
@@ -14,7 +17,7 @@ namespace Konsept.Api.Tests;
 
 /// <summary>
 /// AiGateway, gerçek PostgreSQL 17 ile (full profil): <c>ai_gateway.api_keys</c>'te düz key yok (AC-4), depo her işlemde kullanıcıyla
-/// süzer (AC-9 — kasıtlı bozma bu testi kırar), eşzamanlı kayıt tek satır bırakır (AC-7). Sağlayıcı doğrulaması sahtedir.
+/// süzer (AC-9 — kasıtlı bozma bu testi kırar), eşzamanlı kayıt tek satır bırakır (AC-7); harcama toplamı (spec 0013). Sağlayıcı doğrulaması sahtedir.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class AiGatewayIntegrationTests : IClassFixture<IntegrationApiFactory>, IDisposable
@@ -108,6 +111,35 @@ public sealed class AiGatewayIntegrationTests : IClassFixture<IntegrationApiFact
         }
     }
 
+    /// <summary>
+    /// Spec 0013 AC-3, AC-15, AC-9 (gerçek PostgreSQL): harcama toplamı yalnızca istenen kullanıcının kayıtlarını içerir; ay sınırı
+    /// İstanbul'a göredir (ayın son saniyesi o aya, ertesi ayın ilk anı yeni aya); <c>numeric(20,10)</c> sentin kesirlerini korur.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task SpendRepository_OwnershipAndMonth_RealDatabase()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var userA = Guid.CreateVersion7();
+        var userB = Guid.CreateVersion7();
+        var lastSecond = new DateTimeOffset(2026, 11, 30, 20, 59, 59, TimeSpan.Zero);
+        var firstInstant = new DateTimeOffset(2026, 11, 30, 21, 0, 0, TimeSpan.Zero);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var repository = new SpendRepository(scope.ServiceProvider.GetRequiredService<AiGatewayDbContext>());
+
+        await repository.AddAsync(Record(userA, lastSecond, 1.234567m), ct);
+        await repository.AddAsync(Record(userA, new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero), 0.0000001234m), ct);
+        await repository.AddAsync(Record(userA, firstInstant, 1.131m), ct);
+        await repository.AddAsync(Record(userB, lastSecond, 7m), ct);
+
+        var november = IstanbulMonth.Of(lastSecond);
+        var december = IstanbulMonth.Of(firstInstant);
+        (await repository.SumAsync(userA, november.StartUtc, november.EndUtc, ct)).ShouldBe(1.2345671234m);
+        (await repository.SumAsync(userA, december.StartUtc, december.EndUtc, ct)).ShouldBe(1.131m);
+        (await repository.SumAsync(userB, november.StartUtc, november.EndUtc, ct)).ShouldBe(7m);
+        (await repository.SumAsync(Guid.CreateVersion7(), november.StartUtc, november.EndUtc, ct)).ShouldBe(0m);
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -127,4 +159,19 @@ public sealed class AiGatewayIntegrationTests : IClassFixture<IntegrationApiFact
 
     private async Task<Guid> UserIdAsync(string email) =>
         (Guid)(await _database.Database.ScalarAsync($"SELECT id FROM identity.users WHERE email = '{email}'"))!;
+
+    private static SpendRecord Record(Guid userId, DateTimeOffset at, decimal cost) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        UserId = userId,
+        OccurredAt = at,
+        ProviderId = "anthropic",
+        ModelId = "anthropic/claude-sonnet-4-5",
+        Effort = null,
+        Purpose = CallPurpose.Trial,
+        InputTokens = 10,
+        OutputTokens = 5,
+        Outcome = CallOutcome.Success,
+        CostUsd = cost,
+    };
 }

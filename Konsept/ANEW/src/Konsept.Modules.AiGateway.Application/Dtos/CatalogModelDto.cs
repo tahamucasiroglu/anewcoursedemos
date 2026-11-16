@@ -2,7 +2,7 @@ namespace Konsept.Modules.AiGateway.Application.Dtos;
 
 /// <summary>
 /// Modeller listesindeki satır (spec 0004 Req 4, 6): katalog değerleri ve isteği yapan kullanıcıya göre kullanılabilirlik etiketi
-/// (<c>available</c> · <c>no_key</c> · <c>unreadable</c>).
+/// (<c>no_permission</c> · <c>available</c> · <c>no_key</c> · <c>unreadable</c>).
 /// </summary>
 /// <param name="Id">Model kimliği.</param>
 /// <param name="ProviderId">Sağlayıcı kimliği.</param>
@@ -37,6 +37,9 @@ public sealed record CatalogModelDto(
 
     /// <summary>Etiket: sağlayıcının key'i yok.</summary>
     public const string NoKey = "no_key";
+
+    /// <summary>Etiket: kullanıcının bu modeli kullanma yetkisi yok (spec 0013 Req 3; key durumundan önce gelir).</summary>
+    public const string NoPermission = "no_permission";
 
     /// <summary>Etiket: key kayıtlı ama çözülemiyor.</summary>
     public const string Unreadable = "unreadable";

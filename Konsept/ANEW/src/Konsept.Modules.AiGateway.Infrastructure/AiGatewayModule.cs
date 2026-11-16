@@ -6,6 +6,7 @@ using Konsept.Modules.AiGateway.Application.Validators;
 using Konsept.Modules.AiGateway.Infrastructure.Catalog;
 using Konsept.Modules.AiGateway.Infrastructure.Persistence;
 using Konsept.Modules.AiGateway.Infrastructure.Persistence.Concrete;
+using Konsept.Modules.AiGateway.Infrastructure.Providers.Concrete;
 using Konsept.Modules.AiGateway.Infrastructure.Security;
 using Konsept.Modules.AiGateway.Infrastructure.Validation;
 using Konsept.Shared.Infrastructure.Http.Concrete;
@@ -56,6 +57,19 @@ public static class AiGatewayModule
         services.AddSingleton<IProviderKeyValidator, HttpProviderKeyValidator>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ICatalogService, CatalogService>();
+
+        // Çağrı kapısı (spec 0013): sağlayıcı çağrıları ayrı istemciyle; zaman aşımı ve tekrar kapıdadır (HttpClient'ın 100 sn'lik
+        // varsayılanı kapatılır, yönlendirme izlenmez, istemci logu yok — key yalnızca başlıkta).
+        services.AddHttpClient(HttpProviderClient.ClientName, c => c.Timeout = Timeout.InfiniteTimeSpan)
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false })
+            .RemoveAllLoggers();
+        services.AddSingleton<IProviderClient, HttpProviderClient>();
+        services.AddScoped<ISpendRepository, SpendRepository>();
+        services.AddScoped<ICallerPermissions, ClaimsCallerPermissions>();
+        services.AddScoped<IAiCallGateway, AiCallGateway>();
+        services.AddScoped<ISpendService, SpendService>();
+        services.AddScoped<ITrialCallService, TrialCallService>();
+        services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IValidator<SaveApiKeyRequest>, SaveApiKeyRequestValidator>();
         services.AddHttpContextAccessor();
         services.TryAddScoped<ICurrentUser, HttpContextCurrentUser>();

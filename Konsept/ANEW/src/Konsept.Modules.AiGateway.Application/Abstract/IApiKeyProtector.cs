@@ -15,4 +15,9 @@ public interface IApiKeyProtector
     /// <param name="ciphertext">Şifreli değer.</param>
     /// <returns>Çözülebiliyorsa <c>true</c>.</returns>
     bool CanUnprotect(string ciphertext);
+
+    /// <summary>Şifreli değeri çözer (yalnızca çağrı kapısı kullanır, spec 0013; değer loglanmaz, yanıtlara girmez).</summary>
+    /// <param name="ciphertext">Şifreli değer.</param>
+    /// <returns>Düz key; çözülemiyorsa <c>null</c>.</returns>
+    string? TryUnprotect(string ciphertext);
 }
