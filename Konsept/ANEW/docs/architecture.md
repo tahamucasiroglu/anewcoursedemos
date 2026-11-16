@@ -60,9 +60,24 @@ Proje sayısında **sabit bir kural yok; gerektiği kadar proje** açılır. De�
 (Application), harcama kayıtları `ai_gateway.spend_records`, sağlayıcı istemcisi `Providers/Concrete/HttpProviderClient`
 (seed'deki `dialect`, `chatUrl`, `imageUrl`, `apiModel`), uçlar `POST api/ai/calls/trial` (Ayarlar'daki "Dene") ve
 `GET api/ai/spend/month`. **0005:** `Konsept.Modules.AiGateway.Contracts` açıldı — `ITextModelDirectory` (isteği yapan kullanıcı için
-katalogdaki metin modelleri + seçilebilir bayrağı: yetkili ve key `available`); ilk tüketici Profiles. Çağrı kapısı Contracts'a 0014 ile girer.
+katalogdaki metin modelleri + seçilebilir bayrağı: yetkili ve key `available`); ilk tüketici Profiles. **0014:** Contracts'a `IModelCaller`
+(başka modülün metin çağrısı: `Current()` ile çağıran kimliği + yetkileri isteğin içinde yakalanır, `CallTextAsync` rolü harcama amacına
+çevirip kapıdan geçirir; çıktı sınırı katalog limiti).
 
 **Profiles (0003):** `Konsept.Modules.Profiles.{Domain,Application,Infrastructure,Presentation}` — `profiles` şeması (`profiles`: `(user_id, name_key)` tekil, `name_key` = tr-TR küçük harf; `selections`: kullanıcı başına hatırlanan seçili profil), kendi `ProfilesDbContext`'i. Hazır şablonlar Infrastructure'a gömülü `Templates/templates.json`'dır. Uçlar: `GET|POST api/profiles`, `PUT|DELETE api/profiles/{id}`, `PUT api/profiles/selected`; başka kullanıcının profili her işlemde 404'tür. Seçili profil okunurken çözülür (hatırlanan yoksa ilk oluşturulan). Sistem talimatı Domain'de saf `ProfileInstruction.Build`'dir, hiçbir uçta dönmez; konsept üretiminde kullanımı (ve Contracts katmanı) 0014'te eklenir. Web'de üst bar profil çubuğu ve modal `profiles.js` ile `/profiller` uçlarını kullanır. **0005:** `profiles.concept_settings` (profil başına tek satır, `profile_id` FK cascade; rol başına `*_model`/`*_effort` × konsept/tekrar denetimi/konu önerisi, `tone`/`audience`/`narration`, `word_check`); uçlar `GET|PUT api/profiles/{id}/concept-settings` (başka kullanıcının profili 404; model seçimi AiGateway.Contracts `ITextModelDirectory` ile sunucuda denetlenir, BR-13). Web: Konseptler şeridi `concepts.js` + `/konsept-ayarlari/{profil}`; `profiles.js` seçili profili `profile:selected` olayıyla duyurur.
+**0014:** `Konsept.Modules.Profiles.Contracts` — `IProfileGenerationReader` (kullanıcı kimliğiyle profil + konsept ayarları + sistem
+talimatı; istek bağlamı gerektirmez). Profil silme Concepts.Contracts `IProfileConceptPresence`'a sorar: konsepti olan profil silinemez (409).
+
+**Concepts (0014):** `Konsept.Modules.Concepts.{Contracts,Domain,Application,Infrastructure,Presentation}` — `concepts` şeması
+(`concepts`: sahneler `jsonb`, durum, profil değerleri satırda — dil/biçim/hedef süre, uyarılar, `deleted_at`; `topic_suggestions`:
+bekleyen / önerilip seçilmemiş / seçildi). Üretim **arka plan işidir**: başlatma ucu doğrular, çağıran kimliğini ve profil bağlamını
+yakalar, `IConceptJobLauncher` işi kendi DI kapsamında `Task.Run` ile başlatır ve hemen döner; iş durumu Api sürecinin belleğindeki
+`IConceptJobRegistry`'dedir (kullanıcı × şerit başına bir iş: `topic` · `idea`; Api yeniden başlarsa süren iş kaybolur — B-93). Konseptler
+sırayla, konsept başına tek çağrı; Durdur sıradakileri başlatmaz. Tüm çağrılar AiGateway.Contracts `IModelCaller` ile (rol → amaç:
+konu önerisi, konsept, anlamca tekrar denetimi → `Review`), Günlük olayı Monitoring.Contracts `ISystemEventWriter` ile (başlık içermez).
+Eşikler ve durak kelimeler gömülü `Rules/concept-rules.json`. Uçlar: `GET api/concepts/work`, `POST api/concepts/{topics,from-topics,
+from-idea,jobs/stop,approve,unapprove}`, `GET api/concepts[/{id}]`. Web: `concept-work.js` + `/konsept-uretim/…`, `/konseptler/…`
+(süren iş varken 2 sn yoklama). Web araması ve kaynak listesi yok (B-91).
 
 **Monitoring — hata bildirimleri (0022):** `monitoring.error_reports` (sıralı `Number`, kaynak web/ajan/API, durum "Yeni", süresiz). Web: `POST api/error-reports` + `GET api/error-reports/preview` (oturumlu; son 20 Günlük kaydını ve versiyonu sunucu ekler; kullanıcı başına saatte 10, web + ajan). Okuma `GET api/error-reports/{number}` yalnızca `admin.panel` (listeleme 0025). Ajan bildirimi ayrı HTTP ucu değil, kimlikli hub metodu `ReportError` (+ hesap için `WhoAmI`); AgentGateway Monitoring.Contracts `IErrorReportSubmitter`'a iletir. API'nin beklenmeyen istisnaları Monitoring'deki `IExceptionHandler` ile kaynak "API" kaydı olur (ProblemDetails sürer; 4xx kayıt oluşturmaz). Ajan bekleyen bildirimleri `pending-reports.json`'da (en çok 20, oluştuğu hesaba bağlı) tutar.
 
