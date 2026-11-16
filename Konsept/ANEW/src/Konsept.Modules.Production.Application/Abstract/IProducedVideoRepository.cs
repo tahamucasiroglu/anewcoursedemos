@@ -24,4 +24,11 @@ public interface IProducedVideoRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Kayıt ya da <c>null</c>.</returns>
     Task<ProducedVideo?> GetAsync(Guid userId, Guid videoId, CancellationToken cancellationToken);
+
+    /// <summary>Kullanıcının bir konseptten üretilmiş tüm sürümleri, eskiden yeniye (spec 0007 Req 6).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept (video).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sürümler; başkasının konsepti için boş.</returns>
+    Task<IReadOnlyList<ProducedVideo>> ListByConceptAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken);
 }

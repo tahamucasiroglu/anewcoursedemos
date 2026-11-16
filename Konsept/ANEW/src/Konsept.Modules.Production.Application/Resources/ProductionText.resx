@@ -52,4 +52,18 @@
   <data name="VideoNotFound" xml:space="preserve"><value>Video bulunamadı.</value></data>
   <data name="StreamAgentOffline" xml:space="preserve"><value>Videoyu izlemek için ajan bağlı olmalı</value></data>
   <data name="StreamFileMissing" xml:space="preserve"><value>Video dosyası bulunamadı</value></data>
+  <data name="FileActionInvalid" xml:space="preserve"><value>Geçersiz dosya eylemi.</value></data>
+  <data name="FileActionTimeout" xml:space="preserve"><value>Zaman aşımı</value></data>
+  <data name="FileActionFailed" xml:space="preserve"><value>Ajan dosyayı açamadı.</value></data>
+  <data name="ChangeFirst" xml:space="preserve"><value>İlk sürüm</value></data>
+  <data name="ChangeNone" xml:space="preserve"><value>Aynı ayarlarla yeniden üretildi</value></data>
+  <data name="ChangeConcept" xml:space="preserve"><value>konsept metni</value></data>
+  <data name="ChangeCodeModel" xml:space="preserve"><value>video kodu modeli</value></data>
+  <data name="ChangeEngine" xml:space="preserve"><value>video motoru</value></data>
+  <data name="ChangeImageModel" xml:space="preserve"><value>görsel modeli</value></data>
+  <data name="ChangeAudioModel" xml:space="preserve"><value>ses motoru</value></data>
+  <data name="ChangeSubtitles" xml:space="preserve"><value>altyazı</value></data>
+  <data name="ChangeProgressBar" xml:space="preserve"><value>ilerleme çubuğu</value></data>
+  <data name="ChangeFormat" xml:space="preserve"><value>biçim</value></data>
+  <data name="ChangeSummary" xml:space="preserve"><value>Değişti: {0}</value></data>
 </root>

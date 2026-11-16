@@ -33,6 +33,7 @@ public static class ProductionModule
         services.AddScoped<IQueueStateRepository, QueueStateRepository>();
         services.AddScoped<ProductionPipelineLinks>();
         services.AddScoped<IProductionService, ProductionService>();
+        services.AddScoped<IProducedVideoService, ProducedVideoService>();
         services.AddScoped<IProductionPipeline, ProductionPipeline>();
         services.AddSingleton<IProductionRunner, ProductionRunner>();
         services.AddHostedService<ProductionWorker>();

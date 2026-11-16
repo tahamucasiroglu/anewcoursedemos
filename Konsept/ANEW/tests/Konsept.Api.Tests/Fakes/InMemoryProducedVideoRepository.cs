@@ -27,4 +27,8 @@ public sealed class InMemoryProducedVideoRepository : IProducedVideoRepository
     /// <inheritdoc />
     public Task<ProducedVideo?> GetAsync(Guid userId, Guid videoId, CancellationToken cancellationToken) =>
         Task.FromResult(_rows.TryGetValue(videoId, out var v) && v.UserId == userId ? v : null);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ProducedVideo>> ListByConceptAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<ProducedVideo>>([.. _rows.Values.Where(v => v.UserId == userId && v.ConceptId == conceptId).OrderBy(v => v.EndedAt)]);
 }

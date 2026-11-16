@@ -40,4 +40,7 @@ public static class AgentHubContract
 
     /// <summary>API → ajan: bir video için kısa ömürlü yerel akış adresi aç (spec 0017 Req 21, Ç-1).</summary>
     public const string OpenStream = "OpenStream";
+
+    /// <summary>API → ajan: videonun klasörünü ya da videoyu sistem oynatıcısında aç (spec 0007 Req 4).</summary>
+    public const string OpenFile = "OpenFile";
 }

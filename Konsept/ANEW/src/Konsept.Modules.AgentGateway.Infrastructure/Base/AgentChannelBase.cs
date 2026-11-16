@@ -44,6 +44,13 @@ public abstract class AgentChannelBase : IAgentChannel
         return InvokeAsync<AgentStreamReply>(connectionId, AgentHubContract.OpenStream, request, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task<AgentFileActionReply> OpenFileAsync(string connectionId, AgentFileActionRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+        return InvokeAsync<AgentFileActionReply>(connectionId, AgentHubContract.OpenFile, request, cancellationToken);
+    }
+
     /// <summary>Komutu gönderir ve cevabı bekler.</summary>
     /// <param name="connectionId">Ajan bağlantısı.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

@@ -217,6 +217,53 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         (await queue.GetAsync(userId, ct))!.Halted.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// Spec 0007 AC-11 (gerçek PostgreSQL, kasıtlı bozma hedefi): sürüm kaydının yeni alanları (süre, biçim, maliyet) yazılıp okunur; konseptin
+    /// sürümleri eskiden yeniye gelir; başka kullanıcı ne konseptin sürümlerini ne tek sürümü okuyabilir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Produced_RealDatabase_OwnerFilter()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var videos = new ProducedVideoRepository(scope.ServiceProvider.GetRequiredService<ProductionDbContext>());
+        var (userId, profileId, concept) = (Guid.CreateVersion7(), Guid.CreateVersion7(), Guid.CreateVersion7());
+        var now = DateTimeOffset.UtcNow;
+        var ids = new List<Guid>();
+        foreach (var (title, minutes) in new[] { ("Yeni", -1), ("Eski", -10) })
+        {
+            var id = Guid.CreateVersion7();
+            ids.Add(id);
+            await videos.AddAsync(
+                new ProducedVideo
+                {
+                    Id = id,
+                    UserId = userId,
+                    ProfileId = profileId,
+                    ConceptId = concept,
+                    JobId = Guid.CreateVersion7(),
+                    Title = title,
+                    ConceptText = "{\"title\":\"" + title + "\"}",
+                    Engine = "local/hyperframes",
+                    FileName = title + ".mp4",
+                    StartedAt = now.AddMinutes(minutes - 1),
+                    EndedAt = now.AddMinutes(minutes),
+                    DurationSeconds = 95,
+                    Format = "portrait",
+                    CostUsd = 0.004321m,
+                },
+                ct);
+        }
+
+        var versions = await videos.ListByConceptAsync(userId, concept, ct);
+        versions.Select(v => v.Title).ShouldBe(["Eski", "Yeni"]);
+        (versions[0].DurationSeconds, versions[0].Format, versions[0].CostUsd).ShouldBe((95, "portrait", 0.004321m));
+        (await videos.ListByConceptAsync(Guid.NewGuid(), concept, ct)).ShouldBeEmpty();
+        (await videos.GetAsync(Guid.NewGuid(), ids[0], ct)).ShouldBeNull();
+        (await videos.GetAsync(userId, ids[0], ct))!.Title.ShouldBe("Yeni");
+    }
+
     private static async Task<JsonElement> State(HttpClient client, Guid profile, CancellationToken ct) =>
         await client.GetFromJsonAsync<JsonElement>($"/api/production/state?profileId={profile}", ct);
 

@@ -41,4 +41,11 @@ public interface IAgentChannel
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Cevap.</returns>
     Task<AgentStreamReply> OpenStreamAsync(string connectionId, AgentStreamRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Dosya eylemi (spec 0007 Req 4).</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Cevap.</returns>
+    Task<AgentFileActionReply> OpenFileAsync(string connectionId, AgentFileActionRequest request, CancellationToken cancellationToken);
 }

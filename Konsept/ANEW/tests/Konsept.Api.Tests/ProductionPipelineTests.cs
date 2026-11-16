@@ -108,6 +108,10 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
         record.AiVoiceNotice.ShouldBeFalse();
         record.ConceptText.ShouldContain("Bizans'ın son sabahı başlıyor.");
         record.EndedAt.ShouldBeGreaterThanOrEqualTo(record.StartedAt);
+        record.DurationSeconds.ShouldBe(60); // 0007: sahne planı toplamı, biçim ve işin online maliyeti kayıtta.
+        record.Format.ShouldBe("landscape");
+        record.CostUsd.ShouldBe(job.Progress.CostUsd);
+        record.CostUsd.ShouldBeGreaterThan(0m);
 
         var (otherClient, otherProfile, _, _) = await SetupAsync(ct, reset: false);
         (await otherClient.GetFromJsonAsync<JsonElement>($"/api/production/videos?profileId={otherProfile}", ct)).GetArrayLength().ShouldBe(0);

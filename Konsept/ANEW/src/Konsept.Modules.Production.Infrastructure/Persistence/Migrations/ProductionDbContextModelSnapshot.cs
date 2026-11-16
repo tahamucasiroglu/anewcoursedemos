@@ -52,6 +52,19 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("concept_text");
 
+                    b.Property<decimal>("CostUsd")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("cost_usd");
+
+                    b.Property<int>("DurationSeconds")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("duration_seconds");
+
                     b.Property<DateTimeOffset>("EndedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ended_at");
@@ -67,6 +80,14 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
                         .HasColumnName("file_name");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("landscape")
+                        .HasColumnName("format");
 
                     b.Property<string>("ImageModel")
                         .HasMaxLength(200)
@@ -104,6 +125,9 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ConceptId", "EndedAt")
+                        .HasDatabaseName("ix_videos_user_concept_ended");
 
                     b.HasIndex("UserId", "ProfileId", "EndedAt")
                         .HasDatabaseName("ix_videos_user_profile_ended");

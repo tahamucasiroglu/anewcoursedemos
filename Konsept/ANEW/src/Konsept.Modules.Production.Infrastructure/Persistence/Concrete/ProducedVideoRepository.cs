@@ -35,4 +35,12 @@ public sealed class ProducedVideoRepository : EfRepositoryBase<ProductionDbConte
     /// <inheritdoc />
     public Task<ProducedVideo?> GetAsync(Guid userId, Guid videoId, CancellationToken cancellationToken) =>
         Context.Videos.AsNoTracking().FirstOrDefaultAsync(v => v.Id == videoId && v.UserId == userId, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ProducedVideo>> ListByConceptAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken) =>
+        await Context.Videos.AsNoTracking()
+            .Where(v => v.UserId == userId && v.ConceptId == conceptId)
+            .OrderBy(v => v.EndedAt)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

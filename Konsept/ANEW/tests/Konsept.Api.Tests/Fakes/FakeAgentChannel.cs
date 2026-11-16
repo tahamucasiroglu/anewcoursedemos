@@ -26,6 +26,9 @@ public sealed class FakeAgentChannel : IAgentChannel
     public Func<AgentStreamRequest, AgentStreamReply> Stream { get; set; } =
         r => new AgentStreamReply("http://127.0.0.1:47615/video/" + r.VideoId.ToString("N") + "?t=test", null);
 
+    /// <summary>Gets or sets dosya eylemi işleyicisi (spec 0007; varsayılan: açıldı).</summary>
+    public Func<AgentFileActionRequest, CancellationToken, Task<AgentFileActionReply>> FileAction { get; set; } = DefaultFileAction;
+
     /// <summary>Gets gönderilenler (bağlantı, metot, JSON yük).</summary>
     public IReadOnlyList<(string ConnectionId, string Method, string Payload)> Sent
     {
@@ -50,6 +53,13 @@ public sealed class FakeAgentChannel : IAgentChannel
             true, Device: "gpu", AiVoiceNotice: command.Stage == AgentStageCommand.Merge && command.AudioModel == "local/supertonic-3"));
     }
 
+    /// <summary>Varsayılan dosya eylemi: açıldı.</summary>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal.</param>
+    /// <returns>Cevap.</returns>
+    public static Task<AgentFileActionReply> DefaultFileAction(AgentFileActionRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new AgentFileActionReply(true, null));
+
     /// <summary>Belirli bir metodun komut sayısı.</summary>
     /// <param name="method">Metot.</param>
     /// <param name="stage">Aşama (yalnızca <c>RunStage</c>).</param>
@@ -68,6 +78,7 @@ public sealed class FakeAgentChannel : IAgentChannel
         Missing = [];
         BeforeCheck = null;
         Stage = DefaultStage;
+        FileAction = DefaultFileAction;
     }
 
     /// <inheritdoc />
@@ -106,6 +117,14 @@ public sealed class FakeAgentChannel : IAgentChannel
         ArgumentNullException.ThrowIfNull(request);
         Record(connectionId, "OpenStream", request);
         return Task.FromResult(Stream(request));
+    }
+
+    /// <inheritdoc />
+    public Task<AgentFileActionReply> OpenFileAsync(string connectionId, AgentFileActionRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Record(connectionId, "OpenFile", request);
+        return FileAction(request, cancellationToken);
     }
 
     private void Record(string connectionId, string method, object payload)

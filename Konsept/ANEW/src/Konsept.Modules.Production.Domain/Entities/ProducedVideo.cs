@@ -56,4 +56,13 @@ public sealed record ProducedVideo
 
     /// <summary>Gets bitiş (UTC).</summary>
     public DateTimeOffset EndedAt { get; init; }
+
+    /// <summary>Gets video süresi (sn; sahne planı toplamı — spec 0007 Req 1).</summary>
+    public int DurationSeconds { get; init; }
+
+    /// <summary>Gets biçim (<c>landscape</c> / <c>portrait</c>).</summary>
+    public string Format { get; init; } = "landscape";
+
+    /// <summary>Gets sürümün online model maliyeti (USD; yerel aşamalar ücretsiz — spec 0007 Req 5, BR-12).</summary>
+    public decimal CostUsd { get; init; }
 }

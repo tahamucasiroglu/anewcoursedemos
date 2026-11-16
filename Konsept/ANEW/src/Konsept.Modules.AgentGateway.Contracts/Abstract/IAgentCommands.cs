@@ -39,4 +39,11 @@ public interface IAgentCommands
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Cevap ya da <c>null</c> (ajan yok/koptu).</returns>
     Task<AgentStreamReply?> OpenStreamAsync(Guid userId, AgentStreamRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Dosya eylemi (klasörde aç / sistem oynatıcısında aç — spec 0007 Req 4); yalnızca sahibin ajanına.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal belirteci (zaman aşımı çağıranda).</param>
+    /// <returns>Cevap ya da <c>null</c> (ajan yok/koptu).</returns>
+    Task<AgentFileActionReply?> OpenFileAsync(Guid userId, AgentFileActionRequest request, CancellationToken cancellationToken);
 }

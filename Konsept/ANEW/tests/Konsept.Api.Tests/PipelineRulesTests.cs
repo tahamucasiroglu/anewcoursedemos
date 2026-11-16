@@ -68,6 +68,19 @@ public sealed class PipelineRulesTests
         PlanParser.ParseCode("merhaba").ShouldBeNull();
     }
 
+    /// <summary>Spec 0007 AC-10: ilk sürüm "first"; sonraki sürümde yalnızca değişen alanlar, sabit sırada; aynıysa boş.</summary>
+    [Fact]
+    public void VersionChanges_Describes()
+    {
+        var first = new ProducedVideo { Title = "T", ConceptText = "{\"a\":1}", Engine = "local/hyperframes", FileName = "a.mp4", CodeModel = "m1" };
+        VersionChanges.Describe(null, first).ShouldBe([VersionChanges.First]);
+        VersionChanges.Describe(first, first with { Id = Guid.NewGuid() }).ShouldBeEmpty();
+        VersionChanges.Describe(first, first with { ConceptText = "{\"a\":2}", AudioModel = "local/supertonic-3", Subtitles = true })
+            .ShouldBe([VersionChanges.Concept, VersionChanges.AudioModel, VersionChanges.Subtitles]);
+        VersionChanges.Describe(first, first with { CodeModel = "m2", Engine = "e2", ImageModel = "i", ProgressBar = true, Format = "portrait" })
+            .ShouldBe([VersionChanges.CodeModel, VersionChanges.Engine, VersionChanges.ImageModel, VersionChanges.ProgressBar, VersionChanges.Format]);
+    }
+
     private static FixedJobSettings Fixed(string? image, string? audio) => new()
     {
         Engine = "local/hyperframes",

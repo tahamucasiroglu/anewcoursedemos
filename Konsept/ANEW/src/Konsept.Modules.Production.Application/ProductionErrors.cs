@@ -53,6 +53,15 @@ public static class ProductionErrors
     /// <summary>Gets video dosyası ajan klasöründe yok.</summary>
     public static Error StreamFileMissing => new("production.file_missing", ProductionText.StreamFileMissing, ErrorType.NotFound);
 
+    /// <summary>Dosya eylemi geçersiz (yalnızca <c>folder</c> / <c>player</c>).</summary>
+    public static Error FileActionInvalid => new("production.file_action_invalid", ProductionText.FileActionInvalid, ErrorType.Validation);
+
+    /// <summary>Ajan 10 sn içinde cevap vermedi (spec 0007 Req 4).</summary>
+    public static Error FileActionTimeout => new("production.file_action_timeout", ProductionText.FileActionTimeout, ErrorType.Timeout);
+
+    /// <summary>Ajan dosyayı açamadı.</summary>
+    public static Error FileActionFailed => new("production.file_action_failed", ProductionText.FileActionFailed, ErrorType.Unavailable);
+
     /// <summary>"Sırayla üret" pasif (Req 14): mesaj nedenin metni, <c>reason</c> kodu.</summary>
     /// <param name="reason">Neden kodu (<see cref="StartBlock"/>).</param>
     /// <returns>Hata.</returns>

@@ -44,6 +44,10 @@ public abstract class AgentCommandsBase(IAgentConnectionRegistry registry, IAgen
     public Task<AgentStreamReply?> OpenStreamAsync(Guid userId, AgentStreamRequest request, CancellationToken cancellationToken) =>
         SendAsync(userId, (id, ct) => channel.OpenStreamAsync(id, request, ct), null, cancellationToken);
 
+    /// <inheritdoc />
+    public Task<AgentFileActionReply?> OpenFileAsync(Guid userId, AgentFileActionRequest request, CancellationToken cancellationToken) =>
+        SendAsync(userId, (id, ct) => channel.OpenFileAsync(id, request, ct), new AgentFileActionReply(false, AgentFileActionReply.Failed), cancellationToken);
+
     /// <summary>Hatanın bağlantı kopması anlamına gelip gelmediği (iptal dışındaki gönderim hataları).</summary>
     /// <param name="exception">Hata.</param>
     /// <returns>Koptuysa <c>true</c>.</returns>

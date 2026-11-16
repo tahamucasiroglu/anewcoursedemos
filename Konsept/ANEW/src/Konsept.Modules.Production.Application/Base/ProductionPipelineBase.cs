@@ -509,6 +509,9 @@ public abstract class ProductionPipelineBase(
                 FileName = fileName,
                 StartedAt = _progress.StartedAt ?? now,
                 EndedAt = now,
+                DurationSeconds = _outputs.Plan?.Sum(p => p.DurationSeconds) ?? _content.Scenes.Sum(s => s.DurationSeconds),
+                Format = _fix.Format,
+                CostUsd = _progress.CostUsd,
             },
             CancellationToken.None).ConfigureAwait(false);
         await concepts.ChangeAsync(_job.UserId, _job.ConceptId, ConceptQueueStage.Producing, ConceptQueueStage.VideoReady, CancellationToken.None).ConfigureAwait(false);
