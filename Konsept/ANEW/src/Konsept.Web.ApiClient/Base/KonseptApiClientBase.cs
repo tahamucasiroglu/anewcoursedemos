@@ -63,6 +63,20 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         SendAsync<AdminOverviewResponse>(new HttpRequestMessage(HttpMethod.Get, "api/admin/overview"), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<JsonElement>> GetAdminStatisticsAsync(int? days, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(
+            new HttpRequestMessage(HttpMethod.Get, $"api/admin/statistics?days={(days ?? 30).ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> GetAdminActivitiesAsync(int page, string? user, string? from, string? to, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                $"api/admin/activities?page={Math.Max(1, page).ToString(System.Globalization.CultureInfo.InvariantCulture)}&user={Uri.EscapeDataString(user ?? string.Empty)}&from={Uri.EscapeDataString(from ?? string.Empty)}&to={Uri.EscapeDataString(to ?? string.Empty)}"),
+            cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<PairingDeviceResponse>> AgentPairingAsync(string action, string? code, string? clientIp, CancellationToken cancellationToken)
     {
         // Kod yalnızca gövdede gider (adreste olsaydı Api istek loguna düz yazılırdı, review r1 M-2).

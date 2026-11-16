@@ -1,12 +1,81 @@
-@* Admin iskeleti (spec 0011 Req 4): yalnızca admin.panel yetkisiyle açılır; içerik 0010, 0024 ve 0025'te gelir. Özet
-   admin.js ile /admin/ozet'ten yüklenir; bölüm yokken boş durum metni kalır. *@
+@* Admin paneli (spec 0010; giriş ve yetki 0011): sekmeler İstatistikler · Aktiviteler (Kullanıcılar 0024, Hata bildirimleri 0025
+   araya eklenir). admin-panel.js verileri /admin/istatistikler ve /admin/aktiviteler'den $.ajax ile (K-6) sayfa açılışında, sekme,
+   aralık ve filtre değişiminde alır; canlı yenileme yok. Metinler resx'ten; Api verisi yalnızca textContent ile yazılır. *@
 @{
     ViewData["Title"] = UiText.Admin;
 }
 <h1 class="page__title">@UiText.Admin</h1>
-<section class="admin" id="admin" data-overview-url="/admin/ozet"
-         data-text-forbidden="@UiText.ActionForbidden" data-text-failed="@UiText.AdminLoadFailed">
-    <p class="empty-state admin__empty" id="admin-empty">@UiText.AdminEmpty</p>
-    <ul class="admin__sections" id="admin-sections" hidden></ul>
+<div class="admin-panel" id="admin-panel" data-statistics-url="/admin/istatistikler" data-activities-url="/admin/aktiviteler"
+     data-text-loading="@UiText.AdminLoading" data-text-statistics-failed="@UiText.AdminStatisticsFailed"
+     data-text-activities-failed="@UiText.AdminActivitiesFailed" data-text-correlation="@UiText.AdminCorrelation"
+     data-text-chart-registrations="@UiText.AdminChartRegistrations" data-text-chart-clips="@UiText.AdminChartClips"
+     data-text-chart-active="@UiText.AdminChartActive" data-text-chart-empty="@UiText.AdminChartEmpty"
+     data-text-chart-table="@UiText.AdminChartTable" data-text-chart-summary="@UiText.AdminChartSummary"
+     data-text-column-date="@UiText.AdminColumnDate" data-text-column-value="@UiText.AdminColumnValue"
+     data-text-date-invalid="@UiText.AdminDateInvalid" data-text-activities-empty="@UiText.AdminActivitiesEmpty"
+     data-text-activities-no-match="@UiText.AdminActivitiesNoMatch" data-text-page="@UiText.ConceptsPage">
+    <div class="tabs" role="tablist" aria-label="@UiText.AdminTabsLabel">
+        <button type="button" class="tabs__tab" role="tab" id="admin-tab-statistics" aria-selected="true" aria-controls="admin-statistics">@UiText.AdminTabStatistics</button>
+        <button type="button" class="tabs__tab" role="tab" id="admin-tab-activities" aria-selected="false" aria-controls="admin-activities" tabindex="-1">@UiText.AdminTabActivities</button>
+    </div>
+
+    <section class="tabs__panel" role="tabpanel" id="admin-statistics" aria-labelledby="admin-tab-statistics" tabindex="0">
+        <p class="admin-panel__status" id="admin-statistics-status" role="status" aria-live="polite"></p>
+        <div class="admin-panel__error" id="admin-statistics-error" role="alert" hidden>
+            <p class="admin__message" id="admin-statistics-error-text"></p>
+            <button type="button" class="button" id="admin-statistics-retry">@UiText.AdminRetry</button>
+        </div>
+        <dl class="admin-cards">
+            <div class="admin-card"><dt>@UiText.AdminTotalUsers</dt><dd id="admin-total-users">–</dd></div>
+            <div class="admin-card"><dt>@UiText.AdminTotalClips</dt><dd id="admin-total-clips">–</dd></div>
+            <div class="admin-card"><dt>@UiText.AdminOpenReports</dt><dd id="admin-open-reports">–</dd></div>
+        </dl>
+        <div class="field">
+            <label class="field__label" for="admin-range">@UiText.AdminRange</label>
+            <select class="field__input field__input--short" id="admin-range">
+                <option value="7">@UiText.AdminRange7</option>
+                <option value="30" selected>@UiText.AdminRange30</option>
+                <option value="90">@UiText.AdminRange90</option>
+            </select>
+        </div>
+        <div class="admin-charts" id="admin-charts"></div>
+    </section>
+
+    <section class="tabs__panel" role="tabpanel" id="admin-activities" aria-labelledby="admin-tab-activities" tabindex="0" hidden>
+        <form class="admin-filter" id="admin-activity-filter" novalidate>
+            <div class="field">
+                <label class="field__label" for="admin-filter-user">@UiText.AdminFilterUser</label>
+                <input class="field__input" type="search" id="admin-filter-user" autocomplete="off" aria-describedby="admin-filter-user-hint" />
+                <span class="field__hint" id="admin-filter-user-hint">@UiText.AdminFilterUserHint</span>
+            </div>
+            <div class="field">
+                <label class="field__label" for="admin-filter-from">@UiText.AdminFilterFrom</label>
+                <input class="field__input" type="date" id="admin-filter-from" />
+            </div>
+            <div class="field">
+                <label class="field__label" for="admin-filter-to">@UiText.AdminFilterTo</label>
+                <input class="field__input" type="date" id="admin-filter-to" />
+            </div>
+            <button type="submit" class="button button--primary">@UiText.AdminFilterApply</button>
+        </form>
+        <p class="admin__message" id="admin-filter-warning" role="alert" hidden></p>
+        <p class="admin-panel__status" id="admin-activities-status" role="status" aria-live="polite"></p>
+        <div class="admin-panel__error" id="admin-activities-error" role="alert" hidden>
+            <p class="admin__message" id="admin-activities-error-text"></p>
+            <button type="button" class="button" id="admin-activities-retry">@UiText.AdminRetry</button>
+        </div>
+        <table class="admin-table" id="admin-activity-table" hidden>
+            <caption class="visually-hidden">@UiText.AdminTabActivities</caption>
+            <thead>
+                <tr><th scope="col">@UiText.AdminColumnTime</th><th scope="col">@UiText.AdminColumnUser</th><th scope="col">@UiText.AdminColumnActivity</th></tr>
+            </thead>
+            <tbody id="admin-activity-rows"></tbody>
+        </table>
+        <nav class="admin-pager" id="admin-pager" aria-label="@UiText.AdminPagination" hidden>
+            <button type="button" class="button" id="admin-prev">@UiText.ConceptsPrev</button>
+            <span id="admin-page"></span>
+            <button type="button" class="button" id="admin-next">@UiText.ConceptsNext</button>
+        </nav>
+    </section>
     <p class="admin__message" id="admin-message" role="alert" hidden></p>
-</section>
+</div>

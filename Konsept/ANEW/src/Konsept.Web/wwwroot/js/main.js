@@ -1,5 +1,6 @@
-// Sayfa giriş noktası: pasif kontroller, "Hata bildir", "Ajanı test et", durum yoklaması, Günlük geçmişi, tek gönderimlik çıkış formu, admin özeti, Ayarlar, "Ajanı eşleştir", profiller, Konseptler şeridi, düzenleme döngüsü, Silinenler, önerileri sıfırla, Konseptten Video, Üretilen Videolar ve aylık harcama.
+// Sayfa giriş noktası: pasif kontroller, "Hata bildir", "Ajanı test et", durum yoklaması, Günlük geçmişi, tek gönderimlik çıkış formu, admin özeti, admin paneli, Ayarlar, "Ajanı eşleştir", profiller, Konseptler şeridi, düzenleme döngüsü, Silinenler, önerileri sıfırla, Konseptten Video, Üretilen Videolar ve aylık harcama.
 import { loadAdminOverview } from './admin.js';
+import { initAdminPanel } from './admin-panel.js';
 import { initPairing } from './agent-pairing.js';
 import { bindAgentTest } from './agent-test.js';
 import { bindSubmitOnceForms } from './auth-form.js';
@@ -25,6 +26,7 @@ startPolling(document);
 initJournal(document);
 initErrorReport(document);
 loadAdminOverview(document);
+initAdminPanel(document); // Admin paneli (spec 0010).
 initSettings(document);
 initPairing(document);
 initConcepts(document); // profiles.js'in 'profile:selected' olayından önce dinlemeye başlar.

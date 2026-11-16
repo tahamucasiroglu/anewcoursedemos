@@ -239,6 +239,111 @@ body {
   background: var(--color-surface);
 }
 
+/* Admin paneli (spec 0010): kartlar, grafikler, tablolar, filtre. Renkler yalnızca tema değişkenlerinden (K-7). */
+.admin-panel__status {
+  min-height: 1.2em;
+  color: var(--color-text-muted);
+}
+
+.admin-panel__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-panel__error[hidden],
+.admin-table[hidden],
+.admin-pager[hidden],
+.admin-chart__empty[hidden],
+.admin-chart__svg[hidden] {
+  display: none;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.admin-card {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-card dt {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.admin-card dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.admin-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.admin-chart {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-chart__svg {
+  display: block;
+  width: 100%;
+  height: 8rem;
+}
+
+.admin-chart__bar {
+  fill: var(--color-primary);
+}
+
+.admin-chart__empty {
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.admin-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.admin-pager {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
 .forbidden {
   color: var(--color-error);
   background: var(--color-surface);

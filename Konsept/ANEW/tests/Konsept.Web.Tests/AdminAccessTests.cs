@@ -67,10 +67,13 @@ public sealed partial class AdminAccessTests
         page.QuerySelectorAll("a[href='/admin']").Length.ShouldBe(1);
     }
 
-    /// <summary>Admin iskelet sayfası boş durum metniyle açılır; özet ucu Ajax ile Api'den alınır.</summary>
+    /// <summary>
+    /// Admin sayfası açılır (0010'dan beri boş durum yerine sekmeli panel — plan 0010 A-1); 0011'in özet ucu Ajax ile Api'den alınmaya
+    /// devam eder.
+    /// </summary>
     /// <returns>Görev.</returns>
     [Fact]
-    public async Task AdminPage_AdminRole_ShowsEmptyState()
+    public async Task AdminPage_AdminRole_ShowsPanel()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var factory = new WebFactory();
@@ -84,8 +87,8 @@ public sealed partial class AdminAccessTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         page.QuerySelector("h1.page__title")!.TextContent.ShouldBe("Admin");
-        page.QuerySelector("#admin-empty")!.TextContent.ShouldStartWith("Admin alanı henüz boş.");
-        page.QuerySelector("#admin")!.GetAttribute("data-overview-url").ShouldBe("/admin/ozet");
+        page.QuerySelector("#admin-panel [role='tablist']").ShouldNotBeNull(); // plan 0010 A-1: boş durum yerine panel.
+        page.QuerySelector("#admin-tab-statistics")!.GetAttribute("aria-selected").ShouldBe("true");
         page.QuerySelector("a[href='/admin']")!.GetAttribute("aria-current").ShouldBe("page");
         overview.StatusCode.ShouldBe(HttpStatusCode.OK);
         body.GetProperty("sections").EnumerateArray().ShouldBeEmpty();

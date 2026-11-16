@@ -98,6 +98,41 @@
   <data name="Admin" xml:space="preserve"><value>Admin</value></data>
   <data name="AdminEmpty" xml:space="preserve"><value>Admin alanı henüz boş. İstatistikler, kullanıcılar ve hata bildirimleri ileride burada görünecek.</value></data>
   <data name="AdminLoadFailed" xml:space="preserve"><value>Admin özeti şu an yüklenemedi</value></data>
+  <data name="AdminTabsLabel" xml:space="preserve"><value>Admin paneli bölümleri</value></data>
+  <data name="AdminTabStatistics" xml:space="preserve"><value>İstatistikler</value></data>
+  <data name="AdminTabActivities" xml:space="preserve"><value>Aktiviteler</value></data>
+  <data name="AdminTotalUsers" xml:space="preserve"><value>Toplam kullanıcı</value></data>
+  <data name="AdminTotalClips" xml:space="preserve"><value>Üretilen toplam klip</value></data>
+  <data name="AdminOpenReports" xml:space="preserve"><value>Açık hata bildirimi</value></data>
+  <data name="AdminRange" xml:space="preserve"><value>Aralık</value></data>
+  <data name="AdminRange7" xml:space="preserve"><value>Son 7 gün</value></data>
+  <data name="AdminRange30" xml:space="preserve"><value>Son 30 gün</value></data>
+  <data name="AdminRange90" xml:space="preserve"><value>Son 90 gün</value></data>
+  <data name="AdminChartRegistrations" xml:space="preserve"><value>Günlük yeni kayıt</value></data>
+  <data name="AdminChartClips" xml:space="preserve"><value>Günlük üretilen klip</value></data>
+  <data name="AdminChartActive" xml:space="preserve"><value>Günlük aktif kullanıcı</value></data>
+  <data name="AdminChartEmpty" xml:space="preserve"><value>Bu aralıkta veri yok</value></data>
+  <data name="AdminChartTable" xml:space="preserve"><value>Tablo olarak göster</value></data>
+  <data name="AdminChartSummary" xml:space="preserve"><value>{0}: {1} gün, toplam {2}</value></data>
+  <data name="AdminColumnDate" xml:space="preserve"><value>Tarih</value></data>
+  <data name="AdminColumnValue" xml:space="preserve"><value>Değer</value></data>
+  <data name="AdminLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="AdminStatisticsFailed" xml:space="preserve"><value>İstatistikler şu an yüklenemedi.</value></data>
+  <data name="AdminActivitiesFailed" xml:space="preserve"><value>Aktiviteler şu an yüklenemedi.</value></data>
+  <data name="AdminCorrelation" xml:space="preserve"><value>Hata no: {0}</value></data>
+  <data name="AdminRetry" xml:space="preserve"><value>Tekrar dene</value></data>
+  <data name="AdminFilterUser" xml:space="preserve"><value>Kullanıcı (ad ya da e-posta)</value></data>
+  <data name="AdminFilterUserHint" xml:space="preserve"><value>En az 2 karakter</value></data>
+  <data name="AdminFilterFrom" xml:space="preserve"><value>Başlangıç</value></data>
+  <data name="AdminFilterTo" xml:space="preserve"><value>Bitiş</value></data>
+  <data name="AdminFilterApply" xml:space="preserve"><value>Filtrele</value></data>
+  <data name="AdminDateInvalid" xml:space="preserve"><value>Başlangıç tarihi bitişten sonra olamaz</value></data>
+  <data name="AdminActivitiesEmpty" xml:space="preserve"><value>Henüz aktivite yok</value></data>
+  <data name="AdminActivitiesNoMatch" xml:space="preserve"><value>Filtreye uyan aktivite yok</value></data>
+  <data name="AdminColumnTime" xml:space="preserve"><value>Zaman</value></data>
+  <data name="AdminColumnUser" xml:space="preserve"><value>Kullanıcı</value></data>
+  <data name="AdminColumnActivity" xml:space="preserve"><value>Aktivite</value></data>
+  <data name="AdminPagination" xml:space="preserve"><value>Sayfalama</value></data>
   <data name="PageForbidden" xml:space="preserve"><value>Bu sayfaya erişim yetkiniz yok</value></data>
   <data name="ActionForbidden" xml:space="preserve"><value>Bu işlem için yetkiniz yok</value></data>
   <data name="SettingsApiKeys" xml:space="preserve"><value>API key'ler</value></data>

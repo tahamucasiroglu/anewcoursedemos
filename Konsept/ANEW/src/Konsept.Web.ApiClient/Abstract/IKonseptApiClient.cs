@@ -63,6 +63,21 @@ public interface IKonseptApiClient
     /// <returns>Özet ya da hata (403 → Forbidden).</returns>
     Task<Result<AdminOverviewResponse>> GetAdminOverviewAsync(CancellationToken cancellationToken);
 
+    /// <summary>Admin İstatistikler (spec 0010): özet sayılar ve günlük seri; Api'nin gövdesi olduğu gibi geçer.</summary>
+    /// <param name="days">Aralık (7 / 30 / 90).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (403 → Forbidden).</returns>
+    Task<Result<JsonElement>> GetAdminStatisticsAsync(int? days, CancellationToken cancellationToken);
+
+    /// <summary>Admin Aktiviteler (spec 0010): 25'erli sayfa; Api'nin gövdesi olduğu gibi geçer.</summary>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="user">Ad/e-posta araması.</param>
+    /// <param name="from">Başlangıç günü (<c>yyyy-MM-dd</c>).</param>
+    /// <param name="to">Bitiş günü (<c>yyyy-MM-dd</c>).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (403 → Forbidden).</returns>
+    Task<Result<JsonElement>> GetAdminActivitiesAsync(int page, string? user, string? from, string? to, CancellationToken cancellationToken);
+
     /// <summary>
     /// Ajan eşleştirme (spec 0012): kodun cihazını sorar (<c>lookup</c>), onaylar (<c>approve</c>) ya da reddeder (<c>reject</c>);
     /// tarayıcının IP'si servis anahtarıyla iletilir (Api'nin IP başına hız sınırı, Req 8).
