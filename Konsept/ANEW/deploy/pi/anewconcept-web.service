@@ -19,6 +19,8 @@ Environment=Logging__Directory=/opt/anewconcept/logs/web
 Environment=Logging__Console=false
 # Çerez şifreleme anahtarları kalıcı klasörde (plan 0002, B-46); provision.sh oluşturur.
 Environment=DataProtection__KeysDirectory=/opt/anewconcept/keys/web
+# "Ajanı indir" (spec 0009): sürümlü ajan exe'si ve bileşen aynası (components/); provision.sh doldurur.
+Environment=AgentDownload__Directory=/opt/anewconcept/agent
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
 EnvironmentFile=/etc/anewconcept/web.env
 Restart=always

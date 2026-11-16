@@ -49,7 +49,7 @@ internal sealed record AgentComposition(
         Directory.CreateDirectory(root);
         var logging = AgentLogging.Create(root, TimeProvider.System);
         Serilog.Log.Logger = logging.Logger;
-        var settings = AgentSettingsLoader.Load(AppContext.BaseDirectory);
+        var settings = AgentSettingsLoader.Load(AppContext.BaseDirectory, AgentSettingsLoader.ReadMetadata(typeof(App).Assembly));
         var info = new AssemblyAgentInfoProvider(typeof(App).Assembly);
         var tokens = new FileAgentTokenStore(root);
         var connection = new SignalRServerConnection(settings, info, logger: logging.Logger, accessToken: tokens.Read);

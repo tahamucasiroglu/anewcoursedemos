@@ -30,4 +30,14 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Konsept.Agent.Tests" />
   </ItemGroup>
+  <!--
+    Siteden indirilen tek exe (spec 0009 Req 1): deploy/pi/deploy.sh yayında Pi adreslerini verir
+    (-p:AgentServerUrl=… -p:AgentSiteUrl=…); exe yanında agentsettings*.json yoksa ajan bunları kullanır.
+  -->
+  <ItemGroup Condition="'$(AgentServerUrl)' != ''">
+    <AssemblyMetadata Include="AgentServerUrl" Value="$(AgentServerUrl)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AgentSiteUrl)' != ''">
+    <AssemblyMetadata Include="AgentSiteUrl" Value="$(AgentSiteUrl)" />
+  </ItemGroup>
 </Project>

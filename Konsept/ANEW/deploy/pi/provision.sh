@@ -76,6 +76,22 @@ for app in api web; do
 done
 chmod 750 /opt/anewconcept/api/Konsept.Api /opt/anewconcept/web/Konsept.Web
 
+# Ajan kurulum dosyası ve bileşen aynası (spec 0009 Req 1, 11–12): Web okur (grup anewconcept), herkes indiremez — exe girişle
+# (/ajan/indir), ayna kimliksiz (/ajan-bilesenleri/, yalnızca herkese açık üçüncü taraf arşivleri). Eski sürüm exe'leri silinir,
+# ayna dosyaları korunur (her deploy'da yeniden yüklenmez).
+install -d -o root -g anewconcept -m 750 /opt/anewconcept/agent /opt/anewconcept/agent/components
+if [ -d "$SRC/agent" ]; then
+  find /opt/anewconcept/agent -maxdepth 1 -type f -name 'anewconcept-ajan-*.exe' -delete
+  for f in "$SRC"/agent/*.exe; do
+    if [ -e "$f" ]; then install -m 640 -o root -g anewconcept "$f" /opt/anewconcept/agent/; fi
+  done
+fi
+if [ -d "$SRC/mirror" ]; then
+  for f in "$SRC"/mirror/*; do
+    if [ -e "$f" ]; then install -m 640 -o root -g anewconcept "$f" /opt/anewconcept/agent/components/; fi
+  done
+fi
+
 systemctl daemon-reload
 systemctl enable anewconcept-api.service anewconcept-web.service >/dev/null
 systemctl restart anewconcept-api.service

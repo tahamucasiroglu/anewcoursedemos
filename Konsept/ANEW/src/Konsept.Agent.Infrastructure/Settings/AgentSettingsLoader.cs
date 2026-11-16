@@ -5,7 +5,9 @@ namespace Konsept.Agent.Infrastructure.Settings;
 
 /// <summary>
 /// Ajan ayarlarını ajan klasöründen okur: <c>agentsettings.json</c>, varsa üzerine
-/// <c>agentsettings.Local.json</c> (repoya girmez; geliştiricinin Pi adresi gibi yerel değerler).
+/// <c>agentsettings.Local.json</c> (repoya girmez; geliştiricinin Pi adresi gibi yerel değerler). İkisi de yoksa (siteden indirilen
+/// tek exe, spec 0009 Req 1) yayında exe'ye gömülen adresler (<c>AgentServerUrl</c>/<c>AgentSiteUrl</c> AssemblyMetadata), o da yoksa
+/// localhost.
 /// </summary>
 public static class AgentSettingsLoader
 {
@@ -17,18 +19,43 @@ public static class AgentSettingsLoader
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Ayarları yükler; dosya yoksa varsayılanlar kullanılır.</summary>
+    /// <summary>Gömülü sunucu adresinin AssemblyMetadata anahtarı.</summary>
+    public const string ServerUrlMetadata = "AgentServerUrl";
+
+    /// <summary>Gömülü site adresinin AssemblyMetadata anahtarı.</summary>
+    public const string SiteUrlMetadata = "AgentSiteUrl";
+
+    /// <summary>Ayarları yükler; dosya yoksa gömülü adresler, onlar da yoksa varsayılanlar kullanılır.</summary>
     /// <param name="directory">Ajan klasörü.</param>
+    /// <param name="embedded">Exe'ye gömülü AssemblyMetadata (anahtar → değer); yoksa <c>null</c>.</param>
     /// <returns>Ayarlar.</returns>
-    public static AgentSettings Load(string directory)
+    public static AgentSettings Load(string directory, IReadOnlyDictionary<string, string?>? embedded = null)
     {
         var baseFile = Read(Path.Combine(directory, "agentsettings.json"));
         var local = Read(Path.Combine(directory, "agentsettings.Local.json"));
-        var server = local?.ServerUrl ?? baseFile?.ServerUrl ?? DefaultServerUrl;
-        var site = local?.SiteUrl ?? baseFile?.SiteUrl ?? DefaultSiteUrl;
+        var server = local?.ServerUrl ?? baseFile?.ServerUrl ?? Embedded(embedded, ServerUrlMetadata) ?? DefaultServerUrl;
+        var site = local?.SiteUrl ?? baseFile?.SiteUrl ?? Embedded(embedded, SiteUrlMetadata) ?? DefaultSiteUrl;
         var delay = local?.ReconnectDelaySeconds ?? baseFile?.ReconnectDelaySeconds ?? 3;
         return new AgentSettings(WithSlash(server), WithSlash(site), TimeSpan.FromSeconds(delay));
     }
+
+    /// <summary>Derlemenin AssemblyMetadata değerlerini okur.</summary>
+    /// <param name="assembly">Derleme (ajan exe'si).</param>
+    /// <returns>Anahtar → değer.</returns>
+    public static IReadOnlyDictionary<string, string?> ReadMetadata(System.Reflection.Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+        var values = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var attribute in System.Reflection.CustomAttributeExtensions.GetCustomAttributes<System.Reflection.AssemblyMetadataAttribute>(assembly))
+        {
+            values[attribute.Key] = attribute.Value;
+        }
+
+        return values;
+    }
+
+    private static string? Embedded(IReadOnlyDictionary<string, string?>? embedded, string key) =>
+        embedded is not null && embedded.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
 
     private static AgentSettingsFile? Read(string path) =>
         File.Exists(path) ? JsonSerializer.Deserialize<AgentSettingsFile>(File.ReadAllText(path), Json) : null;
