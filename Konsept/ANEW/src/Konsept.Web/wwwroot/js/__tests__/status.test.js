@@ -82,6 +82,21 @@ describe('durum alanı ve Günlük şeridi (AC-4, AC-6, AC-8)', () => {
     expect(pair.hidden).toBe(true);
   });
 
+  it('ajan bağlı değilken "Ajanı indir" bağlantısı görünür, bağlıyken ve API yokken gizlenir (spec 0009 AC-1)', () => {
+    document.getElementById('system-status').insertAdjacentHTML('beforeend', '<a id="status-agent-download" href="/ajan/indir" download hidden>Ajanı indir</a>');
+    const download = document.getElementById('status-agent-download');
+
+    render(document, { ...healthy, agent: { isConnected: false } });
+    expect(download.hidden).toBe(false);
+    expect(download.getAttribute('href')).toBe('/ajan/indir');
+
+    render(document, healthy);
+    expect(download.hidden).toBe(true);
+
+    render(document, { apiAvailable: false });
+    expect(download.hidden).toBe(true);
+  });
+
   it('istekler $.ajax ile Web controller üzerinden gider', async () => {
     const ajax = vi.spyOn($, 'ajax').mockReturnValue(ajaxResolving($, healthy));
 

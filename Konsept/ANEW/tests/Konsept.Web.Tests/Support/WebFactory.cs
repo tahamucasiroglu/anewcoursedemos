@@ -55,6 +55,9 @@ public sealed class WebFactory : WebApplicationFactory<Program>
     /// <summary>Gets sahte API istemcisi.</summary>
     public IKonseptApiClient Api { get; } = Substitute.For<IKonseptApiClient>();
 
+    /// <summary>Gets ajan kurulum dosyası klasörü (spec 0009; testler dosyayı kendisi koyar, yoksa klasör de yoktur).</summary>
+    public string AgentDownloadDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "web-agent-" + Guid.NewGuid().ToString("N"));
+
     /// <summary>Gets bu örneğin log klasörü.</summary>
     public string LogDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "web-logs-" + Guid.NewGuid().ToString("N"));
 
@@ -124,6 +127,7 @@ public sealed class WebFactory : WebApplicationFactory<Program>
         builder.UseSetting("Api:BaseUrl", "http://api.invalid/");
         builder.UseSetting("Logging:Directory", LogDirectory);
         builder.UseSetting("Internal:ServiceKey", ServiceKey);
+        builder.UseSetting("AgentDownload:Directory", AgentDownloadDirectory);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IKonseptApiClient>();

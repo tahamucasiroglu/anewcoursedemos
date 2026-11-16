@@ -880,6 +880,12 @@ body {
   font-weight: 600;
 }
 
+/* Ajanı indir (spec 0009): bağlantı düğme görünümünde. */
+.agent-download {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .pairing {
   max-width: 34rem;
 }

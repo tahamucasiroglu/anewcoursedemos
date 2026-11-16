@@ -95,6 +95,22 @@ app.UseExceptionHandler("/hata");
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseStaticFiles();
+
+// Ajan bileşen aynası (spec 0009 Req 11–12): herkese açık üçüncü taraf arşivleri (ör. FFmpeg) Pi'de; ajan resmi kaynağa
+// ulaşamazsa buradan indirir ve yine gömülü SHA-256 ile doğrular. Kimliksiz statik dosya yolu (uç değil); yalnızca bu klasör.
+var agentDirectory = builder.Configuration["AgentDownload:Directory"];
+var mirrorDirectory = string.IsNullOrEmpty(agentDirectory) ? null : Path.Combine(agentDirectory, "components");
+if (mirrorDirectory is not null && Directory.Exists(mirrorDirectory))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(mirrorDirectory),
+        RequestPath = "/ajan-bilesenleri",
+        ServeUnknownFileTypes = true,
+        DefaultContentType = "application/octet-stream",
+    });
+}
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

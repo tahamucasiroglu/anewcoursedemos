@@ -127,6 +127,10 @@
   <data name="KeyDeleteConfirm" xml:space="preserve"><value>Bu key silinecek; {0} modelleri kullanılamaz olacak. Sıradaki işler bu sağlayıcıyı kullanıyorsa duracak.</value></data>
   <data name="KeyActionFailed" xml:space="preserve"><value>İşlem şu an yapılamadı (hata no: {0})</value></data>
   <data name="StatusAgentPair" xml:space="preserve"><value>Ajanı eşleştir</value></data>
+  <data name="AgentDownload" xml:space="preserve"><value>Ajanı indir</value></data>
+  <data name="AgentDownloadMissing" xml:space="preserve"><value>Ajan kurulum dosyası şu an sunucuda yok. Lütfen daha sonra tekrar deneyin.</value></data>
+  <data name="SettingsAgent" xml:space="preserve"><value>Ajan</value></data>
+  <data name="SettingsAgentIntro" xml:space="preserve"><value>Videoları bilgisayarınızda üreten ANEW Konsept ajanını indirip çalıştırın. İlk açılışta gerekli araçları kendisi kurar; yönetici izni istemez. Windows SmartScreen uyarısı çıkarsa "Ek bilgi" → "Yine de çalıştır" seçin.</value></data>
   <data name="PairTitle" xml:space="preserve"><value>Ajanı eşleştir</value></data>
   <data name="PairIntro" xml:space="preserve"><value>Ajan penceresindeki 8 karakterlik kodu girin. Gösterilen cihazı tanımıyorsanız reddedin.</value></data>
   <data name="PairCodeLabel" xml:space="preserve"><value>Eşleştirme kodu</value></data>

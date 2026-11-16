@@ -1,10 +1,16 @@
 @* Ayarlar (spec 0004 Req 14): "API key'ler" ve salt okunur "Modeller" bölümleri; sonraki spec'ler aynı sayfaya <section> ekler
-   (ör. ajan 0009, önerileri sıfırla 0016). İçerik settings.js ile /ayarlar/api-keyler ve /ayarlar/modeller'den yüklenir; metinler
+   (ajan 0009 eklendi; önerileri sıfırla 0016). İçerik settings.js ile /ayarlar/api-keyler ve /ayarlar/modeller'den yüklenir; metinler
    resx'ten data-text-* öznitelikleriyle gelir. Tam key hiçbir zaman sayfaya gelmez. *@
 @{
     ViewData["Title"] = UiText.Settings;
 }
 <h1 class="page__title">@UiText.Settings</h1>
+@* Ajan (spec 0009 Req 1): Pi'den ürünün güncel sürümündeki tek kurulum dosyası; her zaman görünür. *@
+<section class="settings__section settings__section--agent" aria-labelledby="settings-agent-title">
+    <h2 class="settings__title" id="settings-agent-title">@UiText.SettingsAgent</h2>
+    <p class="settings__intro">@UiText.SettingsAgentIntro</p>
+    <a class="button button--primary agent-download" id="settings-agent-download" href="/ajan/indir" download>@UiText.AgentDownload</a>
+</section>
 <div class="settings" id="settings" data-keys-url="/ayarlar/api-keyler" data-models-url="/ayarlar/modeller"
      data-text-not-set="@UiText.KeyNotSet" data-text-verified="@UiText.KeyVerified" data-text-unverified="@UiText.KeyUnverified"
      data-text-unreadable="@UiText.KeyUnreadable" data-text-just-now="@UiText.KeyUpdatedJustNow" data-text-updated-at="@UiText.KeyUpdatedAt"

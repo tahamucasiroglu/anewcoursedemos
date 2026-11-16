@@ -40,6 +40,8 @@ export function render(doc, status) {
   const agent = doc.getElementById('status-agent');
   // "Ajanı eşleştir" bağlantısı (spec 0012 Req 3): yalnızca ajan bağlı değilken görünür.
   const pair = doc.getElementById('status-agent-pair');
+  // "Ajanı indir" (spec 0009 Req 1): durum alanında yalnızca ajan bağlı değilken; Ayarlar'da her zaman.
+  const download = doc.getElementById('status-agent-download');
 
   if (!status || status.apiAvailable === false) {
     markJournalStale(doc, true); // Son bilinen kayıt kalır (spec 0021 AC-4).
@@ -49,6 +51,9 @@ export function render(doc, status) {
     set(agent, '', 'unknown');
     if (pair) {
       pair.hidden = true;
+    }
+    if (download) {
+      download.hidden = true;
     }
     return;
   }
@@ -60,6 +65,9 @@ export function render(doc, status) {
   set(agent, connected ? t.agentConnected : t.agentDisconnected, connected ? 'ok' : 'off');
   if (pair) {
     pair.hidden = connected;
+  }
+  if (download) {
+    download.hidden = connected;
   }
   if (!status.databaseAvailable) {
     markJournalStale(doc, true); // Veritabanı yokken kayıt okunamaz: son bilinen kayıt kalır.
