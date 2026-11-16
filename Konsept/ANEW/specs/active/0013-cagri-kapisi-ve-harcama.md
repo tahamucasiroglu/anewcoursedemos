@@ -1,6 +1,6 @@
 # Spec 0013 — cagri-kapisi-ve-harcama
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0013-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
