@@ -22,3 +22,4 @@ Her istek ve cevabı sıralı ve zaman damgalı tutulur. Biçim: `NNNN_YYYY-MM-D
 | 0016 | 2026-11-15 17:40 | Sıfırdan test hazır mı, Pi çalışıyor mu | [0016_2026-11-15_1740_sifirdan-test-hazir-mi.md](0016_2026-11-15_1740_sifirdan-test-hazir-mi.md) |
 | 0017 | 2026-11-15 17:50 | Kayıt ol / giriş yap (üyelik sistemi) | [0017_2026-11-15_1750_uyelik-sistemi.md](0017_2026-11-15_1750_uyelik-sistemi.md) |
 | 0018 | 2026-11-15 18:05 | Admin hesabı (şifreli) + admin hesaplar ayrı | [0018_2026-11-15_1805_admin-hesabi.md](0018_2026-11-15_1805_admin-hesabi.md) |
+| 0019 | 2026-11-16 10:30 | Restart sonrası Pi bağlantısı ve test hazırlığı | [0019_2026-11-16_1030_restart-sonrasi-pi-kontrol.md](0019_2026-11-16_1030_restart-sonrasi-pi-kontrol.md) |
