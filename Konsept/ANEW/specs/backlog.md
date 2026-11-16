@@ -157,3 +157,7 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
 - **B-122** — 0017 AC-29 sonradan değişmezlik adımı test edilmedi (kayıt alanları test ediliyor; `production.videos` için güncelleme yolu yok,
   kayıt yalnızca eklenir) — Source: plan 0017 review r1 L-2 — Severity: Low — Recommendation: 0020 (yeni sürüm) ile birlikte konsept metni ve
   profil ayarı değiştirildikten sonra kaydın aynı kaldığını assert eden test — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
+- **B-123** — 0017 birleştirme sonu: Tamamlandı geçişinden sonraki yazımlardan (video kaydı, konsept Video oldu, Günlük) biri hata verirse iş
+  Tamamlandı ama kayıtsız kalır; ayrıca yeniden kullanım anahtarında kod eforu yok (yalnızca efor değişince eski kod kullanılır); Durdur birleştirmeyle
+  yarışırsa ajandaki dosya sahipsiz kalır — Source: plan 0017 review r2 R2-L-1, R2-I-1 — Severity: Low — Recommendation: geçiş + kayıt + konsept
+  durumunu tek işlemde (ya da yakalayıcıda Tamamlandı işi tamamla); `CodeEffort`'u anahtara ekle — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
