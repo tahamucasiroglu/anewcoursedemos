@@ -40,7 +40,10 @@ public sealed class ConceptsPageTests
         wordCheck.GetAttribute("type").ShouldBe("checkbox");
         wordCheck.HasAttribute("checked").ShouldBeFalse();
         wordCheck.ParentElement!.TextContent.Trim().ShouldBe("Kelime denetimi");
-        page.GetElementById("concept-models-open")!.GetAttribute("aria-haspopup").ShouldBe("dialog");
+        var modelsButton = page.GetElementById("concept-models-open")!;
+        modelsButton.GetAttribute("aria-haspopup").ShouldBe("dialog");
+        modelsButton.HasAttribute("aria-label").ShouldBeFalse(); // Erişilebilir ad görünen özetten gelir (review r1 F-3).
+        modelsButton.TextContent.ShouldContain("Konsept: seçilmedi");
         page.GetElementById("concept-finetune-toggle")!.GetAttribute("aria-expanded").ShouldBe("false");
 
         var areas = page.QuerySelector(".concept-areas")!;

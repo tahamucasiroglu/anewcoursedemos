@@ -185,9 +185,9 @@ describe('Konseptler şeridi (spec 0005)', () => {
     el('concept-models-close').click();
     await flush();
 
+    // Yalnızca değişen roller gider (review r1 F-2; plan A-2).
     expect(body(posts()[0])).toEqual({
       models: [
-        { role: 'concept', modelId: OPUS.id, effort: 'high' },
         { role: 'dedupe', modelId: OPUS.id, effort: 'low' },
         { role: 'topic', modelId: GPT.id, effort: 'medium' },
       ],
@@ -312,6 +312,56 @@ describe('Konseptler şeridi (spec 0005)', () => {
     await flush();
     expect(strip('concept')).toBe('seçilmedi');
     expect(group('tone')).toBe('Belirtilmedi');
+  });
+
+  it('Review r1 F-2: artık seçilemeyen kayıtlı model, başka rol değiştirilince gönderilmez (silinmez)', async () => {
+    await start(settingsOf({ roles: [
+      { role: 'concept', modelId: OPUS.id, modelName: OPUS.name, effort: 'high' },
+      { role: 'dedupe', modelId: 'glm/glm-4.6', modelName: 'GLM-4.6', effort: null },
+      { role: 'topic', modelId: null, modelName: null, effort: null },
+    ] }));
+    expect(strip('dedupe')).toBe('GLM-4.6');
+    el('concept-models-open').click();
+    change(el('concept-model-topic'), SONNET.id);
+    routes['POST /konsept-ayarlari/p1'] = ok(settingsOf());
+    el('concept-models-close').click();
+    await flush();
+    expect(body(posts()[0])).toEqual({ models: [{ role: 'topic', modelId: SONNET.id, effort: null }] });
+  });
+
+  it('Review r1 F-1: şerit kayıtları sıralıdır; uçuştaki istek bitmeden gelen değişiklikler birleşip son değerle tek istekte gider', async () => {
+    await start();
+    const resolvers = [];
+    routes['POST /konsept-ayarlari/p1'] = () => {
+      const d = $.Deferred();
+      resolvers.push(d);
+      return d.promise();
+    };
+    const pick = (name, value) => {
+      const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+      radio.checked = true;
+      change(radio);
+    };
+    pick('tone', 'mysterious');
+    pick('tone', '');
+    el('concept-wordcheck').checked = true;
+    change(el('concept-wordcheck'));
+    pick('tone', 'calm');
+    await flush();
+    expect(posts()).toHaveLength(1); // İkinci istek ilk bitmeden gitmez.
+    expect(body(posts()[0])).toEqual({ fineTune: { tone: 'mysterious', audience: null, narration: null } });
+
+    resolvers[0].resolve(settingsOf({ tone: 'mysterious' })); // Eski yanıt şeridi eski değere çevirmez.
+    await flush();
+    expect(document.querySelector('input[name="tone"]:checked').value).toBe('calm');
+    expect(posts()).toHaveLength(2);
+    expect(body(posts()[1])).toEqual({ fineTune: { tone: 'calm', audience: null, narration: null }, wordCheck: true });
+
+    resolvers[1].resolve(settingsOf({ tone: 'calm', wordCheck: true }));
+    await flush();
+    expect(group('tone')).toBe('L-calm');
+    expect(el('concept-wordcheck').checked).toBe(true);
+    expect(el('concept-settings-status').textContent).toBe('Kaydedildi');
   });
 
   it('AC-7: profil yokken "Profil ekle" üst bardaki + kontrolünü çalıştırır', () => {

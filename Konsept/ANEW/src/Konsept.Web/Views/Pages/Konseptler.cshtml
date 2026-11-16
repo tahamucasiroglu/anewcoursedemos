@@ -43,7 +43,7 @@
          data-text-saved="@UiText.ConceptSettingsSaved" data-text-save-failed="@UiText.ConceptSettingsSaveFailed"
          data-text-not-selected="@UiText.ConceptNotSelected" data-text-unspecified="@UiText.ConceptUnspecified">
     <button type="button" class="concept-strip__models" id="concept-models-open" aria-haspopup="dialog" aria-controls="concept-models-modal"
-            aria-label="@UiText.ConceptModelsOpen" title="@UiText.ConceptModelsOpen" disabled>
+            title="@UiText.ConceptModelsOpen" disabled>
         @foreach (var role in roles)
         {
             <span class="concept-strip__role" data-role="@role.Code">@role.Short: <span class="concept-strip__value" data-role-value>@UiText.ConceptNotSelected</span></span>

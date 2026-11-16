@@ -117,16 +117,34 @@ export function initConcepts(doc) {
     }
   }
 
-  // --- İnce ayar ve kelime denetimi: her değişiklik hemen kaydedilir; hata olursa önceki değer geri gelir (AC-7). ------------
-  async function saveStrip(body) {
-    setStatus(text.textSaving);
-    try {
-      render(await post(url(), body));
-      setStatus(text.textSaved);
-    } catch {
-      render(state.settings);
-      setStatus(text.textSaveFailed, 'error');
+  // --- İnce ayar ve kelime denetimi: her değişiklik kaydedilir; hata olursa önceki (sunucudaki) değer geri gelir (AC-7). ------
+  // Kayıtlar sıralıdır (review r1 F-1): uçuşta istek varken gelen değişiklikler birleştirilip bir sonraki istekte gider; böylece
+  // son seçilen değer kalıcı olur, geç gelen yanıt şeridi eski değere çevirmez ve iki bölüm birbirinin kaydını ezmez.
+  const outbox = { body: null, running: null };
+
+  async function flush() {
+    let failed = false;
+    while (outbox.body) {
+      const body = outbox.body;
+      outbox.body = null;
+      try {
+        state.settings = await post(url(), body);
+      } catch {
+        failed = true;
+      }
     }
+    outbox.running = null;
+    render(state.settings);
+    setStatus(failed ? text.textSaveFailed : text.textSaved, failed ? 'error' : '');
+  }
+
+  function saveStrip(part) {
+    outbox.body = { ...(outbox.body || {}), ...part };
+    setStatus(text.textSaving);
+    if (!outbox.running) {
+      outbox.running = flush();
+    }
+    return outbox.running;
   }
 
   function setPanel(open) {
@@ -208,7 +226,7 @@ export function initConcepts(doc) {
     state.opener = doc.activeElement;
     fillModal();
     modalStatus.textContent = '';
-    state.snapshot = JSON.stringify(readModal());
+    state.snapshot = readModal();
     modal.hidden = false;
     focusables()[0].focus(); // Odak modala geçer (AC-9).
   }
@@ -225,13 +243,17 @@ export function initConcepts(doc) {
     if (state.pending) {
       return;
     }
-    const models = readModal();
-    if (JSON.stringify(models) === state.snapshot) {
+    // Yalnızca değişen roller gider (review r1 F-2): artık seçilemeyen ama kayıtlı modeli olan rol, ona dokunulmadıkça silinmez (plan Risk 2).
+    const models = readModal().filter((m, i) => JSON.stringify(m) !== JSON.stringify(state.snapshot[i]));
+    if (!models.length) {
       closeModal();
       return;
     }
     state.pending = true;
     modalStatus.textContent = text.textSaving;
+    if (outbox.running) {
+      await outbox.running; // Şerit kaydı bitmeden model kaydı başlamaz (F-1).
+    }
     try {
       render(await post(url(), { models }));
       state.pending = false;
@@ -240,7 +262,7 @@ export function initConcepts(doc) {
     } catch {
       state.pending = false;
       fillModal(); // Önceki (kayıtlı) seçim korunur (AC-7).
-      state.snapshot = JSON.stringify(readModal());
+      state.snapshot = readModal();
       modalStatus.textContent = text.textSaveFailed;
     }
   }
