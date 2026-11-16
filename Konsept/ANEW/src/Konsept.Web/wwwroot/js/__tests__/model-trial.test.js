@@ -121,5 +121,8 @@ describe('Modeller: Yetki yok ve Dene (spec 0013)', () => {
     const text = document.getElementById('settings').dataset;
     expect(trialText({ text: 'x', truncated: true, inputTokens: null, outputTokens: null, costUsd: 0.0000026, isEstimated: true }, text))
       .toBe('Yanıt: x · - giriş / - çıkış token · $0,000003 (yarım kaldı) (tahmini)');
+    // review r1 L-5: model çıktısındaki yer tutucu ve "$" desenleri olduğu gibi kalır.
+    expect(trialText({ text: "a $& b {1} $' c", truncated: false, inputTokens: 7, outputTokens: 8, costUsd: 0, isEstimated: false }, text))
+      .toBe("Yanıt: a $& b {1} $' c · 7 giriş / 8 çıkış token · $0,000000");
   });
 });

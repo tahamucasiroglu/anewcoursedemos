@@ -124,11 +124,12 @@ function renderModels(root, state) {
  */
 export function trialText(result, text) {
   const cost = Number(result.costUsd || 0).toFixed(6).replace('.', ',');
+  // Model metni en son ve fonksiyonla yerleştirilir: içindeki "$&", "{1}" gibi diziler yorumlanmaz (review r1 L-5).
   const line = (text.textTrialResult || '')
-    .replace('{0}', result.text || '')
-    .replace('{1}', result.inputTokens ?? '-')
-    .replace('{2}', result.outputTokens ?? '-')
-    .replace('{3}', cost);
+    .replace('{1}', () => String(result.inputTokens ?? '-'))
+    .replace('{2}', () => String(result.outputTokens ?? '-'))
+    .replace('{3}', () => cost)
+    .replace('{0}', () => result.text || '');
   return [line, result.truncated ? text.textTrialTruncated : '', result.isEstimated ? text.textTrialEstimated : '']
     .filter(Boolean)
     .join(' ');
