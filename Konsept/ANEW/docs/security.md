@@ -83,8 +83,15 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
   yoksa Api açılmaz; Development'ta süreç başına rastgele üretilir ve Warning yazılır (anahtarın kendisi asla). Ad
   `SigningKey` ile bittiği için yapılandırma taramasıyla bilinen sır olarak her logda gizlenir.
 - **Ajan girişi:** cihaz eşleştirme — ajan bir kod gösterir, kullanıcı web'de onaylar, ajan kendi refresh token'ını
-  alır. Ajana şifre yazdırılmaz.
-- **Çıkış (BR-14):** web'den çıkış kullanıcının **tüm oturumlarını, ajan dahil** iptal eder; sunucu ajanın SignalR
+  alır. Ajana şifre yazdırılmaz. **Uygulama (0012):** kod `ABCD-1234` (O/0/I/1 yok), 10 dk, tek kullanımlık, bellekte; kod
+  alma/sorgu/onay/ret IP başına 0002 sınırıyla (`agent-pairing` politikası). Ajan durumu yalnızca kendisine verilen 256 bit onay
+  sırrıyla sorar; onayda ajan oturum belirteci (256 bit, `knr_` önekli → her logda gizlenir) **bir kez** teslim edilir, sunucuda
+  yalnızca SHA-256 hash'i (`identity.agent_devices`) durur, döndürülmez, son kullanımdan 90 gün kayar (dakikada en fazla bir
+  yazma). Hub yalnızca `Authorization: Bearer <ajan belirteci>` ile açılır (adreste taşınmaz, istek loguna düşmez); sahip ve cihaz
+  hub kimliğinden okunur, istemciden alınmaz. Kullanıcı başına tek ajan: yeni eşleştirme öncekini iptal eder. Ajan belirteci ajan
+  klasöründe `agent-session.dat`'ta düz durur (şifreleme backlog'da).
+- **Çıkış (BR-14):** web'den çıkış kullanıcının **tüm oturumlarını, ajan dahil** iptal eder (0012: `agent_devices` iptal +
+  `IAgentDeviceRevocationListener` → "SessionClosed" bildirimi ve sunucu tarafı kesme; eski belirteç 401); sunucu ajanın SignalR
   bağlantısını kapatır.
 - **Ban (BR-13):** banlanan kullanıcının tüm token'ları anında iptal edilir.
 
