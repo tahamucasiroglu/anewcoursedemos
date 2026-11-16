@@ -263,7 +263,17 @@ export function initJournal(doc) {
         state.loading = false;
         more.disabled = false;
         more.textContent = t.textMore;
+        keepFocusInside();
       }
+    }
+  }
+
+  // Odaktaki düğme pasifleşir ya da gizlenirse (ör. ilk günde "Önceki gün", son sayfada "Daha fazla") tarayıcı odağı body'ye atar;
+  // odak modalda kalsın diye Kapat'a alınır (review r1 M-1).
+  function keepFocusInside() {
+    const active = doc.activeElement;
+    if (!modal.hidden && (!modal.contains(active) || active.disabled || active.closest('[hidden]'))) {
+      el('journal-modal-close').focus();
     }
   }
 
@@ -292,7 +302,11 @@ export function initJournal(doc) {
       close();
     }
   });
-  modal.addEventListener('keydown', (event) => {
+  // Klavye belge düzeyinde dinlenir: odak bir an modal dışına düşse bile Esc kapatır ve Tab içeri döner (review r1 M-1).
+  doc.addEventListener('keydown', (event) => {
+    if (modal.hidden || !doc.contains(modal)) {
+      return;
+    }
     if (event.key === 'Escape') {
       event.preventDefault();
       close();
@@ -305,7 +319,10 @@ export function initJournal(doc) {
       }
       const firstNode = nodes[0];
       const lastNode = nodes[nodes.length - 1];
-      if (event.shiftKey && doc.activeElement === firstNode) {
+      if (!modal.contains(doc.activeElement)) {
+        event.preventDefault();
+        firstNode.focus();
+      } else if (event.shiftKey && doc.activeElement === firstNode) {
         event.preventDefault();
         lastNode.focus();
       } else if (!event.shiftKey && doc.activeElement === lastNode) {

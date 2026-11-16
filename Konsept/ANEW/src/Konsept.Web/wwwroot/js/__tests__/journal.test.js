@@ -279,4 +279,22 @@ describe('Günlük geçmişi modalı (spec 0021)', () => {
     expect(el('journal-prev').disabled).toBe(true);
     expect(el('journal-next').disabled).toBe(false);
   });
+
+  it('odaktaki "Önceki gün" ilk günde pasifleşince odak modalda kalır, Esc yine kapatır (review r1 M-1)', async () => {
+    const ajax = vi.spyOn($, 'ajax').mockReturnValue(ajaxResolving($, day({ isToday: true, isFirstDay: false })));
+    const journal = initJournal(document);
+    await journal.open();
+
+    ajax.mockReturnValue(ajaxResolving($, day({ date: '2026-11-15', isToday: false, isFirstDay: true })));
+    el('journal-prev').focus();
+    el('journal-prev').click();
+    await flush();
+    expect(el('journal-prev').disabled).toBe(true);
+    expect(el('journal-modal').contains(document.activeElement)).toBe(true);
+
+    document.body.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(el('journal-modal').hidden).toBe(true);
+    expect(document.activeElement).toBe(el('journal'));
+  });
 });
