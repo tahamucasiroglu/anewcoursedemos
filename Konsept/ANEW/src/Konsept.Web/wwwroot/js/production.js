@@ -238,7 +238,7 @@ export function initProduction(doc) {
   // --- Komutlar --------------------------------------------------------------------------------------------------------------------
   async function command(url, body, reloadApproved) {
     if (state.busy) {
-      return;
+      return false;
     }
     state.busy = true;
     setStatus(text.textSaving);
@@ -248,11 +248,13 @@ export function initProduction(doc) {
       if (reloadApproved) {
         await loadApproved();
       }
+      return true;
     } catch (error) {
       setStatus(failText(error));
       if (state.data) {
         renderSettings(); // Reddedilen değişiklik geri alınır; kayıtlı değer görünür.
       }
+      return false;
     } finally {
       state.busy = false;
       if (state.data) {
@@ -279,20 +281,24 @@ export function initProduction(doc) {
   el('production-stop').addEventListener('click', () => command('/uretim/durdur', { profileId: state.profileId }));
   el('production-enqueue').addEventListener('click', async () => {
     // Listedeki görünüş sırasıyla (Req 10).
+    // Seçim yalnızca görünen sayfadadır (sayfa değişince temizlenir; review r1 M-1); başarısızlıkta seçim korunur.
     const ids = state.approved.map((item) => item.id).filter((id) => state.checked.has(id));
-    await command('/uretim/sira', { profileId: state.profileId, conceptIds: ids }, true);
+    if (!(await command('/uretim/sira', { profileId: state.profileId, conceptIds: ids }))) {
+      return;
+    }
     state.checked.clear();
     el('production-enqueue').disabled = true;
     hideDetail();
+    await loadApproved();
   });
-  el('production-prev').addEventListener('click', () => {
-    state.page -= 1;
+  function changePage(delta) {
+    state.page += delta;
+    state.checked.clear();
+    el('production-enqueue').disabled = true;
     loadApproved();
-  });
-  el('production-next').addEventListener('click', () => {
-    state.page += 1;
-    loadApproved();
-  });
+  }
+  el('production-prev').addEventListener('click', () => changePage(-1));
+  el('production-next').addEventListener('click', () => changePage(1));
 
   // --- Model seçimi modalı -------------------------------------------------------------------------------------------------------
   function options(select, kind, current, offLabel) {
