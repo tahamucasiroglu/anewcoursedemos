@@ -38,6 +38,9 @@ public sealed class AiGatewayApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek kullanıcı deposu.</summary>
     public InMemoryUserRepository Users { get; }
 
+    /// <summary>Gets bellek ajan cihaz deposu (plan 0012).</summary>
+    public InMemoryAgentDeviceRepository AgentDevices { get; } = new();
+
     /// <summary>Gets bellek oturum deposu.</summary>
     public InMemorySessionRepository Sessions { get; }
 
@@ -132,6 +135,8 @@ public sealed class AiGatewayApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IProviderKeyValidator>();
             services.AddSingleton<IUserRepository>(Users);
             services.AddSingleton<ISessionRepository>(Sessions);
+            services.RemoveAll<IAgentDeviceRepository>(); // test kurulumu: ajan cihazları (plan 0012).
+            services.AddSingleton<IAgentDeviceRepository>(AgentDevices);
             services.AddSingleton<ISystemEventRepository>(Events);
             services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe());
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);

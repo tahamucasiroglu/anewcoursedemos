@@ -58,6 +58,12 @@ builder.Services.AddAuthorization(options =>
         .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .RequireClaim(AuthPolicies.PermissionClaim, AuthPolicies.AdminPanel));
+
+    // Ajan hub'ı (spec 0012 Req 10): yalnızca eşleşmiş, iptal edilmemiş ajanın oturum belirteci; JWT kabul edilmez.
+    options.AddPolicy(AuthPolicies.AgentHub, policy => policy
+        .AddAuthenticationSchemes(AuthPolicies.AgentScheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim(AuthPolicies.AgentDeviceClaim));
 });
 
 var app = builder.Build();

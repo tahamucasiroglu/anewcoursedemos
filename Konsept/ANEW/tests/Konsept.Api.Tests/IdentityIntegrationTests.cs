@@ -232,6 +232,40 @@ public sealed class IdentityIntegrationTests : IClassFixture<IntegrationApiFacto
         (await sessions.FindWithRoleAsync(Guid.NewGuid(), ct)).ShouldBeNull();
     }
 
+    /// <summary>
+    /// Ajan cihazı (spec 0012, migration <c>AddAgentDevices</c>) gerçek veritabanında: eşleştirme cihazı yazar, belirteç yalnızca
+    /// hash olarak durur, son kullanım kaydırılır, çıkış cihazı iptal eder.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AgentDevices_RealDatabase_RevokeAndTouch()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var email = AuthenticatedClient.NewEmail();
+        using var user = await AuthenticatedClient.CreateAsync(_factory, ct, email);
+        using var agent = _factory.CreateClient();
+        var machine = "DB-PC-" + Guid.NewGuid().ToString("N")[..6];
+
+        var token = await AgentPairing.PairAsync(user, agent, _factory.Services, ct, machine);
+
+        var userId = (Guid)(await ScalarAsync($"SELECT user_id FROM identity.agent_devices WHERE machine_name = '{machine}'"))!;
+        (await CountAsync($"SELECT count(*) FROM identity.agent_devices WHERE user_id = '{userId}' AND revoked_at IS NULL")).ShouldBe(1);
+        (await CountAsync($"SELECT count(*) FROM identity.agent_devices WHERE token_hash = '{token}'")).ShouldBe(0);
+
+        await using (var context = CreateContext(_factory.Database))
+        {
+            var devices = new AgentDeviceRepository(context);
+            var device = await devices.FindByTokenHashAsync(new Konsept.Modules.Identity.Application.Concrete.RefreshTokenFactory().Hash(token), ct);
+            device.ShouldNotBeNull();
+            await devices.TouchAsync(device.Id, device.LastUsedAt.AddDays(30), ct);
+            (await CountAsync($"SELECT count(*) FROM identity.agent_devices WHERE id = '{device.Id}' AND last_used_at > created_at + interval '29 days'")).ShouldBe(1);
+        }
+
+        using var logout = await user.PostAsync(new Uri("/api/auth/logout", UriKind.Relative), null, ct);
+        logout.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await CountAsync($"SELECT count(*) FROM identity.agent_devices WHERE user_id = '{userId}' AND revoked_at IS NULL")).ShouldBe(0);
+    }
+
     private static IdentityModuleDbContext CreateContext(PostgresTestDatabase database) =>
         new(new DbContextOptionsBuilder<IdentityModuleDbContext>()
             .UseNpgsql(database.ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", IdentityModuleDbContext.SchemaName))

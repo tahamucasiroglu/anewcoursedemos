@@ -10,6 +10,7 @@ using Konsept.Modules.Identity.Application.Validators;
 using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Modules.Identity.Infrastructure.Authentication;
 using Konsept.Modules.Identity.Infrastructure.Hosting;
+using Konsept.Modules.Identity.Infrastructure.Pairing.Concrete;
 using Konsept.Modules.Identity.Infrastructure.Persistence;
 using Konsept.Modules.Identity.Infrastructure.Persistence.Concrete;
 using Konsept.Modules.Identity.Infrastructure.RateLimiting;
@@ -65,6 +66,14 @@ public static class IdentityModule
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ISessionRevoker>(sp => sp.GetRequiredService<ISessionService>());
 
+        // Ajan cihaz eşleştirme (spec 0012): kodlar bellekte (tek süreç), cihazlar identity.agent_devices'ta.
+        services.AddSingleton<IPairingStore, InMemoryPairingStore>();
+        services.AddScoped<IAgentDeviceRepository, AgentDeviceRepository>();
+        services.AddScoped<IAgentDeviceRevoker, AgentDeviceRevoker>();
+        services.AddScoped<IAgentTokenValidator, AgentTokenValidator>();
+        services.AddScoped<AgentPairingDependencies>();
+        services.AddScoped<IAgentPairingService, AgentPairingService>();
+
         // İlk admin (spec 0011 Req 5): ayar her açılışta okunur; açılış senkronu arka planda rolleri ayara eşitler.
         services.AddSingleton(new IdentityOptions { AdminEmail = configuration[IdentityOptions.AdminEmailConfigurationKey] });
         services.AddScoped<IAdminRoleSync, AdminRoleSync>();
@@ -82,7 +91,8 @@ public static class IdentityModule
                 o.MapInboundClaims = false;
                 o.EventsType = typeof(SessionValidatingJwtEvents);
             })
-            .AddScheme<AuthenticationSchemeOptions, ServiceKeyAuthenticationHandler>(AuthPolicies.ServiceKeyScheme, null);
+            .AddScheme<AuthenticationSchemeOptions, ServiceKeyAuthenticationHandler>(AuthPolicies.ServiceKeyScheme, null)
+            .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AuthPolicies.AgentScheme, null);
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<TimeProvider>((o, time) => o.TokenValidationParameters = new TokenValidationParameters
             {

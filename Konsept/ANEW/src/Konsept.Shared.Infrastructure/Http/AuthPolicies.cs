@@ -21,6 +21,18 @@ public static class AuthPolicies
     /// </summary>
     public const string PermissionClaim = "konsept.perm";
 
+    /// <summary>Ajan hub'ının kimlik şeması (spec 0012): <c>Authorization: Bearer</c> başlığında ajan oturum belirteci.</summary>
+    public const string AgentScheme = "AgentToken";
+
+    /// <summary>Ajan hub'ı politikası: yalnızca geçerli ajan oturumu (eşleşmiş, iptal edilmemiş cihaz) bağlanabilir.</summary>
+    public const string AgentHub = "agent-hub";
+
+    /// <summary>Ajan principal'ında cihaz kimliği claim'i.</summary>
+    public const string AgentDeviceClaim = "konsept.agent";
+
+    /// <summary>Eşleştirme kod alma/sorgu/onay/ret uçlarının IP başına hız sınırı (spec 0012 Req 8; 0002 Req 9 ile aynı sınır).</summary>
+    public const string AgentPairingRateLimit = "agent-pairing";
+
     /// <summary>Admin alanı politikası; adı ve gerektirdiği yetki <c>admin.panel</c>'dir (Identity <c>Permissions.AdminPanel</c>).</summary>
     public const string AdminPanel = "admin.panel";
 }

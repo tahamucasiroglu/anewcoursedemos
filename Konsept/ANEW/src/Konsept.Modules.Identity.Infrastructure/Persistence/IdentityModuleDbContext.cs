@@ -26,6 +26,9 @@ public sealed class IdentityModuleDbContext : ModuleDbContextBase
     /// <summary>Gets oturumlar.</summary>
     public DbSet<UserSession> Sessions => Set<UserSession>();
 
+    /// <summary>Gets eşleşmiş ajan cihazları (spec 0012).</summary>
+    public DbSet<AgentDevice> AgentDevices => Set<AgentDevice>();
+
     /// <inheritdoc />
     protected override string Schema => SchemaName;
 }

@@ -22,6 +22,8 @@ public sealed class AuthorizationSurfaceTests : IClassFixture<IdentityApiFactory
         "POST api/auth/login",
         "POST api/auth/refresh",
         "POST api/auth/register",
+        "POST api/agent-pairing/codes",
+        "POST api/agent-pairing/status",
         "* hubs/agent/negotiate",
         "* hubs/agent",
     ];

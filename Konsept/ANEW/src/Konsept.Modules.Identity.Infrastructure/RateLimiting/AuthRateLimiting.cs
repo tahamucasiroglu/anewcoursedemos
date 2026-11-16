@@ -30,6 +30,13 @@ public static class AuthRateLimiting
                 var time = context.RequestServices.GetRequiredService<TimeProvider>();
                 return RateLimitPartition.Get(ClientAddress.Resolve(context), _ => new FixedBlockRateLimiter(time));
             });
+
+            // Ajan eşleştirme (spec 0012 Req 8): aynı sınır, ayrı sayaç (giriş denemeleri eşleştirmeyi tüketmesin).
+            options.AddPolicy(AuthPolicies.AgentPairingRateLimit, context =>
+            {
+                var time = context.RequestServices.GetRequiredService<TimeProvider>();
+                return RateLimitPartition.Get(ClientAddress.Resolve(context), _ => new FixedBlockRateLimiter(time));
+            });
             options.OnRejected = async (context, cancellationToken) =>
             {
                 var response = context.HttpContext.Response;

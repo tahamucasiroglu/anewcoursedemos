@@ -74,6 +74,8 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
             var users = new InMemoryUserRepository();
             services.AddSingleton<IUserRepository>(users);
             services.AddSingleton<ISessionRepository>(new InMemorySessionRepository(users));
+            services.RemoveAll<IAgentDeviceRepository>(); // test kurulumu: ajan cihazları (plan 0012).
+            services.AddSingleton<IAgentDeviceRepository>(new InMemoryAgentDeviceRepository());
             services.RemoveAll<ITechnicalLogRepository>();
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
             services.RemoveAll<ISystemEventRepository>();

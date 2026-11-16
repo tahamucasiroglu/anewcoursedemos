@@ -32,6 +32,9 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
         Sessions = new InMemorySessionRepository(Users); // test kurulumu: rol (plan 0011) — oturum doğrulaması rolü kullanıcıdan okur.
     }
 
+    /// <summary>Gets bellek ajan cihaz deposu (plan 0012).</summary>
+    public InMemoryAgentDeviceRepository AgentDevices { get; } = new();
+
     /// <summary>Gets bellek oturum deposu.</summary>
     public InMemorySessionRepository Sessions { get; }
 
@@ -105,6 +108,8 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<ITechnicalLogRepository>();
             services.AddSingleton<IUserRepository>(Users);
             services.AddSingleton<ISessionRepository>(Sessions);
+            services.RemoveAll<IAgentDeviceRepository>(); // test kurulumu: ajan cihazları (plan 0012).
+            services.AddSingleton<IAgentDeviceRepository>(AgentDevices);
             services.AddSingleton<ISystemEventRepository>(Events);
             services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe());
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
