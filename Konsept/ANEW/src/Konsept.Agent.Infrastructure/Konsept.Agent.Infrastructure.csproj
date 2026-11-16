@@ -4,6 +4,10 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Kurulum bileşen listesi (spec 0009): sabit sürüm, adres, SHA-256; ajana gömülü. -->
+    <EmbeddedResource Include="Setup\components.json" LogicalName="Konsept.Agent.Infrastructure.Setup.components.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Konsept.Agent.Application\Konsept.Agent.Application.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
     <ProjectReference Include="..\Konsept.Shared.Logging\Konsept.Shared.Logging.csproj" />

@@ -11,6 +11,12 @@ namespace Konsept.Agent.Infrastructure.Logging;
 /// </summary>
 public sealed class ErrorAlertSink : ILogEventSink
 {
+    /// <summary>
+    /// Bu özelliği taşıyan Error olayı uyarı açmaz (spec 0009 Req 14: kurulum hatası satırda gösterilir, kullanıcı "Hatayı bildir" ile
+    /// bileşen ve adımla açar).
+    /// </summary>
+    public const string NoAlertProperty = "NoAlert";
+
     private IErrorReportCenter? _center;
 
     /// <summary>Uyarıların gideceği merkezi bağlar (bileşim kökünde).</summary>
@@ -22,7 +28,7 @@ public sealed class ErrorAlertSink : ILogEventSink
     {
         ArgumentNullException.ThrowIfNull(logEvent);
         var center = Volatile.Read(ref _center);
-        if (center is null || logEvent.Level < LogEventLevel.Error)
+        if (center is null || logEvent.Level < LogEventLevel.Error || logEvent.Properties.ContainsKey(NoAlertProperty))
         {
             return;
         }
