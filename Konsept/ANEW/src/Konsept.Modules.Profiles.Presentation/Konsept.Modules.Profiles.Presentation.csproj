@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Profiles API controller'ları (yalnızca servise ver → döndür, K-4). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Profiles.Application\Konsept.Modules.Profiles.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

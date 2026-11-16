@@ -9,5 +9,7 @@
     <ProjectReference Include="..\Konsept.Modules.Identity.Presentation\Konsept.Modules.Identity.Presentation.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AiGateway.Infrastructure\Konsept.Modules.AiGateway.Infrastructure.csproj" />
     <ProjectReference Include="..\Konsept.Modules.AiGateway.Presentation\Konsept.Modules.AiGateway.Presentation.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Profiles.Infrastructure\Konsept.Modules.Profiles.Infrastructure.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Profiles.Presentation\Konsept.Modules.Profiles.Presentation.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "tarih-bizans",
+    "title": "Tarih – Bizans",
+    "channelName": "Bizans'ın İzinde",
+    "language": "tr",
+    "format": "landscape",
+    "durationSeconds": 600,
+    "content": "Doğu Roma (Bizans) İmparatorluğu'nun 330–1453 arasındaki siyasi, askeri ve gündelik yaşamını anlatan bir tarih kanalı. Konstantinopolis, imparatorlar, kuşatmalar ve kültürel miras odaktadır. Anlatım belgesel tonunda ve kaynaklara dayalıdır."
+  },
+  {
+    "id": "tarih-osmanli",
+    "title": "Tarih – Osmanlı",
+    "channelName": "Osmanlı Kronikleri",
+    "language": "tr",
+    "format": "landscape",
+    "durationSeconds": 720,
+    "content": "Osmanlı Devleti'nin 1299'daki kuruluşundan 1922'ye kadar olan dönemini işleyen bir tarih kanalı. Padişahlar, seferler, kurumlar ve toplumsal hayat ele alınır. Olaylar tarih sırasıyla ve belgelere dayanarak anlatılır."
+  },
+  {
+    "id": "teknoloji",
+    "title": "Teknoloji",
+    "channelName": "Teknoloji Rehberi",
+    "language": "tr",
+    "format": "portrait",
+    "durationSeconds": 60,
+    "content": "Teknoloji dünyasındaki önemli gelişmeleri kısa ve anlaşılır biçimde anlatan bir kanal. Yazılım, donanım, yapay zekâ ve internet kültürü başlıca konulardır. Her video tek bir fikri sade bir dille açıklar."
+  },
+  {
+    "id": "antik-teknoloji",
+    "title": "Antik teknoloji",
+    "channelName": "Antik Mühendislik",
+    "language": "tr",
+    "format": "landscape",
+    "durationSeconds": 480,
+    "content": "Antik uygarlıkların mühendislik ve bilim başarılarını anlatan bir kanal. Mısır, Mezopotamya, Yunan ve Roma dünyasındaki yapılar, aletler ve buluşlar incelenir. Arkeolojik bulgulara dayanılır, tahmin bilgi gibi sunulmaz."
+  },
+  {
+    "id": "gunumuz-teknolojisi",
+    "title": "Günümüz teknolojisi",
+    "channelName": "Bugünün Teknolojisi",
+    "language": "tr",
+    "format": "portrait",
+    "durationSeconds": 90,
+    "content": "Son yıllarda hayatımıza giren teknolojileri tanıtan bir kanal. Akıllı telefonlar, elektrikli araçlar, yapay zekâ araçları ve yenilenebilir enerji öne çıkar. Ürünler tarafsız biçimde, gerçek özellikleriyle anlatılır."
+  }
+]

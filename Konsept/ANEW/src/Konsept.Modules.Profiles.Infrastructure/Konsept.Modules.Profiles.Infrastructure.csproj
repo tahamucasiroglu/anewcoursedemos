@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Profiles altyapısı: profiles şeması ve DbContext'i (Y-4), gömülü hazır şablonlar. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Profiles.Application\Konsept.Modules.Profiles.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Hazır şablonlar (spec 0003 Req 5): metinler insan onaylı (plan 0003 Risk 1); değişiklik yalnızca bu dosyada. -->
+    <EmbeddedResource Include="Templates\templates.json" LogicalName="Konsept.Profiles.templates.json" />
+  </ItemGroup>
+</Project>
