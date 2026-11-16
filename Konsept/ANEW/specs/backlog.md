@@ -125,3 +125,31 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
 - **B-112** — 0006 ayar kaydı: listeden düşen kayıtlı model (ör. ajan Remotion'u artık bildirmiyor) tüm ayar kaydını `ModelNotListed` ile reddediyor; Altyazı/İlerleme çubuğu değiştirilemiyor — Source: plan 0006 review r1 L-2 (`ProductionServiceBase.Check`) — Severity: Low — Recommendation: `NoPermission` istisnasındaki "kayıtlı değer değişmediyse kabul" kuralını `ModelNotListed` için de uygula; test — Deferred by: tahamucasiroglu, 2026-11-16, review r1 triage (toplu onay, Promtlar/0053)
 - **B-113** — 0006 model modalı: önceki istek sürerken (meşgul) modal kapanırsa seçim kaydedilmeden kaybolur — Source: plan 0006 review r1 L-3 (`production.js` command/closeModal) — Severity: Low — Recommendation: meşgulken kaydı kuyruğa al ya da modal kontrollerini pasif yap; Vitest — Deferred by: tahamucasiroglu, 2026-11-16, review r1 triage (toplu onay, Promtlar/0053)
 - **B-114** — 0006 onaylı liste: son sayfadaki tüm konseptler sıraya alınınca boş sayfa ve "Onaylanmış konsept yok" görünür (önceki sayfalarda konsept varken; "Önceki" çalışır) — Source: plan 0006 review r2 L-7 (`production.js` renderApproved) — Severity: Low — Recommendation: boş sayfa ve `page > 1` ise son geçerli sayfaya dön ve yeniden yükle; Vitest — Deferred by: tahamucasiroglu, 2026-11-16, review r2 triage (toplu onay, Promtlar/0053)
+- **B-115** — 0017 Req 17 / AC-20: ElevenLabs online ses (katalogda karakter başı fiyatla "ses" türü giriş, ses listesinde "online", key/yetki,
+  karakter sayısıyla harcama kaydı, sağlayıcı hizalamasıyla kelime zamanlaması) yok — Source: plan 0017 Risk 1 — Severity: Medium — Recommendation:
+  AiGateway'e `elevenLabs` lehçesi ve `pricePerCharacterUsd`; `IModelCaller.CallVoiceAsync`; hat seslendirmesinde online yol (sahne sahne Pi'de,
+  ses dosyası ajana, görsel yolu gibi) — Deferred by: tahamucasiroglu, 2026-11-16, standing approval ("çok detaylı yapmadan hızlıca")
+- **B-116** — 0017 yerel ses/görsel koşucuları yok (Supertonic 3 ONNX, Chatterbox sidecar, Z-Image-Turbo/FLUX.2 sd-server): bileşenler ajana
+  kurulamadığından (B-73/B-75) araç denetimi "Ajan kurulumu eksik: <model>" der; `ProcessStageRunner.VoiceAsync`/yerel görsel "kurulu değil" döner —
+  Source: plan 0017 Risk 1 — Severity: High (ilk gerçek video için ses kapalı/online görsel gerekir) — Recommendation: B-73/B-75 kurulumu ile birlikte
+  koşucuları ekle; sahne başına `voice.wav` + gerçek ses süresi (altyazı zamanlaması onunla) — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
+- **B-117** — 0017 Req 14a / AC-31 GPU ayrıntısı: aygıt tespiti (0009 Req 8, B-74), yerel model aşamalarında CUDA sağlayıcısı yüklenemezse
+  "Ekran kartı kullanılamadı: <model>", VRAM yetmezse boştaki modelleri boşaltıp tek yeniden deneme yok; yalnızca birleştirmedeki NVENC kodlaması
+  CPU'ya düşmeden hata verir ve aşama kaydı aygıtı tutar — Source: plan 0017 Risk 1 — Severity: Medium — Recommendation: B-116 koşucularıyla aynı
+  yerde; `AgentStageReply.GpuUnavailable` sözleşmesi ve Pi tarafı (hata metni, Error log) hazır — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
+- **B-118** — 0017 render: HyperFrames CLI çağrısı (`components\hyperframes\node_modules\hyperframes\dist\cli.js render <dir> --output clip.mp4
+  --fps 30`) gerçek kurulumla doğrulanmadı; HyperFrames ajana kurulmuyor (B-73) ve LLM kodu 0018'in kısıtlı ortamında çalışmalı (spec: 0017, 0018
+  Shipped olmadan son kullanıcıya açılmaz) — Source: plan 0017 Risk 1 — Severity: High — Recommendation: B-73 kurulumu + 0018 ile; çağrı biçimini
+  `hyperframes --help` ile sabitle, render hata özetini düzeltme döngüsüne ver (sözleşme hazır) — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
+- **B-119** — 0017 AC-1/AC-2/AC-3/AC-22 kare düzeyinde kanıt yok: altyazı/ilerleme çubuğu/sessiz iz/AI notu gerçek FFmpeg çıktısında (ffprobe,
+  kare örnekleme) doğrulanmadı; şablon kuralları birim testli — Source: plan 0017 Risk 1 — Severity: Low — Recommendation: kullanıcı PC'de stub
+  sahne klibiyle (`ffmpeg -f lavfi testsrc`) birleştirmeyi çalıştırıp kareleri incelesin; sonra full profilde ffmpeg varsa koşan test — Deferred by:
+  tahamucasiroglu, 2026-11-16, standing approval
+- **B-120** — 0017 Api yeniden başlarsa çalışan iş Durduruldu olur (çağıran kimliği/yetkileri Api belleğinde, 0014 deseni); kullanıcı "Kaldığı
+  yerden devam et" demeli. Ayrıca Devam/yeni iş için yetkiler istek anındaki gibi kalır (çalışırken yetki kaldırılırsa sonraki iş eski yetkiyle
+  başlar) — Source: plan 0017 — Severity: Low — Recommendation: Identity.Contracts'a kullanıcı kimliğinden yetki okuyucu ekle; koşucu her işte
+  taze yetki alsın, açılışta Producing işler kendiliğinden sürsün — Deferred by: tahamucasiroglu, 2026-11-16, standing approval
+- **B-121** — Kararsız test: `AgentReconnectTests.AgentClient_RegisterRejected_RetriesRegistrationOnSameConnection` yükte bir kez kırmızı oldu
+  (sunucu kaydı tamamlandığında istemci durumu henüz `Connecting`; yeniden koşuda 3/3 yeşil) — Source: plan 0017 step-2 fast CHECK — Severity: Low —
+  Recommendation: testte `Eventually` koşuluna `connection.State == Connected` ekle (assert zayıflatılmaz, yarış penceresi beklenir) — Deferred by:
+  tahamucasiroglu, 2026-11-16, standing approval

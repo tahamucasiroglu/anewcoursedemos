@@ -103,6 +103,24 @@ başına), çıkışta durdurma Identity.Contracts `IUserSessionsEndedListener` 
 otomatik ilerleme ve son oturumun süre dolumunda durdurma 0017'dedir (B-109). Web: `production.js` + `/uretim/…`; onaylı liste ve ayrıntı
 `/konseptler/liste` ve `/konseptler/detay` uçlarını kullanır.
 
+**Production — üretim hattı (0017):** Sırayla üret / Devam et isteği çağıranın model kimliğini (yetkiler, 0014 deseni) tekil
+`IProductionRunner`'a verir; koşucu kullanıcı başına tek döngüde, her koşu kendi DI kapsamında `IProductionPipeline`'ı çalıştırır (istekten
+bağımsız; kimlik Api belleğinde — Api yeniden başlarsa açılış taraması çalışan işi Durduruldu yapar, B-120). Hosted `ProductionWorker` 3 sn'de bir
+tarar: Ajan bekleniyor işi ajan bağlanınca kendiliğinden sürer. Aşamalar: analiz (tek çağrı) → sahne başına video kodu → görseller → seslendirme
+→ render (hata → en fazla 1 düzeltme) → birleştirme; durum ve maliyet iş satırının `progress` jsonb'sinde, yeniden kullanılan çıktılar konsept
+başına `production.stage_outputs`'ta (konsept metni SHA-256'sı; yerel çıktılar yalnızca tamamlandıkları ajan cihazında geçerli), sürüm kaydı
+`production.videos`'ta, art arda hata sayısı `production.queue_states`'te. Ajan bağlıysa hiçbir online çağrıdan önce araç denetimi yapılır. Durdur
+işi DB'de Durduruldu yapar ve koşucunun belirtecini iptal eder: süren online çağrı `CancellationToken.None` ile tamamlanır, her çağrıdan önce
+durum yeniden okunur, yerel aşama ajana `CancelStage` ile kesilir. Online çağrılar AiGateway.Contracts `IModelCaller` (`VideoAnalysis`/`VideoCode`/
+`CodeFix` rolleri, amaç `video_code`; `CallImageAsync`, amaç `image`; yanıtta `CostUsd`). Ajan komutları AgentGateway.Contracts `IAgentCommands`
+(SignalR client results: `CheckTools`, `RunStage`, `CancelStage`, `OpenStream`) yalnızca sahibin kayıttaki geçerli ajan oturumuna gider; komutlarda
+key yoktur, online görsel Pi'de üretilip sahne sahne ajana gider. Uçlar: `GET api/production/videos?profileId=`, `POST api/production/videos/{id}/stream`.
+Ajan: `ProcessStageRunner` (iş klasörü `%LOCALAPPDATA%\anewconcept\jobs\<konsept>`; birleştirme FFmpeg sabit şablonu `MergeTemplate` — ASS kelime
+vurgusu, üst kenarda `overlay` ilerleme çubuğu, sessiz iz, NVENC, CPU'ya düşmeden GPU hatası; Supertonic'te `.ai-ses.txt` notu; HyperFrames CLI ve
+yerel ses/görsel koşucuları B-116/B-118) ve `LocalVideoServer` (yalnızca 127.0.0.1, varsayılan port 47615, video başına 256 bit yetki: ilk açılış
+60 sn, açıldıktan sonra 30 dk boşta kalana kadar geçerli; Range; yetki loglanmaz). Web: `production.js` aşama listesi, maliyet, uyarılar, 3 sn
+yoklama, Üretilenler + izleme alanı (`/uretim/{profil}/videolar`, `/uretim/video/{id}/izle`); CSP `media-src 'self' http://127.0.0.1:*`.
+
 **Monitoring — hata bildirimleri (0022):** `monitoring.error_reports` (sıralı `Number`, kaynak web/ajan/API, durum "Yeni", süresiz). Web: `POST api/error-reports` + `GET api/error-reports/preview` (oturumlu; son 20 Günlük kaydını ve versiyonu sunucu ekler; kullanıcı başına saatte 10, web + ajan). Okuma `GET api/error-reports/{number}` yalnızca `admin.panel` (listeleme 0025). Ajan bildirimi ayrı HTTP ucu değil, kimlikli hub metodu `ReportError` (+ hesap için `WhoAmI`); AgentGateway Monitoring.Contracts `IErrorReportSubmitter`'a iletir. API'nin beklenmeyen istisnaları Monitoring'deki `IExceptionHandler` ile kaynak "API" kaydı olur (ProblemDetails sürer; 4xx kayıt oluşturmaz). Ajan bekleyen bildirimleri `pending-reports.json`'da (en çok 20, oluştuğu hesaba bağlı) tutar.
 
 **Ajan dağıtımı ve ilk kurulum (0009):** Deploy ajanı win-x64 self-contained **tek exe** olarak yayımlar (Pi adresleri `AssemblyMetadata` ile gömülü; exe yanında `agentsettings*.json` varsa o önceliklidir) ve `/opt/anewconcept/agent/anewconcept-ajan-<sürüm>-win-x64.exe`'ye koyar; Web `GET /ajan/indir` (giriş ister; `AgentDownload:Directory`) ürün sürümündeki dosyayı verir — bağlantı Ayarlar'da ve durum alanında "Ajan bağlı değil"ken. Ajan verisi kullanıcı başına `%LOCALAPPDATA%\anewconcept` altındadır (`logs`, oturum belirteci, bekleyen bildirimler, `setup-state.json`, `components\<id>`); exe nerede durursa dursun. Kurulum motoru (`SetupCoordinatorBase`) gömülü `components.json`'daki sabit sürümlü bileşenleri resmi kaynaktan indirir, SHA-256 ile doğrular, `<id>.partial` üzerinden kurar; başarısız indirme 2 kez yeniden denenir, sonra Pi aynası (`/ajan-bilesenleri/<dosya>`) denenir. Kurulu exe'lerin hash'i her açılışta karşılaştırılır (uyuşmazsa "Onarılmalı"). Bugün çekirdek: Node.js, FFmpeg (LGPL), chrome-headless-shell; ertelenenler backlog B-73…B-78.
