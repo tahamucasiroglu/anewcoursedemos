@@ -127,9 +127,26 @@ public sealed class ConceptsIntegrationTests : IClassFixture<IntegrationApiFacto
         var concepts = new ConceptRepository(context);
         var suggestions = new TopicSuggestionRepository(context);
         var older = Concept(userId, profile, "Önce silinen", DateTimeOffset.UtcNow.AddHours(-2), null);
-        var newer = Concept(userId, profile, "Sonra silinen", DateTimeOffset.UtcNow.AddHours(-2), null);
+        var created = DateTimeOffset.UtcNow.AddHours(-2);
+        var newer = new Concept
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            ProfileId = profile,
+            Title = "Sonra silinen",
+            TitleKey = "sonra silinen",
+            Source = ConceptSource.Topic, // Konudan gelen: silinmeden "seçilen", silinince "elenen" (review r1 M-1).
+            Status = ConceptStatus.Generated,
+            Language = "tr",
+            Format = "landscape",
+            TargetDurationSeconds = 60,
+            Scenes = older.Scenes,
+            CreatedAt = created,
+            UpdatedAt = created,
+        };
         await concepts.AddAsync(older, ct);
         await concepts.AddAsync(newer, ct);
+        (await concepts.ListTitlesAsync(userId, profile, ct)).Single(t => t.Title == "Sonra silinen").Chosen.ShouldBeTrue();
         var now = DateTimeOffset.UtcNow;
 
         (await concepts.SoftDeleteAsync(stranger, older.Id, [ConceptStatus.Generated], now, ct)).ShouldBeFalse();
@@ -142,7 +159,9 @@ public sealed class ConceptsIntegrationTests : IClassFixture<IntegrationApiFacto
         (await concepts.ListDeletedAsync(stranger, profile, 0, 50, ct)).Total.ShouldBe(0);
         (await concepts.GetManyAsync(userId, [older.Id], ct)).ShouldBeEmpty();
         (await concepts.GetDeletedAsync(userId, older.Id, ct))!.Scenes.Count.ShouldBe(2);
-        (await concepts.ListTitlesAsync(userId, profile, ct)).ShouldAllBe(t => !t.Chosen);
+        var deletedTopic = (await concepts.ListTitlesAsync(userId, profile, ct)).Single(t => t.Title == "Sonra silinen");
+        deletedTopic.Chosen.ShouldBeFalse(); // Silinenler'deki konsept "elenen" (spec 0016 Req 7, BR-8).
+        deletedTopic.At.ShouldBe(now, TimeSpan.FromMilliseconds(1)); // Zamanı silinme anı.
 
         (await concepts.PurgeAsync(stranger, older.Id, ct)).ShouldBeFalse();
         (await concepts.PurgeAsync(userId, older.Id, ct)).ShouldBeTrue();
