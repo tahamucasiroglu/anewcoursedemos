@@ -40,6 +40,29 @@ public interface IConceptRepository
     /// <returns>Değişen sayı.</returns>
     Task<int> ChangeStatusAsync(Guid userId, IReadOnlyCollection<Guid> ids, ConceptStatus from, ConceptStatus to, DateTimeOffset at, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Sahneleri ve uyarıları değiştirir (spec 0015); yalnızca kullanıcının, silinmemiş ve <paramref name="allowed"/> durumundaki konsepti.
+    /// Durum ve başlık değişmez.
+    /// </summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="allowed">İzin verilen durumlar.</param>
+    /// <param name="scenes">Yeni sahneler.</param>
+    /// <param name="wordRepetition">Kelime tekrarı uyarısı.</param>
+    /// <param name="durationMismatch">Süre uyumsuz uyarısı.</param>
+    /// <param name="at">Zaman (UTC).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Değiştiyse <c>true</c>.</returns>
+    Task<bool> UpdateScenesAsync(
+        Guid userId,
+        Guid conceptId,
+        IReadOnlyCollection<ConceptStatus> allowed,
+        IReadOnlyList<ConceptScene> scenes,
+        bool wordRepetition,
+        bool durationMismatch,
+        DateTimeOffset at,
+        CancellationToken cancellationToken);
+
     /// <summary>Profilin tüm konsept başlıkları (durum ve silinme işaretinden bağımsız; BR-4 geçmişi).</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="profileId">Profil.</param>

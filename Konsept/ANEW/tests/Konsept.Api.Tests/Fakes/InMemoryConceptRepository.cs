@@ -75,6 +75,49 @@ public sealed class InMemoryConceptRepository : IConceptRepository
     }
 
     /// <inheritdoc />
+    public Task<bool> UpdateScenesAsync(
+        Guid userId,
+        Guid conceptId,
+        IReadOnlyCollection<ConceptStatus> allowed,
+        IReadOnlyList<ConceptScene> scenes,
+        bool wordRepetition,
+        bool durationMismatch,
+        DateTimeOffset at,
+        CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var i = _rows.FindIndex(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt is null && allowed.Contains(c.Status));
+            if (i < 0)
+            {
+                return Task.FromResult(false);
+            }
+
+            var c = _rows[i];
+            _rows[i] = new Concept
+            {
+                Id = c.Id,
+                UserId = c.UserId,
+                ProfileId = c.ProfileId,
+                Title = c.Title,
+                TitleKey = c.TitleKey,
+                Source = c.Source,
+                Status = c.Status,
+                Language = c.Language,
+                Format = c.Format,
+                TargetDurationSeconds = c.TargetDurationSeconds,
+                Scenes = [.. scenes],
+                WordRepetitionWarning = wordRepetition,
+                DurationMismatchWarning = durationMismatch,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = at,
+                DeletedAt = c.DeletedAt,
+            };
+            return Task.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<HistoryTitle>> ListTitlesAsync(Guid userId, Guid profileId, CancellationToken cancellationToken)
     {
         lock (_gate)

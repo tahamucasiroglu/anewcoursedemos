@@ -8,6 +8,19 @@ public static class ConceptCodes
     /// <summary>Varsayılan Üretilenler filtresi (S-5): Üretildi + Onaylandı.</summary>
     public static readonly IReadOnlyList<ConceptStatus> DefaultFilter = [ConceptStatus.Generated, ConceptStatus.Approved];
 
+    /// <summary>Düzenlenebilir durumlar (spec 0015 Req 1, S-5): Üretildi + Onaylandı.</summary>
+    public static readonly IReadOnlyList<ConceptStatus> Editable = [ConceptStatus.Generated, ConceptStatus.Approved];
+
+    /// <summary>Revizyon durumu kodu.</summary>
+    /// <param name="status">Durum.</param>
+    /// <returns>Kod.</returns>
+    public static string Of(RevisionStatus status) => status switch
+    {
+        RevisionStatus.Ready => "ready",
+        RevisionStatus.Failed => "failed",
+        _ => "running",
+    };
+
     /// <summary>Durum kodu.</summary>
     /// <param name="status">Durum.</param>
     /// <returns>Kod.</returns>

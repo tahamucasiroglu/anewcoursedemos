@@ -51,6 +51,35 @@ public sealed class ConceptRepository : EfRepositoryBase<ConceptsDbContext>, ICo
             .ExecuteUpdateAsync(s => s.SetProperty(c => c.Status, to).SetProperty(c => c.UpdatedAt, at), cancellationToken);
 
     /// <inheritdoc />
+    public async Task<bool> UpdateScenesAsync(
+        Guid userId,
+        Guid conceptId,
+        IReadOnlyCollection<ConceptStatus> allowed,
+        IReadOnlyList<ConceptScene> scenes,
+        bool wordRepetition,
+        bool durationMismatch,
+        DateTimeOffset at,
+        CancellationToken cancellationToken)
+    {
+        var row = await Context.Concepts
+            .FirstOrDefaultAsync(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt == null && allowed.Contains(c.Status), cancellationToken)
+            .ConfigureAwait(false);
+        if (row is null)
+        {
+            return false;
+        }
+
+        var entry = Context.Entry(row);
+        entry.Property(c => c.Scenes).CurrentValue = [.. scenes];
+        entry.Property(c => c.WordRepetitionWarning).CurrentValue = wordRepetition;
+        entry.Property(c => c.DurationMismatchWarning).CurrentValue = durationMismatch;
+        entry.Property(c => c.UpdatedAt).CurrentValue = at;
+        await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        entry.State = EntityState.Detached;
+        return true;
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<HistoryTitle>> ListTitlesAsync(Guid userId, Guid profileId, CancellationToken cancellationToken)
     {
         var rows = await Context.Concepts.AsNoTracking()

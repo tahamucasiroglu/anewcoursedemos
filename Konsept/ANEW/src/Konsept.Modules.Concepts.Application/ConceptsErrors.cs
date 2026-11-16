@@ -40,6 +40,27 @@ public static class ConceptsErrors
     /// <summary>Gets geri alma yalnızca "Onaylandı"dan.</summary>
     public static Error UnapproveInvalidState => new("concepts.invalid_state", ConceptsText.UnapproveInvalidState, ErrorType.Conflict);
 
+    /// <summary>Gets sırada/üretiliyor konsept düzenlenemez (spec 0015 Req 1).</summary>
+    public static Error LockedQueued => new("concepts.locked", ConceptsText.LockedQueued, ErrorType.Conflict);
+
+    /// <summary>Gets videosu olan konsept burada düzenlenemez (spec 0015 Req 1).</summary>
+    public static Error LockedVideo => new("concepts.locked", ConceptsText.LockedVideo, ErrorType.Conflict);
+
+    /// <summary>Gets konseptte süren yeniden üretim var (G-3).</summary>
+    public static Error RevisionBusy => new("concepts.revision_busy", ConceptsText.RevisionBusy, ErrorType.Conflict);
+
+    /// <summary>Gets onaylanacak hazır revizyon yok.</summary>
+    public static Error RevisionNotReady => new("concepts.revision_not_ready", ConceptsText.RevisionNotReady, ErrorType.Conflict);
+
+    /// <summary>Gets boş düzenleme talimatı.</summary>
+    public static Error InstructionRequired => Field("Instruction", ConceptsText.InstructionRequired);
+
+    /// <summary>Gets uzun düzenleme talimatı.</summary>
+    public static Error InstructionTooLong => Field("Instruction", ConceptsText.InstructionTooLong);
+
+    /// <summary>Gets sahne sayısı değişmiş ya da sahne yok (G-20).</summary>
+    public static Error SceneCountInvalid => Field("Scenes", ConceptsText.SceneCountInvalid);
+
     /// <summary>Gets geçersiz adet.</summary>
     public static Error CountInvalid => Field(CountField, ConceptsText.CountInvalid);
 
@@ -57,6 +78,18 @@ public static class ConceptsErrors
 
     /// <summary>Gets geçersiz durum filtresi.</summary>
     public static Error StatusInvalid => Field("Statuses", ConceptsText.StatusInvalid);
+
+    /// <summary>Sahne alan hataları (alan adı <c>Scenes[i].title</c> biçiminde).</summary>
+    /// <param name="errors">Alan → mesaj.</param>
+    /// <returns>Hata.</returns>
+    public static Error SceneFields(IReadOnlyDictionary<string, string> errors)
+    {
+        ArgumentNullException.ThrowIfNull(errors);
+        return new("concepts.invalid", ConceptsText.ValidationFailed, ErrorType.Validation)
+        {
+            FieldErrors = errors.ToDictionary(p => p.Key, p => new[] { p.Value }, StringComparer.Ordinal),
+        };
+    }
 
     private static Error Field(string field, string message) =>
         new("concepts.invalid", ConceptsText.ValidationFailed, ErrorType.Validation)

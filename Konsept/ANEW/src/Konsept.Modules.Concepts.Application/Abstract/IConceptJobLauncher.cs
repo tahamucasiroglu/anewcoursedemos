@@ -10,4 +10,9 @@ public interface IConceptJobLauncher
     /// <param name="job">İş.</param>
     /// <param name="input">Girdi.</param>
     void Launch(ConceptJob job, ConceptJobInput input);
+
+    /// <summary>Talimatla yeniden üretimi başlatır ve hemen döner (spec 0015 Req 7).</summary>
+    /// <param name="revision">Revizyon.</param>
+    /// <param name="input">Girdi.</param>
+    void LaunchRevision(ConceptRevision revision, RevisionInput input);
 }

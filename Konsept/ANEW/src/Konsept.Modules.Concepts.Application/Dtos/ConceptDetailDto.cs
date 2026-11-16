@@ -1,4 +1,5 @@
 using Konsept.Modules.Concepts.Domain.Entities;
+using Konsept.Modules.Concepts.Domain.Rules;
 
 namespace Konsept.Modules.Concepts.Application.Dtos;
 
@@ -28,4 +29,25 @@ public sealed record ConceptDetailDto(
     IReadOnlyList<ConceptScene> Scenes,
     bool WordRepetitionWarning,
     bool DurationMismatchWarning,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt)
+{
+    /// <summary>Konseptten.</summary>
+    /// <param name="c">Konsept.</param>
+    /// <returns>Detay.</returns>
+    public static ConceptDetailDto From(Concept c)
+    {
+        ArgumentNullException.ThrowIfNull(c);
+        return new(
+            c.Id,
+            c.ProfileId,
+            c.Title,
+            ConceptCodes.Of(c.Status),
+            c.Language,
+            c.Format,
+            c.TargetDurationSeconds,
+            c.Scenes,
+            c.WordRepetitionWarning,
+            c.DurationMismatchWarning,
+            c.CreatedAt);
+    }
+}

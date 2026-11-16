@@ -77,6 +77,37 @@ public sealed class ConceptsIntegrationTests : IClassFixture<IntegrationApiFacto
         delete.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
+    /// <summary>
+    /// Spec 0015 (AC-2, AC-14): gerçek depoda sahne değişikliği <c>jsonb</c>'ye yazılır, durum ve başlık aynı kalır; başkasının ya da izin
+    /// verilmeyen durumdaki konsepti değişmez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Concepts_RealDatabase_UpdateScenes_OwnedEditableOnly()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var email = AuthenticatedClient.NewEmail();
+        using var client = await AuthenticatedClient.CreateAsync(_factory, ct, email);
+        var profile = await ProfileApiTests.CreateAsync(client, "Düzenleme Kanalı", ct);
+        var userId = (Guid)(await _factory.Database.ScalarAsync($"SELECT id FROM identity.users WHERE email = '{email}'"))!;
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var concepts = new ConceptRepository(scope.ServiceProvider.GetRequiredService<ConceptsDbContext>());
+        var concept = Concept(userId, profile, "Düzenlenecek", DateTimeOffset.UtcNow, null);
+        await concepts.AddAsync(concept, ct);
+        ConceptScene[] edited = [new("Yeni", string.Empty, "Yeni metin.", 60)];
+
+        (await concepts.UpdateScenesAsync(Guid.NewGuid(), concept.Id, [ConceptStatus.Generated], edited, true, false, DateTimeOffset.UtcNow, ct)).ShouldBeFalse();
+        (await concepts.UpdateScenesAsync(userId, concept.Id, [ConceptStatus.Approved], edited, true, false, DateTimeOffset.UtcNow, ct)).ShouldBeFalse();
+        (await concepts.UpdateScenesAsync(userId, concept.Id, [ConceptStatus.Generated, ConceptStatus.Approved], edited, true, false, DateTimeOffset.UtcNow, ct)).ShouldBeTrue();
+
+        await using var fresh = _factory.Services.CreateAsyncScope();
+        var stored = (await new ConceptRepository(fresh.ServiceProvider.GetRequiredService<ConceptsDbContext>()).GetManyAsync(userId, [concept.Id], ct)).Single();
+        stored.Scenes.ShouldBe(edited);
+        stored.WordRepetitionWarning.ShouldBeTrue();
+        stored.Status.ShouldBe(ConceptStatus.Generated);
+        stored.Title.ShouldBe("Düzenlenecek");
+    }
+
     private static Concept Concept(Guid userId, Guid profile, string title, DateTimeOffset at, DateTimeOffset? deletedAt) => new()
     {
         Id = Guid.CreateVersion7(),

@@ -18,6 +18,12 @@ public static class ConceptLimits
     /// <summary>Öneri özetinin en fazla uzunluğu (kolon sınırı).</summary>
     public const int MaxSummaryLength = 2000;
 
+    /// <summary>Elle düzenlenen ekran tarifi ve seslendirme metninin en fazla uzunluğu (spec 0015).</summary>
+    public const int MaxSceneTextLength = 10000;
+
+    /// <summary>Düzenleme talimatının en fazla uzunluğu (spec 0015 Req 7; fikirle aynı sınır).</summary>
+    public const int MaxInstructionLength = 2000;
+
     /// <summary>Üretilenler sayfa boyutu.</summary>
     public const int PageSize = 50;
 }

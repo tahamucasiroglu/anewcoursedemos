@@ -33,6 +33,9 @@ public static class ConceptsModule
         services.AddScoped<IConceptJobExecutor, ConceptJobExecutor>();
         services.AddScoped<IConceptWorkService, ConceptWorkService>();
         services.AddScoped<IConceptService, ConceptService>();
+        services.AddSingleton<IConceptRevisionRegistry, ConceptRevisionRegistry>();
+        services.AddScoped<IConceptRevisionExecutor, ConceptRevisionExecutor>();
+        services.AddScoped<IConceptEditService, ConceptEditService>();
         services.AddScoped<IProfileConceptPresence, ProfileConceptPresence>(); // Concepts.Contracts (Profiles kullanır).
         services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();

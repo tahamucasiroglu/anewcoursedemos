@@ -27,4 +27,18 @@ public abstract class ConceptJobLauncherBase(IServiceScopeFactory scopes, IHostA
             },
             CancellationToken.None);
     }
+
+    /// <inheritdoc />
+    public void LaunchRevision(ConceptRevision revision, RevisionInput input)
+    {
+        var stopping = lifetime.ApplicationStopping;
+        _ = Task.Run(
+            async () =>
+            {
+                await using var scope = scopes.CreateAsyncScope();
+                var executor = scope.ServiceProvider.GetRequiredService<IConceptRevisionExecutor>();
+                await executor.ExecuteAsync(revision, input, stopping).ConfigureAwait(false);
+            },
+            CancellationToken.None);
+    }
 }

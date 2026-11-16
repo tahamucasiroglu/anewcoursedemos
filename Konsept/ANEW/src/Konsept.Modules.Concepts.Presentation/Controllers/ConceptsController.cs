@@ -15,14 +15,17 @@ public sealed class ConceptsController : ControllerBase
 {
     private readonly IConceptWorkService _work;
     private readonly IConceptService _concepts;
+    private readonly IConceptEditService _edit;
 
     /// <summary>Initializes a new instance of the <see cref="ConceptsController"/> class.</summary>
     /// <param name="work">Üretim alanları.</param>
     /// <param name="concepts">Üretilenler ve onay.</param>
-    public ConceptsController(IConceptWorkService work, IConceptService concepts)
+    /// <param name="edit">Düzenleme döngüsü (spec 0015).</param>
+    public ConceptsController(IConceptWorkService work, IConceptService concepts, IConceptEditService edit)
     {
         _work = work;
         _concepts = concepts;
+        _edit = edit;
     }
 
     /// <summary>Profilin üretim durumu (hazır olma, bekleyen öneriler, işler).</summary>
@@ -98,4 +101,46 @@ public sealed class ConceptsController : ControllerBase
     [HttpPost("unapprove")]
     public Task<IActionResult> Unapprove([FromBody] ConceptIdsRequest request, CancellationToken cancellationToken) =>
         _concepts.UnapproveAsync(request, cancellationToken).ToActionResult();
+
+    /// <summary>Doğrudan düzenleme: sahneleri kaydet (spec 0015 Req 3).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="request">Sahneler.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Güncel konsept.</returns>
+    [HttpPost("{id:guid}/scenes")]
+    public Task<IActionResult> SaveScenes(Guid id, [FromBody] SaveScenesRequest request, CancellationToken cancellationToken) =>
+        _edit.SaveScenesAsync(id, request, cancellationToken).ToActionResult();
+
+    /// <summary>Talimatla yeniden üret / Tekrar düzenle (spec 0015 Req 7–8).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="request">Talimat.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Revizyon durumu.</returns>
+    [HttpPost("{id:guid}/regenerate")]
+    public Task<IActionResult> Regenerate(Guid id, [FromBody] RegenerateRequest request, CancellationToken cancellationToken) =>
+        _edit.RegenerateAsync(id, request, cancellationToken).ToActionResult();
+
+    /// <summary>Revizyon durumu.</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Revizyon durumu.</returns>
+    [HttpGet("{id:guid}/revision")]
+    public Task<IActionResult> Revision(Guid id, CancellationToken cancellationToken) =>
+        _edit.GetRevisionAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Revizyonu onayla.</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Güncel konsept.</returns>
+    [HttpPost("{id:guid}/revision/approve")]
+    public Task<IActionResult> ApproveRevision(Guid id, CancellationToken cancellationToken) =>
+        _edit.ApproveRevisionAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Revizyonu sil.</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Revizyon durumu.</returns>
+    [HttpPost("{id:guid}/revision/discard")]
+    public Task<IActionResult> DiscardRevision(Guid id, CancellationToken cancellationToken) =>
+        _edit.DiscardRevisionAsync(id, cancellationToken).ToActionResult();
 }

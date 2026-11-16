@@ -30,4 +30,16 @@
   <data name="EventConceptsWithErrors" xml:space="preserve"><value>Konsept üretimi: {0}/{1} tamamlandı, {2} hata</value></data>
   <data name="EventConceptsStopped" xml:space="preserve"><value>Konsept üretimi durduruldu: {0}/{1}</value></data>
   <data name="EventConceptsFailed" xml:space="preserve"><value>Konsept üretimi başarısız: 0/{0}</value></data>
+  <data name="LockedQueued" xml:space="preserve"><value>Önce üretim sırasından çıkarın.</value></data>
+  <data name="LockedVideo" xml:space="preserve"><value>Bu konseptin videosu var; metin değişikliği Üretilen Videolar'daki 'Yeniden üret' ile yapılır.</value></data>
+  <data name="RevisionBusy" xml:space="preserve"><value>Bu konsept için süren bir yeniden üretim var; bitmesini bekleyin.</value></data>
+  <data name="RevisionNotReady" xml:space="preserve"><value>Onaylanacak bir revizyon yok.</value></data>
+  <data name="RevisionUnexpected" xml:space="preserve"><value>Yeniden üretim beklenmeyen bir hatayla durdu.</value></data>
+  <data name="InstructionRequired" xml:space="preserve"><value>Neyin düzeltilmesini istediğinizi yazın.</value></data>
+  <data name="InstructionTooLong" xml:space="preserve"><value>Talimat en fazla 2.000 karakter olabilir.</value></data>
+  <data name="SceneCountInvalid" xml:space="preserve"><value>Sahne eklenemez, silinemez ya da sırası değiştirilemez.</value></data>
+  <data name="SceneTitleInvalid" xml:space="preserve"><value>Sahne başlığını yazın (en fazla 500 karakter).</value></data>
+  <data name="SceneVisualInvalid" xml:space="preserve"><value>Ekran tarifi en fazla 10.000 karakter olabilir.</value></data>
+  <data name="SceneNarrationInvalid" xml:space="preserve"><value>Seslendirme metnini yazın (en fazla 10.000 karakter).</value></data>
+  <data name="SceneDurationInvalid" xml:space="preserve"><value>Süre pozitif tam saniye olmalı.</value></data>
 </root>
