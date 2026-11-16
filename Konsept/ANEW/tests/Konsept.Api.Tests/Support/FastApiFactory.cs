@@ -46,6 +46,9 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek teknik log deposu.</summary>
     public InMemoryTechnicalLogRepository TechnicalLogs { get; } = new();
 
+    /// <summary>Gets bellek hata bildirimi deposu (plan 0022).</summary>
+    public InMemoryErrorReportRepository ErrorReports { get; } = new();
+
     /// <summary>Gets veritabanı yoklaması.</summary>
     public FakeDatabaseProbe Database { get; } = new();
 
@@ -133,6 +136,8 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ISystemEventRepository>(Events);
             services.AddSingleton<IDatabaseProbe>(Database);
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
+            services.RemoveAll<IErrorReportRepository>(); // test kurulumu: hata bildirimleri (plan 0022 A-1).
+            services.AddSingleton<IErrorReportRepository>(ErrorReports);
         });
     }
 }

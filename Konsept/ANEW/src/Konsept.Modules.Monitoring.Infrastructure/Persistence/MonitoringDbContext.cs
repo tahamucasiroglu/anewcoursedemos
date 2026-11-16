@@ -25,6 +25,9 @@ public sealed class MonitoringDbContext : ModuleDbContextBase
     /// <summary>Gets veritabanındaki teknik log (spec 0008).</summary>
     public DbSet<TechnicalLog> TechnicalLogs => Set<TechnicalLog>();
 
+    /// <summary>Gets hata bildirimleri (spec 0022).</summary>
+    public DbSet<ErrorReport> ErrorReports => Set<ErrorReport>();
+
     /// <inheritdoc />
     protected override string Schema => SchemaName;
 }

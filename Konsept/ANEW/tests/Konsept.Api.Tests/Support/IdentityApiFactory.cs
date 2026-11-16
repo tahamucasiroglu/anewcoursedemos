@@ -63,6 +63,9 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek teknik log deposu.</summary>
     public InMemoryTechnicalLogRepository TechnicalLogs { get; } = new();
 
+    /// <summary>Gets bellek hata bildirimi deposu (plan 0022).</summary>
+    public InMemoryErrorReportRepository ErrorReports { get; } = new();
+
     /// <summary>Gets bu örneğin log klasörü.</summary>
     public string LogDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "identity-logs-" + Guid.NewGuid().ToString("N"));
 
@@ -113,6 +116,8 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ISystemEventRepository>(Events);
             services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe());
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
+            services.RemoveAll<IErrorReportRepository>(); // test kurulumu: hata bildirimleri (plan 0022 A-1).
+            services.AddSingleton<IErrorReportRepository>(ErrorReports);
         });
     }
 }
