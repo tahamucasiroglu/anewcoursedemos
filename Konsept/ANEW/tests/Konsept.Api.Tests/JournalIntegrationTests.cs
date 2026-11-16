@@ -58,6 +58,8 @@ public sealed class JournalIntegrationTests : IClassFixture<IntegrationApiFactor
         var more = await owner.GetFromJsonAsync<JsonElement>($"/api/journal?date={date}&skip=50", ct);
         var errors = await owner.GetFromJsonAsync<JsonElement>($"/api/journal?date={date}&filter=error", ct);
         var otherView = await other.GetFromJsonAsync<JsonElement>($"/api/journal?date={date}", ct);
+        var otherToday = await other.GetFromJsonAsync<JsonElement>("/api/journal", ct); // sahibin bugünkü kayıt/giriş olayları da var
+        var otherId = (await other.GetFromJsonAsync<JsonElement>("/api/auth/session", ct)).GetProperty("userId").GetGuid();
 
         first.GetProperty("date").GetString().ShouldBe(date);
         first.GetProperty("items").GetArrayLength().ShouldBe(50);
@@ -67,5 +69,8 @@ public sealed class JournalIntegrationTests : IClassFixture<IntegrationApiFactor
         more.GetProperty("hasMore").GetBoolean().ShouldBeFalse();
         errors.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("message").GetString()).ShouldBe(["video", "gün başı"]);
         otherView.ToString().ShouldNotContain("kayıt 01");
+        var otherItems = otherToday.GetProperty("items").EnumerateArray().ToList();
+        otherItems.ShouldNotBeEmpty();
+        otherItems.ShouldAllBe(i => i.GetProperty("userId").GetGuid() == otherId);
     }
 }
