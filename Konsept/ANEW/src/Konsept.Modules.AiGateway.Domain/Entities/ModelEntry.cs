@@ -47,4 +47,16 @@ public sealed class ModelEntry
 
     /// <summary>Gets üretilen görsel başına USD (görsel).</summary>
     public decimal? PricePerImageUsd { get; init; }
+
+    /// <summary>Gets a value indicating whether giriş yerel mi (spec 0006 Req 18: ajanda çalışır, API key ve birim fiyat yok).</summary>
+    public bool Local { get; init; }
+
+    /// <summary>Gets yalnızca desteklenen dil (<c>tr</c> · <c>en</c>); çok dilliyse <c>null</c> (spec 0006 Req 3).</summary>
+    public string? LanguageOnly { get; init; }
+
+    /// <summary>Gets a value indicating whether "Lisans uyarısı" etiketi taşır (spec 0006 Req 2, Remotion).</summary>
+    public bool LicenseWarning { get; init; }
+
+    /// <summary>Gets girişin bağlı olduğu ajan bileşeni (ör. <c>remotion</c>); yoksa <c>null</c> (spec 0006 Req 19).</summary>
+    public string? Component { get; init; }
 }

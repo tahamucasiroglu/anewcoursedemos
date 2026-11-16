@@ -98,13 +98,15 @@ function renderModels(root, state) {
     unreadable: text.textKeyUnreadable,
     no_permission: text.textNoPermission,
   };
+  // Tür etiketi açık eşlemeyle (spec 0006 Req 18: ses ve video motoru türleri).
+  const kindLabels = { text: text.textKindText, image: text.textKindImage, audio: text.textKindAudio, video_engine: text.textKindVideoEngine };
   list.replaceChildren(...models.map((model) => {
     const item = el(doc, 'li', 'model-row');
     item.dataset.modelId = model.id;
     item.append(
       el(doc, 'span', 'model-row__name', model.name),
       el(doc, 'span', 'model-row__provider', model.providerName),
-      el(doc, 'span', 'model-row__kind', model.kind === 'image' ? text.textKindImage : text.textKindText),
+      el(doc, 'span', 'model-row__kind', kindLabels[model.kind] || text.textKindText),
       el(doc, 'span', `badge badge--${model.availability}`, labels[model.availability] || ''),
     );
     if (model.kind === 'text' && model.availability === 'available') {

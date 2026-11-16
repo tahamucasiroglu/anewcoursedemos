@@ -1,5 +1,6 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "localProviderName": "Yerel",
   "keyValidationTimeoutSeconds": 10,
   "providers": [
     {
@@ -78,6 +79,31 @@
       "effortLevels": [], "defaultEffort": null,
       "outputTokenLimit": 32000, "timeoutSeconds": 600,
       "inputPricePerMillionUsd": 0.60, "outputPricePerMillionUsd": 2.50
+    },
+    {
+      "id": "local/z-image-turbo", "providerId": "local", "name": "Z-Image-Turbo", "kind": "image", "local": true, "component": "z-image-turbo",
+      "effortLevels": [], "defaultEffort": null, "outputTokenLimit": null, "timeoutSeconds": 600
+    },
+    {
+      "id": "local/flux2-klein-4b", "providerId": "local", "name": "FLUX.2 klein 4B", "kind": "image", "local": true,
+      "effortLevels": [], "defaultEffort": null, "outputTokenLimit": null, "timeoutSeconds": 600
+    },
+    {
+      "id": "local/supertonic-3", "providerId": "local", "name": "Supertonic 3", "kind": "audio", "local": true,
+      "effortLevels": [], "defaultEffort": null, "outputTokenLimit": null, "timeoutSeconds": 600
+    },
+    {
+      "id": "local/chatterbox-multilingual-v3", "providerId": "local", "name": "Chatterbox Multilingual V3", "kind": "audio", "local": true,
+      "effortLevels": [], "defaultEffort": null, "outputTokenLimit": null, "timeoutSeconds": 600
+    },
+    {
+      "id": "local/hyperframes", "providerId": "local", "name": "HyperFrames", "kind": "videoEngine", "local": true,
+      "effortLevels": [], "defaultEffort": null, "outputTokenLimit": null, "timeoutSeconds": 600
+    },
+    {
+      "id": "local/remotion", "providerId": "local", "name": "Remotion", "kind": "videoEngine", "local": true, "licenseWarning": true,
+      "component": "remotion",
+      "effortLevels": [], "defaultEffort": null, "outputTokenLimit": null, "timeoutSeconds": 600
     }
   ]
 }

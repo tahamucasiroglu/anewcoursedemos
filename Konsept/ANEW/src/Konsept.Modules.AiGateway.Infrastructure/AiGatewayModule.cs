@@ -59,6 +59,7 @@ public static class AiGatewayModule
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<ITextModelDirectory, TextModelDirectory>(); // AiGateway.Contracts (spec 0005).
+        services.AddScoped<IModelDirectory, ModelDirectory>(); // AiGateway.Contracts (spec 0006).
 
         // Çağrı kapısı (spec 0013): sağlayıcı çağrıları ayrı istemciyle; zaman aşımı ve tekrar kapıdadır (HttpClient'ın 100 sn'lik
         // varsayılanı kapatılır, yönlendirme izlenmez, istemci logu yok — key yalnızca başlıkta).

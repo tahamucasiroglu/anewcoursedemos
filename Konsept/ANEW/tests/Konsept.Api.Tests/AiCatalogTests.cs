@@ -3,7 +3,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Konsept.Api.Tests.Fakes;
 using Konsept.Api.Tests.Support;
+using Konsept.Modules.AiGateway.Application.Base;
+using Konsept.Modules.AiGateway.Application.Concrete;
+using Konsept.Modules.AiGateway.Application.Dtos;
+using Konsept.Modules.AiGateway.Domain.Enums;
 using Konsept.Modules.AiGateway.Infrastructure.Catalog;
 using Shouldly;
 
@@ -40,7 +45,10 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
         var catalog = await client.GetFromJsonAsync<JsonElement>("/api/ai/catalog", ct);
 
         catalog.GetProperty("providers").EnumerateArray().Select(p => p.GetProperty("id").GetString()).ShouldBe(ExpectedProviders);
-        var models = catalog.GetProperty("models").EnumerateArray().ToList();
+        // Plan 0006 A-1: 0006 Req 18 kataloğa yerel girişleri ve "ses"/"video motoru" türlerini ekler; 0004'ün online iddiaları online
+        // girişlere aynen uygulanır, alan iddiaları tüm girişlere.
+        var all = catalog.GetProperty("models").EnumerateArray().ToList();
+        var models = all.Where(m => !m.GetProperty("local").GetBoolean()).ToList();
         models.Select(m => m.GetProperty("kind").GetString()).Distinct().Order(StringComparer.Ordinal).ShouldBe(["image", "text"]);
         foreach (var provider in ExpectedProviders)
         {
@@ -52,7 +60,7 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
         images[0].GetProperty("name").GetString()!.ShouldStartWith("gpt-image");
         images[0].GetProperty("pricePerImageUsd").GetDecimal().ShouldBeGreaterThan(0m);
 
-        foreach (var model in models)
+        foreach (var model in all)
         {
             var id = model.GetProperty("id").GetString()!;
             model.GetProperty("name").GetString().ShouldNotBeNullOrWhiteSpace(id);
@@ -74,9 +82,16 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
         }
 
         var raw = EmbeddedCatalogSource.ReadEmbeddedJson();
-        foreach (var forbidden in new[] { "ollama", "\"audio\"", "\"voice\"", "tts", "fal", "google", "nano", "local" })
+        foreach (var forbidden in new[] { "ollama", "\"voice\"", "tts", "fal", "google", "nano" })
         {
             raw.ShouldNotContain(forbidden, Case.Insensitive);
+        }
+
+        foreach (var model in models)
+        {
+            model.GetProperty("kind").GetString().ShouldNotBe("audio");
+            model.GetProperty("id").GetString()!.ShouldNotContain("local", Case.Insensitive);
+            model.GetProperty("providerId").GetString()!.ShouldNotContain("local", Case.Insensitive);
         }
     }
 
@@ -133,6 +148,67 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
     {
         var catalog = await client.GetFromJsonAsync<JsonElement>("/api/ai/catalog", ct);
         return catalog.GetProperty("models").EnumerateArray()
+            .Where(m => !m.GetProperty("local").GetBoolean()) // Plan 0006 A-1: key etiketi yalnızca online girişlerde (yereller AC-23'te).
             .ToDictionary(m => m.GetProperty("id").GetString()!, m => m.GetProperty("availability").GetString()!, StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Spec 0006 AC-23: Z-Image-Turbo ve FLUX.2 klein 4B "görsel", Supertonic 3 ve Chatterbox Multilingual V3 "ses", HyperFrames ve Remotion
+    /// "video motoru" türünde yerel girişlerdir; tür listesi dört türdür; key'i hiç olmayan kullanıcıda yerel girişler "Key yok" almaz ve
+    /// birim fiyatları yoktur; Ollama/yerel LLM yoktur; Remotion "Lisans uyarısı" taşır.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Catalog_LocalEntries_FourKinds_NoKeyLabel()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+
+        var catalog = await client.GetFromJsonAsync<JsonElement>("/api/ai/catalog", ct);
+
+        var all = catalog.GetProperty("models").EnumerateArray().ToList();
+        all.Select(m => m.GetProperty("kind").GetString()).Distinct().Order(StringComparer.Ordinal).ShouldBe(["audio", "image", "text", "video_engine"]);
+        var local = all.Where(m => m.GetProperty("local").GetBoolean()).ToDictionary(m => m.GetProperty("name").GetString()!, StringComparer.Ordinal);
+        local.Keys.Order(StringComparer.Ordinal).ShouldBe(
+            ["Chatterbox Multilingual V3", "FLUX.2 klein 4B", "HyperFrames", "Remotion", "Supertonic 3", "Z-Image-Turbo"]);
+        local["Z-Image-Turbo"].GetProperty("kind").GetString().ShouldBe("image");
+        local["FLUX.2 klein 4B"].GetProperty("kind").GetString().ShouldBe("image");
+        local["Supertonic 3"].GetProperty("kind").GetString().ShouldBe("audio");
+        local["Chatterbox Multilingual V3"].GetProperty("kind").GetString().ShouldBe("audio");
+        local["HyperFrames"].GetProperty("kind").GetString().ShouldBe("video_engine");
+        local["Remotion"].GetProperty("kind").GetString().ShouldBe("video_engine");
+        local["Remotion"].GetProperty("licenseWarning").GetBoolean().ShouldBeTrue();
+        local["HyperFrames"].GetProperty("licenseWarning").GetBoolean().ShouldBeFalse();
+        foreach (var (name, model) in local)
+        {
+            model.GetProperty("availability").GetString().ShouldBe("available", name);
+            model.GetProperty("pricePerImageUsd").ValueKind.ShouldBe(JsonValueKind.Null, name);
+            model.GetProperty("inputPricePerMillionUsd").ValueKind.ShouldBe(JsonValueKind.Null, name);
+            model.GetProperty("outputPricePerMillionUsd").ValueKind.ShouldBe(JsonValueKind.Null, name);
+        }
+
+        all.Where(m => !m.GetProperty("local").GetBoolean()).ShouldAllBe(m => m.GetProperty("availability").GetString() == "no_key");
+        all.ShouldAllBe(m => !m.GetProperty("name").GetString()!.Contains("Ollama", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// B-89: metin modeli dizini (Konseptler modalı) yalnızca "metin" türünü verir; gerçek seed'deki ses, video motoru ve görsel girişleri
+    /// (yerel ve online) listede yoktur; kullanılabilirlik yalnızca "available" iken seçilebilir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task TextDirectory_OnlyTextKind()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var seed = new EmbeddedCatalogSource().Catalog;
+        var dto = new CatalogDto(seed.Version, [], [.. seed.Models.Select(m => new CatalogModelDto(
+            m.Id, m.ProviderId, m.ProviderId, m.Name, CatalogServiceBase.KindOf(m.Kind), m.EffortLevels, m.DefaultEffort, null, 600, null, null, null,
+            CatalogModelDto.Available, m.Local))]);
+
+        var listed = await new TextModelDirectory(new StubCatalogService(dto)).ListAsync(ct);
+
+        listed.Select(m => m.Id).ShouldBe(seed.Models.Where(m => m.Kind == ModelKind.Text).Select(m => m.Id));
+        listed.ShouldAllBe(m => m.Selectable);
+        seed.Models.Count(m => m.Kind is ModelKind.Audio or ModelKind.VideoEngine).ShouldBe(4);
     }
 }

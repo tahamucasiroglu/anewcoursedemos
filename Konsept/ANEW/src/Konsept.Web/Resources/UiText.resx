@@ -112,6 +112,8 @@
   <data name="FilterAll" xml:space="preserve"><value>Tümü</value></data>
   <data name="KindText" xml:space="preserve"><value>Metin</value></data>
   <data name="KindImage" xml:space="preserve"><value>Görsel</value></data>
+  <data name="KindAudio" xml:space="preserve"><value>Ses</value></data>
+  <data name="KindVideoEngine" xml:space="preserve"><value>Video motoru</value></data>
   <data name="AvailabilityAvailable" xml:space="preserve"><value>Kullanılabilir</value></data>
   <data name="AvailabilityNoKey" xml:space="preserve"><value>Key yok</value></data>
   <data name="AvailabilityUnreadable" xml:space="preserve"><value>Key okunamıyor</value></data>

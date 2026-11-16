@@ -25,6 +25,9 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     /// <summary>Gets saat kaynağı.</summary>
     protected TimeProvider TimeProvider { get; }
 
+    /// <summary>Gets kurulu bileşen deposu (spec 0006); verilmemişse saklanmaz.</summary>
+    protected IInstalledComponentStore? Components { get; init; }
+
     /// <inheritdoc />
     public AgentStatusDto GetStatus(Guid? userId)
     {
@@ -42,6 +45,7 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
         ArgumentNullException.ThrowIfNull(registration);
         var session = new AgentSession(connectionId, registration.MachineName, registration.AgentVersion, TimeProvider.GetUtcNow(), owner.UserId, owner.DeviceId);
         Registry.Set(session);
+        Components?.Set(owner.UserId, registration.InstalledComponents ?? []); // Kurulu bileşenler (spec 0006 Req 19).
         await RunSideEffectAsync(() => OnConnectedAsync(session, cancellationToken), cancellationToken).ConfigureAwait(false);
     }
 

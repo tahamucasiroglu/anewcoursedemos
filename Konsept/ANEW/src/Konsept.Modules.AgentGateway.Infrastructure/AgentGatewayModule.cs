@@ -33,6 +33,9 @@ public static class AgentGatewayModule
         services.AddSingleton<IAgentConnectionTracker, AgentConnectionTracker>();
         services.AddSingleton<IAgentDeviceRevocationListener, AgentSessionTerminator>();
         services.AddSingleton<IAgentChannel, SignalRAgentChannel>();
+        services.AddSingleton<InMemoryInstalledComponentStore>();
+        services.AddSingleton<IInstalledComponentStore>(sp => sp.GetRequiredService<InMemoryInstalledComponentStore>());
+        services.AddSingleton<IInstalledComponentsReader>(sp => sp.GetRequiredService<InMemoryInstalledComponentStore>()); // spec 0006.
         services.AddScoped<IAgentPresenceService, AgentPresenceService>();
         services.AddScoped<IAgentStatusReader>(sp => sp.GetRequiredService<IAgentPresenceService>());
         services.AddScoped<IAgentTestService, AgentTestService>();

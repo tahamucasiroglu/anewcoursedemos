@@ -8,7 +8,7 @@ namespace Konsept.Modules.AiGateway.Application.Dtos;
 /// <param name="ProviderId">Sağlayıcı kimliği.</param>
 /// <param name="ProviderName">Sağlayıcı adı.</param>
 /// <param name="Name">Görünen ad.</param>
-/// <param name="Kind">Tür (<c>text</c> · <c>image</c>).</param>
+/// <param name="Kind">Tür (<c>text</c> · <c>image</c> · <c>audio</c> · <c>video_engine</c>; spec 0006 Req 18).</param>
 /// <param name="EffortLevels">Desteklenen efor seviyeleri.</param>
 /// <param name="DefaultEffort">Varsayılan efor.</param>
 /// <param name="OutputTokenLimit">Çıktı token limiti (metin).</param>
@@ -17,6 +17,10 @@ namespace Konsept.Modules.AiGateway.Application.Dtos;
 /// <param name="OutputPricePerMillionUsd">1M çıkış token'ı USD.</param>
 /// <param name="PricePerImageUsd">Görsel başına USD.</param>
 /// <param name="Availability">Kullanılabilirlik.</param>
+/// <param name="Local">Yerel giriş (spec 0006 Req 18; key ve fiyat yok).</param>
+/// <param name="LanguageOnly">Tek desteklenen dil (<c>tr</c> · <c>en</c>) ya da <c>null</c>.</param>
+/// <param name="LicenseWarning">"Lisans uyarısı" etiketi.</param>
+/// <param name="Component">Bağlı ajan bileşeni ya da <c>null</c>.</param>
 public sealed record CatalogModelDto(
     string Id,
     string ProviderId,
@@ -30,8 +34,24 @@ public sealed record CatalogModelDto(
     decimal? InputPricePerMillionUsd,
     decimal? OutputPricePerMillionUsd,
     decimal? PricePerImageUsd,
-    string Availability)
+    string Availability,
+    bool Local = false,
+    string? LanguageOnly = null,
+    bool LicenseWarning = false,
+    string? Component = null)
 {
+    /// <summary>Tür: metin.</summary>
+    public const string KindText = "text";
+
+    /// <summary>Tür: görsel.</summary>
+    public const string KindImage = "image";
+
+    /// <summary>Tür: ses (spec 0006).</summary>
+    public const string KindAudio = "audio";
+
+    /// <summary>Tür: video motoru (spec 0006).</summary>
+    public const string KindVideoEngine = "video_engine";
+
     /// <summary>Etiket: sağlayıcının key'i kayıtlı.</summary>
     public const string Available = "available";
 

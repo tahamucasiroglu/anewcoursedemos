@@ -15,6 +15,9 @@ public sealed class CatalogSeed
     /// <summary>Gets online sağlayıcılar.</summary>
     public IReadOnlyList<ProviderEntry> Providers { get; init; } = [];
 
+    /// <summary>Gets yerel girişlerin sağlayıcı adı (spec 0006 Req 18; ör. "Yerel").</summary>
+    public string LocalProviderName { get; init; } = "Yerel";
+
     /// <summary>Gets modeller.</summary>
     public IReadOnlyList<ModelEntry> Models { get; init; } = [];
 }

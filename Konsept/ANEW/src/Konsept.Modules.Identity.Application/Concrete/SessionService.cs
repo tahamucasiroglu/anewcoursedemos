@@ -1,5 +1,6 @@
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Identity.Application.Base;
+using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Shared.Kernel.Abstract;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +13,7 @@ namespace Konsept.Modules.Identity.Application.Concrete;
 public sealed class SessionService : SessionServiceBase
 {
     private readonly IAgentDeviceRevoker? _agentDevices;
+    private readonly IReadOnlyList<IUserSessionsEndedListener> _listeners = [];
 
     /// <summary>Initializes a new instance of the <see cref="SessionService"/> class.</summary>
     /// <param name="dependencies">Ortak bağımlılıklar.</param>
@@ -33,7 +35,34 @@ public sealed class SessionService : SessionServiceBase
         _agentDevices = agentDevices ?? throw new ArgumentNullException(nameof(agentDevices));
     }
 
+    /// <summary>Initializes a new instance of the <see cref="SessionService"/> class.</summary>
+    /// <param name="dependencies">Ortak bağımlılıklar.</param>
+    /// <param name="currentUser">İsteği yapan kullanıcı.</param>
+    /// <param name="logger">Teknik log.</param>
+    /// <param name="agentDevices">Ajan cihaz iptali.</param>
+    /// <param name="listeners">Tüm oturumlar kapanınca haber alanlar (spec 0006 Req 16: çalışan üretim işi durur).</param>
+    public SessionService(
+        AuthServiceDependencies dependencies,
+        ICurrentUser currentUser,
+        ILogger<SessionService> logger,
+        IAgentDeviceRevoker agentDevices,
+        IEnumerable<IUserSessionsEndedListener> listeners)
+        : this(dependencies, currentUser, logger, agentDevices)
+    {
+        _listeners = [.. listeners ?? throw new ArgumentNullException(nameof(listeners))];
+    }
+
     /// <inheritdoc />
-    protected override Task OnAllSessionsRevokedAsync(Guid userId, CancellationToken cancellationToken) =>
-        _agentDevices?.RevokeAllAsync(userId, cancellationToken) ?? Task.CompletedTask;
+    protected override async Task OnAllSessionsRevokedAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (_agentDevices is not null)
+        {
+            await _agentDevices.RevokeAllAsync(userId, cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (var listener in _listeners)
+        {
+            await listener.OnAllSessionsEndedAsync(userId, CancellationToken.None).ConfigureAwait(false);
+        }
+    }
 }

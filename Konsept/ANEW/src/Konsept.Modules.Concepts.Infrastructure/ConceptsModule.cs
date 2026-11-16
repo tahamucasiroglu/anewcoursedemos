@@ -38,6 +38,7 @@ public static class ConceptsModule
         services.AddScoped<IConceptEditService, ConceptEditService>();
         services.AddScoped<IConceptTrashService, ConceptTrashService>();
         services.AddScoped<IProfileConceptPresence, ProfileConceptPresence>(); // Concepts.Contracts (Profiles kullanır).
+        services.AddScoped<IConceptQueueBridge, ConceptQueueBridge>(); // Concepts.Contracts (Production kullanır, spec 0006).
         services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();
         services.TryAddScoped<ICurrentUser, HttpContextCurrentUser>();

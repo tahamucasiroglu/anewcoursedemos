@@ -23,7 +23,7 @@ public abstract class TextModelDirectoryBase(ICatalogService catalog) : ITextMod
         }
 
         return [.. result.Value.Models
-            .Where(m => string.Equals(m.Kind, "text", StringComparison.Ordinal))
+            .Where(m => !m.Local && string.Equals(m.Kind, CatalogModelDto.KindText, StringComparison.Ordinal))
             .Select(m => new TextModelInfo(
                 m.Id,
                 m.Name,

@@ -39,6 +39,23 @@ public sealed partial class AgentPresenceService : AgentPresenceServiceBase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>Initializes a new instance of the <see cref="AgentPresenceService"/> class.</summary>
+    /// <param name="registry">Ajan oturum kaydı.</param>
+    /// <param name="events">Genel olay kaydı.</param>
+    /// <param name="timeProvider">Saat kaynağı.</param>
+    /// <param name="logger">Log.</param>
+    /// <param name="components">Kurulu bileşen deposu (spec 0006 Req 19).</param>
+    public AgentPresenceService(
+        IAgentConnectionRegistry registry,
+        ISystemEventWriter events,
+        TimeProvider timeProvider,
+        ILogger<AgentPresenceService> logger,
+        IInstalledComponentStore components)
+        : this(registry, events, timeProvider, logger)
+    {
+        Components = components ?? throw new ArgumentNullException(nameof(components));
+    }
+
     /// <inheritdoc />
     protected override Task OnConnectedAsync(AgentSession session, CancellationToken cancellationToken) =>
         _events.WriteAsync(
