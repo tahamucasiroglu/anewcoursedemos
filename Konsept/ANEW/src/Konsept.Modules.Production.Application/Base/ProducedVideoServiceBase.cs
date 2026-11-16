@@ -192,7 +192,8 @@ public abstract class ProducedVideoServiceBase(
             VersionChanges.AudioModel => ProductionText.ChangeAudioModel,
             VersionChanges.Subtitles => ProductionText.ChangeSubtitles,
             VersionChanges.ProgressBar => ProductionText.ChangeProgressBar,
-            _ => ProductionText.ChangeFormat,
+            VersionChanges.Format => ProductionText.ChangeFormat,
+            _ => c,
         });
         return string.Format(CultureInfo.InvariantCulture, ProductionText.ChangeSummary, string.Join(", ", parts));
     }

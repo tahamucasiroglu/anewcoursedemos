@@ -154,8 +154,35 @@ describe('Üretilen Videolar (spec 0007)', () => {
 
     expect([...el('produced-list').querySelectorAll('.produced-items__title')].map((n) => n.textContent)).toEqual(['Başka']);
     expect(el('produced-panel').hidden).toBe(true);
+    expect(el('produced-panel-hint').textContent).toBe('Ayrıntılar için bir video seçin');
     expect(el('produced-player').hidden).toBe(true);
     expect(el('produced-viewer-status').textContent).toBe('İzlemek için soldan bir video seçin');
+  });
+
+  it('review r1 L-1: yeni seçilen videonun ayrıntısı yüklenemezse önceki sürüm etkin kalmaz (oynatıcı durur, eylemler gizli)', async () => {
+    await start({ items: [item('v1', 'Kuşatma'), item('v2', 'Düşüş')], hasMore: false });
+    await select('v1');
+    expect(el('produced-actions').hidden).toBe(false);
+    routes['GET /uretilenler/video/v2'] = fail(503, { message: 'Sunucuya ulaşılamadı.' });
+
+    await select('v2');
+
+    expect(el('produced-actions').hidden).toBe(true);
+    expect(el('produced-player').hasAttribute('src')).toBe(false);
+    expect(el('produced-panel-hint').textContent).toBe('Sunucuya ulaşılamadı.');
+    el('produced-open-folder').click();
+    await flush();
+    expect(calls.filter((c) => c.url.includes('/ac'))).toHaveLength(0);
+  });
+
+  it('review r1 L-3: dosya eyleminde video bulunamadı (404, dosya değil) eylemleri pasif yapmaz', async () => {
+    await start();
+    await select();
+    routes['POST /uretilenler/surum/s2/ac'] = fail(404, { code: 'production.video_not_found', message: 'Video bulunamadı.' });
+    el('produced-open-folder').click();
+    await flush();
+    expect(el('produced-action-status').textContent).toBe('Video bulunamadı.');
+    expect(el('produced-open-folder').hasAttribute('aria-disabled')).toBe(false);
   });
 
   it('AC-4/AC-9: seçimde en son sürüm yüklenir; sahneler, konsept metni (düz metin), ücret biçimleri, modeller, saatler ve AI ses beyanı', async () => {
@@ -170,7 +197,7 @@ describe('Üretilen Videolar (spec 0007)', () => {
     expect(details).toEqual([
       'Sürüm ücreti', '$1,24', 'Tüm sürümlerin toplamı', '$1,24', 'Video kodu modeli', 'Claude Sonnet 4.5', 'Video motoru', 'HyperFrames',
       'Görsel modeli', 'Kapalı', 'Ses motoru', 'Supertonic 3', 'Altyazı', 'Açık', 'İlerleme çubuğu', 'Açık', 'Video süresi', '30 dk 12 sn',
-      'Biçim', 'Dikey', 'Başlangıç', '10:01', 'Bitiş', '00:30', 'Yapay zekâ ile üretilmiş ses',
+      'Biçim', 'Dikey', 'Başlangıç', '10:01', 'Bitiş', '00:30', 'Yapay zekâ ile üretilmiş ses', 'Açık',
     ]);
     expect(el('produced-details').querySelector('.produced-money').title).toBe('Tam tutar: $1,236');
 

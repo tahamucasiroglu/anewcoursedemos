@@ -53,6 +53,7 @@ export function initProduced(doc, options = {}) {
   const units = { second: text.textSecond, minute: text.textMinute, hour: text.textHour };
   const el = (id) => doc.getElementById(id);
   const player = el('produced-player');
+  const panelHint = el('produced-panel-hint').textContent;
   const state = { profileId: null, count: 0, video: null, version: null, viewer: 'idle', agent: { connected: null, machineName: null }, token: 0 };
 
   function node(tag, className, content) {
@@ -134,7 +135,7 @@ export function initProduced(doc, options = {}) {
       button.disabled = false;
       if (error && error.status === 409) {
         setViewer('offline');
-      } else if (error && error.status === 404 && version === state.version) {
+      } else if (error && error.status === 404 && error.body && error.body.code === 'production.file_missing' && version === state.version) {
         setViewer('missing');
       }
       status.textContent = error && error.status === 504 ? text.textTimeout : messageOf(error, text.textActionFailed);
@@ -300,7 +301,8 @@ export function initProduced(doc, options = {}) {
     row(details, text.textStarted, formatTime(version.startedAt));
     row(details, text.textEnded, formatTime(version.endedAt));
     if (version.aiVoiceNotice) {
-      details.append(node('dd', 'produced-details__ai', text.textAiVoice));
+      const ai = node('dt', 'produced-details__ai', text.textAiVoice);
+      details.append(ai, node('dd', '', text.textOn));
     }
     el('produced-versions').replaceChildren(...video.versions.map((v) => {
       const item = node('li', 'produced-versions__item');
@@ -344,6 +346,7 @@ export function initProduced(doc, options = {}) {
     state.token += 1;
     el('produced-panel').hidden = true;
     el('produced-panel-hint').hidden = false;
+    el('produced-panel-hint').textContent = panelHint;
     el('produced-action-status').textContent = '';
     setViewer('idle');
   }
@@ -352,11 +355,16 @@ export function initProduced(doc, options = {}) {
     for (const other of el('produced-list').querySelectorAll('[data-video]')) {
       other.setAttribute('aria-pressed', other === button ? 'true' : 'false');
     }
+    // Önceki sürüm etkin kalmaz: oynatıcı durur, dosya eylemleri gizlenir (review r1 L-1).
+    state.video = null;
+    state.version = null;
     const token = ++state.token;
+    el('produced-action-status').textContent = '';
+    setViewer('loading');
+    stopPlayer();
     el('produced-panel').hidden = true;
     el('produced-panel-hint').hidden = false;
     el('produced-panel-hint').textContent = text.textLoading;
-    el('produced-viewer-status').textContent = text.textLoading;
     try {
       const video = await get(`/uretilenler/video/${encodeURIComponent(id)}`);
       if (token !== state.token) {
@@ -368,8 +376,8 @@ export function initProduced(doc, options = {}) {
       await loadStream();
     } catch (error) {
       if (token === state.token) {
+        setViewer('idle');
         el('produced-panel-hint').textContent = messageOf(error, text.textLoadFailed);
-        el('produced-viewer-status').textContent = '';
       }
     }
   }

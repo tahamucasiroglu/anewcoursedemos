@@ -4,7 +4,7 @@ using Konsept.Modules.AgentGateway.Contracts.Dtos;
 namespace Konsept.Agent.Infrastructure.Base;
 
 /// <summary>
-/// Dosya eylemlerinin ortak mantığı (spec 0007 Req 4, 9): yalnızca video klasöründeki düz dosya adı (yol, <c>..</c> yok) ve yalnızca iki eylem
+/// Dosya eylemlerinin ortak mantığı (spec 0007 Req 4, 9): yalnızca video klasöründeki düz <c>.mp4</c> dosya adı (yol, <c>..</c>, <c>:</c> akış adı yok — review r1 L-4) ve yalnızca iki eylem
 /// kabul edilir; dosya yoksa <see cref="AgentFileActionReply.NotFound"/>. Kabuk çağrısı alt sınıftadır; hata verirse
 /// <see cref="AgentFileActionReply.Failed"/>.
 /// </summary>
@@ -21,7 +21,10 @@ public abstract class VideoFileActionsBase(Func<string> videoFolder) : IVideoFil
         }
 
         var name = request.FileName;
-        if (string.IsNullOrWhiteSpace(name) || !string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(name)
+            || !string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal)
+            || name.Contains(':', StringComparison.Ordinal)
+            || !string.Equals(Path.GetExtension(name), ".mp4", StringComparison.OrdinalIgnoreCase))
         {
             return new AgentFileActionReply(false, AgentFileActionReply.NotFound);
         }

@@ -33,7 +33,7 @@ public sealed class VideoFileActionsTests : IDisposable
         actions.Calls.ShouldBe([("folder", path), ("player", path)]);
     }
 
-    /// <summary>AC-7, H-1: dosya yoksa ya da ad yol/kaçış içeriyorsa "bulunamadı"; bilinmeyen eylem ve kabuk hatası "açılamadı"; kabuk çağrılmaz.</summary>
+    /// <summary>AC-7, H-1: dosya yoksa, ad yol/kaçış/akış adı içeriyorsa ya da .mp4 değilse "bulunamadı"; bilinmeyen eylem ve kabuk hatası "açılamadı"; kabuk çağrılmaz.</summary>
     [Fact]
     public void Open_Missing_PathEscape_UnknownAction_ShellError()
     {
@@ -47,6 +47,9 @@ public sealed class VideoFileActionsTests : IDisposable
             actions.Open(new AgentFileActionRequest(video, "..\\" + Path.GetFileName(outside), AgentFileActionRequest.Player)).Error.ShouldBe(AgentFileActionReply.NotFound);
             actions.Open(new AgentFileActionRequest(video, outside, AgentFileActionRequest.Player)).Error.ShouldBe(AgentFileActionReply.NotFound);
             actions.Open(new AgentFileActionRequest(video, "kusatma.mp4", "delete")).Error.ShouldBe(AgentFileActionReply.Failed);
+            File.WriteAllBytes(Path.Combine(_folder, "kusatma.exe"), [1]);
+            actions.Open(new AgentFileActionRequest(video, "kusatma.exe", AgentFileActionRequest.Player)).Error.ShouldBe(AgentFileActionReply.NotFound); // Review r1 L-4.
+            actions.Open(new AgentFileActionRequest(video, "kusatma.mp4:ads", AgentFileActionRequest.Player)).Error.ShouldBe(AgentFileActionReply.NotFound);
             actions.Calls.ShouldBeEmpty();
 
             actions.Fail = true;

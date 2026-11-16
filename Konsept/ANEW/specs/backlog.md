@@ -171,3 +171,10 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   çalışma anında ajanın CSP etiketi (`'unsafe-eval'` yok) `Function`/`eval`'i durdurur (plan 0018 G-4) — Source: plan 0018 review r2 R2-L-1 —
   Severity: Low — Recommendation: betiklerde değişkenle köşeli parantez erişimini (`\w\[\s*[A-Za-z_$]`) ve dizelerde `.concat(`'ı reddet; GSAP
   örneklerinde aşırı sıkılaştırmayı ölç — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+- **B-128** — 0007 Üretilen Videolar listesi her istekte profilin tüm sürüm satırlarını (jsonb konsept metni dahil) okuyup bellekte gruplayıp
+  sayfalıyor — Source: plan 0007 review r1 I-1 — Severity: Low — Recommendation: video sayısı yüzleri aşarsa yalnızca liste kolonlarını seçen
+  projeksiyon ya da SQL'de `GROUP BY concept_id` + `LIMIT/OFFSET` — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+- **B-129** — 0007 gerçek ajan + tarayıcı gözlemi check'te değil: seçimden sonra ≤3 sn oynatmaya hazır (AC-5), tam ekran/ses kontrolleri, gezginin
+  dosyayı seçili açması ve varsayılan oynatıcı (AC-8), başka cihazdan açılınca "yalnızca … bilgisayarda" mesajı (AC-14), ajan bağlanınca ≤10 sn'de
+  oynatma (AC-6); testler sahte ajan/jsdom ile — Source: plan 0007 Risk 5 — Severity: Low — Recommendation: kullanıcı testi (Pi + ajan PC + ikinci
+  cihaz); gerekirse Playwright ile tarayıcı testi — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
