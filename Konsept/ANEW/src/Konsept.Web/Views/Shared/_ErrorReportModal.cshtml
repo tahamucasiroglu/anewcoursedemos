@@ -1,0 +1,37 @@
+@* "Hata bildir" modalı (spec 0022 Req 1–3): açıklama + gönderimden önce görünen otomatik bilgiler (sayfa, versiyon, zaman, varsa son
+   hatanın numarası, son 20 Günlük kaydı). Ekran görüntüsü alanı yoktur. Doğrulama mesajı alana bağlıdır ve duyurulur. İptal/Esc metni
+   atar; yalnızca gönderimde sunucu hatası olursa metin korunur. Davranış error-report.js'te; metinler düz metin yazılır. *@
+<div class="dialog-backdrop" id="report-modal" hidden data-url="/hata-bildir"
+     data-text-sending="@UiText.ReportSending" data-text-sent="@UiText.ReportSent" data-text-failed="@UiText.ReportFailed"
+     data-text-empty="@UiText.ReportEmpty" data-text-too-short="@UiText.ReportTooShort" data-text-too-long="@UiText.ReportTooLong"
+     data-text-journal-empty="@UiText.ReportJournalEmpty" data-text-preview-failed="@UiText.ReportPreviewFailed"
+     data-text-forbidden="@UiText.ActionForbidden">
+    <div class="dialog report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+        <h2 class="report-modal__title" id="report-modal-title">@UiText.ReportModalTitle</h2>
+        <form class="report-form" id="report-form" novalidate autocomplete="off">
+            <div class="field">
+                <label class="field__label" for="report-description">@UiText.ReportDescription</label>
+                <textarea class="field__input report-form__text" id="report-description" rows="5"
+                          aria-describedby="report-description-hint report-description-error"></textarea>
+                <p class="field__hint" id="report-description-hint">@UiText.ReportDescriptionHint</p>
+                <p class="field__error" id="report-description-error" role="alert"></p>
+            </div>
+            <section class="report-auto" aria-labelledby="report-auto-title">
+                <h3 class="report-auto__title" id="report-auto-title">@UiText.ReportAutoTitle</h3>
+                <dl class="report-auto__list">
+                    <dt>@UiText.ReportPage</dt><dd id="report-page"></dd>
+                    <dt>@UiText.ReportVersion</dt><dd id="report-version"></dd>
+                    <dt>@UiText.ReportTime</dt><dd id="report-time"></dd>
+                    <dt id="report-correlation-label" hidden>@UiText.ReportCorrelation</dt><dd id="report-correlation" hidden></dd>
+                </dl>
+                <h4 class="report-auto__title">@UiText.ReportJournal</h4>
+                <ol class="report-auto__journal" id="report-journal"></ol>
+            </section>
+            <p class="report-form__status" id="report-status" role="status" aria-live="polite"></p>
+            <div class="dialog__actions">
+                <button type="button" class="button" id="report-cancel">@UiText.ReportCancel</button>
+                <button type="submit" class="button button--primary" id="report-submit">@UiText.ReportSend</button>
+            </div>
+        </form>
+    </div>
+</div>

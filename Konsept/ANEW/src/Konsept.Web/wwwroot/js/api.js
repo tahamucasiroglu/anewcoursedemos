@@ -7,6 +7,15 @@ const TOKEN_HEADER = 'RequestVerificationToken';
 const DEFAULT_TIMEOUT_MS = 15000;
 
 let navigation = globalThis.location;
+let lastCorrelation = '';
+
+/**
+ * Son başarısız isteğin korelasyon numarası ("Hata bildir" modalı ekler, spec 0022 Req 1); yoksa boş.
+ * @returns {string} Numara.
+ */
+export function lastCorrelationId() {
+  return lastCorrelation;
+}
 
 function jq() {
   const $ = globalThis.jQuery;
@@ -81,6 +90,10 @@ function request(method, url, data) {
       .done((body) => resolve(body))
       .fail((xhr) => {
         const status = xhr ? xhr.status : 0;
+        const correlation = xhr && xhr.responseJSON && xhr.responseJSON.correlationId;
+        if (correlation) {
+          lastCorrelation = correlation;
+        }
         if (status === 401 && navigation) {
           navigation.assign(loginRedirectUrl(navigation));
         }

@@ -90,7 +90,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
         var doc = await WebFactory.GetDocumentAsync(client, "/", TestContext.Current.CancellationToken);
 
         var passive = doc.QuerySelectorAll(".passive").ToList();
-        passive.Count.ShouldBe(2); // Spec 0004 Req 14: "Ayarlar" (plan 0004 A-1) ve spec 0003: profil seçimi, kalem, artı artık pasif değil (plan 0003 A-1); yeni davranış ProfileBarTests'te.
+        passive.Count.ShouldBe(1); // Spec 0004 Req 14: "Ayarlar" (plan 0004 A-1), spec 0003: profil seçimi, kalem, artı (plan 0003 A-1) ve spec 0022 Req 1: "Hata bildir" (plan 0022 A-2) artık pasif değil; yeni davranışlar kendi testlerinde.
         foreach (var control in passive)
         {
             control.GetAttribute("aria-disabled").ShouldBe("true");

@@ -119,6 +119,16 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
                 $"api/journal?date={Uri.EscapeDataString(date ?? string.Empty)}&filter={Uri.EscapeDataString(filter ?? string.Empty)}&skip={Math.Max(0, skip).ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
             cancellationToken);
 
+    /// <inheritdoc />
+    public Task<Result<ErrorReportPreviewResponse>> GetErrorReportPreviewAsync(CancellationToken cancellationToken) =>
+        SendAsync<ErrorReportPreviewResponse>(new HttpRequestMessage(HttpMethod.Get, "api/error-reports/preview"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ErrorReportReceiptResponse>> SubmitErrorReportAsync(ErrorReportApiRequest? request, CancellationToken cancellationToken) =>
+        SendAsync<ErrorReportReceiptResponse>(
+            new HttpRequestMessage(HttpMethod.Post, "api/error-reports") { Content = JsonContent.Create(request, options: Json) },
+            cancellationToken);
+
     /// <summary>İsteği API'ye gönderir.</summary>
     /// <param name="request">HTTP isteği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

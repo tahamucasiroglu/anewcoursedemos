@@ -55,8 +55,9 @@
             <button type="button" class="icon-button" id="profile-new" aria-label="@UiText.NewProfile" title="@UiText.NewProfile">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
             </button>
-            <button type="button" class="icon-button passive" aria-disabled="true"
-                    aria-label="@UiText.ReportError" data-tooltip="@UiText.ComingSoon">
+            @* Hata bildir (spec 0022 Req 1): artık çalışır; modalı açar (error-report.js). Yalnızca girişli düzende vardır (Req 13). *@
+            <button type="button" class="icon-button" id="report-open" aria-label="@UiText.ReportError" title="@UiText.ReportError"
+                    aria-haspopup="dialog" aria-controls="report-modal" data-text-link="@UiText.ReportLink" data-text-link-label="@UiText.ReportLinkLabel">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4l9 16H3L12 4zM12 10v4M12 17v1" /></svg>
             </button>
             @* Ayarlar (spec 0004 Req 14): artık çalışır. Düğme aşağıdaki GET formunu gönderir — JS'siz, Enter/Space ile açılır. *@
@@ -92,6 +93,9 @@
     </main>
     <partial name="_ProfileModal" />
     <partial name="_JournalModal" />
+    <partial name="_ErrorReportModal" />
+    <span class="visually-hidden" id="report-result-announce" role="status" aria-live="polite"></span>
+    <p class="report-result" id="report-result" hidden></p>
 
     <footer class="bottombar">
         @* Günlük şeridi (spec 0021): kullanıcının kendi son kaydı; tık/Enter geçmiş modalını açar. Seviye renkle birlikte ikon + metin

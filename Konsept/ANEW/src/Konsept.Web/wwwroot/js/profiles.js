@@ -3,6 +3,7 @@
 // Seçim sunucuda hatırlanır; seçim/oluşturma/silme sonrası açık sayfa yeniden yüklenir (seçili profilin bağlamı, Req 8, BR-2).
 // Kurallar sunucuda da uygulanır; burada yalnızca erken geri bildirim içindir. Metinler resx'ten data-text-* ile gelir.
 import { get, post } from './api.js';
+import { attachReportLink } from './error-report.js';
 
 const NAME_MAX = 80;
 const CONTENT_MAX = 2000;
@@ -203,6 +204,7 @@ export async function initProfiles(doc, options = {}) {
     } catch (failure) {
       select.value = previous;
       alertBox.textContent = format(text.textSelectFailed, correlationOf(failure));
+      attachReportLink(alertBox, failure);
     }
   });
 
@@ -441,6 +443,7 @@ export async function initProfiles(doc, options = {}) {
         formError.textContent = mtext.textForbidden;
       } else {
         formError.textContent = format(mtext.textSaveFailed, correlationOf(failure));
+        attachReportLink(formError, failure);
       }
     }
   });
@@ -465,6 +468,7 @@ export async function initProfiles(doc, options = {}) {
       formError.textContent = failure && failure.status === 403
         ? mtext.textForbidden
         : format(mtext.textDeleteFailed, correlationOf(failure));
+      attachReportLink(formError, failure);
       deleteButton.focus();
     }
   });

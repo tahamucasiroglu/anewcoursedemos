@@ -3,6 +3,7 @@
 // key hiçbir yerde (localStorage, sessionStorage, çerez) saklanmaz; Vazgeç/Esc alanı temizler ve hiçbir istek göndermez.
 // Metinler resx'ten, #settings öğesinin data-text-* öznitelikleriyle gelir.
 import { get, post } from './api.js';
+import { attachReportLink } from './error-report.js';
 
 const TOAST_MS = 3000;
 const JUST_NOW_MS = 60 * 1000;
@@ -235,6 +236,7 @@ function renderRow(root, state, row, data) {
       loadModels(root, state);
     } catch (failure) {
       error.textContent = failureText(failure, text);
+      attachReportLink(error, failure);
       input.setAttribute('aria-invalid', 'true');
       save.disabled = false;
       cancel.disabled = false;
@@ -291,6 +293,7 @@ function openDeleteDialog(root, state, row, data) {
       onCancel(); // Odak açan düğmeye döner (review r1 L-2); satır değişmez.
       const error = root.querySelector('#keys-error');
       error.textContent = failureText(failure, root.dataset);
+      attachReportLink(error, failure);
       show(error, true);
     } finally {
       confirm.disabled = false;

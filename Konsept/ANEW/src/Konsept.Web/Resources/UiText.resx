@@ -183,4 +183,25 @@
   <data name="ProfileDurationInvalid" xml:space="preserve"><value>Hedef süre 15 saniye ile 15 dakika arasında olmalı.</value></data>
   <data name="ProfileContentRequired" xml:space="preserve"><value>Kanal içeriğini girin.</value></data>
   <data name="ProfileContentTooLong" xml:space="preserve"><value>Kanal içeriği en fazla 2000 karakter olabilir.</value></data>
+  <data name="ReportModalTitle" xml:space="preserve"><value>Hata bildir</value></data>
+  <data name="ReportDescription" xml:space="preserve"><value>Ne oldu? Sorunu kısaca anlatın</value></data>
+  <data name="ReportDescriptionHint" xml:space="preserve"><value>10–4000 karakter. Şifre ya da API key yazmayın; yazarsanız gizlenir.</value></data>
+  <data name="ReportAutoTitle" xml:space="preserve"><value>Bildirime otomatik eklenecek bilgiler</value></data>
+  <data name="ReportPage" xml:space="preserve"><value>Sayfa</value></data>
+  <data name="ReportVersion" xml:space="preserve"><value>Versiyon</value></data>
+  <data name="ReportTime" xml:space="preserve"><value>Zaman</value></data>
+  <data name="ReportCorrelation" xml:space="preserve"><value>Son hatanın numarası</value></data>
+  <data name="ReportJournal" xml:space="preserve"><value>Son 20 Günlük kaydı</value></data>
+  <data name="ReportJournalEmpty" xml:space="preserve"><value>Günlük'te kayıt yok</value></data>
+  <data name="ReportPreviewFailed" xml:space="preserve"><value>Günlük kayıtları şu an gösterilemiyor; gönderimde sunucu ekler</value></data>
+  <data name="ReportCancel" xml:space="preserve"><value>İptal</value></data>
+  <data name="ReportSend" xml:space="preserve"><value>Gönder</value></data>
+  <data name="ReportSending" xml:space="preserve"><value>Gönderiliyor…</value></data>
+  <data name="ReportSent" xml:space="preserve"><value>Bildiriminiz alındı (No: {0})</value></data>
+  <data name="ReportFailed" xml:space="preserve"><value>Bildirim gönderilemedi (hata no: {0}). Yazdığınız metin duruyor, tekrar deneyebilirsiniz.</value></data>
+  <data name="ReportEmpty" xml:space="preserve"><value>Lütfen karşılaştığınız sorunu yazın.</value></data>
+  <data name="ReportTooShort" xml:space="preserve"><value>Açıklama en az 10 karakter olmalı.</value></data>
+  <data name="ReportTooLong" xml:space="preserve"><value>Açıklama en fazla 4000 karakter olabilir.</value></data>
+  <data name="ReportLink" xml:space="preserve"><value>Bildir</value></data>
+  <data name="ReportLinkLabel" xml:space="preserve"><value>Bu hatayı bildir</value></data>
 </root>

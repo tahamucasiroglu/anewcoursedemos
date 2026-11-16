@@ -133,4 +133,15 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Gün sayfası ya da hata.</returns>
     Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken);
+
+    /// <summary>"Hata bildir" modalının otomatik bilgileri (spec 0022 Req 1).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Önizleme ya da hata.</returns>
+    Task<Result<ErrorReportPreviewResponse>> GetErrorReportPreviewAsync(CancellationToken cancellationToken);
+
+    /// <summary>Web'den hata bildirimi gönderir (spec 0022 Req 1–2).</summary>
+    /// <param name="request">Açıklama, sayfa, korelasyon.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Bildirim numarası ya da hata (doğrulama, sınır).</returns>
+    Task<Result<ErrorReportReceiptResponse>> SubmitErrorReportAsync(ErrorReportApiRequest? request, CancellationToken cancellationToken);
 }
