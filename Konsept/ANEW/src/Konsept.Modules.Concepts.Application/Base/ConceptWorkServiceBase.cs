@@ -71,7 +71,8 @@ public abstract class ConceptWorkServiceBase(
         }
 
         // Yeni "Konu üret": bekleyen tüm öneriler "önerilip seçilmemiş" olur ve listeden kalkar (Req 7).
-        await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, null, SuggestionState.Rejected, cancellationToken).ConfigureAwait(false);
+        await PrepareAsync(job, () => suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, null, SuggestionState.Rejected, CancellationToken.None))
+            .ConfigureAwait(false);
         launcher.Launch(job, new ConceptJobInput(who, context, count, null, []));
         return Result<ConceptWorkDto>.Success(await WorkAsync(who, context, cancellationToken).ConfigureAwait(false));
     }
@@ -114,9 +115,12 @@ public abstract class ConceptWorkServiceBase(
         }
 
         // Seçilenler üretime gider; listedeki seçilmeyenler "önerilip seçilmemiş" olur ve listeden kalkar (Req 7).
-        await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, [.. selected.Select(s => s.Id)], SuggestionState.Selected, cancellationToken)
-            .ConfigureAwait(false);
-        await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, null, SuggestionState.Rejected, cancellationToken).ConfigureAwait(false);
+        await PrepareAsync(job, async () =>
+        {
+            await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, [.. selected.Select(s => s.Id)], SuggestionState.Selected, CancellationToken.None)
+                .ConfigureAwait(false);
+            await suggestions.SetPendingStateAsync(who.UserId, context.ProfileId, null, SuggestionState.Rejected, CancellationToken.None).ConfigureAwait(false);
+        }).ConfigureAwait(false);
         launcher.Launch(job, new ConceptJobInput(who, context, selected.Count, null, selected));
         return Result<ConceptWorkDto>.Success(await WorkAsync(who, context, cancellationToken).ConfigureAwait(false));
     }
@@ -201,6 +205,21 @@ public abstract class ConceptWorkServiceBase(
             && count is >= ConceptLimits.MinCount and <= ConceptLimits.MaxCount
             ? count
             : null;
+
+    // Kayıtlı iş başlamadan önceki hazırlık (review r1 M-1): istek iptali hazırlığı kesmez (CancellationToken.None); yine de hata
+    // olursa iş "başarısız" biter, böylece şerit kalıcı olarak "sürüyor" kalmaz.
+    private static async Task PrepareAsync(ConceptJob job, Func<Task> prepare)
+    {
+        try
+        {
+            await prepare().ConfigureAwait(false);
+        }
+        catch
+        {
+            job.Finish(Resources.ConceptsText.Unexpected);
+            throw;
+        }
+    }
 
     private ConceptJob NewJob(ModelCallerIdentity who, ProfileGenerationContext context, JobLane lane, JobKind kind, int total) => new()
     {

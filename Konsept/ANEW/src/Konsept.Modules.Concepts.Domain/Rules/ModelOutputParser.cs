@@ -23,6 +23,7 @@ public static class ModelOutputParser
 
         var root = doc.RootElement;
         if (Text(root, "title") is not { } title
+            || title.Length > ConceptLimits.MaxTitleLength // Kolon sınırını aşan başlık kaydı düşürmesin (review r1 M-2).
             || !root.TryGetProperty("scenes", out var scenes)
             || scenes.ValueKind != JsonValueKind.Array
             || scenes.GetArrayLength() == 0)

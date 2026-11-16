@@ -48,4 +48,10 @@ public sealed class TopicSuggestionRepository : EfRepositoryBase<ConceptsDbConte
 
         return query.ExecuteUpdateAsync(s => s.SetProperty(x => x.State, state), cancellationToken);
     }
+
+    /// <inheritdoc />
+    public Task RestoreSelectedAsync(Guid userId, Guid profileId, IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        Context.TopicSuggestions
+            .Where(s => s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Selected && ids.Contains(s.Id))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.State, SuggestionState.Pending), cancellationToken);
 }

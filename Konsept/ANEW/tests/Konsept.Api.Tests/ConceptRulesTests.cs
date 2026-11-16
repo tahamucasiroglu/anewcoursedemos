@@ -63,6 +63,9 @@ public sealed class ConceptRulesTests
         SuggestionFormat.IsValid(new ParsedTopic("Başlık", "Scene 2 shows the castle.", false)).ShouldBeFalse();
         SuggestionFormat.IsValid(new ParsedTopic("Başlık", "Özet.", true)).ShouldBeFalse();
         SuggestionFormat.IsValid(new ParsedTopic(string.Empty, "Özet.", false)).ShouldBeFalse();
+        SuggestionFormat.IsValid(new ParsedTopic(new string('a', 501), "Özet.", false)).ShouldBeFalse(); // Review r1 M-2: kolon sınırı.
+        SuggestionFormat.IsValid(new ParsedTopic("Başlık", new string('a', 2001), false)).ShouldBeFalse();
+        ModelOutputParser.Concept($$"""{"title":"{{new string('a', 501)}}","scenes":[{"title":"S","visual":"V","narration":"N","durationSeconds":5}]}""").ShouldBeNull();
     }
 
     /// <summary>BR-4: başlık anahtarı boşluk, tırnak, bitiş noktalaması ve Türkçe büyük/küçük harf farkını yok sayar.</summary>

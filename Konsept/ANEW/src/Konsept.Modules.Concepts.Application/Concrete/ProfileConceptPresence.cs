@@ -3,6 +3,7 @@ using Konsept.Modules.Concepts.Application.Base;
 
 namespace Konsept.Modules.Concepts.Application.Concrete;
 
-/// <summary>Konsepti olan profiller (Concepts.Contracts); davranış <see cref="ProfileConceptPresenceBase"/>'tedir.</summary>
+/// <summary>Konsepti olan ya da üretimi süren profiller (Concepts.Contracts); davranış <see cref="ProfileConceptPresenceBase"/>'tedir.</summary>
 /// <param name="concepts">Konsept deposu.</param>
-public sealed class ProfileConceptPresence(IConceptRepository concepts) : ProfileConceptPresenceBase(concepts);
+/// <param name="jobs">İş kaydı.</param>
+public sealed class ProfileConceptPresence(IConceptRepository concepts, IConceptJobRegistry jobs) : ProfileConceptPresenceBase(concepts, jobs);

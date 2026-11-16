@@ -24,6 +24,8 @@ public static partial class SuggestionFormat
         var titleSentences = SentenceCount.Of(topic.Title);
         var summarySentences = SentenceCount.Of(topic.Summary);
         return !topic.HasExtraFields
+            && topic.Title.Length <= ConceptLimits.MaxTitleLength
+            && topic.Summary.Length <= ConceptLimits.MaxSummaryLength
             && titleSentences is >= 1 and <= MaxTitleSentences
             && summarySentences is >= 1 and <= MaxSummarySentences
             && !ScenePattern().IsMatch(topic.Title)

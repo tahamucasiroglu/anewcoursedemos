@@ -19,4 +19,9 @@ public interface IConceptJobRegistry
     /// <param name="lane">Şerit.</param>
     /// <returns>İş ya da <c>null</c>.</returns>
     ConceptJob? Get(Guid userId, JobLane lane);
+
+    /// <summary>Kullanıcının süren işlerinin profilleri (süren işin profili silinemez; review r1 M-3).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <returns>Profil kimlikleri.</returns>
+    IReadOnlySet<Guid> RunningProfiles(Guid userId);
 }

@@ -169,26 +169,41 @@ public abstract class ConceptJobExecutorBase(
 
     private async Task RunFromTopicsAsync(ConceptJob job, ConceptJobInput input, CancellationToken cancellationToken)
     {
-        foreach (var topic in input.Topics)
+        // Konsepte çevrilemeyen (durdurulan ya da hata veren) öneriler listeye geri döner; kullanıcı isterse elle yeniden üretir
+        // (otomatik tekrar yok, review r1 M-4).
+        var unsaved = new List<Guid>();
+        try
         {
-            if (job.StopRequested)
+            foreach (var topic in input.Topics)
             {
-                break; // Sıradakiler başlamaz (G-3).
-            }
+                if (job.StopRequested)
+                {
+                    unsaved.Add(topic.Id); // Sıradakiler başlamaz (G-3).
+                    continue;
+                }
 
-            var outcome = await GenerateAsync(
-                input,
-                avoid => ConceptPrompts.FromTopicPrompt(topic.Title, topic.Summary, avoid),
-                cancellationToken).ConfigureAwait(false);
-            if (outcome.Error is { } error)
+                var outcome = await GenerateAsync(
+                    input,
+                    avoid => ConceptPrompts.FromTopicPrompt(topic.Title, topic.Summary, avoid),
+                    cancellationToken).ConfigureAwait(false);
+                if (outcome.Error is { } error)
+                {
+                    job.Fail(topic.Title, error);
+                    unsaved.Add(topic.Id);
+                    continue;
+                }
+
+                // Başlık seçilen önerininkidir: geçmiş ve "seçilen konular" bu başlıkla tutarlı kalır (BR-4).
+                await concepts.AddAsync(Build(input, topic.Title, outcome, ConceptSource.Topic), CancellationToken.None).ConfigureAwait(false);
+                job.Succeed();
+            }
+        }
+        finally
+        {
+            if (unsaved.Count > 0)
             {
-                job.Fail(topic.Title, error);
-                continue;
+                await suggestions.RestoreSelectedAsync(input.Caller.UserId, input.Context.ProfileId, unsaved, CancellationToken.None).ConfigureAwait(false);
             }
-
-            // Başlık seçilen önerininkidir: geçmiş ve "seçilen konular" bu başlıkla tutarlı kalır (BR-4).
-            await concepts.AddAsync(Build(input, topic.Title, outcome, ConceptSource.Topic), CancellationToken.None).ConfigureAwait(false);
-            job.Succeed();
         }
 
         job.Finish();

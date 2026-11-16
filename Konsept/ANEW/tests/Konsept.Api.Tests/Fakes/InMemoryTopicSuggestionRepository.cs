@@ -43,8 +43,45 @@ public sealed class InMemoryTopicSuggestionRepository : ITopicSuggestionReposito
     }
 
     /// <inheritdoc />
+    public Task RestoreSelectedAsync(Guid userId, Guid profileId, IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            for (var i = 0; i < _rows.Count; i++)
+            {
+                var s = _rows[i];
+                if (s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Selected && ids.Contains(s.Id))
+                {
+                    _rows[i] = new TopicSuggestion
+                    {
+                        Id = s.Id,
+                        UserId = s.UserId,
+                        ProfileId = s.ProfileId,
+                        Title = s.Title,
+                        TitleKey = s.TitleKey,
+                        Summary = s.Summary,
+                        State = SuggestionState.Pending,
+                        CreatedAt = s.CreatedAt,
+                    };
+                }
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Gets or sets a value indicating whether sonraki durum değişikliği hata versin (veritabanı hatası benzetimi; review r1 M-1).</summary>
+    public bool FailNextStateChange { get; set; }
+
+    /// <inheritdoc />
     public Task SetPendingStateAsync(Guid userId, Guid profileId, IReadOnlyCollection<Guid>? ids, SuggestionState state, CancellationToken cancellationToken)
     {
+        if (FailNextStateChange)
+        {
+            FailNextStateChange = false;
+            throw new InvalidOperationException("Benzetilmiş veritabanı hatası.");
+        }
+
         lock (_gate)
         {
             for (var i = 0; i < _rows.Count; i++)

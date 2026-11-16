@@ -256,6 +256,25 @@ public sealed class ConceptsApiTests : IClassFixture<ConceptsApiFactory>
         _factory.Suggestions.Rows.Single(s => s.Id == suggestion.Id).State.ShouldBe(SuggestionState.Pending);
     }
 
+    /// <summary>Review r1 M-1: iş kaydedildikten sonraki hazırlık hata verirse iş "başarısız" biter; şerit kalıcı olarak "sürüyor" kalmaz.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReviewR1_M1_PreparationFailure_LaneNotStuck()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var profile = await ReadyProfileAsync(client, ct);
+        _factory.Provider.Handler = (_, role, _) => role == CallRole.Topics ? Ok(TopicsJson(("Konu", "Özet."))) : Duplicates();
+
+        _factory.Suggestions.FailNextStateChange = true;
+        (await PostAsync(client, "/api/concepts/topics", new { profileId = profile, count = 1 }, ct)).StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        (await WorkAsync(client, profile, ct)).GetProperty("topicJob").GetProperty("status").GetString().ShouldBe("failed");
+        _factory.Provider.Calls.Count.ShouldBe(0);
+
+        (await PostAsync(client, "/api/concepts/topics", new { profileId = profile, count = 1 }, ct)).EnsureSuccessStatusCode();
+        (await WaitJobAsync(client, profile, "topicJob", ct)).GetProperty("status").GetString().ShouldBe("completed");
+    }
+
     /// <summary>AC-28: girişsiz istekler reddedilir.</summary>
     /// <returns>Görev.</returns>
     [Fact]

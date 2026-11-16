@@ -556,6 +556,66 @@ public sealed class ConceptGenerationTests : IClassFixture<ConceptsApiFactory>
         _factory.Provider.CallsOf(CallRole.Concept).Count.ShouldBe(3);
         _factory.Concepts.Rows.Count(c => c.ProfileId == profile).ShouldBe(3);
         _factory.Events.Events.ShouldContain(e => e.ProfileId == profile && e.Message == "Konsept üretimi durduruldu: 3/10");
+
+        // Review r1 M-4: üretilmeyen 7 öneri listeye geri döner (otomatik tekrar yok, kullanıcı elle yeniden seçebilir).
+        var back = (await WorkAsync(client, profile, ct)).GetProperty("suggestions").EnumerateArray().Select(s => s.GetProperty("title").GetString()).ToList();
+        back.ShouldBe([.. Enumerable.Range(4, 7).Select(i => $"Konu {i}")]);
+        _factory.Provider.CallsOf(CallRole.Concept).Count.ShouldBe(3);
+    }
+
+    /// <summary>
+    /// Review r1 M-2: kolon sınırını aşan model çıktısı (500+ karakter başlık) işi düşürmez: konsept "üretilemedi", öneri "biçim dışı"
+    /// sayılır; diğerleri kaydedilir, ek çağrı yok.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReviewR1_M2_OverlongOutput_NotSaved_BatchSurvives()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var profile = await ReadyProfileAsync(client, ct);
+        var longTitle = new string('a', 501);
+        _factory.Provider.Handler = (_, role, n) => role switch
+        {
+            CallRole.Topics => Ok(TopicsJson((longTitle, "Özet."), ("Normal konu", "Özet."))),
+            CallRole.Concept => Ok(ConceptJson(n == 1 ? longTitle : "Normal konsept", [60])),
+            _ => Duplicates(),
+        };
+
+        (await PostAsync(client, "/api/concepts/from-idea", new { profileId = profile, idea = "Fikir", count = 2 }, ct)).EnsureSuccessStatusCode();
+        var job = await WaitJobAsync(client, profile, "ideaJob", ct);
+        job.GetProperty("succeeded").GetInt32().ShouldBe(1);
+        job.GetProperty("failures").GetArrayLength().ShouldBe(1);
+        _factory.Concepts.Rows.Where(c => c.ProfileId == profile).Select(c => c.Title).ShouldBe(["Normal konsept"]);
+
+        (await PostAsync(client, "/api/concepts/topics", new { profileId = profile, count = 2 }, ct)).EnsureSuccessStatusCode();
+        var topics = await WaitJobAsync(client, profile, "topicJob", ct);
+        topics.GetProperty("formatRejected").GetInt32().ShouldBe(1);
+        topics.GetProperty("succeeded").GetInt32().ShouldBe(1);
+        _factory.Provider.CallsOf(CallRole.Concept).Count.ShouldBe(2);
+    }
+
+    /// <summary>Review r1 M-3: üretim sürerken profil (henüz konsepti olmasa da) silinemez; iş bitince silinebilir.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReviewR1_M3_RunningJob_ProfileNotDeletable()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var profile = await ReadyProfileAsync(client, ct);
+        var release = new TaskCompletionSource();
+        _factory.Provider.Handler = async (_, _, _) =>
+        {
+            await release.Task;
+            return ProviderAttempt.Failed(400);
+        };
+
+        (await PostAsync(client, "/api/concepts/from-idea", new { profileId = profile, idea = "Fikir", count = 1 }, ct)).EnsureSuccessStatusCode();
+        (await client.DeleteAsync(new Uri($"/api/profiles/{profile}", UriKind.Relative), ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        _factory.Profiles.Rows.ShouldContain(p => p.Id == profile);
+        release.SetResult();
+        await WaitJobAsync(client, profile, "ideaJob", ct);
+        (await client.DeleteAsync(new Uri($"/api/profiles/{profile}", UriKind.Relative), ct)).EnsureSuccessStatusCode();
     }
 
     /// <summary>AC-21: konudan ve fikirden üretim aynı anda çalışır, ilerlemeleri ayrı görünür; aynı şeritte ikinci iş reddedilir.</summary>

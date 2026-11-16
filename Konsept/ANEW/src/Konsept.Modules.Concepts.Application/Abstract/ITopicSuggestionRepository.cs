@@ -27,4 +27,12 @@ public interface ITopicSuggestionRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>
     Task SetPendingStateAsync(Guid userId, Guid profileId, IReadOnlyCollection<Guid>? ids, SuggestionState state, CancellationToken cancellationToken);
+
+    /// <summary>Seçilip konsepte çevrilemeyen (durdurulan ya da hata veren) önerileri yeniden bekleyen yapar (review r1 M-4).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="ids">Öneriler (yalnızca "seçildi" durumundakiler değişir).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    Task RestoreSelectedAsync(Guid userId, Guid profileId, IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
 }

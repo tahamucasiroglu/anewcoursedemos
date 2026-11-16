@@ -12,6 +12,12 @@ public static class ConceptLimits
     /// <summary>Fikir metninin en fazla uzunluğu.</summary>
     public const int MaxIdeaLength = 2000;
 
+    /// <summary>Başlığın en fazla uzunluğu (kolon sınırı; aşan model çıktısı biçim dışıdır — review r1 M-2).</summary>
+    public const int MaxTitleLength = 500;
+
+    /// <summary>Öneri özetinin en fazla uzunluğu (kolon sınırı).</summary>
+    public const int MaxSummaryLength = 2000;
+
     /// <summary>Üretilenler sayfa boyutu.</summary>
     public const int PageSize = 50;
 }

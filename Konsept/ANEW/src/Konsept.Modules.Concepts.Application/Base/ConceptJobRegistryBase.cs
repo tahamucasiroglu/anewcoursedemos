@@ -38,4 +38,13 @@ public abstract class ConceptJobRegistryBase : IConceptJobRegistry
             return _jobs.GetValueOrDefault((userId, lane));
         }
     }
+
+    /// <inheritdoc />
+    public IReadOnlySet<Guid> RunningProfiles(Guid userId)
+    {
+        lock (_gate)
+        {
+            return _jobs.Where(p => p.Key.UserId == userId && p.Value.IsRunning).Select(p => p.Value.ProfileId).ToHashSet();
+        }
+    }
 }
