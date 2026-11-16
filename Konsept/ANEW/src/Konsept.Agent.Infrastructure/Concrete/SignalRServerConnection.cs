@@ -27,6 +27,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly Func<string?>? _accessToken;
     private readonly IStageRunner? _stages;
     private readonly IVideoStreamHost? _streams;
+    private readonly IVideoFileActions? _files;
     private readonly Func<IReadOnlyList<string>>? _installedComponents;
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource _run;
@@ -44,6 +45,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="stages">Yerel üretim aşamaları (spec 0017); verilmezse üretim komutlarına cevap verilmez.</param>
     /// <param name="streams">Yerel video akışı (spec 0017); verilmezse akış açılmaz.</param>
     /// <param name="installedComponents">Kurulu bileşen kimlikleri (B-110; kayıtta gönderilir); verilmezse gönderilmez.</param>
+    /// <param name="files">Dosya eylemleri (spec 0007); verilmezse komut işlenmez.</param>
     public SignalRServerConnection(
         AgentSettings settings,
         IAgentInfoProvider info,
@@ -52,8 +54,10 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         Func<string?>? accessToken = null,
         IStageRunner? stages = null,
         IVideoStreamHost? streams = null,
-        Func<IReadOnlyList<string>>? installedComponents = null)
+        Func<IReadOnlyList<string>>? installedComponents = null,
+        IVideoFileActions? files = null)
     {
+        _files = files;
         _installedComponents = installedComponents;
         _stages = stages;
         _streams = streams;
@@ -232,6 +236,12 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         if (_streams is { } streams)
         {
             hub.On<AgentStreamRequest, AgentStreamReply>(AgentHubContract.OpenStream, streams.Open);
+        }
+
+        if (_files is { } files)
+        {
+            // Klasörde aç / Sistem oynatıcısında aç (spec 0007 Req 4): yalnızca bu oturumun sunucusundan.
+            hub.On<AgentFileActionRequest, AgentFileActionReply>(AgentHubContract.OpenFile, files.Open);
         }
 
         hub.On(AgentHubContract.SessionClosed, () =>

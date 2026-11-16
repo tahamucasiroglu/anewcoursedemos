@@ -66,7 +66,8 @@ internal sealed record AgentComposition(
             accessToken: tokens.Read,
             stages: stages,
             streams: streams,
-            installedComponents: () => [.. setupState.Load().Installed.Keys]);
+            installedComponents: () => [.. setupState.Load().Installed.Keys],
+            files: new ShellVideoFileActions(videoFolder));
         logging.SummarySink.Attach(connection);
         var session = new AgentSessionCoordinator(
             connection,
