@@ -4,6 +4,7 @@ using Konsept.Modules.AgentGateway.Application.Concrete;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Konsept.Modules.AgentGateway.Domain.Entities;
 using Konsept.Modules.AgentGateway.Infrastructure.Concrete;
+using Konsept.Shared.Kernel.Abstract;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using Shouldly;
@@ -19,14 +20,25 @@ public sealed class AgentTestServiceTests
     private readonly IAgentChannel _channel = Substitute.For<IAgentChannel>();
     private readonly FakeTimeProvider _time = new();
 
+    // Test kurulumu (plan 0012): "Ajanı test et" isteği yapan kullanıcının ajanına gider.
+    private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
+
+    /// <summary>Initializes a new instance of the <see cref="AgentTestServiceTests"/> class.</summary>
+    public AgentTestServiceTests()
+    {
+        _currentUser.UserId.Returns(UserId);
+    }
+
+    private static Guid UserId { get; } = Guid.NewGuid();
+
     /// <summary>Bağlı ajan cevap verirse versiyonu ve makine adı döner.</summary>
     /// <returns>Görev.</returns>
     [Fact]
     public async Task TestAgent_Connected_ReturnsVersionAndMachine()
     {
-        _registry.Set(new AgentSession("c1", "TAHA-PC", "0.1.0", _time.GetUtcNow()));
+        _registry.Set(new AgentSession("c1", "TAHA-PC", "0.1.0", _time.GetUtcNow(), UserId));
         _channel.PingAsync("c1", Arg.Any<CancellationToken>()).Returns(new AgentPingReply("TAHA-PC", "0.1.0"));
-        var service = new AgentTestService(_registry, _channel, _time);
+        var service = new AgentTestService(_registry, _channel, _time, _currentUser);
 
         var result = await service.TestAsync(TestContext.Current.CancellationToken);
 
@@ -40,7 +52,7 @@ public sealed class AgentTestServiceTests
     [Fact]
     public async Task TestAgent_NotConnected_ReturnsError()
     {
-        var service = new AgentTestService(_registry, _channel, _time);
+        var service = new AgentTestService(_registry, _channel, _time, _currentUser);
 
         var result = await service.TestAsync(TestContext.Current.CancellationToken);
 
@@ -55,12 +67,12 @@ public sealed class AgentTestServiceTests
     [Fact]
     public async Task TestAgent_NoReply10s_ReturnsTimeout()
     {
-        _registry.Set(new AgentSession("c1", "TAHA-PC", "0.1.0", _time.GetUtcNow()));
+        _registry.Set(new AgentSession("c1", "TAHA-PC", "0.1.0", _time.GetUtcNow(), UserId));
         _channel.PingAsync("c1", Arg.Any<CancellationToken>())
             .Returns(call => Task.Delay(Timeout.Infinite, call.Arg<CancellationToken>()).ContinueWith<AgentPingReply>(
                 t => throw new OperationCanceledException(),
                 TaskScheduler.Default));
-        var service = new AgentTestService(_registry, _channel, _time);
+        var service = new AgentTestService(_registry, _channel, _time, _currentUser);
 
         var pending = service.TestAsync(TestContext.Current.CancellationToken);
         _time.Advance(TimeSpan.FromSeconds(9));
@@ -77,10 +89,10 @@ public sealed class AgentTestServiceTests
     [Fact]
     public async Task TestAgent_ConnectionLostDuringSend_ReturnsNotConnected()
     {
-        _registry.Set(new AgentSession("c1", "TAHA-PC", "0.1.0", _time.GetUtcNow()));
+        _registry.Set(new AgentSession("c1", "TAHA-PC", "0.1.0", _time.GetUtcNow(), UserId));
         _channel.PingAsync("c1", Arg.Any<CancellationToken>())
             .Returns(Task.FromException<AgentPingReply>(new IOException("bağlantı yok")));
-        var service = new AgentTestService(_registry, _channel, _time);
+        var service = new AgentTestService(_registry, _channel, _time, _currentUser);
 
         var result = await service.TestAsync(TestContext.Current.CancellationToken);
 

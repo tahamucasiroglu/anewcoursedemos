@@ -42,17 +42,20 @@ public sealed partial class AgentPresenceService : AgentPresenceServiceBase
     /// <inheritdoc />
     protected override Task OnConnectedAsync(AgentSession session, CancellationToken cancellationToken) =>
         _events.WriteAsync(
-            new SystemEventEntry(ConnectedEventType, SystemEventLevel.Info, $"Ajan bağlandı: {session.MachineName} (v{session.AgentVersion})"),
+            new SystemEventEntry(ConnectedEventType, SystemEventLevel.Info, $"Ajan bağlandı: {session.MachineName} (v{session.AgentVersion})", OwnerOf(session)),
             cancellationToken);
 
     /// <inheritdoc />
     protected override Task OnDisconnectedAsync(AgentSession session, CancellationToken cancellationToken) =>
         _events.WriteAsync(
-            new SystemEventEntry(DisconnectedEventType, SystemEventLevel.Warning, $"Ajan bağlantısı koptu: {session.MachineName}"),
+            new SystemEventEntry(DisconnectedEventType, SystemEventLevel.Warning, $"Ajan bağlantısı koptu: {session.MachineName}", OwnerOf(session)),
             cancellationToken);
 
     /// <inheritdoc />
     protected override void OnSideEffectFailed(Exception exception) => LogEventWriteFailed(_logger, exception);
+
+    // Ajan olayları sahibine bağlıdır ve yalnızca onun Günlük şeridinde görünür (spec 0012 Req 13).
+    private static Guid? OwnerOf(AgentSession session) => session.UserId == Guid.Empty ? null : session.UserId;
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Ajan olayı olay kaydına yazılamadı; ajan durumu etkilenmedi.")]
     private static partial void LogEventWriteFailed(ILogger logger, Exception exception);

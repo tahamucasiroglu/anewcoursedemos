@@ -5,7 +5,8 @@ using Konsept.Modules.AgentGateway.Domain.Entities;
 namespace Konsept.Modules.AgentGateway.Application.Base;
 
 /// <summary>
-/// Ajan varlığının ortak mantığı: oturum kaydı ve durum okuma; olay yazımını alt sınıfa bırakır.
+/// Ajan varlığının ortak mantığı: oturumun sahibiyle kaydı ve kullanıcıya göre durum okuma (spec 0012 Req 13); olay yazımını
+/// alt sınıfa bırakır.
 /// </summary>
 public abstract class AgentPresenceServiceBase : IAgentPresenceService
 {
@@ -25,20 +26,21 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     protected TimeProvider TimeProvider { get; }
 
     /// <inheritdoc />
-    public AgentStatusDto GetStatus()
+    public AgentStatusDto GetStatus(Guid? userId)
     {
-        var current = Registry.Current;
+        var current = userId is { } id ? Registry.Find(id) : null;
         return current is null
             ? new AgentStatusDto(false, null, null, null)
             : new AgentStatusDto(true, current.MachineName, current.AgentVersion, current.ConnectedAt);
     }
 
     /// <inheritdoc />
-    public async Task RegisterAsync(string connectionId, AgentRegistration registration, CancellationToken cancellationToken)
+    public async Task RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+        ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(registration);
-        var session = new AgentSession(connectionId, registration.MachineName, registration.AgentVersion, TimeProvider.GetUtcNow());
+        var session = new AgentSession(connectionId, registration.MachineName, registration.AgentVersion, TimeProvider.GetUtcNow(), owner.UserId, owner.DeviceId);
         Registry.Set(session);
         await RunSideEffectAsync(() => OnConnectedAsync(session, cancellationToken), cancellationToken).ConfigureAwait(false);
     }

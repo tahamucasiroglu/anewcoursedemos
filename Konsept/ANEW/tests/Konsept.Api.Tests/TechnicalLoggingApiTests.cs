@@ -179,7 +179,9 @@ public sealed class TechnicalLoggingApiTests : IClassFixture<FastApiFactory>
     {
         var ct = TestContext.Current.CancellationToken;
         var marker = Guid.NewGuid().ToString("N");
-        var agent = _factory.CreateAgentConnection();
+        using var owner = await _factory.CreateAuthenticatedClientAsync(ct); // test kurulumu: eşleştirme (plan 0012)
+        using var agentHttp = _factory.CreateClient();
+        var agent = _factory.CreateAgentConnection(await AgentPairing.PairAsync(owner, agentHttp, _factory.Services, ct));
         await using (agent.ConfigureAwait(false))
         {
             await agent.StartAsync(ct);

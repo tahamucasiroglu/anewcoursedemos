@@ -136,7 +136,8 @@ public sealed class TechnicalLogIntegrationTests : IClassFixture<IntegrationApiF
                 api.StartServer();
                 var logging = AgentLogging.Create(agentDir.FullName, TimeProvider.System);
                 var settings = new AgentSettings(new Uri($"http://127.0.0.1:{port}/"), new Uri("http://127.0.0.1/"), TimeSpan.FromMilliseconds(300));
-                var connection = new SignalRServerConnection(settings, new TestAgentInfo(), logger: logging.Logger);
+                var token = await api.PairAgentAsync(ct); // test kurulumu (plan 0012)
+                var connection = new SignalRServerConnection(settings, new TestAgentInfo(), logger: logging.Logger, accessToken: () => token);
                 logging.SummarySink.Attach(connection);
                 await using (connection.ConfigureAwait(false))
                 {

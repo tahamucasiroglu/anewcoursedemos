@@ -14,6 +14,12 @@ public static class AgentHubContract
     /// <summary>API → ajan: "Ajanı test et" komutu; ajan sürümünü ve makine adını döndürür.</summary>
     public const string Ping = "Ping";
 
+    /// <summary>
+    /// API → ajan: ajanın oturumu iptal edildi (çıkış ya da yeni eşleştirme, spec 0012 Req 6, 12); ajan "Oturum kapandı" gösterir
+    /// ve yeni kod ister. Hemen ardından bağlantı sunucu tarafından kesilir.
+    /// </summary>
+    public const string SessionClosed = "SessionClosed";
+
     /// <summary>Ajan → API: Error/Critical log özeti (spec 0008 Req 7); yalnızca kayıtlı bağlantıdan kabul edilir.</summary>
     public const string ReportLog = "ReportLog";
 }

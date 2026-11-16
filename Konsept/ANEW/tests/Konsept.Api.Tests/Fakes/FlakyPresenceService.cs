@@ -1,5 +1,6 @@
 using Konsept.Modules.AgentGateway.Application.Abstract;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Modules.AgentGateway.Domain.Entities;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Konsept.Api.Tests.Fakes;
@@ -13,13 +14,13 @@ namespace Konsept.Api.Tests.Fakes;
 public sealed class FlakyPresenceService(IAgentPresenceService inner, FlakyRegistrationState state) : IAgentPresenceService
 {
     /// <inheritdoc />
-    public AgentStatusDto GetStatus() => inner.GetStatus();
+    public AgentStatusDto GetStatus(Guid? userId) => inner.GetStatus(userId);
 
     /// <inheritdoc />
-    public Task RegisterAsync(string connectionId, AgentRegistration registration, CancellationToken cancellationToken) =>
+    public Task RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken) =>
         state.ShouldFail(connectionId)
             ? Task.FromException(new HubException("kayıt geçici olarak reddedildi"))
-            : inner.RegisterAsync(connectionId, registration, cancellationToken);
+            : inner.RegisterAsync(connectionId, owner, registration, cancellationToken);
 
     /// <inheritdoc />
     public Task DisconnectAsync(string connectionId, CancellationToken cancellationToken) =>

@@ -5,5 +5,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Modules.AgentGateway.Application\Konsept.Modules.AgentGateway.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Identity.Contracts\Konsept.Modules.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

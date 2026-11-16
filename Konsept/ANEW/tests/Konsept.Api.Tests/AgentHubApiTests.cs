@@ -32,7 +32,7 @@ public sealed class AgentHubApiTests : IClassFixture<FastApiFactory>
     {
         var ct = TestContext.Current.CancellationToken;
         using var client = await _factory.CreateAuthenticatedClientAsync(ct);
-        var agent = _factory.CreateAgentConnection();
+        var agent = _factory.CreateAgentConnection(await PairAsync(client, ct)); // test kurulumu: eşleştirme (plan 0012)
         await using (agent.ConfigureAwait(false))
         {
             await agent.StartAsync(ct);
@@ -55,7 +55,7 @@ public sealed class AgentHubApiTests : IClassFixture<FastApiFactory>
     {
         var ct = TestContext.Current.CancellationToken;
         using var client = await _factory.CreateAuthenticatedClientAsync(ct);
-        var agent = _factory.CreateAgentConnection();
+        var agent = _factory.CreateAgentConnection(await PairAsync(client, ct)); // test kurulumu: eşleştirme (plan 0012)
         await using (agent.ConfigureAwait(false))
         {
             agent.On(AgentHubContract.Ping, () => new AgentPingReply("TAHA-PC", "0.1.0"));
@@ -86,6 +86,12 @@ public sealed class AgentHubApiTests : IClassFixture<FastApiFactory>
         response.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
         body.GetProperty("title").GetString().ShouldBe("Ajan bağlı değil");
         body.GetProperty("code").GetString().ShouldBe("agent.not_connected");
+    }
+
+    private async Task<string> PairAsync(HttpClient client, CancellationToken ct)
+    {
+        using var agentHttp = _factory.CreateClient();
+        return await AgentPairing.PairAsync(client, agentHttp, _factory.Services, ct);
     }
 
     private static async Task<bool> IsAgentConnectedAsync(HttpClient client, CancellationToken ct)

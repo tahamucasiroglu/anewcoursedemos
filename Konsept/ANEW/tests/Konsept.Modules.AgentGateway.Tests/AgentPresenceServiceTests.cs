@@ -1,5 +1,6 @@
 using Konsept.Modules.AgentGateway.Application.Concrete;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Modules.AgentGateway.Domain.Entities;
 using Konsept.Modules.AgentGateway.Infrastructure.Concrete;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
@@ -20,6 +21,9 @@ public sealed class AgentPresenceServiceTests
     private readonly ISystemEventWriter _events = Substitute.For<ISystemEventWriter>();
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 11, 14, 10, 0, 0, TimeSpan.Zero));
 
+    // Test kurulumu (plan 0012): ajan oturumu sahibiyle kaydolur; durum sahibine göre okunur.
+    private static readonly AgentOwner Owner = new(Guid.NewGuid(), Guid.NewGuid());
+
     /// <summary>Kayıt olunca durum "bağlı" olur ve "Ajan bağlandı" olayı yazılır.</summary>
     /// <returns>Görev.</returns>
     [Fact]
@@ -27,9 +31,9 @@ public sealed class AgentPresenceServiceTests
     {
         var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
 
-        await service.RegisterAsync("c1", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
+        await service.RegisterAsync("c1", Owner, new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
 
-        var status = service.GetStatus();
+        var status = service.GetStatus(Owner.UserId);
         status.IsConnected.ShouldBeTrue();
         status.MachineName.ShouldBe("TAHA-PC");
         status.ConnectedAt.ShouldBe(_time.GetUtcNow());
@@ -45,11 +49,11 @@ public sealed class AgentPresenceServiceTests
     public async Task Disconnect_CurrentAgent_MarksDisconnectedAndWritesWarning()
     {
         var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
-        await service.RegisterAsync("c1", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
+        await service.RegisterAsync("c1", Owner, new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
 
         await service.DisconnectAsync("c1", TestContext.Current.CancellationToken);
 
-        service.GetStatus().IsConnected.ShouldBeFalse();
+        service.GetStatus(Owner.UserId).IsConnected.ShouldBeFalse();
         await _events.Received(1).WriteAsync(
             Arg.Is<SystemEventEntry>(e => e.Type == AgentPresenceService.DisconnectedEventType && e.Level == SystemEventLevel.Warning),
             Arg.Any<CancellationToken>());
@@ -61,12 +65,12 @@ public sealed class AgentPresenceServiceTests
     public async Task Disconnect_StaleConnectionAfterReconnect_KeepsNewSession()
     {
         var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
-        await service.RegisterAsync("old", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
-        await service.RegisterAsync("new", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
+        await service.RegisterAsync("old", Owner, new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
+        await service.RegisterAsync("new", Owner, new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken);
 
         await service.DisconnectAsync("old", TestContext.Current.CancellationToken);
 
-        service.GetStatus().IsConnected.ShouldBeTrue();
+        service.GetStatus(Owner.UserId).IsConnected.ShouldBeTrue();
         await _events.DidNotReceive().WriteAsync(
             Arg.Is<SystemEventEntry>(e => e.Type == AgentPresenceService.DisconnectedEventType),
             Arg.Any<CancellationToken>());
@@ -81,10 +85,10 @@ public sealed class AgentPresenceServiceTests
             .Returns(Task.FromException<SystemEventDto>(new InvalidOperationException("veritabanı kapalı")));
         var service = new AgentPresenceService(_registry, _events, _time, NullLogger<AgentPresenceService>.Instance);
 
-        await Should.NotThrowAsync(() => service.RegisterAsync("c1", new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken));
+        await Should.NotThrowAsync(() => service.RegisterAsync("c1", Owner, new AgentRegistration("TAHA-PC", "0.1.0"), TestContext.Current.CancellationToken));
 
-        service.GetStatus().IsConnected.ShouldBeTrue();
+        service.GetStatus(Owner.UserId).IsConnected.ShouldBeTrue();
         await Should.NotThrowAsync(() => service.DisconnectAsync("c1", TestContext.Current.CancellationToken));
-        service.GetStatus().IsConnected.ShouldBeFalse();
+        service.GetStatus(Owner.UserId).IsConnected.ShouldBeFalse();
     }
 }

@@ -12,7 +12,7 @@ namespace Konsept.Api.Tests;
 
 /// <summary>
 /// Default-deny yüzeyi (spec 0002 AC-11, Api tarafı): kimliksiz uçlar tam olarak Req 11 listesidir (giriş, kayıt, refresh —
-/// A-0 —, sağlık, geçici ajan hub'ı); geri kalan her uç kimliksiz istekte 401 döner ve veri vermez.
+/// A-0 —, sağlık) ve ajanın kod alma + kod durumu (spec 0012 Req 10; geçici kimliksiz ajan hub'ı kaldırıldı); geri kalan her uç kimliksiz istekte 401 döner ve veri vermez.
 /// </summary>
 public sealed class AuthorizationSurfaceTests : IClassFixture<IdentityApiFactory>
 {
@@ -24,8 +24,6 @@ public sealed class AuthorizationSurfaceTests : IClassFixture<IdentityApiFactory
         "POST api/auth/register",
         "POST api/agent-pairing/codes",
         "POST api/agent-pairing/status",
-        "* hubs/agent/negotiate",
-        "* hubs/agent",
     ];
 
     private readonly IdentityApiFactory _factory;

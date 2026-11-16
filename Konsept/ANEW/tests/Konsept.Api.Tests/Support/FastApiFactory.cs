@@ -53,13 +53,15 @@ public sealed class FastApiFactory : WebApplicationFactory<Program>
     public string LogDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "logs-" + Guid.NewGuid().ToString("N"));
 
     /// <summary>Test sunucusuna bağlı bir ajan hub bağlantısı kurar (henüz başlatılmamış).</summary>
+    /// <param name="agentToken">Eşleştirmeyle alınan ajan oturum belirteci (plan 0012; hub kimliksiz bağlantıyı reddeder).</param>
     /// <returns>Hub bağlantısı.</returns>
-    public HubConnection CreateAgentConnection() =>
+    public HubConnection CreateAgentConnection(string? agentToken) =>
         new HubConnectionBuilder()
             .WithUrl(new Uri(Server.BaseAddress, AgentHubContract.HubPath.TrimStart('/')), options =>
             {
                 options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
                 options.Transports = HttpTransportType.LongPolling;
+                options.AccessTokenProvider = () => Task.FromResult(agentToken);
             })
             .Build();
 

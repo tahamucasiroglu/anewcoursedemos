@@ -30,7 +30,8 @@ public abstract class AgentTestServiceBase : IAgentTestService
     /// <inheritdoc />
     public async Task<Result<AgentTestResultDto>> TestAsync(CancellationToken cancellationToken)
     {
-        var session = Registry.Current;
+        // Kullanıcı yalnızca kendi ajanına ulaşır (spec 0012 Req 13): başkasının ajanı "bağlı değil" görünür.
+        var session = RequestingUserId is { } userId ? Registry.Find(userId) : null;
         if (session is null)
         {
             return Result<AgentTestResultDto>.Failure(AgentErrors.NotConnected);
@@ -52,6 +53,9 @@ public abstract class AgentTestServiceBase : IAgentTestService
             return Result<AgentTestResultDto>.Failure(AgentErrors.NotConnected);
         }
     }
+
+    /// <summary>Gets isteği yapan kullanıcı; giriş yapılmamışsa <c>null</c>.</summary>
+    protected abstract Guid? RequestingUserId { get; }
 
     /// <summary>Komutu ajana gönderir.</summary>
     /// <param name="connectionId">Ajan bağlantısı.</param>

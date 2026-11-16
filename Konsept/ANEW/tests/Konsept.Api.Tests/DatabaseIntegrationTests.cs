@@ -45,8 +45,10 @@ public sealed class DatabaseIntegrationTests : IClassFixture<IntegrationApiFacto
     public async Task AgentEvents_Persisted_LastEventShownInStrip()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var client = await AuthenticatedClient.CreateAsync(_factory, ct);
-        var agent = _factory.CreateAgentConnection();
+        var email = AuthenticatedClient.NewEmail();
+        using var client = await AuthenticatedClient.CreateAsync(_factory, ct, email);
+        using var agentHttp = _factory.CreateClient();
+        var agent = _factory.CreateAgentConnection(await AgentPairing.PairAsync(client, agentHttp, _factory.Services, ct)); // test kurulumu (plan 0012)
         await using (agent.ConfigureAwait(false))
         {
             await agent.StartAsync(ct);
@@ -66,8 +68,10 @@ public sealed class DatabaseIntegrationTests : IClassFixture<IntegrationApiFacto
                 ct);
         }
 
+        // Spec 0012 Req 13 (A-2): ajan olayı artık sahibine bağlıdır (önceden kullanıcısızdı).
+        var userId = await _factory.Database.ScalarAsync($"SELECT id FROM identity.users WHERE normalized_email = '{email.ToUpperInvariant()}'");
         var connected = await _factory.Database.ScalarAsync(
-            "SELECT count(*) FROM monitoring.system_events WHERE \"Type\" = 'agent.connected' AND \"UserId\" IS NULL");
+            $"SELECT count(*) FROM monitoring.system_events WHERE \"Type\" = 'agent.connected' AND \"UserId\" = '{userId}'");
         Convert.ToInt64(connected, System.Globalization.CultureInfo.InvariantCulture).ShouldBe(1);
     }
 }

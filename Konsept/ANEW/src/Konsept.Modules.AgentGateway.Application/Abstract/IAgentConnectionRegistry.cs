@@ -3,14 +3,22 @@ using Konsept.Modules.AgentGateway.Domain.Entities;
 namespace Konsept.Modules.AgentGateway.Application.Abstract;
 
 /// <summary>
-/// Bağlı ajan oturumunun tutulduğu yer. Bu spec'te tek ajan vardır (kimlik 0012'de); en son kaydolan geçerlidir.
+/// Bağlı ajan oturumlarının tutulduğu yer (spec 0012 Req 6, 13): kullanıcı başına tek ajan; aynı kullanıcının en son kaydolan
+/// ajanı geçerlidir. Bir kullanıcı yalnızca kendi ajanını görür.
 /// </summary>
 public interface IAgentConnectionRegistry
 {
-    /// <summary>Gets bağlı ajan oturumu; bağlı ajan yoksa <c>null</c>.</summary>
-    AgentSession? Current { get; }
+    /// <summary>Kullanıcının bağlı ajanını bulur.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <returns>Oturum ya da <c>null</c>.</returns>
+    AgentSession? Find(Guid userId);
 
-    /// <summary>Oturumu geçerli ajan olarak kaydeder.</summary>
+    /// <summary>Bağlantı kimliğiyle geçerli oturumu bulur.</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <returns>Oturum ya da <c>null</c>.</returns>
+    AgentSession? FindByConnection(string connectionId);
+
+    /// <summary>Oturumu sahibinin geçerli ajanı olarak kaydeder.</summary>
     /// <param name="session">Ajan oturumu.</param>
     void Set(AgentSession session);
 

@@ -1,6 +1,7 @@
 using Konsept.Modules.AgentGateway.Application.Abstract;
 using Konsept.Modules.AgentGateway.Application.Base;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Shared.Kernel.Abstract;
 
 namespace Konsept.Modules.AgentGateway.Application.Concrete;
 
@@ -10,16 +11,22 @@ namespace Konsept.Modules.AgentGateway.Application.Concrete;
 public sealed class AgentTestService : AgentTestServiceBase
 {
     private readonly IAgentChannel _channel;
+    private readonly ICurrentUser _currentUser;
 
     /// <summary>Initializes a new instance of the <see cref="AgentTestService"/> class.</summary>
     /// <param name="registry">Ajan oturum kaydı.</param>
     /// <param name="channel">Ajan komut kanalı.</param>
     /// <param name="timeProvider">Saat kaynağı.</param>
-    public AgentTestService(IAgentConnectionRegistry registry, IAgentChannel channel, TimeProvider timeProvider)
+    /// <param name="currentUser">İsteği yapan kullanıcı (yalnızca kendi ajanına ulaşır).</param>
+    public AgentTestService(IAgentConnectionRegistry registry, IAgentChannel channel, TimeProvider timeProvider, ICurrentUser currentUser)
         : base(registry, timeProvider)
     {
         _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
     }
+
+    /// <inheritdoc />
+    protected override Guid? RequestingUserId => _currentUser.UserId;
 
     /// <inheritdoc />
     protected override Task<AgentPingReply> SendPingAsync(string connectionId, CancellationToken cancellationToken) =>

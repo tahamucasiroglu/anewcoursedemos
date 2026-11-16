@@ -184,6 +184,36 @@ public sealed class AgentPairingApiTests : IClassFixture<IdentityApiFactory>
         device.UserId.ShouldNotBe(userA);
     }
 
+    /// <summary>
+    /// Ajan oturumu son kullanımdan itibaren 90 gün geçerlidir: 90 gün dolmadan bağlanan ajanın oturumu yenilenir (yeniden
+    /// eşleştirme istenmez), 90 günden uzun kullanılmayan oturum reddedilir (saat ilerletilerek).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AgentSession_90DaysUnused_Rejected_UsedWithinRenews()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (user, _) = await NewUserAsync(ct);
+        using var agent = _factory.CreateClient();
+        var token = await AgentPairing.PairAsync(user, agent, _factory.Services, ct, "UZUN-PC");
+
+        (await NegotiateAsync(agent, token, ct)).ShouldBe(HttpStatusCode.OK);
+        _factory.Time.Advance(TimeSpan.FromDays(89));
+        (await NegotiateAsync(agent, token, ct)).ShouldBe(HttpStatusCode.OK);
+        _factory.Time.Advance(TimeSpan.FromDays(89));
+        (await NegotiateAsync(agent, token, ct)).ShouldBe(HttpStatusCode.OK);
+        _factory.Time.Advance(TimeSpan.FromDays(90).Add(TimeSpan.FromMinutes(1)));
+        (await NegotiateAsync(agent, token, ct)).ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    private static async Task<HttpStatusCode> NegotiateAsync(HttpClient client, string token, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/hubs/agent/negotiate?negotiateVersion=1");
+        request.Headers.Authorization = new("Bearer", token);
+        using var response = await client.SendAsync(request, ct);
+        return response.StatusCode;
+    }
+
     private static async Task<(HttpStatusCode Status, string? Title)> ProblemAsync(HttpResponseMessage response, CancellationToken ct)
     {
         using (response)

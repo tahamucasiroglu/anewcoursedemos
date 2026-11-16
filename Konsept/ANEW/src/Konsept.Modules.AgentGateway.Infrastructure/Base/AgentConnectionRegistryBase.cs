@@ -4,21 +4,27 @@ using Konsept.Modules.AgentGateway.Domain.Entities;
 namespace Konsept.Modules.AgentGateway.Infrastructure.Base;
 
 /// <summary>
-/// Oturum kaydının iş parçacığı güvenli ortak mantığı; saklama biçimini alt sınıfa bırakır.
+/// Oturum kaydının iş parçacığı güvenli ortak mantığı (kullanıcı başına tek oturum); saklama biçimini alt sınıfa bırakır.
 /// </summary>
 public abstract class AgentConnectionRegistryBase : IAgentConnectionRegistry
 {
     private readonly Lock _gate = new();
 
     /// <inheritdoc />
-    public AgentSession? Current
+    public AgentSession? Find(Guid userId)
     {
-        get
+        lock (_gate)
         {
-            lock (_gate)
-            {
-                return Read();
-            }
+            return Read(userId);
+        }
+    }
+
+    /// <inheritdoc />
+    public AgentSession? FindByConnection(string connectionId)
+    {
+        lock (_gate)
+        {
+            return ReadAll().FirstOrDefault(s => string.Equals(s.ConnectionId, connectionId, StringComparison.Ordinal));
         }
     }
 
@@ -28,7 +34,7 @@ public abstract class AgentConnectionRegistryBase : IAgentConnectionRegistry
         ArgumentNullException.ThrowIfNull(session);
         lock (_gate)
         {
-            Write(session);
+            Write(session.UserId, session);
         }
     }
 
@@ -37,22 +43,28 @@ public abstract class AgentConnectionRegistryBase : IAgentConnectionRegistry
     {
         lock (_gate)
         {
-            var current = Read();
-            if (current is null || !string.Equals(current.ConnectionId, connectionId, StringComparison.Ordinal))
+            var current = ReadAll().FirstOrDefault(s => string.Equals(s.ConnectionId, connectionId, StringComparison.Ordinal));
+            if (current is null)
             {
                 return null;
             }
 
-            Write(null);
+            Write(current.UserId, null);
             return current;
         }
     }
 
-    /// <summary>Saklanan oturumu okur (kilit altında çağrılır).</summary>
+    /// <summary>Kullanıcının oturumunu okur (kilit altında çağrılır).</summary>
+    /// <param name="userId">Kullanıcı.</param>
     /// <returns>Oturum ya da <c>null</c>.</returns>
-    protected abstract AgentSession? Read();
+    protected abstract AgentSession? Read(Guid userId);
 
-    /// <summary>Oturumu saklar (kilit altında çağrılır).</summary>
+    /// <summary>Tüm oturumları okur (kilit altında çağrılır).</summary>
+    /// <returns>Oturumlar.</returns>
+    protected abstract IEnumerable<AgentSession> ReadAll();
+
+    /// <summary>Kullanıcının oturumunu saklar ya da siler (kilit altında çağrılır).</summary>
+    /// <param name="userId">Kullanıcı.</param>
     /// <param name="session">Oturum ya da <c>null</c>.</param>
-    protected abstract void Write(AgentSession? session);
+    protected abstract void Write(Guid userId, AgentSession? session);
 }

@@ -23,16 +23,17 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
     private readonly bool _databaseDown;
     private readonly FlakyRegistrationState? _flakyRegistration;
     private readonly string? _databaseConnectionString;
-    private readonly Lock _tokenGate = new();
-    private string? _accessToken;
+    private readonly KestrelApiStores _stores;
 
     /// <summary>Initializes a new instance of the <see cref="KestrelApiFactory"/> class.</summary>
     /// <param name="port">Loopback portu.</param>
     /// <param name="databaseDown">Veritabanı kapalı gibi davransın mı.</param>
     /// <param name="flakyRegistration">Verilirse ilk kayıt istekleri reddedilir.</param>
     /// <param name="databaseConnectionString">Verilirse bellek depoları yerine bu gerçek veritabanı kullanılır (full profil).</param>
-    public KestrelApiFactory(int port, bool databaseDown = false, FlakyRegistrationState? flakyRegistration = null, string? databaseConnectionString = null)
+    /// <param name="stores">Verilirse bellek depoları ve kimlik bu örnekle paylaşılır (plan 0012 test kurulumu: yeniden başlatma).</param>
+    public KestrelApiFactory(int port, bool databaseDown = false, FlakyRegistrationState? flakyRegistration = null, string? databaseConnectionString = null, KestrelApiStores? stores = null)
     {
+        _stores = stores ?? new KestrelApiStores();
         _databaseDown = databaseDown;
         _flakyRegistration = flakyRegistration;
         _databaseConnectionString = databaseConnectionString;
@@ -71,11 +72,10 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<IUserRepository>();
             services.RemoveAll<ISessionRepository>();
-            var users = new InMemoryUserRepository();
-            services.AddSingleton<IUserRepository>(users);
-            services.AddSingleton<ISessionRepository>(new InMemorySessionRepository(users));
+            services.AddSingleton<IUserRepository>(_stores.Users);
+            services.AddSingleton<ISessionRepository>(_stores.Sessions);
             services.RemoveAll<IAgentDeviceRepository>(); // test kurulumu: ajan cihazları (plan 0012).
-            services.AddSingleton<IAgentDeviceRepository>(new InMemoryAgentDeviceRepository());
+            services.AddSingleton<IAgentDeviceRepository>(_stores.AgentDevices);
             services.RemoveAll<ITechnicalLogRepository>();
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
             services.RemoveAll<ISystemEventRepository>();
@@ -93,22 +93,34 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
         });
     }
 
-    // Token fabrika başına bir kez alınır (istemci her yoklamada yeniden açılıyor); ConfigureClient eşzamanlıdır.
+    /// <summary>
+    /// Ajanı gerçek eşleştirme uçlarıyla bu fabrikanın kullanıcısına eşleştirir (plan 0012 test kurulumu: hub kimliksiz
+    /// bağlantıyı reddeder; durum yalnızca sahibine görünür).
+    /// </summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Ajan oturum belirteci.</returns>
+    public async Task<string> PairAgentAsync(CancellationToken cancellationToken)
+    {
+        using var client = CreateClient();
+        return await AgentPairing.PairAsync(client, client, Services, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Token kimlik başına bir kez alınır (istemci her yoklamada yeniden açılıyor); ConfigureClient eşzamanlıdır.
     private string AccessToken(HttpClient client)
     {
-        lock (_tokenGate)
+        lock (_stores.Gate)
         {
-            if (_accessToken is null)
+            if (_stores.AccessToken is null)
             {
                 using var anonymous = new HttpClient { BaseAddress = client.BaseAddress };
                 var email = AuthenticatedClient.NewEmail();
                 AuthenticatedClient.RegisterAsync(anonymous, Services, email, AuthenticatedClient.Password, "Ajan Testi", CancellationToken.None)
                     .GetAwaiter().GetResult();
-                _accessToken = AuthenticatedClient.LoginAsync(anonymous, Services, email, AuthenticatedClient.Password, CancellationToken.None)
+                _stores.AccessToken = AuthenticatedClient.LoginAsync(anonymous, Services, email, AuthenticatedClient.Password, CancellationToken.None)
                     .GetAwaiter().GetResult().GetProperty("accessToken").GetString();
             }
 
-            return _accessToken!;
+            return _stores.AccessToken!;
         }
     }
 }

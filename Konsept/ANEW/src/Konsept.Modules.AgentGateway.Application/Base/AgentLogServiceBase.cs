@@ -23,8 +23,8 @@ public abstract class AgentLogServiceBase(IAgentConnectionRegistry registry, Age
     public async Task<bool> ReportAsync(string connectionId, AgentLogSummary summary, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(summary);
-        var session = registry.Current;
-        if (session is null || session.ConnectionId != connectionId
+        var session = registry.FindByConnection(connectionId);
+        if (session is null
             || summary.Level is not ((int)LogEntryLevel.Error or (int)LogEntryLevel.Critical)
             || !quota.TryConsume(timeProvider.GetUtcNow()))
         {

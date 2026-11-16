@@ -5,6 +5,8 @@ using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Domain.Entities;
 using Konsept.Modules.AgentGateway.Infrastructure.Concrete;
 using Konsept.Modules.AgentGateway.Infrastructure.Hubs;
+using Konsept.Modules.Identity.Contracts.Abstract;
+using Konsept.Shared.Infrastructure.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +25,8 @@ public static class AgentGatewayModule
     {
         services.AddSignalR();
         services.AddSingleton<IAgentConnectionRegistry, InMemoryAgentConnectionRegistry>();
+        services.AddSingleton<IAgentConnectionTracker, AgentConnectionTracker>();
+        services.AddSingleton<IAgentDeviceRevocationListener, AgentSessionTerminator>();
         services.AddSingleton<IAgentChannel, SignalRAgentChannel>();
         services.AddScoped<IAgentPresenceService, AgentPresenceService>();
         services.AddScoped<IAgentStatusReader>(sp => sp.GetRequiredService<IAgentPresenceService>());
@@ -33,14 +37,14 @@ public static class AgentGatewayModule
     }
 
     /// <summary>
-    /// Ajan hub'ını <see cref="AgentHubContract.HubPath"/> yoluna bağlar. Hub şimdilik kimliksizdir (spec 0002 Req 11'in
-    /// geçici istisnası); geçici, 0012 kaldırır ve yerine eşleştirme istisnalarını koyar.
+    /// Ajan hub'ını <see cref="AgentHubContract.HubPath"/> yoluna bağlar. Yalnızca geçerli ajan oturumu bağlanabilir
+    /// (<see cref="AuthPolicies.AgentHub"/>, spec 0012 Req 10 — 0002'nin geçici kimliksiz istisnası kaldırıldı).
     /// </summary>
     /// <param name="endpoints">Uç nokta kurucusu.</param>
     /// <returns>Aynı kurucu.</returns>
     public static IEndpointRouteBuilder MapAgentGateway(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapHub<AgentHub>(AgentHubContract.HubPath).AllowAnonymous(); // geçici, 0012 kaldırır
+        endpoints.MapHub<AgentHub>(AgentHubContract.HubPath).RequireAuthorization(AuthPolicies.AgentHub);
         return endpoints;
     }
 }

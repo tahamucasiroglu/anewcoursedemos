@@ -27,11 +27,14 @@ public sealed class AgentReconnectTests
         var ct = TestContext.Current.CancellationToken;
         var port = FreeLoopbackPort();
         var settings = new AgentSettings(new Uri($"http://127.0.0.1:{port}/"), new Uri("http://127.0.0.1/"), TimeSpan.FromMilliseconds(300));
-        var connection = new SignalRServerConnection(settings, new TestAgentInfo());
+        var stores = new KestrelApiStores(); // test kurulumu (plan 0012): yeniden açılan API aynı eşleşmeyi tanır.
+        string? token = null;
+        var connection = new SignalRServerConnection(settings, new TestAgentInfo(), accessToken: () => token);
         await using (connection.ConfigureAwait(false))
         {
-            var first = new KestrelApiFactory(port);
+            var first = new KestrelApiFactory(port, stores: stores);
             first.StartServer();
+            token = await first.PairAgentAsync(ct);
             await connection.StartAsync(ct);
             await Eventually.WithinAsync(() => IsConnectedAsync(first, ct), Limit, ct);
             connection.State.ShouldBe(ConnectionState.Connected);
@@ -39,7 +42,7 @@ public sealed class AgentReconnectTests
             await first.DisposeAsync();
             await Eventually.WithinAsync(() => Task.FromResult(connection.State != ConnectionState.Connected), Limit, ct);
 
-            var second = new KestrelApiFactory(port);
+            var second = new KestrelApiFactory(port, stores: stores);
             await using (second.ConfigureAwait(false))
             {
                 second.StartServer();
@@ -66,7 +69,8 @@ public sealed class AgentReconnectTests
         await using (api.ConfigureAwait(false))
         {
             api.StartServer();
-            var connection = new SignalRServerConnection(settings, new TestAgentInfo());
+            var token = await api.PairAgentAsync(ct); // test kurulumu (plan 0012)
+            var connection = new SignalRServerConnection(settings, new TestAgentInfo(), accessToken: () => token);
             await using (connection.ConfigureAwait(false))
             {
                 var changes = 0;
@@ -100,7 +104,8 @@ public sealed class AgentReconnectTests
         await using (api.ConfigureAwait(false))
         {
             api.StartServer();
-            var connection = new SignalRServerConnection(settings, new TestAgentInfo());
+            var token = await api.PairAgentAsync(ct); // test kurulumu (plan 0012)
+            var connection = new SignalRServerConnection(settings, new TestAgentInfo(), accessToken: () => token);
             await using (connection.ConfigureAwait(false))
             {
                 await connection.StartAsync(ct);

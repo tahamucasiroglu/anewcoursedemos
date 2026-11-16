@@ -21,6 +21,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly IAgentInfoProvider _info;
     private readonly Func<HttpMessageHandler>? _handlerFactory;
     private readonly ILogger _logger;
+    private readonly Func<string?>? _accessToken;
     private readonly CancellationTokenSource _lifetime = new();
     private HubConnection? _hub;
     private Task _connectLoop = Task.CompletedTask;
@@ -31,8 +32,10 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="info">Ajan bilgisi.</param>
     /// <param name="handlerFactory">Testte HTTP yolunu değiştirmek için; normalde <c>null</c>.</param>
     /// <param name="logger">Ajan teknik logu (spec 0008); verilmezse log yazılmaz.</param>
-    public SignalRServerConnection(AgentSettings settings, IAgentInfoProvider info, Func<HttpMessageHandler>? handlerFactory = null, ILogger? logger = null)
+    /// <param name="accessToken">Ajan oturum belirtecini veren kaynak (spec 0012; <c>Authorization</c> başlığında gider, adreste değil).</param>
+    public SignalRServerConnection(AgentSettings settings, IAgentInfoProvider info, Func<HttpMessageHandler>? handlerFactory = null, ILogger? logger = null, Func<string?>? accessToken = null)
     {
+        _accessToken = accessToken;
         _logger = (logger ?? Serilog.Core.Logger.None).ForContext<SignalRServerConnection>();
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _info = info ?? throw new ArgumentNullException(nameof(info));
@@ -105,6 +108,11 @@ public sealed class SignalRServerConnection : ServerConnectionBase
                 if (_handlerFactory is not null)
                 {
                     options.HttpMessageHandlerFactory = _ => _handlerFactory();
+                }
+
+                if (_accessToken is not null)
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(_accessToken());
                 }
             })
             .WithAutomaticReconnect(new ForeverRetryPolicy(_settings.ReconnectDelay))

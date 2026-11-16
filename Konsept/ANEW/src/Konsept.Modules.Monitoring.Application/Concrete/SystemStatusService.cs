@@ -55,5 +55,5 @@ public sealed class SystemStatusService : SystemStatusServiceBase
     protected override string ReadVersion() => _version.Version;
 
     /// <inheritdoc />
-    protected override AgentStatusDto ReadAgentStatus() => _agent.GetStatus();
+    protected override AgentStatusDto ReadAgentStatus() => _agent.GetStatus(_currentUser.UserId);
 }
