@@ -62,6 +62,17 @@ public interface IKonseptApiClient
     /// <returns>Özet ya da hata (403 → Forbidden).</returns>
     Task<Result<AdminOverviewResponse>> GetAdminOverviewAsync(CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Ajan eşleştirme (spec 0012): kodun cihazını sorar (<c>lookup</c>), onaylar (<c>approve</c>) ya da reddeder (<c>reject</c>);
+    /// tarayıcının IP'si servis anahtarıyla iletilir (Api'nin IP başına hız sınırı, Req 8).
+    /// </summary>
+    /// <param name="action"><c>lookup</c>, <c>approve</c> ya da <c>reject</c>.</param>
+    /// <param name="code">Kullanıcının yazdığı kod.</param>
+    /// <param name="clientIp">Tarayıcının IP adresi.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Cihaz ya da hata (kod yok 404 / süresi dolmuş, kullanılmış 409 / çok fazla deneme 429).</returns>
+    Task<Result<PairingDeviceResponse>> AgentPairingAsync(string action, string? code, string? clientIp, CancellationToken cancellationToken);
+
     /// <summary>Model kataloğunu (kullanıcıya göre etiketli) getirir (spec 0004).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Katalog ya da hata.</returns>

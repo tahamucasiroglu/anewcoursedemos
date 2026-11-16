@@ -1,5 +1,6 @@
-// Sayfa giriş noktası: pasif kontroller, "Ajanı test et", durum yoklaması, tek gönderimlik çıkış formu, admin özeti ve Ayarlar.
+// Sayfa giriş noktası: pasif kontroller, "Ajanı test et", durum yoklaması, tek gönderimlik çıkış formu, admin özeti, Ayarlar ve "Ajanı eşleştir".
 import { loadAdminOverview } from './admin.js';
+import { initPairing } from './agent-pairing.js';
 import { bindAgentTest } from './agent-test.js';
 import { bindSubmitOnceForms } from './auth-form.js';
 import { bindPassiveControls } from './passive-controls.js';
@@ -12,3 +13,4 @@ bindSubmitOnceForms(document);
 startPolling(document);
 loadAdminOverview(document);
 initSettings(document);
+initPairing(document);

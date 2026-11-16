@@ -63,6 +63,19 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         SendAsync<AdminOverviewResponse>(new HttpRequestMessage(HttpMethod.Get, "api/admin/overview"), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<PairingDeviceResponse>> AgentPairingAsync(string action, string? code, string? clientIp, CancellationToken cancellationToken)
+    {
+        var path = "api/agent-pairing/" + Uri.EscapeDataString(string.IsNullOrWhiteSpace(code) ? "-" : code.Trim());
+        var request = action switch
+        {
+            "lookup" => new HttpRequestMessage(HttpMethod.Get, path),
+            "approve" or "reject" => new HttpRequestMessage(HttpMethod.Post, path + "/" + action),
+            _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Bilinmeyen eşleştirme işlemi."),
+        };
+        return SendAsync<PairingDeviceResponse>(WithClientIp(request, clientIp), cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<Result<CatalogResponse>> GetCatalogAsync(CancellationToken cancellationToken) =>
         SendAsync<CatalogResponse>(new HttpRequestMessage(HttpMethod.Get, "api/ai/catalog"), cancellationToken);
 

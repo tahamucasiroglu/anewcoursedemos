@@ -67,6 +67,21 @@ describe('durum alanı ve Günlük şeridi (AC-4, AC-6, AC-8)', () => {
     expect(document.getElementById('journal').dataset.level).toBe('critical');
   });
 
+  it('ajan bağlı değilken "Ajanı eşleştir" bağlantısı görünür, bağlıyken gizlenir (spec 0012 AC-2)', () => {
+    document.getElementById('system-status').insertAdjacentHTML('beforeend', '<a id="status-agent-pair" href="/ajan-eslestir" hidden>Ajanı eşleştir</a>');
+    const pair = document.getElementById('status-agent-pair');
+
+    render(document, { ...healthy, agent: { isConnected: false } });
+    expect(pair.hidden).toBe(false);
+    expect(pair.getAttribute('href')).toBe('/ajan-eslestir');
+
+    render(document, healthy);
+    expect(pair.hidden).toBe(true);
+
+    render(document, { apiAvailable: false });
+    expect(pair.hidden).toBe(true);
+  });
+
   it('istekler $.ajax ile Web controller üzerinden gider', async () => {
     const ajax = vi.spyOn($, 'ajax').mockReturnValue(ajaxResolving($, healthy));
 

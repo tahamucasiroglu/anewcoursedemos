@@ -1,0 +1,28 @@
+@* Ajanı eşleştir (spec 0012 Req 3–8, AC-14): kod elle girilir (adreste taşınmaz); sayfa cihazı (makine adı + sürüm) gösterir,
+   kullanıcı Onayla/Reddet der. Davranış agent-pairing.js'te; metinler resx'ten data-text-* ile gelir. Hata role="alert" ile
+   duyurulur ve alanla ilişkilidir (aria-describedby); hata sonrası odak kod alanına döner. *@
+@{
+    ViewData["Title"] = UiText.PairTitle;
+}
+<h1 class="page__title">@UiText.PairTitle</h1>
+<section class="pairing" id="pairing" data-lookup-url="/ajan-eslestir/sorgula" data-approve-url="/ajan-eslestir/onayla"
+         data-reject-url="/ajan-eslestir/reddet" data-text-sending="@UiText.PairSending" data-text-approved="@UiText.PairApproved"
+         data-text-rejected="@UiText.PairRejected" data-text-failed="@UiText.PairFailed" data-text-code-required="@UiText.PairCodeRequired"
+         data-text-device-format="@UiText.PairDeviceFormat">
+    <p class="pairing__intro">@UiText.PairIntro</p>
+    <form id="pairing-form" class="pairing__form" novalidate>
+        <label class="pairing__label" for="pairing-code">@UiText.PairCodeLabel</label>
+        <input class="pairing__input" id="pairing-code" name="code" type="text" autocomplete="off" spellcheck="false"
+               autocapitalize="characters" maxlength="9" placeholder="ABCD-1234" aria-describedby="pairing-error" />
+        <button class="button button--primary" id="pairing-lookup" type="submit">@UiText.PairLookup</button>
+    </form>
+    <div class="pairing__device" id="pairing-device" hidden>
+        <p class="pairing__device-text">@UiText.PairDeviceIntro <strong id="pairing-device-name"></strong></p>
+        <div class="pairing__actions">
+            <button class="button button--primary" id="pairing-approve" type="button">@UiText.PairApprove</button>
+            <button class="button" id="pairing-reject" type="button">@UiText.PairReject</button>
+        </div>
+    </div>
+    <p class="pairing__status" id="pairing-status" role="status" aria-live="polite"></p>
+    <p class="pairing__error" id="pairing-error" role="alert" hidden></p>
+</section>

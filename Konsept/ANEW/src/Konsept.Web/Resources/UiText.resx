@@ -105,4 +105,18 @@
   <data name="KeyDeleted" xml:space="preserve"><value>API key silindi</value></data>
   <data name="KeyDeleteConfirm" xml:space="preserve"><value>Bu key silinecek; {0} modelleri kullanılamaz olacak. Sıradaki işler bu sağlayıcıyı kullanıyorsa duracak.</value></data>
   <data name="KeyActionFailed" xml:space="preserve"><value>İşlem şu an yapılamadı (hata no: {0})</value></data>
+  <data name="StatusAgentPair" xml:space="preserve"><value>Ajanı eşleştir</value></data>
+  <data name="PairTitle" xml:space="preserve"><value>Ajanı eşleştir</value></data>
+  <data name="PairIntro" xml:space="preserve"><value>Ajan penceresindeki 8 karakterlik kodu girin. Gösterilen cihazı tanımıyorsanız reddedin.</value></data>
+  <data name="PairCodeLabel" xml:space="preserve"><value>Eşleştirme kodu</value></data>
+  <data name="PairLookup" xml:space="preserve"><value>Kodu gönder</value></data>
+  <data name="PairDeviceIntro" xml:space="preserve"><value>Bu kod şu cihaza ait:</value></data>
+  <data name="PairDeviceFormat" xml:space="preserve"><value>{0} · sürüm {1}</value></data>
+  <data name="PairApprove" xml:space="preserve"><value>Onayla</value></data>
+  <data name="PairReject" xml:space="preserve"><value>Reddet</value></data>
+  <data name="PairSending" xml:space="preserve"><value>Gönderiliyor…</value></data>
+  <data name="PairApproved" xml:space="preserve"><value>Onaylandı. Ajan birkaç saniye içinde "Eşleşti" gösterecek.</value></data>
+  <data name="PairRejected" xml:space="preserve"><value>Reddedildi. Ajan yeni kod alabilir.</value></data>
+  <data name="PairFailed" xml:space="preserve"><value>İşlem tamamlanamadı, tekrar deneyin.</value></data>
+  <data name="PairCodeRequired" xml:space="preserve"><value>Ajan penceresindeki kodu girin.</value></data>
 </root>

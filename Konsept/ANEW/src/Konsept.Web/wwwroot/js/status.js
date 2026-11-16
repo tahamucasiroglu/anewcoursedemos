@@ -53,12 +53,17 @@ export function render(doc, status) {
   const api = doc.getElementById('status-api');
   const db = doc.getElementById('status-db');
   const agent = doc.getElementById('status-agent');
+  // "Ajanı eşleştir" bağlantısı (spec 0012 Req 3): yalnızca ajan bağlı değilken görünür.
+  const pair = doc.getElementById('status-agent-pair');
 
   if (!status || status.apiAvailable === false) {
     version.textContent = '';
     set(api, t.apiDown, 'error');
     set(db, '', 'unknown');
     set(agent, '', 'unknown');
+    if (pair) {
+      pair.hidden = true;
+    }
     return;
   }
 
@@ -67,6 +72,9 @@ export function render(doc, status) {
   set(db, status.databaseAvailable ? t.dbOk : t.dbDown, status.databaseAvailable ? 'ok' : 'error');
   const connected = Boolean(status.agent && status.agent.isConnected);
   set(agent, connected ? t.agentConnected : t.agentDisconnected, connected ? 'ok' : 'off');
+  if (pair) {
+    pair.hidden = connected;
+  }
   renderJournal(doc, status.lastEvent || null, t.journalEmpty);
 }
 
