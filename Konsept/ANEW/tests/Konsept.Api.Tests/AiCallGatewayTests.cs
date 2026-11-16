@@ -3,6 +3,7 @@ using Konsept.Api.Tests.Support;
 using Konsept.Modules.AiGateway.Application.Dtos;
 using Konsept.Modules.AiGateway.Domain.Entities;
 using Konsept.Modules.AiGateway.Domain.Enums;
+using Konsept.Modules.AiGateway.Domain.Rules;
 using Shouldly;
 
 namespace Konsept.Api.Tests;
@@ -455,6 +456,9 @@ public sealed class AiCallGatewayTests
         (await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet))).Error!.Message.ShouldBe("Anthropic için API key girilmemiş — Ayarlar");
         _h.Provider.Calls.Count.ShouldBe(1);
         _h.Spend.Records.ShouldHaveSingleItem().ProviderId.ShouldBe("anthropic");
+        var (start, end) = IstanbulMonth.Of(_h.Time.GetUtcNow()); // review r1 L-4: silinen key'in kaydı aylık toplama girmeye devam eder.
+        (await _h.Spend.SumAsync(_user, start, end, ct)).ShouldBe(_h.Spend.Records.Single().CostUsd);
+        _h.Spend.Records.Single().CostUsd.ShouldBeGreaterThan(0m);
     }
 
     /// <summary>AC-17: ay toplamı ne kadar yüksek olursa olsun çağrı engellenmez (harcama yalnızca bilgi).</summary>
