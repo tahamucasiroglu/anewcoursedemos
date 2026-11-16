@@ -84,6 +84,11 @@ sahne sayısı aynı) · `POST {id}/regenerate` (talimatla yeniden üretim, arka
 süren varken ikinci istek 409 — G-3; Api yeniden başlarsa revizyon kaybolur, konsept değişmez). Çağrı 0014'ün konsept talimatıyla,
 `ModelRole.ConceptGeneration` + profil; mevcut konsept ve talimat istemde veri bloklarında; başlık değişmez. Web: `concept-edit.js`
 (`concept-work.js` ile `concept:before-open` / `concept:opened` / `concept:changed` olayları), `/konseptler/{id}/…`, `/?konsept=<id>` bağlantısı.
+**0016 Silinenler:** `IConceptTrashService` — `POST api/concepts/{id}/delete` (soft delete, `deleted_at`; yalnızca Üretildi/Onaylandı) ·
+`GET api/concepts/deleted[/{id}]` (en yeni silinen üstte, salt okunur) · `POST api/concepts/deleted/{id}/purge` (kalıcı; konudan gelmişse aynı
+anahtarlı "seçildi" öneri de silinir) · `POST api/concepts/suggestions/reset` (yalnızca profilin `Rejected` önerileri). Silinmiş konsept öneri
+geçmişinde "elenen" sayılır (`ListTitlesAsync`, zamanı `deleted_at`). Web: `deleted.js` (`/silinenler/konseptler/…`), `suggestion-reset.js`
+(`/oneriler/sifirla`), ortak `confirm-dialog.js`; `concept-work.js` çöpü `concept:deleted` olayını yayar.
 
 **Monitoring — hata bildirimleri (0022):** `monitoring.error_reports` (sıralı `Number`, kaynak web/ajan/API, durum "Yeni", süresiz). Web: `POST api/error-reports` + `GET api/error-reports/preview` (oturumlu; son 20 Günlük kaydını ve versiyonu sunucu ekler; kullanıcı başına saatte 10, web + ajan). Okuma `GET api/error-reports/{number}` yalnızca `admin.panel` (listeleme 0025). Ajan bildirimi ayrı HTTP ucu değil, kimlikli hub metodu `ReportError` (+ hesap için `WhoAmI`); AgentGateway Monitoring.Contracts `IErrorReportSubmitter`'a iletir. API'nin beklenmeyen istisnaları Monitoring'deki `IExceptionHandler` ile kaynak "API" kaydı olur (ProblemDetails sürer; 4xx kayıt oluşturmaz). Ajan bekleyen bildirimleri `pending-reports.json`'da (en çok 20, oluştuğu hesaba bağlı) tutar.
 
