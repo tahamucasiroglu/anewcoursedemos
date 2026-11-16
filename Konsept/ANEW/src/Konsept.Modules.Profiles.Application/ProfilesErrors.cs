@@ -23,6 +23,12 @@ public static class ProfilesErrors
     /// <summary>Alan: kanal içeriği.</summary>
     public const string ContentField = "Content";
 
+    /// <summary>Alan: konsept ayarlarında model seçimleri (spec 0005).</summary>
+    public const string ModelsField = "Models";
+
+    /// <summary>Alan: konsept ayarlarında ince ayar (spec 0005).</summary>
+    public const string FineTuneField = "FineTune";
+
     /// <summary>Hata kodu: alan kuralı.</summary>
     public const string InvalidCode = "profiles.invalid";
 
@@ -44,6 +50,18 @@ public static class ProfilesErrors
     /// <summary>Gets ad aynı kullanıcının başka profilinde var.</summary>
     public static Error NameTaken => Invalid(new Dictionary<string, string[]>(StringComparer.Ordinal) { [ChannelNameField] = [ProfilesText.ChannelNameTaken] });
 
+    /// <summary>Gets seçilemeyen model (yetki yok, key yok/okunamıyor, metin modeli değil; spec 0005 Req 5, BR-13).</summary>
+    public static Error ModelNotSelectable => Field(ModelsField, ProfilesText.ModelNotSelectable);
+
+    /// <summary>Gets model rolü geçersiz ya da tekrarlı.</summary>
+    public static Error RoleInvalid => Field(ModelsField, ProfilesText.ModelRoleInvalid);
+
+    /// <summary>Gets efor modelin desteklediği düzeylerden biri değil.</summary>
+    public static Error EffortInvalid => Field(ModelsField, ProfilesText.EffortInvalid);
+
+    /// <summary>Gets ince ayar değeri listede yok.</summary>
+    public static Error FineTuneInvalid => Field(FineTuneField, ProfilesText.FineTuneInvalid);
+
     /// <summary>Alan kuralı ihlallerinden hata.</summary>
     /// <param name="issues">İhlaller.</param>
     /// <returns>Alan hatalı doğrulama hatası.</returns>
@@ -58,6 +76,9 @@ public static class ProfilesErrors
 
         return Invalid(fields);
     }
+
+    private static Error Field(string field, string message) =>
+        Invalid(new Dictionary<string, string[]>(StringComparer.Ordinal) { [field] = [message] });
 
     private static Error Invalid(Dictionary<string, string[]> fields) =>
         new(InvalidCode, ProfilesText.ValidationFailed, ErrorType.Validation) { FieldErrors = fields };

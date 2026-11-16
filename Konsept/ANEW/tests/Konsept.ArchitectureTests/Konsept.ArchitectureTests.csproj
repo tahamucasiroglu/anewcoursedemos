@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Domain\Konsept.Modules.Identity.Domain.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Application\Konsept.Modules.Identity.Application.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.Identity.Infrastructure\Konsept.Modules.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Konsept.Modules.AiGateway.Contracts\Konsept.Modules.AiGateway.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.AiGateway.Domain\Konsept.Modules.AiGateway.Domain.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.AiGateway.Application\Konsept.Modules.AiGateway.Application.csproj" />
     <ProjectReference Include="..\..\src\Konsept.Modules.AiGateway.Infrastructure\Konsept.Modules.AiGateway.Infrastructure.csproj" />

@@ -5,6 +5,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Modules.Profiles.Domain\Konsept.Modules.Profiles.Domain.csproj" />
+    <!-- Seçilebilir metin modelleri (spec 0005, Y-1: yalnızca AiGateway'in Contracts'ı). -->
+    <ProjectReference Include="..\Konsept.Modules.AiGateway.Contracts\Konsept.Modules.AiGateway.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- Kullanıcıya dönen metinler yalnızca resx'te (Türkçe). Derlemede tipli ProfilesText sınıfı üretilir. -->

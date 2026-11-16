@@ -76,6 +76,52 @@ public sealed class ProfilesIntegrationTests : IClassFixture<IntegrationApiFacto
         list.GetProperty("items").GetArrayLength().ShouldBe(2);
     }
 
+    /// <summary>
+    /// Spec 0005 AC-4/AC-8: konsept ayarları gerçek veritabanında profil başına kalıcıdır; gerçek depo başka kullanıcıya satırı
+    /// göstermez ve onun adına üzerine yazmaz; profil silinince ayar satırı da silinir (cascade).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ConceptSettings_RealDatabase_PersistOwnershipCascade()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var emailA = AuthenticatedClient.NewEmail();
+        var emailB = AuthenticatedClient.NewEmail();
+        using var a = await AuthenticatedClient.CreateAsync(_factory, ct, emailA);
+        using var b = await AuthenticatedClient.CreateAsync(_factory, ct, emailB);
+        var profileA = await ProfileApiTests.CreateAsync(a, "Ayar A", ct);
+        var other = await ProfileApiTests.CreateAsync(a, "Ayar A2", ct);
+        var idB = await UserIdAsync(emailB);
+        var fineTune = new { tone = "documentary", audience = "curious", narration = "myth_or_fact" };
+
+        (await a.PutAsJsonAsync($"/api/profiles/{profileA}/concept-settings", new { fineTune, wordCheck = true }, ct)).EnsureSuccessStatusCode();
+        (await a.PutAsJsonAsync($"/api/profiles/{profileA}/concept-settings", new { wordCheck = false }, ct)).EnsureSuccessStatusCode();
+        var saved = await a.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/profiles/{profileA}/concept-settings", ct);
+        var untouched = await a.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/profiles/{other}/concept-settings", ct);
+        using var steal = await b.PutAsJsonAsync($"/api/profiles/{profileA}/concept-settings", new { wordCheck = true }, ct);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var repository = new ConceptSettingsRepository(scope.ServiceProvider.GetRequiredService<ProfilesDbContext>());
+        var row = await repository.GetAsync(await UserIdAsync(emailA), profileA, ct);
+        await repository.SaveAsync(
+            new Konsept.Modules.Profiles.Domain.Entities.ConceptSettings { ProfileId = profileA, UserId = idB, Tone = "calm", WordCheck = true, UpdatedAt = DateTimeOffset.UtcNow },
+            ct);
+
+        saved.GetProperty("tone").GetString().ShouldBe("documentary");
+        saved.GetProperty("narration").GetString().ShouldBe("myth_or_fact");
+        saved.GetProperty("wordCheck").GetBoolean().ShouldBeFalse();
+        untouched.GetProperty("tone").ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Null);
+        steal.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        row.ShouldNotBeNull().Audience.ShouldBe("curious");
+        (await repository.GetAsync(idB, profileA, ct)).ShouldBeNull();
+        var afterForeignWrite = await a.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/profiles/{profileA}/concept-settings", ct);
+        afterForeignWrite.GetProperty("tone").GetString().ShouldBe("documentary");
+        afterForeignWrite.GetProperty("wordCheck").GetBoolean().ShouldBeFalse();
+
+        (await a.DeleteAsync(new Uri($"/api/profiles/{profileA}", UriKind.Relative), ct)).EnsureSuccessStatusCode();
+        var remaining = await _factory.Database.ScalarAsync($"SELECT count(*) FROM profiles.concept_settings WHERE profile_id = '{profileA}'");
+        Convert.ToInt64(remaining, System.Globalization.CultureInfo.InvariantCulture).ShouldBe(0);
+    }
+
     private async Task<Guid> UserIdAsync(string email) =>
         (Guid)(await _factory.Database.ScalarAsync($"SELECT id FROM identity.users WHERE email = '{email}'"))!;
 }

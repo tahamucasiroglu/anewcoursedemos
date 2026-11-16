@@ -23,6 +23,77 @@ namespace Konsept.Modules.Profiles.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Konsept.Modules.Profiles.Domain.Entities.ConceptSettings", b =>
+                {
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("profile_id");
+
+                    b.Property<string>("Audience")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("audience");
+
+                    b.Property<string>("ConceptEffort")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("concept_effort");
+
+                    b.Property<string>("ConceptModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("concept_model");
+
+                    b.Property<string>("DedupeEffort")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("dedupe_effort");
+
+                    b.Property<string>("DedupeModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("dedupe_model");
+
+                    b.Property<string>("Narration")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("narration");
+
+                    b.Property<string>("Tone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("tone");
+
+                    b.Property<string>("TopicEffort")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("topic_effort");
+
+                    b.Property<string>("TopicModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("topic_model");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<bool>("WordCheck")
+                        .HasColumnType("boolean")
+                        .HasColumnName("word_check");
+
+                    b.HasKey("ProfileId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_concept_settings_user");
+
+                    b.ToTable("concept_settings", "profiles");
+                });
+
             modelBuilder.Entity("Konsept.Modules.Profiles.Domain.Entities.Profile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -104,6 +175,15 @@ namespace Konsept.Modules.Profiles.Infrastructure.Persistence.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("selections", "profiles");
+                });
+
+            modelBuilder.Entity("Konsept.Modules.Profiles.Domain.Entities.ConceptSettings", b =>
+                {
+                    b.HasOne("Konsept.Modules.Profiles.Domain.Entities.Profile", null)
+                        .WithOne()
+                        .HasForeignKey("Konsept.Modules.Profiles.Domain.Entities.ConceptSettings", "ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

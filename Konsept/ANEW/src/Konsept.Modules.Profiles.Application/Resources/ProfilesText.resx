@@ -17,4 +17,8 @@
   <data name="NotFound" xml:space="preserve"><value>Profil bulunamadı.</value></data>
   <data name="ValidationFailed" xml:space="preserve"><value>Girilen bilgiler geçersiz.</value></data>
   <data name="SignInRequired" xml:space="preserve"><value>Oturumunuz sona erdi.</value></data>
+  <data name="ModelNotSelectable" xml:space="preserve"><value>Bu model seçilemez: kullanma yetkiniz ya da geçerli bir API key'iniz yok.</value></data>
+  <data name="ModelRoleInvalid" xml:space="preserve"><value>Model rolü geçersiz.</value></data>
+  <data name="EffortInvalid" xml:space="preserve"><value>Bu efor düzeyi seçilen model için geçerli değil.</value></data>
+  <data name="FineTuneInvalid" xml:space="preserve"><value>İnce ayar seçimi geçersiz.</value></data>
 </root>

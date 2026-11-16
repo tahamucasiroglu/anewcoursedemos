@@ -23,6 +23,9 @@ public sealed class ProfilesDbContext : ModuleDbContextBase
     /// <summary>Gets seçili profil satırları.</summary>
     public DbSet<ProfileSelection> Selections => Set<ProfileSelection>();
 
+    /// <summary>Gets profil başına Konseptler sayfası ayarları (spec 0005).</summary>
+    public DbSet<ConceptSettings> ConceptSettings => Set<ConceptSettings>();
+
     /// <inheritdoc />
     protected override string Schema => SchemaName;
 }

@@ -6,6 +6,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Modules.AiGateway.Domain\Konsept.Modules.AiGateway.Domain.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AiGateway.Contracts\Konsept.Modules.AiGateway.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- Kullanıcıya dönen metinler yalnızca resx'te (Türkçe). Derlemede tipli AiGatewayText sınıfı üretilir. -->

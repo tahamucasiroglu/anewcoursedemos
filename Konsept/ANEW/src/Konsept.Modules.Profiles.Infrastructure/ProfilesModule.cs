@@ -26,6 +26,9 @@ public static class ProfilesModule
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddSingleton<IProfileTemplateSource, EmbeddedTemplateSource>();
         services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IConceptSettingsRepository, ConceptSettingsRepository>(); // spec 0005
+        services.AddScoped<IConceptSettingsService, ConceptSettingsService>();
+        services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();
         services.TryAddScoped<ICurrentUser, HttpContextCurrentUser>();
         return services;
