@@ -626,6 +626,83 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
         }
     }
 
+    /// <summary>
+    /// Spec 0018 AC-4 (Pi tarafı): yasaklı yapı içeren video kodu ajana hiç gitmez; tek düzeltme çağrısı yapılır (ret nedeni istemde), düzeltilen
+    /// kod da reddedilirse iş "Video kodu güvenlik denetiminden geçmedi" ile Hata olur ve render komutu hiç gönderilmez. Kasıtlı bozma: hatta
+    /// <c>RenderCodeGate.Check</c> çağrısı kaldırılınca render komutu gider ve test kırmızıya döner.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_ForbiddenCode_OneFix_ThenRejected_NeverSentToAgent()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct);
+        _factory.Provider.Handler = (call, role, index) => role is CallRole.Code or CallRole.Fix
+            ? Task.FromResult(ProviderAttempt.Completed("<!doctype html><html><body><script>fetch('http://198.51.100.7/x')</script></body></html>", 100, 200))
+            : Reply(call, role, index);
+        var concept = Seed(profile, user, "Sızdıran Kod");
+        await EnqueueAndStartAsync(client, profile, [concept], ct);
+        await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
+
+        var fixes = _factory.Provider.CallsOf(CallRole.Fix);
+        fixes.Count.ShouldBe(1);
+        fixes[0].Prompt.ShouldContain("security check failed");
+        _factory.Agent.Count("RunStage", AgentStageCommand.Render).ShouldBe(0);
+        Job(concept).Progress!.Error.ShouldBe("Video kodu güvenlik denetiminden geçmedi.");
+    }
+
+    /// <summary>
+    /// Spec 0018 AC-4 (ajan tarafı): ajan kodu render öncesi reddederse (<c>code_rejected</c>) ret 0017 düzeltme döngüsüne girer (1 düzeltme);
+    /// düzeltilen kod da reddedilirse iş "güvenlik denetiminden geçmedi" ile Hata olur.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_AgentRejectsCode_OneFix_ThenFailed()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct);
+        _factory.Agent.Stage = (conn, cmd, token) =>
+            cmd.Stage == AgentStageCommand.Render
+                ? Task.FromResult(new AgentStageReply(false, AgentStageReply.CodeRejected, "forbidden: fetch", FailedScene: 0))
+                : FakeAgentChannel.DefaultStage(conn, cmd, token);
+        var concept = Seed(profile, user, "Ajan Reddi");
+        await EnqueueAndStartAsync(client, profile, [concept], ct);
+        await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
+
+        var fixes = _factory.Provider.CallsOf(CallRole.Fix);
+        fixes.Count.ShouldBe(1);
+        fixes[0].Prompt.ShouldContain("forbidden: fetch");
+        _factory.Agent.Count("RunStage", AgentStageCommand.Render).ShouldBe(2);
+        Job(concept).Progress!.Error.ShouldBe("Video kodu güvenlik denetiminden geçmedi.");
+    }
+
+    /// <summary>
+    /// Spec 0018 AC-3 / AC-5: render sınırı aşılırsa (<c>render_limit</c>) ya da çıktı kapısından geçmezse (<c>output_invalid</c>) iş düzeltme
+    /// çağrısı yapmadan sade açıklamayla Hata olur.
+    /// </summary>
+    /// <param name="error">Ajan hata kodu.</param>
+    /// <param name="text">Beklenen sade hata.</param>
+    /// <returns>Görev.</returns>
+    [Theory]
+    [InlineData(AgentStageReply.RenderLimit, "Render süre ya da kaynak sınırını aştı.")]
+    [InlineData(AgentStageReply.OutputInvalid, "Render çıktısı geçersiz.")]
+    public async Task Pipeline_RenderLimitOrInvalidOutput_FailsPlain_NoFix(string error, string text)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct);
+        _factory.Agent.Stage = (conn, cmd, token) =>
+            cmd.Stage == AgentStageCommand.Render
+                ? Task.FromResult(new AgentStageReply(false, error))
+                : FakeAgentChannel.DefaultStage(conn, cmd, token);
+        var concept = Seed(profile, user, "Sınır " + error);
+        await EnqueueAndStartAsync(client, profile, [concept], ct);
+        await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
+
+        _factory.Provider.CallsOf(CallRole.Fix).Count.ShouldBe(0);
+        _factory.Agent.Count("RunStage", AgentStageCommand.Merge).ShouldBe(0);
+        Job(concept).Progress!.Error.ShouldBe(text);
+    }
+
     private static void InterlockedMax(ref int target, int value)
     {
         int current;

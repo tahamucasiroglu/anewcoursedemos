@@ -66,11 +66,19 @@ public static class PipelinePrompts
     /// <returns>Talimat.</returns>
     public static string CodeSystem(string format, bool withImage)
     {
-        var size = string.Equals(format, "portrait", StringComparison.Ordinal) ? "1080x1920" : "1920x1080";
+        var portrait = string.Equals(format, "portrait", StringComparison.Ordinal);
+        var (w, h) = portrait ? ("1080", "1920") : ("1920", "1080");
         return CodeTask + "\n" +
-            "- Output one complete HTML document for the HyperFrames engine, " + size + " pixels, 30 fps, lasting exactly the given seconds.\n" +
-            "- Animation must be deterministic and seekable by time: no network access, no external URLs, no timers, no Date.now, no random.\n" +
-            (withImage ? "- Use the local file image.png as the main picture of the scene.\n" : "- Draw everything with HTML/CSS/SVG; there is no image file.\n") +
+            "- Output one complete HTML document for the HyperFrames engine, " + w + "x" + h + " pixels, 30 fps, lasting exactly the given seconds.\n" +
+            "- Contract: html and body are exactly " + w + "px by " + h + "px with overflow hidden. The root element is <div id=\"root\" " +
+            "data-composition-id=\"main\" data-start=\"0\" data-duration=\"<seconds>\" data-width=\"" + w + "\" data-height=\"" + h + "\">; " +
+            "every timed element has class=\"clip\" data-start, data-duration and data-track-index.\n" +
+            "- Animate only with GSAP loaded as <script src=\"gsap.min.js\"></script> (a local file). Build one paused timeline " +
+            "(gsap.timeline({ paused: true })) and register it as window.__timelines[\"main\"] = tl; the engine seeks it frame by frame.\n" +
+            "- Security rules (the code is rejected otherwise): no URLs or network access of any kind (no http, //, fetch, XMLHttpRequest, " +
+            "WebSocket, import, eval, Function, timers, navigator, location, open), no iframes/links/forms, no inline on* event attributes, " +
+            "no escape sequences (backslash-u, backslash-x, &#), no window[...] style access, no Date.now, no random.\n" +
+            (withImage ? "- Use the local file image.png as the main picture of the scene; it is the only file besides gsap.min.js.\n" : "- Draw everything with HTML/CSS/SVG; there is no image file.\n") +
             "- Do not draw subtitles or a progress bar; they are added later.\n" +
             DataRule +
             "Output only the HTML document, no other text.";

@@ -4,6 +4,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Modules.AgentGateway.Contracts.Rules;
 using Konsept.Modules.AiGateway.Contracts.Abstract;
 using Konsept.Modules.AiGateway.Contracts.Dtos;
 using Konsept.Modules.AiGateway.Contracts.Enums;
@@ -338,9 +339,22 @@ public abstract class ProductionPipelineBase(
                 return new StageResult(PipelineOutcome.Failed, ModelError(reply.Error));
             }
 
-            if ((reply.Value.Truncated ? null : PlanParser.ParseCode(reply.Value.Text)) is not { } code)
+            if ((reply.Value.Truncated ? null : PlanParser.ParseCode(reply.Value.Text)) is not { } written)
             {
                 return new StageResult(PipelineOutcome.Failed, ProductionText.PipelineCodeInvalid);
+            }
+
+            var code = RenderCodeGate.Normalize(written);
+            if (RenderCodeGate.Check(code) is { Ok: false } verdict)
+            {
+                // Yasaklı yapı: kod ajana hiç gitmez; tek düzeltme denemesi (spec 0018 Req 3).
+                var (fixedCode, failure) = await FixCodeAsync(code, "security check failed: " + verdict.Reason, ProductionText.PipelineCodeRejected).ConfigureAwait(false);
+                if (fixedCode is null)
+                {
+                    return failure!;
+                }
+
+                code = fixedCode;
             }
 
             codes.Add(code);
@@ -404,34 +418,57 @@ public abstract class ProductionPipelineBase(
 
             if (_progress.FixUsed)
             {
-                return new StageResult(PipelineOutcome.Failed, ProductionText.PipelineRenderFailed); // İkinci düzeltme yok (Req 12, AC-13).
+                return result; // İkinci düzeltme yok (Req 12, AC-13; 0018 Req 3).
             }
 
-            if (!await StillProducingAsync().ConfigureAwait(false))
-            {
-                return new StageResult(PipelineOutcome.Stopped);
-            }
-
-            _progress = _progress with { FixUsed = true };
             var codes = _outputs.Codes!.ToList();
-            var reply = await CallTextAsync(
-                ModelRole.CodeFix,
-                PipelinePrompts.FixSystem(_fix.Format, _fix.ImageModel is not null),
-                PipelinePrompts.FixPrompt(codes[index], detail ?? string.Empty)).ConfigureAwait(false);
-            if (!reply.IsSuccess)
+            var (code, failure) = await FixCodeAsync(codes[index], detail ?? string.Empty, result.Error ?? ProductionText.PipelineRenderFailed).ConfigureAwait(false);
+            if (code is null)
             {
-                return new StageResult(PipelineOutcome.Failed, ModelError(reply.Error));
-            }
-
-            if ((reply.Value.Truncated ? null : PlanParser.ParseCode(reply.Value.Text)) is not { } code)
-            {
-                return new StageResult(PipelineOutcome.Failed, ProductionText.PipelineRenderFailed);
+                return failure!;
             }
 
             codes[index] = code;
             _outputs = _outputs with { Codes = codes };
             await SaveOutputsAsync().ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// İşin tek düzeltme çağrısı (0017 Req 12; 0018 Req 3): düzeltilen kod da yasaklı yapı kapısından geçmeli; geçmezse iş "güvenlik
+    /// denetiminden geçmedi" ile Hata olur.
+    /// </summary>
+    private async Task<(string? Code, StageResult? Failure)> FixCodeAsync(string code, string error, string failText)
+    {
+        if (_progress.FixUsed)
+        {
+            return (null, new StageResult(PipelineOutcome.Failed, failText));
+        }
+
+        if (!await StillProducingAsync().ConfigureAwait(false))
+        {
+            return (null, new StageResult(PipelineOutcome.Stopped));
+        }
+
+        _progress = _progress with { FixUsed = true };
+        var reply = await CallTextAsync(
+            ModelRole.CodeFix,
+            PipelinePrompts.FixSystem(_fix.Format, _fix.ImageModel is not null),
+            PipelinePrompts.FixPrompt(code, error)).ConfigureAwait(false);
+        if (!reply.IsSuccess)
+        {
+            return (null, new StageResult(PipelineOutcome.Failed, ModelError(reply.Error)));
+        }
+
+        if ((reply.Value.Truncated ? null : PlanParser.ParseCode(reply.Value.Text)) is not { } written)
+        {
+            return (null, new StageResult(PipelineOutcome.Failed, failText));
+        }
+
+        var fixedCode = RenderCodeGate.Normalize(written);
+        return RenderCodeGate.Check(fixedCode).Ok
+            ? (fixedCode, null)
+            : (null, new StageResult(PipelineOutcome.Failed, ProductionText.PipelineCodeRejected));
     }
 
     private async Task<StageResult> MergeAsync()
@@ -533,6 +570,12 @@ public abstract class ProductionPipelineBase(
                 return (new StageResult(PipelineOutcome.Stopped), null, null);
             case AgentStageReply.RenderFailed when reply.FailedScene is { } scene && scene >= 0 && scene < scenes.Count:
                 return (new StageResult(PipelineOutcome.Failed, ProductionText.PipelineRenderFailed), scene, reply.Detail);
+            case AgentStageReply.CodeRejected when reply.FailedScene is { } scene && scene >= 0 && scene < scenes.Count:
+                return (new StageResult(PipelineOutcome.Failed, ProductionText.PipelineCodeRejected), scene, "security check failed: " + reply.Detail);
+            case AgentStageReply.RenderLimit:
+                return (new StageResult(PipelineOutcome.Failed, ProductionText.PipelineRenderLimit), null, null);
+            case AgentStageReply.OutputInvalid:
+                return (new StageResult(PipelineOutcome.Failed, ProductionText.PipelineOutputInvalid), null, null);
             case AgentStageReply.ToolMissing:
                 return (new StageResult(PipelineOutcome.Failed, Format(ProductionText.PipelineToolsMissing, PipelineRules.ToolName(reply.Detail ?? string.Empty))), null, null);
             case AgentStageReply.GpuUnavailable:

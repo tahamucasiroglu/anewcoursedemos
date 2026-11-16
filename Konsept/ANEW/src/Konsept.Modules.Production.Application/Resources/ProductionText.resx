@@ -35,6 +35,9 @@
   <data name="PipelineCodeInvalid" xml:space="preserve"><value>Video kodu üretilemedi: model beklenen biçimde yanıt vermedi.</value></data>
   <data name="PipelineImageInvalid" xml:space="preserve"><value>Görsel üretilemedi: model görsel döndürmedi.</value></data>
   <data name="PipelineRenderFailed" xml:space="preserve"><value>Video kodu videoya dönüştürülemedi (düzeltme denemesinden sonra da).</value></data>
+  <data name="PipelineCodeRejected" xml:space="preserve"><value>Video kodu güvenlik denetiminden geçmedi.</value></data>
+  <data name="PipelineRenderLimit" xml:space="preserve"><value>Render süre ya da kaynak sınırını aştı.</value></data>
+  <data name="PipelineOutputInvalid" xml:space="preserve"><value>Render çıktısı geçersiz.</value></data>
   <data name="PipelineStageFailed" xml:space="preserve"><value>{0} aşaması tamamlanamadı.</value></data>
   <data name="StageAnalysis" xml:space="preserve"><value>Konsept inceleniyor</value></data>
   <data name="StageCode" xml:space="preserve"><value>Video kodu üretiliyor</value></data>
