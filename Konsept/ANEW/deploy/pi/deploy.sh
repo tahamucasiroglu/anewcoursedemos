@@ -33,11 +33,12 @@ mkdir -p "$work/agent" "$work/mirror"
 cp "$work/agent-publish/Konsept.Agent.exe" "$work/agent/$AGENT_FILE"
 
 echo "deploy: bileşen aynası"
+# /opt/anewconcept/agent 750 root:anewconcept: SSH kullanıcısı okuyamaz, uzak varlık kontrolleri sudo ile (review r1 H-1).
 cache=${ANEWCONCEPT_MIRROR_CACHE:-$HOME/.cache/anewconcept-mirror}
 mkdir -p "$cache"
 node "$ROOT/deploy/pi/agent-mirror.mjs" "$ROOT/src/Konsept.Agent.Infrastructure/Setup/components.json" > "$work/mirror.txt"
 while read -r sha file url; do
-  if ssh -n -o BatchMode=yes "$PI" "test -f /opt/anewconcept/agent/components/$file"; then
+  if ssh -n -o BatchMode=yes "$PI" "sudo -n test -f /opt/anewconcept/agent/components/$file"; then
     echo "deploy: aynada var: $file"; continue
   fi
   if [ ! -f "$cache/$file" ] || [ "$(sha256sum "$cache/$file" | cut -d' ' -f1)" != "$sha" ]; then
@@ -79,7 +80,7 @@ for i in $(seq 1 30); do
 done
 [ "$ok" -eq 1 ] || { echo "deploy: servisler ayağa kalkmadı" >&2; ssh "$PI" 'systemctl --no-pager status anewconcept-api anewconcept-web | tail -20' >&2; exit 1; }
 cat "$work/health.txt"; echo
-ssh -o BatchMode=yes "$PI" "test -f /opt/anewconcept/agent/$AGENT_FILE"   || { echo "deploy: ajan kurulum dosyası Pi'de yok: $AGENT_FILE" >&2; exit 1; }
+ssh -o BatchMode=yes "$PI" "sudo -n test -f /opt/anewconcept/agent/$AGENT_FILE"   || { echo "deploy: ajan kurulum dosyası Pi'de yok: $AGENT_FILE" >&2; exit 1; }
 echo "deploy: ajan indirilebilir: $AGENT_SITE_URL""ajan/indir ($AGENT_FILE)"
 
 echo "deploy: sonra — diğer servisler ve portlar"

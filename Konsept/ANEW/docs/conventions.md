@@ -120,6 +120,7 @@
 - SignalR bağlantı kopması: otomatik yeniden bağlanan ajan sunucuda kayıtsız kalır — ajan yeniden bağlanınca kendini yeniden kaydeder ve yarım kalan işini bildirir — from bootstrap 2026-11-14
 - SignalR hub mesajı: varsayılan `MaximumReceiveMessageSize` 32 KB; aşan mesaj bağlantıyı kapatır — büyük yük taşıyan hub metodunda istemci yükü sınırlansın ve sınır bilinçli ayarlansın — from 0022 review r1 H-1
 - Pi'ye yayın: x64 çıktısı Pi'de çalışmaz — `dotnet publish -r linux-arm64` ile yayınla — from bootstrap 2026-11-14
+- Pi'de `/opt/anewconcept/*` klasörleri `750 root:anewconcept`: deploy betiğindeki uzak dosya kontrolleri SSH kullanıcısıyla izin hatası verip sessizce "yok" der — uzak kontrolleri `sudo -n test …` ile yap — from 0009 review r1 H-1
 
 ## Enforced by tooling
 <!-- List what the compiler/linter/analyzers already enforce, so review doesn't re-litigate it.
