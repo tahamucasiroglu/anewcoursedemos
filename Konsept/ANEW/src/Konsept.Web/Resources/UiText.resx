@@ -268,12 +268,63 @@
   <data name="NarrationWhatIf" xml:space="preserve"><value>Ya olsaydı</value></data>
   <data name="ConceptWordCheck" xml:space="preserve"><value>Kelime denetimi</value></data>
   <data name="AreaTopic" xml:space="preserve"><value>Konudan üret</value></data>
-  <data name="AreaTopicHint" xml:space="preserve"><value>Konu önerileri ve seçtiğiniz konudan konsept üretimi burada yer alacak.</value></data>
+  <data name="AreaTopicHint" xml:space="preserve"><value>Henüz öneri yok. Adet girip "Konu üret"e basın; beğendiğiniz konuları seçip konsepte çevirin.</value></data>
   <data name="AreaIdea" xml:space="preserve"><value>Fikirden üret</value></data>
-  <data name="AreaIdeaHint" xml:space="preserve"><value>Kendi fikrinizden konsept üretimi burada yer alacak.</value></data>
+  <data name="AreaIdeaHint" xml:space="preserve"><value>Fikrinizi yazın, adet girin; konseptler doğrudan Üretilenler'e düşer.</value></data>
   <data name="AreaProduced" xml:space="preserve"><value>Üretilenler</value></data>
   <data name="AreaEdit" xml:space="preserve"><value>Düzenleme alanı</value></data>
-  <data name="AreaEditHint" xml:space="preserve"><value>Seçtiğiniz konsepti düzenlemek burada yer alacak.</value></data>
+  <data name="AreaEditHint" xml:space="preserve"><value>Okumak için Üretilenler'den bir konsept seçin.</value></data>
   <data name="ConceptsNoProfileHint" xml:space="preserve"><value>Konseptlerle çalışmak için üst bardaki + düğmesiyle bir profil ekleyin.</value></data>
   <data name="ConceptsNoProfileAction" xml:space="preserve"><value>Profil ekle</value></data>
+  <data name="WorkNotReady" xml:space="preserve"><value>Bu üretim için gerekli rollerde model seçili değil ya da sağlayıcının geçerli API key'i yok.</value></data>
+  <data name="WorkOpenModels" xml:space="preserve"><value>Model bilgisi</value></data>
+  <data name="WorkGoSettings" xml:space="preserve"><value>Ayarlar</value></data>
+  <data name="TopicCountLabel" xml:space="preserve"><value>Öneri adedi</value></data>
+  <data name="TopicGenerate" xml:space="preserve"><value>Konu üret</value></data>
+  <data name="TopicProduce" xml:space="preserve"><value>Seçtiklerini üret</value></data>
+  <data name="TopicListLabel" xml:space="preserve"><value>Konu önerileri</value></data>
+  <data name="IdeaLabel" xml:space="preserve"><value>Fikriniz (en fazla 2.000 karakter)</value></data>
+  <data name="IdeaCountLabel" xml:space="preserve"><value>Konsept adedi</value></data>
+  <data name="IdeaGenerate" xml:space="preserve"><value>Üret</value></data>
+  <data name="WorkStop" xml:space="preserve"><value>Durdur</value></data>
+  <data name="WorkCountInvalid" xml:space="preserve"><value>1 ile 100 arasında bir tam sayı girin.</value></data>
+  <data name="WorkIdeaRequired" xml:space="preserve"><value>Fikir metnini yazın.</value></data>
+  <data name="WorkIdeaTooLong" xml:space="preserve"><value>Fikir metni en fazla 2.000 karakter olabilir.</value></data>
+  <data name="WorkTopicsRunning" xml:space="preserve"><value>Öneriler üretiliyor…</value></data>
+  <data name="WorkRunning" xml:space="preserve"><value>Üretiliyor: {0}/{1}</value></data>
+  <data name="WorkDone" xml:space="preserve"><value>Tamamlandı: {0}/{1} konsept kaydedildi.</value></data>
+  <data name="WorkTopicsDone" xml:space="preserve"><value>{0} öneri listelendi.</value></data>
+  <data name="WorkStopped" xml:space="preserve"><value>Durduruldu: {0}/{1} konsept kaydedildi.</value></data>
+  <data name="WorkFailures" xml:space="preserve"><value>{0} konsept üretilemedi:</value></data>
+  <data name="WorkFailureIdea" xml:space="preserve"><value>{0}. konsept</value></data>
+  <data name="WorkFormatRejected" xml:space="preserve"><value>{0} öneri biçim dışı olduğu için gösterilmedi.</value></data>
+  <data name="WorkTopicDuplicates" xml:space="preserve"><value>{0} öneri mevcut konularla aynı olduğu için gösterilmedi.</value></data>
+  <data name="WorkIdeaDuplicates" xml:space="preserve"><value>{0} konsept mevcut konularla aynı olduğu için kaydedilmedi.</value></data>
+  <data name="WorkDedupeUnavailable" xml:space="preserve"><value>Anlamca denetim yapılamadı.</value></data>
+  <data name="WorkNoNewTopics" xml:space="preserve"><value>Yeni öneri bulunamadı: tüm adaylar mevcut konularla aynı ya da biçim dışıydı.</value></data>
+  <data name="WorkRequestFailed" xml:space="preserve"><value>İşlem yapılamadı. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ConceptFilterLegend" xml:space="preserve"><value>Durum filtresi</value></data>
+  <data name="ConceptStatusGenerated" xml:space="preserve"><value>Üretildi</value></data>
+  <data name="ConceptStatusApproved" xml:space="preserve"><value>Onaylandı</value></data>
+  <data name="ConceptStatusQueued" xml:space="preserve"><value>Sırada</value></data>
+  <data name="ConceptStatusProducing" xml:space="preserve"><value>Üretiliyor</value></data>
+  <data name="ConceptStatusVideoReady" xml:space="preserve"><value>Video oldu</value></data>
+  <data name="ConceptsLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="ConceptsLoadFailed" xml:space="preserve"><value>Konseptler alınamadı. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ConceptsApproveSelected" xml:space="preserve"><value>Seçilenleri onayla</value></data>
+  <data name="ConceptApprove" xml:space="preserve"><value>Onayla: {0}</value></data>
+  <data name="ConceptUnapprove" xml:space="preserve"><value>Onayı geri al: {0}</value></data>
+  <data name="ConceptSelect" xml:space="preserve"><value>Seç: {0}</value></data>
+  <data name="ConceptApproving" xml:space="preserve"><value>Onay kaydediliyor…</value></data>
+  <data name="ConceptApproveFailed" xml:space="preserve"><value>Onay değiştirilemedi; durum aynı kaldı.</value></data>
+  <data name="ConceptWarningWords" xml:space="preserve"><value>Kelime tekrarı</value></data>
+  <data name="ConceptWarningDuration" xml:space="preserve"><value>Süre uyumsuz</value></data>
+  <data name="ConceptsPrev" xml:space="preserve"><value>Önceki sayfa</value></data>
+  <data name="ConceptsNext" xml:space="preserve"><value>Sonraki sayfa</value></data>
+  <data name="ConceptsPage" xml:space="preserve"><value>Sayfa {0}/{1}</value></data>
+  <data name="ConceptSceneHeading" xml:space="preserve"><value>Sahne {0}: {1}</value></data>
+  <data name="ConceptSceneVisual" xml:space="preserve"><value>Ekran</value></data>
+  <data name="ConceptSceneNarration" xml:space="preserve"><value>Seslendirme</value></data>
+  <data name="ConceptSceneDuration" xml:space="preserve"><value>Süre: {0} sn</value></data>
+  <data name="ConceptDetailFailed" xml:space="preserve"><value>Konsept alınamadı.</value></data>
 </root>

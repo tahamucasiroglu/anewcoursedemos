@@ -132,6 +132,39 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<JsonElement>> GetConceptWorkAsync(Guid profileId, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/work?profileId={profileId:D}"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> SendConceptCommandAsync(ConceptCommand command, JsonElement? body, CancellationToken cancellationToken)
+    {
+        var path = command switch
+        {
+            ConceptCommand.Topics => "api/concepts/topics",
+            ConceptCommand.FromTopics => "api/concepts/from-topics",
+            ConceptCommand.FromIdea => "api/concepts/from-idea",
+            ConceptCommand.Stop => "api/concepts/jobs/stop",
+            ConceptCommand.Approve => "api/concepts/approve",
+            _ => "api/concepts/unapprove",
+        };
+        // Yalnızca JSON nesnesi iletilir; başka her şey boş nesne olur (Api doğrular, Web yorumlamaz).
+        HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
+        return SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Post, path) { Content = content }, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> ListConceptsAsync(Guid profileId, string? statuses, int page, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                $"api/concepts?profileId={profileId:D}&statuses={Uri.EscapeDataString(statuses ?? string.Empty)}&page={Math.Max(1, page).ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> GetConceptAsync(Guid conceptId, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/{conceptId:D}"), cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken) =>
         SendAsync<JournalDayResponse>(
             new HttpRequestMessage(

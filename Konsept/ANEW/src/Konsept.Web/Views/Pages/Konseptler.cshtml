@@ -78,22 +78,110 @@
     </div>
 </section>
 
-<div class="concept-areas" data-requires-profile>
-    <section class="concept-area" aria-labelledby="area-topic-title">
+@* Dört alan (spec 0014): sol üst konudan üret, sağ üst fikirden üret, sol alt Üretilenler, sağ alt salt okunur detay. Üretim
+   sunucuda sürer; concept-work.js /konsept-uretim ve /konseptler uçlarını $.ajax ile kullanır, süren iş varken 2 sn'de bir yoklar.
+   Model çıktısı güvenilmeyen veridir: JS yalnızca textContent ile yazar. Metinler resx'ten data-text-* ile gelir. *@
+<div class="concept-areas" id="concept-work" data-requires-profile
+     data-text-count-invalid="@UiText.WorkCountInvalid" data-text-idea-required="@UiText.WorkIdeaRequired"
+     data-text-idea-too-long="@UiText.WorkIdeaTooLong" data-text-topics-running="@UiText.WorkTopicsRunning"
+     data-text-running="@UiText.WorkRunning" data-text-done="@UiText.WorkDone" data-text-topics-done="@UiText.WorkTopicsDone"
+     data-text-stopped="@UiText.WorkStopped" data-text-failures="@UiText.WorkFailures" data-text-failure-idea="@UiText.WorkFailureIdea"
+     data-text-format-rejected="@UiText.WorkFormatRejected" data-text-topic-duplicates="@UiText.WorkTopicDuplicates"
+     data-text-idea-duplicates="@UiText.WorkIdeaDuplicates" data-text-dedupe-unavailable="@UiText.WorkDedupeUnavailable"
+     data-text-no-new-topics="@UiText.WorkNoNewTopics" data-text-request-failed="@UiText.WorkRequestFailed"
+     data-text-loading="@UiText.ConceptsLoading" data-text-load-failed="@UiText.ConceptsLoadFailed"
+     data-text-approve="@UiText.ConceptApprove" data-text-unapprove="@UiText.ConceptUnapprove" data-text-select="@UiText.ConceptSelect"
+     data-text-approving="@UiText.ConceptApproving" data-text-approve-failed="@UiText.ConceptApproveFailed"
+     data-text-warning-words="@UiText.ConceptWarningWords" data-text-warning-duration="@UiText.ConceptWarningDuration"
+     data-text-page="@UiText.ConceptsPage" data-text-scene-heading="@UiText.ConceptSceneHeading"
+     data-text-scene-visual="@UiText.ConceptSceneVisual" data-text-scene-narration="@UiText.ConceptSceneNarration"
+     data-text-scene-duration="@UiText.ConceptSceneDuration" data-text-detail-failed="@UiText.ConceptDetailFailed"
+     data-text-status-generated="@UiText.ConceptStatusGenerated" data-text-status-approved="@UiText.ConceptStatusApproved"
+     data-text-status-queued="@UiText.ConceptStatusQueued" data-text-status-producing="@UiText.ConceptStatusProducing"
+     data-text-status-video_ready="@UiText.ConceptStatusVideoReady">
+    <section class="concept-area" id="concept-topic" aria-labelledby="area-topic-title">
         <h2 class="concept-area__title" id="area-topic-title">@UiText.AreaTopic</h2>
-        <p class="concept-area__hint">@UiText.AreaTopicHint</p>
+        <p class="concept-work__notready" data-not-ready="topics" hidden>
+            @UiText.WorkNotReady
+            <button type="button" class="link-button" data-open-models>@UiText.WorkOpenModels</button> ·
+            <a href="/ayarlar">@UiText.WorkGoSettings</a>
+        </p>
+        <form class="concept-work__form" id="topic-form" novalidate>
+            <label class="field__label" for="topic-count">@UiText.TopicCountLabel</label>
+            <input class="field__input field__input--short" id="topic-count" type="number" min="1" max="100" step="1" inputmode="numeric" value="10"
+                   aria-describedby="topic-count-error" />
+            <button type="submit" class="button button--primary" id="topic-generate" disabled>@UiText.TopicGenerate</button>
+            <p class="field__error" id="topic-count-error" role="alert"></p>
+        </form>
+        <div class="concept-work__job">
+            <p class="concept-work__progress" id="topic-progress" role="status" aria-live="polite"></p>
+            <button type="button" class="button button--danger" id="topic-stop" hidden>@UiText.WorkStop</button>
+        </div>
+        <ul class="concept-work__notes" id="topic-notes" aria-live="polite"></ul>
+        <p class="concept-area__hint" id="topic-empty">@UiText.AreaTopicHint</p>
+        <ul class="suggestion-list" id="topic-list" aria-label="@UiText.TopicListLabel"></ul>
+        <p class="field__error" id="topic-produce-error" role="alert"></p>
+        <button type="button" class="button button--primary" id="topic-produce" data-not-ready-target="fromTopics" disabled>@UiText.TopicProduce</button>
+        <p class="concept-work__notready" data-not-ready="fromTopics" hidden>
+            @UiText.WorkNotReady
+            <button type="button" class="link-button" data-open-models>@UiText.WorkOpenModels</button> ·
+            <a href="/ayarlar">@UiText.WorkGoSettings</a>
+        </p>
     </section>
-    <section class="concept-area" aria-labelledby="area-idea-title">
+    <section class="concept-area" id="concept-idea" aria-labelledby="area-idea-title">
         <h2 class="concept-area__title" id="area-idea-title">@UiText.AreaIdea</h2>
-        <p class="concept-area__hint">@UiText.AreaIdeaHint</p>
+        <p class="concept-work__notready" data-not-ready="idea" hidden>
+            @UiText.WorkNotReady
+            <button type="button" class="link-button" data-open-models>@UiText.WorkOpenModels</button> ·
+            <a href="/ayarlar">@UiText.WorkGoSettings</a>
+        </p>
+        <form class="concept-work__form concept-work__form--idea" id="idea-form" novalidate>
+            <label class="field__label" for="idea-text">@UiText.IdeaLabel</label>
+            <textarea class="field__input concept-work__idea" id="idea-text" rows="4" aria-describedby="idea-text-error"></textarea>
+            <p class="field__error" id="idea-text-error" role="alert"></p>
+            <label class="field__label" for="idea-count">@UiText.IdeaCountLabel</label>
+            <input class="field__input field__input--short" id="idea-count" type="number" min="1" max="100" step="1" inputmode="numeric" value="5"
+                   aria-describedby="idea-count-error" />
+            <button type="submit" class="button button--primary" id="idea-generate" disabled>@UiText.IdeaGenerate</button>
+            <p class="field__error" id="idea-count-error" role="alert"></p>
+        </form>
+        <div class="concept-work__job">
+            <p class="concept-work__progress" id="idea-progress" role="status" aria-live="polite"></p>
+            <button type="button" class="button button--danger" id="idea-stop" hidden>@UiText.WorkStop</button>
+        </div>
+        <ul class="concept-work__notes" id="idea-notes" aria-live="polite"></ul>
+        <p class="concept-area__hint" id="idea-hint">@UiText.AreaIdeaHint</p>
     </section>
-    <section class="concept-area" aria-labelledby="area-produced-title">
+    <section class="concept-area" id="concept-produced" aria-labelledby="area-produced-title">
         <h2 class="concept-area__title" id="area-produced-title">@UiText.AreaProduced</h2>
-        <p class="empty-state" data-requires-profile>@UiText.EmptyConcepts</p>
+        <fieldset class="concept-filter" id="concept-filter">
+            <legend class="concept-filter__legend">@UiText.ConceptFilterLegend</legend>
+            @foreach (var (code, text, on) in new[]
+            {
+                ("generated", UiText.ConceptStatusGenerated, true), ("approved", UiText.ConceptStatusApproved, true),
+                ("queued", UiText.ConceptStatusQueued, false), ("producing", UiText.ConceptStatusProducing, false),
+                ("video_ready", UiText.ConceptStatusVideoReady, false),
+            })
+            {
+                <label class="concept-filter__option"><input type="checkbox" value="@code" checked="@on" /> @text</label>
+            }
+        </fieldset>
+        <p class="empty-state" data-requires-profile id="concepts-empty">@UiText.EmptyConcepts</p>
+        <p class="concept-list__status" id="concepts-status" role="status" aria-live="polite"></p>
+        <ul class="concept-list" id="concept-list"></ul>
+        <div class="concept-list__actions">
+            <button type="button" class="button" id="concepts-approve-selected" disabled>@UiText.ConceptsApproveSelected</button>
+            <span class="concept-list__pager" id="concepts-pager" hidden>
+                <button type="button" class="button" id="concepts-prev">@UiText.ConceptsPrev</button>
+                <span id="concepts-page"></span>
+                <button type="button" class="button" id="concepts-next">@UiText.ConceptsNext</button>
+            </span>
+        </div>
     </section>
-    <section class="concept-area" aria-labelledby="area-edit-title">
+    <section class="concept-area" id="concept-detail-area" aria-labelledby="area-edit-title">
         <h2 class="concept-area__title" id="area-edit-title">@UiText.AreaEdit</h2>
-        <p class="concept-area__hint">@UiText.AreaEditHint</p>
+        <p class="concept-area__hint" id="concept-detail-hint">@UiText.AreaEditHint</p>
+        <article class="concept-detail" id="concept-detail" tabindex="-1" hidden></article>
     </section>
 </div>
 

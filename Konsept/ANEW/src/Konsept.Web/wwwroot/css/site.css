@@ -1291,6 +1291,176 @@ body {
   color: var(--color-text-muted);
 }
 
+/* Konseptler: üretim alanları, öneri listesi, Üretilenler ve detay (spec 0014). Renkler yalnızca tema değişkenleri (K-7). */
+.concept-work__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin: 0.5rem 0;
+}
+
+.concept-work__idea {
+  flex: 1 1 100%;
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.concept-work__job {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.concept-work__progress {
+  min-height: 1.2rem;
+  margin: 0.25rem 0;
+  color: var(--color-text);
+}
+
+.concept-work__progress[data-kind="error"] {
+  color: var(--color-error);
+}
+
+.concept-list__status {
+  min-height: 1.2rem;
+  margin: 0.25rem 0;
+  color: var(--color-text-muted);
+}
+
+.concept-work__notes {
+  margin: 0.25rem 0;
+  padding-left: 1.2rem;
+  color: var(--color-text-muted);
+}
+
+.concept-work__notready {
+  margin: 0.25rem 0;
+  color: var(--color-warning);
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.suggestion-list,
+.concept-list {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion-list__item {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.suggestion-list__label {
+  display: flex;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.suggestion-list__summary {
+  margin: 0.2rem 0 0 1.6rem;
+  color: var(--color-text-muted);
+}
+
+.concept-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: 0;
+}
+
+.concept-filter__legend {
+  width: 100%;
+  font-weight: 600;
+}
+
+.concept-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.concept-row__title {
+  flex: 1 1 10rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.concept-row__approve[aria-pressed="true"] {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.badge--warning {
+  color: var(--color-warning);
+}
+
+.badge--approved {
+  color: var(--color-success);
+}
+
+.concept-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.concept-list__pager {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.concept-detail__title {
+  margin: 0 0 0.4rem;
+}
+
+.concept-detail__badges {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.concept-detail__scenes {
+  padding-left: 1.2rem;
+}
+
+.concept-detail__scene p {
+  margin: 0.2rem 0;
+  white-space: pre-wrap;
+}
+
+.concept-detail__scene-title {
+  margin: 0.6rem 0 0.2rem;
+}
+
+.concept-detail__duration {
+  color: var(--color-text-muted);
+}
+
 .concepts-no-profile {
   margin: 1rem 0;
   color: var(--color-text);

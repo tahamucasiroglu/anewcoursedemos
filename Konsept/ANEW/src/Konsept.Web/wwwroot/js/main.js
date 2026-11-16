@@ -3,6 +3,7 @@ import { loadAdminOverview } from './admin.js';
 import { initPairing } from './agent-pairing.js';
 import { bindAgentTest } from './agent-test.js';
 import { bindSubmitOnceForms } from './auth-form.js';
+import { initConceptWork } from './concept-work.js';
 import { initConcepts } from './concepts.js';
 import { initErrorReport } from './error-report.js';
 import { initJournal } from './journal.js';
@@ -22,5 +23,6 @@ loadAdminOverview(document);
 initSettings(document);
 initPairing(document);
 initConcepts(document); // profiles.js'in 'profile:selected' olayından önce dinlemeye başlar.
+initConceptWork(document); // Konseptler'in dört alanı (spec 0014); aynı olayı dinler.
 initProfiles(document);
 initSpend(document);

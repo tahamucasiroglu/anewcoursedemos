@@ -96,6 +96,8 @@ export function initConcepts(doc) {
     }
     wordCheck.checked = Boolean(settings.wordCheck);
     strip.dataset.state = 'ready';
+    // Üretim alanları hazır olmayı yeniden sorsun (spec 0014 AC-1; concept-work.js dinler).
+    doc.dispatchEvent(new CustomEvent('concept-settings:changed', { detail: { profileId: state.profileId } }));
   }
 
   function url() {

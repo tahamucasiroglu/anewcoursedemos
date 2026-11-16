@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Konsept.Shared.Kernel.Results;
 using Konsept.Web.ApiClient.Dtos;
 
@@ -149,6 +150,33 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Yeni ayarlar ya da hata (alan hataları / 404).</returns>
     Task<Result<ConceptSettingsResponse>> SaveConceptSettingsAsync(Guid profileId, SaveConceptSettingsApiRequest? request, CancellationToken cancellationToken);
+
+    /// <summary>Profilin konsept üretim durumu: hazır olma, bekleyen öneriler, iki şeridin işi (spec 0014). Gövde olduğu gibi aktarılır.</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata.</returns>
+    Task<Result<JsonElement>> GetConceptWorkAsync(Guid profileId, CancellationToken cancellationToken);
+
+    /// <summary>Konsept komutu (Konu üret, Seçtiklerini üret, fikirden Üret, Durdur, onayla, onayı geri al; spec 0014). Doğrulama Api'dedir.</summary>
+    /// <param name="command">Komut.</param>
+    /// <param name="body">Tarayıcının gövdesi.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (alan hataları dahil).</returns>
+    Task<Result<JsonElement>> SendConceptCommandAsync(ConceptCommand command, JsonElement? body, CancellationToken cancellationToken);
+
+    /// <summary>Üretilenler sayfası (spec 0014).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="statuses">Virgüllü durum kodları.</param>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata.</returns>
+    Task<Result<JsonElement>> ListConceptsAsync(Guid profileId, string? statuses, int page, CancellationToken cancellationToken);
+
+    /// <summary>Konseptin tamamı (spec 0014).</summary>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata.</returns>
+    Task<Result<JsonElement>> GetConceptAsync(Guid conceptId, CancellationToken cancellationToken);
 
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
