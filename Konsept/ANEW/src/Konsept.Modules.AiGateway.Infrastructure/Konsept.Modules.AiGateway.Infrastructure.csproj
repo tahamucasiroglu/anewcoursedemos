@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- AiGateway altyapısı: ai_gateway şeması ve DbContext'i (Y-4), gömülü katalog seed'i, Data Protection ile key şifreleme
+       ve sağlayıcıların maliyetsiz doğrulama uçlarını çağıran HTTP doğrulayıcı (Y-7: dış LLM API'lerine yalnızca AiGateway gider). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.AiGateway.Application\Konsept.Modules.AiGateway.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Sürümlü katalog seed'i (spec 0004 Req 5): fiyat/limit değişikliği yalnızca bu dosyada (patch sürüm). -->
+    <EmbeddedResource Include="Catalog\catalog.json" LogicalName="Konsept.AiGateway.catalog.json" />
+  </ItemGroup>
+</Project>

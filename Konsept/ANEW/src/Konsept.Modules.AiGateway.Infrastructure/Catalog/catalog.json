@@ -1,0 +1,67 @@
+{
+  "version": "1.0.0",
+  "keyValidationTimeoutSeconds": 10,
+  "providers": [
+    { "id": "anthropic", "name": "Anthropic", "validationUrl": "https://api.anthropic.com/v1/models", "authStyle": "anthropic" },
+    { "id": "openai", "name": "OpenAI", "validationUrl": "https://api.openai.com/v1/models", "authStyle": "bearer" },
+    { "id": "openrouter", "name": "OpenRouter", "validationUrl": "https://openrouter.ai/api/v1/key", "authStyle": "bearer" },
+    { "id": "glm", "name": "GLM", "validationUrl": null, "authStyle": "bearer" },
+    { "id": "kimi", "name": "Kimi", "validationUrl": "https://api.moonshot.ai/v1/models", "authStyle": "bearer" }
+  ],
+  "models": [
+    {
+      "id": "anthropic/claude-opus-4-5", "providerId": "anthropic", "name": "Claude Opus 4.5", "kind": "text",
+      "effortLevels": ["low", "medium", "high", "max"], "defaultEffort": "high",
+      "outputTokenLimit": 64000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 5.00, "outputPricePerMillionUsd": 25.00
+    },
+    {
+      "id": "anthropic/claude-sonnet-4-5", "providerId": "anthropic", "name": "Claude Sonnet 4.5", "kind": "text",
+      "effortLevels": ["low", "medium", "high", "max"], "defaultEffort": "medium",
+      "outputTokenLimit": 64000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 3.00, "outputPricePerMillionUsd": 15.00
+    },
+    {
+      "id": "anthropic/claude-haiku-4-5", "providerId": "anthropic", "name": "Claude Haiku 4.5", "kind": "text",
+      "effortLevels": [], "defaultEffort": null,
+      "outputTokenLimit": 64000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 1.00, "outputPricePerMillionUsd": 5.00
+    },
+    {
+      "id": "openai/gpt-5", "providerId": "openai", "name": "GPT-5", "kind": "text",
+      "effortLevels": ["low", "medium", "high"], "defaultEffort": "medium",
+      "outputTokenLimit": 128000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 1.25, "outputPricePerMillionUsd": 10.00
+    },
+    {
+      "id": "openai/gpt-5-mini", "providerId": "openai", "name": "GPT-5 mini", "kind": "text",
+      "effortLevels": ["low", "medium", "high"], "defaultEffort": "medium",
+      "outputTokenLimit": 128000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 0.25, "outputPricePerMillionUsd": 2.00
+    },
+    {
+      "id": "openai/gpt-image-1", "providerId": "openai", "name": "gpt-image-1", "kind": "image",
+      "effortLevels": [], "defaultEffort": null,
+      "outputTokenLimit": null, "timeoutSeconds": 600,
+      "pricePerImageUsd": 0.042
+    },
+    {
+      "id": "openrouter/anthropic/claude-sonnet-4.5", "providerId": "openrouter", "name": "Claude Sonnet 4.5 (OpenRouter)", "kind": "text",
+      "effortLevels": [], "defaultEffort": null,
+      "outputTokenLimit": 64000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 3.00, "outputPricePerMillionUsd": 15.00
+    },
+    {
+      "id": "glm/glm-4.6", "providerId": "glm", "name": "GLM-4.6", "kind": "text",
+      "effortLevels": [], "defaultEffort": null,
+      "outputTokenLimit": 128000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 0.60, "outputPricePerMillionUsd": 2.20
+    },
+    {
+      "id": "kimi/kimi-k2", "providerId": "kimi", "name": "Kimi K2", "kind": "text",
+      "effortLevels": [], "defaultEffort": null,
+      "outputTokenLimit": 32000, "timeoutSeconds": 600,
+      "inputPricePerMillionUsd": 0.60, "outputPricePerMillionUsd": 2.50
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 using Konsept.Modules.AgentGateway.Infrastructure;
 using Konsept.Modules.AgentGateway.Presentation.Controllers;
+using Konsept.Modules.AiGateway.Infrastructure;
+using Konsept.Modules.AiGateway.Presentation.Controllers;
 using Konsept.Modules.Identity.Infrastructure;
 using Konsept.Modules.Identity.Presentation.Controllers;
 using Konsept.Modules.Monitoring.Contracts.Enums;
@@ -35,11 +37,13 @@ builder.Services
     .AddControllers(options => options.Filters.Add<ValidationActionFilter>())
     .AddApplicationPart(typeof(SystemController).Assembly)
     .AddApplicationPart(typeof(AgentController).Assembly)
-    .AddApplicationPart(typeof(AuthController).Assembly);
+    .AddApplicationPart(typeof(AuthController).Assembly)
+    .AddApplicationPart(typeof(ApiKeysController).Assembly);
 builder.Services.AddScoped<ServiceKeyAuthorizationFilter>();
 builder.Services.AddMonitoringModule(connectionString);
 builder.Services.AddAgentGatewayModule();
 builder.Services.AddIdentityModule(connectionString, builder.Configuration, builder.Environment.IsDevelopment());
+builder.Services.AddAiGatewayModule(connectionString, builder.Configuration);
 
 // Default-deny (spec 0002 Req 11): açıkça [AllowAnonymous] olmayan her uç geçerli oturumlu JWT ister; iç uçlar servis
 // anahtarı ister.
@@ -72,6 +76,7 @@ if (app.Configuration.GetValue("Database:MigrateOnStartup", defaultValue: true))
 {
     await app.Services.MigrateMonitoringDatabaseAsync(CancellationToken.None);
     await app.Services.MigrateIdentityDatabaseAsync(CancellationToken.None);
+    await app.Services.MigrateAiGatewayDatabaseAsync(CancellationToken.None);
 }
 
 await app.RunAsync();
