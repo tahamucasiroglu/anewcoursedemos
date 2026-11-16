@@ -26,6 +26,12 @@ public abstract class HttpProviderClientBase(IHttpClientFactory http) : IProvide
     /// <summary>Çıktı sınırı verilmemiş (katalogda limitsiz) metin çağrısında Anthropic'e giden <c>max_tokens</c>.</summary>
     public const int FallbackMaxTokens = 4096;
 
+    /// <summary>Görsel kalitesi (katalog fiyatıyla eşleşir).</summary>
+    public const string ImageQuality = "medium";
+
+    /// <summary>Görsel boyutu (katalog fiyatıyla eşleşir).</summary>
+    public const string ImageSize = "1024x1024";
+
     private const string AnthropicVersion = "2023-06-01";
 
     /// <inheritdoc />
@@ -161,6 +167,10 @@ public abstract class HttpProviderClientBase(IHttpClientFactory http) : IProvide
             ["model"] = call.Model.ProviderModelName,
             ["prompt"] = call.Prompt,
             ["n"] = call.ImageCount,
+            // Katalogdaki görsel fiyatı (0,042 USD) medium kalite 1024×1024 içindir; API varsayılanı "auto" daha pahalı kaliteyi
+            // seçebilir, kayıtla fatura ayrışır (review r1 L-1).
+            ["quality"] = ImageQuality,
+            ["size"] = ImageSize,
         };
     }
 

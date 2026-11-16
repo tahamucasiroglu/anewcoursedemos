@@ -91,6 +91,8 @@ public sealed class ProviderClientTests
         image.Request.RequestUri.ShouldBe(new Uri("https://api.openai.com/v1/images/generations"));
         image.Body.GetProperty("model").GetString().ShouldBe("gpt-image-1");
         image.Body.GetProperty("n").GetInt32().ShouldBe(2);
+        image.Body.GetProperty("quality").GetString().ShouldBe("medium"); // review r1 L-1: katalog fiyatının kalitesi
+        image.Body.GetProperty("size").GetString().ShouldBe("1024x1024");
         image.Result.Images.ShouldBe(["YQ==", "Yg=="]);
     }
 
