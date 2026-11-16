@@ -108,7 +108,12 @@ public abstract class ConceptEditServiceBase(
         // Taban: kaydedilmemiş elle değişiklikler (G-2) → hazır revizyon (Tekrar düzenle revizyon üzerinde ilerler) → kayıtlı konsept.
         var previous = revisions.Get(who.UserId, concept.Id)?.Snapshot();
         var baseScenes = unsaved ?? (previous is { Status: RevisionStatus.Ready } p ? p.Scenes : concept.Scenes);
-        var revision = new ConceptRevision { UserId = who.UserId, ConceptId = concept.Id };
+        var revision = new ConceptRevision
+        {
+            UserId = who.UserId,
+            ConceptId = concept.Id,
+            Fallback = previous is { Status: RevisionStatus.Ready } kept ? kept : null, // Başarısız tur hazır revizyonu silmez (M-1).
+        };
         if (!revisions.TryStart(revision))
         {
             return Result<RevisionDto>.Failure(ConceptsErrors.RevisionBusy); // Çift tıklama / ikinci istek: çağrı yok (G-3).

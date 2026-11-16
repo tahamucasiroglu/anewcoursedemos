@@ -211,7 +211,7 @@ export function initConceptEdit(doc, options = {}) {
     if (first) {
       first.focus();
     }
-    pollRevision(); // Önceden kalmış hazır revizyon varsa modal yeniden açılır (ücretli revizyon kaybolmasın).
+    pollRevision(true); // Önceden kalmış hazır revizyon varsa modal yeniden açılır (ücretli revizyon kaybolmasın).
   }
 
   function stopEdit() {
@@ -283,7 +283,7 @@ export function initConceptEdit(doc, options = {}) {
     }
   }
 
-  function handleRevision(revision) {
+  function handleRevision(revision, initial = false) {
     if (!state.editing || !state.concept || revision.conceptId !== state.concept.id) {
       return;
     }
@@ -292,28 +292,36 @@ export function initConceptEdit(doc, options = {}) {
       const status = modal.hidden ? regenStatus : modalStatus;
       status.dataset.kind = '';
       status.textContent = text.textRegenerating;
-      state.timer = setTimer(pollRevision, POLL_MS);
+      state.timer = setTimer(() => pollRevision(), POLL_MS);
       return;
     }
     setBusy(false);
     if (revision.status === 'ready') {
       regenStatus.textContent = '';
       openModal(revision);
-    } else if (revision.status === 'failed') {
+      if (revision.error && !initial) {
+        // Tekrar düzenle başarısız: önceki (ücretli) revizyon modalda kalır, hata yanında duyurulur (review r1 M-1).
+        modalStatus.dataset.kind = 'error';
+        modalStatus.textContent = revision.error;
+      }
+    } else if (revision.status === 'failed' && !initial) {
+      // Açılıştaki eski hata yeniden gösterilmez (review r1 L-3).
       reportError(revision.error || text.textRegenerateFailed); // Revizyon yok, konsept aynen; otomatik tekrar yok (AC-8).
     }
   }
 
-  async function pollRevision() {
+  async function pollRevision(initial = false) {
     state.timer = null;
     if (!state.editing || !state.concept) {
       return;
     }
     try {
-      handleRevision(await get(`/konseptler/${encodeURIComponent(state.concept.id)}/revizyon`));
+      handleRevision(await get(`/konseptler/${encodeURIComponent(state.concept.id)}/revizyon`), initial);
     } catch (error) {
       setBusy(false);
-      reportError(message(error, text.textRegenerateFailed));
+      if (!initial) {
+        reportError(message(error, text.textRegenerateFailed));
+      }
     }
   }
 

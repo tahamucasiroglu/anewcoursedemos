@@ -217,7 +217,7 @@ public sealed class ConceptGenerationTests : IClassFixture<ConceptsApiFactory>
         saved.Select(c => c.Title).ShouldBe(["Konu A", "Konu C"], ignoreOrder: true);
         saved.ShouldAllBe(c => c.Status == ConceptStatus.Generated && c.Source == ConceptSource.Topic);
         (await WorkAsync(client, profile, ct)).GetProperty("suggestions").GetArrayLength().ShouldBe(0);
-        _factory.Suggestions.Rows.Single(s => s.Title == "Konu B").State.ShouldBe(SuggestionState.Rejected);
+        _factory.Suggestions.Rows.Single(s => s.ProfileId == profile && s.Title == "Konu B").State.ShouldBe(SuggestionState.Rejected);
 
         (await PostAsync(client, "/api/concepts/topics", new { profileId = profile, count = 1 }, ct)).EnsureSuccessStatusCode();
         await WaitJobAsync(client, profile, "topicJob", ct);

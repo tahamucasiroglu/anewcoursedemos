@@ -382,6 +382,32 @@ describe('Konsept düzenleme döngüsü (spec 0015)', () => {
     expect(el('concept-detail').textContent).toContain('Revize anlatım.');
   });
 
+  it('review r1 M-1/L-3: başarısız Tekrar düzenle önceki revizyonu hata mesajıyla modalda bırakır; açılışta eski hata gösterilmez', async () => {
+    await start();
+    routes['GET /konseptler/c1/revizyon'] = ok(revision('failed', { error: 'Eski hata.' }));
+    await openEditor();
+    expect(el('concept-regen-status').textContent).toBe('');
+    expect(el('revision-modal').hidden).toBe(true);
+
+    routes['POST /konseptler/c1/yeniden-uret'] = ok(revision('running'));
+    type(el('concept-instruction'), 'Düzelt');
+    el('concept-regenerate').click();
+    await flush();
+    routes['GET /konseptler/c1/revizyon'] = ok(revision('ready'));
+    timers.pop().fn();
+    await flush();
+    type(el('revision-instruction'), 'Daha kısa');
+    el('revision-again').click();
+    await flush();
+    routes['GET /konseptler/c1/revizyon'] = ok(revision('ready', { error: 'Model çıktısı konsept biçimine uymadı; üretilemedi.' }));
+    timers.pop().fn();
+    await flush();
+    expect(el('revision-modal').hidden).toBe(false);
+    expect(el('revision-scenes').textContent).toContain('Revize anlatım.');
+    expect(el('revision-status').textContent).toBe('Model çıktısı konsept biçimine uymadı; üretilemedi.');
+    expect(el('revision-approve').disabled).toBe(false);
+  });
+
   it('AC-13: /?konsept=<id> o konsepti düzenleme alanında açar; bulunamazsa sade mesaj ve sayfa normal açılır', async () => {
     globalThis.history.replaceState(null, '', '/?konsept=c2');
     await start();

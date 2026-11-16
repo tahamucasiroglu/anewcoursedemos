@@ -106,7 +106,7 @@ public abstract class ConceptRevisionExecutorBase(IModelCaller caller, IConceptR
             return (null, ConceptsText.ConceptTruncated);
         }
 
-        return ModelOutputParser.Concept(reply.Value.Text) is { } parsed
+        return ModelOutputParser.Concept(reply.Value.Text, allowEmptyVisual: true) is { } parsed
             ? (parsed.Scenes, null)
             : (null, ConceptsText.ConceptMalformed);
     }

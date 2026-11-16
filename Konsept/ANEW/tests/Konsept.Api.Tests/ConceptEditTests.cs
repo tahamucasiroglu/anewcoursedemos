@@ -503,6 +503,60 @@ public sealed class ConceptEditTests : IClassFixture<ConceptsApiFactory>
         _factory.Provider.Calls.Count.ShouldBe(0);
     }
 
+    /// <summary>
+    /// Review r1 M-1: hazır revizyon varken "Tekrar düzenle" başarısız olursa önceki (ücretli) revizyon hata mesajıyla hazır kalır,
+    /// onaylanabilir ve sonraki turun tabanı odur; otomatik yeni çağrı yok.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReviewR1_M1_FailedRetry_KeepsPreviousRevision()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var profile = await ReadyProfileAsync(client, ct);
+        var id = Seed(UserOf(profile), profile, ConceptStatus.Generated);
+        _factory.Provider.Handler = (_, _, n) => n == 2
+            ? Ok("bozuk {")
+            : Ok(ConceptJson("Bizans", [60], $"Tur {n} anlatımı."));
+
+        (await PostAsync(client, $"/api/concepts/{id}/regenerate", new { instruction = "Bir" }, ct)).EnsureSuccessStatusCode();
+        await WaitRevisionAsync(client, id, ct);
+        (await PostAsync(client, $"/api/concepts/{id}/regenerate", new { instruction = "İki" }, ct)).EnsureSuccessStatusCode();
+        var kept = await WaitRevisionAsync(client, id, ct);
+
+        kept.GetProperty("status").GetString().ShouldBe("ready");
+        kept.GetProperty("error").GetString().ShouldBe("Model çıktısı konsept biçimine uymadı; üretilemedi.");
+        kept.GetProperty("scenes")[0].GetProperty("narration").GetString().ShouldBe("Tur 1 anlatımı.");
+        await Task.Delay(100, ct);
+        _factory.Provider.CallsOf(CallRole.Concept).Count.ShouldBe(2);
+
+        (await PostAsync(client, $"/api/concepts/{id}/regenerate", new { instruction = "Üç" }, ct)).EnsureSuccessStatusCode();
+        await WaitRevisionAsync(client, id, ct);
+        _factory.Provider.CallsOf(CallRole.Concept)[2].Prompt.ShouldContain("Tur 1 anlatımı."); // Taban önceki revizyon.
+        (await PostAsync(client, $"/api/concepts/{id}/revision/approve", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        _factory.Concepts.Rows.Single(c => c.Id == id).Scenes[0].Narration.ShouldBe("Tur 3 anlatımı.");
+    }
+
+    /// <summary>Review r1 M-2: revizyonda boş ekran tarifi (elle boşaltılabilir) kabul edilir; başlık/seslendirme yine zorunlu.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReviewR1_M2_RevisionWithEmptyVisual_Ready()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var profile = await ReadyProfileAsync(client, ct);
+        var id = Seed(UserOf(profile), profile, ConceptStatus.Generated);
+        _factory.Provider.Handler = (_, _, _) => Ok("""{"title":"Bizans","scenes":[{"title":"A","visual":"","narration":"N.","durationSeconds":60}]}""");
+
+        (await PostAsync(client, $"/api/concepts/{id}/regenerate", new { instruction = "Kısalt" }, ct)).EnsureSuccessStatusCode();
+        var revision = await WaitRevisionAsync(client, id, ct);
+
+        revision.GetProperty("status").GetString().ShouldBe("ready");
+        revision.GetProperty("scenes")[0].GetProperty("visual").GetString().ShouldBe(string.Empty);
+        ModelOutputParser.Concept("""{"title":"T","scenes":[{"title":"A","visual":"","narration":"N","durationSeconds":5}]}""").ShouldBeNull(); // 0014 üretimi değişmedi.
+        ModelOutputParser.Concept("""{"title":"T","scenes":[{"title":"A","narration":"N","durationSeconds":5}]}""", allowEmptyVisual: true).ShouldBeNull();
+    }
+
     private static object[] Edited(string narration) =>
     [
         new { title = "Açılış", visual = "Surlar görünür.", narration, durationSeconds = 20 },

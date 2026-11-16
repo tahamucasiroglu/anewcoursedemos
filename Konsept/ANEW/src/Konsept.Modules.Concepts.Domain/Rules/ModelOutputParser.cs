@@ -12,8 +12,9 @@ public static class ModelOutputParser
 {
     /// <summary>Konsepti ayrıştırır: başlık ve en az bir sahne; her sahnede başlık, ekran tarifi, seslendirme ve pozitif tam saniye.</summary>
     /// <param name="text">Model çıktısı.</param>
+    /// <param name="allowEmptyVisual">Boş ekran tarifi kabul edilsin mi (spec 0015 revizyonu: elle boşaltılabilir; review r1 M-2).</param>
     /// <returns>Konsept ya da <c>null</c>.</returns>
-    public static ParsedConcept? Concept(string? text)
+    public static ParsedConcept? Concept(string? text, bool allowEmptyVisual = false)
     {
         using var doc = Parse(text);
         if (doc is null || doc.RootElement.ValueKind != JsonValueKind.Object)
@@ -36,7 +37,7 @@ public static class ModelOutputParser
         {
             if (scene.ValueKind != JsonValueKind.Object
                 || Text(scene, "title") is not { } sceneTitle
-                || Text(scene, "visual") is not { } visual
+                || (Text(scene, "visual") ?? (allowEmptyVisual ? EmptyText(scene, "visual") : null)) is not { } visual
                 || Text(scene, "narration") is not { } narration
                 || !scene.TryGetProperty("durationSeconds", out var duration)
                 || duration.ValueKind != JsonValueKind.Number
@@ -109,6 +110,9 @@ public static class ModelOutputParser
 
         return set;
     }
+
+    private static string? EmptyText(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? string.Empty : null;
 
     private static string? Text(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString()?.Trim() is { Length: > 0 } s

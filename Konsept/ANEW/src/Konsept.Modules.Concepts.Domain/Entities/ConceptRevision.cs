@@ -24,6 +24,12 @@ public sealed class ConceptRevision
     /// <summary>Gets konsept.</summary>
     public Guid ConceptId { get; init; }
 
+    /// <summary>
+    /// Gets bu turdan önceki hazır revizyon (Tekrar düzenle): yeni tur başarısız olursa o geri gelir — ücretli revizyon kaybolmaz
+    /// (review r1 M-1).
+    /// </summary>
+    public ConceptRevisionSnapshot? Fallback { get; init; }
+
     /// <summary>Gets a value indicating whether yeniden üretim sürüyor.</summary>
     public bool IsRunning
     {
@@ -51,13 +57,24 @@ public sealed class ConceptRevision
         }
     }
 
-    /// <summary>Yeniden üretim başarısız (revizyon yok).</summary>
+    /// <summary>
+    /// Yeniden üretim başarısız: önceki hazır revizyon varsa o hata mesajıyla birlikte hazır kalır, yoksa revizyon yoktur.
+    /// </summary>
     /// <param name="message">Sade hata mesajı.</param>
     public void Fail(string message)
     {
         lock (_gate)
         {
             _error = message;
+            if (Fallback is { } previous)
+            {
+                _scenes = previous.Scenes;
+                _wordRepetition = previous.WordRepetitionWarning;
+                _durationMismatch = previous.DurationMismatchWarning;
+                _status = RevisionStatus.Ready;
+                return;
+            }
+
             _status = RevisionStatus.Failed;
         }
     }
