@@ -58,8 +58,13 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 
 ### H-4 — Kullanıcı PC'sinde LLM kodu
 - LLM'in ürettiği video kodu **yalnızca kendi iş klasörüne erişebilen, ağ erişimi kapalı** bir süreçte render
-  edilir (Y-8). Somut yöntem (Windows Job Object / AppContainer, Node permission model…) **henüz seçilmedi**:
-  video motoru araştırma raporunda (`raporlar/`) kesinleşecek → `specs/backlog.md`.
+  edilir (Y-8). Yöntem (0018, [ADR-0004](decisions/0004-render-sandbox-fallback.md)), yönetici yetkisi istemez: L0 sabit sözleşme
+  (yalnız `image.png`/`gsap.min.js`) · L1 ortak yasaklı yapı kapısı `RenderCodeGate` (Pi + ajan; ret → en fazla 1 düzeltme) · L2 iş
+  klasörü, sıfırdan ortam, bağlantı (symlink/junction) reddi · L3 Chromium sandbox'ı zorunlu + `render-guard.mjs` (ölü proxy, DNS
+  kapatma, WebRTC UDP kapatma; sandbox kapatan bayraklar ayıklanır) · L4 Job Object (süre/bellek/süreç, kill-on-close; sınırlar
+  `agentsettings.json` `render*`) · L5 ajanın CSP etiketi (`'unsafe-eval'` yok, `connect-src 'self'`) · L6 Node izin modeli (okuma: iş +
+  bileşenler, yazma: iş) · L7 ffprobe çıktı kapısı (çıktı hiç çalıştırılmaz). AppContainer spike'ı B-125, isteğe bağlı güçlü mod
+  (güvenlik duvarı) B-124.
 - Ajan güncellemeleri **imza ya da hash doğrulamasından** geçmeden kurulmaz.
 - Ajan yalnızca **kimliği doğrulanmış API bağlantısından** (SignalR) gelen komutları çalıştırır.
 - Videolar kullanıcının PC'sinde kalır; web player ajanın **yalnızca localhost'a açık, kısa ömürlü token'lı**

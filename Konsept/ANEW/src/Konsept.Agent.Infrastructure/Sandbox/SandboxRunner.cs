@@ -71,9 +71,9 @@ public static class SandboxRunner
             timedOut = true;
         }
 
-        var limit = job.LimitExceeded();
         job.Terminate(); // Süreç bitti; arkada kalan alt süreç (tarayıcı, kodlayıcı) da ölür.
         await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+        var limit = job.LimitExceeded(failed: timedOut || process.ExitCode != 0);
         var output = await ReadAsync(stdout).ConfigureAwait(false) + "\n" + await ReadAsync(stderr).ConfigureAwait(false);
         return new SandboxRun(
             timedOut ? -1 : process.ExitCode,

@@ -108,7 +108,7 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
                 File.Delete(stale);
             }
 
-            await File.WriteAllTextAsync(Path.Combine(dir, "index.html"), code, cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(dir, "index.html"), RenderCsp.Apply(code), cancellationToken).ConfigureAwait(false); // L5: ajanın CSP etiketi (review r1 H-1).
             var result = await renderer.RenderAsync(new SceneRenderRequest(WorkDir(command), dir, width, height, scene.DurationSeconds, clipName), cancellationToken)
                 .ConfigureAwait(false);
             switch (result.Outcome)

@@ -25,7 +25,14 @@ public static partial class RenderCodeGate
         "RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel", "Worker", "SharedWorker", "serviceWorker", "importScripts",
         "process", "location", "setTimeout", "setInterval", "setImmediate", "constructor", "__proto__", "Reflect", "Proxy", "WebAssembly",
         "BroadcastChannel", "indexedDB", "caches", "open", "write", "writeln", "insertAdjacentHTML", "outerHTML", "srcdoc", "setAttribute",
-        "setAttributeNS",
+        "setAttributeNS", "fromCharCode", "fromCodePoint", "atob", "unescape", "decodeURI", "decodeURIComponent",
+    ];
+
+    /// <summary>İzin verilen adlandırılmış karakter başvuruları (yazım işaretleri; şema/yol karakteri yok).</summary>
+    private static readonly string[] AllowedReferences =
+    [
+        "amp", "lt", "gt", "quot", "apos", "nbsp", "copy", "reg", "trade", "mdash", "ndash", "hellip", "laquo", "raquo", "lsquo", "rsquo",
+        "ldquo", "rdquo", "middot", "bull", "deg", "times", "euro",
     ];
 
     /// <summary>Bilinen GSAP CDN adresini sahne klasöründeki yerel kopyaya çevirir (L0 sözleşmesi; iki tarafta aynı).</summary>
@@ -64,9 +71,14 @@ public static partial class RenderCodeGate
             return RenderCodeVerdict.Reject("escape sequence (write characters directly)");
         }
 
-        if (code.Contains("@import", StringComparison.OrdinalIgnoreCase))
+        if (NamedReference().Match(code) is { Success: true } reference && !AllowedReferences.Contains(reference.Groups[1].Value, StringComparer.Ordinal))
         {
-            return RenderCodeVerdict.Reject("forbidden: @import");
+            return RenderCodeVerdict.Reject("character reference not allowed: " + reference.Value);
+        }
+
+        if (code.Contains("@import", StringComparison.OrdinalIgnoreCase) || code.Contains("image-set", StringComparison.OrdinalIgnoreCase))
+        {
+            return RenderCodeVerdict.Reject("forbidden: @import / image-set");
         }
 
         if (InlineHandler().Match(code) is { Success: true } handler)
@@ -79,27 +91,42 @@ public static partial class RenderCodeGate
             return RenderCodeVerdict.Reject("forbidden tag: " + tag.Groups[1].Value.ToLowerInvariant());
         }
 
+        if (AnimatedLink().IsMatch(code))
+        {
+            return RenderCodeVerdict.Reject("forbidden: animated href");
+        }
+
         foreach (Match match in ResourceAttribute().Matches(code))
         {
-            if (!IsAllowedResource(match.Groups[3].Value))
+            var value = AttributeValue(match);
+            var candidates = match.Groups[1].Value.Equals("srcset", StringComparison.OrdinalIgnoreCase)
+                ? value.Split(',').Select(c => c.Trim().Split(' ', 2)[0])
+                : [value];
+            if (candidates.FirstOrDefault(c => !IsAllowedResource(c)) is { } bad)
             {
-                return RenderCodeVerdict.Reject("resource not allowed: " + Short(match.Groups[3].Value));
+                return RenderCodeVerdict.Reject("resource not allowed: " + Short(bad));
             }
         }
 
         foreach (Match match in CssUrl().Matches(code))
         {
-            if (!IsAllowedResource(match.Groups[1].Value))
+            if (!IsAllowedResource(match.Groups[1].Value.Trim().Trim('"', '\'').Trim()))
             {
                 return RenderCodeVerdict.Reject("resource not allowed: " + Short(match.Groups[1].Value));
             }
         }
 
+        // Yorumlar ayıklanmaz: dize içindeki "//" ile kod gizlenebilir; talimat betikte yorum ve görünen metin istemez (review r1 L-1).
         foreach (var script in Scripts(code))
         {
             if (ComputedGlobal().Match(script) is { Success: true } global)
             {
                 return RenderCodeVerdict.Reject("forbidden: computed access on " + global.Groups[1].Value);
+            }
+
+            if (Indirection().Match(script) is { Success: true } indirection)
+            {
+                return RenderCodeVerdict.Reject("forbidden indirect access: " + Short(indirection.Value));
             }
 
             foreach (var name in ForbiddenIdentifiers)
@@ -112,6 +139,19 @@ public static partial class RenderCodeGate
         }
 
         return RenderCodeVerdict.Pass;
+    }
+
+    private static string AttributeValue(Match match)
+    {
+        for (var group = 2; group <= 5; group++)
+        {
+            if (match.Groups[group].Success)
+            {
+                return match.Groups[group].Value.Trim(); // Baştaki/sondaki boşluğu tarayıcı da atar (review r1 M-1).
+            }
+        }
+
+        return string.Empty;
     }
 
     private static bool IsAllowedResource(string value) =>
@@ -160,22 +200,31 @@ public static partial class RenderCodeGate
     [GeneratedRegex(@"[""'`(=]\s*[\\/]{2}", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex NetworkPath();
 
-    [GeneratedRegex(@"\\(?:u|x|[0-9a-fA-F])|&#", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"\\(?:u|x|[0-7]|[0-9a-fA-F]{2})|&#", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex Escape();
 
-    [GeneratedRegex(@"(?<![\w$.-])(on[a-z]+)\s*=", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"&([A-Za-z][A-Za-z0-9]*);", RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex NamedReference();
+
+    [GeneratedRegex(@"(?:<[^>]*\s|\.)(on[a-z]+)\s*=(?!=)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
     private static partial Regex InlineHandler();
+
+    [GeneratedRegex(@"attributeName\s*=\s*[""']?\s*(?:xlink:)?href", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex AnimatedLink();
+
+    [GeneratedRegex(@"\[\s*[""'`][^\]]*\+|[""'`]\s*\+\s*[""'`]|=\s*(?:window|globalThis|self|top|parent|frames|document)\s*(?:[;,)]|$)", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex Indirection();
 
     [GeneratedRegex(@"<\s*(iframe|object|embed|frame|frameset|base|link|form|portal|applet|meta\s[^>]*http-equiv)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
     private static partial Regex ForbiddenTag();
 
-    [GeneratedRegex(@"\b(src|href|srcset|poster|action|formaction|ping|manifest|longdesc|lowsrc|dynsrc)\s*=\s*([""'`]?)([^""'`\s>]*)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"\b(src|href|srcset|poster|action|formaction|ping|manifest|longdesc|lowsrc|dynsrc)\s*=(?!=)\s*(?:""([^""]*)""|'([^']*)'|`([^`]*)`|([^\s>""'`]*))", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
     private static partial Regex ResourceAttribute();
 
-    [GeneratedRegex(@"\burl\s*\(\s*[""']?([^""')\s]*)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"\burl\s*\(([^)]*)\)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
     private static partial Regex CssUrl();
 
-    [GeneratedRegex(@"(?<![\w$])(window|self|globalThis|top|parent|frames|opener|document)\s*(?:\?\.)?\s*\[", RegexOptions.CultureInvariant, 1000)]
+    [GeneratedRegex(@"(?<![\w$])(window|self|globalThis|top|parent|frames|opener|document|this)\s*(?:\?\.)?\s*\[", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex ComputedGlobal();
 
     [GeneratedRegex(@"^#[A-Za-z0-9_-]*$", RegexOptions.CultureInvariant, 1000)]

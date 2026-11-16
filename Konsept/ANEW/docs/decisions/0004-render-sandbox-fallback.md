@@ -13,7 +13,8 @@ yerel dosya sunucusu (127.0.0.1) Node'un `--allow-net` iznini ister, dışarıda
 ## Decision
 Spec Req 2'nin izin verdiği yedek yolu kullanıyoruz: L0 sabit sözleşme · L1 ortak yasaklı yapı kapısı (Pi + ajan) · L2 iş klasörü
 (sıfırdan ortam, bağlantı reddi) · L3 Chromium'un kendi sandbox'ı zorunlu + Node ön yükleme modülü (`render-guard.mjs`) ile ajanın
-Chromium'una ölü proxy / DNS kapatma / WebRTC UDP kapatma bayrakları, Node tarafı ölü `HTTP(S)_PROXY` · L4 Job Object · L6 Node izin
+Chromium'una ölü proxy / DNS kapatma / WebRTC UDP kapatma bayrakları, Node tarafı ölü `HTTP(S)_PROXY` · L4 Job Object · L5 ajanın CSP
+etiketi (`'unsafe-eval'` yok, `connect-src 'self'`) · L6 Node izin
 modeli (dosya okuma/yazma sınırlı, ağ açık) · L7 ffprobe çıktı kapısı.
 
 ## Consequences
@@ -22,6 +23,12 @@ modeli (dosya okuma/yazma sınırlı, ağ açık) · L7 ffprobe çıktı kapıs�
   başka yoldan başlatması korumayı zayıflatır. Bu yüzden L1 kapısı ve isteğe bağlı güçlü mod (güvenlik duvarı, B-124) önemlidir.
 - Node tarafı ağ (`--allow-net`) açıktır; motorun kendi isteklerini ortam proxy'si ve telemetri kapatma değişkenleri keser.
 - Job Object ataması süreç başladıktan hemen sonra yapılır (askıda başlatma yok); ilk alt süreç ondan sonra doğar.
+- Chromium proxy'yi tüm loopback adreslerinde kendiliğinden atlar: sayfa aynı bilgisayardaki 127.0.0.1 servislerine (ör. ajanın
+  `LocalVideoServer`'ı, 47615 — video başına yetki ister) istek atabilir. L5 CSP `connect-src 'self'` ve `img-src/media-src 'self'` bunu
+  motorun kendi sunucusuyla sınırlar (review r1 L-3).
+- Ajanın CSP etiketi (`'unsafe-eval'` yok) kapıyı atlatan dolaylı `Function` çağrısını çalışma anında durdurur (gözlem G-4, plan 0018).
+- Lisans: HyperFrames kilit dosyası LGPL-3.0-or-later `@img/sharp-*` (libvips) ikili paketlerini içerir; FFmpeg LGPL emsaliyle aynı:
+  değiştirilmeden, ayrı dosya olarak (npm paketi) dinamik kullanılır, ajana gömülmez (review r1 I-3).
 
 ## Alternatives considered
 - **AppContainer (rapor tercihi):** en güçlü admin'siz katman; Chromium iç içe sandbox ve loopback davranışı doğrulanmadan risklidir

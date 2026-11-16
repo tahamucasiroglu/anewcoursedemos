@@ -14,7 +14,11 @@ const guard = [
   '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
   '--webrtc-ip-handling-policy=disable_non_proxied_udp',
 ];
-const overridden = ['--proxy', '--host-resolver-rules', '--force-webrtc-ip-handling-policy', '--webrtc-ip-handling-policy', '--no-proxy-server'];
+// Chromium sandbox'ını kapatan bayraklar da ayıklanır (review r1 L-3): renderer her zaman Chromium'un kendi sandbox'ında çalışır.
+const overridden = [
+  '--proxy', '--host-resolver-rules', '--force-webrtc-ip-handling-policy', '--webrtc-ip-handling-policy', '--no-proxy-server',
+  '--no-sandbox', '--disable-setuid-sandbox', '--no-zygote', '--disable-gpu-sandbox', '--disable-web-security', '--allow-file-access-from-files',
+];
 const spawn = childProcess.spawn;
 
 childProcess.spawn = function guardedSpawn(file, args, options) {

@@ -78,12 +78,43 @@ public sealed class RenderCodeGateTests
     [InlineData("<script>open('x')</script>")]
     [InlineData("<script>const w = new Worker('w.js')</script>")]
     [InlineData("<img src=\"\\\\\\\\server\\\\share\\\\a.png\" />")]
+    [InlineData("<script>this[\"fe\" + \"tch\"]('/x')</script>")]
+    [InlineData("<script>const w = window; w.x = 1;</script>")]
+    [InlineData("<script>tl[\"constr\" + \"uctor\"][\"constr\" + \"uctor\"](\"return 1\")()</script>")]
+    [InlineData("<script>const i = {}; i[\"sr\" + \"c\"] = u;</script>")]
+    [InlineData("<script>const s = String.fromCharCode(102);</script>")]
+    [InlineData("<script>const s = atob(\"ZmV0Y2g=\");</script>")]
+    [InlineData("<img src=\" ../../token.dat\" />")]
+    [InlineData("<div style=\"background:url( ' ../x.png')\"></div>")]
+    [InlineData("<img srcset=\"image.png 1x, ../../a.png 2x\" />")]
+    [InlineData("<div style=\"background-image:image-set('a.png' 1x)\"></div>")]
+    [InlineData("<svg><a><set attributeName=\"href\" to=\"x\" /></a></svg>")]
+    [InlineData("<svg><a><animate attributeName=\"xlink:href\" values=\"x\" /></a></svg>")]
+    [InlineData("<img src=\"image.png\" alt=\"http&colon;&sol;&sol;x\" />")]
+    [InlineData("<script>img.onerror = \"go()\";</script>")]
     public void ForbiddenConstructs_Rejected(string snippet)
     {
         var code = Harmless.Replace("</body>", snippet + "</body>", StringComparison.Ordinal);
         var verdict = RenderCodeGate.Check(RenderCodeGate.Normalize(code));
         verdict.Ok.ShouldBeFalse(snippet);
         verdict.Reason.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>
+    /// Aşırı sıkılaştırma koruması (review r1 L-1): sıradan GSAP/SVG kodu — değişken adları (<c>one</c>, <c>once</c>), SVG <c>animate</c> sayısal
+    /// değerleri, yazım işareti başvuruları, <c>tl.to</c>/<c>tl.from</c> çağrıları — reddedilmez.
+    /// </summary>
+    /// <param name="snippet">Zararsız belgeye eklenen parça.</param>
+    [Theory]
+    [InlineData("<script>const one = 1; let once = true; tl.to(\"#t\", { x: one }, 0).from(\"#t\", { opacity: 0 }, 1);</script>")]
+    [InlineData("<svg><circle r=\"5\"><animate attributeName=\"r\" from=\"5\" to=\"20\" dur=\"2s\" /></circle></svg>")]
+    [InlineData("<p>Bizans &mdash; &laquo;son sabah&raquo; &amp; İstanbul&hellip;</p>")]
+    [InlineData("<script>const parts = [\"Açılış\", \"Son\"]; parts.forEach((p, i) => tl.to(\"#p\" + i, { opacity: 1 }, i));</script>")]
+    public void OrdinaryCode_NotRejected(string snippet)
+    {
+        var code = Harmless.Replace("</body>", snippet + "</body>", StringComparison.Ordinal);
+        var verdict = RenderCodeGate.Check(RenderCodeGate.Normalize(code));
+        verdict.Ok.ShouldBeTrue(verdict.Reason);
     }
 
     /// <summary>Boş ve aşırı büyük belge reddedilir (karmaşıklık sınırı).</summary>

@@ -142,6 +142,22 @@ public sealed class RenderSandboxTests : IDisposable
         text.ShouldContain("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE localhost");
         text.ShouldContain("--force-webrtc-ip-handling-policy=disable_non_proxied_udp");
         text.ShouldContain("PRODUCER_HEADLESS_SHELL_PATH");
+        text.ShouldContain("'--no-sandbox'"); // Sandbox'ı kapatan bayrak ayıklanır (review r1 L-3).
+    }
+
+    /// <summary>
+    /// Review r1 H-1 (L5): ajan sayfaya kendi CSP etiketini ekler — <c>'unsafe-eval'</c> yok (dolaylı kurulan Function/eval çalışmaz), bağlantı
+    /// yalnızca yerel motor sunucusu; etiket <c>head</c>'in başında, head yoksa belgenin başında.
+    /// </summary>
+    [Fact]
+    public void Csp_PrependedInHead_NoUnsafeEval()
+    {
+        RenderCsp.Policy.ShouldNotContain("unsafe-eval");
+        RenderCsp.Policy.ShouldContain("connect-src 'self'");
+        RenderCsp.Policy.ShouldContain("default-src 'none'");
+        RenderCsp.Apply("<!doctype html><html lang=\"tr\"><head><title>x</title></head></html>")
+            .ShouldBe("<!doctype html><html lang=\"tr\"><head>" + RenderCsp.Tag + "<title>x</title></head></html>");
+        RenderCsp.Apply("<div>x</div>").ShouldStartWith(RenderCsp.Tag);
     }
 
     /// <summary>AC-2 (T4): iş klasörü içinden dışarıyı gösteren bağlantı (junction) varsa render yapılmaz.</summary>
@@ -257,6 +273,7 @@ public sealed class RenderSandboxTests : IDisposable
         public async Task<SceneRenderResult> RenderAsync(SceneRenderRequest request, CancellationToken cancellationToken)
         {
             var index = int.Parse(Path.GetFileName(request.SceneDirectory)["scene-".Length..], System.Globalization.CultureInfo.InvariantCulture);
+            (await File.ReadAllTextAsync(Path.Combine(request.SceneDirectory, "index.html"), cancellationToken)).ShouldContain(RenderCsp.Tag);
             Calls.Add(index);
             Requests.Add(request);
             OnRender?.Invoke(index);

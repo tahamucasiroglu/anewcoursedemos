@@ -77,9 +77,13 @@ public sealed class RenderJobObject : IDisposable
     /// <summary>Job'daki tüm süreçleri sonlandırır.</summary>
     public void Terminate() => JobNativeMethods.TerminateJobObject(_job, 1);
 
-    /// <summary>Süre dışında bir sınır (süreç sayısı, bellek) aşıldı mı; port bildirimlerini ve tepe belleği okur.</summary>
+    /// <summary>
+    /// Süre dışında bir sınır (süreç sayısı, bellek) aşıldı mı: port bildirimleri; süreç başarısız bittiyse tepe belleğin sınıra dayanması da
+    /// (başarılı ama belleği çok kullanan render sınır aşımı sayılmaz — review r1 L-2).
+    /// </summary>
+    /// <param name="failed">Süreç başarısız mı bitti.</param>
     /// <returns>Aşıldıysa <c>true</c>.</returns>
-    public bool LimitExceeded()
+    public bool LimitExceeded(bool failed)
     {
         while (JobNativeMethods.GetQueuedCompletionStatus(_port, out var message, out _, out _, 0))
         {
@@ -89,7 +93,7 @@ public sealed class RenderJobObject : IDisposable
             }
         }
 
-        if (JobNativeMethods.QueryInformationJobObject(_job, JobNativeMethods.ExtendedLimitInformation, out JobLimitInformation info, (uint)Marshal.SizeOf<JobLimitInformation>(), IntPtr.Zero)
+        if (failed && JobNativeMethods.QueryInformationJobObject(_job, JobNativeMethods.ExtendedLimitInformation, out JobLimitInformation info, (uint)Marshal.SizeOf<JobLimitInformation>(), IntPtr.Zero)
             && (long)(ulong)info.PeakJobMemoryUsed >= _memoryLimit * 9 / 10)
         {
             _limitHit = true;

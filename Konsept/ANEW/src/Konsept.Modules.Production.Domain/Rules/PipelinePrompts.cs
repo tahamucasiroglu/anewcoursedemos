@@ -77,7 +77,9 @@ public static class PipelinePrompts
             "(gsap.timeline({ paused: true })) and register it as window.__timelines[\"main\"] = tl; the engine seeks it frame by frame.\n" +
             "- Security rules (the code is rejected otherwise): no URLs or network access of any kind (no http, //, fetch, XMLHttpRequest, " +
             "WebSocket, import, eval, Function, timers, navigator, location, open), no iframes/links/forms, no inline on* event attributes, " +
-            "no escape sequences (backslash-u, backslash-x, &#), no window[...] style access, no Date.now, no random.\n" +
+            "no escape sequences (backslash-u, backslash-x, &#), no window[...] or this[...] style access, no string concatenation " +
+            "inside [...] property access, no Date.now, no random.\n" +
+            "- Put all visible text in HTML elements, not in scripts; write no comments in scripts; scripts only animate elements by selector.\n" +
             (withImage ? "- Use the local file image.png as the main picture of the scene; it is the only file besides gsap.min.js.\n" : "- Draw everything with HTML/CSS/SVG; there is no image file.\n") +
             "- Do not draw subtitles or a progress bar; they are added later.\n" +
             DataRule +
