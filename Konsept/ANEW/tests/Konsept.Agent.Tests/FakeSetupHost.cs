@@ -30,6 +30,9 @@ public sealed class FakeSetupHost : ISetupHost
     /// <summary>Gets or sets indirme başlamadan çalışan eylem (iptal testi).</summary>
     public Action<Uri, string>? BeforeDownload { get; set; }
 
+    /// <summary>Gets or sets indirmeyi bekleten kapı (arayüz testleri kurulum sürerken durumu okur).</summary>
+    public TaskCompletionSource? Hold { get; set; }
+
     /// <summary>Gets or sets araç çalıştırma (exe, argüman) → çıktı.</summary>
     public Func<string, string, string?> Run { get; set; } = (_, _) => "v1.0.0 tool version 2.0";
 
@@ -76,8 +79,13 @@ public sealed class FakeSetupHost : ISetupHost
     public long FreeBytes(string directory) => Free;
 
     /// <inheritdoc />
-    public Task DownloadAsync(Uri source, string destination, IProgress<double>? progress, CancellationToken cancellationToken)
+    public async Task DownloadAsync(Uri source, string destination, IProgress<double>? progress, CancellationToken cancellationToken)
     {
+        if (Hold is { } hold)
+        {
+            await hold.Task.WaitAsync(cancellationToken);
+        }
+
         Downloads.Add(source);
         BeforeDownload?.Invoke(source, destination);
         cancellationToken.ThrowIfCancellationRequested();
@@ -86,10 +94,9 @@ public sealed class FakeSetupHost : ISetupHost
             throw new HttpRequestException("ulaşılamadı");
         }
 
-        File.WriteAllBytes(destination, bytes);
+        await File.WriteAllBytesAsync(destination, bytes, cancellationToken);
         progress?.Report(0.5);
         progress?.Report(1);
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

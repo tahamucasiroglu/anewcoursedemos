@@ -48,4 +48,60 @@
   <data name="NotifyAlertTitle" xml:space="preserve"><value>ANEW Konsept: Bir hata oldu</value></data>
   <data name="NotifyPendingSent" xml:space="preserve"><value>Bekleyen hata bildirimi gönderildi</value></data>
   <data name="TestErrorSummary" xml:space="preserve"><value>Deneme hatası (--hata-dene): bu bir test uyarısıdır</value></data>
+  <data name="SetupTitle" xml:space="preserve"><value>ANEW Konsept · Kurulum</value></data>
+  <data name="SetupHeading" xml:space="preserve"><value>Ajan kurulumu</value></data>
+  <data name="SetupIntro" xml:space="preserve"><value>Video üretimi için gereken araçlar bilgisayarınıza indirilip kurulacak. Hepsi yalnızca bu ajan için ayrı bir klasöre kurulur; bilgisayarınızdaki başka programlar ve ayarlar değişmez, yönetici izni istenmez.</value></data>
+  <data name="SetupInstallRoot" xml:space="preserve"><value>Kurulum yeri: {0}</value></data>
+  <data name="SetupVideoFolder" xml:space="preserve"><value>Video klasörü</value></data>
+  <data name="SetupVideoChange" xml:space="preserve"><value>Değiştir</value></data>
+  <data name="SetupVideoInvalid" xml:space="preserve"><value>Video klasörü tam bir klasör yolu olmalı ve kurulum yeriyle aynı ya da onun içinde olamaz.</value></data>
+  <data name="SetupComponentsLabel" xml:space="preserve"><value>Bileşenler</value></data>
+  <data name="SetupRowDetail" xml:space="preserve"><value>Lisans: {0} · İndirme: {1} · Sürüm {2}</value></data>
+  <data name="SetupRowRequired" xml:space="preserve"><value>Zorunlu</value></data>
+  <data name="SetupLicense" xml:space="preserve"><value>Her bileşen resmi kaynağından indirilir, ajana gömülü SHA-256 ile doğrulanır ve satırında yazan açık kaynak lisansıyla kullanılır. Doğrulamadan geçmeyen dosya kurulmaz.</value></data>
+  <data name="SetupAccept" xml:space="preserve"><value>Okudum ve kabul ediyorum</value></data>
+  <data name="SetupSpace" xml:space="preserve"><value>Gereken: {0} GB, Boş: {1} GB</value></data>
+  <data name="SetupReasonOffline" xml:space="preserve"><value>İnternet bağlantısı yok. Bağlantı kurulunca kurulumu başlatabilirsiniz.</value></data>
+  <data name="SetupReasonDisk" xml:space="preserve"><value>Diskte yeterli yer yok.</value></data>
+  <data name="SetupReasonLicense" xml:space="preserve"><value>Başlatmak için lisans bilgisini okuyup onaylayın.</value></data>
+  <data name="SetupStart" xml:space="preserve"><value>Kurulumu başlat</value></data>
+  <data name="SetupRetry" xml:space="preserve"><value>Tekrar dene</value></data>
+  <data name="SetupReport" xml:space="preserve"><value>Hatayı bildir</value></data>
+  <data name="SetupRepair" xml:space="preserve"><value>Onar</value></data>
+  <data name="SetupProgressName" xml:space="preserve"><value>Kurulum ilerlemesi</value></data>
+  <data name="SetupLogName" xml:space="preserve"><value>Yapılan işler</value></data>
+  <data name="SetupCurrent" xml:space="preserve"><value>Şu an {0} kuruluyor</value></data>
+  <data name="SetupDone" xml:space="preserve"><value>Kurulum tamamlandı · Hazır</value></data>
+  <data name="SetupChecking" xml:space="preserve"><value>Hazır denetimi yapılıyor…</value></data>
+  <data name="SetupStopped" xml:space="preserve"><value>Kurulum durdu. Hatalı bileşenleri tekrar deneyebilirsiniz.</value></data>
+  <data name="SetupConfirm" xml:space="preserve"><value>Kurulum sürüyor, arka planda devam etsin mi?</value></data>
+  <data name="SetupYes" xml:space="preserve"><value>Evet</value></data>
+  <data name="SetupNo" xml:space="preserve"><value>Hayır</value></data>
+  <data name="SetupTrayProgress" xml:space="preserve"><value>Kuruluyor: %{0}</value></data>
+  <data name="StatusWaiting" xml:space="preserve"><value>Bekliyor</value></data>
+  <data name="StatusDownloading" xml:space="preserve"><value>İndiriliyor</value></data>
+  <data name="StatusVerifying" xml:space="preserve"><value>Doğrulanıyor</value></data>
+  <data name="StatusInstalling" xml:space="preserve"><value>Kuruluyor</value></data>
+  <data name="StatusInstalled" xml:space="preserve"><value>Kuruldu</value></data>
+  <data name="StatusSkipped" xml:space="preserve"><value>Atlandı</value></data>
+  <data name="StatusFailed" xml:space="preserve"><value>Hata — {0}</value></data>
+  <data name="StatusNeedsRepair" xml:space="preserve"><value>Onarılmalı</value></data>
+  <data name="FailureNoInternet" xml:space="preserve"><value>İnternet bağlantısı koptu</value></data>
+  <data name="FailureDownload" xml:space="preserve"><value>Dosya indirilemedi</value></data>
+  <data name="FailureVerify" xml:space="preserve"><value>Dosya doğrulanamadı</value></data>
+  <data name="FailureDisk" xml:space="preserve"><value>Diskte yeterli yer yok</value></data>
+  <data name="FailureInstall" xml:space="preserve"><value>Kurulum tamamlanamadı</value></data>
+  <data name="FailureReadyCheck" xml:space="preserve"><value>Ajan kurulumu eksik: {0}</value></data>
+  <data name="LineStarted" xml:space="preserve"><value>Kurulum başladı</value></data>
+  <data name="LineDownloading" xml:space="preserve"><value>{0} indiriliyor</value></data>
+  <data name="LineVerifying" xml:space="preserve"><value>{0} doğrulanıyor</value></data>
+  <data name="LineInstalling" xml:space="preserve"><value>{0} kuruluyor</value></data>
+  <data name="LineInstalled" xml:space="preserve"><value>{0} kuruldu</value></data>
+  <data name="LineFailed" xml:space="preserve"><value>{0}: Hata — {1}</value></data>
+  <data name="LineRetrying" xml:space="preserve"><value>{0} indirilemedi, yeniden deneniyor ({1}/{2})</value></data>
+  <data name="LineMirror" xml:space="preserve"><value>{0} resmi kaynaktan indirilemedi, yedek sunucudan indiriliyor</value></data>
+  <data name="SetupReportSummary" xml:space="preserve"><value>Kurulum hatası: {0} — {1}</value></data>
+  <data name="PurposeNode" xml:space="preserve"><value>Video şablonlarını çalıştıran JavaScript ortamı</value></data>
+  <data name="PurposeFfmpeg" xml:space="preserve"><value>Video render motoru (kodlama ve birleştirme)</value></data>
+  <data name="PurposeChromium" xml:space="preserve"><value>Video karelerini çizen başsız tarayıcı</value></data>
 </root>

@@ -20,6 +20,7 @@
           <Color x:Key="KonseptBorder">#E2C9A8</Color>
           <Color x:Key="KonseptPrimary">#B85A1A</Color>
           <Color x:Key="KonseptOnPrimary">#FFFFFF</Color>
+          <Color x:Key="KonseptError">#A1261B</Color>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
           <Color x:Key="KonseptBg">#1E1410</Color>
@@ -30,6 +31,7 @@
           <Color x:Key="KonseptBorder">#5A4030</Color>
           <Color x:Key="KonseptPrimary">#E8772E</Color>
           <Color x:Key="KonseptOnPrimary">#1E1410</Color>
+          <Color x:Key="KonseptError">#FF8A80</Color>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
 
@@ -47,6 +49,11 @@
       <SolidColorBrush x:Key="KonseptWindowBackground" Color="{DynamicResource KonseptBg}" />
       <SolidColorBrush x:Key="KonseptWindowForeground" Color="{DynamicResource KonseptText}" />
       <SolidColorBrush x:Key="KonseptAccentBrush" Color="{DynamicResource KonseptPrimary}" />
+      <!-- Kurulum ekranı (spec 0009 Req 13, 23): hata satırı kırmızı + "Hata" yazısı; yüzey ve kenarlık paletten. -->
+      <SolidColorBrush x:Key="KonseptErrorBrush" Color="{DynamicResource KonseptError}" />
+      <SolidColorBrush x:Key="KonseptSurfaceBrush" Color="{DynamicResource KonseptSurface}" />
+      <SolidColorBrush x:Key="KonseptBorderBrush" Color="{DynamicResource KonseptBorder}" />
+      <SolidColorBrush x:Key="KonseptMutedBrush" Color="{DynamicResource KonseptTextMuted}" />
       <Color x:Key="SystemAccentColor">#B85A1A</Color>
     </ResourceDictionary>
   </Application.Resources>

@@ -30,6 +30,8 @@ public sealed partial class App : Avalonia.Application
     private IErrorReportCenter? _reports;
     private IDesktopNotifier? _notifier;
     private int _pending;
+    private ISetupCoordinator? _setup;
+    private CancellationTokenSource? _setupStop;
 
     /// <summary>Gets or sets bileşim (testte sahte bileşenlerle değiştirilebilir).</summary>
     internal AgentComposition? Composition { get; set; }
@@ -48,6 +50,12 @@ public sealed partial class App : Avalonia.Application
 
     /// <summary>Gets açık hata uyarısı penceresi; yoksa <c>null</c>.</summary>
     internal ErrorAlertWindow? AlertWindow { get; private set; }
+
+    /// <summary>Gets açık kurulum ekranı; kurulum bittiyse ya da gerekmediyse <c>null</c> (spec 0009).</summary>
+    internal SetupWindow? SetupWindow { get; private set; }
+
+    /// <summary>Gets tray ikonunun ipucu (testler okur).</summary>
+    internal string? TrayToolTip => _trayIcon?.ToolTipText;
 
     /// <summary>Gets a value indicating whether tray ikonunda bekleyen bildirim işareti var.</summary>
     internal bool TrayMarkerShown { get; private set; }
@@ -76,7 +84,17 @@ public sealed partial class App : Avalonia.Application
             window.Attach(Composition);
             AttachTrayStatus(Composition);
             desktop.MainWindow = window;
-            window.Show();
+
+            // İlk kurulum (spec 0009 Req 2, 19–20): bileşenler eksik ya da onarılmalıysa önce kurulum ekranı; değilse 0001'deki gibi.
+            // Bütünlük denetimi kısa (yalnızca kurulu exe'lerin hash'i); motor ConfigureAwait(false) kullanır, UI iş parçacığı kilitlenmez.
+            if (Composition.Setup is { } setup && setup.InspectAsync(CancellationToken.None).GetAwaiter().GetResult())
+            {
+                ShowSetup(setup, Composition.Reports);
+            }
+            else
+            {
+                window.Show();
+            }
             if (Composition.Reports is { } reports)
             {
                 AttachErrorReports(reports, Composition.Notifier ?? new WindowsBalloonNotifier(() => window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero));
@@ -103,12 +121,61 @@ public sealed partial class App : Avalonia.Application
         }
     }
 
+    /// <summary>Kurulum ekranını açar ve tray ipucunu kurulum ilerlemesine bağlar (spec 0009 Req 16).</summary>
+    /// <param name="setup">Kurulum motoru (önceden denetlenmiş).</param>
+    /// <param name="reports">Hata bildirimi merkezi.</param>
+    /// <returns>Pencere.</returns>
+    internal SetupWindow ShowSetup(ISetupCoordinator setup, IErrorReportCenter? reports)
+    {
+        _setup = setup ?? throw new ArgumentNullException(nameof(setup));
+        _setupStop = new CancellationTokenSource();
+        var window = new SetupWindow();
+        window.Attach(setup, reports, _setupStop.Token);
+        window.Completed += (_, _) => CompleteSetup();
+        setup.Changed += (_, _) => Dispatcher.UIThread.Post(UpdateTrayMarker);
+        SetupWindow = window;
+        window.Show();
+        return window;
+    }
+
+    /// <summary>
+    /// Kurulum tamamlandı · Hazır (spec 0009 Req 18): kurulum ekranı kapanır; ajan eşleşmemişse eşleştirme adımı (0012, durum
+    /// penceresindeki kod) açılır, eşleşmişse ajan tray'de kalır.
+    /// </summary>
+    /// <returns>Eşleştirme adımı açıldıysa <c>true</c>.</returns>
+    internal bool CompleteSetup()
+    {
+        SetupWindow?.CloseForGood();
+        SetupWindow = null;
+        UpdateTrayMarker();
+        if (!NeedsPairing(Composition))
+        {
+            return false;
+        }
+
+        ShowMainWindow();
+        return true;
+    }
+
+    /// <summary>Kurulum sonrası eşleştirme adımı gerekir mi (oturum akışı var ve eşleşmemiş).</summary>
+    /// <param name="composition">Bileşim.</param>
+    /// <returns>Gerekir mi.</returns>
+    internal static bool NeedsPairing(AgentComposition? composition) =>
+        composition?.Session is { } session && session.Current.State != AgentSessionState.Paired;
+
     /// <summary>"Çıkış": bağlantıyı kapatır ve uygulamayı sonlandırır.</summary>
     /// <returns>Görev.</returns>
     internal async Task ExitAsync()
     {
         try
         {
+            // Kurulum sürüyorsa güvenli durdur (spec 0009 Req 16): yarım bileşenin dosyaları silinir, tamamlananlar korunur.
+            if (_setupStop is not null && SetupWindow?.Running is { } running)
+            {
+                await _setupStop.CancelAsync().ConfigureAwait(true);
+                await running.ConfigureAwait(true);
+            }
+
             if (Composition is not null)
             {
                 if (Composition.Session is { } session)
@@ -228,7 +295,9 @@ public sealed partial class App : Avalonia.Application
         if (_trayIcon is not null)
         {
             _trayIcon.Icon = new WindowIcon(AssetLoader.Open(new Uri(TrayMarkerShown ? TrayAlertIconUri : TrayIconUri)));
-            _trayIcon.ToolTipText = TrayMarkerShown ? AgentText.TrayAlertTooltip : AgentText.AppTitle;
+            _trayIcon.ToolTipText = _setup?.IsRunning == true
+                ? string.Format(CultureInfo.CurrentCulture, AgentText.SetupTrayProgress, _setup.Percent)
+                : TrayMarkerShown ? AgentText.TrayAlertTooltip : AgentText.AppTitle;
         }
 
         if (TrayPendingItem is not null)
@@ -282,6 +351,13 @@ public sealed partial class App : Avalonia.Application
 
     private void ShowMainWindow()
     {
+        if (SetupWindow is { } setupWindow)
+        {
+            setupWindow.Show();
+            setupWindow.Activate();
+            return;
+        }
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } window })
         {
             window.Show();
