@@ -76,7 +76,13 @@ public static class IdentityModule
         services.AddScoped<IAgentPairingService, AgentPairingService>();
 
         // İlk admin (spec 0011 Req 5): ayar her açılışta okunur; açılış senkronu arka planda rolleri ayara eşitler.
-        services.AddSingleton(new IdentityOptions { AdminEmail = configuration[IdentityOptions.AdminEmailConfigurationKey] });
+        // Model yetkileri (spec 0013 Req 2): ayar yoksa her rol tüm modelleri kullanır; kısıtlama yalnızca ayarla (ekran yok).
+        services.AddSingleton(new IdentityOptions
+        {
+            AdminEmail = configuration[IdentityOptions.AdminEmailConfigurationKey],
+            UserModels = IdentityOptions.ParseModelList(configuration["Identity:ModelPermissions:User"]),
+            AdminModels = IdentityOptions.ParseModelList(configuration["Identity:ModelPermissions:Admin"]),
+        });
         services.AddScoped<IAdminRoleSync, AdminRoleSync>();
         services.AddScoped<IAdminOverviewService, AdminOverviewService>();
         services.AddHostedService<AdminRoleSyncHostedService>();

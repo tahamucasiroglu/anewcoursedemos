@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Konsept.Modules.Identity.Application;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Identity.Domain.Rules;
 using Konsept.Shared.Infrastructure.Http;
@@ -13,9 +14,12 @@ namespace Konsept.Modules.Identity.Infrastructure.Authentication;
 /// Aynı sorgu kullanıcının o anki rolünü döndürür; principal'ın yetki claim'leri (<see cref="AuthPolicies.PermissionClaim"/>)
 /// yalnızca bu rolden kurulur, token'dan gelen aynı adlı claim'ler silinir (spec 0011, plan Risk 1). Rol değişikliği bir
 /// sonraki istekte geçerlidir. Çerçeve adaptörü; karar <see cref="ISessionService.ValidateSessionAsync"/>'tedir.
+/// Model kullanma yetkileri (<c>model.use:…</c>, spec 0013) aynı yerde <see cref="RoleModelPermissions"/>'tan eklenir; oturum
+/// yanıtının yetki listesine girmezler (yalnızca Api'nin çağrı kapısı okur).
 /// </summary>
 /// <param name="sessions">Oturum servisi.</param>
-public sealed class SessionValidatingJwtEvents(ISessionService sessions) : JwtBearerEvents
+/// <param name="options">Identity ayarları (rol başına model listesi).</param>
+public sealed class SessionValidatingJwtEvents(ISessionService sessions, IdentityOptions options) : JwtBearerEvents
 {
     /// <inheritdoc />
     public override async Task TokenValidated(TokenValidatedContext context)
@@ -43,7 +47,8 @@ public sealed class SessionValidatingJwtEvents(ISessionService sessions) : JwtBe
             }
         }
 
-        foreach (var permission in RolePermissions.For(validation.Role))
+        var models = RoleModelPermissions.For(validation.Role, options.UserModels, options.AdminModels);
+        foreach (var permission in RolePermissions.For(validation.Role).Concat(models))
         {
             identity.AddClaim(new Claim(AuthPolicies.PermissionClaim, permission));
         }

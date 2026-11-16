@@ -82,4 +82,19 @@ public sealed class RoleRulesTests
         match.SyncAdminRole(AdminEmailPolicy.NormalizedAdminEmail(" ")).ShouldBeTrue();
         match.Role.ShouldBe(Role.User);
     }
+
+    /// <summary>
+    /// Spec 0013 AC-2: ayar yoksa her iki rol de tüm modellere yetkilidir (<c>model.use:*</c>); ayarla rol yalnızca listedeki modellere
+    /// daraltılır; bilinmeyen rol hiçbir modele yetkili değildir. Model yetkileri rol yetkilerinden (<c>admin.panel</c>) ayrıdır.
+    /// </summary>
+    [Fact]
+    public void RoleModelPermissions_DefaultAll_ConfiguredRestricts()
+    {
+        RoleModelPermissions.For(Role.User, [], []).ShouldBe(["model.use:*"]);
+        RoleModelPermissions.For(Role.Admin, null, null).ShouldBe(["model.use:*"]);
+        RoleModelPermissions.For(Role.User, ["openai/gpt-5-mini", "glm/glm-4.6"], []).ShouldBe(["model.use:openai/gpt-5-mini", "model.use:glm/glm-4.6"]);
+        RoleModelPermissions.For(Role.Admin, ["openai/gpt-5-mini"], []).ShouldBe(["model.use:*"]);
+        RoleModelPermissions.For((Role)99, [], []).ShouldBeEmpty();
+        Permissions.ModelUseAll.ShouldBe("model.use:*");
+    }
 }

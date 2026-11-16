@@ -19,4 +19,13 @@ public sealed class ProviderEntry
 
     /// <summary>Gets key'in gönderildiği başlık biçimi.</summary>
     public ProviderAuthStyle AuthStyle { get; init; }
+
+    /// <summary>Gets metin çağrısı ucu (spec 0013); yoksa <c>null</c> (sağlayıcı çağrılamaz).</summary>
+    public Uri? ChatUrl { get; init; }
+
+    /// <summary>Gets görsel üretim ucu; yoksa <c>null</c>.</summary>
+    public Uri? ImageUrl { get; init; }
+
+    /// <summary>Gets çağrı API biçimi.</summary>
+    public ProviderDialect Dialect { get; init; }
 }

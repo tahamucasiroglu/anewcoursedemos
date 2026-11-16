@@ -15,6 +15,12 @@ public sealed class ModelEntry
     /// <summary>Gets bağlı olduğu sağlayıcının kimliği.</summary>
     public required string ProviderId { get; init; }
 
+    /// <summary>Gets sağlayıcı API'sindeki model adı (ör. <c>claude-sonnet-4-5</c>); yoksa kimliğin ilk <c>/</c>'den sonrası.</summary>
+    public string? ApiModel { get; init; }
+
+    /// <summary>Gets sağlayıcı API'sine gönderilecek model adı.</summary>
+    public string ProviderModelName => ApiModel ?? (Id.IndexOf('/', StringComparison.Ordinal) is var i and >= 0 ? Id[(i + 1)..] : Id);
+
     /// <summary>Gets görünen ad.</summary>
     public required string Name { get; init; }
 
