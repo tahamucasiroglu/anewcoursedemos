@@ -78,6 +78,12 @@ konu önerisi, konsept, anlamca tekrar denetimi → `Review`), Günlük olayı M
 Eşikler ve durak kelimeler gömülü `Rules/concept-rules.json`. Uçlar: `GET api/concepts/work`, `POST api/concepts/{topics,from-topics,
 from-idea,jobs/stop,approve,unapprove}`, `GET api/concepts[/{id}]`. Web: `concept-work.js` + `/konsept-uretim/…`, `/konseptler/…`
 (süren iş varken 2 sn yoklama). Web araması ve kaynak listesi yok (B-91).
+**0015 düzenleme döngüsü:** `IConceptEditService` — `POST api/concepts/{id}/scenes` (elle düzenleme, çağrısız; yalnızca Üretildi/Onaylandı,
+sahne sayısı aynı) · `POST {id}/regenerate` (talimatla yeniden üretim, arka planda `IConceptJobLauncher.LaunchRevision`) · `GET {id}/revision` ·
+`POST {id}/revision/{approve,discard}`. Revizyon Api belleğindeki `IConceptRevisionRegistry`'dedir (kullanıcı × konsept başına tek;
+süren varken ikinci istek 409 — G-3; Api yeniden başlarsa revizyon kaybolur, konsept değişmez). Çağrı 0014'ün konsept talimatıyla,
+`ModelRole.ConceptGeneration` + profil; mevcut konsept ve talimat istemde veri bloklarında; başlık değişmez. Web: `concept-edit.js`
+(`concept-work.js` ile `concept:before-open` / `concept:opened` / `concept:changed` olayları), `/konseptler/{id}/…`, `/?konsept=<id>` bağlantısı.
 
 **Monitoring — hata bildirimleri (0022):** `monitoring.error_reports` (sıralı `Number`, kaynak web/ajan/API, durum "Yeni", süresiz). Web: `POST api/error-reports` + `GET api/error-reports/preview` (oturumlu; son 20 Günlük kaydını ve versiyonu sunucu ekler; kullanıcı başına saatte 10, web + ajan). Okuma `GET api/error-reports/{number}` yalnızca `admin.panel` (listeleme 0025). Ajan bildirimi ayrı HTTP ucu değil, kimlikli hub metodu `ReportError` (+ hesap için `WhoAmI`); AgentGateway Monitoring.Contracts `IErrorReportSubmitter`'a iletir. API'nin beklenmeyen istisnaları Monitoring'deki `IExceptionHandler` ile kaynak "API" kaydı olur (ProblemDetails sürer; 4xx kayıt oluşturmaz). Ajan bekleyen bildirimleri `pending-reports.json`'da (en çok 20, oluştuğu hesaba bağlı) tutar.
 
