@@ -91,12 +91,13 @@ public sealed class AgentPairingPageTests
         noCsrf.Status.ShouldBe(HttpStatusCode.BadRequest);
         await factory.Api.Received(1).AgentPairingAsync("lookup", "ABCD-2345", Arg.Any<string?>(), Arg.Any<CancellationToken>()); // TestServer'da uzak IP yok; iletim aşağıda ApiClient düzeyinde.
 
-        // ApiClient: istemci IP'si servis anahtarıyla gider; kod yalnızca Web → Api yolunda taşınır (tarayıcı adresinde değil).
+        // ApiClient: istemci IP'si servis anahtarıyla gider; kod hiçbir adreste değil, yalnızca gövdede (review r1 M-2).
         var handler = new RecordingHandler("""{"code":"ABCD-2345","machineName":"TAHA-PC","agentVersion":"0.5.0","expiresAt":"2026-11-16T09:10:00Z"}""");
         var api = new KonseptApiClient(new HttpClient(handler) { BaseAddress = new Uri("http://api.test/") }, new ApiClientOptions("svc-key"));
         (await api.AgentPairingAsync("approve", " abcd-2345 ", "192.168.1.20", ct)).IsSuccess.ShouldBeTrue();
         handler.Requests[0].Method.ShouldBe(HttpMethod.Post);
-        handler.Requests[0].RequestUri!.AbsolutePath.ShouldBe("/api/agent-pairing/abcd-2345/approve");
+        handler.Requests[0].RequestUri!.AbsolutePath.ShouldBe("/api/agent-pairing/approve");
+        handler.Requests[0].RequestUri!.ToString().ShouldNotContain("abcd", Case.Insensitive);
         handler.Requests[0].Headers.GetValues(ClientIpHeader.Name).ShouldBe(["192.168.1.20"]);
     }
 

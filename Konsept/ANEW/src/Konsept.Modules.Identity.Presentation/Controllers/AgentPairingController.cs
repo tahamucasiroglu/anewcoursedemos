@@ -45,29 +45,29 @@ public sealed class AgentPairingController : ControllerBase
         _pairing.GetStatusAsync(request, cancellationToken).ToActionResult();
 
     /// <summary>Kodun cihazını gösterir.</summary>
-    /// <param name="code">Kod.</param>
+    /// <param name="request">Kod (yalnızca gövdede; adreste değil — istek loguna düşmez).</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>200 cihaz · 404 kod yok · 409 süresi dolmuş/kullanılmış · 429.</returns>
     [EnableRateLimiting(AuthPolicies.AgentPairingRateLimit)]
-    [HttpGet("{code}")]
-    public Task<IActionResult> Lookup(string code, CancellationToken cancellationToken) =>
-        _pairing.LookupAsync(code, cancellationToken).ToActionResult();
+    [HttpPost("lookup")]
+    public Task<IActionResult> Lookup([FromBody] PairingCodeRequest request, CancellationToken cancellationToken) =>
+        _pairing.LookupAsync(request?.Code, cancellationToken).ToActionResult();
 
     /// <summary>Kodu onaylar; ajan isteği yapan kullanıcının olur.</summary>
-    /// <param name="code">Kod.</param>
+    /// <param name="request">Kod (yalnızca gövdede; adreste değil — istek loguna düşmez).</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>200 cihaz · 404 · 409 · 429.</returns>
     [EnableRateLimiting(AuthPolicies.AgentPairingRateLimit)]
-    [HttpPost("{code}/approve")]
-    public Task<IActionResult> Approve(string code, CancellationToken cancellationToken) =>
-        _pairing.ApproveAsync(code, cancellationToken).ToActionResult();
+    [HttpPost("approve")]
+    public Task<IActionResult> Approve([FromBody] PairingCodeRequest request, CancellationToken cancellationToken) =>
+        _pairing.ApproveAsync(request?.Code, cancellationToken).ToActionResult();
 
     /// <summary>Kodu reddeder.</summary>
-    /// <param name="code">Kod.</param>
+    /// <param name="request">Kod (yalnızca gövdede; adreste değil — istek loguna düşmez).</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>200 cihaz · 404 · 409 · 429.</returns>
     [EnableRateLimiting(AuthPolicies.AgentPairingRateLimit)]
-    [HttpPost("{code}/reject")]
-    public Task<IActionResult> Reject(string code, CancellationToken cancellationToken) =>
-        _pairing.RejectAsync(code, cancellationToken).ToActionResult();
+    [HttpPost("reject")]
+    public Task<IActionResult> Reject([FromBody] PairingCodeRequest request, CancellationToken cancellationToken) =>
+        _pairing.RejectAsync(request?.Code, cancellationToken).ToActionResult();
 }

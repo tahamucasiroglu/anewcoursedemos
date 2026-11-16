@@ -217,6 +217,7 @@ public sealed class AgentOwnershipApiTests : IClassFixture<FastApiFactory>
         }
 
         _factory.Events.Events.Where(e => e.Type == "identity.agent_paired").ShouldAllBe(e => !e.Message.Contains(code));
+        logText.ShouldNotContain(code); // kod adreste taşınmaz, logda yok (review r1 M-2).
     }
 
     private static async Task<JsonElement> StatusAsync(HttpClient client, CancellationToken ct) =>

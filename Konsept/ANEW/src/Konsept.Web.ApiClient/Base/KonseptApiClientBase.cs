@@ -65,13 +65,11 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     /// <inheritdoc />
     public Task<Result<PairingDeviceResponse>> AgentPairingAsync(string action, string? code, string? clientIp, CancellationToken cancellationToken)
     {
-        var path = "api/agent-pairing/" + Uri.EscapeDataString(string.IsNullOrWhiteSpace(code) ? "-" : code.Trim());
-        var request = action switch
-        {
-            "lookup" => new HttpRequestMessage(HttpMethod.Get, path),
-            "approve" or "reject" => new HttpRequestMessage(HttpMethod.Post, path + "/" + action),
-            _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Bilinmeyen eşleştirme işlemi."),
-        };
+        // Kod yalnızca gövdede gider (adreste olsaydı Api istek loguna düz yazılırdı, review r1 M-2).
+        var path = action is "lookup" or "approve" or "reject"
+            ? "api/agent-pairing/" + action
+            : throw new ArgumentOutOfRangeException(nameof(action), action, "Bilinmeyen eşleştirme işlemi.");
+        var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = JsonContent.Create(new { code = code?.Trim() }, options: Json) };
         return SendAsync<PairingDeviceResponse>(WithClientIp(request, clientIp), cancellationToken);
     }
 

@@ -48,7 +48,7 @@ public static class AgentPairing
         return (body.GetProperty("state").GetString()!, token);
     }
 
-    /// <summary>Web tarafı çağrısı: sorgu (GET), onay ya da ret (POST).</summary>
+    /// <summary>Web tarafı çağrısı: sorgu, onay ya da ret (POST, kod gövdede).</summary>
     /// <param name="client">Kullanıcının Bearer istemcisi.</param>
     /// <param name="services">Api servisleri.</param>
     /// <param name="action"><c>lookup</c>, <c>approve</c> ya da <c>reject</c>.</param>
@@ -57,9 +57,7 @@ public static class AgentPairing
     /// <param name="ip">İletilecek istemci IP'si (verilmezse benzersiz).</param>
     /// <returns>Cevap.</returns>
     public static Task<HttpResponseMessage> DecideAsync(HttpClient client, IServiceProvider services, string action, string code, CancellationToken cancellationToken, string? ip = null) =>
-        action == "lookup"
-            ? SendAsync(client, services, HttpMethod.Get, "/api/agent-pairing/" + Uri.EscapeDataString(code), null, cancellationToken, ip)
-            : SendAsync(client, services, HttpMethod.Post, $"/api/agent-pairing/{Uri.EscapeDataString(code)}/{action}", null, cancellationToken, ip);
+        SendAsync(client, services, HttpMethod.Post, "/api/agent-pairing/" + action, new { code }, cancellationToken, ip);
 
     /// <summary>Tam eşleştirme: kod al → kullanıcı onaylar → ajan belirtecini alır.</summary>
     /// <param name="userClient">Kodu onaylayacak kullanıcının istemcisi.</param>
