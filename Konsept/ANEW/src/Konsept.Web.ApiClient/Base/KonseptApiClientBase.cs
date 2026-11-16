@@ -111,6 +111,14 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
     public Task<Result<ProfileResponse>> SelectProfileAsync(Guid? id, CancellationToken cancellationToken) =>
         SendAsync<ProfileResponse>(new HttpRequestMessage(HttpMethod.Put, "api/profiles/selected") { Content = JsonContent.Create(new { profileId = id }, options: Json) }, cancellationToken);
 
+    /// <inheritdoc />
+    public Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken) =>
+        SendAsync<JournalDayResponse>(
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                $"api/journal?date={Uri.EscapeDataString(date ?? string.Empty)}&filter={Uri.EscapeDataString(filter ?? string.Empty)}&skip={Math.Max(0, skip).ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
+            cancellationToken);
+
     /// <summary>İsteği API'ye gönderir.</summary>
     /// <param name="request">HTTP isteği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

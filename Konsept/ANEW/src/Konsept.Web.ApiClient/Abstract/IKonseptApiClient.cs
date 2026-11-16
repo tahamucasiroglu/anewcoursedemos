@@ -125,4 +125,12 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Seçilen profil ya da hata.</returns>
     Task<Result<ProfileResponse>> SelectProfileAsync(Guid? id, CancellationToken cancellationToken);
+
+    /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
+    /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
+    /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>
+    /// <param name="skip">Atlanacak kayıt sayısı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Gün sayfası ya da hata.</returns>
+    Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken);
 }

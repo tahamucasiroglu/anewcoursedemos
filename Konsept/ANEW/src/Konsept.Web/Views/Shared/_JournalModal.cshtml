@@ -1,0 +1,29 @@
+@* Günlük geçmişi modalı (spec 0021 Req 5–6): gün başlıklı, en yenisi üstte, 50'şer; önceki/sonraki gün, seviye filtresi.
+   Bugünde "Sonraki gün", ilk günde "Önceki gün" pasiftir. Kayıt metinleri düz metin yazılır (journal.js, textContent). *@
+<div class="dialog-backdrop" id="journal-modal" hidden
+     data-text-loading="@UiText.JournalLoading" data-text-day-empty="@UiText.JournalDayEmpty"
+     data-text-load-failed="@UiText.JournalLoadFailed" data-text-more="@UiText.JournalMore">
+    <div class="dialog journal-modal" role="dialog" aria-modal="true" aria-labelledby="journal-modal-title">
+        <div class="journal-modal__head">
+            <h2 class="journal-modal__title" id="journal-modal-title">@UiText.JournalHistoryTitle</h2>
+            <button type="button" class="icon-button" id="journal-modal-close" aria-label="@UiText.JournalClose" title="@UiText.JournalClose">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+        </div>
+        <div class="journal-modal__bar">
+            <button type="button" class="button" id="journal-prev">@UiText.JournalPrevDay</button>
+            <h3 class="journal-modal__day" id="journal-day"></h3>
+            <button type="button" class="button" id="journal-next">@UiText.JournalNextDay</button>
+            <label class="journal-modal__filter-label" for="journal-filter">@UiText.JournalFilter</label>
+            <select class="field__input journal-modal__filter" id="journal-filter">
+                <option value="all">@UiText.JournalFilterAll</option>
+                <option value="warning">@UiText.JournalFilterWarning</option>
+                <option value="error">@UiText.JournalFilterError</option>
+            </select>
+        </div>
+        <p class="journal-modal__status" id="journal-status" role="status"></p>
+        <button type="button" class="button" id="journal-retry" hidden>@UiText.JournalRetry</button>
+        <ol class="journal-list" id="journal-list"></ol>
+        <button type="button" class="button" id="journal-more" hidden>@UiText.JournalMore</button>
+    </div>
+</div>

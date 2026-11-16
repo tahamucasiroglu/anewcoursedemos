@@ -91,12 +91,24 @@
         @RenderBody()
     </main>
     <partial name="_ProfileModal" />
+    <partial name="_JournalModal" />
 
     <footer class="bottombar">
-        <div class="journal" id="journal" data-level="info">
+        @* Günlük şeridi (spec 0021): kullanıcının kendi son kaydı; tık/Enter geçmiş modalını açar. Seviye renkle birlikte ikon + metin
+           etiketiyle verilir. Yalnızca Uyarı/Hata/Kritik yeni kayıtlar ayrı polite alandan duyurulur (şeridin kendisi canlı bölge değil). *@
+        <button type="button" class="journal" id="journal" data-level="info" data-state="loading" title="@UiText.JournalOpenHint"
+                aria-haspopup="dialog" aria-controls="journal-modal"
+                data-text-loading="@UiText.JournalLoading" data-text-empty="@UiText.JournalEmpty" data-text-stale="@UiText.JournalStale"
+                data-text-warning="@UiText.JournalLevelWarning" data-text-error="@UiText.JournalLevelError"
+                data-text-critical="@UiText.JournalLevelCritical" data-text-unit-second="@UiText.JournalUnitSecond"
+                data-text-unit-minute="@UiText.JournalUnitMinute" data-text-unit-hour="@UiText.JournalUnitHour">
             <span class="journal__label">@UiText.Journal:</span>
-            <span class="journal__text" id="journal-text">@UiText.JournalEmpty</span>
-        </div>
+            <span class="journal__level" id="journal-level" hidden></span>
+            <span class="journal__text" id="journal-text">@UiText.JournalLoading</span>
+            <span class="journal__profile" id="journal-profile" hidden></span>
+            <span class="journal__stale" id="journal-stale" hidden>@UiText.JournalStale</span>
+        </button>
+        <span class="visually-hidden" id="journal-announce" role="status" aria-live="polite"></span>
         <div class="status" id="system-status" role="status" aria-live="polite" aria-label="@UiText.StatusLabel"
              data-text-loading="@UiText.StatusLoading" data-text-api-ok="@UiText.StatusApiOk"
              data-text-api-down="@UiText.StatusApiDown" data-text-db-ok="@UiText.StatusDbOk"

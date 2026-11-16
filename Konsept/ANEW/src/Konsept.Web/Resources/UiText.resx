@@ -28,7 +28,28 @@
   <data name="PublishingComingSoon" xml:space="preserve"><value>Çok yakında sizlerleyiz</value></data>
   <data name="ErrorPage" xml:space="preserve"><value>Beklenmeyen bir hata oluştu. Lütfen biraz sonra tekrar deneyin.</value></data>
   <data name="Journal" xml:space="preserve"><value>Günlük</value></data>
-  <data name="JournalEmpty" xml:space="preserve"><value>Henüz kayıt yok</value></data>
+  <data name="JournalEmpty" xml:space="preserve"><value>Henüz bir işlem yok</value></data>
+  <data name="JournalLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="JournalStale" xml:space="preserve"><value>Günlük güncellenemiyor</value></data>
+  <data name="JournalOpenHint" xml:space="preserve"><value>Günlük geçmişini aç</value></data>
+  <data name="JournalLevelWarning" xml:space="preserve"><value>Uyarı</value></data>
+  <data name="JournalLevelError" xml:space="preserve"><value>Hata</value></data>
+  <data name="JournalLevelCritical" xml:space="preserve"><value>Kritik</value></data>
+  <data name="JournalUnitSecond" xml:space="preserve"><value>sn</value></data>
+  <data name="JournalUnitMinute" xml:space="preserve"><value>dk</value></data>
+  <data name="JournalUnitHour" xml:space="preserve"><value>sa</value></data>
+  <data name="JournalHistoryTitle" xml:space="preserve"><value>Günlük geçmişi</value></data>
+  <data name="JournalPrevDay" xml:space="preserve"><value>Önceki gün</value></data>
+  <data name="JournalNextDay" xml:space="preserve"><value>Sonraki gün</value></data>
+  <data name="JournalFilter" xml:space="preserve"><value>Seviye</value></data>
+  <data name="JournalFilterAll" xml:space="preserve"><value>Tümü</value></data>
+  <data name="JournalFilterWarning" xml:space="preserve"><value>Uyarı</value></data>
+  <data name="JournalFilterError" xml:space="preserve"><value>Hata</value></data>
+  <data name="JournalDayEmpty" xml:space="preserve"><value>Bu günde işlem yok</value></data>
+  <data name="JournalLoadFailed" xml:space="preserve"><value>Günlük yüklenemedi</value></data>
+  <data name="JournalRetry" xml:space="preserve"><value>Tekrar dene</value></data>
+  <data name="JournalMore" xml:space="preserve"><value>Daha fazla</value></data>
+  <data name="JournalClose" xml:space="preserve"><value>Kapat</value></data>
   <data name="StatusLabel" xml:space="preserve"><value>Sistem durumu</value></data>
   <data name="StatusLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
   <data name="StatusApiOk" xml:space="preserve"><value>API ✓</value></data>

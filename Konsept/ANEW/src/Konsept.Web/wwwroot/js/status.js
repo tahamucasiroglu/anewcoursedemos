@@ -1,9 +1,10 @@
 // Durum alanı ve Günlük şeridi (spec 0001 Req 4–5, AC-4, AC-6, AC-8): 3 sn'de bir Ajax ile yoklanır.
 // Metinler resx'ten gelir (sayfadaki data-text-* öznitelikleri); burada sabit arayüz metni yoktur.
 import { get } from './api.js';
+import { markJournalStale, renderJournal } from './journal.js';
 
 export const POLL_INTERVAL_MS = 3000;
-const LEVELS = ['info', 'warning', 'error', 'critical'];
+export const BACKGROUND_POLL_INTERVAL_MS = 15000;
 
 function texts(box) {
   const d = box.dataset;
@@ -23,24 +24,8 @@ function set(el, text, state) {
   el.dataset.state = state;
 }
 
-/**
- * Günlük şeridinde son olayı gösterir; seviye rengi data-level ile.
- * @param {Document} doc Belge.
- * @param {{message:string, level:number, occurredAt:string}|null} event Son olay.
- * @param {string} emptyText Kayıt yokken metin.
- */
-export function renderJournal(doc, event, emptyText) {
-  const journal = doc.getElementById('journal');
-  const text = doc.getElementById('journal-text');
-  if (!event) {
-    text.textContent = emptyText;
-    journal.dataset.level = 'info';
-    return;
-  }
-  const time = new Date(event.occurredAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  text.textContent = `${time} — ${event.message}`;
-  journal.dataset.level = LEVELS[event.level] || 'info';
-}
+// Günlük şeridinin gösterimi journal.js'tedir (spec 0021); burada yalnızca durum cevabından beslenir.
+export { renderJournal };
 
 /**
  * Sistem durumunu ekrana yazar.
@@ -57,6 +42,7 @@ export function render(doc, status) {
   const pair = doc.getElementById('status-agent-pair');
 
   if (!status || status.apiAvailable === false) {
+    markJournalStale(doc, true); // Son bilinen kayıt kalır (spec 0021 AC-4).
     version.textContent = '';
     set(api, t.apiDown, 'error');
     set(db, '', 'unknown');
@@ -75,6 +61,11 @@ export function render(doc, status) {
   if (pair) {
     pair.hidden = connected;
   }
+  if (!status.databaseAvailable) {
+    markJournalStale(doc, true); // Veritabanı yokken kayıt okunamaz: son bilinen kayıt kalır.
+    return;
+  }
+  markJournalStale(doc, false);
   renderJournal(doc, status.lastEvent || null, t.journalEmpty);
 }
 
@@ -92,12 +83,26 @@ export async function refresh(doc) {
 }
 
 /**
- * Yoklamayı başlatır (hemen bir kez, sonra her 3 sn'de).
+ * Yoklamayı başlatır (spec 0021 Req 2): hemen bir kez; sekme önplandayken 3 sn'de bir, arka plandayken son istekten 15 sn geçince;
+ * sekme yeniden görünür olunca beklemeden.
  * @param {Document} doc Belge.
  * @param {{setInterval: Function}} [timers] Zamanlayıcı (testte sahte).
  * @returns {any} Zamanlayıcı kimliği.
  */
 export function startPolling(doc, timers = globalThis) {
-  refresh(doc);
-  return timers.setInterval(() => refresh(doc), POLL_INTERVAL_MS);
+  let last = 0;
+  const tick = (force) => {
+    if (!force && doc.hidden && Date.now() - last < BACKGROUND_POLL_INTERVAL_MS) {
+      return;
+    }
+    last = Date.now();
+    refresh(doc);
+  };
+  tick(true);
+  doc.addEventListener('visibilitychange', () => {
+    if (!doc.hidden) {
+      tick(true);
+    }
+  });
+  return timers.setInterval(() => tick(false), POLL_INTERVAL_MS);
 }
