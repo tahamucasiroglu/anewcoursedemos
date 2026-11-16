@@ -364,6 +364,43 @@ describe('Konseptler şeridi (spec 0005)', () => {
     expect(el('concept-settings-status').textContent).toBe('Kaydedildi');
   });
 
+  it('Review r2 R2-1: kuyrukta hata sonra başarı — hata mesajı ve sunucudaki değer; şerit kaydı uçuştayken model kaydı bekler', async () => {
+    await start();
+    const resolvers = [];
+    routes['POST /konsept-ayarlari/p1'] = () => {
+      const d = $.Deferred();
+      resolvers.push(d);
+      return d.promise();
+    };
+    el('concept-wordcheck').checked = true;
+    change(el('concept-wordcheck'));
+    const calm = document.querySelector('input[name="audience"][value="expert"]');
+    calm.checked = true;
+    change(calm);
+    resolvers[0].reject({ status: 500, responseJSON: {} });
+    await flush();
+    resolvers[1].resolve(settingsOf({ audience: 'expert' }));
+    await flush();
+    expect(el('concept-wordcheck').checked).toBe(false);
+    expect(group('audience')).toBe('L-expert');
+    expect(el('concept-settings-status').textContent).toBe('Kaydedilemedi, önceki seçim korundu. Biraz sonra tekrar deneyin.');
+
+    el('concept-wordcheck').checked = true;
+    change(el('concept-wordcheck'));
+    el('concept-models-open').click();
+    change(el('concept-model-topic'), GPT.id);
+    el('concept-models-close').click();
+    await flush();
+    expect(posts()).toHaveLength(3); // Model kaydı şerit kaydı bitene kadar gitmez.
+    resolvers[2].resolve(settingsOf({ wordCheck: true }));
+    await flush();
+    expect(posts()).toHaveLength(4);
+    expect(body(posts()[3])).toEqual({ models: [{ role: 'topic', modelId: GPT.id, effort: 'medium' }] });
+    resolvers[3].resolve(settingsOf({ wordCheck: true }));
+    await flush();
+    expect(modalShown()).toBe(false);
+  });
+
   it('AC-7: profil yokken "Profil ekle" üst bardaki + kontrolünü çalıştırır', () => {
     initConcepts(document);
     const plus = vi.fn();
