@@ -290,7 +290,7 @@ describe('Günlük geçmişi modalı (spec 0021)', () => {
     el('journal-prev').click();
     await flush();
     expect(el('journal-prev').disabled).toBe(true);
-    expect(el('journal-modal').contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).toBe(el('journal-modal-close'));
 
     document.body.focus();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
