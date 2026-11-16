@@ -1,5 +1,6 @@
 using System.Globalization;
 using Konsept.Modules.AiGateway.Application.Resources;
+using Konsept.Modules.AiGateway.Contracts.Dtos;
 using Konsept.Shared.Kernel.Enums;
 using Konsept.Shared.Kernel.Results;
 
@@ -18,7 +19,7 @@ public static class AiGatewayErrors
     public const string UnknownProviderCode = "ai.unknown_provider";
 
     /// <summary>Hata kodu: çağrı için key girilmemiş (spec 0013 Req 1).</summary>
-    public const string NoKeyCode = "ai.no_key";
+    public const string NoKeyCode = ModelCallErrorCodes.NoKey;
 
     /// <summary>Hata kodu: key çözülemiyor.</summary>
     public const string KeyUnreadableCode = "ai.key_unreadable";

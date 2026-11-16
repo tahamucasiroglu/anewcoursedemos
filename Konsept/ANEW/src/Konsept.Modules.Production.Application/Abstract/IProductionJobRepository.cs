@@ -75,4 +75,29 @@ public interface IProductionJobRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Durdurulan sayı.</returns>
     Task<int> StopAsync(Guid userId, Guid? profileId, DateTimeOffset at, CancellationToken cancellationToken);
+
+    /// <summary>İşin hat ilerlemesini yazar (spec 0017).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="jobId">İş.</param>
+    /// <param name="progress">İlerleme.</param>
+    /// <param name="at">Zaman (UTC).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    Task SetProgressAsync(Guid userId, Guid jobId, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken);
+
+    /// <summary>Durumu yalnızca iş <paramref name="from"/> durumundaysa değiştirir (tek koşullu ifade; spec 0017).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="jobId">İş.</param>
+    /// <param name="from">Beklenen durumlar.</param>
+    /// <param name="to">Yeni durum.</param>
+    /// <param name="at">Zaman (UTC).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Değiştiyse <c>true</c>.</returns>
+    Task<bool> TransitionAsync(
+        Guid userId, Guid jobId, IReadOnlyCollection<ProductionJobStatus> from, ProductionJobStatus to, DateTimeOffset at, CancellationToken cancellationToken);
+
+    /// <summary>Tüm kullanıcıların çalışan işleri (Üretiliyor, Ajan bekleniyor; hat worker'ı için).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>İşler.</returns>
+    Task<IReadOnlyList<ProductionJob>> ListRunningAsync(CancellationToken cancellationToken);
 }

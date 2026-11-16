@@ -1,4 +1,5 @@
 using Konsept.Modules.AgentGateway.Contracts.Abstract;
+using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Konsept.Modules.AiGateway.Contracts.Abstract;
 using Konsept.Modules.AiGateway.Contracts.Dtos;
 using Konsept.Modules.Concepts.Contracts.Abstract;
@@ -28,6 +29,7 @@ namespace Konsept.Modules.Production.Application.Base;
 /// <param name="components">Kurulu bileşenler.</param>
 /// <param name="user">İsteği yapan kullanıcı.</param>
 /// <param name="time">Saat.</param>
+/// <param name="pipeline">Hat bağlantıları (spec 0017): koşucu, çağıran kimliği, ajan, video kayıtları, sıra durumu.</param>
 public abstract class ProductionServiceBase(
     IProductionJobRepository jobs,
     IProductionSettingsRepository settingsStore,
@@ -36,7 +38,8 @@ public abstract class ProductionServiceBase(
     IModelDirectory models,
     IInstalledComponentsReader components,
     ICurrentUser user,
-    TimeProvider time) : IProductionService
+    TimeProvider time,
+    ProductionPipelineLinks pipeline) : IProductionService
 {
     /// <summary>Bir istekte sıraya alınabilecek en çok konsept.</summary>
     public const int MaxEnqueue = 500;
@@ -220,7 +223,7 @@ public abstract class ProductionServiceBase(
                     .Where(j => j.ProfileId == request.ProfileId && j.Status == ProductionJobStatus.Queued)
                     .OrderBy(j => j.Position)
                     .First();
-                return await StartJobAsync(userId, first, settings, [ProductionJobStatus.Queued]).ConfigureAwait(false);
+                return await StartJobAsync(userId, first, settings, [ProductionJobStatus.Queued]).ConfigureAwait(false) ?? await LaunchAsync(userId).ConfigureAwait(false);
             },
             cancellationToken);
     }
@@ -232,9 +235,15 @@ public abstract class ProductionServiceBase(
         return WithProfileAsync(
             request.ProfileId,
             async (userId, _) =>
-                await jobs.StopAsync(userId, request.ProfileId, time.GetUtcNow(), CancellationToken.None).ConfigureAwait(false) > 0
-                    ? null
-                    : ProductionErrors.NothingRunning,
+            {
+                if (await jobs.StopAsync(userId, request.ProfileId, time.GetUtcNow(), CancellationToken.None).ConfigureAwait(false) == 0)
+                {
+                    return ProductionErrors.NothingRunning;
+                }
+
+                pipeline.Runner.Cancel(userId); // Süren yerel aşama kesilir; süren online çağrı tamamlanır (spec 0017 Req 9).
+                return null;
+            },
             cancellationToken);
     }
 
@@ -256,9 +265,69 @@ public abstract class ProductionServiceBase(
                 }
 
                 var settings = await CurrentSettingsAsync(userId, job.ProfileId, ct).ConfigureAwait(false);
-                return await StartJobAsync(userId, job, settings, Resumable).ConfigureAwait(false);
+                return await StartJobAsync(userId, job, settings, Resumable).ConfigureAwait(false) ?? await LaunchAsync(userId).ConfigureAwait(false);
             },
             cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<ProducedVideoDto>>> ListVideosAsync(Guid profileId, CancellationToken cancellationToken)
+    {
+        if (user.UserId is not { } userId)
+        {
+            return Result<IReadOnlyList<ProducedVideoDto>>.Failure(ProductionErrors.SignInRequired);
+        }
+
+        if (await profiles.GetAsync(userId, profileId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return Result<IReadOnlyList<ProducedVideoDto>>.Failure(ProductionErrors.ProfileNotFound);
+        }
+
+        var list = await pipeline.Videos.ListAsync(userId, profileId, cancellationToken).ConfigureAwait(false);
+        return Result<IReadOnlyList<ProducedVideoDto>>.Success([.. list.Select(v => new ProducedVideoDto(v.Id, v.Title, v.EndedAt))]);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<VideoStreamDto>> OpenStreamAsync(Guid videoId, CancellationToken cancellationToken)
+    {
+        if (user.UserId is not { } userId)
+        {
+            return Result<VideoStreamDto>.Failure(ProductionErrors.SignInRequired);
+        }
+
+        // Yalnızca sahibinin videosu ve yalnızca sahibinin ajanı (BR-1, Req 21).
+        if (await pipeline.Videos.GetAsync(userId, videoId, cancellationToken).ConfigureAwait(false) is not { } video)
+        {
+            return Result<VideoStreamDto>.Failure(ProductionErrors.VideoNotFound);
+        }
+
+        var reply = await pipeline.Agents.OpenStreamAsync(userId, new AgentStreamRequest(video.Id, video.FileName), cancellationToken).ConfigureAwait(false);
+        return reply switch
+        {
+            null => Result<VideoStreamDto>.Failure(ProductionErrors.StreamAgentOffline),
+            { Url: { } url } => Result<VideoStreamDto>.Success(new VideoStreamDto(url)),
+            _ => Result<VideoStreamDto>.Failure(ProductionErrors.StreamFileMissing),
+        };
+    }
+
+    private static StageDto ToDto(StageProgress s) => new(
+        s.Stage switch
+        {
+            PipelineStage.Analysis => "analysis",
+            PipelineStage.Code => "code",
+            PipelineStage.Images => "images",
+            PipelineStage.Voice => "voice",
+            PipelineStage.Render => "render",
+            _ => "merge",
+        },
+        s.State switch
+        {
+            StageState.Running => "running",
+            StageState.Done => "done",
+            StageState.Skipped => "skipped",
+            StageState.Failed => "failed",
+            _ => "pending",
+        },
+        s.Device);
 
     private static ModelInfo? Check(IReadOnlyList<ModelInfo> listed, string? id, string kind, string? current, out Error? error)
     {
@@ -335,26 +404,27 @@ public abstract class ProductionServiceBase(
     private async Task<Error?> StartJobAsync(Guid userId, ProductionJob job, ProductionSettings settings, IReadOnlyCollection<ProductionJobStatus> from)
     {
         var now = time.GetUtcNow();
-        var fix = job.FixedSettings ?? new FixedJobSettings
-        {
-            Subtitles = settings.Subtitles && settings.AudioModel is not null,
-            ProgressBar = settings.ProgressBar,
-            CodeModel = settings.CodeModel,
-            CodeEffort = settings.CodeEffort,
-            Engine = settings.Engine,
-            ImageModel = settings.ImageModel,
-            AudioModel = settings.AudioModel,
-            Language = job.Language,
-            Format = job.Format,
-            TargetDurationSeconds = job.TargetDurationSeconds,
-            FixedAt = now,
-        };
+        var fix = JobFixing.Fix(job, settings, now);
         if (!await jobs.StartAsync(userId, job.Id, from, fix, now, CancellationToken.None).ConfigureAwait(false))
         {
             return ProductionErrors.StartBlocked(StartBlock.RunningElsewhere); // Bu arada başka iş başladı (tekil çalışan kısıtı).
         }
 
         await concepts.ChangeAsync(userId, job.ConceptId, ConceptQueueStage.Queued, ConceptQueueStage.Producing, CancellationToken.None).ConfigureAwait(false);
+        return null;
+    }
+
+    /// <summary>Sıra uyarısını kaldırır ve koşucuyu isteği yapanın kimliğiyle başlatır (spec 0017 Req 5, 11).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <returns>Her zaman <c>null</c> (hata yok).</returns>
+    private async Task<Error?> LaunchAsync(Guid userId)
+    {
+        await pipeline.Queue.SetAsync(new QueueState { UserId = userId, UpdatedAt = time.GetUtcNow() }, CancellationToken.None).ConfigureAwait(false);
+        if (pipeline.Caller.Current() is { } caller)
+        {
+            pipeline.Runner.Launch(userId, caller);
+        }
+
         return null;
     }
 
@@ -386,11 +456,23 @@ public abstract class ProductionServiceBase(
             [.. (listed ?? []).Select(m => new ProductionModelDto(
                 m.Id, m.Name, m.Kind, m.Local, m.LanguageOnly, m.LicenseWarning, m.EffortLevels, m.DefaultEffort, m.Availability))],
             listed is null,
-            [.. mine.Select((j, i) => new ProductionJobDto(j.Id, j.ConceptId, j.Title, i + 1, StatusName(j.Status), j.Language, ToDto(j.FixedSettings)))],
+            [.. mine.Select((j, i) => new ProductionJobDto(
+                j.Id,
+                j.ConceptId,
+                j.Title,
+                i + 1,
+                StatusName(j.Status),
+                j.Language,
+                ToDto(j.FixedSettings),
+                [.. (j.Progress?.Stages ?? []).Select(ToDto)],
+                j.Progress?.CostUsd ?? 0m,
+                j.Status == ProductionJobStatus.Failed ? j.Progress?.Error : null))],
             block,
             block is null ? null : ProductionErrors.BlockText(block),
             [.. StartBlock.LanguageWarnings(settings, selectable, languages).Select(ProductionErrors.BlockText)],
-            runningHere);
+            runningHere,
+            pipeline.Agents.ConnectedDevice(userId) is not null,
+            (await pipeline.Queue.GetAsync(userId, cancellationToken).ConfigureAwait(false))?.Halted == true);
     }
 
     private async Task<Result<ProductionStateDto>> WithProfileAsync(

@@ -12,6 +12,18 @@ public enum CallRole
     /// <summary>Anlamca tekrar denetimi.</summary>
     Dedupe,
 
+    /// <summary>Üretim hattı: analiz (plan 0017).</summary>
+    Analysis,
+
+    /// <summary>Üretim hattı: sahne video kodu.</summary>
+    Code,
+
+    /// <summary>Üretim hattı: render düzeltmesi.</summary>
+    Fix,
+
+    /// <summary>Üretim hattı: online görsel.</summary>
+    Image,
+
     /// <summary>Diğer.</summary>
     Other,
 }

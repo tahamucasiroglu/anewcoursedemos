@@ -1,0 +1,118 @@
+using System.Text.Json;
+using Konsept.Modules.AgentGateway.Application.Abstract;
+using Konsept.Modules.AgentGateway.Contracts.Dtos;
+
+namespace Konsept.Api.Tests.Fakes;
+
+/// <summary>
+/// Sahte ajan kanalı (plan 0017): gerçek SignalR yerine komutları bağlantı kimliğiyle kaydeder; araç denetimi, aşama ve akış cevapları
+/// testten ayarlanır. Varsayılan: tüm araçlar kurulu, her aşama GPU'da başarılı, akış adresi verilir. Gerçek ajan, render ya da LLM yok.
+/// </summary>
+public sealed class FakeAgentChannel : IAgentChannel
+{
+    private readonly Lock _gate = new();
+    private readonly List<(string ConnectionId, string Method, string Payload)> _sent = [];
+
+    /// <summary>Gets or sets eksik araçlar.</summary>
+    public IReadOnlyList<string> Missing { get; set; } = [];
+
+    /// <summary>Gets or sets araç denetiminden önce beklenecek görev (test sırası için); yoksa <c>null</c>.</summary>
+    public Func<Task>? BeforeCheck { get; set; }
+
+    /// <summary>Gets or sets aşama işleyicisi (bağlantı, komut, iptal).</summary>
+    public Func<string, AgentStageCommand, CancellationToken, Task<AgentStageReply>> Stage { get; set; } = DefaultStage;
+
+    /// <summary>Gets or sets akış işleyicisi.</summary>
+    public Func<AgentStreamRequest, AgentStreamReply> Stream { get; set; } =
+        r => new AgentStreamReply("http://127.0.0.1:47615/video/" + r.VideoId.ToString("N") + "?t=test", null);
+
+    /// <summary>Gets gönderilenler (bağlantı, metot, JSON yük).</summary>
+    public IReadOnlyList<(string ConnectionId, string Method, string Payload)> Sent
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _sent];
+            }
+        }
+    }
+
+    /// <summary>Varsayılan aşama: GPU'da başarılı; Supertonic seslendirmesinde AI ses notu.</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="command">Komut.</param>
+    /// <param name="cancellationToken">İptal.</param>
+    /// <returns>Cevap.</returns>
+    public static Task<AgentStageReply> DefaultStage(string connectionId, AgentStageCommand command, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        return Task.FromResult(new AgentStageReply(
+            true, Device: "gpu", AiVoiceNotice: command.Stage == AgentStageCommand.Merge && command.AudioModel == "local/supertonic-3"));
+    }
+
+    /// <summary>Belirli bir metodun komut sayısı.</summary>
+    /// <param name="method">Metot.</param>
+    /// <param name="stage">Aşama (yalnızca <c>RunStage</c>).</param>
+    /// <returns>Sayı.</returns>
+    public int Count(string method, string? stage = null) =>
+        Sent.Count(s => s.Method == method && (stage is null || s.Payload.Contains("\"stage\":\"" + stage + "\"", StringComparison.Ordinal)));
+
+    /// <summary>Kayıtları temizler, varsayılanlara döner.</summary>
+    public void Reset()
+    {
+        lock (_gate)
+        {
+            _sent.Clear();
+        }
+
+        Missing = [];
+        BeforeCheck = null;
+        Stage = DefaultStage;
+    }
+
+    /// <inheritdoc />
+    public Task<AgentPingReply> PingAsync(string connectionId, CancellationToken cancellationToken) =>
+        Task.FromResult(new AgentPingReply("PC", "1.0.0"));
+
+    /// <inheritdoc />
+    public async Task<AgentToolCheckReply> CheckToolsAsync(string connectionId, AgentToolCheckRequest request, CancellationToken cancellationToken)
+    {
+        Record(connectionId, "CheckTools", request);
+        if (BeforeCheck is { } wait)
+        {
+            await wait().ConfigureAwait(false);
+        }
+
+        return new AgentToolCheckReply([.. Missing]);
+    }
+
+    /// <inheritdoc />
+    public Task<AgentStageReply> RunStageAsync(string connectionId, AgentStageCommand command, CancellationToken cancellationToken)
+    {
+        Record(connectionId, "RunStage", command);
+        return Stage(connectionId, command, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task CancelStageAsync(string connectionId, Guid jobId, CancellationToken cancellationToken)
+    {
+        Record(connectionId, "CancelStage", jobId);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<AgentStreamReply> OpenStreamAsync(string connectionId, AgentStreamRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Record(connectionId, "OpenStream", request);
+        return Task.FromResult(Stream(request));
+    }
+
+    private void Record(string connectionId, string method, object payload)
+    {
+        lock (_gate)
+        {
+            _sent.Add((connectionId, method, JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web))));
+        }
+    }
+}

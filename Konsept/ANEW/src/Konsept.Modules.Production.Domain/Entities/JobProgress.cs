@@ -17,6 +17,9 @@ public sealed record JobProgress
     /// <summary>Gets sade hata açıklaması ya da <c>null</c>.</summary>
     public string? Error { get; init; }
 
+    /// <summary>Gets a value indicating whether render düzeltme çağrısı bu işte kullanıldı (iş başına en fazla 1, Req 12).</summary>
+    public bool FixUsed { get; init; }
+
     /// <summary>Gets ilk başlangıç (UTC).</summary>
     public DateTimeOffset? StartedAt { get; init; }
 

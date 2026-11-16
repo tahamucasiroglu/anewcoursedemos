@@ -1,8 +1,11 @@
 using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Modules.Production.Application.Abstract;
 using Konsept.Modules.Production.Application.Concrete;
+using Konsept.Modules.Production.Application.Dtos;
+using Konsept.Modules.Production.Infrastructure.Hosting;
 using Konsept.Modules.Production.Infrastructure.Persistence;
 using Konsept.Modules.Production.Infrastructure.Persistence.Concrete;
+using Konsept.Modules.Production.Infrastructure.Pipeline.Concrete;
 using Konsept.Shared.Infrastructure.Http.Concrete;
 using Konsept.Shared.Kernel.Abstract;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Konsept.Modules.Production.Infrastructure;
 
-/// <summary>Production modülünün servis kaydı ve açılış migration'ı (spec 0006).</summary>
+/// <summary>Production modülünün servis kaydı ve açılış migration'ı (spec 0006, 0017: üretim hattı, koşucu, zamanlayıcı).</summary>
 public static class ProductionModule
 {
     /// <summary>Modülün servislerini kaydeder.</summary>
@@ -25,7 +28,14 @@ public static class ProductionModule
             npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", ProductionDbContext.SchemaName)));
         services.AddScoped<IProductionJobRepository, ProductionJobRepository>();
         services.AddScoped<IProductionSettingsRepository, ProductionSettingsRepository>();
+        services.AddScoped<IStageOutputRepository, StageOutputRepository>();
+        services.AddScoped<IProducedVideoRepository, ProducedVideoRepository>();
+        services.AddScoped<IQueueStateRepository, QueueStateRepository>();
+        services.AddScoped<ProductionPipelineLinks>();
         services.AddScoped<IProductionService, ProductionService>();
+        services.AddScoped<IProductionPipeline, ProductionPipeline>();
+        services.AddSingleton<IProductionRunner, ProductionRunner>();
+        services.AddHostedService<ProductionWorker>();
         services.AddScoped<IUserSessionsEndedListener, ProductionSessionListener>(); // Identity.Contracts: çıkışta üretim durur (Req 16).
         services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();

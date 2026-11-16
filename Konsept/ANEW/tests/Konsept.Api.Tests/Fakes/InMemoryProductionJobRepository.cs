@@ -139,6 +139,52 @@ public sealed class InMemoryProductionJobRepository : IProductionJobRepository
         }
     }
 
+    /// <inheritdoc />
+    public Task SetProgressAsync(Guid userId, Guid jobId, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var index = _rows.FindIndex(j => j.Id == jobId && j.UserId == userId);
+            if (index >= 0)
+            {
+                _rows[index] = _rows[index] with { Progress = progress, UpdatedAt = at };
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TransitionAsync(
+        Guid userId, Guid jobId, IReadOnlyCollection<ProductionJobStatus> from, ProductionJobStatus to, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var index = _rows.FindIndex(j => j.Id == jobId && j.UserId == userId && from.Contains(j.Status));
+            if (index < 0)
+            {
+                return Task.FromResult(false);
+            }
+
+            if (Running.Contains(to) && _rows.Any(j => j.UserId == userId && j.Id != jobId && Running.Contains(j.Status)))
+            {
+                return Task.FromResult(false);
+            }
+
+            _rows[index] = _rows[index] with { Status = to, UpdatedAt = at };
+            return Task.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ProductionJob>> ListRunningAsync(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Task.FromResult<IReadOnlyList<ProductionJob>>([.. _rows.Where(j => Running.Contains(j.Status))]);
+        }
+    }
+
     /// <summary>Test kurulumu: işin durumunu doğrudan değiştirir (0017'nin geçişleri: Ajan bekleniyor, Hata).</summary>
     /// <param name="jobId">İş.</param>
     /// <param name="status">Durum.</param>

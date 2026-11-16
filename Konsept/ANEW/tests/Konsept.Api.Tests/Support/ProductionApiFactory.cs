@@ -1,4 +1,5 @@
 using Konsept.Api.Tests.Fakes;
+using Konsept.Modules.AgentGateway.Application.Abstract;
 using Konsept.Modules.AiGateway.Application.Abstract;
 using Konsept.Modules.AiGateway.Domain.Entities;
 using Konsept.Modules.Concepts.Application.Abstract;
@@ -18,7 +19,7 @@ namespace Konsept.Api.Tests.Support;
 /// konsept, öneri, üretim işi ve üretim ayarı depoları; sahte key doğrulaması ve sahte sağlayıcı (gerçek LLM çağrısı yok). İsteğe bağlı
 /// sabit katalog (tek dilli test girişi) ve kullanıcı model yetkisi. Production, Concepts ve AiGateway servisleri gerçektir.
 /// </summary>
-public sealed class ProductionApiFactory : WebApplicationFactory<Program>
+public class ProductionApiFactory : WebApplicationFactory<Program>
 {
     /// <summary>Initializes a new instance of the <see cref="ProductionApiFactory"/> class.</summary>
     public ProductionApiFactory()
@@ -47,6 +48,21 @@ public sealed class ProductionApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek üretim ayarı deposu.</summary>
     public InMemoryProductionSettingsRepository ProductionSettings { get; } = new();
 
+    /// <summary>Gets harcama deposu (0017: iş maliyeti = harcama kayıtları).</summary>
+    public InMemorySpendRepository Spend { get; } = new();
+
+    /// <summary>Gets olay deposu (0017: Günlük olayları).</summary>
+    public InMemorySystemEventRepository Events { get; } = new();
+
+    /// <summary>Gets aşama çıktıları deposu (0017).</summary>
+    public InMemoryStageOutputRepository Outputs { get; } = new();
+
+    /// <summary>Gets video kayıtları deposu (0017).</summary>
+    public InMemoryProducedVideoRepository Videos { get; } = new();
+
+    /// <summary>Gets sahte ajan kanalı (0017; gerçek ajan yok).</summary>
+    public FakeAgentChannel Agent { get; } = new();
+
     /// <summary>Gets sahte sağlayıcı.</summary>
     public ScriptedProviderClient Provider { get; } = new();
 
@@ -55,6 +71,9 @@ public sealed class ProductionApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Gets or sets kullanıcı rolünün model yetkileri (verilmezse rolün varsayılanı).</summary>
     public string? UserModelPermissions { get; set; }
+
+    /// <summary>Gets a value indicating whether üretim hattı açık (0006 testleri işi Üretiliyor'da bekler: kapalı; plan 0017 Risk 4).</summary>
+    protected virtual bool PipelineEnabled => false;
 
     /// <summary>Gets bu örneğin Data Protection anahtar klasörü.</summary>
     public string KeysDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "dp-keys-" + Guid.NewGuid().ToString("N"));
@@ -98,6 +117,7 @@ public sealed class ProductionApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Internal:ServiceKey", FastApiFactory.ServiceKey);
         builder.UseSetting("Auth:SigningKey", FastApiFactory.SigningKey);
         builder.UseSetting("DataProtection:KeysDirectory", KeysDirectory);
+        builder.UseSetting("Production:Pipeline:Enabled", PipelineEnabled ? "true" : "false");
         if (UserModelPermissions is { } models)
         {
             builder.UseSetting("Identity:ModelPermissions:User", models);
@@ -124,7 +144,7 @@ public sealed class ProductionApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IUserRepository>(Users);
             services.AddSingleton<ISessionRepository>(Sessions);
             services.AddSingleton<IAgentDeviceRepository>(new InMemoryAgentDeviceRepository());
-            services.AddSingleton<ISystemEventRepository>(new InMemorySystemEventRepository());
+            services.AddSingleton<ISystemEventRepository>(Events);
             services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe());
             services.AddSingleton<ITechnicalLogRepository>(new InMemoryTechnicalLogRepository());
             services.AddSingleton<IProfileRepository>(Profiles);
@@ -132,11 +152,19 @@ public sealed class ProductionApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IApiKeyRepository>(Keys);
             services.AddSingleton<IProviderKeyValidator>(new FakeProviderKeyValidator());
             services.AddSingleton<IProviderClient>(Provider);
-            services.AddSingleton<ISpendRepository>(new InMemorySpendRepository());
+            services.AddSingleton<ISpendRepository>(Spend);
             services.AddSingleton<IConceptRepository>(Concepts);
             services.AddSingleton<ITopicSuggestionRepository>(new InMemoryTopicSuggestionRepository());
             services.AddSingleton<IProductionJobRepository>(Jobs);
             services.AddSingleton<IProductionSettingsRepository>(ProductionSettings);
+            services.RemoveAll<IStageOutputRepository>();
+            services.RemoveAll<IProducedVideoRepository>();
+            services.RemoveAll<IQueueStateRepository>();
+            services.RemoveAll<IAgentChannel>();
+            services.AddSingleton<IStageOutputRepository>(Outputs);
+            services.AddSingleton<IProducedVideoRepository>(Videos);
+            services.AddSingleton<IQueueStateRepository>(new InMemoryQueueStateRepository());
+            services.AddSingleton<IAgentChannel>(Agent);
             if (Catalog is { } seed)
             {
                 services.RemoveAll<ICatalogSource>();

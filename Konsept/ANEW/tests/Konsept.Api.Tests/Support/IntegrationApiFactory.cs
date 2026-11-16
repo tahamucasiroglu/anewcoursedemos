@@ -49,5 +49,9 @@ public sealed class IntegrationApiFactory : WebApplicationFactory<Program>, IAsy
         builder.UseSetting("Logging:Directory", Path.Combine(Path.GetTempPath(), "anewconcept-tests", "logs"));
         builder.UseSetting("Internal:ServiceKey", FastApiFactory.ServiceKey);
         builder.UseSetting("Auth:SigningKey", FastApiFactory.SigningKey);
+
+        // Gerçek veritabanı testleri depoları ve uçları doğrular; üretim hattı (0017) kendi hızlı testlerinde sahte ajan/sağlayıcıyla koşar
+        // (plan 0017 A-1). Hat açık olsa Devam et işi gerçek kapıya götürür ve 0006 testinin beklediği Durdur yarışa girerdi.
+        builder.UseSetting("Production:Pipeline:Enabled", "false");
     }
 }

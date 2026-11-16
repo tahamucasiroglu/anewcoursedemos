@@ -23,6 +23,94 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Konsept.Modules.Production.Domain.Entities.ProducedVideo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("AiVoiceNotice")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ai_voice_notice");
+
+                    b.Property<string>("AudioModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("audio_model");
+
+                    b.Property<string>("CodeModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("code_model");
+
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<string>("ConceptText")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("concept_text");
+
+                    b.Property<DateTimeOffset>("EndedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ended_at");
+
+                    b.Property<string>("Engine")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("engine");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("file_name");
+
+                    b.Property<string>("ImageModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("image_model");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("profile_id");
+
+                    b.Property<bool>("ProgressBar")
+                        .HasColumnType("boolean")
+                        .HasColumnName("progress_bar");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<bool>("Subtitles")
+                        .HasColumnType("boolean")
+                        .HasColumnName("subtitles");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("title");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ProfileId", "EndedAt")
+                        .HasDatabaseName("ix_videos_user_profile_ended");
+
+                    b.ToTable("videos", "production");
+                });
+
             modelBuilder.Entity("Konsept.Modules.Production.Domain.Entities.ProductionJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -60,6 +148,10 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ProfileId")
                         .HasColumnType("uuid")
                         .HasColumnName("profile_id");
+
+                    b.Property<string>("Progress")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("progress");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -155,6 +247,74 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_settings_user");
 
                     b.ToTable("settings", "production");
+                });
+
+            modelBuilder.Entity("Konsept.Modules.Production.Domain.Entities.QueueState", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("ConsecutiveFailures")
+                        .HasColumnType("integer")
+                        .HasColumnName("consecutive_failures");
+
+                    b.Property<bool>("Halted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("halted");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("queue_states", "production");
+                });
+
+            modelBuilder.Entity("Konsept.Modules.Production.Domain.Entities.StageOutputs", b =>
+                {
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<string>("Codes")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("codes");
+
+                    b.Property<Guid?>("LocalDevice")
+                        .HasColumnType("uuid")
+                        .HasColumnName("local_device");
+
+                    b.Property<string>("LocalDone")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("local_done");
+
+                    b.Property<string>("Plan")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("plan");
+
+                    b.Property<string>("TextHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("text_hash");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("ConceptId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_stage_outputs_user");
+
+                    b.ToTable("stage_outputs", "production");
                 });
 #pragma warning restore 612, 618
         }

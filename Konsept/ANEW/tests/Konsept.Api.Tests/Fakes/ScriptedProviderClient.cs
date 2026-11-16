@@ -35,7 +35,11 @@ public sealed class ScriptedProviderClient : IProviderClient
     {
         ArgumentNullException.ThrowIfNull(call);
         var system = call.System ?? string.Empty;
-        return system.Contains("Task: suggest new video topics", StringComparison.Ordinal) ? CallRole.Topics
+        return call.Model.Kind == Konsept.Modules.AiGateway.Domain.Enums.ModelKind.Image ? CallRole.Image
+            : system.Contains(Konsept.Modules.Production.Domain.Rules.PipelinePrompts.AnalysisTask, StringComparison.Ordinal) ? CallRole.Analysis
+            : system.Contains(Konsept.Modules.Production.Domain.Rules.PipelinePrompts.FixTask, StringComparison.Ordinal) ? CallRole.Fix
+            : system.Contains(Konsept.Modules.Production.Domain.Rules.PipelinePrompts.CodeTask, StringComparison.Ordinal) ? CallRole.Code
+            : system.Contains("Task: suggest new video topics", StringComparison.Ordinal) ? CallRole.Topics
             : system.Contains("Task: write one complete video concept", StringComparison.Ordinal) ? CallRole.Concept
             : system.Contains("You check video topics for duplicates", StringComparison.Ordinal) ? CallRole.Dedupe
             : CallRole.Other;

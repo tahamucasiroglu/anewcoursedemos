@@ -41,6 +41,12 @@ public sealed class ProductionJobConfiguration : IEntityTypeConfiguration<Produc
             .HasConversion(
                 v => v == null ? null : JsonSerializer.Serialize(v, Json),
                 v => v == null ? null : JsonSerializer.Deserialize<FixedJobSettings>(v, Json));
+        builder.Property(j => j.Progress)
+            .HasColumnName("progress")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => v == null ? null : JsonSerializer.Serialize(v, Json),
+                v => v == null ? null : JsonSerializer.Deserialize<JobProgress>(v, Json));
         builder.Property(j => j.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(j => j.UpdatedAt).HasColumnName("updated_at").IsRequired();
         builder.HasIndex(j => new { j.UserId, j.ProfileId, j.Position }).HasDatabaseName("ix_jobs_user_profile_position");

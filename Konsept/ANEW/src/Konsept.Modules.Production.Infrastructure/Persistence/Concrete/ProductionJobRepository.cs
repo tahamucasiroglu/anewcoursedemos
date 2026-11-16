@@ -106,6 +106,33 @@ public sealed class ProductionJobRepository : EfRepositoryBase<ProductionDbConte
             .Where(j => j.UserId == userId && Running.Contains(j.Status) && (profileId == null || j.ProfileId == profileId))
             .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, ProductionJobStatus.Stopped).SetProperty(j => j.UpdatedAt, at), cancellationToken);
 
+    /// <inheritdoc />
+    public Task SetProgressAsync(Guid userId, Guid jobId, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken) =>
+        Context.Jobs
+            .Where(j => j.Id == jobId && j.UserId == userId)
+            .ExecuteUpdateAsync(s => s.SetProperty(j => j.Progress, progress).SetProperty(j => j.UpdatedAt, at), cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<bool> TransitionAsync(
+        Guid userId, Guid jobId, IReadOnlyCollection<ProductionJobStatus> from, ProductionJobStatus to, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await Context.Jobs
+                .Where(j => j.Id == jobId && j.UserId == userId && from.Contains(j.Status))
+                .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, to).SetProperty(j => j.UpdatedAt, at), cancellationToken)
+                .ConfigureAwait(false) == 1;
+        }
+        catch (Exception ex) when (IsUniqueViolation(ex))
+        {
+            return false; // Tekil çalışan iş kısıtı.
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ProductionJob>> ListRunningAsync(CancellationToken cancellationToken) =>
+        await Context.Jobs.AsNoTracking().Where(j => Running.Contains(j.Status)).ToListAsync(cancellationToken).ConfigureAwait(false);
+
     private static bool IsUniqueViolation(Exception ex) =>
         ex is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
         || ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };

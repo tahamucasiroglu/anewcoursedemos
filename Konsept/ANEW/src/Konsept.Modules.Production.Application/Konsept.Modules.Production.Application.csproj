@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Production use-case'leri (spec 0006): üretim ayarları, sıra, başlat/durdur/devam. Infrastructure'a referans vermez (Y-3); başka
        modüllere yalnızca Contracts'larıyla (Y-1): konsept durumu Concepts, profil sahipliği Profiles, katalog AiGateway, kurulu bileşenler
-       AgentGateway, oturum sonu Identity. -->
+       AgentGateway, oturum sonu Identity; 0017 hattı: ajan komutları AgentGateway, model çağrıları AiGateway, Günlük olayları Monitoring. -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Production.Domain\Konsept.Modules.Production.Domain.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Concepts.Contracts\Konsept.Modules.Concepts.Contracts.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Profiles.Contracts\Konsept.Modules.Profiles.Contracts.csproj" />

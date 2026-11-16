@@ -58,4 +58,16 @@ public interface IProductionService
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Durum.</returns>
     Task<Result<ProductionStateDto>> ResumeAsync(Guid jobId, CancellationToken cancellationToken);
+
+    /// <summary>Profilin bu sayfadan üretilen videoları, en yeni üstte (spec 0017 Req 20).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Videolar.</returns>
+    Task<Result<IReadOnlyList<ProducedVideoDto>>> ListVideosAsync(Guid profileId, CancellationToken cancellationToken);
+
+    /// <summary>Videonun yerel akış adresini ajandan ister (spec 0017 Req 21); başkasının videosu 404.</summary>
+    /// <param name="videoId">Video.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Adres ya da hata (ajan bağlı değil, dosya yok).</returns>
+    Task<Result<VideoStreamDto>> OpenStreamAsync(Guid videoId, CancellationToken cancellationToken);
 }

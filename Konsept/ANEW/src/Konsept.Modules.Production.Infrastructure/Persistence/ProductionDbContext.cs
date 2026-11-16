@@ -23,6 +23,15 @@ public sealed class ProductionDbContext : ModuleDbContextBase
     /// <summary>Gets ayarlar.</summary>
     public DbSet<ProductionSettings> Settings => Set<ProductionSettings>();
 
+    /// <summary>Gets aşama çıktıları (spec 0017).</summary>
+    public DbSet<StageOutputs> StageOutputs => Set<StageOutputs>();
+
+    /// <summary>Gets video kayıtları (spec 0017).</summary>
+    public DbSet<ProducedVideo> Videos => Set<ProducedVideo>();
+
+    /// <summary>Gets sıra durumları (spec 0017).</summary>
+    public DbSet<QueueState> QueueStates => Set<QueueState>();
+
     /// <inheritdoc />
     protected override string Schema => SchemaName;
 }

@@ -87,4 +87,20 @@ public sealed class ProductionController : ControllerBase
     [HttpPost("stop")]
     public Task<IActionResult> Stop([FromBody] ProfileCommandRequest request, CancellationToken cancellationToken) =>
         _production.StopAsync(request, cancellationToken).ToActionResult();
+
+    /// <summary>Profilin üretilen videoları, en yeni üstte (spec 0017 Req 20).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Videolar.</returns>
+    [HttpGet("videos")]
+    public Task<IActionResult> Videos([FromQuery] Guid profileId, CancellationToken cancellationToken) =>
+        _production.ListVideosAsync(profileId, cancellationToken).ToActionResult();
+
+    /// <summary>Videonun kısa ömürlü yerel akış adresi (spec 0017 Req 21).</summary>
+    /// <param name="id">Video.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Adres.</returns>
+    [HttpPost("videos/{id:guid}/stream")]
+    public Task<IActionResult> Stream(Guid id, CancellationToken cancellationToken) =>
+        _production.OpenStreamAsync(id, cancellationToken).ToActionResult();
 }

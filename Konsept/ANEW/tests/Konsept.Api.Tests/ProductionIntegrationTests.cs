@@ -110,6 +110,113 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         (await stranger.PostAsJsonAsync($"/api/production/jobs/{jobIds[1]}/remove", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    /// <summary>
+    /// Plan 0017 (gerçek veritabanı, AddPipeline migration'ı): iş ilerlemesi jsonb gidiş-dönüşü, koşullu durum geçişi (tekil çalışan iş
+    /// kısıtı dahil), tüm kullanıcıların çalışan işleri, konsept başına aşama çıktıları (başkasının satırı değişmez), video kaydı (en yeni
+    /// üstte, sahibine göre) ve sıra durumu upsert'i.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_RealDatabase_Repositories()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ProductionDbContext>();
+        var jobs = new ProductionJobRepository(db);
+        var (userId, profileId) = (Guid.CreateVersion7(), Guid.CreateVersion7());
+        var now = DateTimeOffset.UtcNow;
+        var ids = new[] { Guid.CreateVersion7(), Guid.CreateVersion7() };
+        for (var i = 0; i < ids.Length; i++)
+        {
+            await jobs.AddAsync(
+                new ProductionJob
+                {
+                    Id = ids[i],
+                    UserId = userId,
+                    ProfileId = profileId,
+                    ConceptId = Guid.CreateVersion7(),
+                    Title = "P" + i,
+                    Language = "tr",
+                    Format = "landscape",
+                    TargetDurationSeconds = 60,
+                    Position = i + 1,
+                    Status = ProductionJobStatus.Queued,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                },
+                ct);
+        }
+
+        var fixedSettings = new FixedJobSettings { Engine = "local/hyperframes", Language = "tr", Format = "landscape", FixedAt = now };
+        (await jobs.StartAsync(userId, ids[0], [ProductionJobStatus.Queued], fixedSettings, now, ct)).ShouldBeTrue();
+        var progress = new JobProgress
+        {
+            Stages = [new StageProgress(PipelineStage.Analysis, StageState.Done), new StageProgress(PipelineStage.Render, StageState.Running, "gpu")],
+            CostUsd = 0.012345m,
+            Error = "Ajan kurulumu eksik: HyperFrames",
+            FixUsed = true,
+            StartedAt = now,
+        };
+        await jobs.SetProgressAsync(userId, ids[0], progress, now, ct);
+        var read = (await jobs.GetAsync(userId, ids[0], ct))!.Progress!;
+        (read.CostUsd, read.Error, read.FixUsed, read.StateOf(PipelineStage.Render), read.Stages[1].Device)
+            .ShouldBe((0.012345m, "Ajan kurulumu eksik: HyperFrames", true, StageState.Running, "gpu"));
+        (await jobs.ListRunningAsync(ct)).ShouldContain(j => j.Id == ids[0]);
+        (await jobs.TransitionAsync(userId, ids[0], [ProductionJobStatus.Producing], ProductionJobStatus.WaitingForAgent, now, ct)).ShouldBeTrue();
+        (await jobs.TransitionAsync(userId, ids[1], [ProductionJobStatus.Queued], ProductionJobStatus.Producing, now, ct)).ShouldBeFalse(); // Tekil çalışan iş.
+        (await jobs.TransitionAsync(Guid.NewGuid(), ids[0], [ProductionJobStatus.WaitingForAgent], ProductionJobStatus.Failed, now, ct)).ShouldBeFalse();
+        (await jobs.TransitionAsync(userId, ids[0], [ProductionJobStatus.WaitingForAgent], ProductionJobStatus.Completed, now, ct)).ShouldBeTrue();
+
+        var outputs = new StageOutputRepository(db);
+        var concept = Guid.CreateVersion7();
+        var row = new StageOutputs
+        {
+            UserId = userId,
+            ConceptId = concept,
+            TextHash = new string('a', 64),
+            Plan = [new ScenePlan(0, 5, "n", "p")],
+            Codes = ["<html></html>"],
+            LocalDevice = Guid.NewGuid(),
+            LocalDone = [PipelineStage.Images],
+            UpdatedAt = now,
+        };
+        await outputs.UpsertAsync(row, ct);
+        await outputs.UpsertAsync(row with { Codes = ["<html>2</html>"], LocalDone = [PipelineStage.Images, PipelineStage.Render] }, ct);
+        await outputs.UpsertAsync(row with { UserId = Guid.NewGuid(), Codes = null }, ct); // Başkası yazamaz.
+        var stored = (await outputs.GetAsync(userId, concept, ct))!;
+        (stored.Codes!.Single(), stored.LocalDone.Count, stored.Plan!.Single().ImagePrompt).ShouldBe(("<html>2</html>", 2, "p"));
+        (await outputs.GetAsync(Guid.NewGuid(), concept, ct)).ShouldBeNull();
+
+        var videos = new ProducedVideoRepository(db);
+        foreach (var (title, minutes) in new[] { ("Eski", -10), ("Yeni", -1) })
+        {
+            await videos.AddAsync(
+                new ProducedVideo
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = userId,
+                    ProfileId = profileId,
+                    ConceptId = concept,
+                    JobId = ids[0],
+                    Title = title,
+                    ConceptText = "{\"title\":\"" + title + "\"}",
+                    Engine = "local/hyperframes",
+                    FileName = title + ".mp4",
+                    StartedAt = now.AddMinutes(minutes - 1),
+                    EndedAt = now.AddMinutes(minutes),
+                },
+                ct);
+        }
+
+        (await videos.ListAsync(userId, profileId, ct)).Select(v => v.Title).ShouldBe(["Yeni", "Eski"]);
+        (await videos.ListAsync(Guid.NewGuid(), profileId, ct)).ShouldBeEmpty();
+
+        var queue = new QueueStateRepository(db);
+        await queue.SetAsync(new QueueState { UserId = userId, ConsecutiveFailures = 3, Halted = true, UpdatedAt = now }, ct);
+        await queue.SetAsync(new QueueState { UserId = userId, ConsecutiveFailures = 0, Halted = false, UpdatedAt = now }, ct);
+        (await queue.GetAsync(userId, ct))!.Halted.ShouldBeFalse();
+    }
+
     private static async Task<JsonElement> State(HttpClient client, Guid profile, CancellationToken ct) =>
         await client.GetFromJsonAsync<JsonElement>($"/api/production/state?profileId={profile}", ct);
 

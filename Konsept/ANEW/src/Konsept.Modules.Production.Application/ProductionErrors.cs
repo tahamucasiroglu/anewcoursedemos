@@ -44,6 +44,15 @@ public static class ProductionErrors
     /// <summary>Gets devam yalnızca Durduruldu/Hata'dan (Req 15).</summary>
     public static Error CannotResume => new("production.cannot_resume", ProductionText.CannotResume, ErrorType.Conflict);
 
+    /// <summary>Gets video yok ya da başkasının (BR-1).</summary>
+    public static Error VideoNotFound => new("production.video_not_found", ProductionText.VideoNotFound, ErrorType.NotFound);
+
+    /// <summary>Gets ajan bağlı değil; video izlenemez (spec 0017 Req 21).</summary>
+    public static Error StreamAgentOffline => new("production.agent_offline", ProductionText.StreamAgentOffline, ErrorType.Conflict);
+
+    /// <summary>Gets video dosyası ajan klasöründe yok.</summary>
+    public static Error StreamFileMissing => new("production.file_missing", ProductionText.StreamFileMissing, ErrorType.NotFound);
+
     /// <summary>"Sırayla üret" pasif (Req 14): mesaj nedenin metni, <c>reason</c> kodu.</summary>
     /// <param name="reason">Neden kodu (<see cref="StartBlock"/>).</param>
     /// <returns>Hata.</returns>

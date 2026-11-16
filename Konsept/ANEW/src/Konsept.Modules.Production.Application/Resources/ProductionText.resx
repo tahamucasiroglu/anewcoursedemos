@@ -27,4 +27,25 @@
   <data name="BlockNoKey" xml:space="preserve"><value>API key yok — Ayarlar</value></data>
   <data name="BlockAudioLanguage" xml:space="preserve"><value>Seçili ses modeli konsept dilini desteklemiyor</value></data>
   <data name="BlockImageLanguage" xml:space="preserve"><value>Seçili görsel modeli konsept dilini desteklemiyor</value></data>
+  <data name="PipelineNoKey" xml:space="preserve"><value>API key yok — Ayarlar</value></data>
+  <data name="PipelineToolsMissing" xml:space="preserve"><value>Ajan kurulumu eksik: {0}</value></data>
+  <data name="PipelineGpuUnavailable" xml:space="preserve"><value>Ekran kartı kullanılamadı: {0}</value></data>
+  <data name="PipelineConceptMissing" xml:space="preserve"><value>Konsept bulunamadı.</value></data>
+  <data name="PipelineAnalysisInvalid" xml:space="preserve"><value>Konsept incelenemedi: model beklenen biçimde yanıt vermedi.</value></data>
+  <data name="PipelineCodeInvalid" xml:space="preserve"><value>Video kodu üretilemedi: model beklenen biçimde yanıt vermedi.</value></data>
+  <data name="PipelineImageInvalid" xml:space="preserve"><value>Görsel üretilemedi: model görsel döndürmedi.</value></data>
+  <data name="PipelineRenderFailed" xml:space="preserve"><value>Video kodu videoya dönüştürülemedi (düzeltme denemesinden sonra da).</value></data>
+  <data name="PipelineStageFailed" xml:space="preserve"><value>{0} aşaması tamamlanamadı.</value></data>
+  <data name="StageAnalysis" xml:space="preserve"><value>Konsept inceleniyor</value></data>
+  <data name="StageCode" xml:space="preserve"><value>Video kodu üretiliyor</value></data>
+  <data name="StageImages" xml:space="preserve"><value>Görseller üretiliyor</value></data>
+  <data name="StageVoice" xml:space="preserve"><value>Seslendirme yapılıyor</value></data>
+  <data name="StageRender" xml:space="preserve"><value>Video kodu videoya dönüştürülüyor</value></data>
+  <data name="StageMerge" xml:space="preserve"><value>Birleştiriliyor</value></data>
+  <data name="EventStarted" xml:space="preserve"><value>Video üretimi başladı: {0}</value></data>
+  <data name="EventCompleted" xml:space="preserve"><value>Video hazırlandı: {0} — {1} ({2})</value></data>
+  <data name="EventFailed" xml:space="preserve"><value>Video üretimi hata verdi: {0} — {1} ({2}): {3}</value></data>
+  <data name="VideoNotFound" xml:space="preserve"><value>Video bulunamadı.</value></data>
+  <data name="StreamAgentOffline" xml:space="preserve"><value>Videoyu izlemek için ajan bağlı olmalı</value></data>
+  <data name="StreamFileMissing" xml:space="preserve"><value>Video dosyası bulunamadı</value></data>
 </root>
