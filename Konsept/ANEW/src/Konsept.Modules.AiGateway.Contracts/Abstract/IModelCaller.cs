@@ -19,4 +19,10 @@ public interface IModelCaller
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Yanıt ya da Türkçe, sade nedenli hata.</returns>
     Task<Result<TextModelReply>> CallTextAsync(TextModelCall call, CancellationToken cancellationToken);
+
+    /// <summary>Online görsel modelini çağırır (spec 0017; aynı kapı, amaç görsel).</summary>
+    /// <param name="call">Çağrı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görsel ya da Türkçe, sade nedenli hata.</returns>
+    Task<Result<ImageModelReply>> CallImageAsync(ImageModelCall call, CancellationToken cancellationToken);
 }

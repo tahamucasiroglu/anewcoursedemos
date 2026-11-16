@@ -24,4 +24,11 @@ public interface IConceptQueueBridge
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Değiştiyse <c>true</c>.</returns>
     Task<bool> ChangeAsync(Guid userId, Guid conceptId, ConceptQueueStage from, ConceptQueueStage to, CancellationToken cancellationToken);
+
+    /// <summary>Kullanıcının silinmemiş konseptinin metni (spec 0017).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Metin ya da <c>null</c> (yok, başkasının ya da silinmiş).</returns>
+    Task<ConceptContent?> GetContentAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken);
 }

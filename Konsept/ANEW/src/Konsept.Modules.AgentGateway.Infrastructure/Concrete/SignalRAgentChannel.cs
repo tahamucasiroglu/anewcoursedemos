@@ -23,4 +23,12 @@ public sealed class SignalRAgentChannel : AgentChannelBase
     /// <inheritdoc />
     protected override Task<AgentPingReply> InvokePingAsync(string connectionId, CancellationToken cancellationToken) =>
         _hub.Clients.Client(connectionId).InvokeAsync<AgentPingReply>(AgentHubContract.Ping, cancellationToken);
+
+    /// <inheritdoc />
+    protected override Task<T> InvokeAsync<T>(string connectionId, string method, object argument, CancellationToken cancellationToken) =>
+        _hub.Clients.Client(connectionId).InvokeAsync<T>(method, argument, cancellationToken);
+
+    /// <inheritdoc />
+    protected override Task SendAsync(string connectionId, string method, object argument, CancellationToken cancellationToken) =>
+        _hub.Clients.Client(connectionId).SendAsync(method, argument, cancellationToken);
 }

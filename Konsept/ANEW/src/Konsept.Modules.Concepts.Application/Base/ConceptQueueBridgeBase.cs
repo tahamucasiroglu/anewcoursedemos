@@ -29,4 +29,19 @@ public abstract class ConceptQueueBridgeBase(IConceptRepository concepts, TimePr
     public async Task<bool> ChangeAsync(Guid userId, Guid conceptId, ConceptQueueStage from, ConceptQueueStage to, CancellationToken cancellationToken) =>
         await concepts.ChangeStatusAsync(userId, [conceptId], (ConceptStatus)(int)from, (ConceptStatus)(int)to, time.GetUtcNow(), cancellationToken)
             .ConfigureAwait(false) == 1;
+
+    /// <inheritdoc />
+    public async Task<ConceptContent?> GetContentAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken)
+    {
+        var found = await concepts.GetManyAsync(userId, [conceptId], cancellationToken).ConfigureAwait(false);
+        return found.FirstOrDefault(c => c.Id == conceptId) is { } c
+            ? new ConceptContent(
+                c.Id,
+                c.ProfileId,
+                c.Title,
+                c.Language,
+                c.Format,
+                [.. c.Scenes.Select(s => new ConceptSceneContent(s.Title, s.Visual, s.Narration, s.DurationSeconds))])
+            : null;
+    }
 }

@@ -33,6 +33,7 @@ public static class AgentGatewayModule
         services.AddSingleton<IAgentConnectionTracker, AgentConnectionTracker>();
         services.AddSingleton<IAgentDeviceRevocationListener, AgentSessionTerminator>();
         services.AddSingleton<IAgentChannel, SignalRAgentChannel>();
+        services.AddSingleton<IAgentCommands, AgentCommands>(); // spec 0017: üretim hattının ajan komutları (yalnızca sahibin ajanı).
         services.AddSingleton<InMemoryInstalledComponentStore>();
         services.AddSingleton<IInstalledComponentStore>(sp => sp.GetRequiredService<InMemoryInstalledComponentStore>());
         services.AddSingleton<IInstalledComponentsReader>(sp => sp.GetRequiredService<InMemoryInstalledComponentStore>()); // spec 0006.

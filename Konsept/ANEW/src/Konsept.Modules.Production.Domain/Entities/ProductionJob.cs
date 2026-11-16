@@ -41,6 +41,9 @@ public sealed record ProductionJob
     /// <summary>Gets sabitlenen ayarlar; iş hiç başlamadıysa <c>null</c>.</summary>
     public FixedJobSettings? FixedSettings { get; init; }
 
+    /// <summary>Gets hat ilerlemesi (spec 0017); iş hiç başlamadıysa <c>null</c>.</summary>
+    public JobProgress? Progress { get; init; }
+
     /// <summary>Gets oluşturulma (UTC).</summary>
     public DateTimeOffset CreatedAt { get; init; }
 

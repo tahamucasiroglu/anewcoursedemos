@@ -28,4 +28,16 @@ public static class AgentHubContract
 
     /// <summary>Ajan → API: ajanın eşleştiği hesabın kimliği (spec 0022 Req 8; bekleyen bildirimi hesaba bağlamak için).</summary>
     public const string WhoAmI = "WhoAmI";
+
+    /// <summary>API → ajan: üretim için gereken araçlar kurulu mu (spec 0017 Req 14); eksiklerin kimliklerini döndürür.</summary>
+    public const string CheckTools = "CheckTools";
+
+    /// <summary>API → ajan: bir yerel üretim aşamasını çalıştır (görseller, seslendirme, render, birleştirme; spec 0017 Req 13).</summary>
+    public const string RunStage = "RunStage";
+
+    /// <summary>API → ajan: işin süren yerel aşamasını kes (Durdur, spec 0017 Req 9).</summary>
+    public const string CancelStage = "CancelStage";
+
+    /// <summary>API → ajan: bir video için kısa ömürlü yerel akış adresi aç (spec 0017 Req 21, Ç-1).</summary>
+    public const string OpenStream = "OpenStream";
 }

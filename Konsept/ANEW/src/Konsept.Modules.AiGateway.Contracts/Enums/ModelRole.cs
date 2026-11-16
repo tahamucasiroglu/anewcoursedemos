@@ -11,4 +11,13 @@ public enum ModelRole
 
     /// <summary>Anlamca tekrar denetimi.</summary>
     DuplicateCheck,
+
+    /// <summary>Üretim hattı: konsept inceleme (analiz; amaç video kodu, spec 0017 Req 7).</summary>
+    VideoAnalysis,
+
+    /// <summary>Üretim hattı: sahne başına video kodu.</summary>
+    VideoCode,
+
+    /// <summary>Üretim hattı: render hatasından sonra tek düzeltme (Req 12).</summary>
+    CodeFix,
 }
