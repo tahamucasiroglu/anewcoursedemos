@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Production altyapısı (spec 0006): production şeması ve DbContext'i (Y-4), depolar. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Production.Application\Konsept.Modules.Production.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

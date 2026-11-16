@@ -10,6 +10,8 @@ using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Modules.Monitoring.Infrastructure;
 using Konsept.Modules.Monitoring.Infrastructure.Logging;
 using Konsept.Modules.Monitoring.Presentation.Controllers;
+using Konsept.Modules.Production.Infrastructure;
+using Konsept.Modules.Production.Presentation.Controllers;
 using Konsept.Modules.Profiles.Infrastructure;
 using Konsept.Modules.Profiles.Presentation.Controllers;
 using Konsept.Shared.Infrastructure.Http;
@@ -44,7 +46,8 @@ builder.Services
     .AddApplicationPart(typeof(AuthController).Assembly)
     .AddApplicationPart(typeof(ApiKeysController).Assembly)
     .AddApplicationPart(typeof(ProfilesController).Assembly)
-    .AddApplicationPart(typeof(ConceptsController).Assembly);
+    .AddApplicationPart(typeof(ConceptsController).Assembly)
+    .AddApplicationPart(typeof(ProductionController).Assembly);
 builder.Services.AddScoped<ServiceKeyAuthorizationFilter>();
 builder.Services.AddMonitoringModule(connectionString);
 builder.Services.AddAgentGatewayModule();
@@ -52,6 +55,7 @@ builder.Services.AddIdentityModule(connectionString, builder.Configuration, buil
 builder.Services.AddAiGatewayModule(connectionString, builder.Configuration);
 builder.Services.AddProfilesModule(connectionString);
 builder.Services.AddConceptsModule(connectionString);
+builder.Services.AddProductionModule(connectionString);
 
 // Default-deny (spec 0002 Req 11): açıkça [AllowAnonymous] olmayan her uç geçerli oturumlu JWT ister; iç uçlar servis
 // anahtarı ister.
@@ -93,6 +97,7 @@ if (app.Configuration.GetValue("Database:MigrateOnStartup", defaultValue: true))
     await app.Services.MigrateAiGatewayDatabaseAsync(CancellationToken.None);
     await app.Services.MigrateProfilesDatabaseAsync(CancellationToken.None);
     await app.Services.MigrateConceptsDatabaseAsync(CancellationToken.None);
+    await app.Services.MigrateProductionDatabaseAsync(CancellationToken.None);
 }
 
 await app.RunAsync();

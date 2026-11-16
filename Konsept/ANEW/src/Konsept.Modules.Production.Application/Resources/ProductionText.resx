@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Production modülünün kullanıcıya dönen metinleri (yalnızca Türkçe; spec 0006): hatalar ve "Sırayla üret" pasiflik nedenleri. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SignInRequired" xml:space="preserve"><value>Oturumunuz sona erdi.</value></data>
+  <data name="ProfileNotFound" xml:space="preserve"><value>Profil bulunamadı.</value></data>
+  <data name="JobNotFound" xml:space="preserve"><value>İş bulunamadı.</value></data>
+  <data name="NothingSelected" xml:space="preserve"><value>Sıraya alınacak konsepti seçin.</value></data>
+  <data name="NotApproved" xml:space="preserve"><value>Yalnızca onaylanmış konseptler sıraya alınabilir.</value></data>
+  <data name="ModelsUnavailable" xml:space="preserve"><value>Model listesi yüklenemedi.</value></data>
+  <data name="ModelNotListed" xml:space="preserve"><value>Seçilen model listede yok.</value></data>
+  <data name="NoPermission" xml:space="preserve"><value>Bu modeli kullanma yetkiniz yok</value></data>
+  <data name="JobLocked" xml:space="preserve"><value>Üretimdeki iş taşınamaz ve çıkarılamaz; önce durdurun.</value></data>
+  <data name="CannotMove" xml:space="preserve"><value>İş bu yönde taşınamaz.</value></data>
+  <data name="NothingRunning" xml:space="preserve"><value>Çalışan iş yok.</value></data>
+  <data name="CannotResume" xml:space="preserve"><value>Yalnızca durdurulan ya da hata veren iş devam ettirilebilir.</value></data>
+  <data name="BlockEmpty" xml:space="preserve"><value>Sıra boş</value></data>
+  <data name="BlockRunningHere" xml:space="preserve"><value>Üretim sürüyor</value></data>
+  <data name="BlockRunningElsewhere" xml:space="preserve"><value>Başka bir profilde üretim sürüyor</value></data>
+  <data name="BlockModelsFailed" xml:space="preserve"><value>Model listesi yüklenemedi</value></data>
+  <data name="BlockNoCodeModel" xml:space="preserve"><value>Video kodu modeli seçin</value></data>
+  <data name="BlockUnavailable" xml:space="preserve"><value>Seçili model kullanılamıyor</value></data>
+  <data name="BlockNoPermission" xml:space="preserve"><value>Model yetkiniz yok</value></data>
+  <data name="BlockNoKey" xml:space="preserve"><value>API key yok — Ayarlar</value></data>
+  <data name="BlockAudioLanguage" xml:space="preserve"><value>Seçili ses modeli konsept dilini desteklemiyor</value></data>
+  <data name="BlockImageLanguage" xml:space="preserve"><value>Seçili görsel modeli konsept dilini desteklemiyor</value></data>
+</root>

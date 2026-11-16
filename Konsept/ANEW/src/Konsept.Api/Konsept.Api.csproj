@@ -13,5 +13,7 @@
     <ProjectReference Include="..\Konsept.Modules.Profiles.Presentation\Konsept.Modules.Profiles.Presentation.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Concepts.Infrastructure\Konsept.Modules.Concepts.Infrastructure.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Concepts.Presentation\Konsept.Modules.Concepts.Presentation.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Production.Infrastructure\Konsept.Modules.Production.Infrastructure.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Production.Presentation\Konsept.Modules.Production.Presentation.csproj" />
   </ItemGroup>
 </Project>

@@ -10,7 +10,7 @@ namespace Konsept.Modules.Identity.Application.Concrete;
 /// Oturum servisi (refresh, doğrulama, çıkış, geçerli kullanıcı, tüm oturumları iptal). Ajan cihaz iptali verilmişse "tüm
 /// oturumları iptal et" eşleşmiş ajanı da düşürür (spec 0012 Req 12); DI her zaman verir.
 /// </summary>
-public sealed class SessionService : SessionServiceBase
+public sealed partial class SessionService : SessionServiceBase
 {
     private readonly IAgentDeviceRevoker? _agentDevices;
     private readonly IReadOnlyList<IUserSessionsEndedListener> _listeners = [];
@@ -62,7 +62,18 @@ public sealed class SessionService : SessionServiceBase
 
         foreach (var listener in _listeners)
         {
-            await listener.OnAllSessionsEndedAsync(userId, CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                await listener.OnAllSessionsEndedAsync(userId, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Çıkış her koşulda tamamlanır (BR-14): dinleyicinin hatası oturum iptalini geri almaz, loglanır.
+                LogListenerFailed(Logger, ex, listener.GetType().Name);
+            }
         }
     }
+
+    [LoggerMessage(EventId = 2010, Level = LogLevel.Error, Message = "Oturum sonu dinleyicisi başarısız: {Listener}")]
+    private static partial void LogListenerFailed(ILogger logger, Exception exception, string listener);
 }
