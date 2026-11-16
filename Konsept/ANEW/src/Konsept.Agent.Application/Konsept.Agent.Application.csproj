@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Ajan use-case soyutlamaları: sunucu bağlantısı, ajan bilgisi, tarayıcı açma. -->
+  <!-- Ajan use-case soyutlamaları: sunucu bağlantısı, ajan bilgisi, tarayıcı açma; 0017: yerel üretim aşamaları ve yerel video akışı (komut sözleşmesi AgentGateway.Contracts). -->
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Agent.Domain\Konsept.Agent.Domain.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AgentGateway.Contracts\Konsept.Modules.AgentGateway.Contracts.csproj" />
   </ItemGroup>
 </Project>

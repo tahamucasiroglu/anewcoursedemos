@@ -13,7 +13,8 @@ namespace Konsept.Agent;
 
 /// <summary>
 /// Ajanın bileşim kökü: ayarlar, ajan bilgisi, sunucu bağlantısı, tarayıcı açıcı, teknik log (spec 0008) ve oturum akışı
-/// (spec 0012: eşleştirme kodu, saklı belirteç, oturum kapandı), hata bildirimi (spec 0022) ve ilk kurulum (spec 0009).
+/// (spec 0012: eşleştirme kodu, saklı belirteç, oturum kapandı), hata bildirimi (spec 0022), ilk kurulum (spec 0009) ve yerel üretim aşamaları
+/// + yerel video akışı (spec 0017).
 /// </summary>
 /// <param name="Settings">Ayarlar.</param>
 /// <param name="Info">Ajan bilgisi.</param>
@@ -52,7 +53,12 @@ internal sealed record AgentComposition(
         var settings = AgentSettingsLoader.Load(AppContext.BaseDirectory, AgentSettingsLoader.ReadMetadata(typeof(App).Assembly));
         var info = new AssemblyAgentInfoProvider(typeof(App).Assembly);
         var tokens = new FileAgentTokenStore(root);
-        var connection = new SignalRServerConnection(settings, info, logger: logging.Logger, accessToken: tokens.Read);
+        var setupState = new FileSetupStateStore(root);
+        var videoFolder = () => setupState.Load().VideoFolder ?? AgentPaths.DefaultVideoFolder;
+        var streams = new LocalVideoServer(videoFolder, TimeProvider.System, logging.Logger);
+        streams.Start(); // spec 0017 Req 21: yalnızca 127.0.0.1.
+        var stages = new ProcessStageRunner(setupState, root, videoFolder, logging.Logger);
+        var connection = new SignalRServerConnection(settings, info, logger: logging.Logger, accessToken: tokens.Read, stages: stages, streams: streams);
         logging.SummarySink.Attach(connection);
         var session = new AgentSessionCoordinator(
             connection,
@@ -73,7 +79,7 @@ internal sealed record AgentComposition(
         var setup = new SetupCoordinator(
             ComponentCatalog.Load(),
             new WindowsSetupHost(new HttpClient()),
-            new FileSetupStateStore(root),
+            setupState,
             root,
             AgentPaths.DefaultVideoFolder,
             new Uri(settings.SiteUrl, "ajan-bilesenleri/"),

@@ -25,6 +25,8 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly Func<HttpMessageHandler>? _handlerFactory;
     private readonly ILogger _logger;
     private readonly Func<string?>? _accessToken;
+    private readonly IStageRunner? _stages;
+    private readonly IVideoStreamHost? _streams;
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource _run;
     private HubConnection? _hub;
@@ -38,8 +40,19 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="handlerFactory">Testte HTTP yolunu değiştirmek için; normalde <c>null</c>.</param>
     /// <param name="logger">Ajan teknik logu (spec 0008); verilmezse log yazılmaz.</param>
     /// <param name="accessToken">Ajan oturum belirtecini veren kaynak (spec 0012; <c>Authorization</c> başlığında gider, adreste değil).</param>
-    public SignalRServerConnection(AgentSettings settings, IAgentInfoProvider info, Func<HttpMessageHandler>? handlerFactory = null, ILogger? logger = null, Func<string?>? accessToken = null)
+    /// <param name="stages">Yerel üretim aşamaları (spec 0017); verilmezse üretim komutlarına cevap verilmez.</param>
+    /// <param name="streams">Yerel video akışı (spec 0017); verilmezse akış açılmaz.</param>
+    public SignalRServerConnection(
+        AgentSettings settings,
+        IAgentInfoProvider info,
+        Func<HttpMessageHandler>? handlerFactory = null,
+        ILogger? logger = null,
+        Func<string?>? accessToken = null,
+        IStageRunner? stages = null,
+        IVideoStreamHost? streams = null)
     {
+        _stages = stages;
+        _streams = streams;
         _accessToken = accessToken;
         _logger = (logger ?? Serilog.Core.Logger.None).ForContext<SignalRServerConnection>();
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -204,6 +217,19 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             .Build();
 
         hub.On(AgentHubContract.Ping, () => new AgentPingReply(_info.MachineName, _info.Version));
+        if (_stages is { } stages)
+        {
+            // Üretim komutları yalnızca bu oturumun sunucusundan gelir (spec 0017 Req 13); ajan online sağlayıcıya istek atmaz.
+            hub.On<AgentToolCheckRequest, AgentToolCheckReply>(AgentHubContract.CheckTools, stages.CheckTools);
+            hub.On<AgentStageCommand, AgentStageReply>(AgentHubContract.RunStage, stages.RunAsync);
+            hub.On<Guid>(AgentHubContract.CancelStage, stages.Cancel);
+        }
+
+        if (_streams is { } streams)
+        {
+            hub.On<AgentStreamRequest, AgentStreamReply>(AgentHubContract.OpenStream, streams.Open);
+        }
+
         hub.On(AgentHubContract.SessionClosed, () =>
         {
             _logger.Warning("Sunucu ajan oturumunu kapattı");
