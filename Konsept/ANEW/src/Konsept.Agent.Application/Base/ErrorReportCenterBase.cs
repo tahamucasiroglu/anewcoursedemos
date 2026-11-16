@@ -125,7 +125,7 @@ public abstract class ErrorReportCenterBase : IErrorReportCenter
                 return ReportOutcome.OtherAccount;
             }
 
-            var outcome = await _connection.TrySendErrorReportAsync(report with { AccountId = account }, cancellationToken).ConfigureAwait(false);
+            var outcome = await _connection.TrySendErrorReportAsync(report, cancellationToken).ConfigureAwait(false);
             if (outcome is { } sent)
             {
                 return sent;
@@ -160,6 +160,7 @@ public abstract class ErrorReportCenterBase : IErrorReportCenter
 
             foreach (var report in Pending())
             {
+                // Hesap istemcide de, sunucuda da (gönderilen AccountId değiştirilmeden) denetlenir (review r1 M-1).
                 if (report.AccountId is { } owner && owner != account)
                 {
                     Remove(report);
@@ -167,7 +168,7 @@ public abstract class ErrorReportCenterBase : IErrorReportCenter
                     continue;
                 }
 
-                var outcome = await _connection.TrySendErrorReportAsync(report with { AccountId = account }, cancellationToken).ConfigureAwait(false);
+                var outcome = await _connection.TrySendErrorReportAsync(report, cancellationToken).ConfigureAwait(false);
                 if (outcome is null)
                 {
                     return; // Gönderilemedi: bekletmeye devam, sıradaki bağlantıda yeniden.

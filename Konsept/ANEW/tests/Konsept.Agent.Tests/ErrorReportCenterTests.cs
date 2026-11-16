@@ -170,7 +170,10 @@ public sealed class ErrorReportCenterTests : IDisposable
         center.PendingCount.ShouldBe(0);
     }
 
-    /// <summary>Eşleşme öncesi oluşan bildirim (hesapsız) ilk eşleşen hesap adına gönderilir.</summary>
+    /// <summary>
+    /// Eşleşme öncesi oluşan bildirim hesapsız gönderilir (sunucu ilk eşleşen hesap adına kaydeder); istemci hesabı değiştirmez, böylece
+    /// sunucudaki hesap denetimi gerçek istekte de çalışır (review r1 M-1).
+    /// </summary>
     /// <returns>Görev.</returns>
     [Fact]
     public async Task Report_BeforePairing_GoesWithFirstAccount()
@@ -187,7 +190,7 @@ public sealed class ErrorReportCenterTests : IDisposable
         report.AccountId.ShouldBeNull();
         report.Component.ShouldBe("Node.js");
         report.Step.ShouldBe("doğrulama");
-        await _connection.Received(1).TrySendErrorReportAsync(Arg.Is<AgentErrorReport>(r => r.Id == report.Id && r.AccountId == AccountA), Arg.Any<CancellationToken>());
+        await _connection.Received(1).TrySendErrorReportAsync(Arg.Is<AgentErrorReport>(r => r.Id == report.Id && r.AccountId == null), Arg.Any<CancellationToken>());
     }
 
     /// <summary>20 bekleyen bildirim varken 21. eklenince en eskisi düşer, 20 kalır ve teknik loga Warning yazılır.</summary>
