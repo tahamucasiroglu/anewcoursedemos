@@ -27,4 +27,25 @@
   <data name="TrayPaired" xml:space="preserve"><value>Eşleşti</value></data>
   <data name="TraySessionClosed" xml:space="preserve"><value>Oturum kapandı</value></data>
   <data name="TrayUnreachable" xml:space="preserve"><value>Sunucuya ulaşılamıyor</value></data>
+  <data name="AlertTitle" xml:space="preserve"><value>Bir hata oldu</value></data>
+  <data name="AlertIntro" xml:space="preserve"><value>Ajanda bir hata oluştu. İsterseniz geliştiriciye bildirebilirsiniz; gönderilecek metin gizli bilgilerden arındırılmıştır.</value></data>
+  <data name="AlertReport" xml:space="preserve"><value>Bildir</value></data>
+  <data name="AlertClose" xml:space="preserve"><value>Kapat</value></data>
+  <data name="AlertSaveFile" xml:space="preserve"><value>Hata raporunu dosyaya kaydet</value></data>
+  <data name="AlertShowDetails" xml:space="preserve"><value>Ayrıntıları göster</value></data>
+  <data name="AlertHideDetails" xml:space="preserve"><value>Ayrıntıları gizle</value></data>
+  <data name="AlertSending" xml:space="preserve"><value>Gönderiliyor…</value></data>
+  <data name="AlertSent" xml:space="preserve"><value>Bildiriminiz gönderildi. Teşekkürler!</value></data>
+  <data name="AlertQueued" xml:space="preserve"><value>Bağlantı kurulunca gönderilecek</value></data>
+  <data name="AlertOtherAccount" xml:space="preserve"><value>Bu bildirim başka bir hesapta oluşturuldu, gönderilmedi</value></data>
+  <data name="AlertRateLimited" xml:space="preserve"><value>Çok fazla bildirim gönderdiniz, biraz sonra tekrar deneyin</value></data>
+  <data name="AlertRejected" xml:space="preserve"><value>Bildirim gönderilemedi</value></data>
+  <data name="AlertSaved" xml:space="preserve"><value>Rapor kaydedildi: {0}</value></data>
+  <data name="AlertSaveFailed" xml:space="preserve"><value>Rapor kaydedilemedi</value></data>
+  <data name="AlertFileName" xml:space="preserve"><value>anew-konsept-hata-raporu.txt</value></data>
+  <data name="TrayPendingReports" xml:space="preserve"><value>Hata uyarısını göster ({0} bekleyen bildirim)</value></data>
+  <data name="TrayAlertTooltip" xml:space="preserve"><value>ANEW Konsept Ajan · Bekleyen hata bildirimi</value></data>
+  <data name="NotifyAlertTitle" xml:space="preserve"><value>ANEW Konsept: Bir hata oldu</value></data>
+  <data name="NotifyPendingSent" xml:space="preserve"><value>Bekleyen hata bildirimi gönderildi</value></data>
+  <data name="TestErrorSummary" xml:space="preserve"><value>Deneme hatası (--hata-dene): bu bir test uyarısıdır</value></data>
 </root>
