@@ -49,7 +49,10 @@ public static class AiGatewayModule
         }
 
         services.AddSingleton<IApiKeyProtector, DataProtectionApiKeyProtector>();
-        services.AddHttpClient(HttpProviderKeyValidator.ClientName).RemoveAllLoggers();
+        // Yönlendirme izlenmez (review r1 L-3): .NET yönlendirmede Authorization'ı siler ama x-api-key'i taşır; 3xx → "Doğrulanmadı".
+        services.AddHttpClient(HttpProviderKeyValidator.ClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false })
+            .RemoveAllLoggers();
         services.AddSingleton<IProviderKeyValidator, HttpProviderKeyValidator>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ICatalogService, CatalogService>();

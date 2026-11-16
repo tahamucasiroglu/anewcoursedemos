@@ -2,8 +2,11 @@ using System.Net;
 using Konsept.Api.Tests.Fakes;
 using Konsept.Modules.AiGateway.Domain.Entities;
 using Konsept.Modules.AiGateway.Domain.Enums;
+using Konsept.Modules.AiGateway.Infrastructure;
 using Konsept.Modules.AiGateway.Infrastructure.Catalog;
 using Konsept.Modules.AiGateway.Infrastructure.Validation;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Konsept.Api.Tests;
@@ -90,6 +93,29 @@ public sealed class ProviderKeyValidatorTests
             .ShouldBe(KeyCheckOutcome.Inconclusive);
         handler.Requests.ShouldBeEmpty();
         seed.KeyValidationTimeoutSeconds.ShouldBe(10);
+    }
+
+    /// <summary>
+    /// Review r1 L-3/I-2: modülün kaydettiği adlandırılmış istemci yönlendirme izlemez (x-api-key başka adrese taşınmaz) ve
+    /// zincirinde yeniden deneme/dayanıklılık işleyicisi yoktur (tek deneme, Req 10).
+    /// </summary>
+    [Fact]
+    public void Module_ValidationClient_NoRedirectNoRetryHandlers()
+    {
+        var services = new ServiceCollection().AddLogging();
+        services.AddAiGatewayModule("Host=127.0.0.1;Port=1;Database=unused", new ConfigurationBuilder().Build());
+        using var provider = services.BuildServiceProvider();
+
+        HttpMessageHandler? handler = provider.GetRequiredService<IHttpMessageHandlerFactory>().CreateHandler(HttpProviderKeyValidator.ClientName);
+        var chain = new List<HttpMessageHandler>();
+        while (handler is not null)
+        {
+            chain.Add(handler);
+            handler = (handler as DelegatingHandler)?.InnerHandler;
+        }
+
+        chain.ShouldNotContain(h => h.GetType().Name.Contains("Retry", StringComparison.OrdinalIgnoreCase) || h.GetType().Name.Contains("Resilience", StringComparison.OrdinalIgnoreCase));
+        chain[^1].ShouldBeOfType<SocketsHttpHandler>().AllowAutoRedirect.ShouldBeFalse();
     }
 
     private static CatalogSeed Seed(double timeoutSeconds)

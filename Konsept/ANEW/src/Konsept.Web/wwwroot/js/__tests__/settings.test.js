@@ -207,6 +207,45 @@ describe('Ayarlar (spec 0004)', () => {
     expect(status('anthropic')).toBe('Girilmemiş');
   });
 
+  it('review r1 L-1: kayıt sürerken Vazgeç pasif, Esc alanı kapatmaz', async () => {
+    await initSettings(document);
+    routes['POST /ayarlar/api-keyler/anthropic'] = () => $.Deferred().promise();
+    const target = row('anthropic');
+    target.querySelector('.key-row__edit').click();
+    target.querySelector('input').value = 'sk-bekleyen-key-1234';
+
+    target.querySelector('.key-form').dispatchEvent(new Event('submit', { cancelable: true }));
+    expect(target.querySelector('.key-form__cancel').disabled).toBe(true);
+    target.querySelector('.key-form__cancel').click();
+    key(target.querySelector('input'), 'Escape');
+
+    expect(target.querySelector('.key-form').hidden).toBe(false);
+    expect(posts()).toHaveLength(1);
+  });
+
+  it('review r1 L-2 / AC-15: silme hatasında genel mesaj, odak Sil düğmesine döner, satır değişmez; sonraki başarıda mesaj gizlenir', async () => {
+    await initSettings(document);
+    routes['POST /ayarlar/api-keyler/openai/sil'] = fail(503, { code: 'api.error', correlationId: 'corr-7' });
+
+    row('openai').querySelector('.key-row__delete').click();
+    document.getElementById('delete-confirm').click();
+    await flush();
+
+    const error = document.getElementById('keys-error');
+    expect(error.hidden).toBe(false);
+    expect(error.textContent).toBe('İşlem şu an yapılamadı (hata no: corr-7)');
+    expect(document.getElementById('delete-dialog').hidden).toBe(true);
+    expect(document.activeElement).toBe(row('openai').querySelector('.key-row__delete'));
+    expect(status('openai')).toBe('sk-…a3f · Doğrulandı · az önce güncellendi');
+
+    routes['POST /ayarlar/api-keyler/openai/sil'] = ok({ providerId: 'openai', providerName: 'OpenAI', state: 'none', hint: null, validation: null, updatedAt: null });
+    row('openai').querySelector('.key-row__delete').click();
+    document.getElementById('delete-confirm').click();
+    await flush();
+    expect(error.hidden).toBe(true);
+    expect(status('openai')).toBe('Girilmemiş');
+  });
+
   it('AC-8/17: Sil önce onay metnini gösterir; Esc vazgeçer (istek yok); odak pencerede kalır; onayla satır Girilmemiş olur', async () => {
     await initSettings(document);
     routes['POST /ayarlar/api-keyler/openai/sil'] = ok({ providerId: 'openai', providerName: 'OpenAI', state: 'none', hint: null, validation: null, updatedAt: null });

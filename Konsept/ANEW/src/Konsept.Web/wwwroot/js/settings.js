@@ -185,7 +185,7 @@ function renderRow(root, state, row, data) {
   input.type = 'password';
   input.id = inputId;
   input.name = 'apiKey';
-  input.autocomplete = 'off';
+  input.autocomplete = 'new-password'; // Tarayıcı key'i şifre olarak kaydetmeyi önermesin (review r1 I-1).
   input.spellcheck = false;
   input.setAttribute('aria-describedby', errorId);
   const save = el(doc, 'button', 'button button--primary key-form__save', text.textSave);
@@ -201,11 +201,18 @@ function renderRow(root, state, row, data) {
     show(form, true);
     input.focus();
   });
-  cancel.addEventListener('click', () => closeForm(row));
+  // Kayıt sürerken Vazgeç/Esc alanı kapatmaz (review r1 L-1): istek zaten gitmiştir; sonucu alanın yanında görünür.
+  cancel.addEventListener('click', () => {
+    if (form.dataset.pending !== 'true') {
+      closeForm(row);
+    }
+  });
   form.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();
-      closeForm(row);
+      if (form.dataset.pending !== 'true') {
+        closeForm(row);
+      }
     }
   });
   form.addEventListener('submit', async (event) => {
@@ -215,11 +222,13 @@ function renderRow(root, state, row, data) {
     }
     form.dataset.pending = 'true';
     save.disabled = true;
+    cancel.disabled = true;
     save.textContent = text.textSaving;
     error.textContent = '';
     try {
       const saved = await post(`${root.dataset.keysUrl}/${encodeURIComponent(id)}`, { apiKey: input.value });
       input.value = '';
+      show(root.querySelector('#keys-error'), false);
       renderRow(root, state, row, saved);
       row.querySelector('.key-row__edit').focus();
       toast(root, text.textSaved);
@@ -228,6 +237,7 @@ function renderRow(root, state, row, data) {
       error.textContent = failureText(failure, text);
       input.setAttribute('aria-invalid', 'true');
       save.disabled = false;
+      cancel.disabled = false;
       save.textContent = text.textSave;
       delete form.dataset.pending;
     }
@@ -272,12 +282,13 @@ function openDeleteDialog(root, state, row, data) {
     try {
       const empty = await post(`${root.dataset.keysUrl}/${encodeURIComponent(data.providerId)}/sil`);
       close();
+      show(root.querySelector('#keys-error'), false);
       renderRow(root, state, row, empty);
       row.querySelector('.key-row__edit').focus();
       toast(root, root.dataset.textDeleted);
       loadModels(root, state);
     } catch (failure) {
-      close();
+      onCancel(); // Odak açan düğmeye döner (review r1 L-2); satır değişmez.
       const error = root.querySelector('#keys-error');
       error.textContent = failureText(failure, root.dataset);
       show(error, true);

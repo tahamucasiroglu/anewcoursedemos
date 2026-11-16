@@ -315,6 +315,28 @@ public sealed class ApiKeyApiTests : IClassFixture<AiGatewayApiFactory>
         fixedRow.GetProperty("hint").GetString().ShouldBe("sk-…" + fresh[^3..]);
     }
 
+    /// <summary>
+    /// Review r1 M-1: yalnızca kalıcı kaydedilen key bilinen sır olur — sağlayıcının reddettiği değer süreç geneli maskeye girmez
+    /// (log zehirleme / liste doldurma yok), kaydedilen öneksiz key ise her log metninde gizlenir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task KnownSecret_OnlyPersistedKeyRegistered()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        var rejected = NewKey("glmred");
+        var saved = NewKey("glmok");
+
+        _factory.Validator.Outcome = KeyCheckOutcome.Rejected;
+        (await client.PutAsJsonAsync("/api/ai/keys/glm", new { apiKey = rejected }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        _factory.Validator.Outcome = KeyCheckOutcome.Inconclusive;
+        (await client.PutAsJsonAsync("/api/ai/keys/glm", new { apiKey = saved }, ct)).EnsureSuccessStatusCode();
+
+        Konsept.Shared.Kernel.Security.SecretMasker.Mask($"satır {rejected} son").ShouldContain(rejected);
+        Konsept.Shared.Kernel.Security.SecretMasker.Mask($"satır {saved} son").ShouldNotContain(saved);
+    }
+
     /// <summary>Katalogda olmayan sağlayıcı 404; doğrulama çağrılmaz.</summary>
     /// <returns>Görev.</returns>
     [Fact]

@@ -14,7 +14,7 @@ namespace Konsept.Modules.AiGateway.Application.Base;
 /// <summary>
 /// API key yönetimi (spec 0004 Req 7–12, H-2). Her işlem isteği yapan kullanıcının kimliğiyle yapılır (BR-1); URL'de yalnızca
 /// sağlayıcı adı vardır, başka kullanıcının satırına hiçbir yol yoktur. Kaydetme: biçim → sağlayıcıda tek maliyetsiz doğrulama →
-/// 401 ise kaydetmeden red (mevcut key değişmez), değilse şifreleyip yerine koyma. Key bilinen sır olarak kaydedilir (B-45):
+/// 401 ise kaydetmeden red (mevcut key değişmez), değilse şifreleyip yerine koyma. Kaydedilen key bilinen sır olur (B-45):
 /// bir log metnine nasıl girerse girsin 0008 maskesi onu gizler. Loglarda ve yanıtlarda yalnızca maskeli hal bulunur.
 /// </summary>
 /// <param name="catalog">Katalog.</param>
@@ -83,7 +83,6 @@ public abstract class ApiKeyServiceBase(
         }
 
         var key = ApiKeyFormat.Normalize(request!.ApiKey);
-        SecretMasker.RegisterKnownSecret(key);
         var hint = ApiKeyMask.Mask(key);
         var outcome = await validator.CheckAsync(provider, key, cancellationToken).ConfigureAwait(false);
         if (outcome == KeyCheckOutcome.Rejected)
@@ -103,6 +102,9 @@ public abstract class ApiKeyServiceBase(
             UpdatedAt = time.GetUtcNow(),
         };
         await keys.UpsertAsync(row, cancellationToken).ConfigureAwait(false);
+
+        // Yalnızca kalıcı kaydedilen key bilinen sır olur (review r1 M-1): reddedilen ya da biçimsiz değer süreç geneli maskeye girmez.
+        SecretMasker.RegisterKnownSecret(key);
         KeySaved(logger, provider.Id, hint, ValidationText(row.Validation), null);
         return Result<ApiKeyStatusDto>.Success(Saved(provider, row));
     }

@@ -1,6 +1,6 @@
 # Spec 0004 — katalog-api-key-ve-ayarlar
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0004-plan.md`
 - Self-critique: done (öneriler 2026-11-14 onaylandı ve işlendi)
