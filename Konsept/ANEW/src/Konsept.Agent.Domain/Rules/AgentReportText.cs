@@ -21,6 +21,15 @@ public static partial class AgentReportText
     /// <summary>Rapora eklenen en fazla log satırı.</summary>
     public const int MaxLogLines = 200;
 
+    /// <summary>Bir log satırının rapordaki en fazla uzunluğu (karakter; fazlası kırpılır).</summary>
+    public const int MaxLineLength = 500;
+
+    /// <summary>Rapordaki log satırlarının toplam en fazla uzunluğu (karakter; sunucu sınırıyla aynı, en yeniler kalır).</summary>
+    public const int MaxLogChars = 64 * 1024;
+
+    /// <summary>Hata özetinin en fazla uzunluğu (karakter).</summary>
+    public const int MaxSummaryLength = 4000;
+
     /// <summary>Ajanda tutulan en fazla bekleyen bildirim.</summary>
     public const int MaxPending = 20;
 
@@ -71,12 +80,33 @@ public static partial class AgentReportText
     {
         ArgumentNullException.ThrowIfNull(lines);
         var from = now - LogWindow;
-        return lines
+        var selected = lines
             .Where(l => l.Level >= AgentLogLevel.Warning && l.At >= from && l.At <= now)
             .OrderBy(l => l.At)
             .TakeLast(MaxLogLines)
-            .Select(l => string.Create(CultureInfo.InvariantCulture, $"{l.At.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ} [{LevelCode(l.Level)}] {Sanitize(l.Text, environment)}"))
+            .Select(l => Cut(string.Create(CultureInfo.InvariantCulture, $"{l.At.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ} [{LevelCode(l.Level)}] {Sanitize(l.Text, environment)}"), MaxLineLength))
             .ToList();
+
+        // Toplam sınır: hub mesajı sınırlı kalsın (review r1 H-1); en eski satırlar düşer.
+        var total = selected.Sum(l => l.Length);
+        var skip = 0;
+        while (total > MaxLogChars && skip < selected.Count)
+        {
+            total -= selected[skip].Length;
+            skip++;
+        }
+
+        return selected.Skip(skip).ToList();
+    }
+
+    /// <summary>Metni sınıra kırpar (sonuna "…" eklenir).</summary>
+    /// <param name="text">Metin.</param>
+    /// <param name="max">En fazla uzunluk.</param>
+    /// <returns>Kırpılmış metin.</returns>
+    public static string Cut(string text, int max)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return text.Length > max ? text[..(max - 1)] + "…" : text;
     }
 
     /// <summary>Adımın rapordaki adı.</summary>

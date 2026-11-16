@@ -72,6 +72,33 @@ public sealed class AgentErrorReportApiTests : IClassFixture<FastApiFactory>
         }
     }
 
+    /// <summary>
+    /// Ajanın gönderebileceği en büyük rapor (200 satır × 500 karakter, Türkçe karakterli; özet 4000) hub sınırına takılmadan kaydedilir;
+    /// bağlantı kopmaz (review r1 H-1).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task AgentHub_ReportError_LargestReportAccepted()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var user = await AuthenticatedClient.CreateAsync(_factory, ct);
+        var agent = _factory.CreateAgentConnection(await PairAsync(user, ct));
+        await using (agent.ConfigureAwait(false))
+        {
+            await agent.StartAsync(ct);
+            await agent.InvokeAsync(AgentHubContract.Register, new AgentRegistration(Machine, "0.9.0"), ct);
+            var lines = Enumerable.Range(0, 200).Select(i => $"{i:000} " + new string('ğ', 496)).ToList();
+
+            var reply = await agent.InvokeAsync<AgentErrorReportReply>(
+                AgentHubContract.ReportError,
+                new AgentErrorReportRequest(null, new string('ş', 4000), "0.9.0", "Windows 11", null, null, lines),
+                ct);
+
+            reply.Result.ShouldBe(AgentErrorReportResult.Sent);
+            agent.State.ShouldBe(HubConnectionState.Connected);
+        }
+    }
+
     /// <summary>A hesabında oluşan bildirim B hesabıyla eşleşmiş ajandan gelirse kaydedilmez ("başka hesap").</summary>
     /// <returns>Görev.</returns>
     [Fact]

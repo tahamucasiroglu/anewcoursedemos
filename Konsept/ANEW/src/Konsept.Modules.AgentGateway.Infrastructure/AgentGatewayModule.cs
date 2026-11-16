@@ -18,12 +18,17 @@ namespace Konsept.Modules.AgentGateway.Infrastructure;
 /// </summary>
 public static class AgentGatewayModule
 {
+    /// <summary>Hub'ın kabul ettiği en büyük mesaj (bayt).</summary>
+    public const long MaxHubMessageBytes = 1024 * 1024;
+
     /// <summary>Modülün servislerini kaydeder.</summary>
     /// <param name="services">Servis koleksiyonu.</param>
     /// <returns>Aynı koleksiyon.</returns>
     public static IServiceCollection AddAgentGatewayModule(this IServiceCollection services)
     {
-        services.AddSignalR();
+        // Ajan hata bildirimi (spec 0022) en fazla ~64K karakter log taşır; JSON kaçışıyla 32 KB varsayılanı aşar ve bağlantıyı
+        // kapatırdı (review r1 H-1). Ajan yükü sınırlar; sunucu 1 MB'a kadar kabul eder.
+        services.AddSignalR(options => options.MaximumReceiveMessageSize = MaxHubMessageBytes);
         services.AddSingleton<IAgentConnectionRegistry, InMemoryAgentConnectionRegistry>();
         services.AddSingleton<IAgentConnectionTracker, AgentConnectionTracker>();
         services.AddSingleton<IAgentDeviceRevocationListener, AgentSessionTerminator>();

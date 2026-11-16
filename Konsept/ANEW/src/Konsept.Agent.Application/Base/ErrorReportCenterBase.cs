@@ -72,7 +72,7 @@ public abstract class ErrorReportCenterBase : IErrorReportCenter
     /// <inheritdoc />
     public AgentErrorReport? Raise(string summary, string? component = null, InstallStep? step = null)
     {
-        var clean = AgentReportText.Sanitize(summary, _environment);
+        var clean = AgentReportText.Cut(AgentReportText.Sanitize(summary, _environment), AgentReportText.MaxSummaryLength);
         if (string.IsNullOrWhiteSpace(clean))
         {
             return null;

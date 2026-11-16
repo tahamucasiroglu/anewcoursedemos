@@ -62,6 +62,27 @@ public sealed class ErrorReportCenterTests : IDisposable
     }
 
     /// <summary>
+    /// Uzun satırlar 500 karaktere, satırların toplamı 64K karaktere kırpılır (en yeniler kalır); özet 4000 karakteri aşmaz — rapor hub
+    /// mesaj sınırına takılmaz (review r1 H-1).
+    /// </summary>
+    [Fact]
+    public void LogLines_LongLinesAndTotalCapped()
+    {
+        var now = _time.GetUtcNow();
+        var lines = Enumerable.Range(0, 200)
+            .Select(i => new AgentLogLine(now.AddMinutes(-10).AddSeconds(i), AgentLogLevel.Warning, $"satır {i:000} " + new string('ğ', 2000)))
+            .ToList();
+
+        var selected = AgentReportText.SelectLogLines(lines, now, Environment);
+        var report = Create().Raise(new string('ş', 9000))!;
+
+        selected.ShouldAllBe(l => l.Length <= AgentReportText.MaxLineLength);
+        selected.Sum(l => l.Length).ShouldBeLessThanOrEqualTo(AgentReportText.MaxLogChars);
+        selected[^1].ShouldContain("satır 199");
+        report.Summary.Length.ShouldBeLessThanOrEqualTo(AgentReportText.MaxSummaryLength);
+    }
+
+    /// <summary>
     /// Kullanıcının profil yolu ve başka <c>C:\Users\&lt;ad&gt;</c> yolları <c>%USERPROFILE%</c> olur; makine adı ve 0008 listesindeki
     /// değerler (API key, JWT) rapora girmez.
     /// </summary>
