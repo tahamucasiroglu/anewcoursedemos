@@ -20,26 +20,21 @@ public static partial class RenderCsp
     /// <summary>Eklenen etiket.</summary>
     public const string Tag = "<meta http-equiv=\"Content-Security-Policy\" content=\"" + Policy + "\">";
 
-    /// <summary>Etiketi <c>&lt;head&gt;</c>'in hemen başına (yoksa <c>&lt;html&gt;</c>'den sonra, o da yoksa belgenin başına) ekler.</summary>
+    /// <summary>
+    /// Etiketi belgenin en başına (yalnızca baştaki <c>&lt;!doctype&gt;</c>'tan sonra) ekler: ayrıştırıcı onu örtük <c>&lt;head&gt;</c>'e alır,
+    /// sonradan gelen <c>&lt;html&gt;</c>/<c>&lt;head&gt;</c> birleşir. Böylece hiçbir betik politikadan önce çalışmaz ve etiket bir dizenin
+    /// içine düşemez (review r2 H-1).
+    /// </summary>
     /// <param name="html">LLM'in yazdığı belge (kapıdan geçmiş).</param>
     /// <returns>Politikalı belge.</returns>
     public static string Apply(string html)
     {
         ArgumentNullException.ThrowIfNull(html);
-        foreach (var anchor in new[] { HeadTag(), HtmlTag() })
-        {
-            if (anchor.Match(html) is { Success: true } match)
-            {
-                return html.Insert(match.Index + match.Length, Tag);
-            }
-        }
-
-        return Tag + html;
+        return LeadingDoctype().Match(html) is { Success: true } doctype
+            ? html.Insert(doctype.Index + doctype.Length, Tag)
+            : Tag + html;
     }
 
-    [GeneratedRegex(@"<head\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex HeadTag();
-
-    [GeneratedRegex(@"<html\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex HtmlTag();
+    [GeneratedRegex(@"\A\s*<!doctype\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex LeadingDoctype();
 }

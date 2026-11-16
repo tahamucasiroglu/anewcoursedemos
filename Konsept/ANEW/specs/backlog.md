@@ -167,3 +167,7 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   Chromium sandbox'ına dayanır, ayrı gözlem yok — Source: plan 0018 Risk 4 — Severity: Low — Recommendation: Windows'ta bileşenler kuruluysa koşan
   `Category=RenderE2E` testi (ayrı check adımı, `requires` ile bileşen denetimi) ve NVIDIA'sız makinede bir kullanıcı testi — Deferred by:
   tahamucasiroglu, 2026-11-16, standing approval
+- **B-127** — 0018 kapı: anahtarı `"constr".concat("uctor")` ya da şablon dizesiyle kurup `tl[k]` ile erişim L1 kapısında yakalanmıyor;
+  çalışma anında ajanın CSP etiketi (`'unsafe-eval'` yok) `Function`/`eval`'i durdurur (plan 0018 G-4) — Source: plan 0018 review r2 R2-L-1 —
+  Severity: Low — Recommendation: betiklerde değişkenle köşeli parantez erişimini (`\w\[\s*[A-Za-z_$]`) ve dizelerde `.concat(`'ı reddet; GSAP
+  örneklerinde aşırı sıkılaştırmayı ölç — Deferred by: tahamucasiroglu, 2026-11-17, standing approval

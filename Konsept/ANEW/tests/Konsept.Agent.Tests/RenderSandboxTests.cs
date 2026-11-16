@@ -156,8 +156,10 @@ public sealed class RenderSandboxTests : IDisposable
         RenderCsp.Policy.ShouldContain("connect-src 'self'");
         RenderCsp.Policy.ShouldContain("default-src 'none'");
         RenderCsp.Apply("<!doctype html><html lang=\"tr\"><head><title>x</title></head></html>")
-            .ShouldBe("<!doctype html><html lang=\"tr\"><head>" + RenderCsp.Tag + "<title>x</title></head></html>");
+            .ShouldBe("<!doctype html>" + RenderCsp.Tag + "<html lang=\"tr\"><head><title>x</title></head></html>");
         RenderCsp.Apply("<div>x</div>").ShouldStartWith(RenderCsp.Tag);
+        RenderCsp.Apply("<script>const s = \"<head>\";</script><html><head></head></html>").ShouldStartWith(RenderCsp.Tag); // Review r2 H-1.
+        RenderCsp.Apply("<!doctype html><script>go()</script><html><head></head></html>").ShouldStartWith("<!doctype html>" + RenderCsp.Tag);
     }
 
     /// <summary>AC-2 (T4): iş klasörü içinden dışarıyı gösteren bağlantı (junction) varsa render yapılmaz.</summary>

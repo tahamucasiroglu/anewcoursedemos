@@ -92,6 +92,15 @@ public sealed class RenderCodeGateTests
     [InlineData("<svg><a><animate attributeName=\"xlink:href\" values=\"x\" /></a></svg>")]
     [InlineData("<img src=\"image.png\" alt=\"http&colon;&sol;&sol;x\" />")]
     [InlineData("<script>img.onerror = \"go()\";</script>")]
+    [InlineData("<svg/onload=\"go()\"></svg>")]
+    [InlineData("<img src=\"image.png\"onerror=\"go()\" />")]
+    [InlineData("<img src=\"image.png\" alt=\">\" onerror=\"go()\" />")]
+    [InlineData("<p>&amp; ok</p><img src=\"image.png\" alt=\"http&colon;&sol;&sol;x\" />")]
+    [InlineData("<script>const g = (globalThis);</script>")]
+    [InlineData("<script>const g = window || 0;</script>")]
+    [InlineData("<script>const g = window.window;</script>")]
+    [InlineData("<script>const g = [window][0];</script>")]
+    [InlineData("<script>const g = window\r\nconst h = 1;</script>")]
     public void ForbiddenConstructs_Rejected(string snippet)
     {
         var code = Harmless.Replace("</body>", snippet + "</body>", StringComparison.Ordinal);
