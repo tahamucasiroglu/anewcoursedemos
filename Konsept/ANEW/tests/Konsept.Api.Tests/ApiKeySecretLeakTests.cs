@@ -35,6 +35,7 @@ public sealed class ApiKeySecretLeakTests : IClassFixture<AiGatewayApiFactory>
         var saved = ApiKeyApiTests.NewKey("sk-ant-");
         var replaced = ApiKeyApiTests.NewKey("sk-ant-");
         var rejected = ApiKeyApiTests.NewKey("sk-ant-");
+        var unprefixed = ApiKeyApiTests.NewKey("glmkey"); // Bilinen önek yok: 0008 desenleri değil, bilinen sır kaydı gizlemeli.
         var bodies = new List<string>();
 
         _factory.Validator.Outcome = KeyCheckOutcome.Accepted;
@@ -44,6 +45,10 @@ public sealed class ApiKeySecretLeakTests : IClassFixture<AiGatewayApiFactory>
         bodies.Add(await PutTextAsync(client, rejected, ct));
         _factory.Validator.Outcome = KeyCheckOutcome.Accepted;
         bodies.Add(await PutTextAsync(client, "kisa\u0001" + saved[..10], ct));
+        using (var glm = await client.PutAsJsonAsync("/api/ai/keys/glm", new { apiKey = unprefixed }, ct))
+        {
+            bodies.Add(await glm.Content.ReadAsStringAsync(ct));
+        }
         bodies.Add(await client.GetStringAsync(new Uri("/api/ai/keys", UriKind.Relative), ct));
         bodies.Add(await client.GetStringAsync(new Uri("/api/ai/catalog", UriKind.Relative), ct));
         using (var delete = await client.DeleteAsync(new Uri("/api/ai/keys/anthropic", UriKind.Relative), ct))
@@ -55,10 +60,11 @@ public sealed class ApiKeySecretLeakTests : IClassFixture<AiGatewayApiFactory>
         var logger = _factory.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Konsept.Api.Tests.KeyLeak");
 #pragma warning disable CA1848, CA2254 // Test: key kasıtlı olarak serbest metinde.
         logger.LogWarning($"elle yazılan key {replaced} sonu");
+        logger.LogWarning($"elle yazılan öneksiz key {unprefixed} sonu");
 #pragma warning restore CA1848, CA2254
         var text = await FlushedLogTextAsync(ct);
 
-        foreach (var key in new[] { saved, replaced, rejected })
+        foreach (var key in new[] { saved, replaced, rejected, unprefixed })
         {
             ApiKeyApiTests.ShouldNotLeak(key, [text, .. bodies]);
             ApiKeyApiTests.ShouldNotLeak(key, [.. _factory.Events.Events.Select(e => e.Message)]);
@@ -69,6 +75,7 @@ public sealed class ApiKeySecretLeakTests : IClassFixture<AiGatewayApiFactory>
         text.ShouldContain("sk-…" + saved[^3..]);
         text.ShouldContain("reddetti");
         text.ShouldContain("elle yazılan key");
+        text.ShouldContain("elle yazılan öneksiz key");
     }
 
     private async Task<string> PutTextAsync(HttpClient client, string key, CancellationToken ct)

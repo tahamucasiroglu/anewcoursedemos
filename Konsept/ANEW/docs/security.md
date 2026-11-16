@@ -19,6 +19,12 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
   online API key'lerini hiç tutmaz (Y-8).
 - **Data Protection anahtarları** Pi'de kalıcı bir klasörde durur ve **yedeklenir**. Kaybolurlarsa kayıtlı tüm
   API key'ler çözülemez hale gelir.
+- **API key'ler (0004):** `ai_gateway.api_keys` (kullanıcı + sağlayıcı tekil) yalnızca şifreli değer (Data Protection, amaç
+  `Konsept.AiGateway.ApiKeys.v1`; Api uygulama adı `anewconcept-api`, anahtarlar `DataProtection:KeysDirectory` → Pi'de
+  `/opt/anewconcept/keys/api`) ve maskeli ipucu (`ilk ≤3 … son 3`) tutar; düz key sütunu yoktur. Yanıtlar yalnızca maskeli hali
+  taşır; çözülemeyen satır "Key okunamıyor" olur. Kaydedilen key `SecretMasker.RegisterKnownSecret` ile bilinen sırdır (önekten
+  bağımsız her logda gizlenir). Doğrulama sağlayıcının seed'deki maliyetsiz GET ucuyla, tek deneme, 10 sn; testlerde sahte
+  doğrulayıcı/HTTP işleyicisi — gerçek sağlayıcı çağrısı yok. Her işlem oturumdaki kullanıcıyla süzülür; yolda key kimliği yoktur.
 - Üretim gizli bilgileri (DB şifresi vb.) Pi'de ortam değişkeni ya da systemd `EnvironmentFile` ile verilir;
   repoda yalnızca `.env.example` bulunur. `appsettings*.json` içinde gizli bilgi olmaz.
 - **Loglar (Serilog):** şifre hiçbir zaman loglanmaz (maskeli bile değil: `***`); API key yalnızca maskeli (`sk-…a3f`);

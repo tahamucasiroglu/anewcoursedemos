@@ -52,7 +52,9 @@ fi
 # yalnızca yoksa oluşturulur ve yalnızca eksik satırlar eklenir. Satır yoksa ya da boşsa hiçbir hesap admin olmaz; Api her
 # açılışta rolleri bu ayara eşitler.
 # Web çerez şifreleme anahtarları (plan 0002, B-46): kalıcı klasör; silinirse tüm oturumlar düşer.
-install -d -o anewconcept -g anewconcept -m 700 /opt/anewconcept/keys /opt/anewconcept/keys/web
+# Api'nin Data Protection anahtarları (plan 0004, H-2): kullanıcıların API key'leri bununla şifreli; klasör yedeklenmeli —
+# kaybolursa kayıtlı tüm key'ler "Key okunamıyor" olur ve kullanıcılar yeniden girer.
+install -d -o anewconcept -g anewconcept -m 700 /opt/anewconcept/keys /opt/anewconcept/keys/web /opt/anewconcept/keys/api
 umask 027
 # web.env her kurulumda api.env'deki anahtardan yeniden yazılır; buraya elle değişken eklemeyin (review I-4).
 grep '^Internal__ServiceKey=' /etc/anewconcept/api.env > /etc/anewconcept/web.env
