@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
 using Konsept.Api.Tests.Fakes;
 using Konsept.Modules.Identity.Application.Abstract;
+using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
+using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,8 @@ namespace Konsept.Api.Tests.Support;
 /// </summary>
 public sealed class IdentityApiFactory : WebApplicationFactory<Program>
 {
+    private InMemoryAdminActivityRepository? _adminActivities;
+
     /// <summary>Gets ilerletilebilir saat (2026-11-14 09:00 UTC'den başlar).</summary>
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.Zero));
 
@@ -65,6 +69,12 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Gets bellek hata bildirimi deposu (plan 0022).</summary>
     public InMemoryErrorReportRepository ErrorReports { get; } = new();
+
+    /// <summary>Gets bellek video sürüm deposu (klip istatistiği kaynağı; plan 0010).</summary>
+    public InMemoryProducedVideoRepository ProducedVideos { get; } = new();
+
+    /// <summary>Gets bellek admin sorguları (plan 0010); olay ve hata bildirimi depolarını okur.</summary>
+    public InMemoryAdminActivityRepository AdminActivities => _adminActivities ??= new InMemoryAdminActivityRepository(Events, ErrorReports);
 
     /// <summary>Gets bu örneğin log klasörü.</summary>
     public string LogDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "identity-logs-" + Guid.NewGuid().ToString("N"));
@@ -118,6 +128,12 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ITechnicalLogRepository>(TechnicalLogs);
             services.RemoveAll<IErrorReportRepository>(); // test kurulumu: hata bildirimleri (plan 0022 A-1).
             services.AddSingleton<IErrorReportRepository>(ErrorReports);
+            services.RemoveAll<IUserDirectory>(); // test kurulumu: admin istatistikleri (plan 0010).
+            services.RemoveAll<IClipStatistics>();
+            services.RemoveAll<IAdminActivityRepository>();
+            services.AddSingleton<IUserDirectory>(new InMemoryUserDirectory(Users));
+            services.AddSingleton<IClipStatistics>(new InMemoryClipStatistics(ProducedVideos));
+            services.AddSingleton<IAdminActivityRepository>(AdminActivities);
         });
     }
 }

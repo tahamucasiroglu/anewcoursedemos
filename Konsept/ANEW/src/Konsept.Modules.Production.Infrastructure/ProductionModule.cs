@@ -1,4 +1,5 @@
 using Konsept.Modules.Identity.Contracts.Abstract;
+using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Production.Application.Abstract;
 using Konsept.Modules.Production.Application.Concrete;
 using Konsept.Modules.Production.Application.Dtos;
@@ -30,6 +31,7 @@ public static class ProductionModule
         services.AddScoped<IProductionSettingsRepository, ProductionSettingsRepository>();
         services.AddScoped<IStageOutputRepository, StageOutputRepository>();
         services.AddScoped<IProducedVideoRepository, ProducedVideoRepository>();
+        services.AddScoped<IClipStatistics, ClipStatistics>(); // Monitoring.Contracts: admin klip sayısı (spec 0010).
         services.AddScoped<IQueueStateRepository, QueueStateRepository>();
         services.AddScoped<ProductionPipelineLinks>();
         services.AddScoped<IProductionService, ProductionService>();

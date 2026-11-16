@@ -66,6 +66,7 @@ public static class IdentityModule
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ISessionRevoker>(sp => sp.GetRequiredService<ISessionService>());
         services.AddScoped<IUserAccountReader, UserAccountReader>(); // Günlük geçmişinin ilk günü (spec 0021 Req 6).
+        services.AddScoped<IUserDirectory, UserDirectory>(); // Admin istatistikleri ve aktiviteleri (spec 0010).
 
         // Ajan cihaz eşleştirme (spec 0012): kodlar bellekte (tek süreç), cihazlar identity.agent_devices'ta.
         services.AddSingleton<IPairingStore, InMemoryPairingStore>();
