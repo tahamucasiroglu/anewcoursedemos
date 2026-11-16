@@ -198,6 +198,28 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/deleted/{conceptId:D}"), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<JsonElement>> GetProductionStateAsync(Guid profileId, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/production/state?profileId={profileId:D}"), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> SendProductionAsync(ProductionCommand command, Guid? id, JsonElement? body, CancellationToken cancellationToken)
+    {
+        var target = id ?? Guid.Empty;
+        var (method, path) = command switch
+        {
+            ProductionCommand.SaveSettings => (HttpMethod.Put, $"api/production/settings?profileId={target:D}"),
+            ProductionCommand.Enqueue => (HttpMethod.Post, "api/production/queue"),
+            ProductionCommand.Start => (HttpMethod.Post, "api/production/start"),
+            ProductionCommand.Stop => (HttpMethod.Post, "api/production/stop"),
+            ProductionCommand.Move => (HttpMethod.Post, $"api/production/jobs/{target:D}/move"),
+            ProductionCommand.Remove => (HttpMethod.Post, $"api/production/jobs/{target:D}/remove"),
+            _ => (HttpMethod.Post, $"api/production/jobs/{target:D}/resume"),
+        };
+        HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
+        return SendAsync<JsonElement>(new HttpRequestMessage(method, path) { Content = content }, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<Result<JournalDayResponse>> GetJournalDayAsync(string? date, string? filter, int skip, CancellationToken cancellationToken) =>
         SendAsync<JournalDayResponse>(
             new HttpRequestMessage(

@@ -2,5 +2,99 @@
     ViewData["RequiresProfile"] = true;
     ViewData["Title"] = UiText.NavConceptToVideo;
 }
+@* Konseptten Video (spec 0006): üst şeritte model seçimi özeti (sol; tıklayınca modal) ve Altyazı / İlerleme çubuğu (sağ); altında solda
+   onaylanan konsept listesi + salt okunur ayrıntı ("Konseptler'de düzenle" bağlantısı, Ç-11), ortada üretim sırası. Sağ sütun (Üretilenler)
+   0017'dedir. production.js /uretim ve /konseptler uçlarını $.ajax ile kullanır (K-6); konsept metni yalnızca textContent ile yazılır.
+   Kurallar sunucudadır; metinler resx'ten data-text-* ile gelir. *@
 <h1 class="page__title">@UiText.NavConceptToVideo</h1>
-<p class="empty-state" data-requires-profile>@UiText.EmptyConceptToVideo</p>
+<div class="production" id="production" data-requires-profile
+     data-text-loading="@UiText.ProductionLoading" data-text-failed="@UiText.ProductionFailed" data-text-correlation="@UiText.ProductionCorrelation"
+     data-text-saving="@UiText.ProductionSaving" data-text-not-selected="@UiText.ConceptNotSelected"
+     data-text-image-off="@UiText.ProductionImageOff" data-text-audio-off="@UiText.ProductionAudioOff"
+     data-text-local="@UiText.ProductionLocal" data-text-online="@UiText.ProductionOnline" data-text-no-key="@UiText.ProductionNoKey"
+     data-text-no-permission="@UiText.ProductionNoPermission" data-text-unreadable="@UiText.ProductionUnreadable"
+     data-text-only-turkish="@UiText.ProductionOnlyTurkish" data-text-only-english="@UiText.ProductionOnlyEnglish" data-text-license="@UiText.ProductionLicense"
+     data-text-status-queued="@UiText.JobQueued" data-text-status-producing="@UiText.JobProducing" data-text-status-stopped="@UiText.JobStopped"
+     data-text-status-waiting-for-agent="@UiText.JobWaitingForAgent" data-text-status-failed="@UiText.JobFailed" data-text-status-completed="@UiText.JobCompleted"
+     data-text-move-up="@UiText.ProductionMoveUp" data-text-move-down="@UiText.ProductionMoveDown" data-text-remove="@UiText.ProductionRemove"
+     data-text-resume="@UiText.ProductionResume" data-text-select="@UiText.ProductionSelect" data-text-page="@UiText.ConceptsPage"
+     data-text-edit-in-concepts="@UiText.ProductionEditInConcepts"
+     data-text-scene-heading="@UiText.ConceptSceneHeading" data-text-scene-visual="@UiText.ConceptSceneVisual"
+     data-text-scene-narration="@UiText.ConceptSceneNarration" data-text-scene-duration="@UiText.ConceptSceneDuration">
+    <section class="production__strip" aria-label="@UiText.ProductionStripLabel">
+        <button type="button" class="concept-strip__models" id="production-models-open" aria-haspopup="dialog" aria-controls="production-models-modal"
+                title="@UiText.ProductionModelsOpen" disabled>
+            <span class="concept-strip__role">@UiText.ProductionCodeShort: <span class="concept-strip__value" id="production-summary-code">@UiText.ConceptNotSelected</span></span>
+            <span class="concept-strip__role">@UiText.ProductionEngineShort: <span class="concept-strip__value" id="production-summary-engine"></span></span>
+            <span class="concept-strip__role">@UiText.ProductionImageShort: <span class="concept-strip__value" id="production-summary-image"></span></span>
+            <span class="concept-strip__role">@UiText.ProductionAudioShort: <span class="concept-strip__value" id="production-summary-audio"></span></span>
+        </button>
+        <p class="production__warning" id="production-language-warning" role="alert" hidden></p>
+        <div class="production__toggles">
+            <label class="production__toggle"><input type="checkbox" id="production-subtitles" disabled /> @UiText.ProductionSubtitles</label>
+            <span class="production__note" id="production-subtitles-note" hidden>@UiText.ProductionSubtitlesSilent</span>
+            <label class="production__toggle"><input type="checkbox" id="production-progress" disabled /> @UiText.ProductionProgressBar</label>
+        </div>
+        <p class="concept-strip__status" id="production-status" role="status" aria-live="polite"></p>
+    </section>
+    <div class="production__columns">
+        <section class="production__approved" aria-labelledby="production-approved-title">
+            <h2 class="production__heading" id="production-approved-title">@UiText.ProductionApprovedTitle</h2>
+            <p class="empty-state" id="production-approved-empty" data-requires-profile>@UiText.EmptyConceptToVideo</p>
+            <p class="concept-list__status" id="production-approved-status" role="status" aria-live="polite"></p>
+            <ul class="concept-list" id="production-approved"></ul>
+            <span class="concept-list__pager" id="production-pager" hidden>
+                <button type="button" class="button" id="production-prev">@UiText.ConceptsPrev</button>
+                <span id="production-page"></span>
+                <button type="button" class="button" id="production-next">@UiText.ConceptsNext</button>
+            </span>
+            <button type="button" class="button button--primary" id="production-enqueue" disabled>@UiText.ProductionEnqueue</button>
+            <h2 class="production__heading">@UiText.ProductionDetailTitle</h2>
+            <p class="concept-area__hint" id="production-detail-hint">@UiText.ProductionDetailHint</p>
+            <article class="concept-detail" id="production-detail" tabindex="-1" hidden></article>
+        </section>
+        <section class="production__queue" aria-labelledby="production-queue-title">
+            <h2 class="production__heading" id="production-queue-title">@UiText.ProductionQueueTitle</h2>
+            <div class="production__controls">
+                <button type="button" class="button button--primary" id="production-start" disabled>@UiText.ProductionStart</button>
+                <button type="button" class="button" id="production-stop" hidden>@UiText.ProductionStop</button>
+                <span class="production__block" id="production-block" aria-live="polite"></span>
+            </div>
+            <p class="production__queue-empty" id="production-queue-empty">@UiText.ProductionQueueEmpty</p>
+            <ol class="production-queue" id="production-queue"></ol>
+        </section>
+    </div>
+</div>
+<div class="dialog-backdrop" id="production-models-modal" hidden>
+    <div class="dialog concept-models" role="dialog" aria-modal="true" aria-labelledby="production-models-title">
+        <div class="profile-modal__head">
+            <h2 class="profile-modal__title" id="production-models-title">@UiText.ProductionModelsTitle</h2>
+            <button type="button" class="icon-button" id="production-models-close" aria-label="@UiText.ConceptModelsClose" title="@UiText.ConceptModelsClose">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+        </div>
+        <p class="production__warning" id="production-models-error" role="alert" hidden>@UiText.ProductionModelsFailed</p>
+        <div class="field">
+            <label class="field__label" for="production-model-code">@UiText.ProductionCodeModel</label>
+            <select class="field__input" id="production-model-code"></select>
+        </div>
+        <div class="field" id="production-effort-field" hidden>
+            <label class="field__label" for="production-model-effort">@UiText.ProductionCodeEffort</label>
+            <select class="field__input" id="production-model-effort"></select>
+        </div>
+        <div class="field">
+            <label class="field__label" for="production-model-engine">@UiText.ProductionEngine</label>
+            <select class="field__input" id="production-model-engine"></select>
+        </div>
+        <div class="field">
+            <label class="field__label" for="production-model-image">@UiText.ProductionImageModel</label>
+            <select class="field__input" id="production-model-image"></select>
+        </div>
+        <div class="field">
+            <label class="field__label" for="production-model-audio">@UiText.ProductionAudioModel</label>
+            <select class="field__input" id="production-model-audio"></select>
+        </div>
+        <p class="production__warning" id="production-models-warning" role="alert" hidden></p>
+        <p class="concept-models__status">@UiText.ProductionModelsKeyHint <a href="/ayarlar">@UiText.ConceptModelsGoSettings</a></p>
+    </div>
+</div>

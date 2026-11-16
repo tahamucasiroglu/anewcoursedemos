@@ -28,7 +28,7 @@
   <data name="ThemeToggle" xml:space="preserve"><value>Açık/koyu temayı değiştir</value></data>
   <data name="ComingSoon" xml:space="preserve"><value>Yakında</value></data>
   <data name="EmptyConcepts" xml:space="preserve"><value>Henüz konsept yok.</value></data>
-  <data name="EmptyConceptToVideo" xml:space="preserve"><value>Henüz videoya hazır konsept yok.</value></data>
+  <data name="EmptyConceptToVideo" xml:space="preserve"><value>Onaylanmış konsept yok — Konseptler sayfasından video için konsept seçin</value></data>
   <data name="EmptyProduced" xml:space="preserve"><value>Henüz üretilmiş video yok.</value></data>
   <data name="EmptyDeleted" xml:space="preserve"><value>Silinen bir şey yok.</value></data>
   <data name="PublishingComingSoon" xml:space="preserve"><value>Çok yakında sizlerleyiz</value></data>
@@ -391,4 +391,55 @@
   <data name="SuggestionsResetting" xml:space="preserve"><value>Sıfırlanıyor…</value></data>
   <data name="SuggestionsResetDone" xml:space="preserve"><value>Öneriler sıfırlandı</value></data>
   <data name="SuggestionsResetFailed" xml:space="preserve"><value>Öneriler sıfırlanamadı; hiçbir şey değişmedi.</value></data>
+  <data name="ProductionLoading" xml:space="preserve"><value>Yükleniyor…</value></data>
+  <data name="ProductionFailed" xml:space="preserve"><value>Sunucuya ulaşılamadı. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ProductionCorrelation" xml:space="preserve"><value>(Korelasyon: {0})</value></data>
+  <data name="ProductionSaving" xml:space="preserve"><value>Kaydediliyor…</value></data>
+  <data name="ProductionImageOff" xml:space="preserve"><value>Kapalı — koddan çiz</value></data>
+  <data name="ProductionAudioOff" xml:space="preserve"><value>Kapalı — sessiz video</value></data>
+  <data name="ProductionLocal" xml:space="preserve"><value>yerel</value></data>
+  <data name="ProductionOnline" xml:space="preserve"><value>online</value></data>
+  <data name="ProductionNoKey" xml:space="preserve"><value>Key yok</value></data>
+  <data name="ProductionNoPermission" xml:space="preserve"><value>Yetki yok</value></data>
+  <data name="ProductionUnreadable" xml:space="preserve"><value>Key okunamıyor</value></data>
+  <data name="ProductionOnlyTurkish" xml:space="preserve"><value>Yalnız Türkçe</value></data>
+  <data name="ProductionOnlyEnglish" xml:space="preserve"><value>Yalnız İngilizce</value></data>
+  <data name="ProductionLicense" xml:space="preserve"><value>Lisans uyarısı</value></data>
+  <data name="JobQueued" xml:space="preserve"><value>Sırada</value></data>
+  <data name="JobProducing" xml:space="preserve"><value>Üretiliyor</value></data>
+  <data name="JobStopped" xml:space="preserve"><value>Durduruldu</value></data>
+  <data name="JobWaitingForAgent" xml:space="preserve"><value>Ajan bekleniyor</value></data>
+  <data name="JobFailed" xml:space="preserve"><value>Hata</value></data>
+  <data name="JobCompleted" xml:space="preserve"><value>Tamamlandı</value></data>
+  <data name="ProductionMoveUp" xml:space="preserve"><value>{0}'ı yukarı taşı</value></data>
+  <data name="ProductionMoveDown" xml:space="preserve"><value>{0}'ı aşağı taşı</value></data>
+  <data name="ProductionRemove" xml:space="preserve"><value>{0}'ı sıradan çıkar</value></data>
+  <data name="ProductionResume" xml:space="preserve"><value>Kaldığı yerden devam et</value></data>
+  <data name="ProductionSelect" xml:space="preserve"><value>{0} seç</value></data>
+  <data name="ProductionEditInConcepts" xml:space="preserve"><value>Konseptler'de düzenle</value></data>
+  <data name="ProductionStripLabel" xml:space="preserve"><value>Üretim ayarları</value></data>
+  <data name="ProductionModelsOpen" xml:space="preserve"><value>Model seçimini aç</value></data>
+  <data name="ProductionCodeShort" xml:space="preserve"><value>Video kodu</value></data>
+  <data name="ProductionEngineShort" xml:space="preserve"><value>Motor</value></data>
+  <data name="ProductionImageShort" xml:space="preserve"><value>Görsel</value></data>
+  <data name="ProductionAudioShort" xml:space="preserve"><value>Ses</value></data>
+  <data name="ProductionSubtitles" xml:space="preserve"><value>Altyazı</value></data>
+  <data name="ProductionSubtitlesSilent" xml:space="preserve"><value>Sessiz videoda altyazı yok</value></data>
+  <data name="ProductionProgressBar" xml:space="preserve"><value>İlerleme çubuğu</value></data>
+  <data name="ProductionApprovedTitle" xml:space="preserve"><value>Onaylanan konseptler</value></data>
+  <data name="ProductionEnqueue" xml:space="preserve"><value>Üretim sırasına al</value></data>
+  <data name="ProductionDetailTitle" xml:space="preserve"><value>Konsept ayrıntısı</value></data>
+  <data name="ProductionDetailHint" xml:space="preserve"><value>Ayrıntı için bir konsepte tıklayın</value></data>
+  <data name="ProductionQueueTitle" xml:space="preserve"><value>Üretim sırası</value></data>
+  <data name="ProductionStart" xml:space="preserve"><value>Sırayla üret</value></data>
+  <data name="ProductionStop" xml:space="preserve"><value>Durdur</value></data>
+  <data name="ProductionQueueEmpty" xml:space="preserve"><value>Sıra boş</value></data>
+  <data name="ProductionModelsTitle" xml:space="preserve"><value>Model seçimi</value></data>
+  <data name="ProductionModelsFailed" xml:space="preserve"><value>Model listesi yüklenemedi. Biraz sonra tekrar deneyin.</value></data>
+  <data name="ProductionCodeModel" xml:space="preserve"><value>Video kodu modeli</value></data>
+  <data name="ProductionCodeEffort" xml:space="preserve"><value>Video kodu eforu</value></data>
+  <data name="ProductionEngine" xml:space="preserve"><value>Video motoru</value></data>
+  <data name="ProductionImageModel" xml:space="preserve"><value>Görsel modeli</value></data>
+  <data name="ProductionAudioModel" xml:space="preserve"><value>Ses modeli</value></data>
+  <data name="ProductionModelsKeyHint" xml:space="preserve"><value>"Key yok" etiketli online model için API key'i Ayarlar'dan ekleyin.</value></data>
 </root>

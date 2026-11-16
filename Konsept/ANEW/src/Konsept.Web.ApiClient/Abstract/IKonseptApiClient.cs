@@ -205,6 +205,20 @@ public interface IKonseptApiClient
     /// <returns>Detay (Api gövdesi aynen).</returns>
     Task<Result<JsonElement>> GetDeletedConceptAsync(Guid conceptId, CancellationToken cancellationToken);
 
+    /// <summary>Konseptten Video: profilin durumu (spec 0006; ayarlar, model seçenekleri, sıra, pasiflik nedeni).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Api'nin JSON'u.</returns>
+    Task<Result<JsonElement>> GetProductionStateAsync(Guid profileId, CancellationToken cancellationToken);
+
+    /// <summary>Konseptten Video komutu (spec 0006); gövde olduğu gibi iletilir, kurallar Api'dedir.</summary>
+    /// <param name="command">Komut.</param>
+    /// <param name="id">Profil (ayarlar) ya da iş (taşı, çıkar, devam); diğerlerinde <c>null</c>.</param>
+    /// <param name="body">Gövde.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Profilin güncel durumu.</returns>
+    Task<Result<JsonElement>> SendProductionAsync(ProductionCommand command, Guid? id, JsonElement? body, CancellationToken cancellationToken);
+
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
     /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>

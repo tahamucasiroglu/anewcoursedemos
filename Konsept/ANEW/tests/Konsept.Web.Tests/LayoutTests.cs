@@ -22,7 +22,7 @@ public sealed partial class LayoutTests : IClassFixture<WebFactory>
     public static TheoryData<string, string, string> Pages => new()
     {
         { "/", "Konseptler", "Henüz konsept yok." },
-        { "/konseptten-video", "Konseptten Video", "Henüz videoya hazır konsept yok." },
+        { "/konseptten-video", "Konseptten Video", "Onaylanmış konsept yok — Konseptler sayfasından video için konsept seçin" }, // Spec 0006 (plan 0006 A-3): onaylanan listenin boş durumu.
         { "/uretilenler", "Üretilenler", "Henüz üretilmiş video yok." },
         { "/silinenler", "Silinenler", "Henüz silinmiş konsept yok" }, // Spec 0016 Req 3 (plan 0016 A-1): Konseptler sekmesinin boş durumu.
         { "/yayinlama", "Yayınlama", "Çok yakında sizlerleyiz" },
