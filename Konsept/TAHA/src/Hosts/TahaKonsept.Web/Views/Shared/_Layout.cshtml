@@ -92,7 +92,7 @@
                 <div class="tk-dropdown-menu" role="menu">
                     <div class="tk-dropdown-head">
                         <strong>@userName</strong>
-                        <small>Tek kullanıcı modu</small>
+                        <small>@(isAdmin ? "Yönetici" : "Kullanıcı")</small>
                     </div>
                     @if (isAdmin)
                     {
