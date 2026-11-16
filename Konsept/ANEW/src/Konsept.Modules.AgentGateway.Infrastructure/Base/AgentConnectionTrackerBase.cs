@@ -7,15 +7,31 @@ namespace Konsept.Modules.AgentGateway.Infrastructure.Base;
 public abstract class AgentConnectionTrackerBase : IAgentConnectionTracker
 {
     private readonly Lock _gate = new();
+    private readonly HashSet<Guid> _revoked = [];
 
     /// <inheritdoc />
-    public void Track(string connectionId, AgentOwner owner, Action abort)
+    public bool Track(string connectionId, AgentOwner owner, Action abort)
     {
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(abort);
         lock (_gate)
         {
+            if (_revoked.Contains(owner.DeviceId))
+            {
+                return false;
+            }
+
             Save(connectionId, owner, abort);
+            return true;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool Contains(string connectionId)
+    {
+        lock (_gate)
+        {
+            return Exists(connectionId);
         }
     }
 
@@ -34,6 +50,9 @@ public abstract class AgentConnectionTrackerBase : IAgentConnectionTracker
         ArgumentNullException.ThrowIfNull(deviceIds);
         lock (_gate)
         {
+            // İptal edilen cihaz kimlikleri tutulur (cihaz başına 16 bayt): kimliği doğrulanmış ama henüz izlenmeyen bağlantı da
+            // sonradan alınmaz.
+            _revoked.UnionWith(deviceIds);
             var taken = Matching(userId, deviceIds).ToList();
             taken.ForEach(t => Delete(t.Key));
             return taken;
@@ -45,6 +64,11 @@ public abstract class AgentConnectionTrackerBase : IAgentConnectionTracker
     /// <param name="owner">Sahip.</param>
     /// <param name="abort">Kesme eylemi.</param>
     protected abstract void Save(string connectionId, AgentOwner owner, Action abort);
+
+    /// <summary>Var mı (kilit altında çağrılır).</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <returns>Varsa <c>true</c>.</returns>
+    protected abstract bool Exists(string connectionId);
 
     /// <summary>Siler (kilit altında çağrılır).</summary>
     /// <param name="connectionId">Bağlantı.</param>

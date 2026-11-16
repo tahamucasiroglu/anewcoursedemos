@@ -8,17 +8,26 @@ namespace Konsept.Modules.AgentGateway.Application.Abstract;
 /// </summary>
 public interface IAgentConnectionTracker
 {
-    /// <summary>Bağlantıyı izlemeye alır.</summary>
+    /// <summary>
+    /// Bağlantıyı izlemeye alır. Cihaz bu süreçte iptal edilmişse (kimlik doğrulaması ile bağlanma arasındaki yarış, review r1
+    /// M-1) bağlantı alınmaz.
+    /// </summary>
     /// <param name="connectionId">Bağlantı.</param>
     /// <param name="owner">Sahip ve cihaz.</param>
     /// <param name="abort">Bağlantıyı sunucu tarafında kesen eylem.</param>
-    void Track(string connectionId, AgentOwner owner, Action abort);
+    /// <returns>Alındıysa <c>true</c>; cihaz iptal edilmişse <c>false</c> (çağıran bağlantıyı keser).</returns>
+    bool Track(string connectionId, AgentOwner owner, Action abort);
+
+    /// <summary>Bağlantı izleniyor mu (iptal edilmemiş cihazın açık bağlantısı).</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <returns>İzleniyorsa <c>true</c>.</returns>
+    bool Contains(string connectionId);
 
     /// <summary>Bağlantıyı izlemeden çıkarır.</summary>
     /// <param name="connectionId">Bağlantı.</param>
     void Untrack(string connectionId);
 
-    /// <summary>Verilen cihazların açık bağlantılarını izlemeden çıkarıp döndürür.</summary>
+    /// <summary>Verilen cihazları iptal edilmiş olarak işaretler; açık bağlantılarını izlemeden çıkarıp döndürür.</summary>
     /// <param name="userId">Sahip.</param>
     /// <param name="deviceIds">Cihazlar.</param>
     /// <returns>Bağlantı kimlikleri ve kesme eylemleri.</returns>

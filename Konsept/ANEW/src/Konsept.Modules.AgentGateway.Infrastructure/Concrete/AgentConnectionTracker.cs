@@ -12,6 +12,9 @@ public sealed class AgentConnectionTracker : AgentConnectionTrackerBase
     protected override void Save(string connectionId, AgentOwner owner, Action abort) => _connections[connectionId] = (owner, abort);
 
     /// <inheritdoc />
+    protected override bool Exists(string connectionId) => _connections.ContainsKey(connectionId);
+
+    /// <inheritdoc />
     protected override void Delete(string connectionId) => _connections.Remove(connectionId);
 
     /// <inheritdoc />

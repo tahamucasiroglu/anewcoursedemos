@@ -33,7 +33,13 @@ public sealed class AgentHub : Hub
     /// <inheritdoc />
     public override async Task OnConnectedAsync()
     {
-        _tracker.Track(Context.ConnectionId, Owner(), Context.Abort);
+        if (!_tracker.Track(Context.ConnectionId, Owner(), Context.Abort))
+        {
+            // Kimlik doğrulandıktan sonra cihaz iptal edildi (review r1 M-1): eski oturum bağlı kalamaz.
+            Context.Abort();
+            return;
+        }
+
         await base.OnConnectedAsync().ConfigureAwait(false);
     }
 
@@ -41,7 +47,9 @@ public sealed class AgentHub : Hub
     /// <param name="registration">Ajanın bilgileri.</param>
     /// <returns>Görev.</returns>
     public Task Register(AgentRegistration registration) =>
-        _presence.RegisterAsync(Context.ConnectionId, Owner(), registration, Context.ConnectionAborted);
+        _tracker.Contains(Context.ConnectionId)
+            ? _presence.RegisterAsync(Context.ConnectionId, Owner(), registration, Context.ConnectionAborted)
+            : throw new HubException("Ajan oturumu kapandı.");
 
     /// <summary>Ajan Error/Critical log özeti gönderir (spec 0008 Req 7); kayıtsız bağlantıdan ya da düşük seviyede reddedilir.</summary>
     /// <param name="summary">Özet.</param>
