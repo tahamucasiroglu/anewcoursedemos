@@ -208,9 +208,12 @@ public sealed class ProductionApiTests : IClassFixture<ProductionApiFactory>
         cleared.GetProperty("languageWarnings").GetArrayLength().ShouldBe(0);
         cleared.GetProperty("startBlock").GetString().ShouldBe("empty");
 
+        // Profil sıraya almadan önce de sonra da İngilizce/yatay: işin değerleri yine konseptin kaydındakilerdir.
+        (await client.PutAsJsonAsync($"/api/profiles/{profile}", ProfileApiTests.Body("Dil Kanalı", seconds: 120, language: "en", format: "landscape"), ct))
+            .EnsureSuccessStatusCode();
         var turkish = SeedIn(factory, user, profile, "Türkçe konsept", ConceptStatus.Approved, language: "tr", format: "portrait", seconds: 60);
         (await EnqueueAsync(client, profile, [turkish], ct)).EnsureSuccessStatusCode();
-        (await client.PutAsJsonAsync($"/api/profiles/{profile}", ProfileApiTests.Body("Dil Kanalı", seconds: 120, language: "en", format: "landscape"), ct))
+        (await client.PutAsJsonAsync($"/api/profiles/{profile}", ProfileApiTests.Body("Dil Kanalı", seconds: 150, language: "en", format: "landscape"), ct))
             .EnsureSuccessStatusCode();
         var ready = await StateAsync(client, profile, ct);
         ready.GetProperty("languageWarnings").GetArrayLength().ShouldBe(0);

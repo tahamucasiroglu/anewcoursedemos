@@ -90,6 +90,19 @@ anahtarlı "seçildi" öneri de silinir) · `POST api/concepts/suggestions/reset
 geçmişinde "elenen" sayılır (`ListTitlesAsync`, zamanı `deleted_at`). Web: `deleted.js` (`/silinenler/konseptler/…`), `suggestion-reset.js`
 (`/oneriler/sifirla`), ortak `confirm-dialog.js`; `concept-work.js` çöpü `concept:deleted` olayını yayar.
 
+**Production (0006):** `Konsept.Modules.Production.{Domain,Application,Infrastructure,Presentation}` (Contracts 0017'de gerektiğinde) —
+`production` şeması: `settings` (profil başına üretim ayarı: altyazı, ilerleme çubuğu, video kodu modeli + efor, motor, görsel/ses; `null` =
+"Kapalı"; satır yoksa varsayılanlar, görsel varsayılanı kurulu bileşene göre) ve `jobs` (iş: konsept, başlık, konseptin kaydındaki dil/biçim/süre,
+profil içi konum, durum, `fixed_settings` jsonb). İş durumu tek liste: Sırada · Üretiliyor · Durduruldu · Ajan bekleniyor · Hata · Tamamlandı
+(`ProductionJobStatus`). Kullanıcı başına tek çalışan iş kısmi tekil dizindir (`ux_jobs_one_running_per_user`); konsept başına tek tamamlanmamış
+iş. Uçlar `GET api/production/state`, `PUT api/production/settings`, `POST api/production/{queue,start,stop}`,
+`POST api/production/jobs/{id}/{move,remove,resume}` — her biri profilin tüm durumunu döndürür ("Sırayla üret" pasiflik kodu + metni, dil
+uyarıları). Konsept durumu Concepts.Contracts `IConceptQueueBridge` ile (koşullu geçiş), katalog AiGateway.Contracts `IModelDirectory`, kurulu
+bileşenler AgentGateway.Contracts `IInstalledComponentsReader` (ajan `AgentRegistration.InstalledComponents` ile bildirir; bellekte, kullanıcı
+başına), çıkışta durdurma Identity.Contracts `IUserSessionsEndedListener` (dinleyici hatası çıkışı engellemez). Bu spec iş aşaması çalıştırmaz;
+otomatik ilerleme ve son oturumun süre dolumunda durdurma 0017'dedir (B-109). Web: `production.js` + `/uretim/…`; onaylı liste ve ayrıntı
+`/konseptler/liste` ve `/konseptler/detay` uçlarını kullanır.
+
 **Monitoring — hata bildirimleri (0022):** `monitoring.error_reports` (sıralı `Number`, kaynak web/ajan/API, durum "Yeni", süresiz). Web: `POST api/error-reports` + `GET api/error-reports/preview` (oturumlu; son 20 Günlük kaydını ve versiyonu sunucu ekler; kullanıcı başına saatte 10, web + ajan). Okuma `GET api/error-reports/{number}` yalnızca `admin.panel` (listeleme 0025). Ajan bildirimi ayrı HTTP ucu değil, kimlikli hub metodu `ReportError` (+ hesap için `WhoAmI`); AgentGateway Monitoring.Contracts `IErrorReportSubmitter`'a iletir. API'nin beklenmeyen istisnaları Monitoring'deki `IExceptionHandler` ile kaynak "API" kaydı olur (ProblemDetails sürer; 4xx kayıt oluşturmaz). Ajan bekleyen bildirimleri `pending-reports.json`'da (en çok 20, oluştuğu hesaba bağlı) tutar.
 
 **Ajan dağıtımı ve ilk kurulum (0009):** Deploy ajanı win-x64 self-contained **tek exe** olarak yayımlar (Pi adresleri `AssemblyMetadata` ile gömülü; exe yanında `agentsettings*.json` varsa o önceliklidir) ve `/opt/anewconcept/agent/anewconcept-ajan-<sürüm>-win-x64.exe`'ye koyar; Web `GET /ajan/indir` (giriş ister; `AgentDownload:Directory`) ürün sürümündeki dosyayı verir — bağlantı Ayarlar'da ve durum alanında "Ajan bağlı değil"ken. Ajan verisi kullanıcı başına `%LOCALAPPDATA%\anewconcept` altındadır (`logs`, oturum belirteci, bekleyen bildirimler, `setup-state.json`, `components\<id>`); exe nerede durursa dursun. Kurulum motoru (`SetupCoordinatorBase`) gömülü `components.json`'daki sabit sürümlü bileşenleri resmi kaynaktan indirir, SHA-256 ile doğrular, `<id>.partial` üzerinden kurar; başarısız indirme 2 kez yeniden denenir, sonra Pi aynası (`/ajan-bilesenleri/<dosya>`) denenir. Kurulu exe'lerin hash'i her açılışta karşılaştırılır (uyuşmazsa "Onarılmalı"). Bugün çekirdek: Node.js, FFmpeg (LGPL), chrome-headless-shell; ertelenenler backlog B-73…B-78.
