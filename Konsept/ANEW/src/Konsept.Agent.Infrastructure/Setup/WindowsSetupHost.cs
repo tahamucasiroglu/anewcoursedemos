@@ -11,8 +11,14 @@ namespace Konsept.Agent.Infrastructure.Setup;
 /// Yönetici izni gerektiren hiçbir şey yapmaz; ortam/araç yolu ayarlarına dokunmaz (Req 6–7). Çerçeve adaptörü — testlerde sahte.
 /// </summary>
 /// <param name="http">İndirme istemcisi.</param>
-public sealed class WindowsSetupHost(HttpClient http) : ISetupHost
+/// <param name="inactivityTimeout">Gövdeden veri gelmeden geçebilecek en uzun süre; verilmezse 30 sn (review r1 M-1).</param>
+public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeout = null) : ISetupHost
 {
+    /// <summary>Varsayılan hareketsizlik süresi: bağlantı sessizce koparsa indirme bu süre sonunda başarısız sayılır.</summary>
+    public static readonly TimeSpan DefaultInactivityTimeout = TimeSpan.FromSeconds(30);
+
+    private readonly TimeSpan _inactivity = inactivityTimeout ?? DefaultInactivityTimeout;
+
     /// <summary>Hazır denetiminde bir aracın en uzun çalışma süresi.</summary>
     public static readonly TimeSpan CheckTimeout = TimeSpan.FromSeconds(30);
 
@@ -38,7 +44,7 @@ public sealed class WindowsSetupHost(HttpClient http) : ISetupHost
                 var buffer = new byte[1 << 16];
                 long done = 0;
                 int read;
-                while ((read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                while ((read = await ReadWithTimeoutAsync(stream, buffer, cancellationToken).ConfigureAwait(false)) > 0)
                 {
                     await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
                     done += read;
@@ -104,6 +110,21 @@ public sealed class WindowsSetupHost(HttpClient http) : ISetupHost
         catch (System.ComponentModel.Win32Exception)
         {
             return null;
+        }
+    }
+
+    private async Task<int> ReadWithTimeoutAsync(Stream stream, byte[] buffer, CancellationToken cancellationToken)
+    {
+        using var idle = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        idle.CancelAfter(_inactivity);
+        try
+        {
+            return await stream.ReadAsync(buffer, idle.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Bağlantı sessizce koptu (veri yok, hata yok): motor yeniden dener, aynayı dener, sonunda "İnternet bağlantısı koptu" der.
+            throw new IOException("İndirme durdu: bağlantıdan veri gelmiyor.");
         }
     }
 }
