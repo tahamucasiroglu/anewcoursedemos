@@ -123,7 +123,8 @@ public sealed class InMemoryConceptRepository : IConceptRepository
         lock (_gate)
         {
             return Task.FromResult<IReadOnlyList<HistoryTitle>>(
-                [.. _rows.Where(c => c.UserId == userId && c.ProfileId == profileId).Select(c => new HistoryTitle(c.Title, c.Source == ConceptSource.Topic, c.CreatedAt))]);
+                [.. _rows.Where(c => c.UserId == userId && c.ProfileId == profileId)
+                    .Select(c => new HistoryTitle(c.Title, c.Source == ConceptSource.Topic && c.DeletedAt is null, c.DeletedAt ?? c.CreatedAt))]);
         }
     }
 
@@ -136,7 +137,52 @@ public sealed class InMemoryConceptRepository : IConceptRepository
         }
     }
 
-    private static Concept Copy(Concept c, ConceptStatus status, DateTimeOffset at) => new()
+    /// <inheritdoc />
+    public Task<bool> SoftDeleteAsync(Guid userId, Guid conceptId, IReadOnlyCollection<ConceptStatus> allowed, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var i = _rows.FindIndex(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt is null && allowed.Contains(c.Status));
+            if (i < 0)
+            {
+                return Task.FromResult(false);
+            }
+
+            _rows[i] = Copy(_rows[i], _rows[i].Status, at, at);
+            return Task.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<ConceptPage> ListDeletedAsync(Guid userId, Guid profileId, int skip, int take, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var query = _rows.Where(c => c.UserId == userId && c.ProfileId == profileId && c.DeletedAt is not null).ToList();
+            var items = query.OrderByDescending(c => c.DeletedAt).ThenByDescending(c => c.Id).Skip(skip).Take(take).ToList();
+            return Task.FromResult(new ConceptPage(items, query.Count));
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<Concept?> GetDeletedAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Task.FromResult(_rows.FirstOrDefault(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt is not null));
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<bool> PurgeAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Task.FromResult(_rows.RemoveAll(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt is not null) > 0);
+        }
+    }
+
+    private static Concept Copy(Concept c, ConceptStatus status, DateTimeOffset at, DateTimeOffset? deletedAt = null) => new()
     {
         Id = c.Id,
         UserId = c.UserId,
@@ -153,6 +199,6 @@ public sealed class InMemoryConceptRepository : IConceptRepository
         DurationMismatchWarning = c.DurationMismatchWarning,
         CreatedAt = c.CreatedAt,
         UpdatedAt = at,
-        DeletedAt = c.DeletedAt,
+        DeletedAt = deletedAt ?? c.DeletedAt,
     };
 }

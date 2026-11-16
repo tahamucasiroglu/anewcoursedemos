@@ -108,6 +108,56 @@ public sealed class ConceptsIntegrationTests : IClassFixture<IntegrationApiFacto
         stored.Title.ShouldBe("Düzenlenecek");
     }
 
+    /// <summary>
+    /// Spec 0016 (AC-1, AC-6, AC-7, AC-9, AC-11): gerçek depoda soft delete, Silinenler listesi (en yeni silinen üstte), silinmişin "elenen"
+    /// geçmişte olması, kalıcı silme ve yalnızca seçilmemiş önerilerin sıfırlanması; başkasının kaydı değişmez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Concepts_RealDatabase_TrashPurgeReset_Owned()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var email = AuthenticatedClient.NewEmail();
+        using var client = await AuthenticatedClient.CreateAsync(_factory, ct, email);
+        var profile = await ProfileApiTests.CreateAsync(client, "Çöp Kanalı", ct);
+        var userId = (Guid)(await _factory.Database.ScalarAsync($"SELECT id FROM identity.users WHERE email = '{email}'"))!;
+        var stranger = Guid.NewGuid();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<ConceptsDbContext>();
+        var concepts = new ConceptRepository(context);
+        var suggestions = new TopicSuggestionRepository(context);
+        var older = Concept(userId, profile, "Önce silinen", DateTimeOffset.UtcNow.AddHours(-2), null);
+        var newer = Concept(userId, profile, "Sonra silinen", DateTimeOffset.UtcNow.AddHours(-2), null);
+        await concepts.AddAsync(older, ct);
+        await concepts.AddAsync(newer, ct);
+        var now = DateTimeOffset.UtcNow;
+
+        (await concepts.SoftDeleteAsync(stranger, older.Id, [ConceptStatus.Generated], now, ct)).ShouldBeFalse();
+        (await concepts.SoftDeleteAsync(userId, older.Id, [ConceptStatus.Approved], now, ct)).ShouldBeFalse();
+        (await concepts.SoftDeleteAsync(userId, older.Id, [ConceptStatus.Generated], now.AddMinutes(-1), ct)).ShouldBeTrue();
+        (await concepts.SoftDeleteAsync(userId, newer.Id, [ConceptStatus.Generated], now, ct)).ShouldBeTrue();
+
+        var page = await concepts.ListDeletedAsync(userId, profile, 0, 50, ct);
+        page.Items.Select(c => c.Title).ShouldBe(["Sonra silinen", "Önce silinen"]);
+        (await concepts.ListDeletedAsync(stranger, profile, 0, 50, ct)).Total.ShouldBe(0);
+        (await concepts.GetManyAsync(userId, [older.Id], ct)).ShouldBeEmpty();
+        (await concepts.GetDeletedAsync(userId, older.Id, ct))!.Scenes.Count.ShouldBe(2);
+        (await concepts.ListTitlesAsync(userId, profile, ct)).ShouldAllBe(t => !t.Chosen);
+
+        (await concepts.PurgeAsync(stranger, older.Id, ct)).ShouldBeFalse();
+        (await concepts.PurgeAsync(userId, older.Id, ct)).ShouldBeTrue();
+        (await concepts.GetDeletedAsync(userId, older.Id, ct)).ShouldBeNull();
+        (await concepts.ListTitlesAsync(userId, profile, ct)).Select(t => t.Title).ShouldBe(["Sonra silinen"]);
+
+        TopicSuggestion Suggestion(string title, SuggestionState state) =>
+            new() { Id = Guid.CreateVersion7(), UserId = userId, ProfileId = profile, Title = title, TitleKey = title, Summary = "Özet.", State = state, CreatedAt = DateTimeOffset.UtcNow };
+        await suggestions.AddRangeAsync([Suggestion("red", SuggestionState.Rejected), Suggestion("seçili", SuggestionState.Selected), Suggestion("bekleyen", SuggestionState.Pending)], ct);
+        (await suggestions.DeleteRejectedAsync(stranger, profile, ct)).ShouldBe(0);
+        (await suggestions.DeleteRejectedAsync(userId, profile, ct)).ShouldBe(1);
+        await suggestions.DeleteSelectedAsync(userId, profile, "seçili", ct);
+        (await suggestions.ListAsync(userId, profile, ct)).Select(s => s.Title).ShouldBe(["bekleyen"]);
+    }
+
     private static Concept Concept(Guid userId, Guid profile, string title, DateTimeOffset at, DateTimeOffset? deletedAt) => new()
     {
         Id = Guid.CreateVersion7(),

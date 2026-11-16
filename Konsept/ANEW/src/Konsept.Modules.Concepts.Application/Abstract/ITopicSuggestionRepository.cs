@@ -35,4 +35,19 @@ public interface ITopicSuggestionRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>
     Task RestoreSelectedAsync(Guid userId, Guid profileId, IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
+    /// <summary>Profilin önerilip seçilmemiş önerilerini siler (spec 0016 Req 9, G-10).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Silinen sayı.</returns>
+    Task<int> DeleteRejectedAsync(Guid userId, Guid profileId, CancellationToken cancellationToken);
+
+    /// <summary>Profilde aynı anahtarlı "seçildi" önerileri siler (kalıcı silinen konseptin hafızası; spec 0016 Req 8).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="titleKey">Başlık anahtarı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    Task DeleteSelectedAsync(Guid userId, Guid profileId, string titleKey, CancellationToken cancellationToken);
 }

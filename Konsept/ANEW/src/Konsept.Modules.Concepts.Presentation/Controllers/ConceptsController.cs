@@ -7,7 +7,7 @@ namespace Konsept.Modules.Concepts.Presentation.Controllers;
 
 /// <summary>
 /// Konseptler (spec 0014): üretim durumu, Konu üret, Seçtiklerini üret, fikirden Üret, Durdur; Üretilenler listesi, detay, onay ve
-/// onayı geri al. Giriş ister (default-deny); sahiplik servistedir (başkasının verisi 404, BR-1).
+/// onayı geri al; düzenleme döngüsü (0015); Silinenler ve önerileri sıfırla (0016). Giriş ister (default-deny); sahiplik servistedir (başkasının verisi 404, BR-1).
 /// </summary>
 [ApiController]
 [Route("api/concepts")]
@@ -16,16 +16,19 @@ public sealed class ConceptsController : ControllerBase
     private readonly IConceptWorkService _work;
     private readonly IConceptService _concepts;
     private readonly IConceptEditService _edit;
+    private readonly IConceptTrashService _trash;
 
     /// <summary>Initializes a new instance of the <see cref="ConceptsController"/> class.</summary>
     /// <param name="work">Üretim alanları.</param>
     /// <param name="concepts">Üretilenler ve onay.</param>
     /// <param name="edit">Düzenleme döngüsü (spec 0015).</param>
-    public ConceptsController(IConceptWorkService work, IConceptService concepts, IConceptEditService edit)
+    /// <param name="trash">Silinenler ve önerileri sıfırla (spec 0016).</param>
+    public ConceptsController(IConceptWorkService work, IConceptService concepts, IConceptEditService edit, IConceptTrashService trash)
     {
         _work = work;
         _concepts = concepts;
         _edit = edit;
+        _trash = trash;
     }
 
     /// <summary>Profilin üretim durumu (hazır olma, bekleyen öneriler, işler).</summary>
@@ -143,4 +146,45 @@ public sealed class ConceptsController : ControllerBase
     [HttpPost("{id:guid}/revision/discard")]
     public Task<IActionResult> DiscardRevision(Guid id, CancellationToken cancellationToken) =>
         _edit.DiscardRevisionAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Konsepti Silinenler'e taşı (spec 0016 Req 1–2).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Taşınan satır.</returns>
+    [HttpPost("{id:guid}/delete")]
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+        _trash.DeleteAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Silinenler: profilin silinmiş konseptleri (spec 0016 Req 4).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sayfa.</returns>
+    [HttpGet("deleted")]
+    public Task<IActionResult> Deleted([FromQuery] Guid profileId, [FromQuery] int page, CancellationToken cancellationToken) =>
+        _trash.ListAsync(profileId, page, cancellationToken).ToActionResult();
+
+    /// <summary>Silinmiş konseptin tamamı (salt okunur; spec 0016 Req 5).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Detay.</returns>
+    [HttpGet("deleted/{id:guid}")]
+    public Task<IActionResult> DeletedDetail(Guid id, CancellationToken cancellationToken) =>
+        _trash.GetAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Kalıcı sil (spec 0016 Req 6).</summary>
+    /// <param name="id">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Silinen satır.</returns>
+    [HttpPost("deleted/{id:guid}/purge")]
+    public Task<IActionResult> Purge(Guid id, CancellationToken cancellationToken) =>
+        _trash.PurgeAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Önerileri sıfırla (spec 0016 Req 9).</summary>
+    /// <param name="request">Profil.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sonuç.</returns>
+    [HttpPost("suggestions/reset")]
+    public Task<IActionResult> ResetSuggestions([FromBody] ResetSuggestionsRequest request, CancellationToken cancellationToken) =>
+        _trash.ResetSuggestionsAsync(request, cancellationToken).ToActionResult();
 }

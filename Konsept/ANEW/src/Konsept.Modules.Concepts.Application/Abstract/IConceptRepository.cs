@@ -63,11 +63,14 @@ public interface IConceptRepository
         DateTimeOffset at,
         CancellationToken cancellationToken);
 
-    /// <summary>Profilin tüm konsept başlıkları (durum ve silinme işaretinden bağımsız; BR-4 geçmişi).</summary>
+    /// <summary>
+    /// Profilin tüm konsept başlıkları (durum ve silinme işaretinden bağımsız; BR-4 geçmişi). Silinenler'dekiler "elenen" sayılır ve
+    /// zamanı silinme anıdır (spec 0016 Req 7, BR-8).
+    /// </summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="profileId">Profil.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
-    /// <returns>Başlıklar (konudan üretilenler "seçilen").</returns>
+    /// <returns>Başlıklar (konudan üretilen silinmemişler "seçilen").</returns>
     Task<IReadOnlyList<HistoryTitle>> ListTitlesAsync(Guid userId, Guid profileId, CancellationToken cancellationToken);
 
     /// <summary>Kullanıcının en az bir konsepti olan profilleri (silinmişler dahil).</summary>
@@ -75,4 +78,36 @@ public interface IConceptRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Profil kimlikleri.</returns>
     Task<IReadOnlySet<Guid>> ProfileIdsAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>Silinenler'e taşır (spec 0016; soft delete); yalnızca kullanıcının, silinmemiş ve <paramref name="allowed"/> durumundaki konsepti.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="allowed">İzin verilen durumlar.</param>
+    /// <param name="at">Silinme zamanı (UTC).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Taşındıysa <c>true</c>.</returns>
+    Task<bool> SoftDeleteAsync(Guid userId, Guid conceptId, IReadOnlyCollection<ConceptStatus> allowed, DateTimeOffset at, CancellationToken cancellationToken);
+
+    /// <summary>Profilin Silinenler'deki konseptleri, en yeni silinen üstte, sayfalı (spec 0016 Req 4).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="skip">Atlanan.</param>
+    /// <param name="take">Alınan.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sayfa ve toplam.</returns>
+    Task<ConceptPage> ListDeletedAsync(Guid userId, Guid profileId, int skip, int take, CancellationToken cancellationToken);
+
+    /// <summary>Kullanıcının Silinenler'deki konsepti.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Konsept ya da <c>null</c>.</returns>
+    Task<Concept?> GetDeletedAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken);
+
+    /// <summary>Kalıcı siler; yalnızca kullanıcının Silinenler'deki konsepti (spec 0016 Req 6, BR-7).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Silindiyse <c>true</c>.</returns>
+    Task<bool> PurgeAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken);
 }

@@ -84,9 +84,11 @@ public sealed class ConceptRepository : EfRepositoryBase<ConceptsDbContext>, ICo
     {
         var rows = await Context.Concepts.AsNoTracking()
             .Where(c => c.UserId == userId && c.ProfileId == profileId)
-            .Select(c => new { c.Title, c.Source, c.CreatedAt })
+            .Select(c => new { c.Title, c.Source, c.CreatedAt, c.DeletedAt })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return [.. rows.Select(r => new HistoryTitle(r.Title, r.Source == ConceptSource.Topic, r.CreatedAt))];
+
+        // Silinenler'deki konsept "elenen" sayılır, zamanı silinme anıdır (spec 0016 Req 7, BR-8).
+        return [.. rows.Select(r => new HistoryTitle(r.Title, r.Source == ConceptSource.Topic && r.DeletedAt == null, r.DeletedAt ?? r.CreatedAt))];
     }
 
     /// <inheritdoc />
@@ -99,4 +101,32 @@ public sealed class ConceptRepository : EfRepositoryBase<ConceptsDbContext>, ICo
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return ids.ToHashSet();
     }
+
+    /// <inheritdoc />
+    public async Task<bool> SoftDeleteAsync(
+        Guid userId, Guid conceptId, IReadOnlyCollection<ConceptStatus> allowed, DateTimeOffset at, CancellationToken cancellationToken) =>
+        await Context.Concepts
+            .Where(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt == null && allowed.Contains(c.Status))
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.DeletedAt, at).SetProperty(c => c.UpdatedAt, at), cancellationToken)
+            .ConfigureAwait(false) > 0;
+
+    /// <inheritdoc />
+    public async Task<ConceptPage> ListDeletedAsync(Guid userId, Guid profileId, int skip, int take, CancellationToken cancellationToken)
+    {
+        var query = Context.Concepts.AsNoTracking().Where(c => c.UserId == userId && c.ProfileId == profileId && c.DeletedAt != null);
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        var items = await query.OrderByDescending(c => c.DeletedAt).ThenByDescending(c => c.Id).Skip(skip).Take(take)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        return new ConceptPage(items, total);
+    }
+
+    /// <inheritdoc />
+    public Task<Concept?> GetDeletedAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken) =>
+        Context.Concepts.AsNoTracking().FirstOrDefaultAsync(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt != null, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<bool> PurgeAsync(Guid userId, Guid conceptId, CancellationToken cancellationToken) =>
+        await Context.Concepts
+            .Where(c => c.Id == conceptId && c.UserId == userId && c.DeletedAt != null)
+            .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false) > 0;
 }

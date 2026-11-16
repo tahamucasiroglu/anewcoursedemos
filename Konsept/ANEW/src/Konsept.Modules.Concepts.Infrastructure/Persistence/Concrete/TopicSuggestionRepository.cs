@@ -54,4 +54,16 @@ public sealed class TopicSuggestionRepository : EfRepositoryBase<ConceptsDbConte
         Context.TopicSuggestions
             .Where(s => s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Selected && ids.Contains(s.Id))
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.State, SuggestionState.Pending), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<int> DeleteRejectedAsync(Guid userId, Guid profileId, CancellationToken cancellationToken) =>
+        Context.TopicSuggestions
+            .Where(s => s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Rejected)
+            .ExecuteDeleteAsync(cancellationToken);
+
+    /// <inheritdoc />
+    public Task DeleteSelectedAsync(Guid userId, Guid profileId, string titleKey, CancellationToken cancellationToken) =>
+        Context.TopicSuggestions
+            .Where(s => s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Selected && s.TitleKey == titleKey)
+            .ExecuteDeleteAsync(cancellationToken);
 }

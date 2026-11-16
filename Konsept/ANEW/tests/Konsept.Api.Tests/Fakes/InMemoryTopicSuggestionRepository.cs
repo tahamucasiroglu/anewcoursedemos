@@ -106,4 +106,24 @@ public sealed class InMemoryTopicSuggestionRepository : ITopicSuggestionReposito
 
         return Task.CompletedTask;
     }
+
+    /// <inheritdoc />
+    public Task<int> DeleteRejectedAsync(Guid userId, Guid profileId, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Task.FromResult(_rows.RemoveAll(s => s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Rejected));
+        }
+    }
+
+    /// <inheritdoc />
+    public Task DeleteSelectedAsync(Guid userId, Guid profileId, string titleKey, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _rows.RemoveAll(s => s.UserId == userId && s.ProfileId == profileId && s.State == SuggestionState.Selected && s.TitleKey == titleKey);
+        }
+
+        return Task.CompletedTask;
+    }
 }

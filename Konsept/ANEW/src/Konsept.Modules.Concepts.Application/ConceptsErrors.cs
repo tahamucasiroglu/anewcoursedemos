@@ -46,6 +46,9 @@ public static class ConceptsErrors
     /// <summary>Gets videosu olan konsept burada düzenlenemez (spec 0015 Req 1).</summary>
     public static Error LockedVideo => new("concepts.locked", ConceptsText.LockedVideo, ErrorType.Conflict);
 
+    /// <summary>Gets videosu olan konsept burada silinemez (spec 0016 Req 1).</summary>
+    public static Error DeleteLockedVideo => new("concepts.locked", ConceptsText.DeleteLockedVideo, ErrorType.Conflict);
+
     /// <summary>Gets konseptte süren yeniden üretim var (G-3).</summary>
     public static Error RevisionBusy => new("concepts.revision_busy", ConceptsText.RevisionBusy, ErrorType.Conflict);
 
