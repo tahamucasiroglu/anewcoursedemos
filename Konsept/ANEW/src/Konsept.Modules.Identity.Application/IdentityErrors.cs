@@ -29,6 +29,15 @@ public static class IdentityErrors
     /// <summary>Hata kodu: IP başına hız sınırı aşıldı.</summary>
     public const string TooManyAttemptsCode = "auth.too_many_attempts";
 
+    /// <summary>Hata kodu: eşleştirme kodu bulunamadı (spec 0012 Req 5).</summary>
+    public const string PairingCodeNotFoundCode = "agent_pairing.code_not_found";
+
+    /// <summary>Hata kodu: eşleştirme kodunun süresi dolmuş.</summary>
+    public const string PairingCodeExpiredCode = "agent_pairing.code_expired";
+
+    /// <summary>Hata kodu: eşleştirme kodu daha önce kullanılmış (onaylanmış ya da reddedilmiş).</summary>
+    public const string PairingCodeUsedCode = "agent_pairing.code_used";
+
     /// <summary>Ek bilgi anahtarı: kalan hak.</summary>
     public const string RemainingAttemptsKey = "remainingAttempts";
 
@@ -46,6 +55,15 @@ public static class IdentityErrors
 
     /// <summary>Gets çok fazla deneme.</summary>
     public static Error TooManyAttempts => new(TooManyAttemptsCode, IdentityText.TooManyAttempts, ErrorType.TooManyRequests);
+
+    /// <summary>Gets eşleştirme kodu bulunamadı.</summary>
+    public static Error PairingCodeNotFound => new(PairingCodeNotFoundCode, IdentityText.PairingCodeNotFound, ErrorType.NotFound);
+
+    /// <summary>Gets eşleştirme kodunun süresi dolmuş.</summary>
+    public static Error PairingCodeExpired => new(PairingCodeExpiredCode, IdentityText.PairingCodeExpired, ErrorType.Conflict);
+
+    /// <summary>Gets eşleştirme kodu daha önce kullanılmış.</summary>
+    public static Error PairingCodeUsed => new(PairingCodeUsedCode, IdentityText.PairingCodeUsed, ErrorType.Conflict);
 
     /// <summary>Yanlış şifre hatası.</summary>
     /// <param name="remainingAttempts">Kalan hak.</param>

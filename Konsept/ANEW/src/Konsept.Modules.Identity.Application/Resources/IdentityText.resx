@@ -25,4 +25,10 @@
   <data name="EventLoginFailed" xml:space="preserve"><value>Başarısız giriş denemesi</value></data>
   <data name="EventLocked" xml:space="preserve"><value>Hesap 15 dakika kilitlendi</value></data>
   <data name="EventLoggedOut" xml:space="preserve"><value>Çıkış yapıldı, tüm oturumlar kapatıldı</value></data>
+  <data name="PairingCodeNotFound" xml:space="preserve"><value>Kod bulunamadı. Ajan penceresindeki kodu kontrol edin.</value></data>
+  <data name="PairingCodeExpired" xml:space="preserve"><value>Kodun süresi dolmuş. Ajanda yeni kod alın.</value></data>
+  <data name="PairingCodeUsed" xml:space="preserve"><value>Bu kod daha önce kullanılmış.</value></data>
+  <data name="MachineNameRequired" xml:space="preserve"><value>Makine adı gerekli (en fazla 64 karakter).</value></data>
+  <data name="AgentVersionRequired" xml:space="preserve"><value>Ajan sürümü gerekli (en fazla 32 karakter).</value></data>
+  <data name="EventAgentPaired" xml:space="preserve"><value>Ajan eşleştirildi: {0} (v{1})</value></data>
 </root>

@@ -109,8 +109,21 @@ public abstract partial class SessionServiceBase : AuthServiceBase, ISessionServ
     }
 
     /// <inheritdoc />
-    public Task<int> RevokeAllAsync(Guid userId, CancellationToken cancellationToken) =>
-        Dependencies.Sessions.RevokeAllAsync(userId, Now, cancellationToken);
+    public async Task<int> RevokeAllAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var revoked = await Dependencies.Sessions.RevokeAllAsync(userId, Now, cancellationToken).ConfigureAwait(false);
+        await OnAllSessionsRevokedAsync(userId, cancellationToken).ConfigureAwait(false);
+        return revoked;
+    }
+
+    /// <summary>
+    /// Web oturumları iptal edildikten sonra çağrılır: "tüm oturumlar" ajanın oturumunu da kapsar (BR-14, spec 0012 Req 12);
+    /// alt sınıf eşleşmiş ajan cihazlarını iptal eder.
+    /// </summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    protected virtual Task OnAllSessionsRevokedAsync(Guid userId, CancellationToken cancellationToken) => Task.CompletedTask;
 
     [LoggerMessage(EventId = 2001, Level = LogLevel.Warning, Message = "Refresh reddedildi: token geçersiz, kullanılmış ya da oturum kapalı")]
     private static partial void LogRefreshRejected(ILogger logger);

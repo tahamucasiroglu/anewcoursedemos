@@ -23,6 +23,16 @@ public static class IdentityEvents
     /// <summary>Çıkış (tüm oturumlar).</summary>
     public const string LoggedOut = "identity.logged_out";
 
+    /// <summary>Ajan eşleştirildi (spec 0012 Req 14; kod, sır ve belirteç içermez).</summary>
+    public const string AgentPaired = "identity.agent_paired";
+
+    /// <summary>Eşleştirme olayının metni: cihaz adı ve sürümü.</summary>
+    /// <param name="machineName">Makine adı.</param>
+    /// <param name="agentVersion">Ajan sürümü.</param>
+    /// <returns>Türkçe metin.</returns>
+    public static string AgentPairedMessage(string machineName, string agentVersion) =>
+        string.Format(System.Globalization.CultureInfo.CurrentCulture, IdentityText.EventAgentPaired, machineName, agentVersion);
+
     /// <summary>Olay türünün metni.</summary>
     /// <param name="type">Olay türü.</param>
     /// <returns>Türkçe metin.</returns>
