@@ -47,6 +47,14 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
   korelasyon numarasıyla döner. **Stack trace, SQL ve API key kullanıcıya asla gösterilmez** (`docs/conventions.md`).
 - **H-3:** online çağrılarda yeniden deneme yalnızca 429 ve 5xx'te, en fazla 2 kez, artan beklemeyle; 4xx'te tekrar
   yok. Testlerde gerçek LLM çağrısı yapılmaz (stub). Her online çağrının token ve maliyeti kaydedilir (BR-12).
+- **Çağrı kapısı (0013):** online model yalnızca `IAiCallGateway` ile çağrılır. Sağlayıcıya gitmeden önce: model yetkisi
+  (`model.use:*` / `model.use:<model>`), çağıranın **kendi** key satırı (yalnızca çağıranın `UserId`'siyle; depo süzgecine ek
+  olarak kapı da sahipliği denetler) ve çözülmesi, efor (katalog dışı → red), çıktı sınırı (katalog limitine kırpılır). Tekrar
+  yalnızca 429/5xx/kurulamayan bağlantıda (≤3 deneme, 1 sn → 2 sn); zaman aşımı (katalog, varsayılan 600 sn) ve gönderildikten
+  sonra kopan yanıt tekrar edilmez. Sağlayıcıya ulaşan her deneme `ai_gateway.spend_records`'a yazılır (`numeric(20,10)` USD;
+  hata yanıtı 0, token yoksa giriş tahmini "tahmini"; OpenRouter'ın `usage.cost`'u esas). Hata gövdesi okunmaz, kullanıcıya
+  yalnızca Türkçe sabit mesaj döner; HTTP istemcisi (`ai-calls`) logsuz, yönlendirmesiz, `Timeout=Infinite` (süre kapıda).
+  Ham HTTP kullanılır (SDK'ların kendi tekrarları H-3'ü delerdi).
 
 ### H-4 — Kullanıcı PC'sinde LLM kodu
 - LLM'in ürettiği video kodu **yalnızca kendi iş klasörüne erişebilen, ağ erişimi kapalı** bir süreçte render
@@ -99,6 +107,9 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 - **Varsayılan: kapalı (default-deny).** Her API endpoint'i giriş ister; yalnızca login ve kayıt gibi açıkça
   işaretlenmiş uçlar açıktır.
 - **Yetki tabanlı politikalar:** örn. `admin.panel`, `publish.use`, `model.use:<model>`; roller bu yetkilerin paketidir.
+- **Model yetkileri (0013):** Api her istekte rol yetkilerine ek olarak model claim'lerini kurar (`SessionValidatingJwtEvents`):
+  ayar yoksa her rol `model.use:*`; kısıtlama yalnızca ayarla — `Identity:ModelPermissions:User` / `:Admin` (virgüllü model
+  kimlikleri; Pi'de `Identity__ModelPermissions__User`). Ekran yoktur. Oturum yanıtının `permissions` listesi değişmez.
 - **Roller (0011):** iki rol — `user` (varsayılan, yetkisiz) ve `admin` (`admin.panel`); `identity.users.role` sütununda (check
   constraint). **Yetki her istekte veritabanından okunur, JWT'de rol/yetki taşınmaz:** Api'nin her istekteki oturum doğrulaması
   (`sid`) aynı sorguda rolü de alır ve principal'a `konsept.perm` claim'lerini ekler; token'dan gelen aynı adlı claim'ler önce

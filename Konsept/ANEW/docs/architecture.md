@@ -56,7 +56,10 @@ Proje sayısında **sabit bir kural yok; gerektiği kadar proje** açılır. De�
 | **Infrastructure** | EF Core 10 (Npgsql), modülün `DbContext`'i ve şeması, dış çağrılar | `Konsept.Modules.Concepts.Infrastructure` |
 | **Presentation** | API controller'ları (yalnızca doğrula, servise ver, döndür; K-4) | `Konsept.Modules.Concepts.Presentation` |
 
-**AiGateway (0004):** `Konsept.Modules.AiGateway.{Domain,Application,Infrastructure,Presentation}` — `ai_gateway` şeması (`api_keys`), kendi `AiGatewayDbContext`'i; katalog DB'de değil, Infrastructure'a gömülü sürümlü `Catalog/catalog.json` seed'idir (`ICatalogSource`). Uçlar: `GET api/ai/catalog`, `GET|PUT|DELETE api/ai/keys[/{provider}]`. Contracts katmanı 0013'te (çağrı kapısı) eklenir.
+**AiGateway (0004):** `Konsept.Modules.AiGateway.{Domain,Application,Infrastructure,Presentation}` — `ai_gateway` şeması (`api_keys`), kendi `AiGatewayDbContext`'i; katalog DB'de değil, Infrastructure'a gömülü sürümlü `Catalog/catalog.json` seed'idir (`ICatalogSource`). Uçlar: `GET api/ai/catalog`, `GET|PUT|DELETE api/ai/keys[/{provider}]`. **0013:** çağrı kapısı `IAiCallGateway`
+(Application), harcama kayıtları `ai_gateway.spend_records`, sağlayıcı istemcisi `Providers/Concrete/HttpProviderClient`
+(seed'deki `dialect`, `chatUrl`, `imageUrl`, `apiModel`), uçlar `POST api/ai/calls/trial` (Ayarlar'daki "Dene") ve
+`GET api/ai/spend/month`. Contracts katmanı ilk tüketiciyle (0014) açılır; kapı o zamana kadar modül içidir.
 
 **Profiles (0003):** `Konsept.Modules.Profiles.{Domain,Application,Infrastructure,Presentation}` — `profiles` şeması (`profiles`: `(user_id, name_key)` tekil, `name_key` = tr-TR küçük harf; `selections`: kullanıcı başına hatırlanan seçili profil), kendi `ProfilesDbContext`'i. Hazır şablonlar Infrastructure'a gömülü `Templates/templates.json`'dır. Uçlar: `GET|POST api/profiles`, `PUT|DELETE api/profiles/{id}`, `PUT api/profiles/selected`; başka kullanıcının profili her işlemde 404'tür. Seçili profil okunurken çözülür (hatırlanan yoksa ilk oluşturulan). Sistem talimatı Domain'de saf `ProfileInstruction.Build`'dir, hiçbir uçta dönmez; konsept üretiminde kullanımı (ve Contracts katmanı) 0014'te eklenir. Web'de üst bar profil çubuğu ve modal `profiles.js` ile `/profiller` uçlarını kullanır.
 
