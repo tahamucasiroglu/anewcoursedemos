@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Concepts altyapısı: concepts şeması ve DbContext'i (Y-4), gömülü kural değerleri, arka plan iş başlatıcı. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Concepts.Application\Konsept.Modules.Concepts.Application.csproj" />
+    <ProjectReference Include="..\Konsept.Shared.Infrastructure\Konsept.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Kural değerleri (spec 0014: 200 başlık, ±%15, kelime denetimi 5 / %2, durak kelimeler); değişiklik yalnızca bu dosyada. -->
+    <EmbeddedResource Include="Rules\concept-rules.json" LogicalName="Konsept.Concepts.concept-rules.json" />
+  </ItemGroup>
+</Project>

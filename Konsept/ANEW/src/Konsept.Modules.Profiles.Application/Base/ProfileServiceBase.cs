@@ -1,3 +1,4 @@
+using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Profiles.Application.Abstract;
 using Konsept.Modules.Profiles.Application.Dtos;
 using Konsept.Modules.Profiles.Domain.Entities;
@@ -12,16 +13,19 @@ namespace Konsept.Modules.Profiles.Application.Base;
 /// Profil yönetimi (spec 0003). Her işlem isteği yapan kullanıcının kimliğiyle yapılır (BR-1, H-1): başka kullanıcının profil
 /// kimliği "Profil bulunamadı" döner, varlığı açığa çıkmaz. Alan kuralları <see cref="ProfileRules"/>'tadır ve arayüzü atlayan
 /// isteklerde de uygulanır (Req 6). Seçili profil okunurken çözülür: hatırlanan profil kullanıcının değilse ya da silinmişse ilk
-/// oluşturulan profil seçilidir (Req 9). Loglarda kanal içeriği yoktur.
+/// oluşturulan profil seçilidir (Req 9). Konsepti olan profil silinemez; kural sunucudadır ve <c>CanDelete</c> ile arayüze yansır
+/// (Req 14, spec 0014 Req 26). Loglarda kanal içeriği yoktur.
 /// </summary>
 /// <param name="profiles">Profil deposu.</param>
 /// <param name="templates">Şablonlar.</param>
+/// <param name="concepts">Konsepti olan profiller (Concepts.Contracts).</param>
 /// <param name="currentUser">İsteği yapan kullanıcı.</param>
 /// <param name="time">Saat.</param>
 /// <param name="logger">Log.</param>
 public abstract class ProfileServiceBase(
     IProfileRepository profiles,
     IProfileTemplateSource templates,
+    IProfileConceptPresence concepts,
     ICurrentUser currentUser,
     TimeProvider time,
     ILogger logger) : IProfileService
@@ -75,7 +79,7 @@ public abstract class ProfileServiceBase(
         // Yeni profil kendiliğinden seçili profil olur (Req 3).
         await profiles.SetSelectionAsync(userId, profile.Id, cancellationToken).ConfigureAwait(false);
         Created(logger, profile.Id, null);
-        return Result<ProfileDto>.Success(ToDto(profile));
+        return Result<ProfileDto>.Success(ToDto(profile, withConcepts: false));
     }
 
     /// <inheritdoc />
@@ -104,7 +108,7 @@ public abstract class ProfileServiceBase(
         }
 
         Updated(logger, profile.Id, null);
-        return Result<ProfileDto>.Success(ToDto(profile));
+        return Result<ProfileDto>.Success(await ToDtoAsync(profile, cancellationToken).ConfigureAwait(false));
     }
 
     /// <inheritdoc />
@@ -113,6 +117,18 @@ public abstract class ProfileServiceBase(
         if (currentUser.UserId is not { } userId)
         {
             return Result<ProfileListDto>.Failure(ProfilesErrors.SignInRequired);
+        }
+
+        if (await profiles.GetAsync(userId, profileId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return Result<ProfileListDto>.Failure(ProfilesErrors.NotFound);
+        }
+
+        // Konsepti olan profil silinemez; arayüzü atlayan istek de reddedilir, profil yerinde kalır (spec 0014 Req 26, AC-30).
+        var withConcepts = await concepts.ProfilesWithConceptsAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (withConcepts.Contains(profileId))
+        {
+            return Result<ProfileListDto>.Failure(ProfilesErrors.HasConcepts);
         }
 
         if (!await profiles.DeleteAsync(userId, profileId, cancellationToken).ConfigureAwait(false))
@@ -139,7 +155,7 @@ public abstract class ProfileServiceBase(
         }
 
         await profiles.SetSelectionAsync(userId, profile.Id, cancellationToken).ConfigureAwait(false);
-        return Result<ProfileDto>.Success(ToDto(profile));
+        return Result<ProfileDto>.Success(await ToDtoAsync(profile, cancellationToken).ConfigureAwait(false));
     }
 
     private static Error? Invalid(SaveProfileRequest? request)
@@ -162,9 +178,15 @@ public abstract class ProfileServiceBase(
         UpdatedAt = updatedAt,
     };
 
-    // Konsept modülü henüz yok (0014): her profil silinebilir; 0014 burada konsept sayısına bakar (Req 14).
-    private static ProfileDto ToDto(Profile p) =>
-        new(p.Id, p.Name, p.Language, p.Format, p.DurationSeconds, p.Content, p.CreatedAt, CanDelete: true);
+    // Konsepti olan profil silinemez (Req 14, spec 0014 Req 26).
+    private static ProfileDto ToDto(Profile p, bool withConcepts) =>
+        new(p.Id, p.Name, p.Language, p.Format, p.DurationSeconds, p.Content, p.CreatedAt, CanDelete: !withConcepts);
+
+    private async Task<ProfileDto> ToDtoAsync(Profile profile, CancellationToken cancellationToken)
+    {
+        var withConcepts = await concepts.ProfilesWithConceptsAsync(profile.UserId, cancellationToken).ConfigureAwait(false);
+        return ToDto(profile, withConcepts.Contains(profile.Id));
+    }
 
     private async Task<ProfileListDto> BuildListAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -172,7 +194,10 @@ public abstract class ProfileServiceBase(
         var remembered = await profiles.GetSelectionAsync(userId, cancellationToken).ConfigureAwait(false);
         var selected = items.FirstOrDefault(p => p.Id == remembered)
             ?? items.OrderBy(p => p.CreatedAt).ThenBy(p => p.Id).FirstOrDefault();
-        var ordered = items.OrderBy(p => p.Name, ProfileRules.NameOrder).ThenBy(p => p.CreatedAt).Select(ToDto).ToList();
+        var withConcepts = await concepts.ProfilesWithConceptsAsync(userId, cancellationToken).ConfigureAwait(false);
+        var ordered = items.OrderBy(p => p.Name, ProfileRules.NameOrder).ThenBy(p => p.CreatedAt)
+            .Select(p => ToDto(p, withConcepts.Contains(p.Id)))
+            .ToList();
         var templateList = templates.Templates
             .Select(t => new ProfileTemplateDto(t.Id, t.Title, t.ChannelName, t.Language, t.Format, t.DurationSeconds, t.Content))
             .ToList();

@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Concepts modülünün başka modüllere açık tek yüzeyi (Y-1): profilin konsepti var mı (0003 Req 14 / 0014 Req 26). -->
+</Project>

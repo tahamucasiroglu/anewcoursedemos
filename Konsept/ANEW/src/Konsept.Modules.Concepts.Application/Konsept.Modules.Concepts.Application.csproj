@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Concepts use-case'leri: konu önerisi, konsept üretimi (arka plan işi), Üretilenler, onay. Infrastructure'a referans vermez (Y-3);
+       başka modüllere yalnızca Contracts'larıyla (Y-1): model çağrısı AiGateway, profil bağlamı Profiles, Günlük olayı Monitoring. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Modules.Concepts.Domain\Konsept.Modules.Concepts.Domain.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Concepts.Contracts\Konsept.Modules.Concepts.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.AiGateway.Contracts\Konsept.Modules.AiGateway.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Profiles.Contracts\Konsept.Modules.Profiles.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Kullanıcıya dönen metinler yalnızca resx'te (Türkçe). Derlemede tipli ConceptsText sınıfı üretilir. -->
+    <EmbeddedResource Update="Resources\ConceptsText.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)ConceptsText.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Konsept.Modules.Concepts.Application.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>ConceptsText</StronglyTypedClassName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

@@ -2,6 +2,8 @@ using Konsept.Modules.AgentGateway.Infrastructure;
 using Konsept.Modules.AgentGateway.Presentation.Controllers;
 using Konsept.Modules.AiGateway.Infrastructure;
 using Konsept.Modules.AiGateway.Presentation.Controllers;
+using Konsept.Modules.Concepts.Infrastructure;
+using Konsept.Modules.Concepts.Presentation.Controllers;
 using Konsept.Modules.Identity.Infrastructure;
 using Konsept.Modules.Identity.Presentation.Controllers;
 using Konsept.Modules.Monitoring.Contracts.Enums;
@@ -41,13 +43,15 @@ builder.Services
     .AddApplicationPart(typeof(AgentController).Assembly)
     .AddApplicationPart(typeof(AuthController).Assembly)
     .AddApplicationPart(typeof(ApiKeysController).Assembly)
-    .AddApplicationPart(typeof(ProfilesController).Assembly);
+    .AddApplicationPart(typeof(ProfilesController).Assembly)
+    .AddApplicationPart(typeof(ConceptsController).Assembly);
 builder.Services.AddScoped<ServiceKeyAuthorizationFilter>();
 builder.Services.AddMonitoringModule(connectionString);
 builder.Services.AddAgentGatewayModule();
 builder.Services.AddIdentityModule(connectionString, builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services.AddAiGatewayModule(connectionString, builder.Configuration);
 builder.Services.AddProfilesModule(connectionString);
+builder.Services.AddConceptsModule(connectionString);
 
 // Default-deny (spec 0002 Req 11): açıkça [AllowAnonymous] olmayan her uç geçerli oturumlu JWT ister; iç uçlar servis
 // anahtarı ister.
@@ -88,6 +92,7 @@ if (app.Configuration.GetValue("Database:MigrateOnStartup", defaultValue: true))
     await app.Services.MigrateIdentityDatabaseAsync(CancellationToken.None);
     await app.Services.MigrateAiGatewayDatabaseAsync(CancellationToken.None);
     await app.Services.MigrateProfilesDatabaseAsync(CancellationToken.None);
+    await app.Services.MigrateConceptsDatabaseAsync(CancellationToken.None);
 }
 
 await app.RunAsync();

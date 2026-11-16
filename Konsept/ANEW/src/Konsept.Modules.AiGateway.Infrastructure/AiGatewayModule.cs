@@ -69,6 +69,7 @@ public static class AiGatewayModule
         services.AddScoped<ISpendRepository, SpendRepository>();
         services.AddScoped<ICallerPermissions, ClaimsCallerPermissions>();
         services.AddScoped<IAiCallGateway, AiCallGateway>();
+        services.AddScoped<IModelCaller, ModelCaller>(); // AiGateway.Contracts (spec 0014).
         services.AddScoped<ISpendService, SpendService>();
         services.AddScoped<ITrialCallService, TrialCallService>();
         services.TryAddSingleton(TimeProvider.System);

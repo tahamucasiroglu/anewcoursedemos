@@ -11,7 +11,7 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed class ConceptRulesTests
 {
-    /// <summary>Testlerde kullanılan kural değerleri (gömülü <c>concept-rules.json</c> ile aynı).</summary>
+    /// <summary>Testlerde kullanılan kural değerleri (eşikler gömülü <c>concept-rules.json</c> ile aynı; durak kelimeler kısaltılmış örnek).</summary>
     public static readonly ConceptRuleSet Rules = new()
     {
         TitleHistoryLimit = 200,
@@ -25,6 +25,19 @@ public sealed class ConceptRulesTests
             ["en"] = ["the", "a", "and", "of"],
         },
     };
+
+    /// <summary>Spec 0014 Constraints: eşikler kodda değil gömülü yapılandırmada; değerler spec'tekilerdir (200, ±%15, 5, %2) ve iki dilin durak kelimeleri vardır.</summary>
+    [Fact]
+    public void EmbeddedRules_SpecValues()
+    {
+        var rules = new Konsept.Modules.Concepts.Infrastructure.Rules.EmbeddedConceptRuleSource().Rules;
+        rules.TitleHistoryLimit.ShouldBe(200);
+        rules.DurationTolerance.ShouldBe(0.15m);
+        rules.WordRepeatMinCount.ShouldBe(5);
+        rules.WordRepeatMinShare.ShouldBe(0.02m);
+        rules.StopWordsFor("tr").ShouldContain("ve");
+        rules.StopWordsFor("en").ShouldContain("the");
+    }
 
     /// <summary>AC-3/G-19: cümle sayımı nokta, soru, ünlem; sıra sayısı noktası cümle bitirmez.</summary>
     [Fact]

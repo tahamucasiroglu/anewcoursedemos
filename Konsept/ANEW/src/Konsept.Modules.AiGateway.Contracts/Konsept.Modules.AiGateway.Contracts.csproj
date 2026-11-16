@@ -1,3 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- AiGateway modülünün başka modüllere açık tek yüzeyi (Y-1): isteği yapan kullanıcının seçebileceği metin modelleri (0005). -->
+  <!-- AiGateway modülünün başka modüllere açık tek yüzeyi (Y-1): isteği yapan kullanıcının seçebileceği metin modelleri (0005) ve
+       metin modeli çağrısı (0014; kapı, key ve harcama kaydı AiGateway'de kalır). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Konsept.Shared.Kernel\Konsept.Shared.Kernel.csproj" />
+  </ItemGroup>
 </Project>

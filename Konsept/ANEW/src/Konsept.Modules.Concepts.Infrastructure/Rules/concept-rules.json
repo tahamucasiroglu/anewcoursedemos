@@ -1,0 +1,21 @@
+{
+  "titleHistoryLimit": 200,
+  "historySummaryKeywords": 30,
+  "durationTolerance": 0.15,
+  "wordRepeatMinCount": 5,
+  "wordRepeatMinShare": 0.02,
+  "stopWords": {
+    "tr": [
+      "ve", "ile", "bir", "bu", "şu", "o", "da", "de", "ki", "mi", "mı", "mu", "mü", "için", "gibi", "daha", "çok", "en", "ama",
+      "fakat", "ya", "veya", "hem", "ne", "her", "olan", "olarak", "kadar", "sonra", "önce", "onun", "bunu", "bunun", "şey", "değil",
+      "var", "yok", "ise", "diye", "ben", "sen", "biz", "siz", "onlar", "çünkü", "ancak", "yani", "bile", "artık", "işte", "nasıl",
+      "neden", "hangi", "hiç", "tüm", "bütün", "aynı", "başka", "ilk", "son"
+    ],
+    "en": [
+      "the", "a", "an", "and", "or", "of", "to", "in", "on", "at", "for", "with", "is", "was", "were", "are", "be", "been", "it",
+      "its", "this", "that", "these", "those", "as", "by", "from", "but", "not", "he", "she", "they", "we", "you", "i", "his", "her",
+      "their", "our", "your", "them", "him", "has", "have", "had", "will", "would", "can", "could", "into", "than", "then", "there",
+      "which", "who", "what", "when", "where", "how", "so", "if", "all", "one", "more"
+    ]
+  }
+}

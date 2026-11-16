@@ -1,5 +1,6 @@
 using Konsept.Api.Tests.Fakes;
 using Konsept.Modules.AiGateway.Application.Abstract;
+using Konsept.Modules.Concepts.Application.Abstract;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Profiles.Application.Abstract;
@@ -110,6 +111,8 @@ public sealed class ConceptSettingsApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IConceptSettingsRepository>(Settings);
             services.AddSingleton<IApiKeyRepository>(Keys);
             services.AddSingleton<IProviderKeyValidator>(new FakeProviderKeyValidator());
+            services.RemoveAll<IConceptRepository>(); // test kurulumu: konsept deposu (plan 0014 A-1; profil silme kuralı okur).
+            services.AddSingleton<IConceptRepository>(new InMemoryConceptRepository());
         });
     }
 }

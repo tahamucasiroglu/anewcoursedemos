@@ -1,4 +1,5 @@
 using Konsept.Api.Tests.Fakes;
+using Konsept.Modules.Concepts.Application.Abstract;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
 using Konsept.Modules.Profiles.Application.Abstract;
@@ -86,6 +87,8 @@ public sealed class ProfilesApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IDatabaseProbe>(new FakeDatabaseProbe());
             services.AddSingleton<ITechnicalLogRepository>(new InMemoryTechnicalLogRepository());
             services.AddSingleton<IProfileRepository>(Profiles);
+            services.RemoveAll<IConceptRepository>(); // test kurulumu: konsept deposu (plan 0014 A-1; profil silme kuralı okur).
+            services.AddSingleton<IConceptRepository>(new InMemoryConceptRepository());
         });
     }
 }

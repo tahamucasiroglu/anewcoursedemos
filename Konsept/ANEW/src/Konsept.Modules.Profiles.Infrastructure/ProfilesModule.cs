@@ -1,5 +1,6 @@
 using Konsept.Modules.Profiles.Application.Abstract;
 using Konsept.Modules.Profiles.Application.Concrete;
+using Konsept.Modules.Profiles.Contracts.Abstract;
 using Konsept.Modules.Profiles.Infrastructure.Persistence;
 using Konsept.Modules.Profiles.Infrastructure.Persistence.Concrete;
 using Konsept.Modules.Profiles.Infrastructure.Templates;
@@ -28,6 +29,7 @@ public static class ProfilesModule
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IConceptSettingsRepository, ConceptSettingsRepository>(); // spec 0005
         services.AddScoped<IConceptSettingsService, ConceptSettingsService>();
+        services.AddScoped<IProfileGenerationReader, ProfileGenerationReader>(); // Profiles.Contracts (spec 0014)
         services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();
         services.TryAddScoped<ICurrentUser, HttpContextCurrentUser>();

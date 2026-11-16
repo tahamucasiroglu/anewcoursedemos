@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Concepts modülünün kullanıcıya dönen metinleri (yalnızca Türkçe): hata, bilgi ve Günlük olayı metinleri. Olaylar başlık/metin içermez. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SignInRequired" xml:space="preserve"><value>Oturumunuz sona erdi.</value></data>
+  <data name="ProfileNotFound" xml:space="preserve"><value>Profil bulunamadı.</value></data>
+  <data name="NotFound" xml:space="preserve"><value>Bulunamadı.</value></data>
+  <data name="ValidationFailed" xml:space="preserve"><value>Girilen bilgiler geçersiz.</value></data>
+  <data name="CountInvalid" xml:space="preserve"><value>1 ile 100 arasında bir tam sayı girin.</value></data>
+  <data name="IdeaRequired" xml:space="preserve"><value>Fikir metnini yazın.</value></data>
+  <data name="IdeaTooLong" xml:space="preserve"><value>Fikir metni en fazla 2.000 karakter olabilir.</value></data>
+  <data name="SelectionRequired" xml:space="preserve"><value>Önce en az bir öneri seçin.</value></data>
+  <data name="LaneInvalid" xml:space="preserve"><value>Üretim alanı geçersiz.</value></data>
+  <data name="StatusInvalid" xml:space="preserve"><value>Durum filtresi geçersiz.</value></data>
+  <data name="NotReady" xml:space="preserve"><value>Bu üretim için gerekli modeller seçilmemiş ya da sağlayıcının geçerli API key'i yok. Model bilgisinden seçin ya da Ayarlar'dan key ekleyin.</value></data>
+  <data name="Busy" xml:space="preserve"><value>Bu alanda süren bir üretim var; bitmesini bekleyin ya da durdurun.</value></data>
+  <data name="ApproveInvalidState" xml:space="preserve"><value>Yalnızca "Üretildi" durumundaki konseptler onaylanabilir.</value></data>
+  <data name="UnapproveInvalidState" xml:space="preserve"><value>Onay yalnızca "Onaylandı" durumundaki konseptlerde geri alınabilir.</value></data>
+  <data name="ConceptTruncated" xml:space="preserve"><value>Bu süre için seçili modelin çıktı sınırı yetmedi; daha yüksek sınırlı bir model seçin</value></data>
+  <data name="ConceptMalformed" xml:space="preserve"><value>Model çıktısı konsept biçimine uymadı; üretilemedi.</value></data>
+  <data name="TopicsTruncated" xml:space="preserve"><value>Öneriler üretilemedi: seçili modelin çıktı sınırı yetmedi.</value></data>
+  <data name="TopicsMalformed" xml:space="preserve"><value>Öneriler üretilemedi: model çıktısı öneri biçimine uymadı.</value></data>
+  <data name="Unexpected" xml:space="preserve"><value>Üretim beklenmeyen bir hatayla durdu.</value></data>
+  <data name="EventTopics" xml:space="preserve"><value>Konu önerisi: {0} öneri</value></data>
+  <data name="EventTopicsFailed" xml:space="preserve"><value>Konu önerisi başarısız</value></data>
+  <data name="EventConcepts" xml:space="preserve"><value>Konsept üretimi: {0}/{1} tamamlandı</value></data>
+  <data name="EventConceptsWithErrors" xml:space="preserve"><value>Konsept üretimi: {0}/{1} tamamlandı, {2} hata</value></data>
+  <data name="EventConceptsStopped" xml:space="preserve"><value>Konsept üretimi durduruldu: {0}/{1}</value></data>
+  <data name="EventConceptsFailed" xml:space="preserve"><value>Konsept üretimi başarısız: 0/{0}</value></data>
+</root>

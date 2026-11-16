@@ -44,6 +44,9 @@ public static class ProfilesErrors
     /// <summary>Gets 20 profil sınırı (Req 3).</summary>
     public static Error LimitReached => new(LimitCode, ProfilesText.LimitReached, ErrorType.Conflict);
 
+    /// <summary>Gets konsepti olan profil silinemez (spec 0003 Req 14, 0014 Req 26).</summary>
+    public static Error HasConcepts => new("profiles.has_concepts", ProfilesText.HasConcepts, ErrorType.Conflict);
+
     /// <summary>Gets oturum yok.</summary>
     public static Error SignInRequired => new("auth.required", ProfilesText.SignInRequired, ErrorType.Unauthorized);
 

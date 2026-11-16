@@ -1,3 +1,4 @@
+using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Profiles.Application.Abstract;
 using Konsept.Modules.Profiles.Application.Base;
 using Konsept.Shared.Kernel.Abstract;
@@ -8,12 +9,14 @@ namespace Konsept.Modules.Profiles.Application.Concrete;
 /// <summary>Profil servisi.</summary>
 /// <param name="profiles">Profil deposu.</param>
 /// <param name="templates">Şablonlar.</param>
+/// <param name="concepts">Konsepti olan profiller (Concepts.Contracts).</param>
 /// <param name="currentUser">İsteği yapan kullanıcı.</param>
 /// <param name="time">Saat.</param>
 /// <param name="logger">Log.</param>
 public sealed class ProfileService(
     IProfileRepository profiles,
     IProfileTemplateSource templates,
+    IProfileConceptPresence concepts,
     ICurrentUser currentUser,
     TimeProvider time,
-    ILogger<ProfileService> logger) : ProfileServiceBase(profiles, templates, currentUser, time, logger);
+    ILogger<ProfileService> logger) : ProfileServiceBase(profiles, templates, concepts, currentUser, time, logger);

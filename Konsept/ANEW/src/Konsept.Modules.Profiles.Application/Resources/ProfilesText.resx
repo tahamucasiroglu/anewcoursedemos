@@ -21,4 +21,5 @@
   <data name="ModelRoleInvalid" xml:space="preserve"><value>Model rolü geçersiz.</value></data>
   <data name="EffortInvalid" xml:space="preserve"><value>Bu efor düzeyi seçilen model için geçerli değil.</value></data>
   <data name="FineTuneInvalid" xml:space="preserve"><value>İnce ayar seçimi geçersiz.</value></data>
+  <data name="HasConcepts" xml:space="preserve"><value>Bu profilin konseptleri var; silinemez</value></data>
 </root>
