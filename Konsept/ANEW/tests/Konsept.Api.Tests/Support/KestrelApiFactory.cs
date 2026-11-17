@@ -24,6 +24,7 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
     private readonly FlakyRegistrationState? _flakyRegistration;
     private readonly string? _databaseConnectionString;
     private readonly KestrelApiStores _stores;
+    private readonly bool _requireSameVersion;
 
     /// <summary>Initializes a new instance of the <see cref="KestrelApiFactory"/> class.</summary>
     /// <param name="port">Loopback portu.</param>
@@ -31,8 +32,10 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
     /// <param name="flakyRegistration">Verilirse ilk kayıt istekleri reddedilir.</param>
     /// <param name="databaseConnectionString">Verilirse bellek depoları yerine bu gerçek veritabanı kullanılır (full profil).</param>
     /// <param name="stores">Verilirse bellek depoları ve kimlik bu örnekle paylaşılır (plan 0012 test kurulumu: yeniden başlatma).</param>
-    public KestrelApiFactory(int port, bool databaseDown = false, FlakyRegistrationState? flakyRegistration = null, string? databaseConnectionString = null, KestrelApiStores? stores = null)
+    /// <param name="requireSameVersion">Sürüm kapısı açık mı (plan 0023 test kurulumu; varsayılan: test derlemesinde kapalı).</param>
+    public KestrelApiFactory(int port, bool databaseDown = false, FlakyRegistrationState? flakyRegistration = null, string? databaseConnectionString = null, KestrelApiStores? stores = null, bool requireSameVersion = false)
     {
+        _requireSameVersion = requireSameVersion;
         _stores = stores ?? new KestrelApiStores();
         _databaseDown = databaseDown;
         _flakyRegistration = flakyRegistration;
@@ -63,6 +66,10 @@ public sealed class KestrelApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Logging:Directory", Path.Combine(Path.GetTempPath(), "anewconcept-tests", "logs"));
         builder.UseSetting("Internal:ServiceKey", FastApiFactory.ServiceKey);
         builder.UseSetting("Auth:SigningKey", FastApiFactory.SigningKey);
+        if (_requireSameVersion)
+        {
+            builder.UseSetting(Konsept.Modules.AgentGateway.Infrastructure.AgentGatewayModule.RequireSameVersionKey, "true");
+        }
         builder.ConfigureServices(services =>
         {
             if (_databaseConnectionString is not null)

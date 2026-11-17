@@ -69,7 +69,7 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
             return false;
         }
 
-        if (Activity is not null && await Activity.IsProducingAsync(owner.UserId, cancellationToken).ConfigureAwait(false))
+        if (await IsProducingAsync(owner.UserId, cancellationToken).ConfigureAwait(false))
         {
             return false; // "Üretim sürüyor; iş bitince ya da durdurulunca güncellenecek" (Req 3): ajan bir süre sonra yeniden sorar.
         }
@@ -106,6 +106,25 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>
     protected abstract Task OnDisconnectedAsync(AgentSession session, CancellationToken cancellationToken);
+
+    // Üretim durumu okunamazsa (veritabanı yok) iş de yürüyemez: güncelleme engellenmez, hata loglanır.
+    private async Task<bool> IsProducingAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (Activity is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return await Activity.IsProducingAsync(userId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            OnSideEffectFailed(ex);
+            return false;
+        }
+    }
 
     private async Task RunSideEffectAsync(Func<Task> sideEffect, CancellationToken cancellationToken)
     {

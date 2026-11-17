@@ -20,6 +20,8 @@ namespace Konsept.Agent.Infrastructure.Concrete;
 /// </summary>
 public sealed class SignalRServerConnection : ServerConnectionBase
 {
+    // Sunucunun "ajan güncellenmeli" eksik kimliği (AgentGateway AgentCommandsBase.AgentProtocol ile aynı değer).
+    private const string ProtocolMismatch = "agent";
     private readonly AgentSettings _settings;
     private readonly IAgentInfoProvider _info;
     private readonly Func<HttpMessageHandler>? _handlerFactory;
@@ -160,6 +162,25 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     }
 
     /// <inheritdoc />
+    public override async Task<bool?> TryBeginUpdateAsync(CancellationToken cancellationToken)
+    {
+        if (State != ConnectionState.Connected || _hub is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _hub.InvokeAsync<bool>(AgentHubContract.BeginUpdate, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            _logger.Warning("Güncelleme başlangıcı sunucuya bildirilemedi: {ExceptionType}", ex.GetType().Name);
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
     public override async Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -232,26 +253,31 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         if (_stages is { } stages)
         {
             // Üretim komutları yalnızca bu oturumun sunucusundan gelir (spec 0017 Req 13); ajan online sağlayıcıya istek atmaz.
-            hub.On<AgentToolCheckRequest, AgentToolCheckReply>(AgentHubContract.CheckTools, stages.CheckTools);
-            hub.On<AgentStageCommand, AgentStageReply>(AgentHubContract.RunStage, stages.RunAsync);
+            // Sürüm uyumsuzken (spec 0023 Req 4) hiçbir komut yürütülmez; sunucu da göndermez (çift güvence).
+            hub.On<AgentToolCheckRequest, AgentToolCheckReply>(
+                AgentHubContract.CheckTools, request => UpdateRequired ? new AgentToolCheckReply([ProtocolMismatch]) : stages.CheckTools(request));
+            hub.On<AgentStageCommand, AgentStageReply>(
+                AgentHubContract.RunStage, command => UpdateRequired ? Task.FromResult(new AgentStageReply(false, AgentStageReply.Failed)) : stages.RunAsync(command));
             hub.On<Guid>(AgentHubContract.CancelStage, stages.Cancel);
         }
 
         if (_streams is { } streams)
         {
-            hub.On<AgentStreamRequest, AgentStreamReply>(AgentHubContract.OpenStream, streams.Open);
+            hub.On<AgentStreamRequest, AgentStreamReply>(AgentHubContract.OpenStream, request => UpdateRequired ? new AgentStreamReply(null, AgentFileActionReply.Failed) : streams.Open(request));
         }
 
         if (_files is { } files)
         {
             // Klasörde aç / Sistem oynatıcısında aç (spec 0007 Req 4): yalnızca bu oturumun sunucusundan.
-            hub.On<AgentFileActionRequest, AgentFileActionReply>(AgentHubContract.OpenFile, files.Open);
+            hub.On<AgentFileActionRequest, AgentFileActionReply>(
+                AgentHubContract.OpenFile, request => UpdateRequired ? new AgentFileActionReply(false, AgentFileActionReply.Failed) : files.Open(request));
         }
 
         if (_deleter is { } deleter)
         {
             // Kalıcı sil (spec 0019 Req 4): yalnızca bu oturumun sunucusundan, yalnızca video klasöründeki .mp4 adları.
-            hub.On<AgentDeleteFilesRequest, AgentDeleteFilesReply>(AgentHubContract.DeleteFiles, deleter.Delete);
+            hub.On<AgentDeleteFilesRequest, AgentDeleteFilesReply>(
+                AgentHubContract.DeleteFiles, request => UpdateRequired ? new AgentDeleteFilesReply(request.FileNames) : deleter.Delete(request));
         }
 
         hub.On(AgentHubContract.SessionClosed, () =>
@@ -364,10 +390,16 @@ public sealed class SignalRServerConnection : ServerConnectionBase
 
     private async Task RegisterAsync(CancellationToken cancellationToken)
     {
-        await _hub!.InvokeAsync(
+        var reply = await _hub!.InvokeAsync<AgentRegisterReply?>(
             AgentHubContract.Register,
             new AgentRegistration(_info.MachineName, _info.Version, _installedComponents?.Invoke()),
             cancellationToken).ConfigureAwait(false);
+        if (reply is { UpdateRequired: true })
+        {
+            _logger.Warning("Sürüm uyumsuz: ajan {Version}, sunucu {ServerVersion}; güncelleme gerekli, komutlar yürütülmeyecek", _info.Version, reply.ServerVersion);
+        }
+
+        SetUpdateRequired(reply?.UpdateRequired == true, reply?.ServerVersion ?? _info.Version);
         SetState(ConnectionState.Connected);
         _logger.Information("Sunucuya bağlanıldı ve kayıt olundu: {Server}", _settings.ServerUrl);
     }

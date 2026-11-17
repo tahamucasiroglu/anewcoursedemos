@@ -18,6 +18,15 @@ public interface IServerConnection : IAsyncDisposable
     /// </summary>
     event EventHandler? SessionRevoked;
 
+    /// <summary>
+    /// Sunucu kayıtta ajanın sürümünün kendisininkinden farklı olduğunu bildirdi (spec 0023 Req 4); argüman sunucu sürümü. Ajan bu durumda hiçbir
+    /// komut yürütmez ve güncelleme ekranını açar.
+    /// </summary>
+    event EventHandler<string>? UpdateRequiredReceived;
+
+    /// <summary>Gets a value indicating whether sürüm uyumsuzluğu var (komutlar yürütülmez).</summary>
+    bool UpdateRequired { get; }
+
     /// <summary>Gets anlık bağlantı durumu.</summary>
     ConnectionState State { get; }
 
@@ -47,6 +56,14 @@ public interface IServerConnection : IAsyncDisposable
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Sonuç ya da <c>null</c>.</returns>
     Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sunucuya güncellemeye başlamak istediğini bildirir (spec 0023 Req 3): kullanıcının "Üretiliyor" işi varsa <c>false</c>; başlayabilirse
+    /// <c>true</c> (sunucu güncelleme bitene kadar ajana iş göndermez); bağlı değilse <c>null</c> (iş zaten gönderilemez).
+    /// </summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sonuç.</returns>
+    Task<bool?> TryBeginUpdateAsync(CancellationToken cancellationToken);
 
     /// <summary>Bağlantıyı yeniden başlatılabilir biçimde kapatır (oturum kapandı; yeni eşleştirmeden sonra <see cref="StartAsync"/>).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>

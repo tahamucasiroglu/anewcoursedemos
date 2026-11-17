@@ -2,6 +2,7 @@
   <!-- Ajan altyapısı: SignalR istemcisi (yalnızca ajan tarafında), ayar dosyası, tarayıcı açma. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="BouncyCastle.Cryptography" />
   </ItemGroup>
   <ItemGroup>
     <!-- Kurulum bileşen listesi (spec 0009): sabit sürüm, adres, SHA-256; ajana gömülü. -->

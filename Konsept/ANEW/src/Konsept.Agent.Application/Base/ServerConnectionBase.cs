@@ -10,12 +10,19 @@ namespace Konsept.Agent.Application.Base;
 public abstract class ServerConnectionBase : IServerConnection
 {
     private int _state = (int)ConnectionState.Disconnected;
+    private volatile bool _updateRequired;
 
     /// <inheritdoc />
     public event EventHandler<ConnectionState>? StateChanged;
 
     /// <inheritdoc />
     public event EventHandler? SessionRevoked;
+
+    /// <inheritdoc />
+    public event EventHandler<string>? UpdateRequiredReceived;
+
+    /// <inheritdoc />
+    public bool UpdateRequired => _updateRequired;
 
     /// <inheritdoc />
     public ConnectionState State => (ConnectionState)Volatile.Read(ref _state);
@@ -39,6 +46,9 @@ public abstract class ServerConnectionBase : IServerConnection
     public abstract Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken);
 
     /// <inheritdoc />
+    public abstract Task<bool?> TryBeginUpdateAsync(CancellationToken cancellationToken);
+
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         await DisposeCoreAsync().ConfigureAwait(false);
@@ -57,6 +67,18 @@ public abstract class ServerConnectionBase : IServerConnection
 
     /// <summary>Sunucunun oturumu kapattığını bildirir.</summary>
     protected void RaiseSessionRevoked() => SessionRevoked?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>Kayıt cevabındaki sürüm bilgisini işler (spec 0023 Req 4): uyumsuzsa komutlar durur ve olay yükselir.</summary>
+    /// <param name="updateRequired">Sürüm uyumsuz mu.</param>
+    /// <param name="serverVersion">Sunucu sürümü.</param>
+    protected void SetUpdateRequired(bool updateRequired, string serverVersion)
+    {
+        _updateRequired = updateRequired;
+        if (updateRequired)
+        {
+            UpdateRequiredReceived?.Invoke(this, serverVersion);
+        }
+    }
 
     /// <summary>Kaynakları bırakır.</summary>
     /// <returns>Görev.</returns>
