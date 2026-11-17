@@ -16,7 +16,7 @@ public sealed class ErrorReportRulesTests
     {
         Enum.GetValues<ErrorReportSource>().ShouldBe([ErrorReportSource.Web, ErrorReportSource.Agent, ErrorReportSource.Api]);
         Enum.GetValues<ErrorReportSource>().Select(ErrorReportServiceBase.SourceName).ShouldBe(["web", "agent", "api"]);
-        Enum.GetValues<ErrorReportStatus>().ShouldBe([ErrorReportStatus.New]);
+        Enum.GetValues<ErrorReportStatus>().ShouldBe([ErrorReportStatus.New, ErrorReportStatus.Reviewing, ErrorReportStatus.Resolved, ErrorReportStatus.Ignored]); // plan 0025 A-2.
     }
 
     /// <summary>

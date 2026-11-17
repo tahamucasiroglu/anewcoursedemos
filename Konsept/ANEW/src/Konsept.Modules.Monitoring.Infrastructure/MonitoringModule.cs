@@ -39,6 +39,7 @@ public static class MonitoringModule
         services.AddScoped<IErrorReportSubmitter>(sp => sp.GetRequiredService<IErrorReportService>());
         services.AddScoped<IAdminActivityRepository, AdminActivityRepository>(); // Admin paneli (spec 0010).
         services.AddScoped<IAdminStatisticsService, AdminStatisticsService>();
+        services.AddScoped<IAdminErrorReportService, AdminErrorReportService>(); // Admin Hata bildirimleri (spec 0025).
         services.AddExceptionHandler<ErrorReportExceptionHandler>(); // API'nin beklenmeyen hatası → otomatik hata kaydı (spec 0022 Req 10).
         services.AddHostedService<TechnicalLogRetentionWorker>();
         return services;

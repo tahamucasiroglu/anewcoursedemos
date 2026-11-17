@@ -18,7 +18,7 @@ public sealed class AdminActivityRepository : EfRepositoryBase<MonitoringDbConte
 
     /// <inheritdoc />
     public Task<int> CountOpenErrorReportsAsync(CancellationToken cancellationToken) =>
-        Context.ErrorReports.AsNoTracking().CountAsync(r => r.Status == ErrorReportStatus.New, cancellationToken);
+        Context.ErrorReports.AsNoTracking().CountAsync(r => r.Status == ErrorReportStatus.New || r.Status == ErrorReportStatus.Reviewing, cancellationToken); // açık (spec 0025 Req 2)
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<UserEventTime>> ListUserEventTimesAsync(DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken) =>

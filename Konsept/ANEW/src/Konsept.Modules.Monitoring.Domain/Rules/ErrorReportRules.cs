@@ -1,3 +1,4 @@
+using Konsept.Modules.Monitoring.Domain.Enums;
 using Konsept.Shared.Kernel.Security;
 
 namespace Konsept.Modules.Monitoring.Domain.Rules;
@@ -28,6 +29,35 @@ public static class ErrorReportRules
 
     /// <summary>Ekli satırların (Günlük ya da ajan logu) toplam en fazla uzunluğu.</summary>
     public const int AttachmentMaxLength = 64 * 1024;
+
+    /// <summary>Admin notunun en fazla uzunluğu (spec 0025 Req 5).</summary>
+    public const int AdminNoteMaxLength = 500;
+
+    /// <summary>Gets "açık" sayılan durumlar: Yeni + İnceleniyor (spec 0025 Req 2).</summary>
+    public static IReadOnlyList<ErrorReportStatus> OpenStatuses { get; } = [ErrorReportStatus.New, ErrorReportStatus.Reviewing];
+
+    /// <summary>Durumun sözleşme adı.</summary>
+    /// <param name="status">Durum.</param>
+    /// <returns><c>new</c> / <c>reviewing</c> / <c>resolved</c> / <c>ignored</c>.</returns>
+    public static string StatusName(ErrorReportStatus status) => status switch
+    {
+        ErrorReportStatus.Reviewing => "reviewing",
+        ErrorReportStatus.Resolved => "resolved",
+        ErrorReportStatus.Ignored => "ignored",
+        _ => "new",
+    };
+
+    /// <summary>Sözleşme adından durumu çözer (büyük/küçük harf duyarsız); bilinmeyen değer <c>null</c>.</summary>
+    /// <param name="name">Ad.</param>
+    /// <returns>Durum ya da <c>null</c>.</returns>
+    public static ErrorReportStatus? ParseStatus(string? name) => name?.Trim().ToUpperInvariant() switch
+    {
+        "NEW" => ErrorReportStatus.New,
+        "REVIEWING" => ErrorReportStatus.Reviewing,
+        "RESOLVED" => ErrorReportStatus.Resolved,
+        "IGNORED" => ErrorReportStatus.Ignored,
+        _ => null,
+    };
 
     /// <summary>Ajan bildirimindeki en fazla log satırı.</summary>
     public const int MaxLogLines = 200;

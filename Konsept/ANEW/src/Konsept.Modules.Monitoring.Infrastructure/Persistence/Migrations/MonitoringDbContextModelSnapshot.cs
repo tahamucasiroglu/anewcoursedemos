@@ -28,6 +28,10 @@ namespace Konsept.Modules.Monitoring.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AdminNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("AgentVersion")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -75,6 +79,9 @@ namespace Konsept.Modules.Monitoring.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("StatusChangedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Step")
                         .HasMaxLength(200)

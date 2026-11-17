@@ -4,7 +4,7 @@ using Konsept.Modules.Monitoring.Domain.Rules;
 namespace Konsept.Modules.Monitoring.Domain.Entities;
 
 /// <summary>
-/// Bir hata bildirimi (spec 0022 Req 1, 4, 10, 11): kaynak (web / ajan / API), "Yeni" durumu, zaman (UTC), ürün versiyonu ve kaynağa göre
+/// Bir hata bildirimi (spec 0022 Req 1, 4, 10, 11; yönetim 0025): kaynak (web / ajan / API), durum ("Yeni" başlar), zaman (UTC), ürün versiyonu ve kaynağa göre
 /// ekler. Süresiz saklanır. Her metin alanı oluşturulurken maskelenir (H-2); ajan bildiriminde makine adı alanı yoktur.
 /// Kullanıcıya gösterilen sıra numarası (<see cref="Number"/>) veritabanında üretilir.
 /// </summary>
@@ -29,7 +29,7 @@ public sealed class ErrorReport
     /// <summary>Gets kaynak.</summary>
     public ErrorReportSource Source { get; private set; }
 
-    /// <summary>Gets durum (her zaman "Yeni" başlar).</summary>
+    /// <summary>Gets durum ("Yeni" başlar; admin değiştirir, spec 0025).</summary>
     public ErrorReportStatus Status { get; private set; }
 
     /// <summary>Gets oluşma zamanı (UTC).</summary>
@@ -64,6 +64,12 @@ public sealed class ErrorReport
 
     /// <summary>Gets ekli satırlar: web'de son 20 Günlük kaydı, ajanda log satırları; maskeli, satır satır.</summary>
     public string? Attachments { get; private set; }
+
+    /// <summary>Gets admin notu (spec 0025 Req 5; en fazla 500 karakter, maskeli).</summary>
+    public string? AdminNote { get; private set; }
+
+    /// <summary>Gets durumun son değiştiği an (UTC); hiç değişmediyse <c>null</c>.</summary>
+    public DateTimeOffset? StatusChangedAt { get; private set; }
 
     /// <summary>Web'den gelen bildirimi oluşturur.</summary>
     /// <param name="userId">Gönderen.</param>
@@ -131,6 +137,17 @@ public sealed class ErrorReport
         report.Description = ErrorReportRules.Clean(summary, ErrorReportRules.SummaryMaxLength);
         report.CorrelationId = ErrorReportRules.Clean(correlationId, ErrorReportRules.ShortFieldMaxLength);
         return report;
+    }
+
+    /// <summary>Durumu ve admin notunu değiştirir (spec 0025 Req 5); not maskelenir, boşsa silinir. Sınır kontrolü serviste.</summary>
+    /// <param name="status">Yeni durum.</param>
+    /// <param name="note">Admin notu.</param>
+    /// <param name="at">Değişiklik anı.</param>
+    public void ChangeStatus(ErrorReportStatus status, string? note, DateTimeOffset at)
+    {
+        Status = status;
+        AdminNote = ErrorReportRules.Clean(note, ErrorReportRules.AdminNoteMaxLength);
+        StatusChangedAt = at.ToUniversalTime();
     }
 
     /// <summary>Numarayı atar (bellek depoları için; veritabanında sütun kendisi üretir).</summary>

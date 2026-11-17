@@ -52,7 +52,7 @@ public abstract class ErrorReportServiceBase(TimeProvider timeProvider) : IError
             r.Id,
             r.Number,
             SourceName(r.Source),
-            "new",
+            ErrorReportRules.StatusName(r.Status),
             r.CreatedAt,
             r.UserId,
             r.ProductVersion,

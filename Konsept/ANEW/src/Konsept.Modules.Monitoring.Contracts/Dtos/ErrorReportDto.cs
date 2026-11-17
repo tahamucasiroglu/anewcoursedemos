@@ -6,7 +6,7 @@ namespace Konsept.Modules.Monitoring.Contracts.Dtos;
 /// <param name="Id">Kimlik.</param>
 /// <param name="Number">Bildirim numarası.</param>
 /// <param name="Source">Kaynak: <c>web</c> / <c>agent</c> / <c>api</c>.</param>
-/// <param name="Status">Durum: <c>new</c>.</param>
+/// <param name="Status">Durum: <c>new</c> / <c>reviewing</c> / <c>resolved</c> / <c>ignored</c>.</param>
 /// <param name="CreatedAt">Zaman (UTC).</param>
 /// <param name="UserId">Gönderen kullanıcı.</param>
 /// <param name="ProductVersion">Ürün versiyonu.</param>

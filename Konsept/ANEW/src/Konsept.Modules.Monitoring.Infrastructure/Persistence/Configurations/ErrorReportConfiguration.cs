@@ -29,6 +29,7 @@ public sealed class ErrorReportConfiguration : IEntityTypeConfiguration<ErrorRep
         builder.Property(r => r.Component).HasMaxLength(ErrorReportRules.ShortFieldMaxLength);
         builder.Property(r => r.Step).HasMaxLength(ErrorReportRules.ShortFieldMaxLength);
         builder.Property(r => r.Attachments).HasMaxLength(ErrorReportRules.AttachmentMaxLength);
+        builder.Property(r => r.AdminNote).HasMaxLength(ErrorReportRules.AdminNoteMaxLength); // spec 0025 Req 5.
         builder.HasIndex(r => new { r.UserId, r.CreatedAt }); // Saatlik sınır sayımı (Req 15).
         builder.HasIndex(r => r.CreatedAt);
     }

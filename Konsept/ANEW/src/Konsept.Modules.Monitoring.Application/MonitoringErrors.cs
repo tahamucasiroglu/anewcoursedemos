@@ -24,6 +24,14 @@ public static class MonitoringErrors
     /// <summary>Gets hata bildirimi bulunamadı.</summary>
     public static Error ReportNotFound { get; } = new("error_report.not_found", "Hata bildirimi bulunamadı.", ErrorType.NotFound);
 
+    /// <summary>Gets geçersiz durum değeri (spec 0025 Req 5).</summary>
+    public static Error ReportStatusInvalid { get; } =
+        new("error_report.status_invalid", "Geçersiz durum. Yeni, İnceleniyor, Çözüldü ya da Yok sayıldı seçin.", ErrorType.Validation);
+
+    /// <summary>Gets admin notu çok uzun (spec 0025 Req 5).</summary>
+    public static Error ReportNoteTooLong { get; } =
+        new("error_report.note_too_long", $"Not en fazla {ErrorReportRules.AdminNoteMaxLength} karakter olabilir.", ErrorType.Validation);
+
     /// <summary>Açıklamanın doğrulama hatası (spec 0022 Req 1, AC-3): boş, 10 karakterden kısa ya da 4000'den uzun.</summary>
     /// <param name="description">Açıklama.</param>
     /// <returns>Hata (alan hatasıyla) ya da geçerliyse <c>null</c>.</returns>

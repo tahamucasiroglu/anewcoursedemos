@@ -14,7 +14,7 @@ public sealed class InMemoryAdminActivityRepository(InMemorySystemEventRepositor
 
     /// <inheritdoc />
     public Task<int> CountOpenErrorReportsAsync(CancellationToken cancellationToken) =>
-        Fail ? Task.FromException<int>(new InvalidOperationException("SELECT gizli_tablo")) : Task.FromResult(reports.Reports.Count(r => r.Status == ErrorReportStatus.New));
+        Fail ? Task.FromException<int>(new InvalidOperationException("SELECT gizli_tablo")) : Task.FromResult(reports.Reports.Count(r => r.Status is ErrorReportStatus.New or ErrorReportStatus.Reviewing));
 
     /// <inheritdoc />
     public Task<IReadOnlyList<UserEventTime>> ListUserEventTimesAsync(DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken) =>

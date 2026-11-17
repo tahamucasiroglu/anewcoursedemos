@@ -1,4 +1,5 @@
 using Konsept.Modules.Monitoring.Application.Abstract;
+using Konsept.Modules.Monitoring.Application.Dtos;
 using Konsept.Modules.Monitoring.Domain.Entities;
 using Konsept.Modules.Monitoring.Domain.Enums;
 using Konsept.Shared.Infrastructure.Persistence.Base;
@@ -32,4 +33,38 @@ public sealed class ErrorReportRepository : EfRepositoryBase<MonitoringDbContext
     /// <inheritdoc />
     public Task<ErrorReport?> GetByNumberAsync(long number, CancellationToken cancellationToken) =>
         Context.ErrorReports.AsNoTracking().FirstOrDefaultAsync(r => r.Number == number, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<ErrorReportPage> ListAsync(
+        ErrorReportSource? source,
+        IReadOnlyCollection<ErrorReportStatus>? statuses,
+        int skip,
+        int take,
+        CancellationToken cancellationToken)
+    {
+        var query = Context.ErrorReports.AsNoTracking();
+        if (source is { } only)
+        {
+            query = query.Where(r => r.Source == only);
+        }
+
+        if (statuses is not null)
+        {
+            var set = statuses.ToList();
+            query = query.Where(r => set.Contains(r.Status));
+        }
+
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        var items = await query.OrderByDescending(r => r.Number).Skip(skip).Take(take).ToListAsync(cancellationToken).ConfigureAwait(false);
+        return new ErrorReportPage(items, total);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> UpdateStatusAsync(long number, ErrorReportStatus status, string? note, DateTimeOffset at, CancellationToken cancellationToken) =>
+        await Context.ErrorReports
+            .Where(r => r.Number == number)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(r => r.Status, status).SetProperty(r => r.AdminNote, note).SetProperty(r => r.StatusChangedAt, at.ToUniversalTime()),
+                cancellationToken)
+            .ConfigureAwait(false) == 1;
 }
