@@ -99,12 +99,22 @@ public abstract class AgentInstallationBase : IAgentInstallation
         }
 
         // Çalışan exe silinemez ama yeniden adlandırılabilir: önce "önceki" olur, sonra yeni exe yerine geçer.
+        var moved = false;
         if (File.Exists(InstalledExe))
         {
             File.Move(InstalledExe, PreviousExe);
+            moved = true;
         }
 
-        File.Move(stagedExe, InstalledExe);
+        try
+        {
+            File.Move(stagedExe, InstalledExe);
+        }
+        catch (Exception ex) when ((ex is IOException or UnauthorizedAccessException) && moved)
+        {
+            File.Move(PreviousExe, InstalledExe); // Çalışan sürüm yerine döner; başlangıç kaydı ve kısayol bozulmaz (review r2 L-2).
+            throw;
+        }
     }
 
     /// <inheritdoc />

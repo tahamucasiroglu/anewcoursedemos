@@ -274,8 +274,17 @@ public abstract class AgentUpdaterBase : IAgentUpdater, IProgress<double>
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _installation.SaveState(before);
             WriteLog(AgentLogLevel.Error, "Güncelleme kurulamadı: {ExceptionType}", ex.GetType().Name);
+            try
+            {
+                _installation.SaveState(before);
+            }
+            catch (Exception restore) when (restore is IOException or UnauthorizedAccessException)
+            {
+                // Durum dosyası yazılamıyor: ekran yine Hata + Tekrar dene gösterir (review r2 L-1).
+                WriteLog(AgentLogLevel.Warning, "Güncelleme durumu geri yazılamadı: {ExceptionType}", restore.GetType().Name);
+            }
+
             return Fail(manifest, SetupFailure.InstallFailed, InstallStep.Install);
         }
 

@@ -317,6 +317,43 @@ public sealed class AgentUpdaterTests : IDisposable
         _install.Launches.ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// Review r2 L-1/L-2, AC-9: değiş-tokuş başarısız olursa çalışan exe yerinde kalır, durum geri yazılır, satır Hata (InstallFailed) olur ve
+    /// sunucuya güncellemenin bittiği bildirilir; önceki geri dönüşün <c>failed-</c> kalıntısı silinir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Apply_SwapFails_StateRestored_FailedEvent()
+    {
+        Publish("0.6.0", NewExe);
+        var failed = Path.Combine(Path.GetDirectoryName(_installation.InstalledExe)!, "failed-anewconcept-ajan.exe");
+        File.WriteAllText(failed, "kalıntı");
+        var updater = Create();
+        var ct = TestContext.Current.CancellationToken;
+        await updater.CheckAsync(ct);
+        File.Delete(_installation.InstalledExe);
+        Directory.CreateDirectory(_installation.InstalledExe);
+
+        (await updater.ApplyAsync(ct)).ShouldBeFalse();
+
+        _events[^1].ShouldBe(new UpdateEvent(UpdateStatus.Failed, Failure: SetupFailure.InstallFailed, Version: "0.6.0"));
+        Directory.Exists(_installation.InstalledExe).ShouldBeTrue(); // kurulu yer değişmedi
+        File.Exists(failed).ShouldBeFalse();
+        _installation.LoadState().ShouldBe(new UpdateState());
+        _install.Launches.ShouldBeEmpty();
+        await _connection.Received(1).TryEndUpdateAsync();
+    }
+
+    /// <summary>Review r2 L-2: yeni exe yerine geçemezse çalışan sürüm kurulu yere geri döner (başlangıç kaydı boş exe'yi göstermez).</summary>
+    [Fact]
+    public void Swap_LastMoveFails_InstalledRestored()
+    {
+        Should.Throw<FileNotFoundException>(() => _installation.Swap(Path.Combine(_temp.FullName, "yok.exe")));
+
+        File.ReadAllText(_installation.InstalledExe).ShouldBe("eski sürüm");
+        File.Exists(_installation.PreviousExe).ShouldBeFalse();
+    }
+
     /// <summary>AC-7: diskte yalnızca bir önceki sürüm saklanır (iki güncellemeden sonra en eski silinmiştir).</summary>
     [Fact]
     public void Apply_KeepsOnlyOnePrevious()
