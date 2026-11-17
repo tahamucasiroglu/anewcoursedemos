@@ -36,6 +36,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LockedUntil).HasColumnName("locked_until");
         builder.Property(u => u.RegisteredAt).HasColumnName("registered_at").IsRequired();
         builder.Property(u => u.LastLoginAt).HasColumnName("last_login_at");
+        builder.Property(u => u.BannedAt).HasColumnName("banned_at");
         builder.Property(u => u.Role)
             .HasColumnName("role")
             .HasMaxLength(16)

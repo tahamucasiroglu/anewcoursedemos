@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Konsept.Modules.AiGateway.Contracts\Konsept.Modules.AiGateway.Contracts.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Profiles.Contracts\Konsept.Modules.Profiles.Contracts.csproj" />
     <ProjectReference Include="..\Konsept.Modules.Monitoring.Contracts\Konsept.Modules.Monitoring.Contracts.csproj" />
+    <ProjectReference Include="..\Konsept.Modules.Identity.Contracts\Konsept.Modules.Identity.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- Kullanıcıya dönen metinler yalnızca resx'te (Türkçe). Derlemede tipli ConceptsText sınıfı üretilir. -->

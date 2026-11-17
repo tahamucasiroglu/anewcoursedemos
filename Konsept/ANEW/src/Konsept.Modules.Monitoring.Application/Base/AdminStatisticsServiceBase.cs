@@ -51,7 +51,7 @@ public abstract class AdminStatisticsServiceBase(TimeProvider timeProvider) : IA
                 clipDays.GetValueOrDefault(d),
                 active.GetValueOrDefault(d)))
             .ToList();
-        return Result<AdminStatisticsDto>.Success(new AdminStatisticsDto(users.Count, clips.Count, openReports, range, series));
+        return Result<AdminStatisticsDto>.Success(new AdminStatisticsDto(users.Count, clips.Count, openReports, range, series, users.Count(u => u.IsBanned)));
     }
 
     /// <inheritdoc />

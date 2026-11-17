@@ -32,6 +32,8 @@ public static partial class ActivityKinds
             "identity.login_failed" => "Başarısız giriş",
             "identity.locked" => "Hesap geçici kilitlendi",
             "identity.agent_paired" => "Ajan eşleştirildi",
+            "identity.banned" => "Banlandı",
+            "identity.unbanned" => "Ban kaldırıldı",
             "concepts.topics" => failed || level == EventLevel.Warning ? "Konu önerisi başarısız" : "Konu önerisi aldı",
             "concepts.generation" when failed => "Konsept üretimi başarısız",
             "concepts.generation" => CountOf(message) is { } count

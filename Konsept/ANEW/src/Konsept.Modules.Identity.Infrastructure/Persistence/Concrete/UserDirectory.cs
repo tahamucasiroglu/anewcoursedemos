@@ -19,7 +19,7 @@ public sealed class UserDirectory : EfRepositoryBase<IdentityModuleDbContext>, I
     public async Task<IReadOnlyList<UserDirectoryEntry>> ListAsync(CancellationToken cancellationToken) =>
         await Context.Users
             .AsNoTracking()
-            .Select(u => new UserDirectoryEntry(u.Id, u.Name, u.Email, u.RegisteredAt))
+            .Select(u => new UserDirectoryEntry(u.Id, u.Name, u.Email, u.RegisteredAt, u.BannedAt != null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 }

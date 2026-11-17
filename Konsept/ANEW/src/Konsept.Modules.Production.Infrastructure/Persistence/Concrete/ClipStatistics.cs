@@ -36,4 +36,13 @@ public sealed class ClipStatistics : EfRepositoryBase<ProductionDbContext>, ICli
         // Konsept başına tek klip: hem canlı satır hem iz varsa en eski an.
         return [.. live.Concat(gone).GroupBy(c => c.ConceptId).Select(g => g.Min(c => c.At))];
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<Guid, int>> CountByUserAsync(CancellationToken cancellationToken) =>
+        await Context.Videos
+            .AsNoTracking()
+            .GroupBy(v => v.UserId)
+            .Select(g => new { UserId = g.Key, Clips = g.Select(v => v.ConceptId).Distinct().Count() })
+            .ToDictionaryAsync(r => r.UserId, r => r.Clips, cancellationToken)
+            .ConfigureAwait(false);
 }

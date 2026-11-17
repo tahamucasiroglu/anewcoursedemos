@@ -29,6 +29,9 @@ public sealed class IdentityModuleDbContext : ModuleDbContextBase
     /// <summary>Gets eşleşmiş ajan cihazları (spec 0012).</summary>
     public DbSet<AgentDevice> AgentDevices => Set<AgentDevice>();
 
+    /// <summary>Gets ban ve ban kaldırma kayıtları (spec 0024).</summary>
+    public DbSet<UserBanRecord> UserBans => Set<UserBanRecord>();
+
     /// <inheritdoc />
     protected override string Schema => SchemaName;
 }

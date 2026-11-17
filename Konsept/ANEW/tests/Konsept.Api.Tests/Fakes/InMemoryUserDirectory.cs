@@ -9,5 +9,5 @@ public sealed class InMemoryUserDirectory(InMemoryUserRepository users) : IUserD
 {
     /// <inheritdoc />
     public Task<IReadOnlyList<UserDirectoryEntry>> ListAsync(CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<UserDirectoryEntry>>([.. users.Users.Select(u => new UserDirectoryEntry(u.Id, u.Name, u.Email, u.RegisteredAt))]);
+        Task.FromResult<IReadOnlyList<UserDirectoryEntry>>([.. users.Users.Select(u => new UserDirectoryEntry(u.Id, u.Name, u.Email, u.RegisteredAt, u.IsBanned))]);
 }

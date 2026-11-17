@@ -56,6 +56,12 @@ public sealed class User
     /// <summary>Gets rol (spec 0011); yalnızca <see cref="AdminEmailPolicy"/> kararıyla belirlenir.</summary>
     public Role Role { get; private set; }
 
+    /// <summary>Gets ban anı (spec 0024); banlı değilse <c>null</c>. Ban süresizdir, yalnızca admin kaldırır.</summary>
+    public DateTimeOffset? BannedAt { get; private set; }
+
+    /// <summary>Gets a value indicating whether hesap banlı mı.</summary>
+    public bool IsBanned => BannedAt is not null;
+
     /// <summary>Yeni kullanıcı oluşturur.</summary>
     /// <param name="name">Ad (kırpılır).</param>
     /// <param name="email">E-posta (kırpılır).</param>
@@ -103,6 +109,33 @@ public sealed class User
         }
 
         Role = role;
+        return true;
+    }
+
+    /// <summary>Banlar (bellek içi uygulamalar için; veritabanı tek ifadelik koşullu <c>UPDATE</c> kullanır).</summary>
+    /// <param name="now">Ban anı.</param>
+    /// <returns>Durum değiştiyse <c>true</c>; zaten banlıysa <c>false</c> (idempotent).</returns>
+    public bool Ban(DateTimeOffset now)
+    {
+        if (IsBanned)
+        {
+            return false;
+        }
+
+        BannedAt = now.ToUniversalTime();
+        return true;
+    }
+
+    /// <summary>Banı kaldırır.</summary>
+    /// <returns>Durum değiştiyse <c>true</c>; banlı değilse <c>false</c>.</returns>
+    public bool Unban()
+    {
+        if (!IsBanned)
+        {
+            return false;
+        }
+
+        BannedAt = null;
         return true;
     }
 

@@ -29,7 +29,11 @@ public sealed class AgentDeviceRepository : EfRepositoryBase<IdentityModuleDbCon
 
     /// <inheritdoc />
     public Task<AgentDevice?> FindByTokenHashAsync(string tokenHash, CancellationToken cancellationToken) =>
-        Context.AgentDevices.AsNoTracking().FirstOrDefaultAsync(d => d.TokenHash == tokenHash, cancellationToken);
+        Context.AgentDevices
+            .AsNoTracking()
+            .Where(d => d.TokenHash == tokenHash)
+            .Where(d => Context.Users.Any(u => u.Id == d.UserId && u.BannedAt == null)) // Banlı sahibin ajanı bağlanamaz (spec 0024 Req 4).
+            .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc />
     public Task TouchAsync(Guid deviceId, DateTimeOffset now, CancellationToken cancellationToken)

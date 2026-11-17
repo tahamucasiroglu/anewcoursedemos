@@ -50,4 +50,20 @@ public interface IUserRepository
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Rolü değişen hesap sayısı.</returns>
     Task<int> SyncAdminRoleAsync(string? normalizedAdminEmail, CancellationToken cancellationToken);
+
+    /// <summary>Tüm kullanıcıları listeler (spec 0024 admin listesi; tek Pi, az kullanıcı).</summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kullanıcılar.</returns>
+    Task<IReadOnlyList<User>> ListAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Ban durumunu tek atomik koşullu işlemle değiştirir (spec 0024 Req 3, 6): <paramref name="bannedAt"/> verilirse yalnızca
+    /// banlı olmayan hesabı banlar; <c>null</c> ise yalnızca banlı hesabın banını kaldırır. Eşzamanlı iki istekten yalnızca biri
+    /// değiştirir (çift tıklama tek kayıt).
+    /// </summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="bannedAt">Ban anı ya da kaldırmak için <c>null</c>.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum değiştiyse <c>true</c>.</returns>
+    Task<bool> SetBannedAsync(Guid userId, DateTimeOffset? bannedAt, CancellationToken cancellationToken);
 }

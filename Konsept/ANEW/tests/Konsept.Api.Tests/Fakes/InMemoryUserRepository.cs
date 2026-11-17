@@ -108,4 +108,17 @@ public sealed class InMemoryUserRepository : IUserRepository
             return Task.FromResult(_users.Count(u => u.SyncAdminRole(normalizedAdminEmail)));
         }
     }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<User>> ListAsync(CancellationToken cancellationToken) => Task.FromResult(Users);
+
+    /// <inheritdoc />
+    public Task<bool> SetBannedAsync(Guid userId, DateTimeOffset? bannedAt, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var user = _users.FirstOrDefault(u => u.Id == userId);
+            return Task.FromResult(user is not null && (bannedAt is { } at ? user.Ban(at) : user.Unban()));
+        }
+    }
 }

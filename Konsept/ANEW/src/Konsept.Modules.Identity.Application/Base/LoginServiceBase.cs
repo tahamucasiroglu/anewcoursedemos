@@ -49,6 +49,13 @@ public abstract class LoginServiceBase(AuthServiceDependencies dependencies) : A
             return Result<AuthSessionDto>.Failure(IdentityErrors.WrongPassword(LockoutPolicy.RemainingAttempts(outcome.FailedCount)));
         }
 
+        if (user.IsBanned)
+        {
+            // Banlı hesap, doğru şifre (spec 0024 Req 5, 10): giriş yok, sayaç ve son giriş değişmez; sebep gösterilmez. Kilit önce
+            // gelir (yukarıda), yanlış şifre 0002'nin normal akışındadır.
+            return Result<AuthSessionDto>.Failure(IdentityErrors.Suspended);
+        }
+
         if (!await users.RegisterSuccessfulLoginAsync(user.Id, now, cancellationToken).ConfigureAwait(false))
         {
             // Doğru şifre ama hesap bu arada kilitlendi: kilitli hesap yolundaki gibi başarısız giriş olayı yazılır (review R6-1).

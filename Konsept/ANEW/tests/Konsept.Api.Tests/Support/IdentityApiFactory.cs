@@ -39,6 +39,9 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
     /// <summary>Gets bellek ajan cihaz deposu (plan 0012).</summary>
     public InMemoryAgentDeviceRepository AgentDevices { get; } = new();
 
+    /// <summary>Gets ban kayıtları (plan 0024).</summary>
+    public InMemoryUserBanRepository Bans { get; } = new();
+
     /// <summary>Gets bellek oturum deposu.</summary>
     public InMemorySessionRepository Sessions { get; }
 
@@ -134,6 +137,8 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IUserDirectory>(new InMemoryUserDirectory(Users));
             services.AddSingleton<IClipStatistics>(new InMemoryClipStatistics(ProducedVideos));
             services.AddSingleton<IAdminActivityRepository>(AdminActivities);
+            services.RemoveAll<IUserBanRepository>(); // test kurulumu: ban kayıtları (plan 0024).
+            services.AddSingleton<IUserBanRepository>(Bans);
         });
     }
 }

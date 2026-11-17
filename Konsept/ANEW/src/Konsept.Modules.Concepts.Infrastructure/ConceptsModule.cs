@@ -5,6 +5,7 @@ using Konsept.Modules.Concepts.Infrastructure.Jobs.Concrete;
 using Konsept.Modules.Concepts.Infrastructure.Persistence;
 using Konsept.Modules.Concepts.Infrastructure.Persistence.Concrete;
 using Konsept.Modules.Concepts.Infrastructure.Rules;
+using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Shared.Infrastructure.Http.Concrete;
 using Konsept.Shared.Kernel.Abstract;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,7 @@ public static class ConceptsModule
         services.AddScoped<IConceptTrashService, ConceptTrashService>();
         services.AddScoped<IProfileConceptPresence, ProfileConceptPresence>(); // Concepts.Contracts (Profiles kullanır).
         services.AddScoped<IConceptQueueBridge, ConceptQueueBridge>(); // Concepts.Contracts (Production kullanır, spec 0006).
+        services.AddScoped<IUserSessionsEndedListener, ConceptSessionListener>(); // Identity.Contracts: çıkış/ban partiyi durdurur (0014 Req 20, 0024).
         services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();
         services.TryAddScoped<ICurrentUser, HttpContextCurrentUser>();

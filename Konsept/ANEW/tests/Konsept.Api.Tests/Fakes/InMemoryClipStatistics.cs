@@ -9,4 +9,9 @@ public sealed class InMemoryClipStatistics(InMemoryProducedVideoRepository video
     /// <inheritdoc />
     public Task<IReadOnlyList<DateTimeOffset>> ListFirstCompletionsAsync(CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<DateTimeOffset>>([.. videos.Rows.GroupBy(v => v.ConceptId).Select(g => g.Min(v => v.EndedAt))]);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyDictionary<Guid, int>> CountByUserAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, int>>(
+            videos.Rows.GroupBy(v => v.UserId).ToDictionary(g => g.Key, g => g.Select(v => v.ConceptId).Distinct().Count()));
 }

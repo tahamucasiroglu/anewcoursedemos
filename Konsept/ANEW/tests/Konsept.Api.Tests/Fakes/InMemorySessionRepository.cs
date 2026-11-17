@@ -62,7 +62,7 @@ public sealed class InMemorySessionRepository(InMemoryUserRepository? users = nu
         }
 
         var user = await users.FindByIdAsync(session.UserId, cancellationToken).ConfigureAwait(false);
-        return user is null ? null : (session, user.Role);
+        return user is null || user.IsBanned ? null : (session, user.Role); // Banlı kullanıcı (spec 0024; gerçek JOIN ile aynı).
     }
 
     /// <inheritdoc />

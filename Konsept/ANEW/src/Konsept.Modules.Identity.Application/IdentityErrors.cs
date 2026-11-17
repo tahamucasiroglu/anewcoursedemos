@@ -38,6 +38,21 @@ public static class IdentityErrors
     /// <summary>Hata kodu: eşleştirme kodu daha önce kullanılmış (onaylanmış ya da reddedilmiş).</summary>
     public const string PairingCodeUsedCode = "agent_pairing.code_used";
 
+    /// <summary>Hata kodu: hesap banlı (spec 0024 Req 5; sebep gösterilmez).</summary>
+    public const string SuspendedCode = "identity.suspended";
+
+    /// <summary>Hata kodu: hedef kullanıcı yok (spec 0024 Req 3).</summary>
+    public const string UserNotFoundCode = "admin.user_not_found";
+
+    /// <summary>Hata kodu: admin kendini banlayamaz (Req 7).</summary>
+    public const string CannotBanSelfCode = "admin.cannot_ban_self";
+
+    /// <summary>Hata kodu: admin hesapları banlanamaz (Req 7).</summary>
+    public const string CannotBanAdminCode = "admin.cannot_ban_admin";
+
+    /// <summary>Hata kodu: ban sebebi 500 karakteri aşıyor.</summary>
+    public const string BanReasonTooLongCode = "admin.ban_reason_too_long";
+
     /// <summary>Ek bilgi anahtarı: kalan hak.</summary>
     public const string RemainingAttemptsKey = "remainingAttempts";
 
@@ -55,6 +70,21 @@ public static class IdentityErrors
 
     /// <summary>Gets çok fazla deneme.</summary>
     public static Error TooManyAttempts => new(TooManyAttemptsCode, IdentityText.TooManyAttempts, ErrorType.TooManyRequests);
+
+    /// <summary>Gets hesap askıya alınmış (banlı).</summary>
+    public static Error Suspended => new(SuspendedCode, IdentityText.AccountSuspended, ErrorType.Unauthorized);
+
+    /// <summary>Gets hedef kullanıcı yok.</summary>
+    public static Error UserNotFound => new(UserNotFoundCode, IdentityText.UserNotFound, ErrorType.NotFound);
+
+    /// <summary>Gets admin kendini banlayamaz.</summary>
+    public static Error CannotBanSelf => new(CannotBanSelfCode, IdentityText.CannotBanSelf, ErrorType.Conflict);
+
+    /// <summary>Gets admin hesapları banlanamaz.</summary>
+    public static Error CannotBanAdmin => new(CannotBanAdminCode, IdentityText.CannotBanAdmin, ErrorType.Conflict);
+
+    /// <summary>Gets ban sebebi çok uzun.</summary>
+    public static Error BanReasonTooLong => new(BanReasonTooLongCode, IdentityText.BanReasonTooLong, ErrorType.Validation);
 
     /// <summary>Gets eşleştirme kodu bulunamadı.</summary>
     public static Error PairingCodeNotFound => new(PairingCodeNotFoundCode, IdentityText.PairingCodeNotFound, ErrorType.NotFound);

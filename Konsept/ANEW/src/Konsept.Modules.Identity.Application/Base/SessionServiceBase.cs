@@ -54,7 +54,7 @@ public abstract partial class SessionServiceBase : AuthServiceBase, ISessionServ
         }
 
         var user = await Dependencies.Users.FindByIdAsync(session.UserId, cancellationToken).ConfigureAwait(false);
-        return user is null
+        return user is null || user.IsBanned
             ? Result<AuthSessionDto>.Failure(IdentityErrors.SessionInvalid)
             : Result<AuthSessionDto>.Success(CreateSession(user, session.Id, next, now));
     }

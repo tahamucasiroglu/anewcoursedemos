@@ -81,6 +81,10 @@ namespace Konsept.Modules.Identity.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("BannedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("banned_at");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(254)
@@ -138,6 +142,46 @@ namespace Konsept.Modules.Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("users", "identity", t =>
                         {
                             t.HasCheckConstraint("ck_users_role", "role IN ('user', 'admin')");
+                        });
+                });
+
+            modelBuilder.Entity("Konsept.Modules.Identity.Domain.Entities.UserBanRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("admin_id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_bans_user_id");
+
+                    b.ToTable("user_bans", "identity", t =>
+                        {
+                            t.HasCheckConstraint("ck_user_bans_kind", "kind IN ('ban', 'unban')");
                         });
                 });
 

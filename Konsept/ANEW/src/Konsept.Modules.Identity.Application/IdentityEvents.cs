@@ -26,6 +26,12 @@ public static class IdentityEvents
     /// <summary>Ajan eşleştirildi (spec 0012 Req 14; kod, sır ve belirteç içermez).</summary>
     public const string AgentPaired = "identity.agent_paired";
 
+    /// <summary>Kullanıcı banlandı (spec 0024 Req 8; olay metninde sebep yok).</summary>
+    public const string Banned = "identity.banned";
+
+    /// <summary>Kullanıcının banı kaldırıldı.</summary>
+    public const string Unbanned = "identity.unbanned";
+
     /// <summary>Eşleştirme olayının metni: cihaz adı ve sürümü.</summary>
     /// <param name="machineName">Makine adı.</param>
     /// <param name="agentVersion">Ajan sürümü.</param>
@@ -43,6 +49,8 @@ public static class IdentityEvents
         LoginFailed => IdentityText.EventLoginFailed,
         Locked => IdentityText.EventLocked,
         LoggedOut => IdentityText.EventLoggedOut,
+        Banned => IdentityText.EventBanned,
+        Unbanned => IdentityText.EventUnbanned,
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Bilinmeyen olay türü."),
     };
 }

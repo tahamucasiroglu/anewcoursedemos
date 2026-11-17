@@ -40,7 +40,7 @@ public sealed class SessionRepository : EfRepositoryBase<IdentityModuleDbContext
         var row = await (
             from session in Context.Sessions.AsNoTracking()
             join user in Context.Users.AsNoTracking() on session.UserId equals user.Id
-            where session.Id == sessionId
+            where session.Id == sessionId && user.BannedAt == null // Banlı kullanıcının oturumu yok sayılır (spec 0024 Req 4).
             select new { Session = session, user.Role })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);

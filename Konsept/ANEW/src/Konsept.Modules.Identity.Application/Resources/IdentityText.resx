@@ -31,4 +31,11 @@
   <data name="MachineNameRequired" xml:space="preserve"><value>Makine adı gerekli (en fazla 64 karakter).</value></data>
   <data name="AgentVersionRequired" xml:space="preserve"><value>Ajan sürümü gerekli (en fazla 32 karakter).</value></data>
   <data name="EventAgentPaired" xml:space="preserve"><value>Ajan eşleştirildi: {0} (v{1})</value></data>
+  <data name="AccountSuspended" xml:space="preserve"><value>Hesabınız askıya alınmıştır.</value></data>
+  <data name="UserNotFound" xml:space="preserve"><value>Kullanıcı bulunamadı.</value></data>
+  <data name="CannotBanSelf" xml:space="preserve"><value>Kendinizi banlayamazsınız</value></data>
+  <data name="CannotBanAdmin" xml:space="preserve"><value>Admin hesapları banlanamaz</value></data>
+  <data name="BanReasonTooLong" xml:space="preserve"><value>En fazla 500 karakter</value></data>
+  <data name="EventBanned" xml:space="preserve"><value>Hesap askıya alındı</value></data>
+  <data name="EventUnbanned" xml:space="preserve"><value>Hesabın askısı kaldırıldı</value></data>
 </root>

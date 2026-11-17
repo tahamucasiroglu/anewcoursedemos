@@ -114,6 +114,22 @@ public sealed class UserRepository : EfRepositoryBase<IdentityModuleDbContext>, 
             [new NpgsqlParameter("admin_email", NpgsqlDbType.Varchar) { Value = (object?)normalizedAdminEmail ?? DBNull.Value }],
             cancellationToken);
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<User>> ListAsync(CancellationToken cancellationToken) =>
+        await Context.Users.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async Task<bool> SetBannedAsync(Guid userId, DateTimeOffset? bannedAt, CancellationToken cancellationToken)
+    {
+        // Tek koşullu UPDATE (spec 0024 Req 3): eşzamanlı iki ban isteğinden yalnızca biri satırı değiştirir.
+        var utc = bannedAt?.ToUniversalTime();
+        var rows = utc is null
+            ? Context.Users.Where(u => u.Id == userId && u.BannedAt != null)
+            : Context.Users.Where(u => u.Id == userId && u.BannedAt == null);
+        var updated = await rows.ExecuteUpdateAsync(set => set.SetProperty(u => u.BannedAt, utc), cancellationToken).ConfigureAwait(false);
+        return updated == 1;
+    }
+
     private static async Task<LockoutOutcome?> ReadOutcomeAsync(DbCommand command, CancellationToken cancellationToken)
     {
         var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
