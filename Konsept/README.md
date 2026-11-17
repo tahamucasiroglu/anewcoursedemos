@@ -162,17 +162,45 @@ Alttaki resimde üretim için harcanan kaynaklar gösterilmekte. Api ücreti api
 
 - Bir yerde artık lütfen bitir diye yalvardım. Plandan işe geçemedik. Bütün spec leri artık onay almadan bitir dedim. Bitirdim dedi sadece karşılama ekranı vardı. Şimdi tekrar başla dedim. Bende düzgün kullanamadım tabiki hedeflenen kullanımı yapamadım ama basit işlerde başlayamıyorum. Lakin daha önce Claude ile bir tane büyük proje deneyimim oldu. Veritabanından başlayarak son kullanıcıya uzanan değişimlerde projede bozulma ve düzgün yapması için çok fazla token harcaması yapıyordu. Burada `/new-feature` ve `spec` sisteminde bu sorunları çözdüğüne inanıyorum. 
 
+<video controls src="Sources/Ciktilar/Anew/Vikinglerin-Kuzey-Amerika-ya-Vardığında-Neden-Kalıcı-Bir-Kol-bf5a8f819664.mp4" title="Title"></video>
 
-- 
+<video controls src="Sources/Ciktilar/Anew/İnka-İmparatorluğunun-Son-İmparatoru-Atahualpa-nın-Tutulması-2ed56b108a92.mp4" title="Title"></video>
 
+<video controls src="Sources/Ciktilar/Anew/Çin-in-Büyük-Duvarı-İnşa-Edilirken-Binlerce-İşçinin-Kayıp-Ol-671ac715bd78.mp4" title="Title"></video>
 
-
-
-
-
-
+![alt text](Sources/anew_concept.png)
 
 
+
+# Karşılaştırma
+
+Öncelikle bir yerde artık `ANEW`'e dedimki yalvarırım başla artık kodlamaya. Çünkü çok fazla ağırdan aldı. Ayrıca daha fazla token yakması, uzun sürmesi kullanmamak bile iyi dedirtebiliyor. Yaklaşık 2 kat süre farkı ve 2.5 katlık bir token farkı mevcut. Dürüst bir ekleme ile tam doğru kullanamadım tabiki bir yerde `/new-feature` filan bıraktım düz yazmaya başladım specleri onaysız yap dedim filan. 
+
+<br>
+
+`ANEW` dürüst olmak gekirse basit işlerde veya freelance işlerde gelen bir site, basit admin panel ve basit blogları yayınlayacakları siteler için gereğinden fazla detaylı çalışmakta.
+
+<br>
+
+Fakat `ANEW` kısmında en dikkat çekici kısım şu `(Buradaki örneklerin basit projeler için olduğunu unutmayın.)` yaptığını tam yapıyor. Mesela ben indirme sitesi istediğimde kendi serbest modelim sormadan bir site hazırlamış login filan ayarlamış. `ANEW` dediğimi yapmış. Ekstra yapmamış yada azını. Ayrıca kendimde bazı buglar vardı. çok önemsemedim özellik bugları fakat `ANEW` görsel bug dışında işleri düzgün yapmıştı. `(Tekrar ara not 1 tane bug var ama oda benim artık yap ne olursa olsun yap işe başlamadın bir türlü diye azarlamam ve düzgün kullanmamamla oldu o yüzden saymadım)` 
+
+
+<br> 
+
+
+Token kullanımı olarak özellik eklemelerinde vs bir azalma ile karşılaşmadım fakat sadece `/bootstrap` ve `/new-feature` ile böyle kalan özellikleri etkileyebilir. Fakat büyük projeler için gayet iyi bir skill. Önerileri ve testleri gerçekten uzun sürsede sonuçların başarı oranını yükseltiyor. 
+
+<br>
+
+Belki ekstra hızlı başlangıç gibi bir mod ile önce bir şeyler hızlı çıkar sonra baklıabilir. Emin değilim ama basit prtojelerde kurulum ile uğraşmak açıkcçası bana zor gelir ama kurumsal büyük bir proje için çok iyi
+
+<br>
+
+Ayrıca asıl vurucu noktası bence dil bağımsız olması gibi ai bağımsız olması. Codex, Claude ve diğer llm ile bir projede ortak çalışmalar yapılabilmekte. Bu bence asıl etkili tarafı. 
+
+<br>
+
+Kısaca ileride özellikle büyük şirketlerde `ANEW ile 1+ yıl tecrübeli` gibi kriterler görebiliriz.
 
 
 
