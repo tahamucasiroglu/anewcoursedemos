@@ -39,12 +39,11 @@ public abstract class ComponentInstallerBase(ISetupCoordinator setup) : ICompone
             return new AgentInstallReply(false, unknown); // Listede olmayan hiçbir şey kurulmaz (Req 8).
         }
 
-        while (_setup.IsRunning)
+        // İlk kurulum (ya da pencereden Tekrar dene) sürüyorsa bitmesi beklenir; başlatma anındaki yarışta kurulum çalışmadıysa yeniden denenir.
+        while (!await _setup.InstallAsync(ids, cancellationToken).ConfigureAwait(false))
         {
-            await DelayAsync(WaitStep, cancellationToken).ConfigureAwait(false); // İlk kurulum sürüyor: bitmesi beklenir.
+            await DelayAsync(WaitStep, cancellationToken).ConfigureAwait(false);
         }
-
-        await _setup.InstallAsync(ids, cancellationToken).ConfigureAwait(false);
         var failed = _setup.Components
             .Where(s => ids.Contains(s.Component.Id, StringComparer.Ordinal) && s.Status != ComponentStatus.Installed)
             .Select(s => s.Component.Id)

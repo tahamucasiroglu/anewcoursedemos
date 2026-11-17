@@ -56,10 +56,10 @@ public interface ISetupCoordinator
 
     /// <summary>
     /// Üretimin istediği bileşenleri kurar (spec 0027 Req 5, 8): yalnızca listedeki ve kurulu olmayan kimlikler (isteğe bağlı olanlar
-    /// dahil); bitince tüm bileşenler hazırsa Hazır denetimi çalışır. Kurulum zaten sürüyorsa hiçbir şey yapmaz (çağıran bekler).
+    /// dahil); bitince tüm bileşenler hazırsa Hazır denetimi çalışır. Kurulum zaten sürüyorsa hiçbir şey yapmaz ve <c>false</c> döner (çağıran bekleyip yeniden dener).
     /// </summary>
     /// <param name="componentIds">Bileşen kimlikleri.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
-    /// <returns>Görev.</returns>
-    Task InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken);
+    /// <returns>Kurulum bu çağrıda çalıştıysa <c>true</c>.</returns>
+    Task<bool> InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken);
 }

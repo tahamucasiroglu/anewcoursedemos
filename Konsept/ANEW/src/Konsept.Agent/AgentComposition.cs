@@ -121,7 +121,7 @@ internal sealed record AgentComposition(
             TimeProvider.System,
             logging.Logger);
         logging.Logger.Information("Ajan başladı: sürüm {Version}, sunucu {Server}", info.Version, settings.ServerUrl);
-        return new AgentComposition(settings, info, connection, new ShellBrowserLauncher(), logging, session, reports, Setup: setup, Updater: updater);
+        return new AgentComposition(settings, info, connection, new ShellBrowserLauncher(logging.Logger), logging, session, reports, Setup: setup, Updater: updater);
     }
 
     /// <summary>Kurulu kopyayı (spec 0023; HKCU kayıtları, Başlat menüsü) gerçek Windows bileşenleriyle kurar.</summary>

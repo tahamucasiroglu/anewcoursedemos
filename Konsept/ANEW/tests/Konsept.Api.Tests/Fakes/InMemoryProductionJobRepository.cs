@@ -156,6 +156,24 @@ public sealed class InMemoryProductionJobRepository : IProductionJobRepository
     }
 
     /// <inheritdoc />
+    public Task<bool> SetProgressIfAsync(
+        Guid userId, Guid jobId, IReadOnlyCollection<ProductionJobStatus> from, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(from);
+        lock (_gate)
+        {
+            var index = _rows.FindIndex(j => j.Id == jobId && j.UserId == userId && from.Contains(j.Status));
+            if (index < 0)
+            {
+                return Task.FromResult(false);
+            }
+
+            _rows[index] = _rows[index] with { Progress = progress, UpdatedAt = at };
+            return Task.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc />
     public Task SetProgressAsync(Guid userId, Guid jobId, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken)
     {
         lock (_gate)

@@ -127,6 +127,14 @@ public sealed class ProductionJobRepository : EfRepositoryBase<ProductionDbConte
             .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, ProductionJobStatus.Stopped).SetProperty(j => j.UpdatedAt, at), cancellationToken);
 
     /// <inheritdoc />
+    public async Task<bool> SetProgressIfAsync(
+        Guid userId, Guid jobId, IReadOnlyCollection<ProductionJobStatus> from, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken) =>
+        await Context.Jobs
+            .Where(j => j.Id == jobId && j.UserId == userId && from.Contains(j.Status))
+            .ExecuteUpdateAsync(s => s.SetProperty(j => j.Progress, progress).SetProperty(j => j.UpdatedAt, at), cancellationToken)
+            .ConfigureAwait(false) == 1;
+
+    /// <inheritdoc />
     public Task SetProgressAsync(Guid userId, Guid jobId, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken) =>
         Context.Jobs
             .Where(j => j.Id == jobId && j.UserId == userId)

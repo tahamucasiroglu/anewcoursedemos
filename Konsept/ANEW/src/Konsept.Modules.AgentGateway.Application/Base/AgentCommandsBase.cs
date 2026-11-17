@@ -16,7 +16,7 @@ namespace Konsept.Modules.AgentGateway.Application.Base;
 public abstract class AgentCommandsBase(IAgentConnectionRegistry registry, IAgentChannel channel) : IAgentCommands
 {
     /// <summary>Ajan sözleşmeye uymadığında araç denetiminde eksik bildirilen kimlik (ajan güncellenmeli).</summary>
-    public const string AgentProtocol = "agent";
+    public const string AgentProtocol = AgentToolCheckReply.AgentProtocol;
 
     /// <inheritdoc />
     public Guid? ConnectedDevice(Guid userId) => Commandable(userId)?.DeviceId;

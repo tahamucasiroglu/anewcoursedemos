@@ -284,10 +284,12 @@ public abstract class ProductionServiceBase(
                     return ProductionErrors.NoPendingInstall;
                 }
 
-                if (!install.Approved)
+                // Koşullu yazım (review r1 L-1): bu arada Reddet/Durdur olduysa onay onların ilerlemesini ezmez.
+                if (!install.Approved
+                    && !await jobs.SetProgressIfAsync(
+                        userId, job.Id, Waiting, job.Progress with { Install = install with { Approved = true } }, time.GetUtcNow(), CancellationToken.None).ConfigureAwait(false))
                 {
-                    await jobs.SetProgressAsync(userId, job.Id, job.Progress with { Install = install with { Approved = true } }, time.GetUtcNow(), CancellationToken.None)
-                        .ConfigureAwait(false);
+                    return ProductionErrors.NoPendingInstall;
                 }
 
                 if (pipeline.Caller.Current() is { } caller)

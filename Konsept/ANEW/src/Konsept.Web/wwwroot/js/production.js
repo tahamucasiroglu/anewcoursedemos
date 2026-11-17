@@ -161,6 +161,7 @@ export function initProduction(doc, timers = globalThis) {
       const running = RUNNING.includes(job.status);
       const item = node('li', 'production-queue__item');
       item.dataset.status = job.status;
+      item.dataset.jobId = job.id;
       const label = node('span', 'production-queue__title', `${job.number}. ${job.title}`);
       const pending = awaitingInstall(job);
       const statusText = pending ? text.textAwaitingInstall : text[`textStatus${job.status.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`];
@@ -613,7 +614,8 @@ export function initProduction(doc, timers = globalThis) {
     const opening = state.installJob === null;
     state.installJob = id;
     if (opening) {
-      state.installOpener = doc.activeElement;
+      // Kendiliğinden açılışta (odak sayfa gövdesinde) dönüş hedefi işin satırıdır.
+      state.installOpener = doc.activeElement && doc.activeElement !== doc.body ? doc.activeElement : null;
     }
     const items = job.install.components || [];
     el('production-install-text').textContent = fill(text.textInstallText, job.title);
@@ -624,7 +626,8 @@ export function initProduction(doc, timers = globalThis) {
     if (opening) {
       el('production-install-message').hidden = true;
       installModal.hidden = false;
-      el('production-install-approve').focus(); // Odak pencereye geçer.
+      // Odak başlığa (review r1 L-4): kendiliğinden açılan pencerede basılan Enter çok GB'lık indirmeyi habersiz onaylamasın.
+      el('production-install-title').focus();
     }
   }
 
@@ -635,12 +638,19 @@ export function initProduction(doc, timers = globalThis) {
     if (dismissed) {
       state.installDismissed.add(state.installJob); // Esc: iş beklemeye devam eder; satırdaki düğme yeniden açar.
     }
+    const id = state.installJob;
     state.installJob = null;
     installModal.hidden = true;
     const opener = state.installOpener;
     state.installOpener = null;
-    if (opener && typeof opener.focus === 'function' && doc.contains(opener)) {
-      opener.focus();
+    // Yoklama satırları yeniden çizer (review r1 M-1): açan düğme kopmuşsa aynı işin güncel düğmesine, o da yoksa satırına dönülür.
+    const row = [...el('production-queue').children].find((n) => n.dataset.jobId === id);
+    const target = opener && doc.contains(opener) ? opener : row && (row.querySelector('.production-queue__install') || row);
+    if (target && typeof target.focus === 'function') {
+      if (target === row) {
+        row.tabIndex = -1;
+      }
+      target.focus();
     }
   }
 

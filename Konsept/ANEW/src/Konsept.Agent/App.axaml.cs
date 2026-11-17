@@ -178,7 +178,10 @@ public sealed partial class App : Avalonia.Application
     {
         if (Composition is not null)
         {
-            Composition.Browser.Open(Composition.Settings.SiteUrl);
+            if (!Composition.Browser.Open(Composition.Settings.SiteUrl))
+            {
+                _notifier?.Show(AgentText.AppTitle, string.Format(CultureInfo.CurrentCulture, AgentText.BrowserOpenFailed, Composition.Settings.SiteUrl.AbsoluteUri)); // B-153
+            }
         }
     }
 

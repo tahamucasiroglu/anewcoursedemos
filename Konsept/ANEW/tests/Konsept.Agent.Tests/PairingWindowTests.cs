@@ -56,6 +56,20 @@ public sealed class PairingWindowTests
         browser.DidNotReceive().Open(Arg.Is<Uri>(u => u.AbsoluteUri.Contains("ABCD", StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>B-153: tarayıcı açılamazsa pencere düşmez, adresi elle açılsın diye ipucunda gösterir.</summary>
+    [AvaloniaFact]
+    public void Window_OpenPairingPage_BrowserFails_ShowsAddress()
+    {
+        var browser = Substitute.For<IBrowserLauncher>();
+        browser.Open(Arg.Any<Uri>()).Returns(false);
+        var window = new MainWindow();
+        window.Attach(Composition(browser, Session(new AgentSessionSnapshot(AgentSessionState.Unpaired, "ABCD-2345", DateTimeOffset.UtcNow.AddMinutes(10)))));
+
+        Should.NotThrow(window.OpenPairingPage);
+
+        window.HintDisplay.ShouldBe("Tarayıcı açılamadı. Bu adresi tarayıcınızda açın: http://192.168.1.10:8000/ajan-eslestir");
+    }
+
     /// <summary>
     /// Tray menüsünün en üstündeki tıklanamayan satır oturum durumunu izler: "Eşleşmedi" → "Eşleşti" → "Oturum kapandı" →
     /// "Sunucuya ulaşılamıyor"; "Siteye git" ve "Çıkış" değişmez.

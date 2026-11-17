@@ -66,9 +66,6 @@ public abstract class ProductionPipelineBase(
     /// <summary>Günlük olay türü.</summary>
     public const string EventType = "production.video";
 
-    // Ajan sürümü uyumsuz (AgentGateway AgentCommandsBase.AgentProtocol ile aynı değer): kurulamaz, ajan güncellenmeli.
-    private const string AgentProtocolId = "agent";
-
     private static readonly ProductionJobStatus[] Producing = [ProductionJobStatus.Producing];
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
@@ -243,6 +240,8 @@ public abstract class ProductionPipelineBase(
                     return await WaitAsync().ConfigureAwait(false);
                 case ToolCheckOutcome.Stopped:
                     return PipelineOutcome.Stopped;
+                case ToolCheckOutcome.Dropped when _progress.Install is { Approved: true }:
+                    return await WaitAsync().ConfigureAwait(false); // Onaylı kurulum sırasında koptu: Ajan bekleniyor (Req 7, review r1 L-2).
                 default:
                     break; // Hazır ya da ajan koptu (koptuysa yerel aşamada yeniden sorulur).
             }
@@ -707,7 +706,7 @@ public abstract class ProductionPipelineBase(
 
         var installable = (reply.Installable ?? []).Where(c => reply.Missing.Contains(c.Id, StringComparer.Ordinal)).ToList();
         var unavailable = reply.Missing.Where(id => !installable.Any(c => string.Equals(c.Id, id, StringComparison.Ordinal))).ToList();
-        if (unavailable.Contains(AgentProtocolId, StringComparer.Ordinal))
+        if (unavailable.Contains(AgentToolCheckReply.AgentProtocol, StringComparer.Ordinal))
         {
             return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineToolsMissing, string.Join(", ", reply.Missing.Select(PipelineRules.ToolName))));
         }
@@ -755,6 +754,11 @@ public abstract class ProductionPipelineBase(
         }
 
         await ClearInstallAsync().ConfigureAwait(false);
+        if (installed.Ok && after!.Missing.Count > 0 && !after.Missing.Intersect(reply.Missing, StringComparer.Ordinal).Any())
+        {
+            return await CheckToolsAsync(device).ConfigureAwait(false); // Yeni eksik çıktı (Req 5): yeniden onay ya da kurulamaz hatası.
+        }
+
         if (!installed.Ok || after!.Missing.Count > 0)
         {
             var failed = !installed.Ok ? (installed.Failed.Count > 0 ? installed.Failed : reply.Missing) : after!.Missing;

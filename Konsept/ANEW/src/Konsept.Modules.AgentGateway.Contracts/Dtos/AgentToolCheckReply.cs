@@ -6,4 +6,8 @@ namespace Konsept.Modules.AgentGateway.Contracts.Dtos;
 /// </summary>
 /// <param name="Missing">Eksik araçlar.</param>
 /// <param name="Installable">Eksiklerden ajanın kurabildikleri; eski ajanda <c>null</c>.</param>
-public sealed record AgentToolCheckReply(IReadOnlyList<string> Missing, IReadOnlyList<AgentComponentInfo>? Installable = null);
+public sealed record AgentToolCheckReply(IReadOnlyList<string> Missing, IReadOnlyList<AgentComponentInfo>? Installable = null)
+{
+    /// <summary>Ajan sözleşmeye/sürüme uymadığında eksik bildirilen kimlik (ajan güncellenmeli; kurulamaz).</summary>
+    public const string AgentProtocol = "agent";
+}

@@ -168,7 +168,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         RunCoreAsync(s => string.Equals(s.Component.Id, componentId, StringComparison.Ordinal), cancellationToken);
 
     /// <inheritdoc />
-    public Task InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken)
+    public Task<bool> InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(componentIds);
         return RunCoreAsync(s => componentIds.Contains(s.Component.Id, StringComparer.Ordinal) && s.Status != ComponentStatus.Installed, cancellationToken);
@@ -199,13 +199,13 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         }
     }
 
-    private async Task RunCoreAsync(Func<ComponentState, bool> select, CancellationToken cancellationToken)
+    private async Task<bool> RunCoreAsync(Func<ComponentState, bool> select, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             if (_running)
             {
-                return;
+                return false;
             }
 
             _running = true;
@@ -244,6 +244,8 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         {
             Volatile.Write(ref _running, false);
         }
+
+        return true;
     }
 
     private async Task InstallAsync(SetupComponent component, CancellationToken cancellationToken)

@@ -52,6 +52,7 @@ function pageHtml() {
     </div>
     <div id="production-install-modal" hidden>
       <div role="dialog" aria-modal="true">
+        <h2 id="production-install-title" tabindex="-1">İndirme onayı</h2>
         <p id="production-install-text"></p><ul id="production-install-list"></ul><p id="production-install-total"></p>
         <p id="production-install-message" role="alert" hidden></p>
         <button type="button" id="production-install-decline">Vazgeç (üretimi durdur)</button>
@@ -120,7 +121,7 @@ describe('Konseptten Video — eksik bileşen indirme onayı (spec 0027)', () =>
     };
   });
 
-  it('AC-8: bekleyen indirmede pencere kendiliğinden açılır (ad, boyut, toplam), odak İndir ve devam et\'te; satırda durum ve düğme', async () => {
+  it('AC-8: bekleyen indirmede pencere kendiliğinden açılır (ad, boyut, toplam), odak başlıkta (düğmede değil); satırda durum ve düğme', async () => {
     await start(stateOf({ jobs: [job('j1', 'Kuşatma', 'waiting_for_agent', { install: PENDING })] }));
     expect(el('production-install-modal').hidden).toBe(false);
     expect(el('production-install-text').textContent).toBe('“Kuşatma” videosu için ajan bilgisayarına şunların indirilip kurulması gerekiyor:');
@@ -129,7 +130,7 @@ describe('Konseptten Video — eksik bileşen indirme onayı (spec 0027)', () =>
       'Model — yaklaşık 3,0 GB indirme, diskte 6,0 GB',
     ]);
     expect(el('production-install-total').textContent).toBe('Toplam: yaklaşık 3,0 GB indirme, diskte 6,1 GB.');
-    expect(document.activeElement).toBe(el('production-install-approve'));
+    expect(document.activeElement).toBe(el('production-install-title'));
     const row = el('production-queue').querySelector('li');
     expect(row.querySelector('.production-queue__status').textContent).toBe('Onay bekleniyor — indirme gerekli');
     expect(row.querySelector('.production-queue__install').textContent).toBe('İndirmeyi onayla…');
@@ -161,17 +162,26 @@ describe('Konseptten Video — eksik bileşen indirme onayı (spec 0027)', () =>
 
   it('AC-8: Esc yalnızca kapatır (uç çağrılmaz), yoklama yeniden açmaz; satırdaki düğme yeniden açar; Tab pencerede döner', async () => {
     await start(stateOf({ jobs: [job('j1', 'Kuşatma', 'waiting_for_agent', { install: PENDING })] }));
+    el('production-install-approve').focus();
     el('production-install-approve').dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     expect(document.activeElement).toBe(el('production-install-decline'));
     el('production-install-decline').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(el('production-install-modal').hidden).toBe(true);
+    expect(document.activeElement).toBe(el('production-queue').querySelector('.production-queue__install'));
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0);
     timers.pending.shift()();
     await flush();
     expect(el('production-install-modal').hidden).toBe(true);
     const open = el('production-queue').querySelector('.production-queue__install');
+    open.focus();
     open.click();
     expect(el('production-install-modal').hidden).toBe(false);
+    // Açıkken yoklama satırları yeniden çizer (açan düğme kopar); Esc odağı aynı işin yeni düğmesine verir (review r1 M-1).
+    timers.pending.shift()();
+    await flush();
+    expect(open.isConnected).toBe(false);
+    el('production-install-title').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.activeElement).toBe(el('production-queue').querySelector('.production-queue__install'));
   });
 
   it('AC-8: komut reddedilirse pencerede sunucu mesajı; pencere açık kalır', async () => {

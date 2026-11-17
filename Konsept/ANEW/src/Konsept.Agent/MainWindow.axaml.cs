@@ -38,6 +38,9 @@ public sealed partial class MainWindow : Window
     /// <summary>Gets durum metni (testler okur).</summary>
     internal string StateDisplay => StateText.Text ?? string.Empty;
 
+    /// <summary>Gets ipucu metni (testler okur; B-153 tarayıcı açılamadı mesajı).</summary>
+    internal string HintDisplay => HintText.Text ?? string.Empty;
+
     /// <summary>Gets oturum metni (testler okur).</summary>
     internal string SessionDisplay => SessionText.Text ?? string.Empty;
 
@@ -76,7 +79,12 @@ public sealed partial class MainWindow : Window
     {
         if (_composition is not null)
         {
-            _composition.Browser.Open(new Uri(_composition.Settings.SiteUrl, PairingPagePath));
+            var address = new Uri(_composition.Settings.SiteUrl, PairingPagePath);
+            if (!_composition.Browser.Open(address))
+            {
+                // B-153: tarayıcı açılamadı — ajan düşmez, adres elle açılsın diye gösterilir.
+                HintText.Text = string.Format(CultureInfo.CurrentCulture, AgentText.BrowserOpenFailed, address.AbsoluteUri);
+            }
         }
     }
 

@@ -99,6 +99,9 @@ public sealed partial class ProductionPipelineTests
         Job(second).Status.ShouldBe(ProductionJobStatus.Queued);
         _factory.Agent.Count("InstallComponents").ShouldBe(0);
         _factory.Provider.Calls.ShouldBeEmpty();
+        using var lateApprove = await client.PostAsync($"/api/production/jobs/{Job(first).Id}/install/approve", null, ct); // Reddedilen onaylanamaz (review r1 L-1).
+        lateApprove.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (Job(first).Status, Job(first).Progress!.Install, Job(first).Progress!.Error).ShouldBe((ProductionJobStatus.Failed, null, "İndirme onaylanmadı: HyperFrames. Üretim durdu."));
         _factory.Events.Events.ShouldContain(e => e.UserId == user && e.Message.Contains("İndirme onaylanmadı: HyperFrames", StringComparison.Ordinal)
             && e.Message.StartsWith("Video üretimi hata verdi: Reddedilen", StringComparison.Ordinal));
     }
@@ -152,6 +155,8 @@ public sealed partial class ProductionPipelineTests
         (await client.PostAsync($"/api/production/jobs/{Job(concept).Id}/install/approve", null, ct)).EnsureSuccessStatusCode();
         await Eventually.WithinAsync(() => Task.FromResult(_factory.Agent.Count("InstallComponents") == 1 && Job(concept).Status == ProductionJobStatus.WaitingForAgent), Limit, ct);
         Job(concept).Progress!.Install.ShouldNotBeNull().Approved.ShouldBeTrue();
+        await Task.Delay(TimeSpan.FromMilliseconds(500), ct);
+        _factory.Provider.Calls.ShouldBeEmpty(); // Kopunca online aşamalara geçilmez (review r1 L-2).
 
         var newConn = await RegisterAgentAsync(user, ct);
 

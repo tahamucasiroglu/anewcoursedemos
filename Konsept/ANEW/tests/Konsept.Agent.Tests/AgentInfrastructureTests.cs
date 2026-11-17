@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Konsept.Agent.Infrastructure.Concrete;
 using Konsept.Agent.Infrastructure.Settings;
@@ -48,4 +49,30 @@ public sealed class AgentInfrastructureTests
     [Fact]
     public void BrowserLauncher_NonHttpAddress_IsRejected() =>
         Should.Throw<ArgumentException>(() => new ShellBrowserLauncher().Open(new Uri("file:///C:/Windows/notepad.exe")));
+
+    /// <summary>
+    /// B-153: kabuk tarayıcıyı açamazsa (ajan logundaki <c>FileNotFoundException</c>) ajan düşmez; Gezgin yedeğiyle açılır, o da olmazsa
+    /// <c>false</c> döner.
+    /// </summary>
+    [Fact]
+    public void BrowserLauncher_ShellFails_FallsBackOrReturnsFalse_NeverThrows()
+    {
+        var address = new Uri("http://192.168.1.10:8000/ajan-eslestir");
+        var started = new List<ProcessStartInfo>();
+        var fallback = new ShellBrowserLauncher(start: info =>
+        {
+            started.Add(info);
+            if (info.UseShellExecute)
+            {
+                throw new FileNotFoundException();
+            }
+        });
+
+        fallback.Open(address).ShouldBeTrue();
+        started.Select(i => (i.FileName, i.UseShellExecute, string.Join(" ", i.ArgumentList)))
+            .ShouldBe([(address.AbsoluteUri, true, string.Empty), ("explorer.exe", false, address.AbsoluteUri)]);
+
+        var broken = new ShellBrowserLauncher(start: _ => throw new FileNotFoundException());
+        Should.NotThrow(() => broken.Open(address)).ShouldBeFalse();
+    }
 }

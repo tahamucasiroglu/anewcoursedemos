@@ -82,6 +82,17 @@ public interface IProductionJobRepository
     /// <returns>Durdurulan sayı.</returns>
     Task<int> StopAsync(Guid userId, Guid? profileId, DateTimeOffset at, CancellationToken cancellationToken);
 
+    /// <summary>İşin ilerlemesini yalnızca durumu beklenenlerdense yazar (spec 0027: onay, araya giren Reddet/Durdur'u ezmesin).</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="jobId">İş.</param>
+    /// <param name="from">Beklenen durumlar.</param>
+    /// <param name="progress">İlerleme.</param>
+    /// <param name="at">Zaman (UTC).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Yazıldıysa <c>true</c>.</returns>
+    Task<bool> SetProgressIfAsync(
+        Guid userId, Guid jobId, IReadOnlyCollection<ProductionJobStatus> from, JobProgress progress, DateTimeOffset at, CancellationToken cancellationToken);
+
     /// <summary>İşin hat ilerlemesini yazar (spec 0017).</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="jobId">İş.</param>
