@@ -3,8 +3,9 @@
     ViewData["Title"] = UiText.NavDeleted;
 }
 @* Silinenler (spec 0016): iki sekme — Konseptler (seçili profilin silinmiş konseptleri, 50'şerli, en yeni silinen üstte; tıklayınca
-   salt okunur sahneler; "Kalıcı sil" onaylı) ve Videolar (yalnızca boş durum; içeriği 0019). Geri yükleme yoktur (Ç-2). deleted.js
-   /silinenler/konseptler uçlarını $.ajax ile kullanır (K-6); model çıktısı yalnızca textContent ile yazılır. Metinler resx'ten. *@
+   salt okunur sahneler; "Kalıcı sil" onaylı) ve Videolar (spec 0019: silinen videolar aynı satır biçiminde, en yeni silinen üstte; "Kalıcı sil"
+   onaylı, ajan yokken pasif + "Ajan bağlı değil"). Geri yükleme yoktur (Ç-2). deleted.js ve deleted-videos.js /silinenler uçlarını $.ajax ile
+   kullanır (K-6); model çıktısı yalnızca textContent ile yazılır. Metinler resx'ten. *@
 <h1 class="page__title">@UiText.NavDeleted</h1>
 <div class="deleted" id="deleted" data-requires-profile
      data-text-loading="@UiText.DeletedLoading" data-text-load-failed="@UiText.DeletedLoadFailed"
@@ -29,13 +30,33 @@
         <p class="concept-area__hint" id="deleted-detail-hint">@UiText.DeletedDetailHint</p>
         <article class="concept-detail" id="deleted-detail" tabindex="-1" hidden></article>
     </section>
-    <section class="tabs__panel" role="tabpanel" id="deleted-panel-videos" aria-labelledby="deleted-tab-videos" tabindex="0" hidden>
-        <p class="empty-state">@UiText.DeletedEmptyVideos</p>
+    <section class="tabs__panel" role="tabpanel" id="deleted-panel-videos" aria-labelledby="deleted-tab-videos" tabindex="0" hidden
+             data-text-meta="@UiText.DeletedVideoMeta" data-text-purge="@UiText.DeletedVideoPurge" data-text-purged="@UiText.DeletedVideoPurged"
+             data-text-purge-failed="@UiText.DeletedVideoPurgeFailed" data-text-agent-offline="@UiText.DeletedVideoAgentOffline"
+             data-text-partial="@UiText.DeletedVideoPartial">
+        <p class="empty-state" id="deleted-videos-empty" data-requires-profile>@UiText.DeletedEmptyVideos</p>
+        <p class="concept-list__status" id="deleted-videos-status" role="status" aria-live="polite"></p>
+        <button type="button" class="button" id="deleted-videos-retry" hidden>@UiText.ProducedRetry</button>
+        <ul class="concept-list" id="deleted-videos-list"></ul>
+        <span class="concept-list__pager" id="deleted-videos-pager" hidden>
+            <button type="button" class="button" id="deleted-videos-prev">@UiText.ConceptsPrev</button>
+            <span id="deleted-videos-page"></span>
+            <button type="button" class="button" id="deleted-videos-next">@UiText.ConceptsNext</button>
+        </span>
     </section>
 </div>
 <div class="dialog-backdrop dialog-backdrop--confirm" id="deleted-purge-dialog" hidden>
     <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="deleted-purge-text">
         <p class="dialog__text" id="deleted-purge-text">@UiText.DeletedPurgeConfirm</p>
+        <div class="dialog__actions">
+            <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
+            <button type="button" class="button button--danger" data-confirm-ok>@UiText.DeletedPurgeOk</button>
+        </div>
+    </div>
+</div>
+<div class="dialog-backdrop dialog-backdrop--confirm" id="deleted-video-purge-dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="deleted-video-purge-text">
+        <p class="dialog__text" id="deleted-video-purge-text">@UiText.DeletedVideoPurgeConfirm</p>
         <div class="dialog__actions">
             <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
             <button type="button" class="button button--danger" data-confirm-ok>@UiText.DeletedPurgeOk</button>

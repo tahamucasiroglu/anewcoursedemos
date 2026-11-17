@@ -2,8 +2,10 @@
 // (tarayıcının yerel kontrolleri; ses düzeyi bu tarayıcıda hatırlanır), altında Klasörde aç / Sistem oynatıcısında aç; sağda sahneler,
 // konsept metni, ayrıntılar ve ücret, sürümler. Ajan durumu status.js'in 3 sn yoklamasından ('agent:status') gelir: ajan yokken mesaj ve pasif
 // eylemler, ajan gelince oynatma kendiliğinden yeniden denenir. Akış adresi yüklenmeden hata verirse bu cihaz ajanın bilgisayarı değildir.
+// "Sil" (spec 0019) onaydan sonra videoyu tüm sürümleriyle Silinenler'e gönderir; sunucu işlemidir (ajan yokken de çalışır), pasif olmaz.
 // Tüm istekler api.js ($.ajax, K-6); LLM metni güvenilmeyen veridir, yalnızca textContent. Metinler resx'ten data-text-*.
 import { get, post } from './api.js';
+import { confirmDialog } from './confirm-dialog.js';
 import { formatDuration, formatTime } from './journal.js';
 
 export const VOLUME_KEY = 'anew.produced.volume';
@@ -146,6 +148,43 @@ export function initProduced(doc, options = {}) {
     button.addEventListener('click', () => openFile(button));
   }
 
+  // --- Sil (spec 0019): onay → Silinenler; vazgeçince hiçbir şey değişmez. Ajan durumundan bağımsız (sunucu işlemi). -----------------
+  const deleteButton = el('produced-delete');
+
+  async function deleteVideo() {
+    const video = state.video;
+    const dialog = el('produced-delete-dialog');
+    if (!video || !dialog || !(await confirmDialog(dialog, deleteButton))) {
+      return;
+    }
+    deleteButton.disabled = true;
+    try {
+      await post(`/uretilenler/video/${encodeURIComponent(video.id)}/sil`, {});
+      const row = [...el('produced-list').querySelectorAll('[data-video]')].find((b) => b.dataset.video === video.id);
+      if (row) {
+        row.closest('li').remove();
+        state.count = Math.max(0, state.count - 1);
+      }
+      if (state.video === video) {
+        clearSelection();
+      }
+      el('produced-empty').hidden = state.count > 0;
+      el('produced-status').textContent = text.textDeleted;
+      const next = el('produced-list').querySelector('[data-video]');
+      if (next) {
+        next.focus(); // Silinen satırın yerine odak listede kalır.
+      }
+    } catch (error) {
+      el('produced-action-status').textContent = messageOf(error, text.textDeleteFailed);
+    } finally {
+      deleteButton.disabled = false;
+    }
+  }
+
+  if (deleteButton) {
+    deleteButton.addEventListener('click', () => deleteVideo());
+  }
+
   // --- İzleme yeri ----------------------------------------------------------------------------------------------------------------
   function stopPlayer() {
     player.pause?.();
@@ -272,6 +311,9 @@ export function initProduced(doc, options = {}) {
     el('produced-panel-hint').hidden = true;
     el('produced-panel').hidden = false;
     el('produced-title').textContent = video.title;
+    if (deleteButton) {
+      deleteButton.setAttribute('aria-label', fill(text.textDeleteLabel, video.title));
+    }
     el('produced-scenes').replaceChildren(...version.scenes.map((scene, index) => {
       const item = node('li', 'produced-scenes__item');
       item.append(node('h4', 'produced-scenes__title', fill(text.textSceneTitle, index + 1, scene.title)), node('p', '', scene.narration));

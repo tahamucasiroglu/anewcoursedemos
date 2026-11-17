@@ -417,6 +417,18 @@
   <data name="DeletedPurging" xml:space="preserve"><value>Kalıcı siliniyor…</value></data>
   <data name="DeletedPurged" xml:space="preserve"><value>Konsept kalıcı olarak silindi.</value></data>
   <data name="DeletedPurgeFailed" xml:space="preserve"><value>Konsept kalıcı silinemedi; yerinde kaldı.</value></data>
+  <data name="DeletedVideoMeta" xml:space="preserve"><value>Silinme: {0} · {1} sürüm</value></data>
+  <data name="DeletedVideoPurge" xml:space="preserve"><value>Videoyu kalıcı sil: {0}</value></data>
+  <data name="DeletedVideoPurgeConfirm" xml:space="preserve"><value>Video kaydı ve tüm sürüm dosyaları bilgisayarınızdan kalıcı olarak silinecek, geri alınamaz.</value></data>
+  <data name="DeletedVideoPurged" xml:space="preserve"><value>Video kalıcı olarak silindi.</value></data>
+  <data name="DeletedVideoPurgeFailed" xml:space="preserve"><value>Video kalıcı silinemedi; yerinde kaldı.</value></data>
+  <data name="DeletedVideoAgentOffline" xml:space="preserve"><value>Ajan bağlı değil</value></data>
+  <data name="DeletedVideoPartial" xml:space="preserve"><value>Bazı dosyalar silinemedi, dosyayı kapatıp tekrar deneyin</value></data>
+  <data name="ProducedDelete" xml:space="preserve"><value>Sil</value></data>
+  <data name="ProducedDeleteLabel" xml:space="preserve"><value>Videoyu sil: {0}</value></data>
+  <data name="ProducedDeleteConfirm" xml:space="preserve"><value>Video tüm sürümleriyle Silinenler'e taşınacak; dosyalar bilgisayarınızda kalır.</value></data>
+  <data name="ProducedDeleted" xml:space="preserve"><value>Video Silinenler'e taşındı.</value></data>
+  <data name="ProducedDeleteFailed" xml:space="preserve"><value>Video silinemedi; yerinde kaldı.</value></data>
   <data name="SettingsSuggestions" xml:space="preserve"><value>Öneriler</value></data>
   <data name="SuggestionsResetIntro" xml:space="preserve"><value>Önerilip seçmediğin başlıklar tekrar önerilmez. Sıfırlarsan seçili profilde yeniden önerilebilir olurlar.</value></data>
   <data name="SuggestionsReset" xml:space="preserve"><value>Önerileri sıfırla</value></data>

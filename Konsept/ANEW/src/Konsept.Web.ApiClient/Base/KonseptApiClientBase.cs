@@ -220,6 +220,14 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<JsonElement>> ListDeletedVideosAsync(Guid profileId, int page, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                $"api/produced/deleted?profileId={profileId:D}&page={Math.Max(1, page).ToString(System.Globalization.CultureInfo.InvariantCulture)}"),
+            cancellationToken);
+
+    /// <inheritdoc />
     public Task<Result<JsonElement>> GetProductionStateAsync(Guid profileId, CancellationToken cancellationToken) =>
         SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/production/state?profileId={profileId:D}"), cancellationToken);
 
@@ -239,6 +247,8 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ProductionCommand.Stream => (HttpMethod.Post, $"api/production/videos/{target:D}/stream"),
             ProductionCommand.ProducedVideo => (HttpMethod.Get, $"api/produced/{target:D}"),
             ProductionCommand.OpenFile => (HttpMethod.Post, $"api/produced/versions/{target:D}/open"),
+            ProductionCommand.DeleteVideo => (HttpMethod.Post, $"api/produced/{target:D}/delete"),
+            ProductionCommand.PurgeVideo => (HttpMethod.Post, $"api/produced/deleted/{target:D}/purge"),
             _ => (HttpMethod.Post, $"api/production/jobs/{target:D}/resume"),
         };
         if (method == HttpMethod.Get)

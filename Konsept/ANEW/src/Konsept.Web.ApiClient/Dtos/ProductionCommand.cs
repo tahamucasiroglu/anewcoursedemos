@@ -35,4 +35,10 @@ public enum ProductionCommand
 
     /// <summary>Üretilen Videolar: Klasörde aç / Sistem oynatıcısında aç (spec 0007).</summary>
     OpenFile,
+
+    /// <summary>Üretilen Videolar: Sil — videoyu tüm sürümleriyle Silinenler'e gönder (kimlik: video; spec 0019).</summary>
+    DeleteVideo,
+
+    /// <summary>Silinenler — Videolar: Kalıcı sil (kimlik: video; spec 0019).</summary>
+    PurgeVideo,
 }

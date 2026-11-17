@@ -241,6 +241,13 @@ public interface IKonseptApiClient
     /// <returns>Liste parçası (Api gövdesi aynen).</returns>
     Task<Result<JsonElement>> ListProducedAsync(Guid profileId, int skip, CancellationToken cancellationToken);
 
+    /// <summary>Silinenler — Videolar: profilin silinmiş videoları, 50'şerli (<c>GET api/produced/deleted</c>; spec 0019).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="page">Sayfa (1'den).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Liste (Api gövdesi aynen).</returns>
+    Task<Result<JsonElement>> ListDeletedVideosAsync(Guid profileId, int page, CancellationToken cancellationToken);
+
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>
     /// <param name="filter">Seviye filtresi (<c>all</c>, <c>warning</c>, <c>error</c>).</param>

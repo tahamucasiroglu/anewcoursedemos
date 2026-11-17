@@ -1,4 +1,4 @@
-// Sayfa giriş noktası: pasif kontroller, "Hata bildir", "Ajanı test et", durum yoklaması, Günlük geçmişi, tek gönderimlik çıkış formu, admin özeti, admin paneli, Ayarlar, "Ajanı eşleştir", profiller, Konseptler şeridi, düzenleme döngüsü, Silinenler, önerileri sıfırla, Konseptten Video, Üretilen Videolar ve aylık harcama.
+// Sayfa giriş noktası: pasif kontroller, "Hata bildir", "Ajanı test et", durum yoklaması, Günlük geçmişi, tek gönderimlik çıkış formu, admin özeti, admin paneli, Ayarlar, "Ajanı eşleştir", profiller, Konseptler şeridi, düzenleme döngüsü, Silinenler (Konseptler, Videolar), önerileri sıfırla, Konseptten Video, Üretilen Videolar ve aylık harcama.
 import { loadAdminOverview } from './admin.js';
 import { initAdminPanel } from './admin-panel.js';
 import { initPairing } from './agent-pairing.js';
@@ -8,6 +8,7 @@ import { initConceptEdit } from './concept-edit.js';
 import { initConceptWork } from './concept-work.js';
 import { initConcepts } from './concepts.js';
 import { initDeleted } from './deleted.js';
+import { initDeletedVideos } from './deleted-videos.js';
 import { initErrorReport } from './error-report.js';
 import { initJournal } from './journal.js';
 import { bindPassiveControls } from './passive-controls.js';
@@ -33,6 +34,7 @@ initConcepts(document); // profiles.js'in 'profile:selected' olayından önce di
 initConceptEdit(document); // Düzenleme döngüsü (spec 0015); concept-work.js'in olaylarını dinler.
 initConceptWork(document); // Konseptler'in dört alanı (spec 0014); aynı olayı dinler.
 initDeleted(document); // Silinenler sayfası (spec 0016).
+initDeletedVideos(document); // Silinenler — Videolar sekmesi (spec 0019); 'agent:status' olayını dinler.
 initSuggestionReset(document); // Ayarlar → Öneriler (spec 0016).
 initProduction(document); // Konseptten Video (spec 0006); 'profile:selected' olayını dinler.
 initProduced(document); // Üretilen Videolar (spec 0007); 'profile:selected' ve 'agent:status' olaylarını dinler.

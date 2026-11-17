@@ -4,7 +4,7 @@
 }
 @* Üretilen Videolar (spec 0007): solda seçili profilin videoları (50'şerli, "Daha fazla göster"), ortada izleme yeri (ajanın yerel akışı,
    tarayıcının yerel kontrolleri; altında Klasörde aç / Sistem oynatıcısında aç), sağda seslendirme ve sahneler, konsept metni, ayrıntılar ve
-   ücret, video sürümleri. produced.js /uretilenler ve /uretim/video/{id}/izle uçlarını $.ajax ile kullanır (K-6); LLM metni yalnızca
+   ücret, video sürümleri. Eylem satırında "Sil" (spec 0019) videoyu onaydan sonra tüm sürümleriyle Silinenler'e gönderir. produced.js /uretilenler ve /uretim/video/{id}/izle uçlarını $.ajax ile kullanır (K-6); LLM metni yalnızca
    textContent ile yazılır. Metinler resx'ten data-text-* ile gelir. *@
 <h1 class="page__title">@UiText.NavProduced</h1>
 <div class="produced" id="produced" data-requires-profile
@@ -23,6 +23,7 @@
      data-text-format="@UiText.ProducedFormat" data-text-landscape="@UiText.ProducedLandscape" data-text-portrait="@UiText.ProducedPortrait"
      data-text-started="@UiText.ProducedStarted" data-text-ended="@UiText.ProducedEnded" data-text-ai-voice="@UiText.ProducedAiVoice"
      data-text-version="@UiText.ProducedVersion" data-text-version-label="@UiText.ProducedVersionLabel" data-text-status-completed="@UiText.JobCompleted"
+     data-text-delete-label="@UiText.ProducedDeleteLabel" data-text-deleted="@UiText.ProducedDeleted" data-text-delete-failed="@UiText.ProducedDeleteFailed"
      data-text-second="@UiText.ProducedSecond" data-text-minute="@UiText.ProducedMinute" data-text-hour="@UiText.ProducedHour">
     <section class="produced__list" aria-labelledby="produced-list-heading">
         <h2 class="produced__heading" id="produced-list-heading">@UiText.ProducedListLabel</h2>
@@ -39,6 +40,7 @@
         <div class="produced__actions" id="produced-actions" hidden>
             <button type="button" class="button" id="produced-open-folder" data-action="folder" data-label="@UiText.ProducedOpenFolder">@UiText.ProducedOpenFolder</button>
             <button type="button" class="button" id="produced-open-player" data-action="player" data-label="@UiText.ProducedOpenPlayer">@UiText.ProducedOpenPlayer</button>
+            <button type="button" class="button button--danger" id="produced-delete">@UiText.ProducedDelete</button>
             <p class="produced__action-status" id="produced-action-status" role="status" aria-live="polite"></p>
         </div>
     </section>
@@ -56,4 +58,13 @@
             <ul class="produced-versions" id="produced-versions"></ul>
         </div>
     </section>
+</div>
+<div class="dialog-backdrop dialog-backdrop--confirm" id="produced-delete-dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="produced-delete-text">
+        <p class="dialog__text" id="produced-delete-text">@UiText.ProducedDeleteConfirm</p>
+        <div class="dialog__actions">
+            <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
+            <button type="button" class="button button--danger" data-confirm-ok>@UiText.ProducedDelete</button>
+        </div>
+    </div>
 </div>
