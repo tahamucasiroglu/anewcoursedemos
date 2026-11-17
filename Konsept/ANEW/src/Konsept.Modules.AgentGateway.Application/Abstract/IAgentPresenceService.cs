@@ -15,8 +15,18 @@ public interface IAgentPresenceService : IAgentStatusReader
     /// <param name="owner">Hub kimliğinden gelen sahip ve cihaz.</param>
     /// <param name="registration">Ajanın bilgileri.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
-    /// <returns>Görev.</returns>
-    Task RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken);
+    /// <returns>Sunucu sürümü ve güncelleme gerekip gerekmediği (spec 0023 Req 4).</returns>
+    Task<AgentRegisterReply> RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Ajan güncellemeye başlamak istiyor (spec 0023 Req 3): sahibin "Üretiliyor" işi varsa reddedilir; değilse oturum "güncelleniyor" olur
+    /// ve güncelleme bitene (ajan yeniden bağlanana) kadar ajana komut gitmez.
+    /// </summary>
+    /// <param name="connectionId">Bağlantı kimliği.</param>
+    /// <param name="owner">Sahip.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Başlayabilirse <c>true</c>.</returns>
+    Task<bool> BeginUpdateAsync(string connectionId, AgentOwner owner, CancellationToken cancellationToken);
 
     /// <summary>Bağlantının kopmasını işler.</summary>
     /// <param name="connectionId">Kopan bağlantının kimliği.</param>

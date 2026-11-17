@@ -48,10 +48,20 @@ public sealed class AgentHub : Hub
 
     /// <summary>Ajan kendini kaydeder.</summary>
     /// <param name="registration">Ajanın bilgileri.</param>
-    /// <returns>Görev.</returns>
-    public Task Register(AgentRegistration registration) =>
+    /// <returns>Sunucu sürümü ve ajanın güncellenmesi gerekip gerekmediği (spec 0023 Req 4).</returns>
+    public Task<AgentRegisterReply> Register(AgentRegistration registration) =>
         _tracker.Contains(Context.ConnectionId)
             ? _presence.RegisterAsync(Context.ConnectionId, Owner(), registration, Context.ConnectionAborted)
+            : throw new HubException("Ajan oturumu kapandı.");
+
+    /// <summary>
+    /// Ajan güncellemeye başlamak istiyor (spec 0023 Req 3): kullanıcının "Üretiliyor" işi varsa <c>false</c>; değilse oturum "güncelleniyor"
+    /// olur ve ajana iş gitmez. İptal edilmiş oturumdan reddedilir.
+    /// </summary>
+    /// <returns>Başlayabilirse <c>true</c>.</returns>
+    public Task<bool> BeginUpdate() =>
+        _tracker.Contains(Context.ConnectionId)
+            ? _presence.BeginUpdateAsync(Context.ConnectionId, Owner(), Context.ConnectionAborted)
             : throw new HubException("Ajan oturumu kapandı.");
 
     /// <summary>Ajan Error/Critical log özeti gönderir (spec 0008 Req 7); kayıtsız bağlantıdan ya da düşük seviyede reddedilir.</summary>

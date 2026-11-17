@@ -110,4 +110,31 @@ public sealed class AgentDownloadTests
         using var escape = await client.GetAsync(new Uri("/ajan-bilesenleri/..%2F" + AgentDownloadController.CurrentFileName, UriKind.Relative), ct);
         escape.StatusCode.ShouldNotBe(HttpStatusCode.OK);
     }
+
+    /// <summary>
+    /// Spec 0023 Req 6: imzalı güncelleme listesi ve ajan exe'si kimliksiz statik yoldan (<c>/ajan-guncelleme/</c>) sunulur; yalnızca
+    /// <c>update</c> klasöründen — kök klasördeki dosyalara oradan çıkılamaz.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task UpdateFeed_Anonymous_ServesOnlyUpdateFolder()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new WebFactory();
+        var update = Path.Combine(factory.AgentDownloadDirectory, "update");
+        Directory.CreateDirectory(update);
+        await File.WriteAllTextAsync(Path.Combine(update, "manifest.json"), "{}", ct);
+        await File.WriteAllBytesAsync(Path.Combine(update, "manifest.json.sig"), [9], ct);
+        await File.WriteAllBytesAsync(Path.Combine(factory.AgentDownloadDirectory, AgentDownloadController.CurrentFileName), [1], ct);
+        using var client = SignedInClient.CreateAnonymous(factory);
+
+        using var manifest = await client.GetAsync(new Uri("/ajan-guncelleme/manifest.json", UriKind.Relative), ct);
+        manifest.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await manifest.Content.ReadAsStringAsync(ct)).ShouldBe("{}");
+        using var signature = await client.GetAsync(new Uri("/ajan-guncelleme/manifest.json.sig", UriKind.Relative), ct);
+        (await signature.Content.ReadAsByteArrayAsync(ct)).ShouldBe([9]);
+
+        using var escape = await client.GetAsync(new Uri("/ajan-guncelleme/..%2F" + AgentDownloadController.CurrentFileName, UriKind.Relative), ct);
+        escape.StatusCode.ShouldNotBe(HttpStatusCode.OK);
+    }
 }

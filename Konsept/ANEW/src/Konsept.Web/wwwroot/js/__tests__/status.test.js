@@ -54,6 +54,21 @@ describe('durum alanı ve Günlük şeridi (AC-4, AC-6, AC-8)', () => {
     expect(text('status-agent')).toBe('Ajan bağlı değil');
   });
 
+  it('spec 0023 AC-6: sürümü uyumsuz ajan "Ajan güncellemesi gerekli"; "Ajanı indir" görünür, "Ajanı eşleştir" gizli; güncellenince normale döner', () => {
+    document.getElementById('system-status').insertAdjacentHTML('beforeend',
+      '<a id="status-agent-download" href="/ajan/indir" download hidden>Ajanı indir</a><a id="status-agent-pair" href="/ajan-eslestir" hidden>Ajanı eşleştir</a>');
+
+    render(document, { ...healthy, agent: { isConnected: false, updateRequired: true, machineName: 'TAHA-PC' } });
+    expect(text('status-agent')).toBe('Ajan güncellemesi gerekli');
+    expect(state('status-agent')).toBe('off');
+    expect(document.getElementById('status-agent-download').hidden).toBe(false);
+    expect(document.getElementById('status-agent-pair').hidden).toBe(true);
+
+    render(document, healthy);
+    expect(text('status-agent')).toBe('Ajan bağlı');
+    expect(document.getElementById('status-agent-download').hidden).toBe(true);
+  });
+
   it('spec 0007: ajan durumu ve cihaz adı agent:status olayıyla sayfaya iletilir', () => {
     const seen = [];
     const listener = (event) => seen.push(event.detail);

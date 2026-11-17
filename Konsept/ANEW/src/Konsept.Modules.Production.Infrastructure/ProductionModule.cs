@@ -1,3 +1,4 @@
+using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
@@ -39,6 +40,7 @@ public static class ProductionModule
         services.AddScoped<IProducedVideoService, ProducedVideoService>();
         services.AddScoped<IDislikedVideoTitles, DislikedVideoTitles>(); // Concepts.Contracts: "beğenilmedi" negatif sinyali (spec 0019).
         services.AddScoped<IProductionPipeline, ProductionPipeline>();
+        services.AddScoped<IProductionActivityReader, ProductionActivityReader>(); // AgentGateway.Contracts: iş sürerken güncelleme yok (spec 0023).
         services.AddSingleton<IProductionRunner, ProductionRunner>();
         services.AddHostedService<ProductionWorker>();
         services.AddScoped<IUserSessionsEndedListener, ProductionSessionListener>(); // Identity.Contracts: çıkışta üretim durur (Req 16).

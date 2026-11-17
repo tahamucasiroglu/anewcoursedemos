@@ -154,6 +154,9 @@ export function initProduction(doc, timers = globalThis) {
       if (job.error) {
         item.append(node('p', 'production-queue__error', job.error)); // Sade açıklama sunucudan (iç ayrıntı yok, Req 11).
       }
+      if (job.status === 'waiting_for_agent' && state.data.agentUpdateRequired) {
+        item.append(node('p', 'production-queue__error', text.textAgentUpdateRequired)); // Neden (spec 0023 Req 15).
+      }
       if (RESUMABLE.includes(job.status)) {
         const resume = node('button', 'button production-queue__resume', text.textResume);
         resume.type = 'button';
@@ -181,6 +184,10 @@ export function initProduction(doc, timers = globalThis) {
     const offline = el('production-agent-offline');
     if (offline) {
       offline.hidden = state.data.agentConnected !== false || !jobs.some((j) => j.status === 'waiting_for_agent'); // BR-11, Req 15.
+      const reason = state.data.agentUpdateRequired ? text.textAgentUpdateRequired : text.textAgentOffline; // spec 0023 Req 15.
+      if (reason) {
+        offline.textContent = reason;
+      }
     }
     const halted = el('production-halted');
     if (halted) {

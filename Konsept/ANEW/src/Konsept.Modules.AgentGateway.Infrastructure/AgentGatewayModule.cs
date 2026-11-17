@@ -3,12 +3,15 @@ using Konsept.Modules.AgentGateway.Application.Concrete;
 using Konsept.Modules.AgentGateway.Contracts;
 using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Domain.Entities;
+using Konsept.Modules.AgentGateway.Domain.Rules;
 using Konsept.Modules.AgentGateway.Infrastructure.Concrete;
 using Konsept.Modules.AgentGateway.Infrastructure.Hubs;
 using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Shared.Infrastructure.Http;
+using Konsept.Shared.Kernel.Abstract;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Konsept.Modules.AgentGateway.Infrastructure;
@@ -21,6 +24,9 @@ public static class AgentGatewayModule
     /// <summary>Hub'ın kabul ettiği en büyük mesaj (bayt).</summary>
     public const long MaxHubMessageBytes = 1024 * 1024;
 
+    /// <summary>Sürüm kapısını açıp kapatan ayar (varsayılan açık; spec 0023).</summary>
+    public const string RequireSameVersionKey = "AgentGateway:RequireSameVersion";
+
     /// <summary>Modülün servislerini kaydeder.</summary>
     /// <param name="services">Servis koleksiyonu.</param>
     /// <returns>Aynı koleksiyon.</returns>
@@ -30,6 +36,10 @@ public static class AgentGatewayModule
         // kapatırdı (review r1 H-1). Ajan yükü sınırlar; sunucu 1 MB'a kadar kabul eder.
         services.AddSignalR(options => options.MaximumReceiveMessageSize = MaxHubMessageBytes);
         services.AddSingleton<IAgentConnectionRegistry, InMemoryAgentConnectionRegistry>();
+        // Sürüm kapısı (spec 0023 Req 4, 15): ürün sürümünden farklı ajana komut gitmez. Yalnızca test kurulumu kapatır.
+        services.AddSingleton(sp => new AgentVersionGate(
+            sp.GetRequiredService<IProductVersionProvider>().Version,
+            sp.GetRequiredService<IConfiguration>().GetValue(RequireSameVersionKey, true)));
         services.AddSingleton<IAgentConnectionTracker, AgentConnectionTracker>();
         services.AddSingleton<IAgentDeviceRevocationListener, AgentSessionTerminator>();
         services.AddSingleton<IAgentChannel, SignalRAgentChannel>();

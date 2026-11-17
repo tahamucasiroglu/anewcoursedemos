@@ -13,6 +13,13 @@ public interface IAgentCommands
     /// <returns>Cihaz ya da <c>null</c>.</returns>
     Guid? ConnectedDevice(Guid userId);
 
+    /// <summary>
+    /// Kullanıcının ajanı bağlı ama sürümü sunucudan farklı mı (spec 0023 Req 15): bekleyen işin satırında neden "Ajan güncellemesi gerekli".
+    /// </summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <returns>Güncelleme gerekiyorsa <c>true</c>.</returns>
+    bool UpdateRequired(Guid userId);
+
     /// <summary>Araç denetimi.</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="request">İstek.</param>

@@ -111,6 +111,20 @@ if (mirrorDirectory is not null && Directory.Exists(mirrorDirectory))
     });
 }
 
+// Ajan güncellemesi (spec 0023 Req 6): imzalı sürüm listesi (manifest.json + .sig) ve ajan exe'si; kimliksiz statik yol, yalnızca bu klasör.
+// Güven imzadadır (Ed25519, açık anahtar ajana gömülü) — sunucu ya da ağ değiştirse de ajan doğrulamadan geçmeyen paketi kurmaz.
+var updateDirectory = string.IsNullOrEmpty(agentDirectory) ? null : Path.Combine(agentDirectory, "update");
+if (updateDirectory is not null && Directory.Exists(updateDirectory))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(updateDirectory),
+        RequestPath = "/ajan-guncelleme",
+        ServeUnknownFileTypes = true,
+        DefaultContentType = "application/octet-stream",
+    });
+}
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

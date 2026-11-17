@@ -15,6 +15,7 @@ function texts(box) {
     dbDown: d.textDbDown,
     agentConnected: d.textAgentConnected,
     agentDisconnected: d.textAgentDisconnected,
+    agentUpdateRequired: d.textAgentUpdateRequired,
     journalEmpty: d.textJournalEmpty,
   };
 }
@@ -62,11 +63,17 @@ export function render(doc, status) {
   set(api, t.apiOk, 'ok');
   set(db, status.databaseAvailable ? t.dbOk : t.dbDown, status.databaseAvailable ? 'ok' : 'error');
   const connected = Boolean(status.agent && status.agent.isConnected);
-  set(agent, connected ? t.agentConnected : t.agentDisconnected, connected ? 'ok' : 'off');
+  // Sürümü uyumsuz ajan (spec 0023 Req 4): bağlı ama komut almıyor → "Ajan güncellemesi gerekli"; "Ajanı indir" görünür kalır.
+  const updateRequired = Boolean(status.agent && status.agent.updateRequired);
+  if (updateRequired) {
+    set(agent, t.agentUpdateRequired, 'off');
+  } else {
+    set(agent, connected ? t.agentConnected : t.agentDisconnected, connected ? 'ok' : 'off');
+  }
   // Üretilen Videolar (spec 0007 Req 7–8): ajan durumu ve cihaz adı sayfaya olayla iletilir (ajan gelince oynatma yeniden denenir).
   doc.dispatchEvent(new CustomEvent('agent:status', { detail: { connected, machineName: (status.agent && status.agent.machineName) || null } }));
   if (pair) {
-    pair.hidden = connected;
+    pair.hidden = connected || updateRequired;
   }
   if (download) {
     download.hidden = connected;

@@ -1,6 +1,7 @@
 using Konsept.Modules.AgentGateway.Application.Abstract;
 using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
+using Konsept.Modules.AgentGateway.Domain.Entities;
 
 namespace Konsept.Modules.AgentGateway.Application.Base;
 
@@ -18,7 +19,10 @@ public abstract class AgentCommandsBase(IAgentConnectionRegistry registry, IAgen
     public const string AgentProtocol = "agent";
 
     /// <inheritdoc />
-    public Guid? ConnectedDevice(Guid userId) => registry.Find(userId)?.DeviceId;
+    public Guid? ConnectedDevice(Guid userId) => Commandable(userId)?.DeviceId;
+
+    /// <inheritdoc />
+    public bool UpdateRequired(Guid userId) => registry.Find(userId)?.UpdateRequired == true;
 
     /// <inheritdoc />
     public Task<AgentToolCheckReply?> CheckToolsAsync(Guid userId, AgentToolCheckRequest request, CancellationToken cancellationToken) =>
@@ -60,10 +64,13 @@ public abstract class AgentCommandsBase(IAgentConnectionRegistry registry, IAgen
     /// <returns>Koptuysa <c>true</c>.</returns>
     protected abstract bool IsConnectionLost(Exception exception);
 
+    // Sürümü uyumsuz ya da güncellemedeki ajan üretim açısından bağlı değildir (spec 0023 Req 3, 15): ona hiçbir komut gitmez.
+    private AgentSession? Commandable(Guid userId) => registry.Find(userId) is { AcceptsCommands: true } session ? session : null;
+
     private async Task<T?> SendAsync<T>(Guid userId, Func<string, CancellationToken, Task<T>> send, T? onError, CancellationToken cancellationToken)
         where T : class
     {
-        if (registry.Find(userId) is not { } session)
+        if (Commandable(userId) is not { } session)
         {
             return null;
         }

@@ -64,6 +64,7 @@
   <data name="StatusDbDown" xml:space="preserve"><value>DB erişilemiyor</value></data>
   <data name="StatusAgentConnected" xml:space="preserve"><value>Ajan bağlı</value></data>
   <data name="StatusAgentDisconnected" xml:space="preserve"><value>Ajan bağlı değil</value></data>
+  <data name="StatusAgentUpdateRequired" xml:space="preserve"><value>Ajan güncellemesi gerekli</value></data>
   <data name="AgentTest" xml:space="preserve"><value>Ajanı test et</value></data>
   <data name="AgentTestSending" xml:space="preserve"><value>Gönderiliyor…</value></data>
   <data name="AgentTestNotConnected" xml:space="preserve"><value>Ajan bağlı değil</value></data>

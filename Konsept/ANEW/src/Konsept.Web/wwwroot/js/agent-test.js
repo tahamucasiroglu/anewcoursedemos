@@ -5,6 +5,7 @@ import { post } from './api.js';
 const ERROR_TEXT_KEYS = {
   'agent.not_connected': 'textAgentNotConnected',
   'agent.timeout': 'textAgentTimeout',
+  'agent.update_required': 'textAgentUpdateRequired', // spec 0023 Req 4: sürümü uyumsuz ajan test komutu almaz.
   'api.unavailable': 'textApiUnavailable',
 };
 

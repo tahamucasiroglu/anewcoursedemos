@@ -40,6 +40,13 @@ describe('"Ajanı test et" (AC-7)', () => {
     expect(result().textContent).toBe('Zaman aşımı');
   });
 
+  it('spec 0023 AC-6: sürümü uyumsuz ajanda "Ajan güncellemesi gerekli" görünür', async () => {
+    vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 503, { code: 'agent.update_required', message: 'server text' }));
+    await runAgentTest(document);
+
+    expect(document.getElementById('agent-test-result').textContent).toBe('Ajan güncellemesi gerekli');
+  });
+
   it('API erişilemezse resx metni, bilinmeyen hatada genel metin görünür', async () => {
     vi.spyOn($, 'ajax').mockReturnValue(ajaxRejecting($, 502, { code: 'api.unavailable', message: 'server text' }));
     await runAgentTest(document);

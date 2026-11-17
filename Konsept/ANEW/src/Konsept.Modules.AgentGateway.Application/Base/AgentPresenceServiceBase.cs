@@ -1,6 +1,8 @@
 using Konsept.Modules.AgentGateway.Application.Abstract;
+using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Konsept.Modules.AgentGateway.Domain.Entities;
+using Konsept.Modules.AgentGateway.Domain.Rules;
 
 namespace Konsept.Modules.AgentGateway.Application.Base;
 
@@ -28,25 +30,52 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     /// <summary>Gets kurulu bileşen deposu (spec 0006); verilmemişse saklanmaz.</summary>
     protected IInstalledComponentStore? Components { get; init; }
 
+    /// <summary>Gets sürüm kapısı (spec 0023); verilmemişse her sürüm kabul edilir.</summary>
+    protected AgentVersionGate? Gate { get; init; }
+
+    /// <summary>Gets kullanıcının "Üretiliyor" işi var mı okuyucusu (spec 0023 Req 3); verilmemişse yok sayılır.</summary>
+    protected IProductionActivityReader? Activity { get; init; }
+
     /// <inheritdoc />
     public AgentStatusDto GetStatus(Guid? userId)
     {
         var current = userId is { } id ? Registry.Find(id) : null;
         return current is null
             ? new AgentStatusDto(false, null, null, null)
-            : new AgentStatusDto(true, current.MachineName, current.AgentVersion, current.ConnectedAt);
+            : new AgentStatusDto(!current.UpdateRequired, current.MachineName, current.AgentVersion, current.ConnectedAt, current.UpdateRequired);
     }
 
     /// <inheritdoc />
-    public async Task RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken)
+    public async Task<AgentRegisterReply> RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(registration);
-        var session = new AgentSession(connectionId, registration.MachineName, registration.AgentVersion, TimeProvider.GetUtcNow(), owner.UserId, owner.DeviceId);
+        var updateRequired = Gate?.RequiresUpdate(registration.AgentVersion) == true;
+        var session = new AgentSession(
+            connectionId, registration.MachineName, registration.AgentVersion, TimeProvider.GetUtcNow(), owner.UserId, owner.DeviceId, updateRequired);
         Registry.Set(session);
         Components?.Set(owner.UserId, registration.InstalledComponents ?? []); // Kurulu bileşenler (spec 0006 Req 19).
         await RunSideEffectAsync(() => OnConnectedAsync(session, cancellationToken), cancellationToken).ConfigureAwait(false);
+        return new AgentRegisterReply(Gate?.ServerVersion ?? registration.AgentVersion, updateRequired);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> BeginUpdateAsync(string connectionId, AgentOwner owner, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (Registry.FindByConnection(connectionId) is not { } session || session.UserId != owner.UserId)
+        {
+            return false;
+        }
+
+        if (Activity is not null && await Activity.IsProducingAsync(owner.UserId, cancellationToken).ConfigureAwait(false))
+        {
+            return false; // "Üretim sürüyor; iş bitince ya da durdurulunca güncellenecek" (Req 3): ajan bir süre sonra yeniden sorar.
+        }
+
+        Registry.Set(session with { Updating = true });
+        return true;
     }
 
     /// <inheritdoc />

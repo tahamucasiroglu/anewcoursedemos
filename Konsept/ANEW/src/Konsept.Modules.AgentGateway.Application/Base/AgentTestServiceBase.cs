@@ -37,6 +37,12 @@ public abstract class AgentTestServiceBase : IAgentTestService
             return Result<AgentTestResultDto>.Failure(AgentErrors.NotConnected);
         }
 
+        if (session.UpdateRequired)
+        {
+            // Sürümü uyumsuz ajan komut yürütmez (spec 0023 Req 4, AC-6): "Ajanı test et" ona gönderilmez.
+            return Result<AgentTestResultDto>.Failure(AgentErrors.UpdateRequired);
+        }
+
         using var timeout = new CancellationTokenSource(ReplyTimeout, TimeProvider);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
         try

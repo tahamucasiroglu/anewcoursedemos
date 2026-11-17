@@ -11,7 +11,7 @@ function pageHtml() {
   return `
     <meta name="csrf-token" content="test-token" />
     <div id="profile-bar"></div>
-    <div id="production" data-text-loading="Yükleniyor…" data-text-failed="Sunucuya ulaşılamadı. Biraz sonra tekrar deneyin."
+    <div id="production" data-text-loading="Yükleniyor…" data-text-agent-update-required="Ajan güncellemesi gerekli" data-text-agent-offline="Ajan bağlı değil" data-text-failed="Sunucuya ulaşılamadı. Biraz sonra tekrar deneyin."
          data-text-correlation="(Korelasyon: {0})" data-text-saving="Kaydediliyor…" data-text-not-selected="seçilmedi"
          data-text-image-off="Kapalı — koddan çiz" data-text-audio-off="Kapalı — sessiz video"
          data-text-status-queued="Sırada" data-text-status-producing="Üretiliyor" data-text-status-stopped="Durduruldu"
@@ -134,6 +134,15 @@ describe('Konseptten Video — üretim hattı (spec 0017)', () => {
     await flush();
     expect(el('production-agent-offline').hidden).toBe(true);
     expect(el('production-halted').hidden).toBe(false);
+  });
+
+  it('spec 0023 AC-15: sürümü uyumsuz ajanda bekleyen işin satırında ve uyarıda neden "Ajan güncellemesi gerekli"', async () => {
+    await start(stateOf({ jobs: [job('j1', 'Bekleyen', 'waiting_for_agent'), job('j2', 'Sıradaki', 'queued')], agentConnected: false, agentUpdateRequired: true }));
+    const [first, second] = [...el('production-queue').children];
+    expect(first.querySelector('.production-queue__error').textContent).toBe('Ajan güncellemesi gerekli');
+    expect(second.querySelector('.production-queue__error')).toBeNull();
+    expect(el('production-agent-offline').hidden).toBe(false);
+    expect(el('production-agent-offline').textContent).toBe('Ajan güncellemesi gerekli');
   });
 
   it('AC-7/AC-8: çalışan iş varken durum 3 sn\'de bir yoklanır (≤5 sn), biten iş Üretilenler\'i yeniler; çalışan iş yoksa yoklama durur', async () => {

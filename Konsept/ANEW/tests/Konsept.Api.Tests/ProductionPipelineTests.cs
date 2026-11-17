@@ -312,6 +312,47 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
     }
 
     /// <summary>
+    /// Spec 0023 AC-15: ajanın sürümü sunucudan farklıyken başlatılan işte ajana hiçbir komut gitmez; iş ilk yerel aşamada Ajan bekleniyor olur,
+    /// durumda "güncelleme gerekli" işareti var, sıradaki iş başlamaz; ajan güncellenip sürümü eşleşince iş kaldığı aşamadan sürer (analiz
+    /// yeniden çalışmaz) ve sıradaki de biter. Sürüm karşılaştırması AgentVersionGateTests'te; burada uyumsuz oturum doğrudan kaydedilir.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Pipeline_MismatchedAgent_WaitsWithReason_ResumesWhenMatched()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct, agent: false);
+        var device = Guid.NewGuid();
+        var conn = "eski-" + Guid.NewGuid().ToString("N");
+        _factory.Services.GetRequiredService<IAgentConnectionRegistry>()
+            .Set(new AgentSession(conn, "PC", "0.0.1", DateTimeOffset.UtcNow, user, device, UpdateRequired: true));
+        var first = Seed(profile, user, "Uyumsuz");
+        var second = Seed(profile, user, "Sonraki");
+        await EnqueueAndStartAsync(client, profile, [first, second], ct);
+
+        await Eventually.WithinAsync(() => Task.FromResult(Job(first).Status == ProductionJobStatus.WaitingForAgent), Limit, ct);
+        await Task.Delay(500, ct);
+        Job(second).Status.ShouldBe(ProductionJobStatus.Queued);
+        _factory.Agent.Sent.Where(s => s.ConnectionId == conn).ShouldBeEmpty();
+        var state = await StateAsync(client, profile, ct);
+        state.GetProperty("agentConnected").GetBoolean().ShouldBeFalse();
+        state.GetProperty("agentUpdateRequired").GetBoolean().ShouldBeTrue();
+        var analyses = _factory.Provider.CallsOf(CallRole.Analysis).Count;
+
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IAgentPresenceService>()
+                .RegisterAsync("yeni-" + Guid.NewGuid().ToString("N"), new AgentOwner(user, device), new AgentRegistration("PC", "1.0.0"), ct);
+        }
+
+        await Eventually.WithinAsync(() => Task.FromResult(Job(second).Status == ProductionJobStatus.Completed), Limit, ct);
+        Job(first).Status.ShouldBe(ProductionJobStatus.Completed);
+        _factory.Provider.CallsOf(CallRole.Analysis).Count.ShouldBe(analyses + 1); // yalnızca ikinci işin analizi; ilki tekrarlanmadı
+        _factory.Agent.Sent.Where(s => s.ConnectionId == conn).ShouldBeEmpty();
+        (await StateAsync(client, profile, ct)).GetProperty("agentUpdateRequired").GetBoolean().ShouldBeFalse();
+    }
+
+    /// <summary>
     /// AC-15, AC-30: ajan render ortasında koparsa iş Ajan bekleniyor olur; kullanıcı yeni ajan eşleştirince (yeni cihaz) araçlar yeni ajana
     /// sorulur, iş render'dan devam eder (analiz/kod yeniden çalışmaz) ve tamamlanır; eski ajana bu andan sonra hiçbir komut gitmez.
     /// </summary>

@@ -17,10 +17,14 @@ public sealed class FlakyPresenceService(IAgentPresenceService inner, FlakyRegis
     public AgentStatusDto GetStatus(Guid? userId) => inner.GetStatus(userId);
 
     /// <inheritdoc />
-    public Task RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken) =>
+    public Task<AgentRegisterReply> RegisterAsync(string connectionId, AgentOwner owner, AgentRegistration registration, CancellationToken cancellationToken) =>
         state.ShouldFail(connectionId)
-            ? Task.FromException(new HubException("kayıt geçici olarak reddedildi"))
+            ? Task.FromException<AgentRegisterReply>(new HubException("kayıt geçici olarak reddedildi"))
             : inner.RegisterAsync(connectionId, owner, registration, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<bool> BeginUpdateAsync(string connectionId, AgentOwner owner, CancellationToken cancellationToken) =>
+        inner.BeginUpdateAsync(connectionId, owner, cancellationToken); // Test kurulumu (plan 0023 A-1): arayüze uyum.
 
     /// <inheritdoc />
     public Task DisconnectAsync(string connectionId, CancellationToken cancellationToken) =>

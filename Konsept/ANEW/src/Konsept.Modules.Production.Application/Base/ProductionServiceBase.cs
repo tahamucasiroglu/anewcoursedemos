@@ -472,7 +472,8 @@ public abstract class ProductionServiceBase(
             [.. StartBlock.LanguageWarnings(settings, selectable, languages).Select(ProductionErrors.BlockText)],
             runningHere,
             pipeline.Agents.ConnectedDevice(userId) is not null,
-            (await pipeline.Queue.GetAsync(userId, cancellationToken).ConfigureAwait(false))?.Halted == true);
+            (await pipeline.Queue.GetAsync(userId, cancellationToken).ConfigureAwait(false))?.Halted == true,
+            pipeline.Agents.UpdateRequired(userId));
     }
 
     private async Task<Result<ProductionStateDto>> WithProfileAsync(

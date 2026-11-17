@@ -15,6 +15,7 @@ namespace Konsept.Modules.Production.Application.Dtos;
 /// <param name="RunningHere">Bu profilde çalışan iş var.</param>
 /// <param name="AgentConnected">Kullanıcının ajanı bağlı (spec 0017 Req 15: Ajan bekleniyor işi varken "Ajan bağlı değil").</param>
 /// <param name="QueueHalted">Art arda 3 iş hata verdi, sıra durdu (spec 0017 Req 11).</param>
+/// <param name="AgentUpdateRequired">Ajan bağlı ama sürümü sunucudan farklı (spec 0023 Req 15): bekleyen işin nedeni "Ajan güncellemesi gerekli".</param>
 public sealed record ProductionStateDto(
     Guid ProfileId,
     ProductionSettingsDto Settings,
@@ -26,4 +27,5 @@ public sealed record ProductionStateDto(
     IReadOnlyList<string> LanguageWarnings,
     bool RunningHere,
     bool AgentConnected,
-    bool QueueHalted);
+    bool QueueHalted,
+    bool AgentUpdateRequired = false);

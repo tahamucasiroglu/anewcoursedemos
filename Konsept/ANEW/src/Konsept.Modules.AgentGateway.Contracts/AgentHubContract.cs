@@ -8,7 +8,10 @@ public static class AgentHubContract
     /// <summary>Hub'ın API üzerindeki yolu.</summary>
     public const string HubPath = "/hubs/agent";
 
-    /// <summary>Ajan → API: bağlanınca (ve her yeniden bağlanmada) kendini kaydeder.</summary>
+    /// <summary>
+    /// Ajan → API: bağlanınca (ve her yeniden bağlanmada) kendini kaydeder. Cevap (<c>AgentRegisterReply</c>) sunucu sürümünü ve sürüm
+    /// uyumsuzsa "güncelleme gerekli" bilgisini taşır (spec 0023 Req 4): ajan o durumda komut yürütmez, güncelleme ekranını açar.
+    /// </summary>
     public const string Register = "Register";
 
     /// <summary>API → ajan: "Ajanı test et" komutu; ajan sürümünü ve makine adını döndürür.</summary>
@@ -43,6 +46,12 @@ public static class AgentHubContract
 
     /// <summary>API → ajan: videonun klasörünü ya da videoyu sistem oynatıcısında aç (spec 0007 Req 4).</summary>
     public const string OpenFile = "OpenFile";
+
+    /// <summary>
+    /// Ajan → API: güncellemeye başlamak istiyor (spec 0023 Req 3). Kullanıcının "Üretiliyor" işi varsa <c>false</c>; değilse oturum
+    /// "güncelleniyor" olur ve güncelleme bitene kadar ajana iş gönderilmez.
+    /// </summary>
+    public const string BeginUpdate = "BeginUpdate";
 
     /// <summary>API → ajan: silinen videonun tüm sürüm dosyalarını kalıcı sil (spec 0019 Req 4).</summary>
     public const string DeleteFiles = "DeleteFiles";

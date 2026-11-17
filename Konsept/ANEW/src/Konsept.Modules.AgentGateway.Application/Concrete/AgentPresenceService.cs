@@ -1,6 +1,8 @@
 using Konsept.Modules.AgentGateway.Application.Abstract;
 using Konsept.Modules.AgentGateway.Application.Base;
+using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AgentGateway.Domain.Entities;
+using Konsept.Modules.AgentGateway.Domain.Rules;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Dtos;
 using Konsept.Modules.Monitoring.Contracts.Enums;
@@ -54,6 +56,28 @@ public sealed partial class AgentPresenceService : AgentPresenceServiceBase
         : this(registry, events, timeProvider, logger)
     {
         Components = components ?? throw new ArgumentNullException(nameof(components));
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="AgentPresenceService"/> class (sürüm kapısı ve üretim durumuyla, spec 0023).</summary>
+    /// <param name="registry">Ajan oturum kaydı.</param>
+    /// <param name="events">Genel olay kaydı yazıcısı.</param>
+    /// <param name="timeProvider">Saat kaynağı.</param>
+    /// <param name="logger">Teknik log.</param>
+    /// <param name="components">Kurulu bileşen deposu.</param>
+    /// <param name="gate">Sürüm kapısı.</param>
+    /// <param name="activity">Kullanıcının "Üretiliyor" işi var mı.</param>
+    public AgentPresenceService(
+        IAgentConnectionRegistry registry,
+        ISystemEventWriter events,
+        TimeProvider timeProvider,
+        ILogger<AgentPresenceService> logger,
+        IInstalledComponentStore components,
+        AgentVersionGate gate,
+        IProductionActivityReader activity)
+        : this(registry, events, timeProvider, logger, components)
+    {
+        Gate = gate ?? throw new ArgumentNullException(nameof(gate));
+        Activity = activity ?? throw new ArgumentNullException(nameof(activity));
     }
 
     /// <inheritdoc />
