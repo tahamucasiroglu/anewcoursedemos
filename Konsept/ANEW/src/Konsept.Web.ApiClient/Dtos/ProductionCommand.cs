@@ -41,4 +41,19 @@ public enum ProductionCommand
 
     /// <summary>Silinenler — Videolar: Kalıcı sil (kimlik: video; spec 0019).</summary>
     PurgeVideo,
+
+    /// <summary>Yeni sürüm önizlemesi (kimlik: video; spec 0020).</summary>
+    VersionPreview,
+
+    /// <summary>Yeni sürümü başlat (kimlik: video; spec 0020).</summary>
+    StartVersion,
+
+    /// <summary>Yeniden üretimi başlat (kimlik: video; spec 0020).</summary>
+    StartRegeneration,
+
+    /// <summary>Hata veren sürümü tekrar dene (kimlik: video; spec 0020).</summary>
+    RetryVersion,
+
+    /// <summary>Hata veren sürümü kaldır (kimlik: video; spec 0020).</summary>
+    RemoveFailedVersion,
 }

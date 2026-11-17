@@ -213,6 +213,25 @@
                 <button type="button" class="button" id="concept-regenerate">@UiText.EditRegenerate</button>
                 <p class="concept-editor__status" id="concept-regen-status" role="status" aria-live="polite"></p>
             </div>
+            @* Yeniden üret bağlamı (spec 0020 Req 4–5, 15): Üretilen Videolar'dan gelindiğinde "Video oldu" konsept düzenlenir; düzenleme/revizyon
+               onaylanınca çalışacak aşamalar + online uyarısı, "Konsept değişmedi" / "Yine de baştan üret", onay penceresi. concept-edit.js. *@
+            <section class="regen-panel" id="regen-panel" aria-labelledby="regen-heading" hidden
+                     data-text-unchanged="@UiText.RegenUnchanged" data-text-save-first="@UiText.RegenSaveFirst" data-text-all-stages="@UiText.RegenAllStages"
+                     data-text-online="@UiText.VersionOnline" data-text-started="@UiText.RegenStarted" data-text-load-failed="@UiText.RegenLoadFailed"
+                     data-text-confirm-stages="@UiText.VersionConfirmStages" data-text-previewing="@UiText.VersionPreviewing"
+                     data-text-stage-analysis="@UiText.ProductionStageAnalysis" data-text-stage-code="@UiText.ProductionStageCode"
+                     data-text-stage-images="@UiText.ProductionStageImages" data-text-stage-voice="@UiText.ProductionStageVoice"
+                     data-text-stage-render="@UiText.ProductionStageRender" data-text-stage-merge="@UiText.ProductionStageMerge">
+                <h3 class="regen-panel__heading" id="regen-heading">@UiText.RegenHeading</h3>
+                <p class="concept-area__hint">@UiText.RegenHint</p>
+                <p class="version-panel__preview" id="regen-preview" role="status" aria-live="polite"></p>
+                <label class="version-panel__check"><input type="checkbox" id="regen-force" /> @UiText.RegenForce</label>
+                <div class="concept-editor__actions">
+                    <button type="button" class="button button--primary" id="regen-start">@UiText.RegenStart</button>
+                    <button type="button" class="button" id="regen-back">@UiText.RegenBack</button>
+                </div>
+                <p class="concept-editor__status" id="regen-status" role="status" aria-live="polite"></p>
+            </section>
         </div>
     </section>
 </div>
@@ -272,6 +291,18 @@
                 <button type="button" class="button" id="revision-confirm-cancel">@UiText.ProfileCancel</button>
                 <button type="button" class="button button--danger" id="revision-confirm-ok">@UiText.RevisionConfirmOk</button>
             </div>
+        </div>
+    </div>
+</div>
+@* Yeniden üretim onayı (spec 0020 Req 3–4): konsept metni her durumda online LLM'le koda dönüşür; tahmini tutar yok. *@
+<div class="dialog-backdrop dialog-backdrop--confirm" id="regen-confirm-dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="regen-confirm-title" aria-describedby="regen-confirm-stages regen-confirm-warning">
+        <h2 class="profile-modal__title" id="regen-confirm-title">@UiText.VersionConfirmTitle</h2>
+        <p class="dialog__text" id="regen-confirm-stages"></p>
+        <p class="dialog__text" id="regen-confirm-warning">@UiText.VersionConfirmWarning</p>
+        <div class="dialog__actions">
+            <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
+            <button type="button" class="button button--primary" data-confirm-ok>@UiText.VersionConfirmOk</button>
         </div>
     </div>
 </div>

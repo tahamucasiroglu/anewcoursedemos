@@ -4,7 +4,8 @@
 }
 @* Üretilen Videolar (spec 0007): solda seçili profilin videoları (50'şerli, "Daha fazla göster"), ortada izleme yeri (ajanın yerel akışı,
    tarayıcının yerel kontrolleri; altında Klasörde aç / Sistem oynatıcısında aç), sağda seslendirme ve sahneler, konsept metni, ayrıntılar ve
-   ücret, video sürümleri. Eylem satırında "Sil" (spec 0019) videoyu onaydan sonra tüm sürümleriyle Silinenler'e gönderir. produced.js /uretilenler ve /uretim/video/{id}/izle uçlarını $.ajax ile kullanır (K-6); LLM metni yalnızca
+   ücret, video sürümleri, süren sürüm (durum + Tekrar dene / Sürümü kaldır) ve "Yeni sürüm" alanı (spec 0020: yalnızca etkilenen aşamalar; online
+   çağrı varsa onay penceresi; video-version.js). Eylem satırında "Yeniden üret" (konsepti Konseptler'de düzenlemeye götürür) ve "Sil" (spec 0019) videoyu onaydan sonra tüm sürümleriyle Silinenler'e gönderir. produced.js /uretilenler ve /uretim/video/{id}/izle uçlarını $.ajax ile kullanır (K-6); LLM metni yalnızca
    textContent ile yazılır. Metinler resx'ten data-text-* ile gelir. *@
 <h1 class="page__title">@UiText.NavProduced</h1>
 <div class="produced" id="produced" data-requires-profile
@@ -24,7 +25,21 @@
      data-text-started="@UiText.ProducedStarted" data-text-ended="@UiText.ProducedEnded" data-text-ai-voice="@UiText.ProducedAiVoice"
      data-text-version="@UiText.ProducedVersion" data-text-version-label="@UiText.ProducedVersionLabel" data-text-status-completed="@UiText.JobCompleted"
      data-text-delete-label="@UiText.ProducedDeleteLabel" data-text-deleted="@UiText.ProducedDeleted" data-text-delete-failed="@UiText.ProducedDeleteFailed"
-     data-text-second="@UiText.ProducedSecond" data-text-minute="@UiText.ProducedMinute" data-text-hour="@UiText.ProducedHour">
+     data-text-second="@UiText.ProducedSecond" data-text-minute="@UiText.ProducedMinute" data-text-hour="@UiText.ProducedHour"
+     data-text-status-queued="@UiText.JobQueued" data-text-status-producing="@UiText.JobProducing" data-text-status-stopped="@UiText.JobStopped"
+     data-text-status-waiting_for_agent="@UiText.JobWaitingForAgent" data-text-status-failed="@UiText.JobFailed"
+     data-text-stage-analysis="@UiText.ProductionStageAnalysis" data-text-stage-code="@UiText.ProductionStageCode"
+     data-text-stage-images="@UiText.ProductionStageImages" data-text-stage-voice="@UiText.ProductionStageVoice"
+     data-text-stage-render="@UiText.ProductionStageRender" data-text-stage-merge="@UiText.ProductionStageMerge"
+     data-text-badge-label="@UiText.ProducedBadgeLabel" data-text-delete-blocked="@UiText.ProducedDeleteBlocked"
+     data-text-regenerate-label="@UiText.ProducedRegenerateLabel" data-text-regenerating="@UiText.ProducedRegenerating"
+     data-text-version-busy="@UiText.VersionBusy" data-text-version-no-change="@UiText.VersionNoChange" data-text-version-previewing="@UiText.VersionPreviewing"
+     data-text-version-stages="@UiText.VersionStages" data-text-version-online="@UiText.VersionOnline" data-text-version-offline="@UiText.VersionOffline"
+     data-text-version-starting="@UiText.VersionStarting" data-text-version-started="@UiText.VersionStarted" data-text-version-load-failed="@UiText.VersionLoadFailed"
+     data-text-version-local-tag="@UiText.VersionLocalTag" data-text-version-online-tag="@UiText.VersionOnlineTag" data-text-version-silent="@UiText.VersionSilent"
+     data-text-version-image-off="@UiText.VersionImageOff" data-text-version-confirm-stages="@UiText.VersionConfirmStages"
+     data-text-active-status="@UiText.ActiveStatus" data-text-active-stage="@UiText.ActiveStage" data-text-active-retried="@UiText.ActiveRetried"
+     data-text-active-removed="@UiText.ActiveRemoved" data-text-active-failed="@UiText.ActiveFailed">
     <section class="produced__list" aria-labelledby="produced-list-heading">
         <h2 class="produced__heading" id="produced-list-heading">@UiText.ProducedListLabel</h2>
         <p class="concept-list__status" id="produced-status" role="status" aria-live="polite"></p>
@@ -40,6 +55,7 @@
         <div class="produced__actions" id="produced-actions" hidden>
             <button type="button" class="button" id="produced-open-folder" data-action="folder" data-label="@UiText.ProducedOpenFolder">@UiText.ProducedOpenFolder</button>
             <button type="button" class="button" id="produced-open-player" data-action="player" data-label="@UiText.ProducedOpenPlayer">@UiText.ProducedOpenPlayer</button>
+            <button type="button" class="button" id="produced-regenerate">@UiText.ProducedRegenerate</button>
             <button type="button" class="button button--danger" id="produced-delete">@UiText.ProducedDelete</button>
             <p class="produced__action-status" id="produced-action-status" role="status" aria-live="polite"></p>
         </div>
@@ -48,6 +64,16 @@
         <p class="concept-area__hint" id="produced-panel-hint">@UiText.ProducedPanelHint</p>
         <div id="produced-panel" hidden>
             <h2 class="produced__heading" id="produced-title"></h2>
+            <div class="produced-active" id="produced-active" hidden>
+                <h3 class="produced-active__heading">@UiText.ActiveHeading</h3>
+                <p class="badge produced-badge" id="produced-active-status"></p>
+                <p class="produced-active__error" id="produced-active-error" hidden></p>
+                <div class="produced-active__actions">
+                    <button type="button" class="button" id="produced-active-retry" hidden>@UiText.ActiveRetry</button>
+                    <button type="button" class="button button--danger" id="produced-active-remove" hidden>@UiText.ActiveRemove</button>
+                </div>
+                <p class="produced__action-status" id="produced-active-message" role="status" aria-live="polite"></p>
+            </div>
             <h3 class="produced__subheading">@UiText.ProducedScenesHeading</h3>
             <ol class="produced-scenes" id="produced-scenes"></ol>
             <h3 class="produced__subheading">@UiText.ProducedConceptHeading</h3>
@@ -56,8 +82,50 @@
             <dl class="produced-details" id="produced-details"></dl>
             <h3 class="produced__subheading">@UiText.ProducedVersionsHeading</h3>
             <ul class="produced-versions" id="produced-versions"></ul>
+            <section class="version-panel" id="version-panel" aria-labelledby="version-heading">
+                <h3 class="version-panel__heading" id="version-heading">@UiText.VersionHeading</h3>
+                <p class="concept-area__hint">@UiText.VersionHint</p>
+                <div class="field">
+                    <label class="field__label" for="version-engine">@UiText.VersionEngine</label>
+                    <select class="field__input" id="version-engine"></select>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="version-image">@UiText.VersionImage</label>
+                    <select class="field__input" id="version-image"></select>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="version-audio">@UiText.VersionAudio</label>
+                    <select class="field__input" id="version-audio"></select>
+                </div>
+                <label class="version-panel__check"><input type="checkbox" id="version-subtitles" /> @UiText.VersionSubtitles</label>
+                <label class="version-panel__check"><input type="checkbox" id="version-progress" /> @UiText.VersionProgressBar</label>
+                <p class="version-panel__preview" id="version-preview" role="status" aria-live="polite"></p>
+                <button type="button" class="button button--primary" id="version-start">@UiText.VersionStart</button>
+                <p class="produced__action-status" id="version-status" role="status" aria-live="polite"></p>
+            </section>
         </div>
     </section>
+</div>
+@* Online çağrı onayı (spec 0020 Req 3, H-3): çalışacak aşamalar ve uyarı; tahmini tutar yok. Odak içeride, Esc vazgeçer (confirm-dialog.js). *@
+<div class="dialog-backdrop dialog-backdrop--confirm" id="version-confirm-dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="version-confirm-title" aria-describedby="version-confirm-stages version-confirm-warning">
+        <h2 class="profile-modal__title" id="version-confirm-title">@UiText.VersionConfirmTitle</h2>
+        <p class="dialog__text" id="version-confirm-stages"></p>
+        <p class="dialog__text" id="version-confirm-warning">@UiText.VersionConfirmWarning</p>
+        <div class="dialog__actions">
+            <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
+            <button type="button" class="button button--primary" data-confirm-ok>@UiText.VersionConfirmOk</button>
+        </div>
+    </div>
+</div>
+<div class="dialog-backdrop dialog-backdrop--confirm" id="version-remove-dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="version-remove-text">
+        <p class="dialog__text" id="version-remove-text">@UiText.ActiveRemoveConfirm</p>
+        <div class="dialog__actions">
+            <button type="button" class="button" data-confirm-cancel>@UiText.ProfileCancel</button>
+            <button type="button" class="button button--danger" data-confirm-ok>@UiText.ActiveRemove</button>
+        </div>
+    </div>
 </div>
 <div class="dialog-backdrop dialog-backdrop--confirm" id="produced-delete-dialog" hidden>
     <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="produced-delete-text">

@@ -3,10 +3,16 @@
 // konsept metni, ayrıntılar ve ücret, sürümler. Ajan durumu status.js'in 3 sn yoklamasından ('agent:status') gelir: ajan yokken mesaj ve pasif
 // eylemler, ajan gelince oynatma kendiliğinden yeniden denenir. Akış adresi yüklenmeden hata verirse bu cihaz ajanın bilgisayarı değildir.
 // "Sil" (spec 0019) onaydan sonra videoyu tüm sürümleriyle Silinenler'e gönderir; sunucu işlemidir (ajan yokken de çalışır), pasif olmaz.
+// Spec 0020: listede süren sürümün durum rozeti (metinli), sağda süren sürüm + Yeni sürüm (video-version.js), eylem satırında Yeniden üret
+// (bağlam açılır, Konseptler'de düzenleme). Süren sürüm varken liste ve seçili video 3 sn'de bir yenilenir (≤5 sn); Sil o sırada pasiftir.
 // Tüm istekler api.js ($.ajax, K-6); LLM metni güvenilmeyen veridir, yalnızca textContent. Metinler resx'ten data-text-*.
 import { get, post } from './api.js';
 import { confirmDialog } from './confirm-dialog.js';
 import { formatDuration, formatTime } from './journal.js';
+import { ACTIVE_STATUSES, initVersionControls, setPassive, statusText } from './video-version.js';
+
+/** Süren sürüm varken yenileme aralığı (spec 0020 Req 9: en geç 5 sn). */
+export const POLL_MS = 3000;
 
 export const VOLUME_KEY = 'anew.produced.volume';
 const dateFormat = new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -42,7 +48,8 @@ export function formatDateTime(iso) {
 /**
  * Sayfayı başlatır (sayfada #produced yoksa hiçbir şey yapmaz).
  * @param {Document} doc Belge.
- * @param {{storage?: Storage|null}} [options] Ses düzeyinin saklandığı yer (testte sahte).
+ * @param {{storage?: Storage|null, setTimer?: Function, clearTimer?: Function, navigate?: Function}} [options] Ses düzeyinin saklandığı yer,
+ *   zamanlayıcı ve sayfa değiştirme (testte sahte).
  * @returns {object|undefined} Denetleyici (testler için).
  */
 export function initProduced(doc, options = {}) {
@@ -56,7 +63,13 @@ export function initProduced(doc, options = {}) {
   const el = (id) => doc.getElementById(id);
   const player = el('produced-player');
   const panelHint = el('produced-panel-hint').textContent;
-  const state = { profileId: null, count: 0, video: null, version: null, viewer: 'idle', agent: { connected: null, machineName: null }, token: 0 };
+  const state = {
+    profileId: null, count: 0, video: null, version: null, viewer: 'idle', agent: { connected: null, machineName: null }, token: 0, badges: {}, timer: null,
+  };
+  const setTimer = options.setTimer || ((fn, ms) => globalThis.setTimeout(fn, ms));
+  const clearTimer = options.clearTimer || ((id) => globalThis.clearTimeout(id));
+  const navigate = options.navigate || ((url) => globalThis.location.assign(url));
+  const versions = initVersionControls(doc, { text, onChanged: () => refresh() });
 
   function node(tag, className, content) {
     const element = doc.createElement(tag);
@@ -154,6 +167,9 @@ export function initProduced(doc, options = {}) {
   async function deleteVideo() {
     const video = state.video;
     const dialog = el('produced-delete-dialog');
+    if (deleteButton.getAttribute('aria-disabled') === 'true') {
+      return; // Üretimi süren sürüm var (spec 0020 Req 12).
+    }
     if (!video || !dialog || !(await confirmDialog(dialog, deleteButton))) {
       return;
     }
@@ -183,6 +199,115 @@ export function initProduced(doc, options = {}) {
 
   if (deleteButton) {
     deleteButton.addEventListener('click', () => deleteVideo());
+  }
+
+  // --- Yeniden üret (spec 0020 Req 4): bağlam açılır, konseptin düzenlemesine gidilir; iptal edilirse hiçbir iş oluşmaz. -------------------
+  const regenerateButton = el('produced-regenerate');
+
+  async function regenerate() {
+    const video = state.video;
+    const version = state.version;
+    if (!video || !version || regenerateButton.getAttribute('aria-disabled') === 'true') {
+      return;
+    }
+    el('produced-action-status').textContent = text.textRegenerating;
+    try {
+      const context = await post(`/uretilenler/video/${encodeURIComponent(video.id)}/yeniden-uret/ac?taban=${encodeURIComponent(version.id)}`, {});
+      navigate(`/konseptler?konsept=${encodeURIComponent(context.conceptId)}&yenidenUret=${encodeURIComponent(context.token)}`
+        + `&taban=${encodeURIComponent(context.baseVersionId)}`);
+    } catch (error) {
+      el('produced-action-status').textContent = messageOf(error, text.textActionFailed);
+    }
+  }
+
+  if (regenerateButton) {
+    regenerateButton.addEventListener('click', () => regenerate());
+  }
+
+  function updateVideoActions() {
+    const video = state.video;
+    if (!video) {
+      return;
+    }
+    if (deleteButton) {
+      setPassive(deleteButton, video.deleteBlocked ? text.textDeleteBlocked : null);
+    }
+    if (regenerateButton) {
+      setPassive(regenerateButton, video.active ? text.textVersionBusy : null);
+      regenerateButton.setAttribute('aria-label', fill(text.textRegenerateLabel, video.title));
+    }
+  }
+
+  // --- Yoklama (spec 0020 Req 9): süren sürüm varken liste rozetleri ve seçili video 3 sn'de bir yenilenir. ------------------------------
+  function busy() {
+    return Boolean((state.video && state.video.active && ACTIVE_STATUSES.includes(state.video.active.status))
+      || Object.values(state.badges).some((s) => ACTIVE_STATUSES.includes(s)));
+  }
+
+  function schedule() {
+    if (state.timer) {
+      clearTimer(state.timer);
+      state.timer = null;
+    }
+    if (busy() && root.isConnected) {
+      state.timer = setTimer(() => refresh(), POLL_MS);
+    }
+  }
+
+  function badge(video) {
+    const span = node('span', `badge produced-badge produced-badge--${video.status}`, statusText(video.status, video.stage, text));
+    span.dataset.badge = video.id;
+    return span;
+  }
+
+  async function refreshBadges() {
+    const profileId = state.profileId;
+    if (!profileId) {
+      return;
+    }
+    const page = await get(`/uretilenler/${encodeURIComponent(profileId)}/liste?atla=0`);
+    if (profileId !== state.profileId) {
+      return;
+    }
+    for (const video of page.items || []) {
+      const button = [...el('produced-list').querySelectorAll('[data-video]')].find((b) => b.dataset.video === video.id);
+      if (!button) {
+        continue;
+      }
+      const old = button.querySelector('[data-badge]');
+      if (old) {
+        old.remove();
+      }
+      if (video.status) {
+        button.append(badge(video));
+      }
+      state.badges[video.id] = video.status || null;
+      button.querySelector('.produced-items__meta').textContent = fill(text.textItemMeta, formatDuration(video.durationSeconds, units), formatDateTime(video.producedAt), video.versionCount);
+    }
+  }
+
+  async function refresh() {
+    const video = state.video;
+    try {
+      if (video) {
+        const fresh = await get(`/uretilenler/video/${encodeURIComponent(video.id)}`);
+        if (state.video === video) {
+          const grown = fresh.versions.length !== video.versions.length;
+          state.video = fresh;
+          state.version = fresh.versions.find((v) => state.version && v.id === state.version.id) || fresh.versions[fresh.versions.length - 1];
+          if (grown) {
+            renderPanel(); // Yeni sürüm eklendi: sürüm listesi yenilenir (seçili sürüm ve oynatıcı korunur).
+          } else {
+            versions.renderActive(fresh);
+            updateVideoActions();
+          }
+        }
+      }
+      await refreshBadges();
+    } catch {
+      // Yoklama hatası sessiz: bir sonraki turda yeniden denenir.
+    }
+    schedule();
   }
 
   // --- İzleme yeri ----------------------------------------------------------------------------------------------------------------
@@ -365,6 +490,8 @@ export function initProduced(doc, options = {}) {
       item.append(button);
       return item;
     }));
+    versions.render(video, version); // Süren sürüm + Yeni sürüm (spec 0020).
+    updateVideoActions();
   }
 
   el('produced-versions').addEventListener('click', (event) => {
@@ -390,6 +517,7 @@ export function initProduced(doc, options = {}) {
     el('produced-panel-hint').hidden = false;
     el('produced-panel-hint').textContent = panelHint;
     el('produced-action-status').textContent = '';
+    versions.reset();
     setViewer('idle');
   }
 
@@ -415,6 +543,7 @@ export function initProduced(doc, options = {}) {
       state.video = video;
       state.version = video.versions[video.versions.length - 1]; // Varsayılan: en son tamamlanan sürüm.
       renderPanel();
+      schedule();
       await loadStream();
     } catch (error) {
       if (token === state.token) {
@@ -433,6 +562,10 @@ export function initProduced(doc, options = {}) {
     button.append(
       node('span', 'produced-items__title', video.title),
       node('span', 'produced-items__meta', fill(text.textItemMeta, formatDuration(video.durationSeconds, units), formatDateTime(video.producedAt), video.versionCount)));
+    if (video.status) {
+      button.append(badge(video)); // Durumun metni de vardır (yalnızca renk değil).
+    }
+    state.badges[video.id] = video.status || null;
     li.append(button);
     return li;
   }
@@ -467,6 +600,7 @@ export function initProduced(doc, options = {}) {
       status.textContent = '';
       el('produced-empty').hidden = state.count > 0;
       el('produced-more').hidden = !page.hasMore;
+      schedule();
     } catch (error) {
       if (profileId === state.profileId) {
         status.textContent = messageOf(error, text.textLoadFailed);
@@ -491,6 +625,7 @@ export function initProduced(doc, options = {}) {
   function selectProfile(profileId) {
     state.profileId = profileId;
     state.count = 0;
+    state.badges = {};
     el('produced-list').replaceChildren();
     clearSelection();
     loadList(false);
@@ -505,5 +640,5 @@ export function initProduced(doc, options = {}) {
   if (bar && bar.dataset.selectedId) {
     selectProfile(bar.dataset.selectedId);
   }
-  return { state, loadList, loadStream };
+  return { state, loadList, loadStream, refresh };
 }

@@ -238,6 +238,19 @@ public interface IKonseptApiClient
     /// <returns>JSON ya da hata (alan hataları dahil).</returns>
     Task<Result<JsonElement>> SendConceptEditAsync(Guid conceptId, ConceptEditCommand command, JsonElement? body, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Yeniden üret bağlamında konsept düzenleme komutu (spec 0020 Req 15): <see cref="SendConceptEditAsync"/> ile aynı, belirteç sorguda
+    /// (<c>?regen=</c>); "Video oldu" konsept yalnızca geçerli belirteçle düzenlenir (Api karar verir).
+    /// </summary>
+    /// <param name="conceptId">Konsept.</param>
+    /// <param name="command">Komut.</param>
+    /// <param name="body">Tarayıcının gövdesi.</param>
+    /// <param name="regen">Bağlam belirteci.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata.</returns>
+    Task<Result<JsonElement>> SendConceptEditInContextAsync(
+        Guid conceptId, ConceptEditCommand command, JsonElement? body, string regen, CancellationToken cancellationToken);
+
     /// <summary>Konseptin revizyon durumu (spec 0015).</summary>
     /// <param name="conceptId">Konsept.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
@@ -284,6 +297,16 @@ public interface IKonseptApiClient
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Liste (Api gövdesi aynen).</returns>
     Task<Result<JsonElement>> ListDeletedVideosAsync(Guid profileId, int page, CancellationToken cancellationToken);
+
+    /// <summary>Yeni sürüm / yeniden üret sorgusu (spec 0020): seçenekler, bağlamı açma, yeniden üretim önizlemesi.</summary>
+    /// <param name="videoId">Video.</param>
+    /// <param name="query">Sorgu.</param>
+    /// <param name="baseVersionId">Taban sürüm.</param>
+    /// <param name="token">Bağlam belirteci (yalnızca önizleme).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Api gövdesi aynen.</returns>
+    Task<Result<JsonElement>> SendVideoVersionQueryAsync(
+        Guid videoId, VideoVersionQuery query, Guid? baseVersionId, string? token, CancellationToken cancellationToken);
 
     /// <summary>Günlük geçmişinde bir günün bir sayfasını getirir (spec 0021).</summary>
     /// <param name="date">Gün (<c>yyyy-MM-dd</c>); boşsa bugün.</param>

@@ -2120,3 +2120,61 @@ body {
     border: 0;
   }
 }
+
+/* Spec 0020: süren sürümün rozeti (metinli; renk yalnızca ek ipucu), süren sürüm kutusu, Yeni sürüm alanı ve Yeniden üret paneli. */
+.produced-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  color: var(--color-accent);
+}
+
+.produced-badge--failed {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.produced-badge--stopped,
+.produced-badge--waiting_for_agent {
+  color: var(--color-warning);
+}
+
+.produced-active,
+.version-panel,
+.regen-panel {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-surface-alt);
+}
+
+.produced-active__error {
+  color: var(--color-error);
+}
+
+.produced-active__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.produced-versions__item--pending {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.version-panel__check {
+  display: block;
+  margin: 0.25rem 0;
+}
+
+.version-panel__preview {
+  margin: 0.5rem 0;
+}
+
+.produced-active__heading,
+.version-panel__heading,
+.regen-panel__heading {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}

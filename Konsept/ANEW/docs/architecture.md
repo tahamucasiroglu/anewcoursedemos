@@ -145,6 +145,17 @@ admin klip sayısı düşmez (B-130). Negatif sinyal: Concepts.Contracts `IDisli
 `<disliked_topics>` (yalnızca varsa). Web: `deleted-videos.js` (`/silinenler/videolar/...`; ajan yokken Kalıcı sil pasif), `produced.js` Sil
 (`/uretilenler/video/{id}/sil`).
 
+**Yeni sürüm ve yeniden üret (0020):** Sürüm işi = 0006 sırasına eklenen sıradan `production.jobs` satırı; `version` jsonb (tür, taban sürüm ve
+ayarları, **onaylanan aşamalar**, online onayı) ve önceden sabitlenmiş ayarlar (profil ayarı kullanılmaz). Konsept "Video oldu" kalır; tekil iş
+`ux_jobs_one_active_per_concept` (`TryAddAsync`). Aşama tekrar kullanımı `stage_outputs.signatures` (aşama → girdilerinin SHA-256'sı; analiz =
+metin + kod modeli + dil + biçim, kod = + motor + görsel var/yok, görsel/ses = + model, render = kod + görsel). Etkilenenler `VersionStages.Affected`
+(Req 1 tablosu); çalışacak küme = etkilenenler ∪ imzası tutmayanlar ∪ bağımlıları; hat onaylanmamış online aşamayı çalıştırmaz, online onayı yoksa
+render düzeltme çağrısı da yapmaz. 0.5.0 çıktılarında imza, tam özet tabana uyuyorsa türetilir. `api/produced/{id}/version-options|version-preview|
+versions|regenerate/open|regenerate|retry|remove-failed`. Yeniden üret bağlamı: Concepts.Contracts `IConceptRegenerationContext` (bellek, belirteç
+2 sa); Concepts düzenleme uçları `?regen=` ile "Video oldu" konsepti düzenler. Render yolu değişmez (AC-16 `RenderPathTests`). Web:
+`video-version.js` (Yeni sürüm, onay penceresi, süren sürüm), `produced.js` (rozet, 3 sn yoklama, Yeniden üret, Sil engeli), `concept-edit.js`
+(bağlam, `/konseptler/{id}/baglam/...`). Video dosya adı UUIDv7'nin rastgele son 12 hanesiyle (aynı dakikadaki iki sürüm çakışmaz).
+
 **Ajanda kısıtlı render (0018, [ADR-0004](decisions/0004-render-sandbox-fallback.md)):** Video kodu önce ortak yasaklı yapı kapısından
 (`AgentGateway.Contracts.Rules.RenderCodeGate`: URL/ağ API'leri, dinamik kod, kaçış dizileri, dolaylı erişim, yalnız `image.png`/`gsap.min.js`)
 Pi'de (kod yazımı/düzeltme sonrası) ve ajanda (render öncesi) geçer; ret tek düzeltmeye gider. Ajan `SandboxedSceneRenderer` sahne başına:

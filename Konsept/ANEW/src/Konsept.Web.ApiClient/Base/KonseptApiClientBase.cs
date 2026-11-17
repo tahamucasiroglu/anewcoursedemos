@@ -218,7 +218,35 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
         SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Get, $"api/concepts/{conceptId:D}"), cancellationToken);
 
     /// <inheritdoc />
-    public Task<Result<JsonElement>> SendConceptEditAsync(Guid conceptId, ConceptEditCommand command, JsonElement? body, CancellationToken cancellationToken)
+    public Task<Result<JsonElement>> SendConceptEditAsync(Guid conceptId, ConceptEditCommand command, JsonElement? body, CancellationToken cancellationToken) =>
+        SendConceptEditToAsync(conceptId, command, body, null, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> SendConceptEditInContextAsync(
+        Guid conceptId, ConceptEditCommand command, JsonElement? body, string regen, CancellationToken cancellationToken) =>
+        SendConceptEditToAsync(conceptId, command, body, regen, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> SendVideoVersionQueryAsync(
+        Guid videoId, VideoVersionQuery query, Guid? baseVersionId, string? token, CancellationToken cancellationToken)
+    {
+        var baseQuery = baseVersionId is { } id && id != Guid.Empty ? $"baseVersionId={id:D}" : string.Empty;
+        return query switch
+        {
+            VideoVersionQuery.Options => SendAsync<JsonElement>(
+                new HttpRequestMessage(HttpMethod.Get, $"api/produced/{videoId:D}/version-options?{baseQuery}"), cancellationToken),
+            VideoVersionQuery.OpenRegeneration => SendAsync<JsonElement>(
+                new HttpRequestMessage(HttpMethod.Post, $"api/produced/{videoId:D}/regenerate/open?{baseQuery}") { Content = JsonContent.Create(new { }, options: Json) },
+                cancellationToken),
+            _ => SendAsync<JsonElement>(
+                new HttpRequestMessage(
+                    HttpMethod.Get, $"api/produced/{videoId:D}/regenerate?token={Uri.EscapeDataString(token ?? string.Empty)}&{baseQuery}"),
+                cancellationToken),
+        };
+    }
+
+    private Task<Result<JsonElement>> SendConceptEditToAsync(
+        Guid conceptId, ConceptEditCommand command, JsonElement? body, string? regen, CancellationToken cancellationToken)
     {
         var path = command switch
         {
@@ -229,6 +257,11 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ConceptEditCommand.Purge => $"api/concepts/deleted/{conceptId:D}/purge",
             _ => $"api/concepts/{conceptId:D}/revision/discard",
         };
+        if (!string.IsNullOrEmpty(regen))
+        {
+            path += "?regen=" + Uri.EscapeDataString(regen); // Yeniden üret bağlamı (spec 0020).
+        }
+
         HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
         return SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Post, path) { Content = content }, cancellationToken);
     }
@@ -287,6 +320,11 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ProductionCommand.OpenFile => (HttpMethod.Post, $"api/produced/versions/{target:D}/open"),
             ProductionCommand.DeleteVideo => (HttpMethod.Post, $"api/produced/{target:D}/delete"),
             ProductionCommand.PurgeVideo => (HttpMethod.Post, $"api/produced/deleted/{target:D}/purge"),
+            ProductionCommand.VersionPreview => (HttpMethod.Post, $"api/produced/{target:D}/version-preview"),
+            ProductionCommand.StartVersion => (HttpMethod.Post, $"api/produced/{target:D}/versions"),
+            ProductionCommand.StartRegeneration => (HttpMethod.Post, $"api/produced/{target:D}/regenerate"),
+            ProductionCommand.RetryVersion => (HttpMethod.Post, $"api/produced/{target:D}/retry"),
+            ProductionCommand.RemoveFailedVersion => (HttpMethod.Post, $"api/produced/{target:D}/remove-failed"),
             _ => (HttpMethod.Post, $"api/production/jobs/{target:D}/resume"),
         };
         if (method == HttpMethod.Get)

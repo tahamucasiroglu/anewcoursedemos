@@ -640,4 +640,53 @@
   <data name="AdminReportClose" xml:space="preserve"><value>Kapat</value></data>
   <data name="AdminReportSaved" xml:space="preserve"><value>Kaydedildi.</value></data>
   <data name="AdminReportSaveFailed" xml:space="preserve"><value>Durum kaydedilemedi.</value></data>
+  <data name="ProducedRegenerate" xml:space="preserve"><value>Yeniden üret</value></data>
+  <data name="ProducedRegenerateLabel" xml:space="preserve"><value>{0} için yeniden üret: önce konsepti düzenle</value></data>
+  <data name="ProducedRegenerating" xml:space="preserve"><value>Konsept düzenlemesi açılıyor…</value></data>
+  <data name="ProducedDeleteBlocked" xml:space="preserve"><value>Önce üretimi durdurun.</value></data>
+  <data name="ProducedBadgeLabel" xml:space="preserve"><value>Süren sürüm: {0}</value></data>
+  <data name="VersionHeading" xml:space="preserve"><value>Yeni sürüm</value></data>
+  <data name="VersionHint" xml:space="preserve"><value>Seçili sürümün ayarlarından başlar; yalnızca değişen ayarın etkilediği aşamalar yeniden üretilir, eski sürümler korunur.</value></data>
+  <data name="VersionEngine" xml:space="preserve"><value>Video motoru</value></data>
+  <data name="VersionImage" xml:space="preserve"><value>Görsel modeli</value></data>
+  <data name="VersionImageOff" xml:space="preserve"><value>Kapalı — koddan çiz</value></data>
+  <data name="VersionAudio" xml:space="preserve"><value>Ses motoru</value></data>
+  <data name="VersionSilent" xml:space="preserve"><value>Kapalı — sessiz video</value></data>
+  <data name="VersionSubtitles" xml:space="preserve"><value>Altyazı</value></data>
+  <data name="VersionProgressBar" xml:space="preserve"><value>İlerleme çubuğu</value></data>
+  <data name="VersionLocalTag" xml:space="preserve"><value>{0} (yerel)</value></data>
+  <data name="VersionOnlineTag" xml:space="preserve"><value>{0} (online)</value></data>
+  <data name="VersionStages" xml:space="preserve"><value>Yeniden üretilecek aşamalar: {0}</value></data>
+  <data name="VersionOnline" xml:space="preserve"><value>Online model çağrısı yapılacak.</value></data>
+  <data name="VersionOffline" xml:space="preserve"><value>Online model çağrısı yapılmayacak.</value></data>
+  <data name="VersionNoChange" xml:space="preserve"><value>Hiçbir ayar değişmedi.</value></data>
+  <data name="VersionPreviewing" xml:space="preserve"><value>Aşamalar hesaplanıyor…</value></data>
+  <data name="VersionStart" xml:space="preserve"><value>Yeni sürümü başlat</value></data>
+  <data name="VersionStarting" xml:space="preserve"><value>Başlatılıyor…</value></data>
+  <data name="VersionStarted" xml:space="preserve"><value>Yeni sürüm sıraya eklendi.</value></data>
+  <data name="VersionBusy" xml:space="preserve"><value>Bu video için zaten üretimde bir sürüm var.</value></data>
+  <data name="VersionLoadFailed" xml:space="preserve"><value>Yeni sürüm seçenekleri yüklenemedi.</value></data>
+  <data name="VersionConfirmTitle" xml:space="preserve"><value>Online model çağrısı yapılacak</value></data>
+  <data name="VersionConfirmStages" xml:space="preserve"><value>Çalışacak aşamalar: {0}.</value></data>
+  <data name="VersionConfirmWarning" xml:space="preserve"><value>Bu aşamalar online model çağrısı yapar; ücret API key'inizin hesabına yazılır. Tahmini tutar gösterilmez.</value></data>
+  <data name="VersionConfirmOk" xml:space="preserve"><value>Onayla ve başlat</value></data>
+  <data name="ActiveHeading" xml:space="preserve"><value>Süren sürüm</value></data>
+  <data name="ActiveStatus" xml:space="preserve"><value>Durum: {0}</value></data>
+  <data name="ActiveStage" xml:space="preserve"><value>{0} — {1}</value></data>
+  <data name="ActiveRetry" xml:space="preserve"><value>Tekrar dene</value></data>
+  <data name="ActiveRemove" xml:space="preserve"><value>Sürümü kaldır</value></data>
+  <data name="ActiveRemoveConfirm" xml:space="preserve"><value>Hata veren sürüm ve yarım kalan çıktıları kaldırılsın mı? Önceki sürümler ve harcama kayıtları değişmez.</value></data>
+  <data name="ActiveRetried" xml:space="preserve"><value>Sürüm kaldığı aşamadan devam ediyor.</value></data>
+  <data name="ActiveRemoved" xml:space="preserve"><value>Hata veren sürüm kaldırıldı.</value></data>
+  <data name="ActiveFailed" xml:space="preserve"><value>İşlem yapılamadı.</value></data>
+  <data name="RegenHeading" xml:space="preserve"><value>Yeniden üret</value></data>
+  <data name="RegenHint" xml:space="preserve"><value>Konsepti düzenleyin (doğrudan kaydedin ya da talimatla düzenletip revizyonu onaylayın), sonra yeni sürümü başlatın.</value></data>
+  <data name="RegenAllStages" xml:space="preserve"><value>Tüm aşamalar baştan çalışır: {0}</value></data>
+  <data name="RegenUnchanged" xml:space="preserve"><value>Konsept değişmedi.</value></data>
+  <data name="RegenForce" xml:space="preserve"><value>Yine de baştan üret</value></data>
+  <data name="RegenStart" xml:space="preserve"><value>Yeni sürüm olarak üret</value></data>
+  <data name="RegenStarted" xml:space="preserve"><value>Yeniden üretim sıraya eklendi. Üretilen Videolar'a dönülüyor…</value></data>
+  <data name="RegenBack" xml:space="preserve"><value>Vazgeç ve Üretilen Videolar'a dön</value></data>
+  <data name="RegenLoadFailed" xml:space="preserve"><value>Yeniden üret bilgisi alınamadı.</value></data>
+  <data name="RegenSaveFirst" xml:space="preserve"><value>Önce düzenlemeyi kaydedin.</value></data>
 </root>

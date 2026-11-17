@@ -3,7 +3,12 @@
 // (Onayla / Sil / Tekrar düzenle; dışına tıklama kapatmaz, Esc "Revizyon silinsin mi?" sorar). Kaydedilmemiş değişiklik varken başka
 // konsepte geçiş ya da sayfadan ayrılma uyarır. Tüm istekler api.js ($.ajax, K-6) ile /konseptler/{id}/... uçlarına. Model çıktısı
 // güvenilmeyen veridir: yalnızca textContent/value ile yazılır. Metinler resx'ten data-text-* ile gelir; kurallar sunucudadır.
+// Yeniden üret bağlamı (spec 0020): adres ?konsept=<id>&yenidenUret=<belirteç>&taban=<sürüm> ise "Video oldu" konsept bu döngüyle düzenlenir
+// (istekler /konseptler/{id}/baglam/... ve belirteç); kaydedilince/revizyon onaylanınca #regen-panel çalışacak aşamaları ve online uyarısını
+// gösterir, metin değişmediyse "Konsept değişmedi" (başlat pasif) ve "Yine de baştan üret"; başlatma onay penceresinden geçer.
 import { get, post } from './api.js';
+import { confirmDialog } from './confirm-dialog.js';
+import { setPassive, stagesText } from './video-version.js';
 
 const POLL_MS = 2000;
 const FOCUSABLE = 'button:not([disabled]), textarea:not([disabled]), input:not([disabled])';
@@ -37,7 +42,8 @@ export function sceneIssues(scenes) {
 /**
  * Düzenleme döngüsünü başlatır (sayfada #concept-editor yoksa hiçbir şey yapmaz).
  * @param {Document} doc Belge.
- * @param {{ setTimer?: Function, clearTimer?: Function, win?: Window }} [options] Zamanlayıcı ve pencere (testler için).
+ * @param {{ setTimer?: Function, clearTimer?: Function, win?: Window, navigate?: Function }} [options] Zamanlayıcı, pencere ve sayfa
+ *   değiştirme (testler için).
  * @returns {object|undefined} Denetleyici.
  */
 export function initConceptEdit(doc, options = {}) {
@@ -68,7 +74,24 @@ export function initConceptEdit(doc, options = {}) {
   const discardButton = el('revision-discard');
   const confirmBox = el('revision-confirm');
   const leaveBox = el('concept-leave');
-  const state = { concept: null, editing: false, dirty: false, busy: false, saving: false, timer: null, opener: null, leave: null };
+  const state = { concept: null, editing: false, dirty: false, busy: false, saving: false, timer: null, opener: null, leave: null, regen: null, preview: null };
+  const navigate = options.navigate || ((url) => globalThis.location.assign(url));
+  const params = new URLSearchParams((doc.location && doc.location.search) || '');
+  if (params.get('yenidenUret') && params.get('konsept')) {
+    state.regen = { conceptId: params.get('konsept'), token: params.get('yenidenUret'), base: params.get('taban') || '' };
+  }
+  const regenPanel = el('regen-panel');
+  const regenText = regenPanel ? regenPanel.dataset : {};
+
+  function inContext(concept = state.concept) {
+    return Boolean(state.regen && concept && concept.id === state.regen.conceptId);
+  }
+
+  /** Düzenleme isteğinin adresi: bağlamda /baglam/... + belirteç (spec 0020), değilse 0015 uçları. */
+  function editUrl(suffix) {
+    const id = encodeURIComponent(state.concept.id);
+    return inContext() ? `/konseptler/${id}/baglam/${suffix}?regen=${encodeURIComponent(state.regen.token)}` : `/konseptler/${id}/${suffix}`;
+  }
 
   function node(tag, className, content) {
     const element = doc.createElement(tag);
@@ -190,6 +213,73 @@ export function initConceptEdit(doc, options = {}) {
   function setDirty(dirty) {
     state.dirty = dirty;
     editor.dataset.dirty = dirty ? 'true' : 'false';
+    updateRegenStart();
+  }
+
+  // --- Yeniden üret bağlamı (spec 0020) ------------------------------------------------------------------------------------------------
+  function updateRegenStart() {
+    if (!regenPanel || !state.regen) {
+      return;
+    }
+    const force = el('regen-force').checked;
+    const reason = state.dirty ? regenText.textSaveFirst
+      : !state.preview ? regenText.textPreviewing
+        : state.preview.unchanged && !force ? regenText.textUnchanged : null;
+    setPassive(el('regen-start'), reason);
+  }
+
+  async function refreshRegen() {
+    if (!regenPanel || !inContext()) {
+      return;
+    }
+    regenPanel.hidden = false;
+    state.preview = null;
+    el('regen-preview').textContent = regenText.textPreviewing;
+    updateRegenStart();
+    try {
+      const preview = await get(`/uretilenler/video/${encodeURIComponent(state.concept.id)}/yeniden-uret?belirtec=${encodeURIComponent(state.regen.token)}`
+        + `&taban=${encodeURIComponent(state.regen.base)}`);
+      state.preview = preview;
+      const lines = [fill(regenText.textAllStages, stagesText(preview.stages, regenText))];
+      if (preview.online) {
+        lines.push(regenText.textOnline);
+      }
+      if (preview.unchanged) {
+        lines.push(regenText.textUnchanged);
+      }
+      el('regen-preview').textContent = lines.join(' ');
+    } catch (error) {
+      el('regen-preview').textContent = message(error, regenText.textLoadFailed);
+    }
+    updateRegenStart();
+  }
+
+  async function startRegen() {
+    const button = el('regen-start');
+    if (!state.preview || button.getAttribute('aria-disabled') === 'true') {
+      return;
+    }
+    el('regen-confirm-stages').textContent = fill(regenText.textConfirmStages, stagesText(state.preview.stages, regenText));
+    if (!(await confirmDialog(el('regen-confirm-dialog'), button))) {
+      return; // Vazgeç / Esc: iş yok, çağrı yok (AC-5, AC-12).
+    }
+    const status = el('regen-status');
+    try {
+      await post(`/uretilenler/video/${encodeURIComponent(state.concept.id)}/yeniden-uret`, {
+        token: state.regen.token, baseVersionId: state.regen.base || null, force: el('regen-force').checked, confirmOnline: true,
+      });
+      status.textContent = regenText.textStarted;
+      state.regen = null;
+      navigate('/uretilenler');
+    } catch (error) {
+      status.textContent = message(error, regenText.textLoadFailed);
+    }
+  }
+
+  if (regenPanel) {
+    el('regen-force').addEventListener('change', () => updateRegenStart());
+    el('regen-start').addEventListener('click', () => startRegen());
+    el('regen-back').addEventListener('click', () => navigate('/uretilenler')); // Düzenleme iptal: hiçbir iş oluşmaz.
   }
 
   function startEdit(concept) {
@@ -211,6 +301,10 @@ export function initConceptEdit(doc, options = {}) {
     if (first) {
       first.focus();
     }
+    if (regenPanel) {
+      regenPanel.hidden = !inContext(concept);
+    }
+    refreshRegen();
     pollRevision(true); // Önceden kalmış hazır revizyon varsa modal yeniden açılır (ücretli revizyon kaybolmasın).
   }
 
@@ -219,6 +313,9 @@ export function initConceptEdit(doc, options = {}) {
     setDirty(false);
     stopPolling();
     editor.hidden = true;
+    if (regenPanel) {
+      regenPanel.hidden = true;
+    }
     const article = el('concept-detail');
     delete article.dataset.editing;
     if (article.dataset.id) {
@@ -250,11 +347,12 @@ export function initConceptEdit(doc, options = {}) {
     editStatus.dataset.kind = '';
     editStatus.textContent = text.textSaving;
     try {
-      const updated = await post(`/konseptler/${encodeURIComponent(state.concept.id)}/sahneler`, { scenes });
+      const updated = await post(editUrl('sahneler'), { scenes });
       state.concept = updated;
       setDirty(false);
       editStatus.textContent = text.textSaved;
       doc.dispatchEvent(new CustomEvent('concept:changed', { detail: { concept: updated } }));
+      refreshRegen(); // Bağlamda: kaydedilen metinle önizleme ve onay adımı (spec 0020 Req 15).
     } catch (error) {
       // Metin korunur; alan hatası alanın yanında, değilse sade mesaj (AC-2, AC-3).
       editStatus.dataset.kind = 'error';
@@ -346,7 +444,7 @@ export function initConceptEdit(doc, options = {}) {
     }
     setBusy(true);
     try {
-      handleRevision(await post(`/konseptler/${encodeURIComponent(state.concept.id)}/yeniden-uret`, body));
+      handleRevision(await post(editUrl('yeniden-uret'), body));
     } catch (error) {
       setBusy(false);
       const fieldMessage = error && error.body && error.body.errors && error.body.errors.Instruction;
@@ -405,7 +503,7 @@ export function initConceptEdit(doc, options = {}) {
   async function approve() {
     setBusy(true);
     try {
-      const updated = await post(`/konseptler/${encodeURIComponent(state.concept.id)}/revizyon/onayla`, {});
+      const updated = await post(editUrl('revizyon/onayla'), {});
       setBusy(false);
       closeModal();
       startEditKeepFocus(updated);
@@ -422,6 +520,7 @@ export function initConceptEdit(doc, options = {}) {
     setDirty(false);
     renderForm(concept.scenes);
     clearErrors();
+    refreshRegen(); // Revizyon onaylandı: bağlamda önizleme ve onay adımına dönülür (spec 0020 Req 15).
   }
 
   async function discard() {
@@ -543,7 +642,7 @@ export function initConceptEdit(doc, options = {}) {
     [doc, 'concept:opened', (event) => {
       const { concept, edit } = event.detail;
       stopPolling();
-      if (edit && (concept.status === 'generated' || concept.status === 'approved')) {
+      if (edit && (concept.status === 'generated' || concept.status === 'approved' || (concept.status === 'video_ready' && inContext(concept)))) {
         startEdit(concept);
       } else {
         stopEdit();
