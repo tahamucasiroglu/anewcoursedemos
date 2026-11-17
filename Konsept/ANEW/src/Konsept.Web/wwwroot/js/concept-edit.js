@@ -221,6 +221,14 @@ export function initConceptEdit(doc, options = {}) {
     if (!regenPanel || !state.regen) {
       return;
     }
+    // "Yine de baştan üret" yalnızca metin değişmediyse sunulur (review r1 I-3).
+    const offered = Boolean(state.preview && state.preview.unchanged);
+    if (el('regen-force-label')) {
+      el('regen-force-label').hidden = !offered;
+    }
+    if (!offered) {
+      el('regen-force').checked = false;
+    }
     const force = el('regen-force').checked;
     const reason = state.dirty ? regenText.textSaveFirst
       : !state.preview ? regenText.textPreviewing

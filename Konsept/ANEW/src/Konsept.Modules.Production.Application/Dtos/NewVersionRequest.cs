@@ -11,5 +11,14 @@ namespace Konsept.Modules.Production.Application.Dtos;
 /// <param name="Subtitles">Altyazı.</param>
 /// <param name="ProgressBar">İlerleme çubuğu.</param>
 /// <param name="ConfirmOnline">Online çağrı uyarısı onaylandı.</param>
+/// <param name="PreviewStages">Kullanıcının önizlemede gördüğü (onayladığı) aşamalar; sunucunun hesapladığı küme farklıysa iş açılmaz (review r1 M-1).
+/// Online çağrı gerektiren başlatmada zorunludur.</param>
 public sealed record NewVersionRequest(
-    Guid BaseVersionId, string? Engine, string? ImageModel, string? AudioModel, bool Subtitles, bool ProgressBar, bool ConfirmOnline = false);
+    Guid BaseVersionId,
+    string? Engine,
+    string? ImageModel,
+    string? AudioModel,
+    bool Subtitles,
+    bool ProgressBar,
+    bool ConfirmOnline = false,
+    IReadOnlyList<string>? PreviewStages = null);

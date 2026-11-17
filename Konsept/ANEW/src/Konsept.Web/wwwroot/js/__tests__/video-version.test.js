@@ -242,7 +242,7 @@ describe('Üretilen Videolar — yeni sürüm ve süren sürüm (spec 0020)', ()
     await flush();
     dialog.querySelector('[data-confirm-ok]').click();
     await flush();
-    expect(JSON.parse(posts('/uretilenler/video/v1/yeni-surum')[0].data).confirmOnline).toBe(true);
+    expect(JSON.parse(posts('/uretilenler/video/v1/yeni-surum')[0].data)).toMatchObject({ confirmOnline: true, previewStages: ['code', 'render', 'merge'] });
   });
 
   it('AC-8/AC-14: süren sürümün rozeti listede ve sürüm listesinde metinli; 3 sn yoklamayla güncellenir; Sil ve Yeniden üret pasif', async () => {
@@ -342,7 +342,7 @@ function conceptsHtml() {
       <p id="concept-regen-status"></p>
       <section id="regen-panel" hidden ${attrs(REGEN_TEXTS)}>
         <p id="regen-preview" role="status"></p>
-        <label><input type="checkbox" id="regen-force" /> Yine de baştan üret</label>
+        <label id="regen-force-label" hidden><input type="checkbox" id="regen-force" /> Yine de baştan üret</label>
         <button type="button" id="regen-start">Yeni sürüm olarak üret</button><button type="button" id="regen-back">Vazgeç</button>
         <p id="regen-status" role="status"></p>
       </section>
@@ -405,6 +405,7 @@ describe('Konseptler — Yeniden üret bağlamı (spec 0020)', () => {
       .toBe('Tüm aşamalar baştan çalışır: Konsept inceleniyor, Video kodu üretiliyor, Render, Birleştiriliyor Online model çağrısı yapılacak. Konsept değişmedi.');
     const start = el('regen-start');
     expect(start.dataset.tooltip).toBe('Konsept değişmedi.');
+    expect(el('regen-force-label').hidden).toBe(false);
     start.click();
     await flush();
     expect(el('regen-confirm-dialog').hidden).toBe(true);
@@ -430,8 +431,8 @@ describe('Konseptler — Yeniden üret bağlamı (spec 0020)', () => {
     el('concept-edit-form').dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();
     expect(posts('/konseptler/c1/baglam/sahneler?regen=tok')).toHaveLength(1);
-    el('regen-force').checked = false;
-    el('regen-force').dispatchEvent(new Event('change'));
+    expect(el('regen-force-label').hidden).toBe(true); // Metin değişti: "Yine de baştan üret" sunulmaz.
+    expect(el('regen-force').checked).toBe(false);
     expect(start.hasAttribute('aria-disabled')).toBe(false);
     start.click();
     await flush();

@@ -80,6 +80,9 @@ public static class ProductionErrors
     /// <summary>Gets online çağrı onayı yok (spec 0020 Req 3, H-3): iş oluşmaz.</summary>
     public static Error VersionOnlineConfirm => new("production.online_confirmation_required", ProductionText.VersionOnlineConfirm, ErrorType.Conflict);
 
+    /// <summary>Gets önizlemeden sonra çalışacak aşamalar değişti (review r1 M-1): iş açılmaz, kullanıcı yeniden bakar.</summary>
+    public static Error VersionPreviewChanged => new("production.version_preview_changed", ProductionText.VersionPreviewChanged, ErrorType.Conflict);
+
     /// <summary>Gets görsel modeli açılıp kapatılamaz (plan 0020).</summary>
     public static Error VersionImageToggle => new("production.version_image_toggle", ProductionText.VersionImageToggle, ErrorType.Validation);
 

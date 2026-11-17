@@ -71,6 +71,7 @@
   <data name="PipelineVersionOutputsLost" xml:space="preserve"><value>Önceki sürümün çıktıları bulunamadı; onaylanmamış online model çağrısı yapılmadı. Sürümü kaldırıp yeni sürümü yeniden başlatın.</value></data>
   <data name="VersionActive" xml:space="preserve"><value>Bu video için zaten üretimde bir sürüm var.</value></data>
   <data name="VersionFailedPending" xml:space="preserve"><value>Bu videonun hata veren bir sürümü var: önce Tekrar dene ya da Sürümü kaldır.</value></data>
+  <data name="VersionPreviewChanged" xml:space="preserve"><value>Önizleme değişti; çalışacak aşamalara yeniden bakıp tekrar başlatın.</value></data>
   <data name="VersionNoChange" xml:space="preserve"><value>Hiçbir ayar değişmedi.</value></data>
   <data name="VersionOnlineConfirm" xml:space="preserve"><value>Online model çağrısı yapılacak; başlatmak için onay gerekli.</value></data>
   <data name="VersionImageToggle" xml:space="preserve"><value>Görsel modeli açılıp kapatılamaz; yalnızca başka bir görsel modeline geçilebilir.</value></data>

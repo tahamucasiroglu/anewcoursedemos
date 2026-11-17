@@ -644,7 +644,6 @@
   <data name="ProducedRegenerateLabel" xml:space="preserve"><value>{0} için yeniden üret: önce konsepti düzenle</value></data>
   <data name="ProducedRegenerating" xml:space="preserve"><value>Konsept düzenlemesi açılıyor…</value></data>
   <data name="ProducedDeleteBlocked" xml:space="preserve"><value>Önce üretimi durdurun.</value></data>
-  <data name="ProducedBadgeLabel" xml:space="preserve"><value>Süren sürüm: {0}</value></data>
   <data name="VersionHeading" xml:space="preserve"><value>Yeni sürüm</value></data>
   <data name="VersionHint" xml:space="preserve"><value>Seçili sürümün ayarlarından başlar; yalnızca değişen ayarın etkilediği aşamalar yeniden üretilir, eski sürümler korunur.</value></data>
   <data name="VersionEngine" xml:space="preserve"><value>Video motoru</value></data>

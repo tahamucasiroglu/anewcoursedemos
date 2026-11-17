@@ -136,6 +136,13 @@ public abstract class VideoVersionServiceBase(
             return Result<ActiveVersionDto>.Failure(ProductionErrors.VersionOnlineConfirm); // Onaysız iş yok, çağrı yok (Req 3, H-3).
         }
 
+        // Onay, kullanıcının gördüğü aşamalara bağlıdır (review r1 M-1): önizlemeden sonra küme değiştiyse (ör. başka ajan cihazı) iş açılmaz.
+        var keys = stages.Select(JobNames.Stage).ToList();
+        if (request.PreviewStages is { } seen ? !seen.SequenceEqual(keys, StringComparer.Ordinal) : online)
+        {
+            return Result<ActiveVersionDto>.Failure(ProductionErrors.VersionPreviewChanged);
+        }
+
         return await AddAsync(context, VersionKind.NewVersion, next.Value, stages, online).ConfigureAwait(false);
     }
 
@@ -210,13 +217,7 @@ public abstract class VideoVersionServiceBase(
         }
 
         var settings = context.Settings with { FixedAt = time.GetUtcNow() };
-        var result = await AddAsync(context, VersionKind.Regenerate, settings, VersionStages.All(settings), true).ConfigureAwait(false);
-        if (result.IsSuccess)
-        {
-            regeneration.Close(context.UserId, videoId); // Sıradaki konsept düzenlenmez.
-        }
-
-        return result;
+        return await AddAsync(context, VersionKind.Regenerate, settings, VersionStages.All(settings), true).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -450,6 +451,7 @@ public abstract class VideoVersionServiceBase(
             return Result<ActiveVersionDto>.Failure(ProductionErrors.VersionActive); // Çift tıklama / yeniden gönderim (Req 8).
         }
 
+        regeneration.Close(userId, job.ConceptId); // Sıradaki konsept düzenlenmez: açık Yeniden üret bağlamı her iki türde kapanır (review r1 M-2).
         await StartIfIdleAsync(userId, job).ConfigureAwait(false);
         var saved = await jobs.GetAsync(userId, job.Id, CancellationToken.None).ConfigureAwait(false);
         return Result<ActiveVersionDto>.Success(JobNames.Active(saved ?? job));

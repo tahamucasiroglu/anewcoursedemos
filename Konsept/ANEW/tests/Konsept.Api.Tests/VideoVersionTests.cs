@@ -195,7 +195,17 @@ public sealed partial class VideoVersionTests : IClassFixture<VersionApiFactory>
         _factory.Jobs.Rows.Count(j => j.ConceptId == video && j.Status != ProductionJobStatus.Completed).ShouldBe(0);
         _factory.Provider.CallsOf(CallRole.Code).Count.ShouldBe(code);
 
-        (await client.PostAsJsonAsync($"/api/produced/{video}/versions", Body(v1.Id, engine: "local/remotion", audio: Supertonic, confirm: true), ct)).EnsureSuccessStatusCode();
+        foreach (var seen in new string[]?[] { null, ["merge"] })
+        {
+            // Review r1 M-1: onay gördüğü aşamalara bağlı — aşamasız ya da farklı aşamalı onay iş açmaz.
+            using var mismatch = await client.PostAsJsonAsync($"/api/produced/{video}/versions", Body(v1.Id, engine: "local/remotion", audio: Supertonic, confirm: true, stages: seen), ct);
+            mismatch.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            (await mismatch.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("title").GetString().ShouldBe("Önizleme değişti; çalışacak aşamalara yeniden bakıp tekrar başlatın.");
+        }
+
+        _factory.Jobs.Rows.Count(j => j.ConceptId == video && j.Status != ProductionJobStatus.Completed).ShouldBe(0);
+        (await client.PostAsJsonAsync(
+            $"/api/produced/{video}/versions", Body(v1.Id, engine: "local/remotion", audio: Supertonic, confirm: true, stages: ["code", "render", "merge"]), ct)).EnsureSuccessStatusCode();
         await Eventually.WithinAsync(() => Task.FromResult(Versions(video).Count == 2), Limit, ct);
 
         _factory.Provider.CallsOf(CallRole.Analysis).Count.ShouldBe(analysis);
@@ -269,7 +279,7 @@ public sealed partial class VideoVersionTests : IClassFixture<VersionApiFactory>
         _factory.Provider.CallsOf(CallRole.Image).Count.ShouldBe(0);
         _factory.Agent.Sent.Count.ShouldBe(sent);
 
-        (await client.PostAsJsonAsync($"/api/produced/{video}/versions", Body(v1.Id, image: GptImage, confirm: true), ct)).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync($"/api/produced/{video}/versions", Body(v1.Id, image: GptImage, confirm: true, stages: ["images", "render", "merge"]), ct)).EnsureSuccessStatusCode();
         await Eventually.WithinAsync(() => Task.FromResult(Versions(video).Count == 2), Limit, ct);
         _factory.Provider.CallsOf(CallRole.Image).Count.ShouldBe(2);
         Versions(video)[1].CostUsd.ShouldBe(SpendOf(user) - spend);
@@ -484,6 +494,13 @@ public sealed partial class VideoVersionTests : IClassFixture<VersionApiFactory>
 
         await RegisterAgentAsync(user, device, ct);
         await Eventually.WithinAsync(() => Task.FromResult(Versions(video).Count == 2), Limit, ct);
+
+        // Review r1 M-2: açık Yeniden üret bağlamı, yeni sürüm başlayınca kapanır — sıradaki konsept düzenlenemez.
+        var token = (await (await client.PostAsJsonAsync($"/api/produced/{video}/regenerate/open", new { }, ct)).Content.ReadFromJsonAsync<JsonElement>(ct))
+            .GetProperty("token").GetString();
+        (await client.PostAsJsonAsync($"/api/produced/{video}/versions", Body(Versions(video)[1].Id, audio: Supertonic), ct)).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync($"/api/concepts/{video}/scenes?regen={token}", new { scenes = Edited("Sırada düzenleme") }, ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        Concept(video).Scenes[0].Narration.ShouldBe("Bizans'ın son sabahı başlıyor.");
         Count(AgentStageCommand.Render).ShouldBe(renders); // Aynı cihaz: render yeniden çalışmaz.
     }
 
@@ -752,8 +769,15 @@ public sealed partial class VideoVersionTests : IClassFixture<VersionApiFactory>
         new { subtitles = true, progressBar, codeModel = Sonnet, codeEffort = (string?)null, engine = "local/hyperframes", imageModel = image, audioModel = audio };
 
     private static object Body(
-        Guid baseVersion, string engine = "local/hyperframes", string? image = null, string? audio = null, bool subtitles = true, bool progressBar = true, bool confirm = false) =>
-        new { baseVersionId = baseVersion, engine, imageModel = image, audioModel = audio, subtitles, progressBar, confirmOnline = confirm };
+        Guid baseVersion,
+        string engine = "local/hyperframes",
+        string? image = null,
+        string? audio = null,
+        bool subtitles = true,
+        bool progressBar = true,
+        bool confirm = false,
+        string[]? stages = null) =>
+        new { baseVersionId = baseVersion, engine, imageModel = image, audioModel = audio, subtitles, progressBar, confirmOnline = confirm, previewStages = stages };
 
     private static object[] Edited(string narration) =>
     [

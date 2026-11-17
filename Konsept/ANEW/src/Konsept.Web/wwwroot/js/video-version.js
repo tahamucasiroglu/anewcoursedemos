@@ -187,7 +187,7 @@ export function initVersionControls(doc, { text, onChanged }) {
     if (!state.preview || state.busy || startButton.getAttribute('aria-disabled') === 'true') {
       return;
     }
-    const body = { ...current(), confirmOnline: false };
+    const body = { ...current(), confirmOnline: false, previewStages: state.preview.stages }; // Onay gördüğü aşamalara bağlı (review r1 M-1).
     if (state.preview.online) {
       el('version-confirm-stages').textContent = fill(text.textVersionConfirmStages, stagesText(state.preview.stages, text));
       if (!(await confirmDialog(el('version-confirm-dialog'), startButton))) {
