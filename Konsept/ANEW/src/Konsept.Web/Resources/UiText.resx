@@ -604,4 +604,40 @@
   <data name="ProducedSecond" xml:space="preserve"><value>sn</value></data>
   <data name="ProducedMinute" xml:space="preserve"><value>dk</value></data>
   <data name="ProducedHour" xml:space="preserve"><value>sa</value></data>
+  <data name="AdminTabReports" xml:space="preserve"><value>Hata bildirimleri</value></data>
+  <data name="AdminReportsFailed" xml:space="preserve"><value>Hata bildirimleri şu an yüklenemedi.</value></data>
+  <data name="AdminReportFailed" xml:space="preserve"><value>Bildirim şu an yüklenemedi.</value></data>
+  <data name="AdminReportsEmpty" xml:space="preserve"><value>Açık hata bildirimi yok</value></data>
+  <data name="AdminReportsNoMatch" xml:space="preserve"><value>Filtreye uyan bildirim yok</value></data>
+  <data name="AdminReportSource" xml:space="preserve"><value>Kaynak</value></data>
+  <data name="AdminReportSourceWeb" xml:space="preserve"><value>Web</value></data>
+  <data name="AdminReportSourceAgent" xml:space="preserve"><value>Ajan</value></data>
+  <data name="AdminReportSourceApi" xml:space="preserve"><value>API</value></data>
+  <data name="AdminReportStatus" xml:space="preserve"><value>Durum</value></data>
+  <data name="AdminReportStatusOpen" xml:space="preserve"><value>Açık</value></data>
+  <data name="AdminReportStatusNew" xml:space="preserve"><value>Yeni</value></data>
+  <data name="AdminReportStatusReviewing" xml:space="preserve"><value>İnceleniyor</value></data>
+  <data name="AdminReportStatusResolved" xml:space="preserve"><value>Çözüldü</value></data>
+  <data name="AdminReportStatusIgnored" xml:space="preserve"><value>Yok sayıldı</value></data>
+  <data name="AdminColumnReporter" xml:space="preserve"><value>Bildiren</value></data>
+  <data name="AdminColumnMessage" xml:space="preserve"><value>Mesaj</value></data>
+  <data name="AdminReportOpen" xml:space="preserve"><value>Detay</value></data>
+  <data name="AdminReportOpenLabel" xml:space="preserve"><value>Bildirim {0} detayı</value></data>
+  <data name="AdminReportTitle" xml:space="preserve"><value>Hata bildirimi No: {0}</value></data>
+  <data name="AdminReportVersion" xml:space="preserve"><value>Uygulama versiyonu</value></data>
+  <data name="AdminReportAgentVersion" xml:space="preserve"><value>Ajan versiyonu</value></data>
+  <data name="AdminReportOs" xml:space="preserve"><value>İşletim sistemi</value></data>
+  <data name="AdminReportComponent" xml:space="preserve"><value>Bileşen / adım</value></data>
+  <data name="AdminReportPage" xml:space="preserve"><value>Sayfa</value></data>
+  <data name="AdminReportCorrelation" xml:space="preserve"><value>Korelasyon no</value></data>
+  <data name="AdminReportDescription" xml:space="preserve"><value>Açıklama</value></data>
+  <data name="AdminReportAttachments" xml:space="preserve"><value>Teknik bilgi</value></data>
+  <data name="AdminReportNoteCurrent" xml:space="preserve"><value>Admin notu</value></data>
+  <data name="AdminReportNewStatus" xml:space="preserve"><value>Yeni durum</value></data>
+  <data name="AdminReportNote" xml:space="preserve"><value>Not (isteğe bağlı)</value></data>
+  <data name="AdminReportNoteCount" xml:space="preserve"><value>{0}/500</value></data>
+  <data name="AdminReportSave" xml:space="preserve"><value>Kaydet</value></data>
+  <data name="AdminReportClose" xml:space="preserve"><value>Kapat</value></data>
+  <data name="AdminReportSaved" xml:space="preserve"><value>Kaydedildi.</value></data>
+  <data name="AdminReportSaveFailed" xml:space="preserve"><value>Durum kaydedilemedi.</value></data>
 </root>

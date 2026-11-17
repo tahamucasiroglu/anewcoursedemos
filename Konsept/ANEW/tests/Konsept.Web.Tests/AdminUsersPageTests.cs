@@ -33,7 +33,7 @@ public sealed class AdminUsersPageTests
 
         var page = await WebFactory.GetDocumentAsync(client, "/admin", ct);
 
-        page.QuerySelectorAll("#admin-panel [role='tab']").Select(t => t.TextContent.Trim()).ShouldBe(["İstatistikler", "Kullanıcılar", "Aktiviteler"]);
+        page.QuerySelectorAll("#admin-panel [role='tab']").Select(t => t.TextContent.Trim()).ShouldBe(["İstatistikler", "Kullanıcılar", "Aktiviteler", "Hata bildirimleri"]); // plan 0025 A-1.
         page.QuerySelector("#admin-users")!.HasAttribute("hidden").ShouldBeTrue();
         page.QuerySelector("#admin-users")!.GetAttribute("data-users-url").ShouldBe("/admin/kullanicilar");
         page.QuerySelectorAll(".admin-card dt").Select(d => d.TextContent).ShouldContain("Banlı kullanıcı");

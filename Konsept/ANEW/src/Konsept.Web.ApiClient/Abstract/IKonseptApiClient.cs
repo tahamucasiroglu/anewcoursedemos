@@ -94,6 +94,27 @@ public interface IKonseptApiClient
     /// <returns>Güncel satır ya da hata.</returns>
     Task<Result<JsonElement>> SetUserBanAsync(Guid userId, bool ban, JsonElement? body, CancellationToken cancellationToken);
 
+    /// <summary>Admin Hata bildirimleri (spec 0025): 25'erli sayfa, kaynak ve durum filtresi; Api'nin gövdesi olduğu gibi geçer.</summary>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="source">Kaynak: all | web | agent | api.</param>
+    /// <param name="status">Durum: open | new | reviewing | resolved | ignored | all.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (403 → Forbidden).</returns>
+    Task<Result<JsonElement>> GetAdminErrorReportsAsync(int page, string? source, string? status, CancellationToken cancellationToken);
+
+    /// <summary>Admin hata bildirimi detayı (spec 0025).</summary>
+    /// <param name="number">Bildirim numarası.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (404 → NotFound).</returns>
+    Task<Result<JsonElement>> GetAdminErrorReportAsync(long number, CancellationToken cancellationToken);
+
+    /// <summary>Admin hata bildirimi durum değiştirme (spec 0025); gövde (<c>{ status, note }</c>) olduğu gibi geçer.</summary>
+    /// <param name="number">Bildirim numarası.</param>
+    /// <param name="body">Gövde.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Güncel detay ya da hata.</returns>
+    Task<Result<JsonElement>> SetErrorReportStatusAsync(long number, JsonElement? body, CancellationToken cancellationToken);
+
     /// <summary>
     /// Ajan eşleştirme (spec 0012): kodun cihazını sorar (<c>lookup</c>), onaylar (<c>approve</c>) ya da reddeder (<c>reject</c>);
     /// tarayıcının IP'si servis anahtarıyla iletilir (Api'nin IP başına hız sınırı, Req 8).

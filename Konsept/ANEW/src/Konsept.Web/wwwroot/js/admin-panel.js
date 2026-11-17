@@ -1,7 +1,8 @@
-// Admin paneli (spec 0010): İstatistikler ve Aktiviteler sekmeleri. Veri /admin/istatistikler ve /admin/aktiviteler'den $.ajax
+// Admin paneli (spec 0010): İstatistikler ve Aktiviteler sekmeleri (Kullanıcılar 0024, Hata bildirimleri 0025 ayrı modüllerde). Veri /admin/istatistikler ve /admin/aktiviteler'den $.ajax
 // ile (api.js, K-6) sayfa açılışında, sekme, aralık ve filtre değişiminde gelir; canlı yenileme yok (Req 9). Grafikler SVG çubuklar
 // + aynı değerleri içeren tablo alternatifi (Req 4). Api verisi yalnızca textContent ile yazılır. Saatler Europe/Istanbul (Req 10).
 import { get } from './api.js';
+import { initAdminReports } from './admin-reports.js';
 import { initAdminUsers } from './admin-users.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -128,6 +129,10 @@ export function initAdminPanel(doc) {
   const tabs = [...root.querySelectorAll('[role="tab"]')];
   const state = { page: 1, filter: { user: '', from: '', to: '' }, statsRequest: 0, activityRequest: 0, activitiesLoaded: false };
   const users = initAdminUsers(doc, { formatTime, correlation: t.textCorrelation }); // Kullanıcılar sekmesi (spec 0024).
+  // Hata bildirimleri sekmesi (spec 0025): durum değişince İstatistikler'deki açık bildirim sayısı yenilenir (Req 5).
+  const reports = initAdminReports(doc, {
+    formatTime, correlation: t.textCorrelation, loading: t.textLoading, pageText: t.textPage, onStatusChanged: () => loadStatistics(),
+  });
 
   function showError(prefix, text) {
     el(`admin-${prefix}-error-text`).textContent = text;
@@ -223,6 +228,9 @@ export function initAdminPanel(doc) {
     if (tab.id === 'admin-tab-users' && users) {
       return users.load();
     }
+    if (tab.id === 'admin-tab-reports' && reports) {
+      return reports.load();
+    }
     return tab.id === 'admin-tab-activities' ? loadActivities() : loadStatistics();
   }
 
@@ -268,5 +276,5 @@ export function initAdminPanel(doc) {
   });
 
   loadStatistics();
-  return { loadStatistics, loadActivities, users, selectTab: (id, focus) => selectTab(el(id), focus) };
+  return { loadStatistics, loadActivities, users, reports, selectTab: (id, focus) => selectTab(el(id), focus) };
 }

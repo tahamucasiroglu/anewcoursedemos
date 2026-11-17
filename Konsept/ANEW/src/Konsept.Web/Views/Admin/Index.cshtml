@@ -1,5 +1,5 @@
-@* Admin paneli (spec 0010; giriş ve yetki 0011): sekmeler İstatistikler · Kullanıcılar (0024) · Aktiviteler (Hata bildirimleri 0025
-   araya eklenir). Kullanıcılar sekmesini admin-users.js yönetir (/admin/kullanicilar, banla, ban-kaldir). admin-panel.js verileri /admin/istatistikler ve /admin/aktiviteler'den $.ajax ile (K-6) sayfa açılışında, sekme,
+@* Admin paneli (spec 0010; giriş ve yetki 0011): sekmeler İstatistikler · Kullanıcılar (0024) · Aktiviteler · Hata bildirimleri (0025,
+   admin-reports.js). Kullanıcılar sekmesini admin-users.js yönetir (/admin/kullanicilar, banla, ban-kaldir). admin-panel.js verileri /admin/istatistikler ve /admin/aktiviteler'den $.ajax ile (K-6) sayfa açılışında, sekme,
    aralık ve filtre değişiminde alır; canlı yenileme yok. Metinler resx'ten; Api verisi yalnızca textContent ile yazılır. *@
 @{
     ViewData["Title"] = UiText.Admin;
@@ -18,6 +18,7 @@
         <button type="button" class="tabs__tab" role="tab" id="admin-tab-statistics" aria-selected="true" aria-controls="admin-statistics">@UiText.AdminTabStatistics</button>
         <button type="button" class="tabs__tab" role="tab" id="admin-tab-users" aria-selected="false" aria-controls="admin-users" tabindex="-1">@UiText.AdminTabUsers</button>
         <button type="button" class="tabs__tab" role="tab" id="admin-tab-activities" aria-selected="false" aria-controls="admin-activities" tabindex="-1">@UiText.AdminTabActivities</button>
+        <button type="button" class="tabs__tab" role="tab" id="admin-tab-reports" aria-selected="false" aria-controls="admin-reports" tabindex="-1">@UiText.AdminTabReports</button>
     </div>
 
     <section class="tabs__panel" role="tabpanel" id="admin-statistics" aria-labelledby="admin-tab-statistics" tabindex="0">
@@ -159,5 +160,111 @@
             <button type="button" class="button" id="admin-next">@UiText.ConceptsNext</button>
         </nav>
     </section>
+
+    @* Hata bildirimleri (spec 0025): admin-reports.js yönetir (/admin/hata-bildirimleri, detay, durum). Varsayılan Açık bildirimler. *@
+    <section class="tabs__panel" role="tabpanel" id="admin-reports" aria-labelledby="admin-tab-reports" tabindex="0" hidden
+             data-reports-url="/admin/hata-bildirimleri" data-text-failed="@UiText.AdminReportsFailed" data-text-detail-failed="@UiText.AdminReportFailed"
+             data-text-empty="@UiText.AdminReportsEmpty" data-text-no-match="@UiText.AdminReportsNoMatch"
+             data-text-source-web="@UiText.AdminReportSourceWeb" data-text-source-agent="@UiText.AdminReportSourceAgent" data-text-source-api="@UiText.AdminReportSourceApi"
+             data-text-status-new="@UiText.AdminReportStatusNew" data-text-status-reviewing="@UiText.AdminReportStatusReviewing"
+             data-text-status-resolved="@UiText.AdminReportStatusResolved" data-text-status-ignored="@UiText.AdminReportStatusIgnored"
+             data-text-open="@UiText.AdminReportOpen" data-text-open-label="@UiText.AdminReportOpenLabel" data-text-detail-title="@UiText.AdminReportTitle"
+             data-text-saved="@UiText.AdminReportSaved" data-text-save-failed="@UiText.AdminReportSaveFailed" data-text-processing="@UiText.AdminProcessing"
+             data-text-note-count="@UiText.AdminReportNoteCount" data-text-none="@UiText.AdminNever">
+        <form class="admin-filter" id="admin-report-filter" novalidate>
+            <div class="field">
+                <label class="field__label" for="admin-report-source-filter">@UiText.AdminReportSource</label>
+                <select class="field__input field__input--short" id="admin-report-source-filter">
+                    <option value="all" selected>@UiText.AdminStatusAll</option>
+                    <option value="web">@UiText.AdminReportSourceWeb</option>
+                    <option value="agent">@UiText.AdminReportSourceAgent</option>
+                    <option value="api">@UiText.AdminReportSourceApi</option>
+                </select>
+            </div>
+            <div class="field">
+                <label class="field__label" for="admin-report-status-filter">@UiText.AdminReportStatus</label>
+                <select class="field__input field__input--short" id="admin-report-status-filter">
+                    <option value="open" selected>@UiText.AdminReportStatusOpen</option>
+                    <option value="new">@UiText.AdminReportStatusNew</option>
+                    <option value="reviewing">@UiText.AdminReportStatusReviewing</option>
+                    <option value="resolved">@UiText.AdminReportStatusResolved</option>
+                    <option value="ignored">@UiText.AdminReportStatusIgnored</option>
+                    <option value="all">@UiText.AdminStatusAll</option>
+                </select>
+            </div>
+            <button type="submit" class="button button--primary">@UiText.AdminFilterApply</button>
+        </form>
+        <p class="admin-panel__status" id="admin-reports-status" role="status" aria-live="polite"></p>
+        <div class="admin-panel__error" id="admin-reports-error" role="alert" hidden>
+            <p class="admin__message" id="admin-reports-error-text"></p>
+            <button type="button" class="button" id="admin-reports-retry">@UiText.AdminRetry</button>
+        </div>
+        <table class="admin-table" id="admin-report-table" hidden>
+            <caption class="visually-hidden">@UiText.AdminTabReports</caption>
+            <thead>
+                <tr>
+                    <th scope="col">@UiText.AdminColumnTime</th><th scope="col">@UiText.AdminReportSource</th>
+                    <th scope="col">@UiText.AdminColumnReporter</th><th scope="col">@UiText.AdminColumnMessage</th>
+                    <th scope="col">@UiText.AdminColumnStatus</th><th scope="col">@UiText.AdminColumnActions</th>
+                </tr>
+            </thead>
+            <tbody id="admin-report-rows"></tbody>
+        </table>
+        <nav class="admin-pager" id="admin-report-pager" aria-label="@UiText.AdminPagination" hidden>
+            <button type="button" class="button" id="admin-report-prev">@UiText.ConceptsPrev</button>
+            <span id="admin-report-page"></span>
+            <button type="button" class="button" id="admin-report-next">@UiText.ConceptsNext</button>
+        </nav>
+    </section>
+
+    @* Bildirim detayı (spec 0025 Req 4–5): tüm içerik textContent ile düz metin; odak pencereye taşınır, Esc kapatır (kayıt sürerken
+       değil), kapanınca odak açan düğmeye döner; kayıt sürerken Kaydet pasif ve "İşleniyor…"; hata pencerede, durum değişmez. *@
+    <div class="dialog-backdrop dialog-backdrop--confirm" id="admin-report-dialog" hidden>
+        <div class="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="admin-report-title">
+            <h2 class="dialog__title" id="admin-report-title"></h2>
+            <p class="admin-panel__status" id="admin-report-loading" role="status" aria-live="polite"></p>
+            <div class="admin-panel__error" id="admin-report-error" role="alert" hidden>
+                <p class="admin__message" id="admin-report-error-text"></p>
+                <button type="button" class="button" id="admin-report-retry">@UiText.AdminRetry</button>
+            </div>
+            <dl class="admin-report" id="admin-report-body" hidden>
+                <dt>@UiText.AdminColumnTime</dt><dd id="admin-report-time"></dd>
+                <dt>@UiText.AdminReportSource</dt><dd id="admin-report-source"></dd>
+                <dt>@UiText.AdminColumnReporter</dt><dd id="admin-report-reporter"></dd>
+                <dt>@UiText.AdminReportStatus</dt><dd id="admin-report-current"></dd>
+                <dt>@UiText.AdminReportVersion</dt><dd id="admin-report-version"></dd>
+                <dt>@UiText.AdminReportAgentVersion</dt><dd id="admin-report-agent-version"></dd>
+                <dt>@UiText.AdminReportOs</dt><dd id="admin-report-os"></dd>
+                <dt>@UiText.AdminReportComponent</dt><dd id="admin-report-component"></dd>
+                <dt>@UiText.AdminReportPage</dt><dd id="admin-report-page-path"></dd>
+                <dt>@UiText.AdminReportCorrelation</dt><dd id="admin-report-correlation"></dd>
+                <dt>@UiText.AdminReportDescription</dt><dd><pre class="admin-report__text" id="admin-report-description"></pre></dd>
+                <dt>@UiText.AdminReportAttachments</dt><dd><pre class="admin-report__text" id="admin-report-attachments"></pre></dd>
+                <dt>@UiText.AdminReportNoteCurrent</dt><dd><pre class="admin-report__text" id="admin-report-note-current"></pre></dd>
+            </dl>
+            <div id="admin-report-form" hidden>
+                <div class="field">
+                    <label class="field__label" for="admin-report-status">@UiText.AdminReportNewStatus</label>
+                    <select class="field__input field__input--short" id="admin-report-status">
+                        <option value="new">@UiText.AdminReportStatusNew</option>
+                        <option value="reviewing">@UiText.AdminReportStatusReviewing</option>
+                        <option value="resolved">@UiText.AdminReportStatusResolved</option>
+                        <option value="ignored">@UiText.AdminReportStatusIgnored</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field__label" for="admin-report-note">@UiText.AdminReportNote</label>
+                    <textarea class="field__input" id="admin-report-note" rows="3" aria-describedby="admin-report-note-count admin-report-note-error"></textarea>
+                    <span class="field__hint" id="admin-report-note-count"></span>
+                    <span class="field__error" id="admin-report-note-error" role="alert" hidden>@UiText.AdminBanReasonTooLong</span>
+                </div>
+            </div>
+            <p class="admin__message" id="admin-report-message" role="alert" hidden></p>
+            <div class="dialog__actions">
+                <button type="button" class="button" id="admin-report-close">@UiText.AdminReportClose</button>
+                <button type="button" class="button button--primary" id="admin-report-save">@UiText.AdminReportSave</button>
+            </div>
+        </div>
+    </div>
     <p class="admin__message" id="admin-message" role="alert" hidden></p>
 </div>

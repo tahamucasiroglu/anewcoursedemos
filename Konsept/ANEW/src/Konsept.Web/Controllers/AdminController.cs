@@ -80,4 +80,31 @@ public sealed class AdminController : Controller
     [HttpPost("/admin/kullanicilar/{id:guid}/ban-kaldir")]
     public Task<IActionResult> BanKaldir(Guid id, CancellationToken cancellationToken) =>
         _api.SetUserBanAsync(id, ban: false, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Hata bildirimleri (Ajax; spec 0025): 25'erli sayfa, kaynak ve durum filtresi; hatada korelasyon numarası.</summary>
+    /// <param name="sayfa">Sayfa.</param>
+    /// <param name="kaynak">Kaynak: all | web | agent | api.</param>
+    /// <param name="durum">Durum: open | new | reviewing | resolved | ignored | all.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpGet("/admin/hata-bildirimleri")]
+    public Task<IActionResult> HataBildirimleri(int sayfa, string? kaynak, string? durum, CancellationToken cancellationToken) =>
+        _api.GetAdminErrorReportsAsync(sayfa, kaynak, durum, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Hata bildirimi detayı (Ajax; spec 0025).</summary>
+    /// <param name="numara">Bildirim numarası.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpGet("/admin/hata-bildirimleri/{numara:long}")]
+    public Task<IActionResult> HataBildirimi(long numara, CancellationToken cancellationToken) =>
+        _api.GetAdminErrorReportAsync(numara, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Hata bildirimi durumunu değiştir (Ajax, antiforgery; spec 0025): gövde <c>{ status, note }</c>.</summary>
+    /// <param name="numara">Bildirim numarası.</param>
+    /// <param name="body">Gövde.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/admin/hata-bildirimleri/{numara:long}/durum")]
+    public Task<IActionResult> HataBildirimiDurum(long numara, [FromBody] JsonElement? body, CancellationToken cancellationToken) =>
+        _api.SetErrorReportStatusAsync(numara, body, cancellationToken).ToDetailedBrowserJson(HttpContext);
 }

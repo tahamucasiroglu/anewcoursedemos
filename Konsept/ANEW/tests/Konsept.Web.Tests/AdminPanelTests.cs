@@ -41,7 +41,7 @@ public sealed partial class AdminPanelTests
         using var activities = await SendAjaxAsync(client, "/admin/aktiviteler?sayfa=2&kullanici=ay%C5%9Fe&baslangic=2026-11-01&bitis=2026-11-10", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        page.QuerySelectorAll("#admin-panel [role='tab']").Select(t => t.TextContent.Trim()).ShouldBe(["İstatistikler", "Kullanıcılar", "Aktiviteler"]); // plan 0024 A-1.
+        page.QuerySelectorAll("#admin-panel [role='tab']").Select(t => t.TextContent.Trim()).ShouldBe(["İstatistikler", "Kullanıcılar", "Aktiviteler", "Hata bildirimleri"]); // plan 0024 A-1, plan 0025 A-1.
         page.QuerySelector("#admin-tab-statistics")!.GetAttribute("aria-selected").ShouldBe("true");
         page.QuerySelector("#admin-statistics")!.HasAttribute("hidden").ShouldBeFalse();
         page.QuerySelector("#admin-activities")!.HasAttribute("hidden").ShouldBeTrue();
