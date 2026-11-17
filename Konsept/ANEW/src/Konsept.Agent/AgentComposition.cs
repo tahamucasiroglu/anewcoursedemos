@@ -64,16 +64,22 @@ internal sealed record AgentComposition(
         var streams = new LocalVideoServer(videoFolder, TimeProvider.System, logging.Logger);
         streams.Start(); // spec 0017 Req 21: yalnızca 127.0.0.1.
         var renderer = new SandboxedSceneRenderer(root, settings.Render ?? throw new InvalidOperationException("Render sınırları yüklenemedi."), logging.Logger);
-        var stages = new ProcessStageRunner(setupState, root, videoFolder, renderer, logging.Logger);
+        // Ekran kartı bir kez tespit edilir; varyantlar (CUDA/CPU) ve ekran kartı gerektiren modeller buna göre (spec 0028 Req 5, 6).
+        var gpu = new WindowsGpuProbe().Detect();
+        logging.Logger.Information("Ekran kartı: {Gpu}", gpu is null ? "bulunamadı" : $"{gpu.Name} ({gpu.Vendor}, {gpu.VramMb} MB)");
+        var catalog = ComponentCatalog.Load(gpu);
+        var models = new LocalModelStages(catalog, setupState, root, new ProcessRunner(), logging.Logger);
+        var stages = new ProcessStageRunner(setupState, root, videoFolder, renderer, logging.Logger, models, catalog, gpu);
         var setupHost = new WindowsSetupHost(new HttpClient());
         var setup = new SetupCoordinator(
-            ComponentCatalog.Load(),
+            catalog,
             setupHost,
             setupState,
             root,
             AgentPaths.DefaultVideoFolder,
             new Uri(settings.SiteUrl, "ajan-bilesenleri/"),
-            logging.Logger);
+            logging.Logger,
+            gpu);
         var connection = new SignalRServerConnection(
             settings,
             info,

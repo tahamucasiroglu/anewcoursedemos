@@ -21,6 +21,7 @@ namespace Konsept.Modules.AiGateway.Application.Dtos;
 /// <param name="LanguageOnly">Tek desteklenen dil (<c>tr</c> · <c>en</c>) ya da <c>null</c>.</param>
 /// <param name="LicenseWarning">"Lisans uyarısı" etiketi.</param>
 /// <param name="Component">Bağlı ajan bileşeni ya da <c>null</c>.</param>
+/// <param name="MinVramGb">Gereken en az ekran kartı belleği (GB) ya da <c>null</c> (spec 0028).</param>
 public sealed record CatalogModelDto(
     string Id,
     string ProviderId,
@@ -38,7 +39,8 @@ public sealed record CatalogModelDto(
     bool Local = false,
     string? LanguageOnly = null,
     bool LicenseWarning = false,
-    string? Component = null)
+    string? Component = null,
+    int? MinVramGb = null)
 {
     /// <summary>Tür: metin.</summary>
     public const string KindText = "text";

@@ -362,7 +362,14 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private AgentToolCheckReply CheckTools(IStageRunner stages, AgentToolCheckRequest request)
     {
         var reply = stages.CheckTools(request);
-        return reply.Missing.Count == 0 || _installer is null ? reply : reply with { Installable = _installer.Describe(reply.Missing) };
+        if (reply.Missing.Count == 0 || _installer is null)
+        {
+            return reply;
+        }
+
+        // Bu bilgisayarda çalışamayan (desteklenmez) bileşen kurulabilir sayılmaz (spec 0028 Req 6).
+        var unsupported = (reply.Unsupported ?? []).Select(u => u.Id).ToHashSet(StringComparer.Ordinal);
+        return reply with { Installable = _installer.Describe(reply.Missing.Where(id => !unsupported.Contains(id))) };
     }
 
     private async Task<AgentInstallReply> InstallAsync(AgentInstallRequest request)

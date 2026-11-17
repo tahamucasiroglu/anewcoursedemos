@@ -59,4 +59,7 @@ public sealed class ModelEntry
 
     /// <summary>Gets girişin bağlı olduğu ajan bileşeni (ör. <c>remotion</c>); yoksa <c>null</c> (spec 0006 Req 19).</summary>
     public string? Component { get; init; }
+
+    /// <summary>Gets yerel modelin gerektirdiği en az ayrılmış ekran kartı belleği (GB); gerekmiyorsa <c>null</c> (spec 0028 Req 6).</summary>
+    public int? MinVramGb { get; init; }
 }

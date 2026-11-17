@@ -51,7 +51,8 @@ export function awaitingInstall(job) {
 }
 
 /**
- * Bir seçeneğin görünen metni: "Ad — yerel" ve varsa "Key yok", "Yalnız Türkçe", "Lisans uyarısı" etiketleri (Req 3, 4).
+ * Bir seçeneğin görünen metni: "Ad — yerel" ve varsa "Key yok", "Yalnız Türkçe", "Lisans uyarısı", "Ekran kartı gerekir (≥ N GB)"
+ * etiketleri (Req 3, 4; spec 0028 Req 6).
  * @param {object} model Model.
  * @param {DOMStringMap} text Metinler.
  * @returns {string} Metin.
@@ -69,6 +70,9 @@ export function optionLabel(model, text) {
   }
   if (model.licenseWarning) {
     tags.push(text.textLicense);
+  }
+  if (model.minVramGb) {
+    tags.push(fill(text.textGpu, model.minVramGb));
   }
   return `${model.name} — ${tags.join(' · ')}`;
 }
@@ -619,7 +623,8 @@ export function initProduction(doc, timers = globalThis) {
     }
     const items = job.install.components || [];
     el('production-install-text').textContent = fill(text.textInstallText, job.title);
-    el('production-install-list').replaceChildren(...items.map((c) => node('li', '', fill(text.textInstallItem, c.name, sizeText(c.downloadBytes), sizeText(c.installedBytes)))));
+    el('production-install-list').replaceChildren(...items.map((c) => node('li', '', fill(text.textInstallItem, c.name, sizeText(c.downloadBytes), sizeText(c.installedBytes))
+      + (c.license ? ` · ${fill(text.textInstallLicense, c.license)}` : ''))));
     const download = items.reduce((sum, c) => sum + Number(c.downloadBytes || 0), 0);
     const installed = items.reduce((sum, c) => sum + Number(c.installedBytes || 0), 0);
     el('production-install-total').textContent = fill(text.textInstallTotal, sizeText(download), sizeText(installed));

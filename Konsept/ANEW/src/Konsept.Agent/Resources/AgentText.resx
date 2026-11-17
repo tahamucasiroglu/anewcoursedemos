@@ -52,6 +52,8 @@
   <data name="SetupHeading" xml:space="preserve"><value>Ajan kurulumu</value></data>
   <data name="SetupIntro" xml:space="preserve"><value>Video üretimi için gereken araçlar bilgisayarınıza indirilip kurulacak. Hepsi yalnızca bu ajan için ayrı bir klasöre kurulur; bilgisayarınızdaki başka programlar ve ayarlar değişmez, yönetici izni istenmez.</value></data>
   <data name="SetupInstallRoot" xml:space="preserve"><value>Kurulum yeri: {0}</value></data>
+  <data name="SetupGpu" xml:space="preserve"><value>Ekran kartı: {0} · {1} GB ayrılmış bellek</value></data>
+  <data name="SetupGpuNone" xml:space="preserve"><value>Ekran kartı bulunamadı — yerel görsel modelleri (Z-Image-Turbo, FLUX.2 klein) bu bilgisayarda çalışmaz.</value></data>
   <data name="SetupVideoFolder" xml:space="preserve"><value>Video klasörü</value></data>
   <data name="SetupVideoChange" xml:space="preserve"><value>Değiştir</value></data>
   <data name="SetupVideoInvalid" xml:space="preserve"><value>Video klasörü tam bir klasör yolu olmalı ve kurulum yeriyle aynı ya da onun içinde olamaz.</value></data>
@@ -83,7 +85,7 @@
   <data name="StatusVerifying" xml:space="preserve"><value>Doğrulanıyor</value></data>
   <data name="StatusInstalling" xml:space="preserve"><value>Kuruluyor</value></data>
   <data name="StatusInstalled" xml:space="preserve"><value>Kuruldu</value></data>
-  <data name="StatusSkipped" xml:space="preserve"><value>Atlandı</value></data>
+  <data name="StatusSkipped" xml:space="preserve"><value>İsteğe bağlı — üretim isterse onayla indirilir</value></data>
   <data name="StatusFailed" xml:space="preserve"><value>Hata — {0}</value></data>
   <data name="StatusNeedsRepair" xml:space="preserve"><value>Onarılmalı</value></data>
   <data name="FailureNoInternet" xml:space="preserve"><value>İnternet bağlantısı koptu</value></data>

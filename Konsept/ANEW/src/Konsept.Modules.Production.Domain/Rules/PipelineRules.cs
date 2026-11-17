@@ -40,6 +40,12 @@ public static class PipelineRules
         ["chatterbox-multilingual-v3"] = "Chatterbox",
         ["z-image-turbo"] = "Z-Image-Turbo",
         ["flux2-klein-4b"] = "FLUX.2 klein 4B",
+        ["python"] = "Python 3.12 (taşınabilir)",
+        ["uv"] = "uv (Python paket kurucu)",
+        ["speech-onnx"] = "Ses ortamı (ONNX Runtime)",
+        ["speech-torch"] = "Ses ortamı (PyTorch)",
+        ["sdcpp"] = "stable-diffusion.cpp",
+        ["qwen3-4b"] = "Qwen3 4B metin kodlayıcı",
     };
 
     /// <summary>Model yerel mi.</summary>

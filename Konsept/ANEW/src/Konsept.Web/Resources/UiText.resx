@@ -492,6 +492,7 @@
   <data name="ProductionOnlyTurkish" xml:space="preserve"><value>Yalnız Türkçe</value></data>
   <data name="ProductionOnlyEnglish" xml:space="preserve"><value>Yalnız İngilizce</value></data>
   <data name="ProductionLicense" xml:space="preserve"><value>Lisans uyarısı</value></data>
+  <data name="ProductionGpuRequired" xml:space="preserve"><value>Ekran kartı gerekir (≥ {0} GB)</value></data>
   <data name="JobQueued" xml:space="preserve"><value>Sırada</value></data>
   <data name="JobProducing" xml:space="preserve"><value>Üretiliyor</value></data>
   <data name="JobStopped" xml:space="preserve"><value>Durduruldu</value></data>
@@ -502,6 +503,7 @@
   <data name="ProductionInstallTitle" xml:space="preserve"><value>İndirme onayı</value></data>
   <data name="ProductionInstallText" xml:space="preserve"><value>“{0}” videosu için ajan bilgisayarına şunların indirilip kurulması gerekiyor:</value></data>
   <data name="ProductionInstallItem" xml:space="preserve"><value>{0} — yaklaşık {1} indirme, diskte {2}</value></data>
+  <data name="ProductionInstallLicense" xml:space="preserve"><value>lisans: {0}</value></data>
   <data name="ProductionInstallTotal" xml:space="preserve"><value>Toplam: yaklaşık {0} indirme, diskte {1}. İndirme ve kurulum ajan bilgisayarında yapılır; ilerleme ajanın simgesinde görünür.</value></data>
   <data name="ProductionInstallApprove" xml:space="preserve"><value>İndir ve devam et</value></data>
   <data name="ProductionInstallDecline" xml:space="preserve"><value>Vazgeç (üretimi durdur)</value></data>

@@ -17,16 +17,28 @@ namespace Konsept.Agent.Infrastructure.Concrete;
 /// kodu önce yasaklı yapı kapısından geçer (<see cref="RenderCodeGate"/>; ret → <see cref="AgentStageReply.CodeRejected"/>), sonra kısıtlı ortamda
 /// (<see cref="ISceneRenderer"/>) render edilir; çıktı kapısından geçen sahnenin işareti (<see cref="SceneMarker"/>) devamda yeniden render'ı önler.
 /// Birleştirme FFmpeg ile sabit şablondur (<see cref="MergeTemplate"/>); kodlayıcı bir kez yoklanır (B-117): NVENC varsa NVENC (kodlama sırasında
-/// düşerse CPU'ya düşülmez, Req 14a), yoksa yazılım kodlayıcı <c>libopenh264</c> ve sahne klipleri WebM. Yerel görsel/ses modelleri bugün
-/// kurulamaz (B-116): aşama "kurulu değil" döner. Süreç Durdur'da ağacıyla öldürülür.
+/// düşerse CPU'ya düşülmez, Req 14a), yoksa yazılım kodlayıcı <c>libopenh264</c> ve sahne klipleri WebM. Yerel görsel/ses modelleri (spec 0028)
+/// <see cref="ILocalModelStages"/> ile bileşen listesindeki çalıştırma şablonundan çalışır; verilmezse aşama "kurulu değil" döner. Birleştirmede
+/// altyazı sahne sesinin konuşma süresine göre zamanlanır. Süreç Durdur'da ağacıyla öldürülür.
 /// </summary>
 /// <param name="setup">Kurulum durumu.</param>
 /// <param name="installRoot">Kurulum yeri.</param>
 /// <param name="videoFolder">Video klasörünü veren kaynak.</param>
 /// <param name="renderer">Kısıtlı sahne render'ı.</param>
 /// <param name="logger">Teknik log.</param>
-public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoot, Func<string> videoFolder, ISceneRenderer renderer, ILogger logger)
-    : StageRunnerBase(setup, logger)
+/// <param name="models">Yerel model aşamaları (spec 0028) ya da <c>null</c>.</param>
+/// <param name="catalog">Çözülmüş bileşen listesi (araç denetimi) ya da <c>null</c>.</param>
+/// <param name="gpu">Ekran kartı ya da <c>null</c>.</param>
+public sealed class ProcessStageRunner(
+    ISetupStateStore setup,
+    string installRoot,
+    Func<string> videoFolder,
+    ISceneRenderer renderer,
+    ILogger logger,
+    ILocalModelStages? models = null,
+    IReadOnlyList<SetupComponent>? catalog = null,
+    GpuInfo? gpu = null)
+    : StageRunnerBase(setup, logger, catalog, gpu)
 {
     /// <summary>NVENC ile sahne klibi.</summary>
     public const string Mp4Clip = "clip.mp4";
@@ -45,7 +57,7 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
     {
         if (command.ImageModel is { } model && model.StartsWith("local/", StringComparison.Ordinal))
         {
-            return Missing(model); // Yerel görsel modeli koşucusu yok (B-116).
+            return models is null ? Missing(model) : await models.ImagesAsync(command, i => SceneDir(command, i), cancellationToken).ConfigureAwait(false);
         }
 
         foreach (var scene in command.Scenes.Where(s => s.ImageBase64 is not null))
@@ -59,7 +71,9 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
 
     /// <inheritdoc />
     protected override Task<AgentStageReply> VoiceAsync(AgentStageCommand command, CancellationToken cancellationToken) =>
-        Task.FromResult(Missing(command.AudioModel ?? "audio")); // Yerel ses modeli koşucusu yok (B-116).
+        models is not null && command.AudioModel is { } model && model.StartsWith("local/", StringComparison.Ordinal)
+            ? models.VoiceAsync(command, WorkDir(command), i => SceneDir(command, i), Ffmpeg, cancellationToken)
+            : Task.FromResult(Missing(command.AudioModel ?? "audio")); // Online ses koşucusu yok (B-115).
 
     /// <summary>
     /// NVENC kullanılabilir mi (B-117): ajan çalıştığı sürece bir kez, küçük bir deneme kodlamasıyla yoklanır. Kullanılamıyorsa yazılım
@@ -161,7 +175,7 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
         {
             await File.WriteAllTextAsync(
                 Path.Combine(work, MergeTemplate.SubtitleFile),
-                MergeTemplate.Subtitles([.. command.Scenes.Select(s => ((double)s.DurationSeconds, s.Narration))], width, height),
+                MergeTemplate.Subtitles([.. command.Scenes.Select(s => ((double)s.DurationSeconds, SpeechSeconds(SceneDir(command, s.Index), s.DurationSeconds), s.Narration))], width, height),
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -193,6 +207,15 @@ public sealed class ProcessStageRunner(ISetupStateStore setup, string installRoo
 
         Logger.Information("Video hazırlandı: {File}", fileName);
         return new AgentStageReply(true, Device: nvenc ? "gpu" : "cpu", AiVoiceNotice: notice);
+    }
+
+    /// <summary>Sahnenin oturtulmuş konuşma süresi (spec 0028 Req 9); kayıt yoksa sahne süresi.</summary>
+    private static double SpeechSeconds(string sceneDir, int sceneSeconds)
+    {
+        var file = Path.Combine(sceneDir, VoiceFit.SpeechFile);
+        return File.Exists(file) && double.TryParse(File.ReadAllText(file), NumberStyles.Float, CultureInfo.InvariantCulture, out var speech) && speech > 0
+            ? speech
+            : sceneSeconds;
     }
 
     private static string ClipOf(string sceneDir) =>

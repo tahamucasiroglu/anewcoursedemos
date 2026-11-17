@@ -137,4 +137,61 @@ public sealed class FakeSetupHost : ISetupHost
         await File.WriteAllTextAsync(Path.Combine(destination, "bin", "tool.mjs"), componentId + " cli", cancellationToken);
         return true;
     }
+
+    /// <summary>Gets Python ortamı kurulum çağrıları (spec 0028): bileşen, varyant, kilit hash'i, uv, Python, önbellek.</summary>
+    public List<(string Id, string? Variant, string Lock, string Uv, string Python, string Cache)> PythonInstalls { get; } = [];
+
+    /// <summary>Gets or sets a value indicating whether Python ortamı kurulumu başarılı olur.</summary>
+    public bool PythonSucceeds { get; set; } = true;
+
+    /// <summary>Çok dosyalı (model ağırlığı) bileşen (spec 0028); içerikler sahte sunucuya konur.</summary>
+    /// <param name="id">Kimlik.</param>
+    /// <param name="files">Göreli yol → içerik.</param>
+    /// <returns>Bileşen.</returns>
+    public SetupComponent AddFiles(string id, params (string Path, string Text)[] files)
+    {
+        var list = new List<ComponentFile>();
+        foreach (var (path, text) in files)
+        {
+            var bytes = Encoding.UTF8.GetBytes(text);
+            var url = new Uri($"https://huggingface.invalid/{id}/resolve/0123456789abcdef0123456789abcdef01234567/{path}");
+            Content[url] = bytes;
+            list.Add(new ComponentFile(path, url, Sha(bytes), bytes.Length));
+        }
+
+        return new SetupComponent(id, id.ToUpperInvariant(), "amaç", "Apache-2.0", "abc123", new Uri($"https://huggingface.invalid/{id}"), id + ".files",
+            Konsept.Agent.Domain.Rules.ComponentRules.FilesManifestSha256(list), list.Sum(f => f.Bytes), list.Sum(f => f.Bytes), null,
+            SetupComponent.FilesManifestName, null, null, false, false, SetupComponent.FilesInstaller, Files: list);
+    }
+
+    /// <summary>Python paket ortamı bileşeni (spec 0028): taşınabilir Python ve uv'ye bağlı.</summary>
+    /// <param name="id">Kimlik.</param>
+    /// <param name="variant">Çözülmüş varyant ya da <c>null</c>.</param>
+    /// <returns>Bileşen.</returns>
+    public static SetupComponent AddPython(string id, string? variant = null) =>
+        new(id, id.ToUpperInvariant(), "amaç", "MIT", "1.0.0" + (variant is null ? string.Empty : "+" + variant), new Uri($"https://pypi.invalid/{id}"), id + ".txt",
+            new string('b', 64), 1000, 2000, null, "pkg/__init__.py", null, null, false, false, SetupComponent.Python,
+            Requires: [SetupComponent.PythonRuntimeId, SetupComponent.UvId], Variant: variant);
+
+    /// <inheritdoc />
+    public async Task<bool> InstallPythonPackagesAsync(
+        string componentId,
+        string? variant,
+        string lockSha256,
+        string uvExecutable,
+        string pythonExecutable,
+        string destination,
+        string cacheDirectory,
+        CancellationToken cancellationToken)
+    {
+        PythonInstalls.Add((componentId, variant, lockSha256, uvExecutable, pythonExecutable, cacheDirectory));
+        if (!PythonSucceeds)
+        {
+            return false;
+        }
+
+        Directory.CreateDirectory(Path.Combine(destination, "pkg"));
+        await File.WriteAllTextAsync(Path.Combine(destination, "pkg", "__init__.py"), componentId, cancellationToken);
+        return true;
+    }
 }

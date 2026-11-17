@@ -55,7 +55,7 @@ public sealed class ComponentInstallerTests : IDisposable
     {
         var installer = new ComponentInstaller(await CreateAsync(), TimeProvider.System);
 
-        installer.Describe(["model", "supertonic-3"]).ShouldBe([new AgentComponentInfo("model", "MODEL", 1000, 2000)]);
+        installer.Describe(["model", "supertonic-3"]).ShouldBe([new AgentComponentInfo("model", "MODEL", 1000, 2000, "MIT")]); // A-2 (plan 0028): lisans da bildirilir.
     }
 
     /// <summary>Kurulum komutu istenen isteğe bağlı bileşeni kurar (diğerine dokunmaz), Hazır olayı çıkar, sonuç başarılı.</summary>

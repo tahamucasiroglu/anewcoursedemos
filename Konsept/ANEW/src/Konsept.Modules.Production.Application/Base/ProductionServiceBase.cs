@@ -373,7 +373,7 @@ public abstract class ProductionServiceBase(
     private static string Format(string format, params object[] args) => string.Format(System.Globalization.CultureInfo.InvariantCulture, format, args);
 
     private static PendingInstallDto? ToDto(PendingInstall? install) =>
-        install is null ? null : new PendingInstallDto(install.Approved, [.. install.Components.Select(c => new InstallItemDto(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes))]);
+        install is null ? null : new PendingInstallDto(install.Approved, [.. install.Components.Select(c => new InstallItemDto(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes, c.License))]);
 
     private static StageDto ToDto(StageProgress s) => new(
         s.Stage switch
@@ -539,7 +539,7 @@ public abstract class ProductionServiceBase(
             profileId,
             ToDto(settings),
             [.. (listed ?? []).Select(m => new ProductionModelDto(
-                m.Id, m.Name, m.Kind, m.Local, m.LanguageOnly, m.LicenseWarning, m.EffortLevels, m.DefaultEffort, m.Availability))],
+                m.Id, m.Name, m.Kind, m.Local, m.LanguageOnly, m.LicenseWarning, m.EffortLevels, m.DefaultEffort, m.Availability, m.MinVramGb))],
             listed is null,
             [.. mine.Select((j, i) => new ProductionJobDto(
                 j.Id,

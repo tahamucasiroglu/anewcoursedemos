@@ -19,6 +19,7 @@ namespace Konsept.Agent.Infrastructure.Concrete;
 /// <param name="defaultVideoFolder">Varsayılan video klasörü.</param>
 /// <param name="mirrorBase">Pi aynası adresi.</param>
 /// <param name="logger">Teknik log; verilmezse yazılmaz.</param>
+/// <param name="gpu">Ekran kartı (spec 0028) ya da <c>null</c>.</param>
 public sealed class SetupCoordinator(
     IReadOnlyList<SetupComponent> catalog,
     ISetupHost host,
@@ -26,7 +27,8 @@ public sealed class SetupCoordinator(
     string installRoot,
     string defaultVideoFolder,
     Uri? mirrorBase,
-    ILogger? logger = null) : SetupCoordinatorBase(catalog, host, store, installRoot, defaultVideoFolder, mirrorBase)
+    ILogger? logger = null,
+    GpuInfo? gpu = null) : SetupCoordinatorBase(catalog, host, store, installRoot, defaultVideoFolder, mirrorBase, gpu)
 {
     private readonly ILogger _logger = (logger ?? Serilog.Core.Logger.None).ForContext<SetupCoordinator>();
 

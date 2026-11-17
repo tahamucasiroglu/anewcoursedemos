@@ -11,6 +11,9 @@
     <EmbeddedResource Include="Sandbox\render-guard.mjs" LogicalName="Konsept.Agent.Infrastructure.Sandbox.render-guard.mjs" />
     <EmbeddedResource Include="Setup\hyperframes\package.json" LogicalName="Konsept.Agent.Infrastructure.Setup.hyperframes.package.json" />
     <EmbeddedResource Include="Setup\hyperframes\package-lock.json" LogicalName="Konsept.Agent.Infrastructure.Setup.hyperframes.package-lock.json" />
+    <!-- Spec 0028: Python ortamlarının hash'li kilit dosyaları ve ses çalıştırma betiği. -->
+    <EmbeddedResource Include="Setup\python\*.txt" LogicalName="Konsept.Agent.Infrastructure.Setup.python.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Setup\runners\*.py" LogicalName="Konsept.Agent.Infrastructure.Setup.runners.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Konsept.Agent.Application\Konsept.Agent.Application.csproj" />

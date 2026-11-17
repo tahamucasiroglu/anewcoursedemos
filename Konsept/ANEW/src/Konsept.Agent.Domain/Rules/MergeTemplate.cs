@@ -56,6 +56,20 @@ public static class MergeTemplate
     public static string Subtitles(IReadOnlyList<(double Seconds, string Narration)> scenes, int width, int height)
     {
         ArgumentNullException.ThrowIfNull(scenes);
+        return Subtitles([.. scenes.Select(s => (s.Seconds, s.Seconds, s.Narration))], width, height);
+    }
+
+    /// <summary>
+    /// ASS altyazı dosyası, konuşma süresiyle (spec 0028 Req 9): her sahnede kelimeler sahne başından konuşmanın oturtulmuş süresi içinde
+    /// zamanlanır (konuşma bitince sahnenin geri kalanında altyazı yok); konuşma süresi 0 ya da sahneden uzunsa sahne süresi kullanılır.
+    /// </summary>
+    /// <param name="scenes">Sahneler (süre sn, konuşma sn, seslendirme metni).</param>
+    /// <param name="width">Genişlik.</param>
+    /// <param name="height">Yükseklik.</param>
+    /// <returns>Dosya içeriği.</returns>
+    public static string Subtitles(IReadOnlyList<(double Seconds, double Speech, string Narration)> scenes, int width, int height)
+    {
+        ArgumentNullException.ThrowIfNull(scenes);
         var c = CultureInfo.InvariantCulture;
         var text = new StringBuilder();
         text.Append("[Script Info]\nScriptType: v4.00+\nPlayResX: ").Append(width.ToString(c)).Append("\nPlayResY: ").Append(height.ToString(c)).Append("\n\n");
@@ -65,17 +79,18 @@ public static class MergeTemplate
             .Append((height / 10).ToString(c)).Append(",1\n\n");
         text.Append("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
         var offset = 0d;
-        foreach (var (seconds, narration) in scenes)
+        foreach (var (seconds, speech, narration) in scenes)
         {
             var words = Clean(narration).Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var total = words.Sum(w => w.Length);
+            var spoken = speech > 0 && speech < seconds ? speech : seconds;
             var at = offset;
             for (var first = 0; first < words.Length; first += WordsPerLine)
             {
                 var line = words.Skip(first).Take(WordsPerLine).ToArray();
                 for (var i = 0; i < line.Length; i++)
                 {
-                    var length = seconds * line[i].Length / total;
+                    var length = spoken * line[i].Length / total;
                     text.Append("Dialogue: 0,").Append(Time(at)).Append(',').Append(Time(at + length)).Append(",Default,,0,0,0,,")
                         .Append(string.Join(' ', line.Select((w, j) => j == i ? "{\\c" + HighlightColor + "}" + w + "{\\c" + TextColor + "}" : w)))
                         .Append('\n');

@@ -24,7 +24,7 @@ function pageHtml() {
          data-text-state-failed="hata" data-text-stages="{0} aşamaları" data-text-cost="Maliyet: {0}"
          data-text-watch="{0} videosunu izle" data-text-player="{0} oynatıcısı"
          data-text-awaiting-install="Onay bekleniyor — indirme gerekli" data-text-installing="İndiriliyor ve kuruluyor: {0}" data-text-install-open="İndirmeyi onayla…"
-         data-text-install-text="“{0}” videosu için ajan bilgisayarına şunların indirilip kurulması gerekiyor:" data-text-install-item="{0} — yaklaşık {1} indirme, diskte {2}"
+         data-text-install-text="“{0}” videosu için ajan bilgisayarına şunların indirilip kurulması gerekiyor:" data-text-install-item="{0} — yaklaşık {1} indirme, diskte {2}" data-text-install-license="lisans: {0}"
          data-text-install-total="Toplam: yaklaşık {0} indirme, diskte {1}.">
       <button type="button" id="production-models-open" disabled>
         <span id="production-summary-code"></span><span id="production-summary-engine"></span>
@@ -82,7 +82,7 @@ const PENDING = {
   approved: false,
   components: [
     { id: 'hyperframes', name: 'HyperFrames', downloadBytes: 40 * MB, installedBytes: 115 * MB },
-    { id: 'model', name: 'Model', downloadBytes: 3 * 1024 * MB, installedBytes: 6 * 1024 * MB },
+    { id: 'model', name: 'Model', downloadBytes: 3 * 1024 * MB, installedBytes: 6 * 1024 * MB, license: 'OpenRAIL-M' },
   ],
 };
 
@@ -127,7 +127,7 @@ describe('Konseptten Video — eksik bileşen indirme onayı (spec 0027)', () =>
     expect(el('production-install-text').textContent).toBe('“Kuşatma” videosu için ajan bilgisayarına şunların indirilip kurulması gerekiyor:');
     expect([...el('production-install-list').children].map((n) => n.textContent)).toEqual([
       'HyperFrames — yaklaşık 40 MB indirme, diskte 115 MB',
-      'Model — yaklaşık 3,0 GB indirme, diskte 6,0 GB',
+      'Model — yaklaşık 3,0 GB indirme, diskte 6,0 GB · lisans: OpenRAIL-M', // Spec 0028 AC-9: lisans da görünür.
     ]);
     expect(el('production-install-total').textContent).toBe('Toplam: yaklaşık 3,0 GB indirme, diskte 6,1 GB.');
     expect(document.activeElement).toBe(el('production-install-title'));

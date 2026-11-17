@@ -18,6 +18,6 @@ public abstract class ModelDirectoryBase(ICatalogService catalog) : IModelDirect
         }
 
         return [.. result.Value.Models.Select(m => new ModelInfo(
-            m.Id, m.Name, m.Kind, m.Local, m.LanguageOnly, m.LicenseWarning, m.Component, m.EffortLevels, m.DefaultEffort, m.Availability))];
+            m.Id, m.Name, m.Kind, m.Local, m.LanguageOnly, m.LicenseWarning, m.Component, m.EffortLevels, m.DefaultEffort, m.Availability, m.MinVramGb))];
     }
 }

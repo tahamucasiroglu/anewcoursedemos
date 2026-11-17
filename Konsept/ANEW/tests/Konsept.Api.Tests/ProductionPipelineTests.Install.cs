@@ -185,6 +185,49 @@ public sealed partial class ProductionPipelineTests
         _factory.Agent.Count("InstallComponents").ShouldBe(0);
     }
 
+    /// <summary>
+    /// Spec 0028 AC-5: ekran kartı gerektiren yerel görsel modeli bu bilgisayarda desteklenmezse (ajan "desteklenmez" der) iş çağrısız Hata
+    /// olur; mesaj modeli ve gereken belleği söyler; indirme önerilmez (kurulabilir diğer eksikler olsa da).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Install_GpuRequired_FailsWithMessage()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct, audio: null, image: "local/z-image-turbo");
+        _factory.Agent.Missing = ["hyperframes", "z-image-turbo"];
+        _factory.Agent.Installable = [HyperFrames];
+        _factory.Agent.Unsupported = [new AgentUnsupportedTool("z-image-turbo", AgentUnsupportedTool.GpuRequired, 4096)];
+        var concept = Seed(profile, user, "Kartsız Bilgisayar");
+        await EnqueueAndStartAsync(client, profile, [concept], ct);
+
+        await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
+
+        Job(concept).Progress!.Error.ShouldBe(
+            "Z-Image-Turbo bu bilgisayarda çalışamaz: ekran kartı (en az 4 GB ayrılmış bellek) gerekir. Üretim ayarlarından başka bir görsel modeli seçin ya da görseli kapatın.");
+        Job(concept).Progress!.Install.ShouldBeNull();
+        _factory.Provider.Calls.ShouldBeEmpty();
+        _factory.Agent.Count("InstallComponents").ShouldBe(0);
+    }
+
+    /// <summary>Spec 0028 Req 12: bekleyen indirmede her bileşenin lisansı da saklanır ve web'e gider.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Install_Pending_CarriesLicense()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var (client, profile, user, _) = await SetupAsync(ct, audio: null);
+        _factory.Agent.Missing = ["hyperframes"];
+        _factory.Agent.Installable = [HyperFrames with { License = "Apache-2.0" }];
+        var concept = Seed(profile, user, "Lisanslı");
+        await EnqueueAndStartAsync(client, profile, [concept], ct);
+
+        await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Progress?.Install is not null), Limit, ct);
+
+        var row = (await StateAsync(client, profile, ct)).GetProperty("jobs").EnumerateArray().First();
+        row.GetProperty("install").GetProperty("components").EnumerateArray().Single().GetProperty("license").GetString().ShouldBe("Apache-2.0");
+    }
+
     /// <summary>AC-6: Onayla/Reddet yalnızca sahibinin bekleyen indirmesinde: başkasının işi 404, bekleyen indirmesi olmayan iş 409.</summary>
     /// <returns>Görev.</returns>
     [Fact]

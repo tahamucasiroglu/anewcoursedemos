@@ -29,6 +29,7 @@
   <data name="BlockImageLanguage" xml:space="preserve"><value>Seçili görsel modeli konsept dilini desteklemiyor</value></data>
   <data name="PipelineNoKey" xml:space="preserve"><value>API key yok — Ayarlar</value></data>
   <data name="PipelineToolsMissing" xml:space="preserve"><value>Ajan kurulumu eksik: {0}</value></data>
+  <data name="PipelineGpuRequired" xml:space="preserve"><value>{0} bu bilgisayarda çalışamaz: ekran kartı (en az {1} GB ayrılmış bellek) gerekir. Üretim ayarlarından başka bir görsel modeli seçin ya da görseli kapatın.</value></data>
   <data name="PipelineToolsUnavailable" xml:space="preserve"><value>Ajan kurulumu eksik: {0}. Bu ajan sürümü bunları indirip kuramıyor; Üretim ayarlarından başka bir model seçin ya da ajanı güncelleyin.</value></data>
   <data name="NoPendingInstall" xml:space="preserve"><value>Bu işin onay bekleyen bir indirmesi yok.</value></data>
   <data name="PipelineInstallDeclined" xml:space="preserve"><value>İndirme onaylanmadı: {0}. Üretim durdu.</value></data>

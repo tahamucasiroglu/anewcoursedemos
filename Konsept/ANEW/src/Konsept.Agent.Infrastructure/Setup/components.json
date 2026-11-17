@@ -71,5 +71,534 @@
     "required": true,
     "mirrored": false,
     "installer": "npm"
+  },
+  {
+    "id": "python",
+    "name": "Python 3.12 (taşınabilir)",
+    "purpose": "Yerel ses modellerini çalıştıran dil ortamı (yalnızca ajan klasöründe)",
+    "license": "PSF-2.0",
+    "version": "3.12.16",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+    "fileName": "cpython-3.12.16-20261026-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+    "sha256": "1f2ab53880fc67ea323398c6388e05af28addc99a8e389209f08a51fdff4b149",
+    "downloadBytes": 22014416,
+    "installedBytes": 63260583,
+    "archiveRoot": "python",
+    "executable": "python.exe",
+    "checkArguments": "--version",
+    "checkExpect": "Python 3.12.16",
+    "required": false,
+    "mirrored": false
+  },
+  {
+    "id": "uv",
+    "name": "uv (Python paket kurucu)",
+    "purpose": "Ses ortamının paketlerini hash'leriyle doğrulayarak kurar",
+    "license": "MIT OR Apache-2.0",
+    "version": "0.13.6",
+    "url": "https://github.com/astral-sh/uv/releases/download/0.13.6/uv-x86_64-pc-windows-msvc.zip",
+    "fileName": "uv-0.13.6-x86_64-pc-windows-msvc.zip",
+    "sha256": "a2a8820d5eea32f08ef467ef3b7f66883a9b076d5737a2fc2fbb5f458d1bb50f",
+    "downloadBytes": 15239500,
+    "installedBytes": 32494992,
+    "archiveRoot": null,
+    "executable": "uv.exe",
+    "checkArguments": "--version",
+    "checkExpect": "uv 0.13.6",
+    "required": false,
+    "mirrored": false
+  },
+  {
+    "id": "speech-onnx",
+    "name": "Ses ortamı (ONNX Runtime)",
+    "purpose": "Supertonic 3 seslendirmesini çalıştıran Python paketleri (CPU)",
+    "license": "MIT (paketler kendi açık kaynak lisanslarıyla)",
+    "version": "1.3.1",
+    "url": "https://pypi.org/project/supertonic/1.3.1/",
+    "fileName": "speech-onnx.txt",
+    "sha256": "1b35feba64140c85fbea1779ba9547c710235a870a48f7022b5f4b3e9872caf6",
+    "downloadBytes": 35425166,
+    "installedBytes": 112094249,
+    "archiveRoot": null,
+    "executable": "supertonic/__init__.py",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "python",
+    "requires": [
+      "python",
+      "uv"
+    ]
+  },
+  {
+    "id": "speech-torch",
+    "name": "Ses ortamı (PyTorch)",
+    "purpose": "Chatterbox seslendirmesini çalıştıran Python paketleri (NVIDIA kartta CUDA, yoksa CPU)",
+    "license": "BSD-3-Clause (PyTorch) · MIT (Chatterbox) · paketler kendi lisanslarıyla",
+    "version": "0.1.7",
+    "url": "https://pypi.org/project/chatterbox-tts/0.1.7/",
+    "fileName": "speech-torch.txt",
+    "sha256": "60d167761bb45c9d4aacba160f57d554ce32fa55667f8bede434428ce2e90564",
+    "downloadBytes": 414114556,
+    "installedBytes": 1747944637,
+    "archiveRoot": null,
+    "executable": "chatterbox/__init__.py",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "python",
+    "requires": [
+      "python",
+      "uv"
+    ],
+    "variants": [
+      {
+        "id": "cuda",
+        "gpu": "nvidia",
+        "minVramMb": 8192,
+        "sha256": "9cdf8d4393a54d5fb72afc75d56807e865bfa7d6853d64a9f072aef9428c8e8e",
+        "downloadBytes": 2741642540,
+        "installedBytes": 5237175156
+      },
+      {
+        "id": "cpu",
+        "gpu": null,
+        "minVramMb": 0,
+        "sha256": "60d167761bb45c9d4aacba160f57d554ce32fa55667f8bede434428ce2e90564",
+        "downloadBytes": 414114556,
+        "installedBytes": 1747944637
+      }
+    ]
+  },
+  {
+    "id": "sdcpp",
+    "name": "stable-diffusion.cpp (Vulkan)",
+    "purpose": "Yerel görsel modellerini ekran kartında çalıştıran motor (NVIDIA, AMD, Intel)",
+    "license": "MIT",
+    "version": "master-1043-3be2378",
+    "url": "https://github.com/leejet/stable-diffusion.cpp/releases/download/master-1043-3be2378/sd-master-3be2378-bin-win-vulkan-x64.zip",
+    "fileName": "sd-master-3be2378-bin-win-vulkan-x64.zip",
+    "sha256": "a5e1fa679561a3bb99b114a8f4a41e67239da29173ff725391ecfa5772e869ee",
+    "downloadBytes": 29796631,
+    "installedBytes": 88980561,
+    "archiveRoot": null,
+    "executable": "sd-cli.exe",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false
+  },
+  {
+    "id": "qwen3-4b",
+    "name": "Qwen3 4B metin kodlayıcı",
+    "purpose": "Z-Image-Turbo ve FLUX.2 klein'in tarifi anlayan dil modeli (GGUF, ortak)",
+    "license": "Apache-2.0",
+    "version": "22c9fc8a",
+    "url": "https://huggingface.co/unsloth/Qwen3-4B-GGUF",
+    "fileName": "qwen3-4b.files",
+    "sha256": "90cbab985c6d2438832a2a5eb552a0addce6703aa4b2109db0f134c9c7689d96",
+    "downloadBytes": 2497281312,
+    "installedBytes": 2497281312,
+    "archiveRoot": null,
+    "executable": "files.sha256",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "files",
+    "files": [
+      {
+        "path": "Qwen3-4B-Q4_K_M.gguf",
+        "url": "https://huggingface.co/unsloth/Qwen3-4B-GGUF/resolve/22c9fc8a8c7700b76a1789366280a6a5a1ad1120/Qwen3-4B-Q4_K_M.gguf",
+        "sha256": "f6f851777709861056efcdad3af01da38b31223a3ba26e61a4f8bf3a2195813a",
+        "bytes": 2497281312
+      }
+    ]
+  },
+  {
+    "id": "z-image-turbo",
+    "name": "Z-Image-Turbo",
+    "purpose": "Yerel görsel modeli: sahne görsellerini ekran kartında üretir (GGUF Q4_K)",
+    "license": "Apache-2.0",
+    "version": "c61c0e42",
+    "url": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo",
+    "fileName": "z-image-turbo.files",
+    "sha256": "330bf27cb9cefde7cbb6c7004963e43f283e1c42d60a4451b202fda2ca7fa61f",
+    "downloadBytes": 4199554692,
+    "installedBytes": 4199554692,
+    "archiveRoot": null,
+    "executable": "files.sha256",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "files",
+    "requires": [
+      "sdcpp",
+      "qwen3-4b"
+    ],
+    "files": [
+      {
+        "path": "z_image_turbo-Q4_K.gguf",
+        "url": "https://huggingface.co/leejet/Z-Image-Turbo-GGUF/resolve/c61c0e422dc8b541b7548cf33a4ef8302b0f8085/z_image_turbo-Q4_K.gguf",
+        "sha256": "14b375ab4f226bc5378f68f37e899ef3c2242b8541e61e2bc1aff40976086fbd",
+        "bytes": 3864250304
+      },
+      {
+        "path": "ae.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/6fc90a3b1b653e935a0d175e260736de25b84df5/split_files/vae/ae.safetensors",
+        "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+        "bytes": 335304388
+      }
+    ],
+    "gpu": {
+      "minVramMb": 4096
+    },
+    "run": {
+      "task": "image",
+      "tool": "sdcpp",
+      "timeoutSeconds": 900,
+      "args": [
+        "--diffusion-model",
+        "{self}/z_image_turbo-Q4_K.gguf",
+        "--vae",
+        "{self}/ae.safetensors",
+        "--llm",
+        "{qwen3-4b}/Qwen3-4B-Q4_K_M.gguf",
+        "-p",
+        "{prompt}",
+        "--cfg-scale",
+        "1.0",
+        "--steps",
+        "8",
+        "-W",
+        "{width}",
+        "-H",
+        "{height}",
+        "--seed",
+        "{seed}",
+        "--offload-to-cpu",
+        "--mmap",
+        "-o",
+        "{output}"
+      ]
+    }
+  },
+  {
+    "id": "flux2-klein-4b",
+    "name": "FLUX.2 klein 4B",
+    "purpose": "Yerel görsel modeli: hızlı (4 adım) sahne görselleri (GGUF Q4_0)",
+    "license": "Apache-2.0",
+    "version": "3b1f5a9d",
+    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B",
+    "fileName": "flux2-klein-4b.files",
+    "sha256": "ab924b713372bacd22ea525093a7326370fb7ad5fb54b1d436a85a121c7e1dbb",
+    "downloadBytes": 2796589852,
+    "installedBytes": 2796589852,
+    "archiveRoot": null,
+    "executable": "files.sha256",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "files",
+    "requires": [
+      "sdcpp",
+      "qwen3-4b"
+    ],
+    "files": [
+      {
+        "path": "flux-2-klein-4b-Q4_0.gguf",
+        "url": "https://huggingface.co/leejet/FLUX.2-klein-4B-GGUF/resolve/3b1f5a9dc3abb32238b053aeb3d823c30afdacbd/flux-2-klein-4b-Q4_0.gguf",
+        "sha256": "d1023499ef3f2f82ff7c50e6778495195c1b6cc34835741778868428111f9ff4",
+        "bytes": 2460378560
+      },
+      {
+        "path": "flux2-vae.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/flux2-klein-4B/resolve/5b3abca5c0dc1ecd4eaf3340868d09063fc1c965/split_files/vae/flux2-vae.safetensors",
+        "sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3",
+        "bytes": 336211292
+      }
+    ],
+    "gpu": {
+      "minVramMb": 4096
+    },
+    "run": {
+      "task": "image",
+      "tool": "sdcpp",
+      "timeoutSeconds": 900,
+      "args": [
+        "--diffusion-model",
+        "{self}/flux-2-klein-4b-Q4_0.gguf",
+        "--vae",
+        "{self}/flux2-vae.safetensors",
+        "--llm",
+        "{qwen3-4b}/Qwen3-4B-Q4_K_M.gguf",
+        "-p",
+        "{prompt}",
+        "--cfg-scale",
+        "1.0",
+        "--steps",
+        "4",
+        "-W",
+        "{width}",
+        "-H",
+        "{height}",
+        "--seed",
+        "{seed}",
+        "--offload-to-cpu",
+        "--mmap",
+        "-o",
+        "{output}"
+      ]
+    }
+  },
+  {
+    "id": "supertonic-3",
+    "name": "Supertonic 3",
+    "purpose": "Yerel seslendirme modeli (31 dil, Türkçe dahil; CPU yeter)",
+    "license": "OpenRAIL-M",
+    "version": "724fb5ab",
+    "url": "https://huggingface.co/Supertone/supertonic-3",
+    "fileName": "supertonic-3.files",
+    "sha256": "2d9eaceef4b88e12b1ce4a3900fa4b463bc62af70df9f217c84e06c551d49ef5",
+    "downloadBytes": 401291925,
+    "installedBytes": 401291925,
+    "archiveRoot": null,
+    "executable": "files.sha256",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "files",
+    "requires": [
+      "speech-onnx"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/LICENSE",
+        "sha256": "0d944a9110fed9a9602d60e0423a272903e7bd21ab060490774efc77c2275e9f",
+        "bytes": 15007
+      },
+      {
+        "path": "config.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/config.json",
+        "sha256": "4099082b107a9d4029849ac76b89eca65e03732660969c2babe5bf308c7357f2",
+        "bytes": 174
+      },
+      {
+        "path": "onnx/duration_predictor.onnx",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/onnx/duration_predictor.onnx",
+        "sha256": "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db",
+        "bytes": 3700147
+      },
+      {
+        "path": "onnx/text_encoder.onnx",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/onnx/text_encoder.onnx",
+        "sha256": "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff",
+        "bytes": 36416150
+      },
+      {
+        "path": "onnx/tts.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/onnx/tts.json",
+        "sha256": "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09",
+        "bytes": 8253
+      },
+      {
+        "path": "onnx/unicode_indexer.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/onnx/unicode_indexer.json",
+        "sha256": "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f",
+        "bytes": 277676
+      },
+      {
+        "path": "onnx/vector_estimator.onnx",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/onnx/vector_estimator.onnx",
+        "sha256": "883ac868ea0275ef0e991524dc64f16b3c0376efd7c320af6b53f5b780d7c61c",
+        "bytes": 256534781
+      },
+      {
+        "path": "onnx/vocoder.onnx",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/onnx/vocoder.onnx",
+        "sha256": "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba",
+        "bytes": 101424195
+      },
+      {
+        "path": "voice_styles/F1.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/F1.json",
+        "sha256": "bbdec6ee00231c2c742ad05483df5334cab3b52fda3ba38e6a07059c4563dbc2",
+        "bytes": 292046
+      },
+      {
+        "path": "voice_styles/F2.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/F2.json",
+        "sha256": "7c722c6a72707b1a77f035d67f0d1351ba187738e06f7683e8c72b1df3477fc6",
+        "bytes": 292423
+      },
+      {
+        "path": "voice_styles/F3.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/F3.json",
+        "sha256": "12f6ef2573baa2defa1128069cb59f203e3ab67c92af77b42df8a0e3a2f7c6ab",
+        "bytes": 290794
+      },
+      {
+        "path": "voice_styles/F4.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/F4.json",
+        "sha256": "c2fa764c1225a76dfc3e2c73e8aa4f70d9ee48793860eb34c295fff01c2e032b",
+        "bytes": 291808
+      },
+      {
+        "path": "voice_styles/F5.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/F5.json",
+        "sha256": "45966e73316415626cf41a7d1c6f3b4c70dbc1ba2bee5c1978ef0ce33244fc8d",
+        "bytes": 291479
+      },
+      {
+        "path": "voice_styles/M1.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/M1.json",
+        "sha256": "e35604687f5d23694b8e91593a93eec0e4eca6c0b02bb8ed69139ab2ea6b0a5b",
+        "bytes": 291748
+      },
+      {
+        "path": "voice_styles/M2.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/M2.json",
+        "sha256": "b76cbf62bac707c710cf0ae5aba5e31eea1a6339a9734bfae33ab98499534a50",
+        "bytes": 292055
+      },
+      {
+        "path": "voice_styles/M3.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/M3.json",
+        "sha256": "ea1ac35ccb91b0d7ecad533a2fbd0eec10c91513d8951e3b25fbba99954e159b",
+        "bytes": 290198
+      },
+      {
+        "path": "voice_styles/M4.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/M4.json",
+        "sha256": "ca8eefad4fcd989c9379032ff3e50738adc547eeb5e221b82593a6d7b3bac303",
+        "bytes": 291522
+      },
+      {
+        "path": "voice_styles/M5.json",
+        "url": "https://huggingface.co/Supertone/supertonic-3/resolve/724fb5abbf5502583fb520898d45929e62f02c0b/voice_styles/M5.json",
+        "sha256": "dd22b92740314321f8ae11c5e87f8dd60d060f15dd3a632b5adf77f471f77af2",
+        "bytes": 291469
+      }
+    ],
+    "run": {
+      "task": "speech",
+      "tool": "python",
+      "timeoutSeconds": 1800,
+      "args": [
+        "-I",
+        "-B",
+        "-X",
+        "utf8",
+        "{script:speech.py}",
+        "--site",
+        "{speech-onnx}",
+        "--backend",
+        "supertonic",
+        "--model-dir",
+        "{self}",
+        "--model-name",
+        "supertonic-3",
+        "--voice",
+        "F1",
+        "--lang",
+        "{lang}",
+        "--input",
+        "{input}",
+        "--output",
+        "{output}"
+      ]
+    }
+  },
+  {
+    "id": "chatterbox-multilingual-v3",
+    "name": "Chatterbox Multilingual V3",
+    "purpose": "Yerel seslendirme modeli (23 dil, Türkçe dahil; Perth filigranlı)",
+    "license": "MIT",
+    "version": "5bb1f6ee",
+    "url": "https://huggingface.co/ResembleAI/chatterbox",
+    "fileName": "chatterbox-multilingual-v3.files",
+    "sha256": "cb89684edd30b8fd2513c1b8245d99d6af329d000463257693c06d7f05c8a114",
+    "downloadBytes": 3208951924,
+    "installedBytes": 3208951924,
+    "archiveRoot": null,
+    "executable": "files.sha256",
+    "checkArguments": null,
+    "checkExpect": null,
+    "required": false,
+    "mirrored": false,
+    "installer": "files",
+    "requires": [
+      "speech-torch"
+    ],
+    "files": [
+      {
+        "path": "ve.pt",
+        "url": "https://huggingface.co/ResembleAI/chatterbox/resolve/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/ve.pt",
+        "sha256": "4b16d836bc598509860f6fa068165a8bb5e9ac84f05582dfcf278a5a372879f1",
+        "bytes": 5698626
+      },
+      {
+        "path": "t3_mtl23ls_v3.safetensors",
+        "url": "https://huggingface.co/ResembleAI/chatterbox/resolve/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/t3_mtl23ls_v3.safetensors",
+        "sha256": "5abca8321ede76f8e61f1cc0d19aea6c946b28871017ce8726f8a69203f05953",
+        "bytes": 2143989928
+      },
+      {
+        "path": "s3gen.pt",
+        "url": "https://huggingface.co/ResembleAI/chatterbox/resolve/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/s3gen.pt",
+        "sha256": "9b9ff07e60b20c136e2b1b3d7563a24604e8d2c4c267888d1ee929dd0151d2a3",
+        "bytes": 1057165844
+      },
+      {
+        "path": "grapheme_mtl_merged_expanded_v1.json",
+        "url": "https://huggingface.co/ResembleAI/chatterbox/resolve/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/grapheme_mtl_merged_expanded_v1.json",
+        "sha256": "69632f47220a788a52ce2661d096453c5655e9bf25289d89a8d832c46ee07dbf",
+        "bytes": 69989
+      },
+      {
+        "path": "conds.pt",
+        "url": "https://huggingface.co/ResembleAI/chatterbox/resolve/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/conds.pt",
+        "sha256": "6552d70568833628ba019c6b03459e77fe71ca197d5c560cef9411bee9d87f4e",
+        "bytes": 107374
+      },
+      {
+        "path": "Cangjie5_TC.json",
+        "url": "https://huggingface.co/ResembleAI/chatterbox/resolve/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/Cangjie5_TC.json",
+        "sha256": "7073fd9de919443ae88e0bd2449917a65fe54898a4413ed1edcc4b67f28bce8c",
+        "bytes": 1920163
+      }
+    ],
+    "run": {
+      "task": "speech",
+      "tool": "python",
+      "timeoutSeconds": 7200,
+      "args": [
+        "-I",
+        "-B",
+        "-X",
+        "utf8",
+        "{script:speech.py}",
+        "--site",
+        "{speech-torch}",
+        "--backend",
+        "chatterbox",
+        "--model-dir",
+        "{self}",
+        "--t3",
+        "t3_mtl23ls_v3.safetensors",
+        "--lang",
+        "{lang}",
+        "--input",
+        "{input}",
+        "--output",
+        "{output}"
+      ]
+    }
   }
 ]

@@ -28,6 +28,9 @@ public sealed class FakeAgentChannel : IAgentChannel
     /// <summary>Gets or sets ajanın kurabildiği bileşenler (spec 0027); araç denetimi eksiklerden bunları bildirir.</summary>
     public IReadOnlyList<AgentComponentInfo> Installable { get; set; } = [];
 
+    /// <summary>Gets or sets bu bilgisayarda çalışamayan araçlar (spec 0028: ekran kartı gerekir).</summary>
+    public IReadOnlyList<AgentUnsupportedTool> Unsupported { get; set; } = [];
+
     /// <summary>Gets or sets kurulum komutunun cevabı (spec 0027); varsayılan: istenenleri kurar (eksiklerden çıkarır) ve başarı döner.</summary>
     public Func<string, AgentInstallRequest, CancellationToken, Task<AgentInstallReply>> Install { get; set; }
 
@@ -100,6 +103,7 @@ public sealed class FakeAgentChannel : IAgentChannel
         Missing = [];
         BeforeCheck = null;
         Installable = [];
+        Unsupported = [];
         Install = DefaultInstall;
         Stage = DefaultStage;
         FileAction = DefaultFileAction;
@@ -120,7 +124,7 @@ public sealed class FakeAgentChannel : IAgentChannel
         }
 
         var missing = Missing;
-        return new AgentToolCheckReply([.. missing], [.. Installable.Where(c => missing.Contains(c.Id))]);
+        return new AgentToolCheckReply([.. missing], [.. Installable.Where(c => missing.Contains(c.Id))], Unsupported.Count == 0 ? null : Unsupported);
     }
 
     /// <summary>Kurulum komutu (spec 0027).</summary>

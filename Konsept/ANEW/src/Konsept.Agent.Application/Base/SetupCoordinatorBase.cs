@@ -29,6 +29,8 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
     private SetupComponent? _current;
     private bool _running;
     private double _currentFraction;
+    private double _spanStart;
+    private double _spanWidth = 1;
     private int _percent;
 
     /// <summary>Initializes a new instance of the <see cref="SetupCoordinatorBase"/> class.</summary>
@@ -38,14 +40,17 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
     /// <param name="installRoot">Kurulum yeri.</param>
     /// <param name="defaultVideoFolder">Varsayılan video klasörü.</param>
     /// <param name="mirrorBase">Pi aynasının adresi (<c>…/ajan-bilesenleri/</c>); yoksa <c>null</c>.</param>
+    /// <param name="gpu">Tespit edilen ekran kartı (spec 0028) ya da <c>null</c>.</param>
     protected SetupCoordinatorBase(
         IReadOnlyList<SetupComponent> catalog,
         ISetupHost host,
         ISetupStateStore store,
         string installRoot,
         string defaultVideoFolder,
-        Uri? mirrorBase)
+        Uri? mirrorBase,
+        GpuInfo? gpu = null)
     {
+        Gpu = gpu;
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _host = host ?? throw new ArgumentNullException(nameof(host));
         _store = store ?? throw new ArgumentNullException(nameof(store));
@@ -72,6 +77,9 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
 
     /// <inheritdoc />
     public string InstallRoot { get; }
+
+    /// <inheritdoc />
+    public GpuInfo? Gpu { get; }
 
     /// <inheritdoc />
     public string VideoFolder => _videoFolder ?? _defaultVideoFolder;
@@ -131,7 +139,8 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
     /// <inheritdoc />
     public SetupPreflight Preflight()
     {
-        var pending = Components.Where(s => s.Status != ComponentStatus.Installed).Select(s => s.Component);
+        // Atlandı (isteğe bağlı, ör. yerel model) bileşenler ilk kurulumda inmez; alan hesabına girmez (spec 0028 Req 13).
+        var pending = Components.Where(s => s.Status is not ComponentStatus.Installed and not ComponentStatus.Skipped).Select(s => s.Component);
         long free;
         try
         {
@@ -256,9 +265,22 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         try
         {
             _currentFraction = 0;
+            (_spanStart, _spanWidth) = (0, 1);
             if (component.Installer == SetupComponent.Npm)
             {
                 await InstallPackagesAsync(component, partial, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            if (component.Installer == SetupComponent.Python)
+            {
+                await InstallPythonAsync(component, partial, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            if (component.Installer == SetupComponent.FilesInstaller)
+            {
+                await InstallFilesAsync(component, partial, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -354,10 +376,114 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         await RecordAsync(component, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<SetupFailure> DownloadAsync(SetupComponent component, string archive, CancellationToken cancellationToken)
+    /// <summary>
+    /// Python paket ortamı (spec 0028 Req 4): indirme/arşiv adımı yok; kurulu taşınabilir Python ve uv ile ajana gömülü hash'li kilit dosyasından
+    /// kurulur (bağımlılıklar liste sırasında önce kurulur). uv önbelleği <c>downloads/uv-cache</c>'tedir ve kurulumdan sonra silinir.
+    /// </summary>
+    private async Task InstallPythonAsync(SetupComponent component, string partial, CancellationToken cancellationToken)
+    {
+        SetStatus(component, ComponentStatus.Installing);
+        var python = _catalog.FirstOrDefault(c => c.Id == SetupComponent.PythonRuntimeId);
+        var uv = _catalog.FirstOrDefault(c => c.Id == SetupComponent.UvId);
+        if (python is null || uv is null || !_installed.ContainsKey(python.Id) || !_installed.ContainsKey(uv.Id))
+        {
+            Fail(component, SetupFailure.InstallFailed, InstallStep.Install, "kurulamadı (Python ya da uv kurulu değil)");
+            return;
+        }
+
+        DeleteDirectory(partial);
+        Directory.CreateDirectory(partial);
+        Directory.CreateDirectory(DownloadsDirectory);
+        var ok = await _host.InstallPythonPackagesAsync(
+            component.Id,
+            component.Variant,
+            component.Sha256,
+            ExecutablePath(uv),
+            ExecutablePath(python),
+            partial,
+            Path.Combine(DownloadsDirectory, "uv-cache"),
+            cancellationToken).ConfigureAwait(false);
+        if (!ok)
+        {
+            DeleteDirectory(partial);
+            Fail(component, SetupFailure.InstallFailed, InstallStep.Install, "kurulamadı");
+            return;
+        }
+
+        var target = Path.Combine(ComponentsDirectory, component.Id);
+        DeleteDirectory(target);
+        Directory.Move(partial, target);
+        await RecordAsync(component, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Çok dosyalı bileşen (spec 0028 Req 3): önce listenin hash'i katalogdakiyle karşılaştırılır; her dosya <c>components/&lt;id&gt;.partial</c>'a
+    /// iner, boyutu ve SHA-256'sı denetlenir (aynı denemede doğrulanmış dosya yeniden inmez). Hepsi doğrulanınca dosya listesi yazılır ve klasör
+    /// yerine taşınır. Uyuşmazlıkta bozuk dosya silinir, bileşen Hata olur.
+    /// </summary>
+    private async Task InstallFilesAsync(SetupComponent component, string partial, CancellationToken cancellationToken)
+    {
+        var files = component.Files ?? [];
+        if (files.Count == 0 || !string.Equals(ComponentRules.FilesManifestSha256(files), component.Sha256, StringComparison.OrdinalIgnoreCase)
+            || !files.All(f => ComponentRules.IsSafeRelativePath(f.Path)))
+        {
+            Fail(component, SetupFailure.VerifyFailed, InstallStep.Verify, "doğrulanamadı (dosya listesi uyuşmadı)");
+            return;
+        }
+
+        _current = component;
+        var total = (double)Math.Max(1, files.Sum(f => f.Bytes));
+        long done = 0;
+        foreach (var file in files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var path = Path.Combine(partial, file.Path.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            if (!await IsFileValidAsync(path, file, cancellationToken).ConfigureAwait(false))
+            {
+                SetStatus(component, ComponentStatus.Downloading);
+                (_spanStart, _spanWidth) = (done / total, file.Bytes / total);
+                var failure = await DownloadAsync(component, file.Url, path, this, mirror: false, cancellationToken).ConfigureAwait(false);
+                (_spanStart, _spanWidth) = (0, 1);
+                if (failure != SetupFailure.None)
+                {
+                    Fail(component, failure, InstallStep.Download, "indirilemedi");
+                    return;
+                }
+
+                SetStatus(component, ComponentStatus.Verifying);
+                if (!await IsFileValidAsync(path, file, cancellationToken).ConfigureAwait(false))
+                {
+                    DeleteFile(path);
+                    Fail(component, SetupFailure.VerifyFailed, InstallStep.Verify, "doğrulanamadı (SHA-256 ya da boyut uyuşmadı)");
+                    return;
+                }
+            }
+
+            done += file.Bytes;
+            ReportProgress(component, done / total);
+        }
+
+        SetStatus(component, ComponentStatus.Installing);
+        await File.WriteAllTextAsync(Path.Combine(partial, SetupComponent.FilesManifestName), ComponentRules.FilesManifest(files), cancellationToken).ConfigureAwait(false);
+        var target = Path.Combine(ComponentsDirectory, component.Id);
+        DeleteDirectory(target);
+        Directory.Move(partial, target);
+        await RecordAsync(component, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> IsFileValidAsync(string path, ComponentFile file, CancellationToken cancellationToken) =>
+        File.Exists(path) && new FileInfo(path).Length == file.Bytes
+        && string.Equals(await _host.ComputeSha256Async(path, cancellationToken).ConfigureAwait(false), file.Sha256, StringComparison.OrdinalIgnoreCase);
+
+    private Task<SetupFailure> DownloadAsync(SetupComponent component, string archive, CancellationToken cancellationToken)
     {
         _current = component;
-        IProgress<double> progress = this;
+        return DownloadAsync(component, component.Url, archive, this, mirror: true, cancellationToken);
+    }
+
+    private async Task<SetupFailure> DownloadAsync(SetupComponent component, Uri source, string archive, IProgress<double> progress, bool mirror, CancellationToken cancellationToken)
+    {
         for (var attempt = 0; attempt <= SetupRules.AutomaticRetries; attempt++)
         {
             if (attempt > 0)
@@ -366,14 +492,14 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
                 WriteLog(AgentLogLevel.Warning, "Kurulum: indirme yeniden deneniyor: {Component} ({Attempt}/{Max})", component.Name, attempt, SetupRules.AutomaticRetries);
             }
 
-            var result = await TryDownloadAsync(component.Url, archive, progress, cancellationToken).ConfigureAwait(false);
+            var result = await TryDownloadAsync(source, archive, progress, cancellationToken).ConfigureAwait(false);
             if (result is SetupFailure.None or SetupFailure.DiskFull)
             {
                 return result;
             }
         }
 
-        if (component.Mirrored && _mirrorBase is not null)
+        if (mirror && component.Mirrored && _mirrorBase is not null)
         {
             Raise(new SetupEvent(SetupEventKind.UsingMirror, StateOf(component)));
             WriteLog(AgentLogLevel.Warning, "Kurulum: resmi kaynağa ulaşılamadı, Pi aynasından indiriliyor: {Component}", component.Name);
@@ -450,6 +576,16 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         if (!File.Exists(executable))
         {
             return false;
+        }
+
+        // Çok dosyalı bileşen: büyük dosyalar açılışta hash'lenmez; varlık + boyut, dosya listesinin hash'i aşağıda (spec 0028 Req 3).
+        foreach (var file in component.Files ?? [])
+        {
+            var path = Path.Combine(ComponentsDirectory, component.Id, file.Path.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(path) || new FileInfo(path).Length != file.Bytes)
+            {
+                return false;
+            }
         }
 
         var hash = await _host.ComputeSha256Async(executable, cancellationToken).ConfigureAwait(false);
@@ -539,7 +675,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
     {
         if (_current is { } component)
         {
-            ReportProgress(component, value);
+            ReportProgress(component, _spanStart + (value * _spanWidth));
         }
     }
 

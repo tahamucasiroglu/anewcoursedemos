@@ -24,7 +24,7 @@ public abstract class ComponentInstallerBase(ISetupCoordinator setup) : ICompone
         return [.. _setup.Components
             .Select(s => s.Component)
             .Where(c => wanted.Contains(c.Id))
-            .Select(c => new AgentComponentInfo(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes))];
+            .Select(c => new AgentComponentInfo(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes, c.License))];
     }
 
     /// <inheritdoc />

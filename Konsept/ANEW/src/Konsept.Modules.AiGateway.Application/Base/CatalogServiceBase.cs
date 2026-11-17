@@ -64,7 +64,8 @@ public abstract class CatalogServiceBase(ICatalogSource catalog, IApiKeyService 
             model.Local,
             model.LanguageOnly,
             model.LicenseWarning,
-            model.Component);
+            model.Component,
+            model.MinVramGb);
 
     /// <summary>Katalog türünün API adı (B-89: her tür açıkça eşlenir; bilinmeyen tür metin sayılmaz).</summary>
     /// <param name="kind">Tür.</param>

@@ -52,4 +52,28 @@ public interface ISetupHost
     /// <param name="cancellationToken">İptal.</param>
     /// <returns>Kurulduysa <c>true</c>.</returns>
     Task<bool> InstallPackagesAsync(string componentId, string lockSha256, string nodeDirectory, string destination, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Python paket ortamını kurar (spec 0028 Req 4): ajana gömülü kilit dosyası (<c>python/&lt;id&gt;[.&lt;varyant&gt;].txt</c>) okunur, SHA-256'sı
+    /// <paramref name="lockSha256"/> ile karşılaştırılır, uv ile her paketi hash'li olarak <paramref name="destination"/>'a kurulur. uv önbelleği
+    /// <paramref name="cacheDirectory"/>'dedir ve sonra silinir; kullanıcının uv/pip yapılandırmasına ve kayıt defterine dokunulmaz.
+    /// </summary>
+    /// <param name="componentId">Bileşen kimliği.</param>
+    /// <param name="variant">Varyant ya da <c>null</c>.</param>
+    /// <param name="lockSha256">Kilit dosyasının beklenen SHA-256'sı.</param>
+    /// <param name="uvExecutable">Kurulu uv.</param>
+    /// <param name="pythonExecutable">Kurulu taşınabilir Python.</param>
+    /// <param name="destination">Hedef klasör.</param>
+    /// <param name="cacheDirectory">Geçici önbellek klasörü.</param>
+    /// <param name="cancellationToken">İptal.</param>
+    /// <returns>Kurulduysa <c>true</c>.</returns>
+    Task<bool> InstallPythonPackagesAsync(
+        string componentId,
+        string? variant,
+        string lockSha256,
+        string uvExecutable,
+        string pythonExecutable,
+        string destination,
+        string cacheDirectory,
+        CancellationToken cancellationToken);
 }

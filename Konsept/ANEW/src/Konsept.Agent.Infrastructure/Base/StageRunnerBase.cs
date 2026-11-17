@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using Konsept.Agent.Application.Abstract;
+using Konsept.Agent.Domain.Entities;
+using Konsept.Agent.Domain.Rules;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Serilog;
 
@@ -12,7 +14,9 @@ namespace Konsept.Agent.Infrastructure.Base;
 /// </summary>
 /// <param name="setup">Kurulum durumu.</param>
 /// <param name="logger">Teknik log.</param>
-public abstract class StageRunnerBase(ISetupStateStore setup, ILogger logger) : IStageRunner
+/// <param name="catalog">Çözülmüş bileşen listesi (spec 0028: bağımlılıklar ve ekran kartı gereksinimi); verilmezse yalnızca kurulu mu bakılır.</param>
+/// <param name="gpu">Tespit edilen ekran kartı ya da <c>null</c>.</param>
+public abstract class StageRunnerBase(ISetupStateStore setup, ILogger logger, IReadOnlyList<SetupComponent>? catalog = null, GpuInfo? gpu = null) : IStageRunner
 {
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _running = new();
 
@@ -23,7 +27,14 @@ public abstract class StageRunnerBase(ISetupStateStore setup, ILogger logger) : 
     public AgentToolCheckReply CheckTools(AgentToolCheckRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return new AgentToolCheckReply([.. request.Tools.Where(t => !IsInstalled(t)).Distinct(StringComparer.Ordinal)]);
+
+        // Eksik modelin kurulu olmayan bağımlılıkları da eksiktir; ekran kartı gereksinimi karşılanmayan model desteklenmez (spec 0028 Req 2, 6).
+        var result = ComponentRules.Check(request.Tools, catalog ?? [], setup.Load().Installed.Keys.ToHashSet(StringComparer.Ordinal), gpu);
+        return new AgentToolCheckReply(
+            result.Missing,
+            Unsupported: result.Unsupported.Count == 0
+                ? null
+                : [.. result.Unsupported.Select(c => new AgentUnsupportedTool(c.Id, AgentUnsupportedTool.GpuRequired, c.Gpu?.MinVramMb))]);
     }
 
     /// <inheritdoc />

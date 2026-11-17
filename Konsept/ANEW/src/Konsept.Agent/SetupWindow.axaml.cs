@@ -122,7 +122,10 @@ public sealed partial class SetupWindow : Window
         _reports = reports;
         _stop = stop;
         _pickFolder = pickFolder ?? PickFolderWithDialogAsync;
-        InstallRootText.Text = string.Format(CultureInfo.CurrentCulture, AgentText.SetupInstallRoot, setup.InstallRoot);
+        InstallRootText.Text = string.Format(CultureInfo.CurrentCulture, AgentText.SetupInstallRoot, setup.InstallRoot) + Environment.NewLine
+            + (setup.Gpu is { } gpu
+                ? string.Format(CultureInfo.CurrentCulture, AgentText.SetupGpu, gpu.Name, (gpu.VramMb / 1024d).ToString("0.#", CultureInfo.CurrentCulture))
+                : AgentText.SetupGpuNone);
         VideoFolderBox.Text = setup.VideoFolder;
         ComponentList.Children.Clear();
         _rows.Clear();

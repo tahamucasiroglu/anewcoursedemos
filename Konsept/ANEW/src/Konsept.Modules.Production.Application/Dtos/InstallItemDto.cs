@@ -5,4 +5,5 @@ namespace Konsept.Modules.Production.Application.Dtos;
 /// <param name="Name">Ad.</param>
 /// <param name="DownloadBytes">İndirme boyutu.</param>
 /// <param name="InstalledBytes">Kurulu boyut.</param>
-public sealed record InstallItemDto(string Id, string Name, long DownloadBytes, long InstalledBytes);
+/// <param name="License">Lisans ya da <c>null</c> (spec 0028).</param>
+public sealed record InstallItemDto(string Id, string Name, long DownloadBytes, long InstalledBytes, string? License = null);

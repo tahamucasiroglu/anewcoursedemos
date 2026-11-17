@@ -11,6 +11,7 @@ namespace Konsept.Modules.AiGateway.Contracts.Dtos;
 /// <param name="EffortLevels">Desteklenen efor seviyeleri.</param>
 /// <param name="DefaultEffort">Varsayılan efor.</param>
 /// <param name="Availability">Kullanılabilirlik: <see cref="Available"/> · <see cref="NoKey"/> · <see cref="NoPermission"/> · <see cref="Unreadable"/>.</param>
+/// <param name="MinVramGb">Yerel modelin gerektirdiği en az ekran kartı belleği (GB) ya da <c>null</c> (spec 0028 Req 6).</param>
 public sealed record ModelInfo(
     string Id,
     string Name,
@@ -21,7 +22,8 @@ public sealed record ModelInfo(
     string? Component,
     IReadOnlyList<string> EffortLevels,
     string? DefaultEffort,
-    string Availability)
+    string Availability,
+    int? MinVramGb = null)
 {
     /// <summary>Kullanılabilir.</summary>
     public const string Available = "available";

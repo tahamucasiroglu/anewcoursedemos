@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Formats.Tar;
 using System.IO.Compression;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
@@ -24,6 +25,9 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
 
     /// <summary>npm bileşen kurulumunun en uzun süresi.</summary>
     public static readonly TimeSpan PackageTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>Python paket ortamı kurulumunun en uzun süresi (CUDA'lı PyTorch ~2,7 GB indirir; spec 0028).</summary>
+    public static readonly TimeSpan PythonTimeout = TimeSpan.FromMinutes(90);
 
     /// <inheritdoc />
     public bool IsOnline() => NetworkInterface.GetIsNetworkAvailable();
@@ -72,8 +76,21 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
     }
 
     /// <inheritdoc />
-    public void ExtractArchive(string archive, string destination) =>
+    public void ExtractArchive(string archive, string destination)
+    {
+        ArgumentNullException.ThrowIfNull(archive);
+        if (archive.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase))
+        {
+            // Taşınabilir Python (python-build-standalone) tar.gz yayımlanır (spec 0028).
+            Directory.CreateDirectory(destination);
+            using var file = File.OpenRead(archive);
+            using var gzip = new GZipStream(file, CompressionMode.Decompress);
+            TarFile.ExtractToDirectory(gzip, destination, overwriteFiles: true);
+            return;
+        }
+
         ZipFile.ExtractToDirectory(archive, destination, overwriteFiles: true);
+    }
 
     /// <inheritdoc />
     public async Task<string?> RunAsync(string executable, string arguments, CancellationToken cancellationToken)
@@ -202,6 +219,123 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
         info.Environment["DO_NOT_TRACK"] = "1";
         info.Environment["npm_config_cache"] = NpmCacheDirectory(destination);
         info.Environment["npm_config_update_notifier"] = "false";
+        return info;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> InstallPythonPackagesAsync(
+        string componentId,
+        string? variant,
+        string lockSha256,
+        string uvExecutable,
+        string pythonExecutable,
+        string destination,
+        string cacheDirectory,
+        CancellationToken cancellationToken)
+    {
+        var name = PythonLockResource(componentId, variant);
+        await using var source = typeof(WindowsSetupHost).Assembly.GetManifestResourceStream(name);
+        if (source is null)
+        {
+            return false;
+        }
+
+        using var memory = new MemoryStream();
+        await source.CopyToAsync(memory, cancellationToken).ConfigureAwait(false);
+        var bytes = memory.ToArray();
+        if (!string.Equals(LockSha256(bytes), lockSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            return false; // Kilit dosyası katalogdaki hash'le uyuşmuyor (değiştirilmiş yapı).
+        }
+
+        try
+        {
+            Directory.CreateDirectory(cacheDirectory);
+            var lockFile = Path.Combine(cacheDirectory, "requirements.txt");
+            await File.WriteAllBytesAsync(lockFile, bytes, cancellationToken).ConfigureAwait(false);
+            var info = CreateUvStartInfo(uvExecutable, pythonExecutable, lockFile, destination, cacheDirectory);
+            using var process = Process.Start(info);
+            if (process is null)
+            {
+                return false;
+            }
+
+            _ = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+            _ = process.StandardError.ReadToEndAsync(CancellationToken.None);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(PythonTimeout);
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill(entireProcessTree: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                return false;
+            }
+
+            return process.ExitCode == 0;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return false;
+        }
+        finally
+        {
+            TryDeleteDirectory(cacheDirectory); // Paketler kuruldu; uv önbelleği (açılmış tekerlekler, GB'larca) yer kaplamasın.
+        }
+    }
+
+    /// <summary>Python ortamının gömülü kilit dosyasının kaynak adı (spec 0028): <c>python.&lt;id&gt;[.&lt;varyant&gt;].txt</c>.</summary>
+    /// <param name="componentId">Bileşen.</param>
+    /// <param name="variant">Varyant ya da <c>null</c>.</param>
+    /// <returns>Kaynak adı.</returns>
+    public static string PythonLockResource(string componentId, string? variant) =>
+        $"Konsept.Agent.Infrastructure.Setup.python.{componentId}{(variant is null ? string.Empty : "." + variant)}.txt";
+
+    /// <summary>
+    /// uv kurulum sürecinin başlangıç bilgisi (spec 0028 Req 4): her paket hash'li (<c>--require-hashes</c>), bağımlılık çözümü yok (kilit tam
+    /// liste), hedef bileşen klasörü (<c>--target</c>), yalnızca kurulu taşınabilir Python; uv yapılandırma dosyaları ve kullanıcının <c>UV_*</c> /
+    /// <c>PIP_*</c> ortam değişkenleri yok sayılır, Python indirmesi kapalı (kayıt defterine yazılmaz), önbellek ajan klasöründe, sistem sertifika deposu.
+    /// </summary>
+    /// <param name="uvExecutable">uv.</param>
+    /// <param name="pythonExecutable">Python.</param>
+    /// <param name="lockFile">Kilit dosyası.</param>
+    /// <param name="destination">Hedef klasör.</param>
+    /// <param name="cacheDirectory">Önbellek.</param>
+    /// <returns>Başlangıç bilgisi.</returns>
+    public static ProcessStartInfo CreateUvStartInfo(string uvExecutable, string pythonExecutable, string lockFile, string destination, string cacheDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uvExecutable);
+        var info = new ProcessStartInfo(uvExecutable)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = cacheDirectory,
+        };
+        foreach (var arg in new[]
+        {
+            "pip", "install", "--no-config", "--require-hashes", "--no-deps", "--index-strategy", "unsafe-best-match", "--link-mode", "copy",
+            "--python", pythonExecutable, "--target", destination, "-r", lockFile,
+        })
+        {
+            info.ArgumentList.Add(arg);
+        }
+
+        foreach (var key in info.Environment.Keys.Where(k => k.StartsWith("UV_", StringComparison.OrdinalIgnoreCase) || k.StartsWith("PIP_", StringComparison.OrdinalIgnoreCase)
+            || k.Equals("PYTHONPATH", StringComparison.OrdinalIgnoreCase) || k.Equals("PYTHONHOME", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            info.Environment.Remove(key);
+        }
+
+        info.Environment["UV_CACHE_DIR"] = cacheDirectory;
+        info.Environment["UV_NO_CONFIG"] = "1";
+        info.Environment["UV_PYTHON_DOWNLOADS"] = "never";
+        info.Environment["UV_NO_PROGRESS"] = "1";
+        info.Environment["UV_NATIVE_TLS"] = "1";
         return info;
     }
 

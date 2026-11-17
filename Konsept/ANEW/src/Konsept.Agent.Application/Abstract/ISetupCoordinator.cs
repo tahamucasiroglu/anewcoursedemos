@@ -17,6 +17,9 @@ public interface ISetupCoordinator
     /// <summary>Gets kurulum yeri (<c>%LOCALAPPDATA%\anewconcept</c>).</summary>
     string InstallRoot { get; }
 
+    /// <summary>Gets tespit edilen ekran kartı (spec 0028 Req 5) ya da <c>null</c>.</summary>
+    GpuInfo? Gpu { get; }
+
     /// <summary>Gets video klasörü (seçilmediyse varsayılan).</summary>
     string VideoFolder { get; }
 

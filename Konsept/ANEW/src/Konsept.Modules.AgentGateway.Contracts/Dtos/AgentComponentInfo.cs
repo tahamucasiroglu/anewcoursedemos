@@ -5,4 +5,5 @@ namespace Konsept.Modules.AgentGateway.Contracts.Dtos;
 /// <param name="Name">Görünen ad.</param>
 /// <param name="DownloadBytes">Yaklaşık indirme boyutu.</param>
 /// <param name="InstalledBytes">Yaklaşık diskte kaplayacağı alan.</param>
-public sealed record AgentComponentInfo(string Id, string Name, long DownloadBytes, long InstalledBytes);
+/// <param name="License">Lisans adı (spec 0028 Req 12; ör. <c>OpenRAIL-M</c>); eski ajanda <c>null</c>.</param>
+public sealed record AgentComponentInfo(string Id, string Name, long DownloadBytes, long InstalledBytes, string? License = null);

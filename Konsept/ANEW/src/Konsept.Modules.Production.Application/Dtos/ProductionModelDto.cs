@@ -10,6 +10,7 @@ namespace Konsept.Modules.Production.Application.Dtos;
 /// <param name="EffortLevels">Efor seviyeleri.</param>
 /// <param name="DefaultEffort">Varsayılan efor.</param>
 /// <param name="Availability">Kullanılabilirlik.</param>
+/// <param name="MinVramGb">Gereken en az ekran kartı belleği (GB) ya da <c>null</c> (spec 0028: "Ekran kartı gerekir" etiketi).</param>
 public sealed record ProductionModelDto(
     string Id,
     string Name,
@@ -19,4 +20,5 @@ public sealed record ProductionModelDto(
     bool LicenseWarning,
     IReadOnlyList<string> EffortLevels,
     string? DefaultEffort,
-    string Availability);
+    string Availability,
+    int? MinVramGb = null);

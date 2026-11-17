@@ -15,7 +15,7 @@ function pageHtml() {
          data-text-correlation="(Korelasyon: {0})" data-text-saving="Kaydediliyor…" data-text-not-selected="seçilmedi"
          data-text-image-off="Kapalı — koddan çiz" data-text-audio-off="Kapalı — sessiz video" data-text-local="yerel" data-text-online="online"
          data-text-no-key="Key yok" data-text-no-permission="Yetki yok" data-text-unreadable="Key okunamıyor"
-         data-text-only-turkish="Yalnız Türkçe" data-text-only-english="Yalnız İngilizce" data-text-license="Lisans uyarısı"
+         data-text-only-turkish="Yalnız Türkçe" data-text-only-english="Yalnız İngilizce" data-text-license="Lisans uyarısı" data-text-gpu="Ekran kartı gerekir (≥ {0} GB)"
          data-text-status-queued="Sırada" data-text-status-producing="Üretiliyor" data-text-status-stopped="Durduruldu"
          data-text-status-waiting-for-agent="Ajan bekleniyor" data-text-status-failed="Hata" data-text-status-completed="Tamamlandı"
          data-text-move-up="{0}'ı yukarı taşı" data-text-move-down="{0}'ı aşağı taşı" data-text-remove="{0}'ı sıradan çıkar"
@@ -111,6 +111,13 @@ describe('Konseptten Video (spec 0006)', () => {
     expect(optionLabel(MODELS[2], text)).toBe('GPT mini — online · Key yok');
     expect(optionLabel(MODELS[5], text)).toBe('Remotion — yerel · Lisans uyarısı');
     expect(optionLabel({ ...MODELS[1], languageOnly: 'en' }, text)).toBe('Claude Sonnet — online · Yalnız İngilizce');
+  });
+
+  it('Spec 0028 AC-9: ekran kartı gerektiren yerel görsel modeli seçim öncesi "Ekran kartı gerekir (≥ N GB)" etiketi taşır', () => {
+    const text = el('production').dataset;
+    expect(optionLabel({ id: 'local/z-image-turbo', name: 'Z-Image-Turbo', kind: 'image', local: true, languageOnly: null, licenseWarning: false, minVramGb: 4 }, text))
+      .toBe('Z-Image-Turbo — yerel · Ekran kartı gerekir (≥ 4 GB)');
+    expect(optionLabel({ ...MODELS[7], minVramGb: null }, text)).toBe('Supertonic 3 — yerel · Yalnız Türkçe');
   });
 
   it('AC-1/AC-21: özet modalı açar, odak modala geçer, Esc kapatır ve kaydeder, odak açana döner, özet yeni seçimi gösterir', async () => {

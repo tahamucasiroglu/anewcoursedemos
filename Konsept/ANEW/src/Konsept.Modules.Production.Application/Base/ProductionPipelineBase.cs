@@ -711,6 +711,16 @@ public abstract class ProductionPipelineBase(
             return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineToolsMissing, string.Join(", ", reply.Missing.Select(PipelineRules.ToolName))));
         }
 
+        // Bu bilgisayarda çalışamayan model (ekran kartı gerekir; spec 0028 Req 6): indirme önerilmez, gereksinim söylenir.
+        var gpuRequired = (reply.Unsupported ?? [])
+            .Where(u => u.Reason == AgentUnsupportedTool.GpuRequired && reply.Missing.Contains(u.Id, StringComparer.Ordinal))
+            .ToList();
+        if (gpuRequired.Count > 0)
+        {
+            var gigabytes = (int)Math.Ceiling(gpuRequired.Max(u => u.MinVramMb ?? 0) / 1024d);
+            return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineGpuRequired, string.Join(", ", gpuRequired.Select(u => PipelineRules.ToolName(u.Id))), gigabytes));
+        }
+
         if (unavailable.Count > 0)
         {
             return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineToolsUnavailable, string.Join(", ", unavailable.Select(PipelineRules.ToolName))));
@@ -721,7 +731,7 @@ public abstract class ProductionPipelineBase(
             // Onay istenir (spec 0027 Req 3): iş Ajan bekleniyor'da kullanıcıyı bekler; sayaç artmaz, sıra ilerlemez.
             _progress = _progress with
             {
-                Install = new PendingInstall { Components = [.. installable.Select(c => new InstallItem(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes))] },
+                Install = new PendingInstall { Components = [.. installable.Select(c => new InstallItem(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes, c.License))] },
             };
             await WriteEventAsync(SystemEventLevel.Info, Format(ProductionText.EventInstallPending, _job.Title, NamesOf(installable, reply.Missing)), null)
                 .ConfigureAwait(false);
