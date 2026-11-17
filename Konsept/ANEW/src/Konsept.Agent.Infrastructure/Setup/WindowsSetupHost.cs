@@ -138,21 +138,7 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
             await File.WriteAllBytesAsync(Path.Combine(destination, name), bytes, cancellationToken).ConfigureAwait(false);
         }
 
-        var info = new ProcessStartInfo(Path.Combine(nodeDirectory, "node.exe"))
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            WorkingDirectory = destination,
-        };
-        foreach (var arg in new[] { Path.Combine(nodeDirectory, "node_modules", Path.Combine("npm", "bin", "npm-cli.js")), "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error" })
-        {
-            info.ArgumentList.Add(arg);
-        }
-
-        info.Environment["HYPERFRAMES_NO_TELEMETRY"] = "1";
-        info.Environment["DO_NOT_TRACK"] = "1";
+        var info = CreateNpmStartInfo(nodeDirectory, destination);
         try
         {
             using var process = Process.Start(info);
@@ -181,6 +167,61 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
         catch (System.ComponentModel.Win32Exception)
         {
             return false;
+        }
+        finally
+        {
+            TryDeleteDirectory(NpmCacheDirectory(destination)); // Paketler kuruldu; indirme önbelleği yer kaplamasın.
+        }
+    }
+
+    /// <summary>
+    /// npm kurulum sürecinin başlangıç bilgisi. npm önbelleği ve günlükleri bileşen klasörünün içinde tutulur: kullanıcının kendi npm
+    /// önbelleğine (<c>%LOCALAPPDATA%\npm-cache</c>) yazılmaz, oradaki günlükler silinmez, kaldırmadan sonra iz kalmaz (spec 0009 Req 6–7).
+    /// </summary>
+    /// <param name="nodeDirectory">Kurulu Node.js klasörü.</param>
+    /// <param name="destination">Paketlerin kurulacağı klasör.</param>
+    /// <returns>Başlangıç bilgisi.</returns>
+    public static ProcessStartInfo CreateNpmStartInfo(string nodeDirectory, string destination)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nodeDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destination);
+        var info = new ProcessStartInfo(Path.Combine(nodeDirectory, "node.exe"))
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = destination,
+        };
+        foreach (var arg in new[] { Path.Combine(nodeDirectory, "node_modules", Path.Combine("npm", "bin", "npm-cli.js")), "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error" })
+        {
+            info.ArgumentList.Add(arg);
+        }
+
+        info.Environment["HYPERFRAMES_NO_TELEMETRY"] = "1";
+        info.Environment["DO_NOT_TRACK"] = "1";
+        info.Environment["npm_config_cache"] = NpmCacheDirectory(destination);
+        info.Environment["npm_config_update_notifier"] = "false";
+        return info;
+    }
+
+    /// <summary>npm'in bu kurulum için kullandığı önbellek klasörü (kurulum bitince silinir).</summary>
+    /// <param name="destination">Paketlerin kurulacağı klasör.</param>
+    /// <returns>Klasör yolu.</returns>
+    public static string NpmCacheDirectory(string destination) => Path.Combine(destination, ".npm-cache");
+
+    private static void TryDeleteDirectory(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Önbellek silinemezse kurulum yine geçerlidir; bileşen klasörüyle birlikte kaldırılır.
         }
     }
 

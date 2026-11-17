@@ -55,6 +55,55 @@ public sealed class WindowsSetupHostTests
         }
     }
 
+    /// <summary>
+    /// npm kurulumu kullanıcının kendi npm önbelleğini (<c>%LOCALAPPDATA%\npm-cache</c>) kullanmaz: önbellek ve günlükler bileşen klasörünün
+    /// içindedir (spec 0009 Req 6–7; gerçek kurulum testinde kullanıcı önbelleğine günlük yazıldığı ve eski günlüklerin silindiği görüldü).
+    /// </summary>
+    [Fact]
+    public void NpmStartInfo_CacheInsideDestination_NotUserCache()
+    {
+        var destination = Path.Combine(Path.GetTempPath(), "anewconcept-npm-dest");
+        var node = Path.Combine(Path.GetTempPath(), "anewconcept-npm-node");
+
+        var info = WindowsSetupHost.CreateNpmStartInfo(node, destination);
+
+        info.FileName.ShouldBe(Path.Combine(node, "node.exe"));
+        info.WorkingDirectory.ShouldBe(destination);
+        info.ArgumentList.ShouldContain("ci");
+        info.ArgumentList.ShouldContain("--ignore-scripts");
+        info.Environment["npm_config_cache"].ShouldBe(Path.Combine(destination, ".npm-cache"));
+        info.Environment["npm_config_cache"]!.ShouldStartWith(destination);
+        info.Environment["npm_config_update_notifier"].ShouldBe("false");
+        info.Environment["HYPERFRAMES_NO_TELEMETRY"].ShouldBe("1");
+    }
+
+    /// <summary>Kurulum hangi yoldan biterse bitsin (burada Node yok → başarısız) bileşenin npm önbelleği silinir; kurulum yerinde iz kalmaz.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task InstallPackages_AnyOutcome_RemovesOwnNpmCache()
+    {
+        var dir = Directory.CreateTempSubdirectory("anewconcept-host-");
+        try
+        {
+            var destination = Directory.CreateDirectory(Path.Combine(dir.FullName, "hyperframes.partial")).FullName;
+            var cache = Directory.CreateDirectory(WindowsSetupHost.NpmCacheDirectory(destination)).FullName;
+            await File.WriteAllTextAsync(Path.Combine(cache, "index"), "x", TestContext.Current.CancellationToken);
+            var hf = ComponentCatalog.Load().Single(c => c.Id == "hyperframes");
+            using var http = new HttpClient(new StallingHandler());
+            var host = new WindowsSetupHost(http);
+
+            var ok = await host.InstallPackagesAsync("hyperframes", hf.Sha256, Path.Combine(dir.FullName, "no-node"), destination, TestContext.Current.CancellationToken);
+
+            ok.ShouldBeFalse();
+            Directory.Exists(cache).ShouldBeFalse();
+            File.Exists(Path.Combine(destination, "package-lock.json")).ShouldBeTrue();
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
     /// <summary>Başlıkları hemen, gövdeden bir parça verip sonra susan sunucu.</summary>
     private sealed class StallingHandler : HttpMessageHandler
     {

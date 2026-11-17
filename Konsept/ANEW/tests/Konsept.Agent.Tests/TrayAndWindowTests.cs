@@ -140,6 +140,23 @@ public sealed class TrayAndWindowTests
         }
     }
 
+    /// <summary>
+    /// Açılışta kapanış (ilk açılışta kendini kurma, güncelleme yeniden başlatması, kaldırmanın geçici kopyası) ana döngü başlamadan
+    /// çağrılmaz, UI kuyruğuna konur: gerçek kurulum testinde siteden indirilen exe kendini kurduktan sonra "Dispatcher shut down"
+    /// hatasıyla çöktü (0xE0434352).
+    /// </summary>
+    [AvaloniaFact]
+    public void ShutdownWhenStarted_DefersUntilDispatcherRuns()
+    {
+        var shutdown = 0;
+
+        App.ShutdownWhenStarted(() => shutdown++);
+
+        shutdown.ShouldBe(0);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        shutdown.ShouldBe(1);
+    }
+
     /// <summary>Pencere kapatılınca uygulama kapanmaz; pencere yalnızca gizlenir.</summary>
     [AvaloniaFact]
     public void MainWindow_Close_DoesNotShutdown()

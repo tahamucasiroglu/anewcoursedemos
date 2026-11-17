@@ -101,7 +101,7 @@ public sealed partial class App : Avalonia.Application
 
             if (Composition is null && SelfInstall())
             {
-                ShutdownAction();
+                ShutdownWhenStarted(ShutdownAction);
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -129,7 +129,7 @@ public sealed partial class App : Avalonia.Application
                 var startup = updater.StartupAsync(_updateStop.Token).GetAwaiter().GetResult();
                 if (startup == UpdateStartup.Restarting)
                 {
-                    ShutdownAction();
+                    ShutdownWhenStarted(ShutdownAction);
                     base.OnFrameworkInitializationCompleted();
                     return;
                 }
@@ -153,6 +153,18 @@ public sealed partial class App : Avalonia.Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// Açılışta (OnFrameworkInitializationCompleted içinde) uygulamayı kapatır: kapatma, ana döngü başladıktan sonra çalışsın diye UI
+    /// kuyruğuna konur. Ana döngüden önce <c>Shutdown</c> çağrılırsa Avalonia dağıtıcısı kapanır ve döngü
+    /// "Dispatcher shut down" hatasıyla çöker (ilk açılış kendini kurduktan sonra, güncelleme yeniden başlatması, kaldırmanın geçici kopyası).
+    /// </summary>
+    /// <param name="shutdown">Kapatma eylemi.</param>
+    internal static void ShutdownWhenStarted(Action shutdown)
+    {
+        ArgumentNullException.ThrowIfNull(shutdown);
+        Dispatcher.UIThread.Post(shutdown);
     }
 
     /// <summary>"Siteye git": siteyi varsayılan tarayıcıda açar.</summary>
@@ -479,7 +491,7 @@ public sealed partial class App : Avalonia.Application
             var copy = Path.Combine(Path.GetTempPath(), "anewconcept-kaldir-" + Guid.NewGuid().ToString("N") + ".exe");
             File.Copy(exe, copy);
             host.Launch(copy, AgentInstallationBase.UninstallArgument);
-            desktop.Shutdown();
+            ShutdownWhenStarted(() => desktop.Shutdown());
             return;
         }
 
