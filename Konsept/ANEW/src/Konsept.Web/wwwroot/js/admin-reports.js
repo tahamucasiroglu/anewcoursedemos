@@ -194,6 +194,8 @@ export function initAdminReports(doc, options) {
     const button = el('admin-report-save');
     const label = button.textContent;
     dialog.busy = true;
+    // Odaktaki düğme pasifleşince odak body'ye düşer, Esc/Tab pencereye ulaşmaz: odak önce pencereye taşınır (review r1 F-1).
+    el('admin-report-dialog').querySelector('[role="dialog"]').focus();
     button.disabled = true;
     el('admin-report-close').disabled = true;
     button.textContent = t.textProcessing;
@@ -215,6 +217,7 @@ export function initAdminReports(doc, options) {
       if (options.onStatusChanged) {
         options.onStatusChanged();
       }
+      button.focus();
       await load();
     } catch (failure) {
       dialog.busy = false;
@@ -223,6 +226,7 @@ export function initAdminReports(doc, options) {
       updateNote();
       el('admin-report-message').textContent = text(failure, t.textSaveFailed);
       el('admin-report-message').hidden = false;
+      button.focus();
     }
   }
 

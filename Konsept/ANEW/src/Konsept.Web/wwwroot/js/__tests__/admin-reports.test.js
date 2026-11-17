@@ -49,7 +49,7 @@ function panelHtml() {
         <table id="admin-report-table" hidden><tbody id="admin-report-rows"></tbody></table>
         <nav id="admin-report-pager" hidden><button id="admin-report-prev">Önceki</button><span id="admin-report-page"></span><button id="admin-report-next">Sonraki</button></nav>
       </section>
-      <div id="admin-report-dialog" hidden><div role="dialog">
+      <div id="admin-report-dialog" hidden><div role="dialog" tabindex="-1">
         <h2 id="admin-report-title"></h2>
         <p id="admin-report-loading" role="status"></p>
         <div id="admin-report-error" role="alert" hidden><p id="admin-report-error-text"></p><button id="admin-report-retry">Tekrar dene</button></div>
@@ -237,7 +237,8 @@ describe('admin Hata bildirimleri (spec 0025)', () => {
     expect(el('admin-report-save').disabled).toBe(true);
     expect(el('admin-report-save').textContent).toBe('İşleniyor…');
     expect(el('admin-report-close').disabled).toBe(true);
-    key(el('admin-report-note'), 'Escape');
+    expect(el('admin-report-dialog').contains(document.activeElement)).toBe(true); // odak pencerede kalır (review r1 F-1)
+    key(document.activeElement, 'Escape');
     expect(el('admin-report-dialog').hidden).toBe(false);
     await panel.reports.save(); // çift tıklama: ikinci istek yok
     expect(ajax.mock.calls.filter((c) => c[0].method === 'POST')).toHaveLength(1);
@@ -254,6 +255,7 @@ describe('admin Hata bildirimleri (spec 0025)', () => {
     expect(el('admin-report-current').textContent).toBe('Çözüldü');
     expect(el('admin-report-note-current').textContent).toBe('düzeltildi');
     expect(el('admin-report-message').textContent).toBe('Kaydedildi.');
+    expect(document.activeElement).toBe(el('admin-report-save'));
     expect(el('admin-open-reports').textContent).toBe('1');
     expect(el('admin-reports-status').textContent).toBe('Açık hata bildirimi yok');
     el('admin-report-close').click();
@@ -286,5 +288,8 @@ describe('admin Hata bildirimleri (spec 0025)', () => {
     expect(el('admin-report-save').disabled).toBe(false);
     expect(el('admin-report-save').textContent).toBe('Kaydet');
     expect(el('admin-report-dialog').textContent).not.toContain('UPDATE');
+    expect(document.activeElement).toBe(el('admin-report-save'));
+    key(document.activeElement, 'Escape');
+    expect(el('admin-report-dialog').hidden).toBe(true);
   });
 });

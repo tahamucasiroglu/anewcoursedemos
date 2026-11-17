@@ -220,7 +220,7 @@
     @* Bildirim detayı (spec 0025 Req 4–5): tüm içerik textContent ile düz metin; odak pencereye taşınır, Esc kapatır (kayıt sürerken
        değil), kapanınca odak açan düğmeye döner; kayıt sürerken Kaydet pasif ve "İşleniyor…"; hata pencerede, durum değişmez. *@
     <div class="dialog-backdrop dialog-backdrop--confirm" id="admin-report-dialog" hidden>
-        <div class="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="admin-report-title">
+        <div class="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="admin-report-title" tabindex="-1">
             <h2 class="dialog__title" id="admin-report-title"></h2>
             <p class="admin-panel__status" id="admin-report-loading" role="status" aria-live="polite"></p>
             <div class="admin-panel__error" id="admin-report-error" role="alert" hidden>

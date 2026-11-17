@@ -139,14 +139,17 @@ public sealed class ErrorReport
         return report;
     }
 
-    /// <summary>Durumu ve admin notunu değiştirir (spec 0025 Req 5); not maskelenir, boşsa silinir. Sınır kontrolü serviste.</summary>
+    /// <summary>
+    /// Durumu ve admin notunu değiştirir (spec 0025 Req 5). Not olduğu gibi yazılır: maskeleme ve sınır serviste yapılır (üretimde depo
+    /// aynı alanları tek <c>ExecuteUpdate</c> ile yazar; bu metot bellek depoları içindir, review r1 F-2).
+    /// </summary>
     /// <param name="status">Yeni durum.</param>
     /// <param name="note">Admin notu.</param>
     /// <param name="at">Değişiklik anı.</param>
     public void ChangeStatus(ErrorReportStatus status, string? note, DateTimeOffset at)
     {
         Status = status;
-        AdminNote = ErrorReportRules.Clean(note, ErrorReportRules.AdminNoteMaxLength);
+        AdminNote = note;
         StatusChangedAt = at.ToUniversalTime();
     }
 
