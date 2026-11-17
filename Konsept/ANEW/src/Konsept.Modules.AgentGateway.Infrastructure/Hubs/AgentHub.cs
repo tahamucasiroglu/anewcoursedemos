@@ -80,6 +80,17 @@ public sealed class AgentHub : Hub
             ? _errors.ReportAsync(Owner().UserId, request, Context.ConnectionAborted)
             : throw new HubException("Ajan oturumu kapandı.");
 
+    /// <summary>Güncelleme kurulmadan bitti (review r1 H-1): oturum yeniden iş alır. İptal edilmiş oturumdan reddedilir.</summary>
+    public void EndUpdate()
+    {
+        if (!_tracker.Contains(Context.ConnectionId))
+        {
+            throw new HubException("Ajan oturumu kapandı.");
+        }
+
+        _presence.EndUpdate(Context.ConnectionId, Owner());
+    }
+
     /// <summary>Ajanın eşleştiği hesap (spec 0022 Req 8): bekleyen bildirimleri hesaba bağlamak için; iptal edilmiş oturumdan reddedilir.</summary>
     /// <returns>Kullanıcı kimliği.</returns>
     public Guid WhoAmI() =>

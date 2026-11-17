@@ -26,4 +26,13 @@ public interface IAgentConnectionRegistry
     /// <param name="connectionId">Kopan bağlantının kimliği.</param>
     /// <returns>Kaldırılan oturum; bağlantı geçerli oturum değilse <c>null</c>.</returns>
     AgentSession? Remove(string connectionId);
+
+    /// <summary>
+    /// Bağlantının geçerli oturumunu kilit altında değiştirir (spec 0023 review r1 M-1): bağlantı artık geçerli oturum değilse ya da
+    /// <paramref name="change"/> <c>null</c> dönerse hiçbir şey yazılmaz.
+    /// </summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="change">Değişiklik.</param>
+    /// <returns>Yazıldıysa <c>true</c>.</returns>
+    bool TryUpdate(string connectionId, Func<AgentSession, AgentSession?> change);
 }

@@ -108,6 +108,38 @@ public sealed class AgentVersionGateTests
         commands.ConnectedDevice(_owner.UserId).ShouldBe(_owner.DeviceId);
     }
 
+    /// <summary>
+    /// Review r1 H-1, M-1: güncelleme kurulmadan biterse (EndUpdate) ajan yeniden komut alır; "Üretiliyor" denetimi sürerken oturum zaten
+    /// "güncelleniyor"dur (yeni komut gitmez) ve iş bulunursa işaret geri alınır; başka bağlantı/sahip işareti değiştiremez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task EndUpdate_FailedUpdate_AcceptsCommandsAgain_BeginMarksBeforeCheck()
+    {
+        var presence = Presence();
+        var commands = new AgentCommands(_registry, _channel);
+        var ct = TestContext.Current.CancellationToken;
+        await presence.RegisterAsync("c1", _owner, new AgentRegistration("PC", ServerVersion), ct);
+        Guid? deviceDuringCheck = _owner.DeviceId;
+        _activity.IsProducingAsync(_owner.UserId, Arg.Any<CancellationToken>()).Returns(_ =>
+        {
+            deviceDuringCheck = commands.ConnectedDevice(_owner.UserId);
+            return true;
+        });
+
+        (await presence.BeginUpdateAsync("c1", _owner, ct)).ShouldBeFalse();
+        deviceDuringCheck.ShouldBeNull(); // denetim sırasında yeni komut kesik
+        commands.ConnectedDevice(_owner.UserId).ShouldBe(_owner.DeviceId); // iş var → işaret geri alındı
+
+        _activity.IsProducingAsync(_owner.UserId, Arg.Any<CancellationToken>()).Returns(false);
+        (await presence.BeginUpdateAsync("c1", _owner, ct)).ShouldBeTrue();
+        commands.ConnectedDevice(_owner.UserId).ShouldBeNull();
+        presence.EndUpdate("c1", new AgentOwner(Guid.NewGuid(), Guid.NewGuid()));
+        commands.ConnectedDevice(_owner.UserId).ShouldBeNull();
+        presence.EndUpdate("c1", _owner);
+        commands.ConnectedDevice(_owner.UserId).ShouldBe(_owner.DeviceId);
+    }
+
     private static AgentStageCommand Stage() => new() { JobId = Guid.NewGuid(), Stage = AgentStageCommand.Voice, Engine = "hyperframes", Language = "tr", Format = "landscape" };
 
     private AgentPresenceService Presence() => new(

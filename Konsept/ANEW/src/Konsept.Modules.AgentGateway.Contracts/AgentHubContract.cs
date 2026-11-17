@@ -53,6 +53,9 @@ public static class AgentHubContract
     /// </summary>
     public const string BeginUpdate = "BeginUpdate";
 
+    /// <summary>Ajan → API: güncelleme kurulmadan bitti (hata/doğrulanamadı); oturum yeniden iş alır (review r1 H-1).</summary>
+    public const string EndUpdate = "EndUpdate";
+
     /// <summary>API → ajan: silinen videonun tüm sürüm dosyalarını kalıcı sil (spec 0019 Req 4).</summary>
     public const string DeleteFiles = "DeleteFiles";
 }

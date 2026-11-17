@@ -54,6 +54,23 @@ public abstract class AgentConnectionRegistryBase : IAgentConnectionRegistry
         }
     }
 
+    /// <inheritdoc />
+    public bool TryUpdate(string connectionId, Func<AgentSession, AgentSession?> change)
+    {
+        ArgumentNullException.ThrowIfNull(change);
+        lock (_gate)
+        {
+            var current = ReadAll().FirstOrDefault(s => string.Equals(s.ConnectionId, connectionId, StringComparison.Ordinal));
+            if (current is null || change(current) is not { } next)
+            {
+                return false;
+            }
+
+            Write(current.UserId, next);
+            return true;
+        }
+    }
+
     /// <summary>Kullanıcının oturumunu okur (kilit altında çağrılır).</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <returns>Oturum ya da <c>null</c>.</returns>

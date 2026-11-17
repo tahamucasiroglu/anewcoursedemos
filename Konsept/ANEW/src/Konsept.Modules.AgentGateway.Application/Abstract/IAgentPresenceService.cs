@@ -28,6 +28,13 @@ public interface IAgentPresenceService : IAgentStatusReader
     /// <returns>Başlayabilirse <c>true</c>.</returns>
     Task<bool> BeginUpdateAsync(string connectionId, AgentOwner owner, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Güncelleme kurulmadan bitti (doğrulama/indirme/disk hatası; review r1 H-1): oturum yeniden komut alır, bekleyen iş sürer.
+    /// </summary>
+    /// <param name="connectionId">Bağlantı kimliği.</param>
+    /// <param name="owner">Sahip.</param>
+    void EndUpdate(string connectionId, AgentOwner owner);
+
     /// <summary>Bağlantının kopmasını işler.</summary>
     /// <param name="connectionId">Kopan bağlantının kimliği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

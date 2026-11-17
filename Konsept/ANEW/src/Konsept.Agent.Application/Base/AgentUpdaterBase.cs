@@ -24,6 +24,7 @@ public abstract class AgentUpdaterBase : IAgentUpdater, IProgress<double>
     private readonly Uri _feed;
     private readonly TimeProvider _time;
     private readonly SemaphoreSlim _applyGate = new(1, 1);
+    private readonly SemaphoreSlim _checkGate = new(1, 1);
     private UpdateEvent _current = new(UpdateStatus.Idle);
 
     /// <summary>Initializes a new instance of the <see cref="AgentUpdaterBase"/> class.</summary>
@@ -77,6 +78,21 @@ public abstract class AgentUpdaterBase : IAgentUpdater, IProgress<double>
         {
             return UpdateCheckOutcome.Disabled;
         }
+
+        // Açılış, zamanlayıcı, tray ve sürüm uyumsuzluğu aynı anda denetleyebilir; aynı geçici dosyaları paylaşırlar (review r1 M-2).
+        await _checkGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await CheckCoreAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _checkGate.Release();
+        }
+    }
+
+    private async Task<UpdateCheckOutcome> CheckCoreAsync(CancellationToken cancellationToken)
+    {
 
         WriteLog(AgentLogLevel.Information, "Güncelleme denetimi: kurulu sürüm {Version}", CurrentVersion);
         byte[] manifestBytes;
@@ -163,7 +179,20 @@ public abstract class AgentUpdaterBase : IAgentUpdater, IProgress<double>
             }
 
             WriteLog(AgentLogLevel.Information, "Güncelleme başladı: {Offered} (kurulu {Version})", manifest.Version, CurrentVersion);
-            return await InstallAsync(manifest, cancellationToken).ConfigureAwait(false);
+            var installed = false;
+            try
+            {
+                installed = await InstallAsync(manifest, cancellationToken).ConfigureAwait(false);
+                return installed;
+            }
+            finally
+            {
+                if (!installed)
+                {
+                    // Kurulmadan bitti: sunucu ajana yeniden iş göndersin (review r1 H-1; AC-4 "API'ye bağlı kalır").
+                    await _connection.TryEndUpdateAsync().ConfigureAwait(false);
+                }
+            }
         }
         finally
         {
@@ -236,13 +265,16 @@ public abstract class AgentUpdaterBase : IAgentUpdater, IProgress<double>
         }
 
         Raise(new UpdateEvent(UpdateStatus.Installing, 100, Version: manifest.Version));
+        var before = _installation.LoadState();
         try
         {
-            _installation.Swap(staged);
+            // Önce durum, sonra değiş-tokuş (review r1 L-1): arada kesilirse yeni exe "onay bekliyor" olarak açılır ve izlenir.
             _installation.SaveState(new UpdateState(manifest.Version, 0, CurrentVersion));
+            _installation.Swap(staged);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            _installation.SaveState(before);
             WriteLog(AgentLogLevel.Error, "Güncelleme kurulamadı: {ExceptionType}", ex.GetType().Name);
             return Fail(manifest, SetupFailure.InstallFailed, InstallStep.Install);
         }

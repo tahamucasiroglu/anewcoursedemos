@@ -64,18 +64,27 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     public async Task<bool> BeginUpdateAsync(string connectionId, AgentOwner owner, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
-        if (Registry.FindByConnection(connectionId) is not { } session || session.UserId != owner.UserId)
+
+        // Önce kilit altında "güncelleniyor" işaretlenir (yeni komutlar kesilir), sonra "Üretiliyor" iş aranır (review r1 M-1: denetle-sonra-yaz yarışı yok).
+        if (!Registry.TryUpdate(connectionId, s => s.UserId == owner.UserId ? s with { Updating = true } : null))
         {
             return false;
         }
 
         if (await IsProducingAsync(owner.UserId, cancellationToken).ConfigureAwait(false))
         {
+            Registry.TryUpdate(connectionId, s => s with { Updating = false });
             return false; // "Üretim sürüyor; iş bitince ya da durdurulunca güncellenecek" (Req 3): ajan bir süre sonra yeniden sorar.
         }
 
-        Registry.Set(session with { Updating = true });
         return true;
+    }
+
+    /// <inheritdoc />
+    public void EndUpdate(string connectionId, AgentOwner owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        Registry.TryUpdate(connectionId, s => s.UserId == owner.UserId ? s with { Updating = false } : null);
     }
 
     /// <inheritdoc />

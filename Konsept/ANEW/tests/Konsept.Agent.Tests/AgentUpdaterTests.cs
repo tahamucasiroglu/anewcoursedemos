@@ -83,6 +83,7 @@ public sealed class AgentUpdaterTests : IDisposable
         _installation.LoadState().ShouldBe(new UpdateState("0.6.0", 0, Current));
         _install.Launches.ShouldBe([(_installation.InstalledExe, AgentUpdaterBase.AfterUpdateArgument)]);
         restarted.ShouldBeTrue();
+        await _connection.DidNotReceive().TryEndUpdateAsync();
         _events.Select(e => e.Status).Distinct().ShouldBe(
             [UpdateStatus.Available, UpdateStatus.Downloading, UpdateStatus.Verifying, UpdateStatus.Installing, UpdateStatus.Completed]);
         await _connection.Received(1).TryBeginUpdateAsync(Arg.Any<CancellationToken>());
@@ -168,6 +169,7 @@ public sealed class AgentUpdaterTests : IDisposable
         _installation.LoadState().ShouldBe(new UpdateState());
         _install.Launches.ShouldBeEmpty();
         _logs.ShouldContain(e => e.Level == LogEventLevel.Error && e.MessageTemplate.Text.Contains("SHA-256", StringComparison.Ordinal));
+        await _connection.Received(1).TryEndUpdateAsync(); // sunucu ajana yeniden iş gönderir (review r1 H-1)
     }
 
     /// <summary>
@@ -360,6 +362,21 @@ public sealed class AgentUpdaterTests : IDisposable
             line.ShouldNotContain(signature);
             line.ShouldNotContain(Convert.ToBase64String(_key.GetEncoded()));
         }
+    }
+
+    /// <summary>Review r1 M-2: aynı anda gelen denetimler sıraya girer; ikisi de listeyi doğrular (geçici dosya çakışması yok).</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Check_Concurrent_BothVerify()
+    {
+        Publish("0.6.0", NewExe);
+        var updater = Create();
+        var ct = TestContext.Current.CancellationToken;
+
+        var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Task.Run(() => updater.CheckAsync(ct), ct)));
+
+        results.ShouldAllBe(r => r == UpdateCheckOutcome.Available);
+        _logs.ShouldNotContain(e => e.Level >= LogEventLevel.Warning);
     }
 
     /// <summary>İmza doğrulayıcı: anahtar yoksa ya da geçersizse yapılandırılmamış sayılır, hiçbir imzayı kabul etmez.</summary>

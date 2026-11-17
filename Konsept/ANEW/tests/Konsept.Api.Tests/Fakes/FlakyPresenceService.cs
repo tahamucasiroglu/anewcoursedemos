@@ -27,6 +27,9 @@ public sealed class FlakyPresenceService(IAgentPresenceService inner, FlakyRegis
         inner.BeginUpdateAsync(connectionId, owner, cancellationToken); // Test kurulumu (plan 0023 A-1): arayüze uyum.
 
     /// <inheritdoc />
+    public void EndUpdate(string connectionId, AgentOwner owner) => inner.EndUpdate(connectionId, owner);
+
+    /// <inheritdoc />
     public Task DisconnectAsync(string connectionId, CancellationToken cancellationToken) =>
         inner.DisconnectAsync(connectionId, cancellationToken);
 }

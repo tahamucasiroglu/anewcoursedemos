@@ -60,6 +60,8 @@ public abstract class AgentInstallationBase : IAgentInstallation
 
     private string AppDirectory => Path.Combine(InstallRoot, "app");
 
+    private string FailedExe => Path.Combine(AppDirectory, "failed-" + UpdateRules.InstalledFileName);
+
     private string StatePath => Path.Combine(InstallRoot, "update-state.json");
 
     /// <inheritdoc />
@@ -89,6 +91,7 @@ public abstract class AgentInstallationBase : IAgentInstallation
     public void Swap(string stagedExe)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(stagedExe);
+        TryDeleteFile(FailedExe); // Önceki geri dönüşün kalıntısı (review r1 L-2).
         Directory.CreateDirectory(Path.GetDirectoryName(PreviousExe)!);
         if (File.Exists(PreviousExe))
         {
@@ -112,7 +115,7 @@ public abstract class AgentInstallationBase : IAgentInstallation
             return false;
         }
 
-        var failed = Path.Combine(AppDirectory, "failed-" + UpdateRules.InstalledFileName);
+        var failed = FailedExe;
         TryDeleteFile(failed);
         if (File.Exists(InstalledExe))
         {
@@ -167,7 +170,8 @@ public abstract class AgentInstallationBase : IAgentInstallation
         ok &= TryDeleteDirectory(InstallRoot);
         if (deleteVideos && SetupRules.IsValidVideoFolder(videoFolder, InstallRoot) && Directory.Exists(videoFolder))
         {
-            // Yalnızca ajanın ürettiği videolar (.mp4) silinir; klasör boş kalırsa o da (kullanıcının başka dosyalarına dokunulmaz).
+            // Video klasöründeki .mp4 videolar silinir; klasör boş kalırsa o da. Kullanıcının başka türden dosyalarına dokunulmaz
+            // (klasördeki ajan dışı .mp4'leri ayırt etmek B-136, review r1 L-3).
             foreach (var video in Directory.EnumerateFiles(videoFolder, "*.mp4", SearchOption.TopDirectoryOnly))
             {
                 ok &= TryDeleteFile(video);

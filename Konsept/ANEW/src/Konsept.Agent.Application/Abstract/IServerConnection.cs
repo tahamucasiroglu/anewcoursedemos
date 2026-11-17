@@ -65,6 +65,10 @@ public interface IServerConnection : IAsyncDisposable
     /// <returns>Sonuç.</returns>
     Task<bool?> TryBeginUpdateAsync(CancellationToken cancellationToken);
 
+    /// <summary>Güncelleme kurulmadan bitti: sunucu ajana yeniden iş gönderebilir (review r1 H-1). Hata yutulur.</summary>
+    /// <returns>Görev.</returns>
+    Task TryEndUpdateAsync();
+
     /// <summary>Bağlantıyı yeniden başlatılabilir biçimde kapatır (oturum kapandı; yeni eşleştirmeden sonra <see cref="StartAsync"/>).</summary>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>

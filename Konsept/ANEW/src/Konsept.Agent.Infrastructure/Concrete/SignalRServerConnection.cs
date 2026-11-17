@@ -181,6 +181,24 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     }
 
     /// <inheritdoc />
+    public override async Task TryEndUpdateAsync()
+    {
+        if (State != ConnectionState.Connected || _hub is null)
+        {
+            return; // Yeniden bağlanınca yeni oturum zaten iş alır.
+        }
+
+        try
+        {
+            await _hub.InvokeAsync(AgentHubContract.EndUpdate).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _logger.Warning("Güncellemenin bittiği sunucuya bildirilemedi: {ExceptionType}", ex.GetType().Name);
+        }
+    }
+
+    /// <inheritdoc />
     public override async Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(report);
