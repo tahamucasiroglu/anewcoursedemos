@@ -46,4 +46,11 @@ public interface IAgentCommands
     /// <param name="cancellationToken">İptal belirteci (zaman aşımı çağıranda).</param>
     /// <returns>Cevap ya da <c>null</c> (ajan yok/koptu).</returns>
     Task<AgentFileActionReply?> OpenFileAsync(Guid userId, AgentFileActionRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Silinen videonun dosyalarını kalıcı siler (spec 0019 Req 4); yalnızca sahibin ajanına.</summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal belirteci (zaman aşımı çağıranda).</param>
+    /// <returns>Cevap ya da <c>null</c> (ajan yok/koptu); ajan hata verirse tüm dosyalar "silinemedi" sayılır.</returns>
+    Task<AgentDeleteFilesReply?> DeleteFilesAsync(Guid userId, AgentDeleteFilesRequest request, CancellationToken cancellationToken);
 }

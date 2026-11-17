@@ -51,6 +51,13 @@ public abstract class AgentChannelBase : IAgentChannel
         return InvokeAsync<AgentFileActionReply>(connectionId, AgentHubContract.OpenFile, request, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task<AgentDeleteFilesReply> DeleteFilesAsync(string connectionId, AgentDeleteFilesRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+        return InvokeAsync<AgentDeleteFilesReply>(connectionId, AgentHubContract.DeleteFiles, request, cancellationToken);
+    }
+
     /// <summary>Komutu gönderir ve cevabı bekler.</summary>
     /// <param name="connectionId">Ajan bağlantısı.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

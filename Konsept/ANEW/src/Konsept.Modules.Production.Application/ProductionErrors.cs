@@ -62,6 +62,12 @@ public static class ProductionErrors
     /// <summary>Ajan dosyayı açamadı.</summary>
     public static Error FileActionFailed => new("production.file_action_failed", ProductionText.FileActionFailed, ErrorType.Unavailable);
 
+    /// <summary>Gets kalıcı silme için ajan bağlı değil (spec 0019 Req 4); kayıt Silinenler'de kalır.</summary>
+    public static Error PurgeAgentOffline => new("production.purge_agent_offline", ProductionText.PurgeAgentOffline, ErrorType.Conflict);
+
+    /// <summary>Gets bazı dosyalar silinemedi (spec 0019 Req 4); kayıt Silinenler'de kalır, tekrar denenebilir.</summary>
+    public static Error PurgePartial => new("production.purge_partial", ProductionText.PurgePartial, ErrorType.Conflict);
+
     /// <summary>"Sırayla üret" pasif (Req 14): mesaj nedenin metni, <c>reason</c> kodu.</summary>
     /// <param name="reason">Neden kodu (<see cref="StartBlock"/>).</param>
     /// <returns>Hata.</returns>

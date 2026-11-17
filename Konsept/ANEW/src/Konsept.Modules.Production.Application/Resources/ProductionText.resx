@@ -55,6 +55,8 @@
   <data name="FileActionInvalid" xml:space="preserve"><value>Geçersiz dosya eylemi.</value></data>
   <data name="FileActionTimeout" xml:space="preserve"><value>Zaman aşımı</value></data>
   <data name="FileActionFailed" xml:space="preserve"><value>Ajan dosyayı açamadı.</value></data>
+  <data name="PurgeAgentOffline" xml:space="preserve"><value>Ajan bağlı değil</value></data>
+  <data name="PurgePartial" xml:space="preserve"><value>Bazı dosyalar silinemedi, dosyayı kapatıp tekrar deneyin</value></data>
   <data name="ChangeFirst" xml:space="preserve"><value>İlk sürüm</value></data>
   <data name="ChangeNone" xml:space="preserve"><value>Aynı ayarlarla yeniden üretildi</value></data>
   <data name="ChangeConcept" xml:space="preserve"><value>konsept metni</value></data>

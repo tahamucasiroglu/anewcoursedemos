@@ -48,6 +48,13 @@ public abstract class AgentCommandsBase(IAgentConnectionRegistry registry, IAgen
     public Task<AgentFileActionReply?> OpenFileAsync(Guid userId, AgentFileActionRequest request, CancellationToken cancellationToken) =>
         SendAsync(userId, (id, ct) => channel.OpenFileAsync(id, request, ct), new AgentFileActionReply(false, AgentFileActionReply.Failed), cancellationToken);
 
+    /// <inheritdoc />
+    public Task<AgentDeleteFilesReply?> DeleteFilesAsync(Guid userId, AgentDeleteFilesRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return SendAsync(userId, (id, ct) => channel.DeleteFilesAsync(id, request, ct), new AgentDeleteFilesReply(request.FileNames), cancellationToken);
+    }
+
     /// <summary>Hatanın bağlantı kopması anlamına gelip gelmediği (iptal dışındaki gönderim hataları).</summary>
     /// <param name="exception">Hata.</param>
     /// <returns>Koptuysa <c>true</c>.</returns>

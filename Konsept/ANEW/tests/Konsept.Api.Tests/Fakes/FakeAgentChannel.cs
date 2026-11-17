@@ -29,6 +29,9 @@ public sealed class FakeAgentChannel : IAgentChannel
     /// <summary>Gets or sets dosya eylemi işleyicisi (spec 0007; varsayılan: açıldı).</summary>
     public Func<AgentFileActionRequest, CancellationToken, Task<AgentFileActionReply>> FileAction { get; set; } = DefaultFileAction;
 
+    /// <summary>Gets or sets kalıcı silme işleyicisi (spec 0019; varsayılan: hepsi silindi).</summary>
+    public Func<AgentDeleteFilesRequest, CancellationToken, Task<AgentDeleteFilesReply>> DeleteFiles { get; set; } = DefaultDeleteFiles;
+
     /// <summary>Gets gönderilenler (bağlantı, metot, JSON yük).</summary>
     public IReadOnlyList<(string ConnectionId, string Method, string Payload)> Sent
     {
@@ -60,6 +63,13 @@ public sealed class FakeAgentChannel : IAgentChannel
     public static Task<AgentFileActionReply> DefaultFileAction(AgentFileActionRequest request, CancellationToken cancellationToken) =>
         Task.FromResult(new AgentFileActionReply(true, null));
 
+    /// <summary>Varsayılan kalıcı silme: hepsi silindi.</summary>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal.</param>
+    /// <returns>Cevap.</returns>
+    public static Task<AgentDeleteFilesReply> DefaultDeleteFiles(AgentDeleteFilesRequest request, CancellationToken cancellationToken) =>
+        Task.FromResult(new AgentDeleteFilesReply([]));
+
     /// <summary>Belirli bir metodun komut sayısı.</summary>
     /// <param name="method">Metot.</param>
     /// <param name="stage">Aşama (yalnızca <c>RunStage</c>).</param>
@@ -79,6 +89,7 @@ public sealed class FakeAgentChannel : IAgentChannel
         BeforeCheck = null;
         Stage = DefaultStage;
         FileAction = DefaultFileAction;
+        DeleteFiles = DefaultDeleteFiles;
     }
 
     /// <inheritdoc />
@@ -125,6 +136,14 @@ public sealed class FakeAgentChannel : IAgentChannel
         ArgumentNullException.ThrowIfNull(request);
         Record(connectionId, "OpenFile", request);
         return FileAction(request, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<AgentDeleteFilesReply> DeleteFilesAsync(string connectionId, AgentDeleteFilesRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Record(connectionId, "DeleteFiles", request);
+        return DeleteFiles(request, cancellationToken);
     }
 
     private void Record(string connectionId, string method, object payload)

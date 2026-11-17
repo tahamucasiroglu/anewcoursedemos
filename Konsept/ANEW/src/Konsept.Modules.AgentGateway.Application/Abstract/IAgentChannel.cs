@@ -48,4 +48,11 @@ public interface IAgentChannel
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Cevap.</returns>
     Task<AgentFileActionReply> OpenFileAsync(string connectionId, AgentFileActionRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Dosyaları kalıcı sil (spec 0019 Req 4).</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Cevap.</returns>
+    Task<AgentDeleteFilesReply> DeleteFilesAsync(string connectionId, AgentDeleteFilesRequest request, CancellationToken cancellationToken);
 }

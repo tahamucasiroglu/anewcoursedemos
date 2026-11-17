@@ -3,6 +3,7 @@ using Konsept.Modules.AiGateway.Application.Abstract;
 using Konsept.Modules.Concepts.Application.Abstract;
 using Konsept.Modules.Identity.Application.Abstract;
 using Konsept.Modules.Monitoring.Application.Abstract;
+using Konsept.Modules.Production.Application.Abstract;
 using Konsept.Modules.Profiles.Application.Abstract;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -53,6 +54,9 @@ public sealed class ConceptsApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Gets sahte sağlayıcı.</summary>
     public ScriptedProviderClient Provider { get; } = new();
+
+    /// <summary>Gets bellek video kayıtları deposu (spec 0019: Silinenler'deki videolar negatif sinyal).</summary>
+    public InMemoryProducedVideoRepository Videos { get; } = new();
 
     /// <summary>Gets bu örneğin Data Protection anahtar klasörü.</summary>
     public string KeysDirectory { get; } = Path.Combine(Path.GetTempPath(), "anewconcept-tests", "dp-keys-" + Guid.NewGuid().ToString("N"));
@@ -112,6 +116,7 @@ public sealed class ConceptsApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<ISpendRepository>();
             services.RemoveAll<IConceptRepository>();
             services.RemoveAll<ITopicSuggestionRepository>();
+            services.RemoveAll<IProducedVideoRepository>();
             services.AddSingleton<IUserRepository>(Users);
             services.AddSingleton<ISessionRepository>(Sessions);
             services.AddSingleton<IAgentDeviceRepository>(new InMemoryAgentDeviceRepository());
@@ -126,6 +131,7 @@ public sealed class ConceptsApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ISpendRepository>(Spend);
             services.AddSingleton<IConceptRepository>(Concepts);
             services.AddSingleton<ITopicSuggestionRepository>(Suggestions);
+            services.AddSingleton<IProducedVideoRepository>(Videos); // Spec 0019: "beğenilmedi" negatif sinyali video kayıtlarından okunur.
         });
     }
 }

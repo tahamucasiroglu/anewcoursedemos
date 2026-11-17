@@ -6,10 +6,12 @@ using Konsept.Modules.Concepts.Domain.Entities;
 using Konsept.Modules.Concepts.Domain.Enums;
 using Konsept.Modules.Concepts.Infrastructure.Persistence;
 using Konsept.Modules.Concepts.Infrastructure.Persistence.Concrete;
+using Konsept.Modules.Production.Application.Concrete;
 using Konsept.Modules.Production.Domain.Entities;
 using Konsept.Modules.Production.Domain.Enums;
 using Konsept.Modules.Production.Infrastructure.Persistence;
 using Konsept.Modules.Production.Infrastructure.Persistence.Concrete;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
@@ -262,6 +264,69 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         (await videos.ListByConceptAsync(Guid.NewGuid(), concept, ct)).ShouldBeEmpty();
         (await videos.GetAsync(Guid.NewGuid(), ids[0], ct)).ShouldBeNull();
         (await videos.GetAsync(userId, ids[0], ct))!.Title.ShouldBe("Yeni");
+    }
+
+    /// <summary>
+    /// Spec 0019 AC-4, AC-9 ve B-130 (gerçek PostgreSQL, kasıtlı bozma hedefi): Sil tüm sürümlere aynı silinme anını yazar, silinen video normal
+    /// okumalarda görünmez ve Silinenler'de görünür; "beğenilmedi" kaynağı başlığı verir; başka kullanıcı ne silebilir ne kalıcı silebilir;
+    /// kalıcı silme kayıtları kaldırır ve admin klip sayısı (konsept başına ilk tamamlanma) düşmez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Videos_RealDatabase_DeletePurge_ClipCountKept()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<ProductionDbContext>();
+        var videos = new ProducedVideoRepository(context);
+        var clips = new ClipStatistics(context);
+        var (userId, profileId, concept) = (Guid.CreateVersion7(), Guid.CreateVersion7(), Guid.CreateVersion7());
+
+        // Benzersiz an: global klip listesinde bu videoyu tanımak için (başka testlerin kayıtlarından ayrılır).
+        var first = new DateTimeOffset(2001, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(Random.Shared.Next(1, int.MaxValue));
+        foreach (var (title, at) in new[] { ("İlk", first), ("İkinci", first.AddHours(1)) })
+        {
+            await videos.AddAsync(
+                new ProducedVideo
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = userId,
+                    ProfileId = profileId,
+                    ConceptId = concept,
+                    JobId = Guid.CreateVersion7(),
+                    Title = title,
+                    ConceptText = "{}",
+                    Engine = "local/hyperframes",
+                    FileName = title + ".mp4",
+                    StartedAt = at.AddMinutes(-1),
+                    EndedAt = at,
+                },
+                ct);
+        }
+
+        int Clips(IReadOnlyList<DateTimeOffset> all) => all.Count(a => a == first);
+        Clips(await clips.ListFirstCompletionsAsync(ct)).ShouldBe(1);
+
+        (await videos.SoftDeleteAsync(Guid.NewGuid(), concept, DateTimeOffset.UtcNow, ct)).ShouldBe(0); // Başkası silemez.
+        (await videos.ListByConceptAsync(userId, concept, ct)).Count.ShouldBe(2);
+        var at2 = DateTimeOffset.UtcNow;
+        (await videos.SoftDeleteAsync(userId, concept, at2, ct)).ShouldBe(2);
+        (await videos.ListByConceptAsync(userId, concept, ct)).ShouldBeEmpty();
+        (await videos.ListAsync(userId, profileId, ct)).ShouldBeEmpty();
+        var deleted = await videos.ListDeletedAsync(userId, profileId, ct);
+        deleted.Count.ShouldBe(2);
+        deleted.ShouldAllBe(v => v.DeletedAt != null && Math.Abs((v.DeletedAt!.Value - at2).TotalMilliseconds) < 1);
+        (await videos.ListDeletedAsync(Guid.NewGuid(), profileId, ct)).ShouldBeEmpty();
+        (await new DislikedVideoTitles(videos).ListAsync(userId, profileId, ct)).Select(d => d.Title).ShouldBe(["İkinci"]);
+        Clips(await clips.ListFirstCompletionsAsync(ct)).ShouldBe(1); // Silinenler'deki video sayılır.
+
+        (await videos.PurgeAsync(Guid.NewGuid(), concept, ct)).ShouldBeFalse(); // Başkası kalıcı silemez.
+        (await videos.ListDeletedByConceptAsync(userId, concept, ct)).Count.ShouldBe(2);
+        (await videos.PurgeAsync(userId, concept, ct)).ShouldBeTrue();
+        (await videos.ListDeletedByConceptAsync(userId, concept, ct)).ShouldBeEmpty();
+        (await context.Videos.AsNoTracking().CountAsync(v => v.ConceptId == concept, ct)).ShouldBe(0); // Yetim kayıt yok.
+        (await new DislikedVideoTitles(videos).ListAsync(userId, profileId, ct)).ShouldBeEmpty();
+        Clips(await clips.ListFirstCompletionsAsync(ct)).ShouldBe(1); // B-130: kalıcı silme klip sayısını düşürmez.
     }
 
     private static async Task<JsonElement> State(HttpClient client, Guid profile, CancellationToken ct) =>

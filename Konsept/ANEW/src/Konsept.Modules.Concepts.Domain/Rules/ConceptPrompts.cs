@@ -44,9 +44,21 @@ public static class ConceptPrompts
         text.Append("- Each topic has a title of exactly one sentence and a summary of at most three sentences. No scenes, no scene details.\n");
         text.Append("- Never suggest a topic listed in chosen_topics, excluded_topics or older_topics, nor a different wording of one of them.\n");
         text.Append("- chosen_topics are topics the user picked before: focus on similar interests without repeating them.\n");
+        var disliked = history.Verbatim.Where(t => t.Disliked).Select(t => t.Title).ToList();
+        if (disliked.Count > 0)
+        {
+            // Spec 0019 Req 6: videosu silinen konu "beğenilmedi" (negatif prompt gibi); blok yalnızca varsa yazılır.
+            text.Append("- disliked_topics are topics whose videos the user deleted: the user did not like them. Never suggest them, and avoid similar topics.\n");
+        }
+
         text.Append(DataRule);
-        AppendList(text, "chosen_topics", history.Verbatim.Where(t => t.Chosen).Select(t => t.Title));
-        AppendList(text, "excluded_topics", history.Verbatim.Where(t => !t.Chosen).Select(t => t.Title));
+        AppendList(text, "chosen_topics", history.Verbatim.Where(t => t.Chosen && !t.Disliked).Select(t => t.Title));
+        AppendList(text, "excluded_topics", history.Verbatim.Where(t => !t.Chosen && !t.Disliked).Select(t => t.Title));
+        if (disliked.Count > 0)
+        {
+            AppendList(text, "disliked_topics", disliked);
+        }
+
         if (history.OlderCount > 0)
         {
             text.Append("<older_topics count=\"").Append(history.OlderCount.ToString(CultureInfo.InvariantCulture)).Append("\">")

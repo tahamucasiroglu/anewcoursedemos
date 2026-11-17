@@ -25,12 +25,14 @@ namespace Konsept.Modules.Production.Application.Base;
 /// <param name="profiles">Profil sahipliği.</param>
 /// <param name="models">Katalog (model adları).</param>
 /// <param name="user">İsteği yapan kullanıcı.</param>
+/// <param name="time">Saat (silinme anı — spec 0019).</param>
 public abstract class ProducedVideoServiceBase(
     IProducedVideoRepository videos,
     IAgentCommands agents,
     IProfileGenerationReader profiles,
     IModelDirectory models,
-    ICurrentUser user) : IProducedVideoService
+    ICurrentUser user,
+    TimeProvider time) : IProducedVideoService
 {
     /// <summary>Liste parçası boyu (Req 1).</summary>
     public const int PageSize = 50;
@@ -40,6 +42,9 @@ public abstract class ProducedVideoServiceBase(
 
     /// <summary>Dosya eylemi zaman aşımı (Req 4).</summary>
     public static readonly TimeSpan FileActionTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>Kalıcı silmede ajanın cevap süresi sınırı (spec 0019 Req 4).</summary>
+    public static readonly TimeSpan PurgeTimeout = TimeSpan.FromSeconds(30);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -133,6 +138,99 @@ public abstract class ProducedVideoServiceBase(
             { Error: AgentFileActionReply.NotFound } => Result<FileActionRequest>.Failure(ProductionErrors.StreamFileMissing),
             _ => Result<FileActionRequest>.Failure(ProductionErrors.FileActionFailed),
         };
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<DeletedVideoItemDto>> DeleteAsync(Guid videoId, CancellationToken cancellationToken)
+    {
+        if (user.UserId is not { } userId)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.SignInRequired);
+        }
+
+        // Yalnızca veritabanı (Req 2): ajan çevrimdışıyken ve dosya yokken de çalışır; ajana komut gitmez, dosya diskte kalır.
+        var rows = await videos.ListByConceptAsync(userId, videoId, cancellationToken).ConfigureAwait(false);
+        var at = time.GetUtcNow();
+        if (rows.Count == 0 || await videos.SoftDeleteAsync(userId, videoId, at, cancellationToken).ConfigureAwait(false) == 0)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.VideoNotFound);
+        }
+
+        return Result<DeletedVideoItemDto>.Success(new DeletedVideoItemDto(videoId, rows[^1].Title, at, rows.Count));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<DeletedVideoListDto>> ListDeletedAsync(Guid profileId, int page, CancellationToken cancellationToken)
+    {
+        if (user.UserId is not { } userId)
+        {
+            return Result<DeletedVideoListDto>.Failure(ProductionErrors.SignInRequired);
+        }
+
+        if (await profiles.GetAsync(userId, profileId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return Result<DeletedVideoListDto>.Failure(ProductionErrors.ProfileNotFound);
+        }
+
+        var rows = await videos.ListDeletedAsync(userId, profileId, cancellationToken).ConfigureAwait(false);
+        var items = rows
+            .GroupBy(v => v.ConceptId)
+            .Select(g => ToDeletedItem(g.Key, g.ToList()))
+            .OrderByDescending(i => i.DeletedAt)
+            .ThenByDescending(i => i.Id)
+            .ToList();
+        var current = Math.Clamp(page, 1, 1_000_000);
+        var slice = items.Skip((int)Math.Min(int.MaxValue, (long)(current - 1) * PageSize)).Take(PageSize).ToList();
+        return Result<DeletedVideoListDto>.Success(new DeletedVideoListDto(slice, current, PageSize, items.Count));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<DeletedVideoItemDto>> PurgeAsync(Guid videoId, CancellationToken cancellationToken)
+    {
+        if (user.UserId is not { } userId)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.SignInRequired);
+        }
+
+        // Yalnızca sahibinin silinmiş videosu (BR-1, Req 7): başkasınınki ajana hiç gitmez.
+        var rows = await videos.ListDeletedByConceptAsync(userId, videoId, cancellationToken).ConfigureAwait(false);
+        if (rows.Count == 0)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.VideoNotFound);
+        }
+
+        var names = rows.Select(v => v.FileName).Distinct(StringComparer.Ordinal).ToList();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(PurgeTimeout);
+        AgentDeleteFilesReply? reply;
+        try
+        {
+            reply = await agents.DeleteFilesAsync(userId, new AgentDeleteFilesRequest(videoId, names), timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.FileActionTimeout);
+        }
+
+        if (reply is null)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.PurgeAgentOffline);
+        }
+
+        // Bir dosya bile kaldıysa kayıt kalır (yetim dosya bırakılmaz); tekrar denemede yalnızca kalanlar silinir (yok = silinmiş).
+        if (reply.Remaining is { Count: > 0 })
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.PurgePartial);
+        }
+
+        await videos.PurgeAsync(userId, videoId, cancellationToken).ConfigureAwait(false);
+        return Result<DeletedVideoItemDto>.Success(ToDeletedItem(videoId, rows));
+    }
+
+    private static DeletedVideoItemDto ToDeletedItem(Guid id, IReadOnlyList<ProducedVideo> rows)
+    {
+        var latest = rows.MaxBy(v => v.EndedAt)!;
+        return new DeletedVideoItemDto(id, latest.Title, rows.Max(v => v.DeletedAt) ?? latest.EndedAt, rows.Count);
     }
 
     private static ProducedVersionDto ToDto(ProducedVideo v, int number, ProducedVideo? previous, Func<string?, string?> name)

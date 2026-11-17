@@ -43,4 +43,7 @@ public static class AgentHubContract
 
     /// <summary>API → ajan: videonun klasörünü ya da videoyu sistem oynatıcısında aç (spec 0007 Req 4).</summary>
     public const string OpenFile = "OpenFile";
+
+    /// <summary>API → ajan: silinen videonun tüm sürüm dosyalarını kalıcı sil (spec 0019 Req 4).</summary>
+    public const string DeleteFiles = "DeleteFiles";
 }

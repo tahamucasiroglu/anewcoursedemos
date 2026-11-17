@@ -5,6 +5,7 @@ using Konsept.Modules.AiGateway.Contracts.Enums;
 using Konsept.Modules.Concepts.Application.Abstract;
 using Konsept.Modules.Concepts.Application.Dtos;
 using Konsept.Modules.Concepts.Application.Resources;
+using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Concepts.Domain.Entities;
 using Konsept.Modules.Concepts.Domain.Enums;
 using Konsept.Modules.Concepts.Domain.Rules;
@@ -35,6 +36,7 @@ namespace Konsept.Modules.Concepts.Application.Base;
 /// <param name="suggestions">Öneri deposu.</param>
 /// <param name="rules">Kurallar.</param>
 /// <param name="events">Günlük olay yazıcısı (Monitoring.Contracts).</param>
+/// <param name="disliked">Silinenler'deki videoların başlıkları (Concepts.Contracts, Production uygular — spec 0019 Req 6).</param>
 /// <param name="time">Saat.</param>
 /// <param name="logger">Log.</param>
 public abstract class ConceptJobExecutorBase(
@@ -43,6 +45,7 @@ public abstract class ConceptJobExecutorBase(
     ITopicSuggestionRepository suggestions,
     IConceptRuleSource rules,
     ISystemEventWriter events,
+    IDislikedVideoTitles disliked,
     TimeProvider time,
     ILogger logger) : IConceptJobExecutor
 {
@@ -363,7 +366,8 @@ public abstract class ConceptJobExecutorBase(
         };
     }
 
-    // Profil geçmişi: tüm konsept başlıkları + bekleyen dışındaki öneriler (seçilmeyenler "elenen", seçilenler "seçilen").
+    // Profil geçmişi: tüm konsept başlıkları + bekleyen dışındaki öneriler (seçilmeyenler "elenen", seçilenler "seçilen") + Silinenler'deki
+    // videoların başlıkları ("beğenilmedi", zamanı silinme anı → tekilleştirmede konseptin kendi kaydından yeni; spec 0019 Req 6).
     private async Task<IReadOnlyList<HistoryTitle>> HistoryAsync(ConceptJobInput input, CancellationToken cancellationToken)
     {
         var userId = input.Caller.UserId;
@@ -373,6 +377,8 @@ public abstract class ConceptJobExecutorBase(
         titles.AddRange(rows
             .Where(s => s.State != SuggestionState.Pending)
             .Select(s => new HistoryTitle(s.Title, s.State == SuggestionState.Selected, s.CreatedAt)));
+        var videos = await disliked.ListAsync(userId, profileId, cancellationToken).ConfigureAwait(false);
+        titles.AddRange(videos.Select(v => new HistoryTitle(v.Title, Chosen: false, v.DeletedAt, Disliked: true)));
         return titles;
     }
 

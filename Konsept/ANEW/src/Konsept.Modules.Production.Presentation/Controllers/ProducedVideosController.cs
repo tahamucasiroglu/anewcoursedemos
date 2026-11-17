@@ -47,4 +47,29 @@ public sealed class ProducedVideosController : ControllerBase
     [HttpPost("versions/{id:guid}/open")]
     public Task<IActionResult> Open(Guid id, [FromBody] FileActionRequest request, CancellationToken cancellationToken) =>
         _videos.OpenFileAsync(id, request, cancellationToken).ToActionResult();
+
+    /// <summary>Sil (spec 0019): videoyu tüm sürümleriyle Silinenler'e gönderir.</summary>
+    /// <param name="id">Video (konsept).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Silinenler satırı.</returns>
+    [HttpPost("{id:guid}/delete")]
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+        _videos.DeleteAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>Silinenler — Videolar (spec 0019).</summary>
+    /// <param name="profileId">Profil.</param>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Liste.</returns>
+    [HttpGet("deleted")]
+    public Task<IActionResult> Deleted([FromQuery] Guid profileId, [FromQuery] int page, CancellationToken cancellationToken) =>
+        _videos.ListDeletedAsync(profileId, page, cancellationToken).ToActionResult();
+
+    /// <summary>Kalıcı sil (spec 0019).</summary>
+    /// <param name="id">Video (konsept).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Kaldırılan satır.</returns>
+    [HttpPost("deleted/{id:guid}/purge")]
+    public Task<IActionResult> Purge(Guid id, CancellationToken cancellationToken) =>
+        _videos.PurgeAsync(id, cancellationToken).ToActionResult();
 }

@@ -2,7 +2,7 @@ namespace Konsept.Modules.Production.Domain.Entities;
 
 /// <summary>
 /// Tamamlanan videonun sürüm kaydı (spec 0017 Req 22): konsept metninin üretim anındaki kopyası, kullanılan modeller ve motor, altyazı/ilerleme
-/// çubuğu seçimi, AI ses notu, başlangıç–bitiş. Kayıt sonradan değişmez; video dosyası ajandadır (yalnızca adı burada).
+/// çubuğu seçimi, AI ses notu, başlangıç–bitiş. İçerik sonradan değişmez (yalnızca silme işareti <see cref="DeletedAt"/> yazılır — spec 0019); video dosyası ajandadır (yalnızca adı burada).
 /// </summary>
 public sealed record ProducedVideo
 {
@@ -65,4 +65,7 @@ public sealed record ProducedVideo
 
     /// <summary>Gets sürümün online model maliyeti (USD; yerel aşamalar ücretsiz — spec 0007 Req 5, BR-12).</summary>
     public decimal CostUsd { get; init; }
+
+    /// <summary>Gets silinme anı (UTC; <c>null</c> = silinmemiş). Sil videonun tüm sürümlerine aynı anı yazar (spec 0019 Req 1, BR-7 soft delete).</summary>
+    public DateTimeOffset? DeletedAt { get; init; }
 }

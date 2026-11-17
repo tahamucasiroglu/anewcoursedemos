@@ -36,6 +36,7 @@ public sealed class ProducedVideoConfiguration : IEntityTypeConfiguration<Produc
         builder.Property(v => v.DurationSeconds).HasColumnName("duration_seconds").HasDefaultValue(0).IsRequired();
         builder.Property(v => v.Format).HasColumnName("format").HasMaxLength(20).HasDefaultValue("landscape").IsRequired();
         builder.Property(v => v.CostUsd).HasColumnName("cost_usd").HasPrecision(18, 6).HasDefaultValue(0m).IsRequired();
+        builder.Property(v => v.DeletedAt).HasColumnName("deleted_at");
         builder.HasIndex(v => new { v.UserId, v.ConceptId, v.EndedAt }).HasDatabaseName("ix_videos_user_concept_ended");
         builder.HasIndex(v => new { v.UserId, v.ProfileId, v.EndedAt }).HasDatabaseName("ix_videos_user_profile_ended");
     }

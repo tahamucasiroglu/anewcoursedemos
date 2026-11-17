@@ -23,6 +23,21 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Konsept.Modules.Production.Domain.Entities.ClipTombstone", b =>
+                {
+                    b.Property<Guid>("ConceptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("concept_id");
+
+                    b.Property<DateTimeOffset>("FirstCompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_completed_at");
+
+                    b.HasKey("ConceptId");
+
+                    b.ToTable("clip_tombstones", "production");
+                });
+
             modelBuilder.Entity("Konsept.Modules.Production.Domain.Entities.ProducedVideo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -58,6 +73,10 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,6)")
                         .HasDefaultValue(0m)
                         .HasColumnName("cost_usd");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<int>("DurationSeconds")
                         .ValueGeneratedOnAdd()

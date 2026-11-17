@@ -13,10 +13,12 @@ namespace Konsept.Modules.Production.Application.Concrete;
 /// <param name="profiles">Profil sahipliği.</param>
 /// <param name="models">Katalog.</param>
 /// <param name="user">İsteği yapan kullanıcı.</param>
+/// <param name="time">Saat.</param>
 public sealed class ProducedVideoService(
     IProducedVideoRepository videos,
     IAgentCommands agents,
     IProfileGenerationReader profiles,
     IModelDirectory models,
-    ICurrentUser user)
-    : ProducedVideoServiceBase(videos, agents, profiles, models, user);
+    ICurrentUser user,
+    TimeProvider time)
+    : ProducedVideoServiceBase(videos, agents, profiles, models, user, time);

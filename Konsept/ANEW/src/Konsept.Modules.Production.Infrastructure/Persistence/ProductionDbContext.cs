@@ -29,6 +29,9 @@ public sealed class ProductionDbContext : ModuleDbContextBase
     /// <summary>Gets video kayıtları (spec 0017).</summary>
     public DbSet<ProducedVideo> Videos => Set<ProducedVideo>();
 
+    /// <summary>Gets kalıcı silinen videoların klip izleri (spec 0019, B-130).</summary>
+    public DbSet<ClipTombstone> ClipTombstones => Set<ClipTombstone>();
+
     /// <summary>Gets sıra durumları (spec 0017).</summary>
     public DbSet<QueueState> QueueStates => Set<QueueState>();
 

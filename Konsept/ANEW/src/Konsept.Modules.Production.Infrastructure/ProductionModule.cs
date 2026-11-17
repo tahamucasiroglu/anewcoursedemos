@@ -1,3 +1,4 @@
+using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Identity.Contracts.Abstract;
 using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Production.Application.Abstract;
@@ -36,6 +37,7 @@ public static class ProductionModule
         services.AddScoped<ProductionPipelineLinks>();
         services.AddScoped<IProductionService, ProductionService>();
         services.AddScoped<IProducedVideoService, ProducedVideoService>();
+        services.AddScoped<IDislikedVideoTitles, DislikedVideoTitles>(); // Concepts.Contracts: "beğenilmedi" negatif sinyali (spec 0019).
         services.AddScoped<IProductionPipeline, ProductionPipeline>();
         services.AddSingleton<IProductionRunner, ProductionRunner>();
         services.AddHostedService<ProductionWorker>();
