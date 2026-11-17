@@ -28,6 +28,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly IStageRunner? _stages;
     private readonly IVideoStreamHost? _streams;
     private readonly IVideoFileActions? _files;
+    private readonly IVideoFileDeleter? _deleter;
     private readonly Func<IReadOnlyList<string>>? _installedComponents;
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource _run;
@@ -46,6 +47,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="streams">Yerel video akışı (spec 0017); verilmezse akış açılmaz.</param>
     /// <param name="installedComponents">Kurulu bileşen kimlikleri (B-110; kayıtta gönderilir); verilmezse gönderilmez.</param>
     /// <param name="files">Dosya eylemleri (spec 0007); verilmezse komut işlenmez.</param>
+    /// <param name="deleter">Kalıcı silme (spec 0019); verilmezse komut işlenmez.</param>
     public SignalRServerConnection(
         AgentSettings settings,
         IAgentInfoProvider info,
@@ -55,9 +57,11 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         IStageRunner? stages = null,
         IVideoStreamHost? streams = null,
         Func<IReadOnlyList<string>>? installedComponents = null,
-        IVideoFileActions? files = null)
+        IVideoFileActions? files = null,
+        IVideoFileDeleter? deleter = null)
     {
         _files = files;
+        _deleter = deleter;
         _installedComponents = installedComponents;
         _stages = stages;
         _streams = streams;
@@ -242,6 +246,12 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         {
             // Klasörde aç / Sistem oynatıcısında aç (spec 0007 Req 4): yalnızca bu oturumun sunucusundan.
             hub.On<AgentFileActionRequest, AgentFileActionReply>(AgentHubContract.OpenFile, files.Open);
+        }
+
+        if (_deleter is { } deleter)
+        {
+            // Kalıcı sil (spec 0019 Req 4): yalnızca bu oturumun sunucusundan, yalnızca video klasöründeki .mp4 adları.
+            hub.On<AgentDeleteFilesRequest, AgentDeleteFilesReply>(AgentHubContract.DeleteFiles, deleter.Delete);
         }
 
         hub.On(AgentHubContract.SessionClosed, () =>
