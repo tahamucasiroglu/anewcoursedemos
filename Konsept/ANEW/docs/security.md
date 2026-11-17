@@ -65,7 +65,7 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
   `agentsettings.json` `render*`) · L5 ajanın CSP etiketi (`'unsafe-eval'` yok, `connect-src 'self'`) · L6 Node izin modeli (okuma: iş +
   bileşenler, yazma: iş) · L7 ffprobe çıktı kapısı (çıktı hiç çalıştırılmaz). AppContainer spike'ı B-125, isteğe bağlı güçlü mod
   (güvenlik duvarı) B-124.
-- Ajan güncellemeleri **imza ya da hash doğrulamasından** geçmeden kurulmaz.
+- Ajan güncellemeleri **imza ya da hash doğrulamasından** geçmeden kurulmaz. (0023: sürüm listesi Ed25519 ile imzalanır — özel anahtar yalnızca yayın PC'sinde, `AGENT_UPDATE_KEY` dosyası; repoda, Pi'de ve loglarda yoktur; açık anahtar exe'ye gömülüdür. Exe SHA-256 ile doğrulanır; eski/aynı sürüm listesi tekrar oynatma sayılıp reddedilir. Anahtar değişimi v1 dışında.)
 - Ajan yalnızca **kimliği doğrulanmış API bağlantısından** (SignalR) gelen komutları çalıştırır.
 - Videolar kullanıcının PC'sinde kalır; web player ajanın **yalnızca localhost'a açık, kısa ömürlü token'lı**
   stream'inden oynatır.

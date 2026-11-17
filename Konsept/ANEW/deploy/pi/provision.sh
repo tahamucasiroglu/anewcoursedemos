@@ -86,6 +86,14 @@ if [ -d "$SRC/agent" ]; then
     if [ -e "$f" ]; then install -m 640 -o root -g anewconcept "$f" /opt/anewconcept/agent/; fi
   done
 fi
+# Ajan güncellemesi (spec 0023): imzalı liste + exe, kimliksiz /ajan-guncelleme/. Yeni liste geldiyse eskisinin yerine geçer (yalnızca son sürüm).
+install -d -o root -g anewconcept -m 750 /opt/anewconcept/agent/update
+if [ -f "$SRC/update/manifest.json" ]; then
+  find /opt/anewconcept/agent/update -maxdepth 1 -type f -delete
+  for f in "$SRC"/update/*; do
+    if [ -e "$f" ]; then install -m 640 -o root -g anewconcept "$f" /opt/anewconcept/agent/update/; fi
+  done
+fi
 if [ -d "$SRC/mirror" ]; then
   for f in "$SRC"/mirror/*; do
     if [ -e "$f" ]; then install -m 640 -o root -g anewconcept "$f" /opt/anewconcept/agent/components/; fi

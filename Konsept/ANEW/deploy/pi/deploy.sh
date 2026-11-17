@@ -6,6 +6,10 @@
 # - Ajan (spec 0009): win-x64 self-contained tek exe, Pi adresleri gömülü (PI_HOST'tan; AGENT_SERVER_URL / AGENT_SITE_URL ile
 #   ezilebilir) → /opt/anewconcept/agent/anewconcept-ajan-<sürüm>-win-x64.exe; Web "Ajanı indir" ile sunar. Bileşen aynası
 #   (components.json'da "mirrored") geliştirici PC'sinde önbelleğe indirilir, SHA-256 doğrulanır, Pi'de yoksa yüklenir.
+# - Ajan güncellemesi (spec 0023): AGENT_UPDATE_KEY (yayın PC'sindeki Ed25519 özel anahtar dosyası; repoda/Pi'de durmaz) verilirse açık
+#   anahtar exe'ye gömülür ve imzalı liste (manifest.json + .sig + exe) /opt/anewconcept/agent/update'e konur (/ajan-guncelleme/).
+#   Verilmezse güncelleme listesi yayınlanmaz ve bu exe güncelleme denetimi yapmaz (uyarı). Anahtar üretimi:
+#   node deploy/pi/agent-manifest.mjs keygen <dosya>
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
@@ -28,9 +32,18 @@ for app in Api Web; do
     --self-contained true -p:UseSharedCompilation=false -nodeReuse:false -o "$work/$lower" >/dev/null
 done
 echo "deploy: ajan (win-x64, self-contained tek dosya, $AGENT_FILE)"
-MSBUILDDISABLENODEREUSE=1 dotnet publish "$ROOT/src/Konsept.Agent/Konsept.Agent.csproj" -c Release -r win-x64 --self-contained true   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none   -p:AgentServerUrl="$AGENT_SERVER_URL" -p:AgentSiteUrl="$AGENT_SITE_URL"   -p:UseSharedCompilation=false -nodeReuse:false -o "$work/agent-publish" >/dev/null
-mkdir -p "$work/agent" "$work/mirror"
+UPDATE_PUBKEY=
+if [ -n "${AGENT_UPDATE_KEY:-}" ]; then
+  UPDATE_PUBKEY=$(node "$ROOT/deploy/pi/agent-manifest.mjs" pubkey "$AGENT_UPDATE_KEY")
+else
+  echo "deploy: UYARI — AGENT_UPDATE_KEY yok; güncelleme listesi yayınlanmayacak, bu exe güncelleme denetimi yapmaz" >&2
+fi
+MSBUILDDISABLENODEREUSE=1 dotnet publish "$ROOT/src/Konsept.Agent/Konsept.Agent.csproj" -c Release -r win-x64 --self-contained true   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none   -p:AgentServerUrl="$AGENT_SERVER_URL" -p:AgentSiteUrl="$AGENT_SITE_URL" -p:AgentUpdatePublicKey="$UPDATE_PUBKEY"   -p:UseSharedCompilation=false -nodeReuse:false -o "$work/agent-publish" >/dev/null
+mkdir -p "$work/agent" "$work/mirror" "$work/update"
 cp "$work/agent-publish/Konsept.Agent.exe" "$work/agent/$AGENT_FILE"
+if [ -n "$UPDATE_PUBKEY" ]; then
+  node "$ROOT/deploy/pi/agent-manifest.mjs" sign "$AGENT_UPDATE_KEY" "$work/agent/$AGENT_FILE" "$VERSION" "$work/update"
+fi
 
 echo "deploy: bileşen aynası"
 # /opt/anewconcept/agent 750 root:anewconcept: SSH kullanıcısı okuyamaz, uzak varlık kontrolleri sudo ile (review r1 H-1).
@@ -64,7 +77,7 @@ snapshot > "$work/before.txt"
 
 echo "deploy: yükleniyor"
 ssh -o BatchMode=yes "$PI" 'rm -rf /tmp/anewconcept-deploy && mkdir -p /tmp/anewconcept-deploy'
-tar -C "$work" -czf - api web agent mirror anewconcept-api.service anewconcept-web.service provision.sh \
+tar -C "$work" -czf - api web agent mirror update anewconcept-api.service anewconcept-web.service provision.sh \
   | ssh -o BatchMode=yes "$PI" 'tar -xzf - -C /tmp/anewconcept-deploy'
 
 echo "deploy: kurulum (sudo)"
