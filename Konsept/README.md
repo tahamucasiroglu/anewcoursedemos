@@ -1,4 +1,7 @@
-# Benim yolum ve ANEW karşılaştırması
+# Saf Claude ve ANEW karşılaştırması
+
+Tam saf Claude çalışması olmadı fakat yinede fikir vermesi açısından verilerle paylaştım. ANEW Eğitimi 1. Hafta sonrası çalışması. ANEW bilgim burada 1. hafta ile sınırlıdır.
+
 
 <details>
 <summary> 
@@ -98,3 +101,107 @@ Onun dışında sürdürülebilir bir program olması lazım. Gelişmeye açık 
 
 Admin panel kısmına çok değinmedim de admin panelde hani basit bir istatistikleri göreyim işte charts olarak da güzel olabilir. Hoşuma gider yani. Onun dışında işte insanları banlayabileyim. Bir de yapılan aktivitelere görebileyim yeter. Çok orada fazla bir isteğim yok şu an. Önceliğim değil yani orası. Önce programın çalışması lazım. Kurulum kontrolleri içinde işte projenin ismiyle beraber kurulum yap. Çakışma olmasın. Konsept adı altında başka bir program olabilir.
 </details>
+
+<br>
+
+# Başlangıç
+
+- Benzer projeyi yakın geçmişte yaptığım için Claude hafızasında aslında bu bilgi bulunmaktaydı.
+- `Taha Consept` normalde `ANEW` den bağımsız olması hederflenmekteydi fakat ben local işlerde testlere önem vermem kendim yapardım. `Taha Consept` ise testleri istemediğim halde normalden düzgün yapması, yüksek olasılıkla `ANEW` den etkilendiğini güsterir. E2E gibi bir terim hiç geçirmedim hiç istemedim ama `ANEW` sonrası bunu yaptığı için tesadüf olacağını düşünmüyorum.
+- Promtlar kaydedildi gelişimi incelemek isteyenler için
+- 
+
+
+
+
+
+
+
+# Taha Consept
+
+- video üretmeye kadar çalışıyor
+- buglar mevcut, ui ve bazı özellik bugları
+- admini aslında ayrı bir url üzerinden istemiştim ama tek url üzerinden yapmış
+
+<br>
+
+<br>
+
+- kullanılan sistem basit, memory klasörü olacak kural ve yöntemlerimiz orada not alınacak, raporlar klasörü olacak araştırmalar hem benim hemde claude anlayacağı şekilde orada tutulacak bilgilere ihtiyaç olunca oradan okuyacak. Promtlar klasöründe promt kaydı buna özel
+
+<br>
+
+- ![alt text](Sources/tahakonsept_1.png)
+- ![alt text](Sources/tahakonsept_2.png)
+- ![alt text](Sources/tahakonsept_3.png)
+
+<br>
+
+Alttaki resimde üretim için harcanan kaynaklar gösterilmekte. Api ücreti api kullanılsaydı. Abonelik olduğu için o kadar para verilmedi. Normalde `ANEW` eklemediğim halde kendiliğinden kullanmış. 
+
+
+<br>
+
+<br>
+
+
+
+- çıktılar için [text](Sources/Ciktilar/Taha)
+
+<br>
+
+<video controls src="Sources/Ciktilar/Taha/4000 Yıllık Kalay Kaçakçılığı Mektubu Anadolu'da Bulundu.mp4" title="Title"></video>
+
+
+<br>
+
+<video controls src="Sources/Ciktilar/Taha/Komutanları bile yerini bilmiyordu_ Hayalet Tümen'in gerçeği.mp4" title="Title"></video>
+
+
+# ANEW Concept
+
+- Bir yerde artık lütfen bitir diye yalvardım. Plandan işe geçemedik. Bütün spec leri artık onay almadan bitir dedim. Bitirdim dedi sadece karşılama ekranı vardı. Şimdi tekrar başla dedim. Bende düzgün kullanamadım tabiki hedeflenen kullanımı yapamadım ama basit işlerde başlayamıyorum. Lakin daha önce Claude ile bir tane büyük proje deneyimim oldu. Veritabanından başlayarak son kullanıcıya uzanan değişimlerde projede bozulma ve düzgün yapması için çok fazla token harcaması yapıyordu. Burada `/new-feature` ve `spec` sisteminde bu sorunları çözdüğüne inanıyorum. 
+
+
+- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
