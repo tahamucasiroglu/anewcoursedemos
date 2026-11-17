@@ -130,6 +130,16 @@ adı) yalnızca sahibin ajanına, 10 sn zaman aşımı (504 "Zaman aşımı"); b
 `produced.js` (`/uretilenler/{profil}/liste`, `/uretilenler/video/{id}`, `/uretilenler/surum/{id}/ac`; akış 0017 ucu), ajan durumu `status.js`'in
 `agent:status` olayından (cihaz adıyla), ses düzeyi `localStorage`.
 
+**Video silme ve Silinenler — Videolar (0019):** Sil = soft delete: `production.videos.deleted_at` konseptin tüm sürümlerine aynı anla yazılır
+(yalnızca DB, ajana komut yok, dosya kalır; içerik alanları değişmez). Normal okumalar (liste, ayrıntı, akış, dosya eylemi) silineni görmez.
+`POST api/produced/{id}/delete` · `GET api/produced/deleted?profileId&page` · `POST api/produced/deleted/{id}/purge`. Kalıcı sil yeni ajan komutu
+`DeleteFiles` (tüm sürüm dosya adları; ajan yalnızca video klasöründeki düz `.mp4` adını siler, olmayan silinmiş sayılır, silinemeyen "kalan" döner;
+30 sn) → ajan yok 409 "Ajan bağlı değil", kalan varsa 409 "Bazı dosyalar silinemedi…", kayıt kalır; hepsi silinince tek işlemde
+`production.clip_tombstones` (konsept, ilk tamamlanma; içerik yok) yazılır ve satırlar silinir — `ClipStatistics` canlı satırlar ∪ izleri okur,
+admin klip sayısı düşmez (B-130). Negatif sinyal: Concepts.Contracts `IDislikedVideoTitles` (Production uygular) → konu talimatında
+`<disliked_topics>` (yalnızca varsa). Web: `deleted-videos.js` (`/silinenler/videolar/...`; ajan yokken Kalıcı sil pasif), `produced.js` Sil
+(`/uretilenler/video/{id}/sil`).
+
 **Ajanda kısıtlı render (0018, [ADR-0004](decisions/0004-render-sandbox-fallback.md)):** Video kodu önce ortak yasaklı yapı kapısından
 (`AgentGateway.Contracts.Rules.RenderCodeGate`: URL/ağ API'leri, dinamik kod, kaçış dizileri, dolaylı erişim, yalnız `image.png`/`gsap.min.js`)
 Pi'de (kod yazımı/düzeltme sonrası) ve ajanda (render öncesi) geçer; ret tek düzeltmeye gider. Ajan `SandboxedSceneRenderer` sahne başına:
