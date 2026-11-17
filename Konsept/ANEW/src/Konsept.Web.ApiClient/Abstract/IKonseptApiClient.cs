@@ -78,6 +78,22 @@ public interface IKonseptApiClient
     /// <returns>JSON ya da hata (403 → Forbidden).</returns>
     Task<Result<JsonElement>> GetAdminActivitiesAsync(int page, string? user, string? from, string? to, CancellationToken cancellationToken);
 
+    /// <summary>Admin Kullanıcılar (spec 0024): 25'erli sayfa, arama, durum filtresi; Api'nin gövdesi olduğu gibi geçer.</summary>
+    /// <param name="page">Sayfa.</param>
+    /// <param name="search">Ad/e-posta araması.</param>
+    /// <param name="status">Durum: all | active | banned.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON ya da hata (403 → Forbidden).</returns>
+    Task<Result<JsonElement>> GetAdminUsersAsync(int page, string? search, string? status, CancellationToken cancellationToken);
+
+    /// <summary>Admin ban / ban kaldırma (spec 0024); gövde (sebep) olduğu gibi geçer.</summary>
+    /// <param name="userId">Hedef kullanıcı.</param>
+    /// <param name="ban"><c>true</c> ban, <c>false</c> ban kaldırma.</param>
+    /// <param name="body">Gövde (<c>{ reason }</c>).</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Güncel satır ya da hata.</returns>
+    Task<Result<JsonElement>> SetUserBanAsync(Guid userId, bool ban, JsonElement? body, CancellationToken cancellationToken);
+
     /// <summary>
     /// Ajan eşleştirme (spec 0012): kodun cihazını sorar (<c>lookup</c>), onaylar (<c>approve</c>) ya da reddeder (<c>reject</c>);
     /// tarayıcının IP'si servis anahtarıyla iletilir (Api'nin IP başına hız sınırı, Req 8).

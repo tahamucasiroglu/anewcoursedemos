@@ -27,6 +27,9 @@ public static class ApiClientErrors
     /// <summary>Hata kodu: hesap kilitli (açılma zamanı ek bilgide).</summary>
     public const string LockedCode = "identity.locked";
 
+    /// <summary>Hata kodu: hesap askıya alınmış (banlı; spec 0024 Req 5).</summary>
+    public const string SuspendedCode = "identity.suspended";
+
     /// <summary>Hata kodu: çok fazla deneme.</summary>
     public const string TooManyAttemptsCode = "auth.too_many_attempts";
 

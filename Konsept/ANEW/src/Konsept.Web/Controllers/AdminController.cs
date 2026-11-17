@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Konsept.Web.ApiClient.Abstract;
 using Konsept.Web.Auth;
 using Konsept.Web.Infrastructure;
@@ -52,4 +53,31 @@ public sealed class AdminController : Controller
     [HttpGet("/admin/aktiviteler")]
     public Task<IActionResult> Aktiviteler(int sayfa, string? kullanici, string? baslangic, string? bitis, CancellationToken cancellationToken) =>
         _api.GetAdminActivitiesAsync(sayfa, kullanici, baslangic, bitis, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Kullanıcılar (Ajax; spec 0024): 25'erli sayfa, ad/e-posta araması, durum filtresi; hatada korelasyon numarası.</summary>
+    /// <param name="sayfa">Sayfa.</param>
+    /// <param name="ara">Ad/e-posta araması.</param>
+    /// <param name="durum">Durum: all | active | banned.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpGet("/admin/kullanicilar")]
+    public Task<IActionResult> Kullanicilar(int sayfa, string? ara, string? durum, CancellationToken cancellationToken) =>
+        _api.GetAdminUsersAsync(sayfa, ara, durum, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Kullanıcıyı banla (Ajax, antiforgery; spec 0024): gövde <c>{ reason }</c>.</summary>
+    /// <param name="id">Kullanıcı.</param>
+    /// <param name="body">Gövde.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/admin/kullanicilar/{id:guid}/banla")]
+    public Task<IActionResult> Banla(Guid id, [FromBody] JsonElement? body, CancellationToken cancellationToken) =>
+        _api.SetUserBanAsync(id, ban: true, body, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>Banı kaldır (Ajax, antiforgery; spec 0024).</summary>
+    /// <param name="id">Kullanıcı.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>JSON.</returns>
+    [HttpPost("/admin/kullanicilar/{id:guid}/ban-kaldir")]
+    public Task<IActionResult> BanKaldir(Guid id, CancellationToken cancellationToken) =>
+        _api.SetUserBanAsync(id, ban: false, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
 }

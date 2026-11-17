@@ -41,13 +41,13 @@ public sealed partial class AdminPanelTests
         using var activities = await SendAjaxAsync(client, "/admin/aktiviteler?sayfa=2&kullanici=ay%C5%9Fe&baslangic=2026-11-01&bitis=2026-11-10", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        page.QuerySelectorAll("#admin-panel [role='tab']").Select(t => t.TextContent.Trim()).ShouldBe(["İstatistikler", "Aktiviteler"]);
+        page.QuerySelectorAll("#admin-panel [role='tab']").Select(t => t.TextContent.Trim()).ShouldBe(["İstatistikler", "Kullanıcılar", "Aktiviteler"]); // plan 0024 A-1.
         page.QuerySelector("#admin-tab-statistics")!.GetAttribute("aria-selected").ShouldBe("true");
         page.QuerySelector("#admin-statistics")!.HasAttribute("hidden").ShouldBeFalse();
         page.QuerySelector("#admin-activities")!.HasAttribute("hidden").ShouldBeTrue();
         page.QuerySelectorAll("#admin-range option").Select(o => o.GetAttribute("value")).ShouldBe(["7", "30", "90"]);
         page.QuerySelector("#admin-range option[selected]")!.GetAttribute("value").ShouldBe("30");
-        page.QuerySelectorAll(".admin-card dt").Select(d => d.TextContent).ShouldBe(["Toplam kullanıcı", "Üretilen toplam klip", "Açık hata bildirimi"]);
+        page.QuerySelectorAll(".admin-card dt").Select(d => d.TextContent).ShouldBe(["Toplam kullanıcı", "Üretilen toplam klip", "Açık hata bildirimi", "Banlı kullanıcı"]); // plan 0024 A-1.
         page.QuerySelector("#admin-panel")!.GetAttribute("data-statistics-url").ShouldBe("/admin/istatistikler");
         page.QuerySelector("#admin-panel")!.GetAttribute("data-activities-url").ShouldBe("/admin/aktiviteler");
         stats.StatusCode.ShouldBe(HttpStatusCode.OK);

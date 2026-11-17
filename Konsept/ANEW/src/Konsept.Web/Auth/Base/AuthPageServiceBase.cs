@@ -224,6 +224,9 @@ public abstract partial class AuthPageServiceBase : IAuthPageService
             case ApiClientErrors.InvalidCredentialsCode:
                 form.Message = UiText.LoginInvalidCredentials;
                 return;
+            case ApiClientErrors.SuspendedCode:
+                form.Message = UiText.LoginSuspended; // Banlı hesap, doğru şifre (spec 0024 Req 5): sebep gösterilmez.
+                return;
             default:
                 if (error.Type == ErrorType.TooManyRequests)
                 {

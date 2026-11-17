@@ -2,6 +2,7 @@
 // ile (api.js, K-6) sayfa açılışında, sekme, aralık ve filtre değişiminde gelir; canlı yenileme yok (Req 9). Grafikler SVG çubuklar
 // + aynı değerleri içeren tablo alternatifi (Req 4). Api verisi yalnızca textContent ile yazılır. Saatler Europe/Istanbul (Req 10).
 import { get } from './api.js';
+import { initAdminUsers } from './admin-users.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const ZONE = 'Europe/Istanbul';
@@ -126,6 +127,7 @@ export function initAdminPanel(doc) {
   const el = (id) => doc.getElementById(id);
   const tabs = [...root.querySelectorAll('[role="tab"]')];
   const state = { page: 1, filter: { user: '', from: '', to: '' }, statsRequest: 0, activityRequest: 0, activitiesLoaded: false };
+  const users = initAdminUsers(doc, { formatTime, correlation: t.textCorrelation }); // Kullanıcılar sekmesi (spec 0024).
 
   function showError(prefix, text) {
     el(`admin-${prefix}-error-text`).textContent = text;
@@ -145,6 +147,10 @@ export function initAdminPanel(doc) {
       el('admin-total-users').textContent = String(data.totalUsers ?? 0);
       el('admin-total-clips').textContent = String(data.totalClips ?? 0);
       el('admin-open-reports').textContent = String(data.openErrorReports ?? 0);
+      const banned = el('admin-banned-users');
+      if (banned) {
+        banned.textContent = String(data.bannedUsers ?? 0); // Banlı kullanıcı kartı (spec 0024 Req 9).
+      }
       const series = data.series || [];
       el('admin-charts').replaceChildren(
         buildChart(doc, t.textChartRegistrations, series, 'registrations', t),
@@ -214,6 +220,9 @@ export function initAdminPanel(doc) {
       tab.focus();
     }
     // Sekme değişiminde veri yeniden gelir (Req 9).
+    if (tab.id === 'admin-tab-users' && users) {
+      return users.load();
+    }
     return tab.id === 'admin-tab-activities' ? loadActivities() : loadStatistics();
   }
 
@@ -259,5 +268,5 @@ export function initAdminPanel(doc) {
   });
 
   loadStatistics();
-  return { loadStatistics, loadActivities, selectTab: (id, focus) => selectTab(el(id), focus) };
+  return { loadStatistics, loadActivities, users, selectTab: (id, focus) => selectTab(el(id), focus) };
 }

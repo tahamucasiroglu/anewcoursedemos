@@ -1,5 +1,5 @@
-@* Admin paneli (spec 0010; giriş ve yetki 0011): sekmeler İstatistikler · Aktiviteler (Kullanıcılar 0024, Hata bildirimleri 0025
-   araya eklenir). admin-panel.js verileri /admin/istatistikler ve /admin/aktiviteler'den $.ajax ile (K-6) sayfa açılışında, sekme,
+@* Admin paneli (spec 0010; giriş ve yetki 0011): sekmeler İstatistikler · Kullanıcılar (0024) · Aktiviteler (Hata bildirimleri 0025
+   araya eklenir). Kullanıcılar sekmesini admin-users.js yönetir (/admin/kullanicilar, banla, ban-kaldir). admin-panel.js verileri /admin/istatistikler ve /admin/aktiviteler'den $.ajax ile (K-6) sayfa açılışında, sekme,
    aralık ve filtre değişiminde alır; canlı yenileme yok. Metinler resx'ten; Api verisi yalnızca textContent ile yazılır. *@
 @{
     ViewData["Title"] = UiText.Admin;
@@ -16,6 +16,7 @@
      data-text-activities-no-match="@UiText.AdminActivitiesNoMatch" data-text-page="@UiText.ConceptsPage">
     <div class="tabs" role="tablist" aria-label="@UiText.AdminTabsLabel">
         <button type="button" class="tabs__tab" role="tab" id="admin-tab-statistics" aria-selected="true" aria-controls="admin-statistics">@UiText.AdminTabStatistics</button>
+        <button type="button" class="tabs__tab" role="tab" id="admin-tab-users" aria-selected="false" aria-controls="admin-users" tabindex="-1">@UiText.AdminTabUsers</button>
         <button type="button" class="tabs__tab" role="tab" id="admin-tab-activities" aria-selected="false" aria-controls="admin-activities" tabindex="-1">@UiText.AdminTabActivities</button>
     </div>
 
@@ -29,6 +30,7 @@
             <div class="admin-card"><dt>@UiText.AdminTotalUsers</dt><dd id="admin-total-users">–</dd></div>
             <div class="admin-card"><dt>@UiText.AdminTotalClips</dt><dd id="admin-total-clips">–</dd></div>
             <div class="admin-card"><dt>@UiText.AdminOpenReports</dt><dd id="admin-open-reports">–</dd></div>
+            <div class="admin-card"><dt>@UiText.AdminBannedUsers</dt><dd id="admin-banned-users">–</dd></div>
         </dl>
         <div class="field">
             <label class="field__label" for="admin-range">@UiText.AdminRange</label>
@@ -40,6 +42,86 @@
         </div>
         <div class="admin-charts" id="admin-charts"></div>
     </section>
+
+    <section class="tabs__panel" role="tabpanel" id="admin-users" aria-labelledby="admin-tab-users" tabindex="0" hidden
+             data-users-url="/admin/kullanicilar" data-text-failed="@UiText.AdminUsersFailed" data-text-no-match="@UiText.AdminUsersNoMatch"
+             data-text-empty="@UiText.AdminUsersEmpty" data-text-active="@UiText.AdminStatusActive" data-text-banned="@UiText.AdminStatusBanned"
+             data-text-role-admin="@UiText.AdminRoleAdmin" data-text-role-user="@UiText.AdminRoleUser" data-text-ban="@UiText.AdminBan"
+             data-text-unban="@UiText.AdminUnban" data-text-cannot-self="@UiText.AdminCannotBanSelf" data-text-cannot-admin="@UiText.AdminCannotBanAdmin"
+             data-text-history-ban="@UiText.AdminHistoryBan" data-text-history-unban="@UiText.AdminHistoryUnban" data-text-history-reason="@UiText.AdminHistoryReason"
+             data-text-ban-title="@UiText.AdminBanTitle" data-text-unban-title="@UiText.AdminUnbanTitle" data-text-ban-failed="@UiText.AdminBanFailed"
+             data-text-unban-failed="@UiText.AdminUnbanFailed" data-text-processing="@UiText.AdminProcessing" data-text-reason-count="@UiText.AdminBanReasonCount"
+             data-text-never="@UiText.AdminNever">
+        <form class="admin-filter" id="admin-user-filter" novalidate>
+            <div class="field">
+                <label class="field__label" for="admin-user-search">@UiText.AdminUsersSearch</label>
+                <input class="field__input" type="search" id="admin-user-search" autocomplete="off" aria-describedby="admin-user-search-hint" />
+                <span class="field__hint" id="admin-user-search-hint">@UiText.AdminFilterUserHint</span>
+            </div>
+            <div class="field">
+                <label class="field__label" for="admin-user-status">@UiText.AdminUsersStatus</label>
+                <select class="field__input field__input--short" id="admin-user-status">
+                    <option value="all" selected>@UiText.AdminStatusAll</option>
+                    <option value="active">@UiText.AdminStatusActive</option>
+                    <option value="banned">@UiText.AdminStatusBanned</option>
+                </select>
+            </div>
+            <button type="submit" class="button button--primary">@UiText.AdminFilterApply</button>
+        </form>
+        <p class="admin-panel__status" id="admin-users-status" role="status" aria-live="polite"></p>
+        <div class="admin-panel__error" id="admin-users-error" role="alert" hidden>
+            <p class="admin__message" id="admin-users-error-text"></p>
+            <button type="button" class="button" id="admin-users-retry">@UiText.AdminRetry</button>
+        </div>
+        <table class="admin-table" id="admin-user-table" hidden>
+            <caption class="visually-hidden">@UiText.AdminTabUsers</caption>
+            <thead>
+                <tr>
+                    <th scope="col">@UiText.AdminColumnName</th><th scope="col">@UiText.AdminColumnEmail</th>
+                    <th scope="col">@UiText.AdminColumnRegistered</th><th scope="col">@UiText.AdminColumnLastLogin</th>
+                    <th scope="col">@UiText.AdminColumnStatus</th><th scope="col">@UiText.AdminColumnRole</th>
+                    <th scope="col">@UiText.AdminColumnClips</th><th scope="col">@UiText.AdminColumnActions</th>
+                </tr>
+            </thead>
+            <tbody id="admin-user-rows"></tbody>
+        </table>
+        <nav class="admin-pager" id="admin-user-pager" aria-label="@UiText.AdminPagination" hidden>
+            <button type="button" class="button" id="admin-user-prev">@UiText.ConceptsPrev</button>
+            <span id="admin-user-page"></span>
+            <button type="button" class="button" id="admin-user-next">@UiText.ConceptsNext</button>
+        </nav>
+    </section>
+
+    @* Ban / ban kaldırma onayı (spec 0024 Req 3, 6): odak pencereye taşınır, Esc vazgeçer (işlem sürerken değil), kapanınca odak
+       açan düğmeye döner; istek sürerken onay pasif ve "İşleniyor…"; hata pencerede gösterilir, durum değişmez. *@
+    <div class="dialog-backdrop dialog-backdrop--confirm" id="admin-ban-dialog" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="admin-ban-title" aria-describedby="admin-ban-text">
+            <h2 class="dialog__title" id="admin-ban-title"></h2>
+            <p class="dialog__text" id="admin-ban-text">@UiText.AdminBanText</p>
+            <div class="field">
+                <label class="field__label" for="admin-ban-reason">@UiText.AdminBanReason</label>
+                <textarea class="field__input" id="admin-ban-reason" rows="3" aria-describedby="admin-ban-reason-count admin-ban-reason-error"></textarea>
+                <span class="field__hint" id="admin-ban-reason-count"></span>
+                <span class="field__error" id="admin-ban-reason-error" role="alert" hidden>@UiText.AdminBanReasonTooLong</span>
+            </div>
+            <p class="admin__message" id="admin-ban-message" role="alert" hidden></p>
+            <div class="dialog__actions">
+                <button type="button" class="button" id="admin-ban-cancel">@UiText.ProfileCancel</button>
+                <button type="button" class="button button--danger" id="admin-ban-ok">@UiText.AdminBan</button>
+            </div>
+        </div>
+    </div>
+    <div class="dialog-backdrop dialog-backdrop--confirm" id="admin-unban-dialog" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="admin-unban-title" aria-describedby="admin-unban-text">
+            <h2 class="dialog__title" id="admin-unban-title"></h2>
+            <p class="dialog__text" id="admin-unban-text">@UiText.AdminUnbanText</p>
+            <p class="admin__message" id="admin-unban-message" role="alert" hidden></p>
+            <div class="dialog__actions">
+                <button type="button" class="button" id="admin-unban-cancel">@UiText.ProfileCancel</button>
+                <button type="button" class="button button--primary" id="admin-unban-ok">@UiText.AdminUnban</button>
+            </div>
+        </div>
+    </div>
 
     <section class="tabs__panel" role="tabpanel" id="admin-activities" aria-labelledby="admin-tab-activities" tabindex="0" hidden>
         <form class="admin-filter" id="admin-activity-filter" novalidate>

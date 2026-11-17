@@ -330,6 +330,28 @@ body {
   text-align: left;
 }
 
+/* Kullanıcılar (spec 0024): durum metinle de gösterilir; banlı satır vurgusu yalnızca tema değişkeniyle. */
+.admin-status--banned {
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.admin-history {
+  margin: 0.25rem 0 0;
+  padding-left: 1rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.admin-users__hint {
+  display: block;
+}
+
+.dialog__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
 .admin-filter {
   display: flex;
   flex-wrap: wrap;

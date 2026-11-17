@@ -134,6 +134,45 @@
   <data name="AdminColumnUser" xml:space="preserve"><value>Kullanıcı</value></data>
   <data name="AdminColumnActivity" xml:space="preserve"><value>Aktivite</value></data>
   <data name="AdminPagination" xml:space="preserve"><value>Sayfalama</value></data>
+  <data name="AdminTabUsers" xml:space="preserve"><value>Kullanıcılar</value></data>
+  <data name="AdminBannedUsers" xml:space="preserve"><value>Banlı kullanıcı</value></data>
+  <data name="AdminUsersFailed" xml:space="preserve"><value>Kullanıcılar şu an yüklenemedi.</value></data>
+  <data name="AdminUsersSearch" xml:space="preserve"><value>Ara (ad ya da e-posta)</value></data>
+  <data name="AdminUsersStatus" xml:space="preserve"><value>Durum</value></data>
+  <data name="AdminStatusAll" xml:space="preserve"><value>Tümü</value></data>
+  <data name="AdminStatusActive" xml:space="preserve"><value>Aktif</value></data>
+  <data name="AdminStatusBanned" xml:space="preserve"><value>Banlı</value></data>
+  <data name="AdminUsersNoMatch" xml:space="preserve"><value>Eşleşen kullanıcı yok</value></data>
+  <data name="AdminUsersEmpty" xml:space="preserve"><value>Henüz kullanıcı yok</value></data>
+  <data name="AdminColumnName" xml:space="preserve"><value>Ad</value></data>
+  <data name="AdminColumnEmail" xml:space="preserve"><value>E-posta</value></data>
+  <data name="AdminColumnRegistered" xml:space="preserve"><value>Kayıt</value></data>
+  <data name="AdminColumnLastLogin" xml:space="preserve"><value>Son giriş</value></data>
+  <data name="AdminColumnStatus" xml:space="preserve"><value>Durum</value></data>
+  <data name="AdminColumnRole" xml:space="preserve"><value>Rol</value></data>
+  <data name="AdminColumnClips" xml:space="preserve"><value>Klip</value></data>
+  <data name="AdminColumnActions" xml:space="preserve"><value>İşlem</value></data>
+  <data name="AdminRoleAdmin" xml:space="preserve"><value>Admin</value></data>
+  <data name="AdminRoleUser" xml:space="preserve"><value>Kullanıcı</value></data>
+  <data name="AdminBan" xml:space="preserve"><value>Banla</value></data>
+  <data name="AdminUnban" xml:space="preserve"><value>Banı kaldır</value></data>
+  <data name="AdminCannotBanSelf" xml:space="preserve"><value>Kendinizi banlayamazsınız</value></data>
+  <data name="AdminCannotBanAdmin" xml:space="preserve"><value>Admin hesapları banlanamaz</value></data>
+  <data name="AdminHistoryBan" xml:space="preserve"><value>Banlandı: {0}, {1}</value></data>
+  <data name="AdminHistoryUnban" xml:space="preserve"><value>Ban kaldırıldı: {0}, {1}</value></data>
+  <data name="AdminHistoryReason" xml:space="preserve"><value>Sebep: {0}</value></data>
+  <data name="AdminBanTitle" xml:space="preserve"><value>Kullanıcıyı banla: {0}</value></data>
+  <data name="AdminBanText" xml:space="preserve"><value>Kullanıcı hemen sistem dışı kalır: oturumları ve ajanı kapanır, işleri durur. Verileri silinmez. Ban süresizdir.</value></data>
+  <data name="AdminBanReason" xml:space="preserve"><value>Sebep (isteğe bağlı, yalnızca adminler görür)</value></data>
+  <data name="AdminBanReasonTooLong" xml:space="preserve"><value>En fazla 500 karakter</value></data>
+  <data name="AdminBanReasonCount" xml:space="preserve"><value>{0}/500</value></data>
+  <data name="AdminUnbanTitle" xml:space="preserve"><value>Banı kaldır: {0}</value></data>
+  <data name="AdminUnbanText" xml:space="preserve"><value>Kullanıcı yeniden giriş yapabilir; eski oturumları geri gelmez, gerekirse ajanını yeniden eşleştirir.</value></data>
+  <data name="AdminProcessing" xml:space="preserve"><value>İşleniyor…</value></data>
+  <data name="AdminBanFailed" xml:space="preserve"><value>Ban uygulanamadı.</value></data>
+  <data name="AdminUnbanFailed" xml:space="preserve"><value>Ban kaldırılamadı.</value></data>
+  <data name="AdminNever" xml:space="preserve"><value>—</value></data>
+  <data name="LoginSuspended" xml:space="preserve"><value>Hesabınız askıya alınmıştır.</value></data>
   <data name="PageForbidden" xml:space="preserve"><value>Bu sayfaya erişim yetkiniz yok</value></data>
   <data name="ActionForbidden" xml:space="preserve"><value>Bu işlem için yetkiniz yok</value></data>
   <data name="SettingsApiKeys" xml:space="preserve"><value>API key'ler</value></data>

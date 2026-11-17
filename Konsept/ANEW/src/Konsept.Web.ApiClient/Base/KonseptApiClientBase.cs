@@ -77,6 +77,22 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<JsonElement>> GetAdminUsersAsync(int page, string? search, string? status, CancellationToken cancellationToken) =>
+        SendAsync<JsonElement>(
+            new HttpRequestMessage(
+                HttpMethod.Get,
+                $"api/admin/users?page={Math.Max(1, page).ToString(System.Globalization.CultureInfo.InvariantCulture)}&search={Uri.EscapeDataString(search ?? string.Empty)}&status={Uri.EscapeDataString(status ?? string.Empty)}"),
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JsonElement>> SetUserBanAsync(Guid userId, bool ban, JsonElement? body, CancellationToken cancellationToken)
+    {
+        HttpContent content = body is { ValueKind: JsonValueKind.Object } json ? JsonContent.Create(json, options: Json) : JsonContent.Create(new { }, options: Json);
+        var path = $"api/admin/users/{userId:D}/{(ban ? "ban" : "unban")}";
+        return SendAsync<JsonElement>(new HttpRequestMessage(HttpMethod.Post, path) { Content = content }, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<Result<PairingDeviceResponse>> AgentPairingAsync(string action, string? code, string? clientIp, CancellationToken cancellationToken)
     {
         // Kod yalnızca gövdede gider (adreste olsaydı Api istek loguna düz yazılırdı, review r1 M-2).
