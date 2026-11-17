@@ -209,6 +209,13 @@ public sealed class AdminStatisticsApiTests
         reversed.GetProperty("total").GetInt32().ShouldBe(3);
         valid.GetProperty("dateFilterIgnored").GetBoolean().ShouldBeFalse();
         valid.GetProperty("total").GetInt32().ShouldBe(1);
+
+        using var huge = await admin.GetAsync(new Uri(Activities + "?page=2147483647", UriKind.Relative), ct); // review r1 L-1
+        using var farDate = await admin.GetAsync(new Uri(Activities + "?to=9999-12-31", UriKind.Relative), ct);
+        huge.StatusCode.ShouldBe(HttpStatusCode.OK);
+        Items(await huge.Content.ReadFromJsonAsync<JsonElement>(ct)).ShouldBeEmpty();
+        farDate.StatusCode.ShouldBe(HttpStatusCode.OK);
+        factory.ErrorReports.Reports.ShouldBeEmpty(); // sınır girdisi otomatik hata kaydı açmaz.
     }
 
     /// <summary>

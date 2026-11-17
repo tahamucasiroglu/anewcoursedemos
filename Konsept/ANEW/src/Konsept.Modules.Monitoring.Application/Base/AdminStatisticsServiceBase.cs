@@ -57,7 +57,7 @@ public abstract class AdminStatisticsServiceBase(TimeProvider timeProvider) : IA
     /// <inheritdoc />
     public async Task<Result<AdminActivityPageDto>> GetActivitiesAsync(AdminActivitiesRequest? request, CancellationToken cancellationToken)
     {
-        var page = Math.Max(1, request?.Page ?? 1);
+        var page = AdminRange.ParsePage(request?.Page);
         var search = AdminRange.ParseSearch(request?.User);
         var from = AdminRange.ParseDate(request?.From);
         var to = AdminRange.ParseDate(request?.To);

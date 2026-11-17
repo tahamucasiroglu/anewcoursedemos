@@ -43,6 +43,12 @@ public sealed class AdminRulesTests
         AdminRange.Matches("ORNEK.TE", "Ali", "ali@ornek.test").ShouldBeTrue();
         AdminRange.Matches("ılmaz", "Ayşe YILMAZ", "x@y.z").ShouldBeTrue();
         AdminRange.Matches("veli", "Ayşe", "ayse@ornek.test").ShouldBeFalse();
+        AdminRange.Matches("VELI", "Veli Demir", "veli@baska.test").ShouldBeTrue(); // review r1 M-3: tr-TR'de I≠i.
+        AdminRange.Matches("GMAIL", "Ali", "ali@gmail.com").ShouldBeTrue();
+        AdminRange.ParseDate("9999-12-31").ShouldBeNull(); // review r1 L-1: gün sınırı taşmaz.
+        AdminRange.ParsePage(int.MaxValue).ShouldBe(AdminRange.MaxPage);
+        AdminRange.ParsePage(0).ShouldBe(1);
+        AdminRange.ParsePage(null).ShouldBe(1);
         AdminRange.ParseDate("2026-11-16").ShouldBe(new DateOnly(2026, 11, 16));
         AdminRange.ParseDate("16.11.2026").ShouldBeNull();
     }

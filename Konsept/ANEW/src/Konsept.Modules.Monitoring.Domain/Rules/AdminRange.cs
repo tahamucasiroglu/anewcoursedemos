@@ -17,6 +17,14 @@ public static class AdminRange
     /// <summary>Kullanıcı aramasının uygulanması için en az karakter.</summary>
     public const int MinSearchLength = 2;
 
+    /// <summary>İstenebilecek en büyük sayfa (taşma koruması).</summary>
+    public const int MaxPage = 1_000_000;
+
+    /// <summary>Sayfa numarasını 1…<see cref="MaxPage"/> aralığına çeker.</summary>
+    /// <param name="page">İstenen sayfa.</param>
+    /// <returns>Sayfa.</returns>
+    public static int ParsePage(int? page) => Math.Clamp(page ?? 1, 1, MaxPage);
+
     /// <summary>İzin verilen aralığa çevirir.</summary>
     /// <param name="days">İstenen gün sayısı.</param>
     /// <returns>7, 30 ya da 90.</returns>
@@ -35,8 +43,9 @@ public static class AdminRange
     public static DateOnly? ParseDate(string? value) =>
         !string.IsNullOrWhiteSpace(value)
         && DateOnly.TryParseExact(value.Trim(), JournalDay.DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day)
+            && day.Year is >= 2000 and <= 9998
             ? day
-            : null;
+            : null; // Aralık dışı gün (ör. 9999-12-31) geçersiz sayılır: gün sınırı hesabı taşmaz.
 
     /// <summary>Kullanıcı aramasını çözer.</summary>
     /// <param name="value">Arama metni.</param>
@@ -47,7 +56,10 @@ public static class AdminRange
         return text is { Length: >= MinSearchLength } ? text : null;
     }
 
-    /// <summary>Ad ya da e-posta aramayı içeriyor mu (büyük/küçük harf duyarsız, tr-TR).</summary>
+    /// <summary>
+    /// Ad ya da e-posta aramayı içeriyor mu (büyük/küçük harf duyarsız): tr-TR (İ/ı) ya da kültürden bağımsız eşleşme yeterlidir —
+    /// tr-TR'de "I" ile "i" eşleşmediği için ASCII e-postalar ("VELI" → "veli@") ikinci yoldan bulunur.
+    /// </summary>
     /// <param name="search">Arama.</param>
     /// <param name="name">Ad.</param>
     /// <param name="email">E-posta.</param>
@@ -56,6 +68,9 @@ public static class AdminRange
     {
         var compare = CultureInfo.GetCultureInfo("tr-TR").CompareInfo;
         const CompareOptions Options = CompareOptions.IgnoreCase;
-        return compare.IndexOf(name ?? string.Empty, search, Options) >= 0 || compare.IndexOf(email ?? string.Empty, search, Options) >= 0;
+        bool Has(string? text) =>
+            compare.IndexOf(text ?? string.Empty, search, Options) >= 0
+            || (text ?? string.Empty).Contains(search, StringComparison.OrdinalIgnoreCase);
+        return Has(name) || Has(email);
     }
 }

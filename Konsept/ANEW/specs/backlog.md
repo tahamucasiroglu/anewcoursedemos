@@ -178,3 +178,9 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   dosyayı seçili açması ve varsayılan oynatıcı (AC-8), başka cihazdan açılınca "yalnızca … bilgisayarda" mesajı (AC-14), ajan bağlanınca ≤10 sn'de
   oynatma (AC-6); testler sahte ajan/jsdom ile — Source: plan 0007 Risk 5 — Severity: Low — Recommendation: kullanıcı testi (Pi + ajan PC + ikinci
   cihaz); gerekirse Playwright ile tarayıcı testi — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+- **B-130** — 0010 AC-3 "silinmiş video klip sayısını düşürmez" parçası: klip sayısı `production.videos` satırlarından (konsept başına ilk
+  tamamlanma) okunuyor; 0019 "Kalıcı sil" video kaydını silerse toplam ve günlük klip sayısı düşer (soft delete satırı tuttuğu için sorun
+  yok). Bugün silme yolu olmadığı için davranış doğru ama kanıtlanamıyor — Source: plan 0010 Risk 1, review r1 M-2 — Severity: Medium —
+  Recommendation: 0019'da kalıcı silme `production.videos` satırını silmeden önce klibi korusun (ör. `production.clip_tombstones` (concept_id,
+  first_completed_at) ya da sayaç) ve `IClipStatistics` bunu da okusun; 0019 testine "kalıcı silme sonrası admin klip sayısı aynı" eklensin —
+  Deferred by: tahamucasiroglu, 2026-11-17, standing approval
