@@ -17,7 +17,7 @@ export function effortLabel(effort) {
 }
 
 /**
- * Bir rolün şeritteki özeti: "Claude Opus 4.5 High", efor yoksa yalnızca ad, seçim yoksa "seçilmedi".
+ * Bir rolün şeritteki özeti: "Claude Opus 5.5 High", efor yoksa yalnızca ad, seçim yoksa "seçilmedi".
  * @param {{ modelId: string|null, modelName: string|null, effort: string|null }|undefined} role Rol.
  * @param {string} notSelected "seçilmedi" metni.
  * @returns {string} Özet.

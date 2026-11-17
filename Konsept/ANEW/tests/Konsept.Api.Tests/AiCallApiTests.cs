@@ -97,4 +97,28 @@ public sealed class AiCallApiTests : IClassFixture<AiGatewayApiFactory>
         (await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "openai/gpt-image-2.6-flare" }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await client.PostAsJsonAsync("/api/ai/calls/trial", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    /// <summary>
+    /// Spec 0026 AC-3 (deneme ucu; review r1 L-3): katalogdan kaldırılan eski kimlikle deneme yerine geçen modelle yapılır; yanıt ve
+    /// harcama kaydı yeni kimliği taşır, sağlayıcıya yeni API adı gider.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Trial_ReplacedModelId_UsesReplacement()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var email = AuthenticatedClient.NewEmail();
+        using var client = await _factory.CreateUserClientAsync(ct, email);
+        var userId = _factory.Users.Get(email).Id;
+        var key = ApiKeyApiTests.NewKey("sk-ant-");
+        (await client.PutAsJsonAsync("/api/ai/keys/anthropic", new { apiKey = key }, ct)).EnsureSuccessStatusCode();
+
+        using var response = await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "anthropic/claude-sonnet-4-5" }, ct);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        body.GetProperty("modelId").GetString().ShouldBe(Sonnet);
+        _factory.Provider.Calls.Last(c => c.Call.ApiKey == key).Call.Model.ProviderModelName.ShouldBe("claude-sonnet-5-5");
+        _factory.Spend.Records.Single(r => r.UserId == userId).ModelId.ShouldBe(Sonnet);
+    }
 }

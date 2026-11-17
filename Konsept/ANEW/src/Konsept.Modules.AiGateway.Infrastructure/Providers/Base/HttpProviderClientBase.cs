@@ -167,7 +167,7 @@ public abstract class HttpProviderClientBase(IHttpClientFactory http) : IProvide
             ["model"] = call.Model.ProviderModelName,
             ["prompt"] = call.Prompt,
             ["n"] = call.ImageCount,
-            // Katalogdaki görsel fiyatı (0,042 USD) medium kalite 1024×1024 içindir; API varsayılanı "auto" daha pahalı kaliteyi
+            // Katalogdaki görsel fiyatı (görsel başı) medium kalite 1024×1024 içindir; API varsayılanı "auto" daha pahalı kaliteyi
             // seçebilir, kayıtla fatura ayrışır (review r1 L-1).
             ["quality"] = ImageQuality,
             ["size"] = ImageSize,

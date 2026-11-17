@@ -36,7 +36,8 @@ public sealed class ModelReplacementMigrationTests
 
         var old = Guid.NewGuid();
         var current = Guid.NewGuid();
-        foreach (var id in new[] { old, current })
+        var untouched = Guid.NewGuid(); // Review r1 L-2: tamamen güncel üretim satırı.
+        foreach (var id in new[] { old, current, untouched })
         {
             await database.ScalarAsync(
                 "INSERT INTO profiles.profiles (id, user_id, name, name_key, language, format, duration_seconds, content, created_at, updated_at) " +
@@ -56,6 +57,10 @@ public sealed class ModelReplacementMigrationTests
             "INSERT INTO production.settings (profile_id, user_id, subtitles, progress_bar, code_model, code_effort, engine, image_model, audio_model, updated_at) " +
             $"VALUES ('{current}', '{current}', false, true, 'kimi/kimi-k2', NULL, 'local/remotion', 'local/z-image-turbo', NULL, now())");
 
+        await database.ScalarAsync(
+            "INSERT INTO production.settings (profile_id, user_id, subtitles, progress_bar, code_model, code_effort, engine, image_model, audio_model, updated_at) " +
+            $"VALUES ('{untouched}', '{untouched}', true, true, 'anthropic/claude-opus-5-5', 'low', 'local/hyperframes', 'openai/gpt-image-2.6-flare', 'local/chatterbox-multilingual-v3', now())");
+
         await profiles.GetService<IMigrator>().MigrateAsync(cancellationToken: ct);
         await production.GetService<IMigrator>().MigrateAsync(cancellationToken: ct);
 
@@ -67,6 +72,8 @@ public sealed class ModelReplacementMigrationTests
             .ShouldBe("openai/gpt-6.1-sol|medium|local/hyperframes|openai/gpt-image-2.6-flare|local/supertonic-3|true|false");
         (await Row(database, "production.settings", current, "code_model, code_effort, engine, image_model, audio_model, subtitles, progress_bar"))
             .ShouldBe("kimi/kimi-k3.1-pro||local/remotion|local/z-image-turbo||false|true");
+        (await Row(database, "production.settings", untouched, "code_model, code_effort, engine, image_model, audio_model, subtitles, progress_bar"))
+            .ShouldBe("anthropic/claude-opus-5-5|low|local/hyperframes|openai/gpt-image-2.6-flare|local/chatterbox-multilingual-v3|true|true");
     }
 
     private static async Task<string> Row(PostgresTestDatabase database, string table, Guid profileId, string columns) =>

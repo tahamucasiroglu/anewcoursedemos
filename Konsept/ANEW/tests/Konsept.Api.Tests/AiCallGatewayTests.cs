@@ -499,18 +499,20 @@ public sealed class AiCallGatewayTests
         var sonnet = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-sonnet-4-5"));
         var opus = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-opus-4-5") with { Effort = "low" });
         var glm = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "glm/glm-4.6") with { Effort = "high" });
+        var opusDefault = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-opus-4-5") with { Effort = "xhigh" }); // review r1 I-3
         var rejected = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "glm/glm-5.3") with { Effort = "high" });
         var unknown = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "openai/gpt-4"));
 
         sonnet.Value.ModelId.ShouldBe(Sonnet);
         opus.Value.ModelId.ShouldBe(Opus);
         glm.Value.ModelId.ShouldBe("glm/glm-5.3");
+        opusDefault.Value.ModelId.ShouldBe(Opus);
         rejected.Error!.Message.ShouldBe("Bu model seçilen efor seviyesini desteklemiyor.");
         unknown.IsSuccess.ShouldBeFalse();
-        _h.Provider.Calls.Select(c => c.Call.Model.ProviderModelName).ShouldBe(["claude-sonnet-5-5", "claude-opus-5-5", "glm-5.3"]);
-        _h.Provider.Calls.Select(c => c.Call.Effort).ShouldBe(["high", "low", null]);
-        _h.Spend.Records.Select(r => r.ModelId).ShouldBe([Sonnet, Opus, "glm/glm-5.3"]);
-        _h.Spend.Records.Select(r => r.CostUsd).ShouldBe([2.00m, 4.00m, 1.40m]);
-        _h.Spend.Records.Select(r => r.Effort).ShouldBe(["high", "low", null]);
+        _h.Provider.Calls.Select(c => c.Call.Model.ProviderModelName).ShouldBe(["claude-sonnet-5-5", "claude-opus-5-5", "glm-5.3", "claude-opus-5-5"]);
+        _h.Provider.Calls.Select(c => c.Call.Effort).ShouldBe(["high", "low", null, "medium"]);
+        _h.Spend.Records.Select(r => r.ModelId).ShouldBe([Sonnet, Opus, "glm/glm-5.3", Opus]);
+        _h.Spend.Records.Select(r => r.CostUsd).ShouldBe([2.00m, 4.00m, 1.40m, 4.00m]);
+        _h.Spend.Records.Select(r => r.Effort).ShouldBe(["high", "low", null, "medium"]);
     }
 }
