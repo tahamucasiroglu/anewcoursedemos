@@ -1,5 +1,6 @@
 using Konsept.Modules.AgentGateway.Contracts.Abstract;
 using Konsept.Modules.AiGateway.Contracts.Abstract;
+using Konsept.Modules.Monitoring.Contracts.Abstract;
 using Konsept.Modules.Production.Application.Abstract;
 
 namespace Konsept.Modules.Production.Application.Dtos;
@@ -13,5 +14,6 @@ namespace Konsept.Modules.Production.Application.Dtos;
 /// <param name="Agents">Ajan komutları.</param>
 /// <param name="Videos">Video kayıtları.</param>
 /// <param name="Queue">Sıra durumu.</param>
+/// <param name="Events">Günlük (spec 0027: indirme reddedildi olayı).</param>
 public sealed record ProductionPipelineLinks(
-    IProductionRunner Runner, IModelCaller Caller, IAgentCommands Agents, IProducedVideoRepository Videos, IQueueStateRepository Queue);
+    IProductionRunner Runner, IModelCaller Caller, IAgentCommands Agents, IProducedVideoRepository Videos, IQueueStateRepository Queue, ISystemEventWriter Events);

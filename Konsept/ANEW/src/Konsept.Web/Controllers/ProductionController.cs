@@ -87,6 +87,22 @@ public sealed class ProductionController : Controller
     public Task<IActionResult> Resume(Guid id, CancellationToken cancellationToken) =>
         _api.SendProductionAsync(ProductionCommand.Resume, id, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
 
+    /// <summary>İşin bekleyen indirmesini onayla (spec 0027 Req 5).</summary>
+    /// <param name="id">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum.</returns>
+    [HttpPost("/uretim/is/{id:guid}/indir-onayla")]
+    public Task<IActionResult> ApproveInstall(Guid id, CancellationToken cancellationToken) =>
+        _api.SendProductionAsync(ProductionCommand.ApproveInstall, id, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
+    /// <summary>İşin bekleyen indirmesini reddet (spec 0027 Req 6).</summary>
+    /// <param name="id">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum.</returns>
+    [HttpPost("/uretim/is/{id:guid}/indir-reddet")]
+    public Task<IActionResult> DeclineInstall(Guid id, CancellationToken cancellationToken) =>
+        _api.SendProductionAsync(ProductionCommand.DeclineInstall, id, null, cancellationToken).ToDetailedBrowserJson(HttpContext);
+
     /// <summary>Üretilenler: profilin videoları, en yeni üstte (Ajax; spec 0017 Req 20).</summary>
     /// <param name="profileId">Profil.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

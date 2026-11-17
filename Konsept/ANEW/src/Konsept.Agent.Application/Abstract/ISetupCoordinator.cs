@@ -53,4 +53,13 @@ public interface ISetupCoordinator
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Görev.</returns>
     Task RetryAsync(string componentId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Üretimin istediği bileşenleri kurar (spec 0027 Req 5, 8): yalnızca listedeki ve kurulu olmayan kimlikler (isteğe bağlı olanlar
+    /// dahil); bitince tüm bileşenler hazırsa Hazır denetimi çalışır. Kurulum zaten sürüyorsa hiçbir şey yapmaz (çağıran bekler).
+    /// </summary>
+    /// <param name="componentIds">Bileşen kimlikleri.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Görev.</returns>
+    Task InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken);
 }

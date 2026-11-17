@@ -13,11 +13,23 @@ public sealed class FakeAgentChannel : IAgentChannel
     private readonly Lock _gate = new();
     private readonly List<(string ConnectionId, string Method, string Payload)> _sent = [];
 
+    /// <summary>Initializes a new instance of the <see cref="FakeAgentChannel"/> class.</summary>
+    public FakeAgentChannel()
+    {
+        Install = DefaultInstall;
+    }
+
     /// <summary>Gets or sets eksik araçlar.</summary>
     public IReadOnlyList<string> Missing { get; set; } = [];
 
     /// <summary>Gets or sets araç denetiminden önce beklenecek görev (test sırası için); yoksa <c>null</c>.</summary>
     public Func<Task>? BeforeCheck { get; set; }
+
+    /// <summary>Gets or sets ajanın kurabildiği bileşenler (spec 0027); araç denetimi eksiklerden bunları bildirir.</summary>
+    public IReadOnlyList<AgentComponentInfo> Installable { get; set; } = [];
+
+    /// <summary>Gets or sets kurulum komutunun cevabı (spec 0027); varsayılan: istenenleri kurar (eksiklerden çıkarır) ve başarı döner.</summary>
+    public Func<string, AgentInstallRequest, CancellationToken, Task<AgentInstallReply>> Install { get; set; }
 
     /// <summary>Gets or sets aşama işleyicisi (bağlantı, komut, iptal).</summary>
     public Func<string, AgentStageCommand, CancellationToken, Task<AgentStageReply>> Stage { get; set; } = DefaultStage;
@@ -87,6 +99,8 @@ public sealed class FakeAgentChannel : IAgentChannel
 
         Missing = [];
         BeforeCheck = null;
+        Installable = [];
+        Install = DefaultInstall;
         Stage = DefaultStage;
         FileAction = DefaultFileAction;
         DeleteFiles = DefaultDeleteFiles;
@@ -105,7 +119,32 @@ public sealed class FakeAgentChannel : IAgentChannel
             await wait().ConfigureAwait(false);
         }
 
-        return new AgentToolCheckReply([.. Missing]);
+        var missing = Missing;
+        return new AgentToolCheckReply([.. missing], [.. Installable.Where(c => missing.Contains(c.Id))]);
+    }
+
+    /// <summary>Kurulum komutu (spec 0027).</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Cevap.</returns>
+    public Task<AgentInstallReply> InstallComponentsAsync(string connectionId, AgentInstallRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Record(connectionId, "InstallComponents", request);
+        return Install(connectionId, request, cancellationToken);
+    }
+
+    /// <summary>Varsayılan kurulum: istenenler artık eksik değil.</summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="request">İstek.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Başarı.</returns>
+    public Task<AgentInstallReply> DefaultInstall(string connectionId, AgentInstallRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Missing = [.. Missing.Where(id => !request.Components.Contains(id))];
+        return Task.FromResult(new AgentInstallReply(true, []));
     }
 
     /// <inheritdoc />

@@ -66,6 +66,9 @@ public abstract class ProductionPipelineBase(
     /// <summary>Günlük olay türü.</summary>
     public const string EventType = "production.video";
 
+    // Ajan sürümü uyumsuz (AgentGateway AgentCommandsBase.AgentProtocol ile aynı değer): kurulamaz, ajan güncellenmeli.
+    private const string AgentProtocolId = "agent";
+
     private static readonly ProductionJobStatus[] Producing = [ProductionJobStatus.Producing];
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
@@ -106,8 +109,9 @@ public abstract class ProductionPipelineBase(
 
         if (job.Status == ProductionJobStatus.WaitingForAgent)
         {
-            // Ajan gelince kendiliğinden devam (Req 15, 23).
-            if (agents.ConnectedDevice(userId) is null
+            // Onaysız bekleyen indirme kullanıcıyı bekler (spec 0027 Req 4); ajan gelince kendiliğinden devam (Req 15, 23).
+            if (job.Progress?.Install is { Approved: false }
+                || agents.ConnectedDevice(userId) is null
                 || !await jobs.TransitionAsync(userId, job.Id, [ProductionJobStatus.WaitingForAgent], ProductionJobStatus.Producing, time.GetUtcNow(), CancellationToken.None).ConfigureAwait(false))
             {
                 return false;
@@ -179,6 +183,9 @@ public abstract class ProductionPipelineBase(
         return (name.Length == 0 ? "video" : name) + "-" + videoId.ToString("N")[^12..] + ".mp4";
     }
 
+    private static string NamesOf(IReadOnlyList<AgentComponentInfo> components, IReadOnlyList<string> fallback) =>
+        components.Count > 0 ? string.Join(", ", components.Select(c => c.Name)) : string.Join(", ", fallback.Select(PipelineRules.ToolName));
+
     private async Task<PipelineOutcome> RunJobAsync()
     {
         var now = time.GetUtcNow();
@@ -224,10 +231,21 @@ public abstract class ProductionPipelineBase(
             await WriteEventAsync(SystemEventLevel.Info, Format(ProductionText.EventStarted, _job.Title), null).ConfigureAwait(false);
         }
 
-        // Ajan bağlıysa, hiçbir online çağrıdan önce araçlar sorulur (Req 14, AC-16).
-        if (device is { } connected && (await CheckToolsAsync(connected).ConfigureAwait(false)).Error is { } toolError)
+        // Ajan bağlıysa, hiçbir online çağrıdan önce araçlar sorulur (Req 14, AC-16); eksik kurulabilirse onay istenir (spec 0027).
+        if (device is { } connected)
         {
-            return await FailAsync(Next(_progress) ?? PipelineStage.Analysis, toolError).ConfigureAwait(false);
+            var (check, toolError) = await CheckToolsAsync(connected).ConfigureAwait(false);
+            switch (check)
+            {
+                case ToolCheckOutcome.Failed:
+                    return await FailAsync(Next(_progress) ?? PipelineStage.Analysis, toolError!).ConfigureAwait(false);
+                case ToolCheckOutcome.AwaitingApproval:
+                    return await WaitAsync().ConfigureAwait(false);
+                case ToolCheckOutcome.Stopped:
+                    return PipelineOutcome.Stopped;
+                default:
+                    break; // Hazır ya da ajan koptu (koptuysa yerel aşamada yeniden sorulur).
+            }
         }
 
         while (Next(_progress) is { } stage)
@@ -248,15 +266,17 @@ public abstract class ProductionPipelineBase(
                 if (_checkedDevice != current)
                 {
                     // Yeni ajan (yeniden eşleştirme, Req 23): araçlar ona da sorulur.
-                    var (dropped, error) = await CheckToolsAsync(current.Value).ConfigureAwait(false);
-                    if (dropped)
+                    var (check, error) = await CheckToolsAsync(current.Value).ConfigureAwait(false);
+                    switch (check)
                     {
-                        return await WaitAsync().ConfigureAwait(false);
-                    }
-
-                    if (error is not null)
-                    {
-                        return await FailAsync(stage, error).ConfigureAwait(false);
+                        case ToolCheckOutcome.Dropped or ToolCheckOutcome.AwaitingApproval:
+                            return await WaitAsync().ConfigureAwait(false);
+                        case ToolCheckOutcome.Failed:
+                            return await FailAsync(stage, error!).ConfigureAwait(false);
+                        case ToolCheckOutcome.Stopped:
+                            return PipelineOutcome.Stopped;
+                        default:
+                            break;
                     }
                 }
 
@@ -665,18 +685,92 @@ public abstract class ProductionPipelineBase(
     private List<AgentStageScene> Scenes(bool code) =>
         [.. _outputs.Plan!.Select(p => new AgentStageScene(p.Index, p.DurationSeconds, p.Narration, p.ImagePrompt, code ? _outputs.Codes?[p.Index] : null, null))];
 
-    private async Task<(bool Dropped, string? Error)> CheckToolsAsync(Guid device)
+    /// <summary>
+    /// Araç denetimi (Req 14) ve eksik bileşen akışı (spec 0027): eksik yoksa hazır; ajan sürümü uyumsuzsa ya da ajanın kuramadığı bir
+    /// eksik varsa hata; eksiklerin hepsi kurulabiliyorsa onaylanmamışsa indirme onayı istenir, onaylanmışsa ajana kurdurulur ve
+    /// yeniden denetlenir. Ajan koparsa onay korunur.
+    /// </summary>
+    private async Task<(ToolCheckOutcome Outcome, string? Error)> CheckToolsAsync(Guid device)
     {
         var reply = await agents.CheckToolsAsync(_job.UserId, new AgentToolCheckRequest(PipelineRules.RequiredTools(_fix)), CancellationToken.None).ConfigureAwait(false);
         if (reply is null)
         {
-            return (true, null); // Ajan koptu: yerel aşamada beklenir.
+            return (ToolCheckOutcome.Dropped, null); // Ajan koptu: yerel aşamada beklenir.
         }
 
         _checkedDevice = device;
-        return (false, reply.Missing.Count == 0
-            ? null
-            : Format(ProductionText.PipelineToolsMissing, string.Join(", ", reply.Missing.Select(PipelineRules.ToolName))));
+        if (reply.Missing.Count == 0)
+        {
+            await ClearInstallAsync().ConfigureAwait(false);
+            return (ToolCheckOutcome.Ready, null);
+        }
+
+        var installable = (reply.Installable ?? []).Where(c => reply.Missing.Contains(c.Id, StringComparer.Ordinal)).ToList();
+        var unavailable = reply.Missing.Where(id => !installable.Any(c => string.Equals(c.Id, id, StringComparison.Ordinal))).ToList();
+        if (unavailable.Contains(AgentProtocolId, StringComparer.Ordinal))
+        {
+            return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineToolsMissing, string.Join(", ", reply.Missing.Select(PipelineRules.ToolName))));
+        }
+
+        if (unavailable.Count > 0)
+        {
+            return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineToolsUnavailable, string.Join(", ", unavailable.Select(PipelineRules.ToolName))));
+        }
+
+        if (_progress.Install?.Covers(reply.Missing) != true)
+        {
+            // Onay istenir (spec 0027 Req 3): iş Ajan bekleniyor'da kullanıcıyı bekler; sayaç artmaz, sıra ilerlemez.
+            _progress = _progress with
+            {
+                Install = new PendingInstall { Components = [.. installable.Select(c => new InstallItem(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes))] },
+            };
+            await WriteEventAsync(SystemEventLevel.Info, Format(ProductionText.EventInstallPending, _job.Title, NamesOf(installable, reply.Missing)), null)
+                .ConfigureAwait(false);
+            return (ToolCheckOutcome.AwaitingApproval, null);
+        }
+
+        AgentInstallReply? installed;
+        try
+        {
+            installed = await agents.InstallComponentsAsync(_job.UserId, new AgentInstallRequest(reply.Missing), _stop).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (_stop.IsCancellationRequested)
+        {
+            return (ToolCheckOutcome.Stopped, null); // Durdur: ajandaki kurulum kendi bitirir; onay korunur.
+        }
+
+        if (installed is null)
+        {
+            _checkedDevice = null;
+            return (ToolCheckOutcome.Dropped, null); // Kurulum sırasında koptu: onay korunur, ajan dönünce yeniden denenir (Req 7).
+        }
+
+        var after = installed.Ok
+            ? await agents.CheckToolsAsync(_job.UserId, new AgentToolCheckRequest(PipelineRules.RequiredTools(_fix)), CancellationToken.None).ConfigureAwait(false)
+            : null;
+        if (installed.Ok && after is null)
+        {
+            _checkedDevice = null;
+            return (ToolCheckOutcome.Dropped, null);
+        }
+
+        await ClearInstallAsync().ConfigureAwait(false);
+        if (!installed.Ok || after!.Missing.Count > 0)
+        {
+            var failed = !installed.Ok ? (installed.Failed.Count > 0 ? installed.Failed : reply.Missing) : after!.Missing;
+            return (ToolCheckOutcome.Failed, Format(ProductionText.PipelineInstallFailed, NamesOf([.. installable.Where(c => failed.Contains(c.Id, StringComparer.Ordinal))], failed)));
+        }
+
+        return (ToolCheckOutcome.Ready, null);
+    }
+
+    private async Task ClearInstallAsync()
+    {
+        if (_progress.Install is not null)
+        {
+            _progress = _progress with { Install = null };
+            await SaveProgressAsync().ConfigureAwait(false);
+        }
     }
 
     private async Task<Result<TextModelReply>> CallTextAsync(ModelRole role, string system, string prompt)

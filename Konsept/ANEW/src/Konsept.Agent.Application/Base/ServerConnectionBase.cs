@@ -52,6 +52,9 @@ public abstract class ServerConnectionBase : IServerConnection
     public abstract Task TryEndUpdateAsync();
 
     /// <inheritdoc />
+    public abstract Task<bool> TryReportComponentsAsync(CancellationToken cancellationToken);
+
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         await DisposeCoreAsync().ConfigureAwait(false);

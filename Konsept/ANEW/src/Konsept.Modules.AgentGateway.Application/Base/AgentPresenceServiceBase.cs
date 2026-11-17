@@ -88,6 +88,19 @@ public abstract class AgentPresenceServiceBase : IAgentPresenceService
     }
 
     /// <inheritdoc />
+    public bool ReportComponents(string connectionId, AgentOwner owner, IReadOnlyList<string> components)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (Registry.Find(owner.UserId) is not { } session || !string.Equals(session.ConnectionId, connectionId, StringComparison.Ordinal))
+        {
+            return false; // Eski ya da kaydı olmayan bağlantı listeyi değiştiremez.
+        }
+
+        Components?.Set(owner.UserId, components ?? []);
+        return true;
+    }
+
+    /// <inheritdoc />
     public async Task DisconnectAsync(string connectionId, CancellationToken cancellationToken)
     {
         var removed = Registry.Remove(connectionId);

@@ -44,6 +44,9 @@ public static class ProductionErrors
     /// <summary>Gets devam yalnızca Durduruldu/Hata'dan (Req 15).</summary>
     public static Error CannotResume => new("production.cannot_resume", ProductionText.CannotResume, ErrorType.Conflict);
 
+    /// <summary>Gets işin onay bekleyen indirmesi yok (spec 0027 AC-6).</summary>
+    public static Error NoPendingInstall => new("production.no_pending_install", ProductionText.NoPendingInstall, ErrorType.Conflict);
+
     /// <summary>Gets video yok ya da başkasının (BR-1).</summary>
     public static Error VideoNotFound => new("production.video_not_found", ProductionText.VideoNotFound, ErrorType.NotFound);
 

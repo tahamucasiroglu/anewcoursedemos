@@ -126,6 +126,15 @@ yerel ses/görsel koşucuları B-116) ve `LocalVideoServer` (yalnızca 127.0.0.1
 60 sn, açıldıktan sonra 30 dk boşta kalana kadar geçerli; Range; yetki loglanmaz). Web: `production.js` aşama listesi, maliyet, uyarılar, 3 sn
 yoklama, Üretilenler + izleme alanı (`/uretim/{profil}/videolar`, `/uretim/video/{id}/izle`); CSP `media-src 'self' http://127.0.0.1:*`.
 
+**Eksik bileşen indirme onayı (0027):** Araç denetiminin cevabı (`AgentToolCheckReply.Installable`) eksiklerden ajanın gömülü
+`components.json`'ından kurabildiklerini (ad, boyut) taşır. Hepsi kurulabiliyorsa iş Hata olmaz: `progress.Install` (bekleyen indirme) yazılır ve
+iş Ajan bekleniyor'a geçer (yeni durum/şema yok; tekil çalışan iş dizini, Durdur, tarama aynen geçerli); onaysızken hat işi sürdürmez.
+`POST api/production/jobs/{id}/install/approve|decline` (web `/uretim/is/{id}/indir-onayla|indir-reddet`): onayda hat `InstallComponents`
+(SignalR client result, zaman aşımsız) ile ajana yalnızca kimlikleri gönderir; ajan `ComponentInstaller` → `SetupCoordinatorBase.InstallAsync`
+(0009 indirme/SHA-256/ayna/hazır denetimi) ile kurar, sonra `ReportComponents` ile kurulu listeyi yeniden bildirir (B-149). Kopmada onay korunur.
+Ret işi Hata yapar (sıradaki başlamaz). Ajanın kuramadığı eksik → yönlendirici mesajla Hata. Listede `required: false` girişler ilk kurulumda
+Atlandı kalır, yalnızca bu akışla iner (yerel model girdileri ve koşucuları B-116).
+
 **Üretilen Videolar (0007):** Video = bir konseptin tamamlanmış sürüm kayıtları (`production.videos`; video kimliği konsept kimliği, sürüm
 numarası bitiş sırası). Kayıtta 0017 alanlarına ek süre (sahne planı toplamı), biçim ve sürümün online maliyeti (migration `AddVideoDetails`).
 `IProducedVideoService` (`api/produced`): profil başına liste (üretim tarihi = ilk sürümün bitişi, 50'şerli), sürüm ayrıntısı (önceki sürüme

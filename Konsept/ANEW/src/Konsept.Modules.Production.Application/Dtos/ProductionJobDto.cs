@@ -11,6 +11,7 @@ namespace Konsept.Modules.Production.Application.Dtos;
 /// <param name="Stages">Hat aşamaları (spec 0017 Req 6); iş hiç başlamadıysa boş.</param>
 /// <param name="CostUsd">O ana kadarki toplam maliyet (USD).</param>
 /// <param name="Error">Hata'da sade açıklama.</param>
+/// <param name="Install">Bekleyen indirme (spec 0027; durum <c>waiting_for_agent</c> + onaysız → onay bekleniyor, onaylı → indiriliyor); yoksa <c>null</c>.</param>
 public sealed record ProductionJobDto(
     Guid Id,
     Guid ConceptId,
@@ -21,4 +22,5 @@ public sealed record ProductionJobDto(
     FixedSettingsDto? Fixed,
     IReadOnlyList<StageDto> Stages,
     decimal CostUsd,
-    string? Error);
+    string? Error,
+    PendingInstallDto? Install = null);

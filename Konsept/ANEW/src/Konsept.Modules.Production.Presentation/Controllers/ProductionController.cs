@@ -72,6 +72,22 @@ public sealed class ProductionController : ControllerBase
     public Task<IActionResult> Resume(Guid id, CancellationToken cancellationToken) =>
         _production.ResumeAsync(id, cancellationToken).ToActionResult();
 
+    /// <summary>İşin bekleyen indirmesini onayla (spec 0027 Req 5).</summary>
+    /// <param name="id">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum.</returns>
+    [HttpPost("jobs/{id:guid}/install/approve")]
+    public Task<IActionResult> ApproveInstall(Guid id, CancellationToken cancellationToken) =>
+        _production.ApproveInstallAsync(id, cancellationToken).ToActionResult();
+
+    /// <summary>İşin bekleyen indirmesini reddet (spec 0027 Req 6).</summary>
+    /// <param name="id">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum.</returns>
+    [HttpPost("jobs/{id:guid}/install/decline")]
+    public Task<IActionResult> DeclineInstall(Guid id, CancellationToken cancellationToken) =>
+        _production.DeclineInstallAsync(id, cancellationToken).ToActionResult();
+
     /// <summary>Sırayla üret.</summary>
     /// <param name="request">Profil.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

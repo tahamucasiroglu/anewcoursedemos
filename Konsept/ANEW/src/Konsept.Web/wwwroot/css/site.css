@@ -1884,7 +1884,8 @@ body {
 }
 
 .production-queue__status--producing,
-.production-queue__status--waiting_for_agent {
+.production-queue__status--waiting_for_agent,
+.production-queue__status--awaiting_install {
   border-color: var(--color-primary);
   font-weight: 600;
 }
@@ -1930,6 +1931,17 @@ body {
   flex: 1 1 100%;
   margin: 0;
   color: var(--color-error);
+}
+
+/* İndirme onayı (spec 0027). */
+.production-queue__note {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.production-install__list {
+  margin: 0 0 0.6rem;
+  padding-left: 1.2rem;
 }
 
 .production__produced-body {

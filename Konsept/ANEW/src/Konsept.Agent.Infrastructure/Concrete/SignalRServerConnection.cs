@@ -32,6 +32,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     private readonly IVideoFileActions? _files;
     private readonly IVideoFileDeleter? _deleter;
     private readonly Func<IReadOnlyList<string>>? _installedComponents;
+    private readonly IComponentInstaller? _installer;
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource _run;
     private HubConnection? _hub;
@@ -50,6 +51,7 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     /// <param name="installedComponents">Kurulu bileşen kimlikleri (B-110; kayıtta gönderilir); verilmezse gönderilmez.</param>
     /// <param name="files">Dosya eylemleri (spec 0007); verilmezse komut işlenmez.</param>
     /// <param name="deleter">Kalıcı silme (spec 0019); verilmezse komut işlenmez.</param>
+    /// <param name="installer">Eksik bileşen kurulumu (spec 0027); verilmezse araç denetimi kurulabilir bilgisi vermez, kurulum komutu reddedilir.</param>
     public SignalRServerConnection(
         AgentSettings settings,
         IAgentInfoProvider info,
@@ -60,8 +62,10 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         IVideoStreamHost? streams = null,
         Func<IReadOnlyList<string>>? installedComponents = null,
         IVideoFileActions? files = null,
-        IVideoFileDeleter? deleter = null)
+        IVideoFileDeleter? deleter = null,
+        IComponentInstaller? installer = null)
     {
+        _installer = installer;
         _files = files;
         _deleter = deleter;
         _installedComponents = installedComponents;
@@ -199,6 +203,25 @@ public sealed class SignalRServerConnection : ServerConnectionBase
     }
 
     /// <inheritdoc />
+    public override async Task<bool> TryReportComponentsAsync(CancellationToken cancellationToken)
+    {
+        if (State != ConnectionState.Connected || _hub is null || _installedComponents is null || UpdateRequired)
+        {
+            return false;
+        }
+
+        try
+        {
+            return await _hub.InvokeAsync<bool>(AgentHubContract.ReportComponents, _installedComponents(), cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            _logger.Warning("Kurulu bileşen listesi sunucuya bildirilemedi: {ExceptionType}", ex.GetType().Name);
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
     public override async Task<ReportOutcome?> TrySendErrorReportAsync(AgentErrorReport report, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -272,12 +295,14 @@ public sealed class SignalRServerConnection : ServerConnectionBase
         {
             // Üretim komutları yalnızca bu oturumun sunucusundan gelir (spec 0017 Req 13); ajan online sağlayıcıya istek atmaz.
             // Sürüm uyumsuzken (spec 0023 Req 4) hiçbir komut yürütülmez; sunucu da göndermez (çift güvence).
-            hub.On<AgentToolCheckRequest, AgentToolCheckReply>(
-                AgentHubContract.CheckTools, request => UpdateRequired ? new AgentToolCheckReply([ProtocolMismatch]) : stages.CheckTools(request));
+            hub.On<AgentToolCheckRequest, AgentToolCheckReply>(AgentHubContract.CheckTools, request => UpdateRequired ? new AgentToolCheckReply([ProtocolMismatch]) : CheckTools(stages, request));
             hub.On<AgentStageCommand, AgentStageReply>(
                 AgentHubContract.RunStage, command => UpdateRequired ? Task.FromResult(new AgentStageReply(false, AgentStageReply.Failed)) : stages.RunAsync(command));
             hub.On<Guid>(AgentHubContract.CancelStage, stages.Cancel);
         }
+
+        // Kullanıcının onayladığı eksik bileşenler (spec 0027 Req 5, 8): yalnızca gömülü listedeki kimlikler kurulur.
+        hub.On<AgentInstallRequest, AgentInstallReply>(AgentHubContract.InstallComponents, InstallAsync);
 
         if (_streams is { } streams)
         {
@@ -332,6 +357,32 @@ public sealed class SignalRServerConnection : ServerConnectionBase
             return Task.CompletedTask;
         };
         return hub;
+    }
+
+    private AgentToolCheckReply CheckTools(IStageRunner stages, AgentToolCheckRequest request)
+    {
+        var reply = stages.CheckTools(request);
+        return reply.Missing.Count == 0 || _installer is null ? reply : reply with { Installable = _installer.Describe(reply.Missing) };
+    }
+
+    private async Task<AgentInstallReply> InstallAsync(AgentInstallRequest request)
+    {
+        if (UpdateRequired || _installer is null)
+        {
+            return new AgentInstallReply(false, request?.Components ?? []);
+        }
+
+        _logger.Information("Sunucu bileşen kurulumu istedi (kullanıcı onayladı): {Components}", string.Join(", ", request.Components));
+        try
+        {
+            var reply = await _installer.InstallAsync(request, _lifetime.Token).ConfigureAwait(false);
+            await TryReportComponentsAsync(_lifetime.Token).ConfigureAwait(false);
+            return reply;
+        }
+        catch (OperationCanceledException)
+        {
+            return new AgentInstallReply(false, request.Components); // Ajan kapanıyor.
+        }
     }
 
     private void EnsureConnectLoop()

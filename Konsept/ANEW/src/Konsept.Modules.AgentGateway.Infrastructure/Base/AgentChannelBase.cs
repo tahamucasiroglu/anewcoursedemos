@@ -24,6 +24,13 @@ public abstract class AgentChannelBase : IAgentChannel
     }
 
     /// <inheritdoc />
+    public Task<AgentInstallReply> InstallComponentsAsync(string connectionId, AgentInstallRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+        return InvokeAsync<AgentInstallReply>(connectionId, AgentHubContract.InstallComponents, request, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<AgentStageReply> RunStageAsync(string connectionId, AgentStageCommand command, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);

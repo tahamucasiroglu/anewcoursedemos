@@ -65,6 +65,15 @@ internal sealed record AgentComposition(
         streams.Start(); // spec 0017 Req 21: yalnızca 127.0.0.1.
         var renderer = new SandboxedSceneRenderer(root, settings.Render ?? throw new InvalidOperationException("Render sınırları yüklenemedi."), logging.Logger);
         var stages = new ProcessStageRunner(setupState, root, videoFolder, renderer, logging.Logger);
+        var setupHost = new WindowsSetupHost(new HttpClient());
+        var setup = new SetupCoordinator(
+            ComponentCatalog.Load(),
+            setupHost,
+            setupState,
+            root,
+            AgentPaths.DefaultVideoFolder,
+            new Uri(settings.SiteUrl, "ajan-bilesenleri/"),
+            logging.Logger);
         var connection = new SignalRServerConnection(
             settings,
             info,
@@ -74,7 +83,17 @@ internal sealed record AgentComposition(
             streams: streams,
             installedComponents: () => [.. setupState.Load().Installed.Keys],
             files: new ShellVideoFileActions(videoFolder),
-            deleter: new VideoFileDeleter(videoFolder));
+            deleter: new VideoFileDeleter(videoFolder),
+            installer: new ComponentInstaller(setup, TimeProvider.System));
+
+        // Kurulum bitince kurulu bileşen listesi sunucuya yeniden bildirilir (spec 0027 Req 9, B-149: eskiden yalnızca kayıtta).
+        setup.Changed += (_, change) =>
+        {
+            if (change.Kind == Domain.Enums.SetupEventKind.Ready)
+            {
+                _ = connection.TryReportComponentsAsync(CancellationToken.None);
+            }
+        };
         logging.SummarySink.Attach(connection);
         var session = new AgentSessionCoordinator(
             connection,
@@ -92,15 +111,6 @@ internal sealed record AgentComposition(
             TimeProvider.System,
             logging.Logger);
         logging.AlertSink.Attach(reports);
-        var setupHost = new WindowsSetupHost(new HttpClient());
-        var setup = new SetupCoordinator(
-            ComponentCatalog.Load(),
-            setupHost,
-            setupState,
-            root,
-            AgentPaths.DefaultVideoFolder,
-            new Uri(settings.SiteUrl, "ajan-bilesenleri/"),
-            logging.Logger);
         var updater = new AgentUpdater(
             info.Version,
             new Uri(settings.SiteUrl, "ajan-guncelleme/"),

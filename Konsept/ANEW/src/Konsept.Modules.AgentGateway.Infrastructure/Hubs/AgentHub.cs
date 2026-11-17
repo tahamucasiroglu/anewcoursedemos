@@ -64,6 +64,14 @@ public sealed class AgentHub : Hub
             ? _presence.BeginUpdateAsync(Context.ConnectionId, Owner(), Context.ConnectionAborted)
             : throw new HubException("Ajan oturumu kapandı.");
 
+    /// <summary>Kurulu bileşen listesi değişti (spec 0027 Req 9, B-149).</summary>
+    /// <param name="components">Kurulu bileşen kimlikleri.</param>
+    /// <returns>Kabul edildiyse <c>true</c>.</returns>
+    public bool ReportComponents(IReadOnlyList<string> components) =>
+        _tracker.Contains(Context.ConnectionId)
+            ? _presence.ReportComponents(Context.ConnectionId, Owner(), components ?? [])
+            : throw new HubException("Ajan oturumu kapandı.");
+
     /// <summary>Ajan Error/Critical log özeti gönderir (spec 0008 Req 7); kayıtsız bağlantıdan ya da düşük seviyede reddedilir.</summary>
     /// <param name="summary">Özet.</param>
     /// <returns>Kabul edildiyse <c>true</c>.</returns>

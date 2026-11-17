@@ -35,6 +35,15 @@ public interface IAgentPresenceService : IAgentStatusReader
     /// <param name="owner">Sahip.</param>
     void EndUpdate(string connectionId, AgentOwner owner);
 
+    /// <summary>
+    /// Ajanın kurulu bileşen listesi değişti (spec 0027 Req 9, B-149): yalnızca sahibinin kayıtlı geçerli oturumundan gelirse saklanır.
+    /// </summary>
+    /// <param name="connectionId">Bağlantı.</param>
+    /// <param name="owner">Oturumun sahibi.</param>
+    /// <param name="components">Kurulu bileşen kimlikleri.</param>
+    /// <returns>Kabul edildiyse <c>true</c>.</returns>
+    bool ReportComponents(string connectionId, AgentOwner owner, IReadOnlyList<string> components);
+
     /// <summary>Bağlantının kopmasını işler.</summary>
     /// <param name="connectionId">Kopan bağlantının kimliği.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

@@ -35,6 +35,15 @@ public static class AgentHubContract
     /// <summary>API → ajan: üretim için gereken araçlar kurulu mu (spec 0017 Req 14); eksiklerin kimliklerini döndürür.</summary>
     public const string CheckTools = "CheckTools";
 
+    /// <summary>
+    /// API → ajan: kullanıcının onayladığı eksik bileşenleri kurulum motoruyla indir ve kur (spec 0027 Req 5, 8); cevap kurulamayanları
+    /// sayar. Yalnızca ajanın gömülü bileşen listesindeki kimlikler kurulur.
+    /// </summary>
+    public const string InstallComponents = "InstallComponents";
+
+    /// <summary>Ajan → API: kurulu bileşen listesi değişti (spec 0027 Req 9, B-149); yalnızca kayıtlı geçerli oturumdan kabul edilir.</summary>
+    public const string ReportComponents = "ReportComponents";
+
     /// <summary>API → ajan: bir yerel üretim aşamasını çalıştır (görseller, seslendirme, render, birleştirme; spec 0017 Req 13).</summary>
     public const string RunStage = "RunStage";
 

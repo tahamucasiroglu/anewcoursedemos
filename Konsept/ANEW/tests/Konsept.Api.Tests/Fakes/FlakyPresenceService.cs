@@ -30,6 +30,10 @@ public sealed class FlakyPresenceService(IAgentPresenceService inner, FlakyRegis
     public void EndUpdate(string connectionId, AgentOwner owner) => inner.EndUpdate(connectionId, owner);
 
     /// <inheritdoc />
+    public bool ReportComponents(string connectionId, AgentOwner owner, IReadOnlyList<string> components) =>
+        inner.ReportComponents(connectionId, owner, components);
+
+    /// <inheritdoc />
     public Task DisconnectAsync(string connectionId, CancellationToken cancellationToken) =>
         inner.DisconnectAsync(connectionId, cancellationToken);
 }

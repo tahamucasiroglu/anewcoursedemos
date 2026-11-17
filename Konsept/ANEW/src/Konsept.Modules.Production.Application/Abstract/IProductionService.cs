@@ -59,6 +59,21 @@ public interface IProductionService
     /// <returns>Durum.</returns>
     Task<Result<ProductionStateDto>> ResumeAsync(Guid jobId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// İşin bekleyen indirmesini onayla (spec 0027 Req 5): iş hatta döner, ajan bağlıysa kurulum hemen başlar; bağlı değilse ajan
+    /// gelince. Bekleyen indirme yoksa 409.
+    /// </summary>
+    /// <param name="jobId">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum.</returns>
+    Task<Result<ProductionStateDto>> ApproveInstallAsync(Guid jobId, CancellationToken cancellationToken);
+
+    /// <summary>İşin bekleyen indirmesini reddet (spec 0027 Req 6): iş Hata olur, sıradaki iş başlamaz. Bekleyen indirme yoksa 409.</summary>
+    /// <param name="jobId">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Durum.</returns>
+    Task<Result<ProductionStateDto>> DeclineInstallAsync(Guid jobId, CancellationToken cancellationToken);
+
     /// <summary>Profilin bu sayfadan üretilen videoları, en yeni üstte (spec 0017 Req 20).</summary>
     /// <param name="profileId">Profil.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>

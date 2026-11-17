@@ -29,6 +29,11 @@
   <data name="BlockImageLanguage" xml:space="preserve"><value>Seçili görsel modeli konsept dilini desteklemiyor</value></data>
   <data name="PipelineNoKey" xml:space="preserve"><value>API key yok — Ayarlar</value></data>
   <data name="PipelineToolsMissing" xml:space="preserve"><value>Ajan kurulumu eksik: {0}</value></data>
+  <data name="PipelineToolsUnavailable" xml:space="preserve"><value>Ajan kurulumu eksik: {0}. Bu ajan sürümü bunları indirip kuramıyor; Üretim ayarlarından başka bir model seçin ya da ajanı güncelleyin.</value></data>
+  <data name="NoPendingInstall" xml:space="preserve"><value>Bu işin onay bekleyen bir indirmesi yok.</value></data>
+  <data name="PipelineInstallDeclined" xml:space="preserve"><value>İndirme onaylanmadı: {0}. Üretim durdu.</value></data>
+  <data name="PipelineInstallFailed" xml:space="preserve"><value>İndirme ya da kurulum başarısız: {0}. Ayrıntı ajan penceresinde (Kurulum ve bileşenler).</value></data>
+  <data name="EventInstallPending" xml:space="preserve"><value>İndirme onayı bekleniyor: {0} — {1}</value></data>
   <data name="PipelineGpuUnavailable" xml:space="preserve"><value>Ekran kartı kullanılamadı: {0}</value></data>
   <data name="PipelineConceptMissing" xml:space="preserve"><value>Konsept bulunamadı.</value></data>
   <data name="PipelineAnalysisInvalid" xml:space="preserve"><value>Konsept incelenemedi: model beklenen biçimde yanıt vermedi.</value></data>

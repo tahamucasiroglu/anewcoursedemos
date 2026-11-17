@@ -496,6 +496,15 @@
   <data name="JobProducing" xml:space="preserve"><value>Üretiliyor</value></data>
   <data name="JobStopped" xml:space="preserve"><value>Durduruldu</value></data>
   <data name="JobWaitingForAgent" xml:space="preserve"><value>Ajan bekleniyor</value></data>
+  <data name="JobAwaitingInstall" xml:space="preserve"><value>Onay bekleniyor — indirme gerekli</value></data>
+  <data name="JobInstalling" xml:space="preserve"><value>İndiriliyor ve kuruluyor: {0}</value></data>
+  <data name="ProductionInstallOpen" xml:space="preserve"><value>İndirmeyi onayla…</value></data>
+  <data name="ProductionInstallTitle" xml:space="preserve"><value>İndirme onayı</value></data>
+  <data name="ProductionInstallText" xml:space="preserve"><value>“{0}” videosu için ajan bilgisayarına şunların indirilip kurulması gerekiyor:</value></data>
+  <data name="ProductionInstallItem" xml:space="preserve"><value>{0} — yaklaşık {1} indirme, diskte {2}</value></data>
+  <data name="ProductionInstallTotal" xml:space="preserve"><value>Toplam: yaklaşık {0} indirme, diskte {1}. İndirme ve kurulum ajan bilgisayarında yapılır; ilerleme ajanın simgesinde görünür.</value></data>
+  <data name="ProductionInstallApprove" xml:space="preserve"><value>İndir ve devam et</value></data>
+  <data name="ProductionInstallDecline" xml:space="preserve"><value>Vazgeç (üretimi durdur)</value></data>
   <data name="JobFailed" xml:space="preserve"><value>Hata</value></data>
   <data name="JobCompleted" xml:space="preserve"><value>Tamamlandı</value></data>
   <data name="ProductionMoveUp" xml:space="preserve"><value>{0}'ı yukarı taşı</value></data>

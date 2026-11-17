@@ -65,6 +65,14 @@ public interface IServerConnection : IAsyncDisposable
     /// <returns>Sonuç.</returns>
     Task<bool?> TryBeginUpdateAsync(CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Bağlıysa kurulu bileşen listesini sunucuya yeniden bildirir (spec 0027 Req 9, B-149: liste yalnızca kayıtta gidiyordu). Bağlı değilse
+    /// göndermez (yeniden bağlanınca kayıt zaten gönderir). Hata fırlatmaz.
+    /// </summary>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Sunucu kabul ettiyse <c>true</c>.</returns>
+    Task<bool> TryReportComponentsAsync(CancellationToken cancellationToken);
+
     /// <summary>Güncelleme kurulmadan bitti: sunucu ajana yeniden iş gönderebilir (review r1 H-1). Hata yutulur.</summary>
     /// <returns>Görev.</returns>
     Task TryEndUpdateAsync();

@@ -5,6 +5,8 @@
 // 0017: iş satırında aşamalar (metin + ikon, yalnızca renk değil), maliyet ve sade hata; "Ajan bağlı değil" ve "sıra durdu" uyarıları; iş
 // çalışırken 3 sn'de bir yoklama (durum ≤5 sn'de görünür); sağ sütunda Üretilenler listesi ve kesik çizginin sağında izleme alanı (ajanın
 // kısa ömürlü yerel akışı).
+// 0027: eksik bileşen indirme onayı — iş "Onay bekleniyor — indirme gerekli" olunca onay penceresi (ad, yaklaşık boyut, toplam) kendiliğinden
+// açılır; İndir ve devam et / Vazgeç uçları; Esc yalnızca kapatır, satırdaki "İndirmeyi onayla…" yeniden açar.
 import { get, lastCorrelationId, post } from './api.js';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), select:not([disabled]), input:not([disabled])';
@@ -27,6 +29,25 @@ export function costText(usd) {
 
 function fill(template, ...args) {
   return String(template || '').replace(/\{(\d+)\}/g, (_, index) => String(args[Number(index)] ?? ''));
+}
+
+/**
+ * Yaklaşık boyut metni (spec 0027): MB altı "1 MB", GB üstü tek ondalıklı "1,2 GB".
+ * @param {number} bytes Bayt.
+ * @returns {string} Metin.
+ */
+export function sizeText(bytes) {
+  const mb = Math.max(1, Math.round(Number(bytes || 0) / (1024 * 1024)));
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1).replace('.', ',')} GB` : `${mb} MB`;
+}
+
+/**
+ * Onay bekleyen indirme var mı (spec 0027): iş Ajan bekleniyor ve indirme onaylanmamış.
+ * @param {object} job İş.
+ * @returns {boolean} Bekliyorsa true.
+ */
+export function awaitingInstall(job) {
+  return Boolean(job && job.status === 'waiting_for_agent' && job.install && !job.install.approved);
 }
 
 /**
@@ -65,7 +86,11 @@ export function initProduction(doc, timers = globalThis) {
   const text = root.dataset;
   const el = (id) => doc.getElementById(id);
   const modal = el('production-models-modal');
-  const state = { profileId: null, data: null, page: 1, checked: new Set(), opener: null, busy: false, approved: [], poll: null, live: '' };
+  const installModal = el('production-install-modal');
+  const state = {
+    profileId: null, data: null, page: 1, checked: new Set(), opener: null, busy: false, approved: [], poll: null, live: '',
+    installJob: null, installOpener: null, installDismissed: new Set(),
+  };
 
   function node(tag, className, content) {
     const element = doc.createElement(tag);
@@ -137,8 +162,20 @@ export function initProduction(doc, timers = globalThis) {
       const item = node('li', 'production-queue__item');
       item.dataset.status = job.status;
       const label = node('span', 'production-queue__title', `${job.number}. ${job.title}`);
-      const status = node('span', `production-queue__status production-queue__status--${job.status}`, text[`textStatus${job.status.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`] || job.status);
+      const pending = awaitingInstall(job);
+      const statusText = pending ? text.textAwaitingInstall : text[`textStatus${job.status.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`];
+      const status = node('span', `production-queue__status production-queue__status--${pending ? 'awaiting_install' : job.status}`, statusText || job.status);
       item.append(label, status);
+      if (job.install && job.install.approved && running) {
+        // Onaylanan indirme sürüyor ya da ajan bekleniyor (spec 0027 Req 5).
+        item.append(node('p', 'production-queue__note', fill(text.textInstalling, job.install.components.map((c) => c.name).join(', '))));
+      }
+      if (pending && installModal) {
+        const open = node('button', 'button production-queue__install', text.textInstallOpen);
+        open.type = 'button';
+        open.addEventListener('click', () => openInstall(job.id));
+        item.append(open);
+      }
       if ((job.stages || []).length) {
         const stages = node('ol', 'production-stages');
         stages.setAttribute('aria-label', fill(text.textStages, job.title));
@@ -216,6 +253,7 @@ export function initProduction(doc, timers = globalThis) {
     if (state.modalOpen) {
       fillModal();
     }
+    syncInstall();
     const finished = before && (before.jobs || []).some((j) => RUNNING.includes(j.status) && !(data.jobs || []).some((n) => n.id === j.id));
     if (finished) {
       loadVideos(); // Biten iş Üretilenler'e düşer.
@@ -558,12 +596,132 @@ export function initProduction(doc, timers = globalThis) {
     }
   });
 
+  // --- İndirme onayı (spec 0027) -------------------------------------------------------------------------------------------------
+  function installFocusables() {
+    return [...installModal.querySelectorAll(FOCUSABLE)].filter((n) => !n.closest('[hidden]'));
+  }
+
+  function pendingJob(id) {
+    return ((state.data && state.data.jobs) || []).find((j) => j.id === id && awaitingInstall(j));
+  }
+
+  function openInstall(id) {
+    const job = pendingJob(id);
+    if (!installModal || !job || state.modalOpen) {
+      return;
+    }
+    const opening = state.installJob === null;
+    state.installJob = id;
+    if (opening) {
+      state.installOpener = doc.activeElement;
+    }
+    const items = job.install.components || [];
+    el('production-install-text').textContent = fill(text.textInstallText, job.title);
+    el('production-install-list').replaceChildren(...items.map((c) => node('li', '', fill(text.textInstallItem, c.name, sizeText(c.downloadBytes), sizeText(c.installedBytes)))));
+    const download = items.reduce((sum, c) => sum + Number(c.downloadBytes || 0), 0);
+    const installed = items.reduce((sum, c) => sum + Number(c.installedBytes || 0), 0);
+    el('production-install-total').textContent = fill(text.textInstallTotal, sizeText(download), sizeText(installed));
+    if (opening) {
+      el('production-install-message').hidden = true;
+      installModal.hidden = false;
+      el('production-install-approve').focus(); // Odak pencereye geçer.
+    }
+  }
+
+  function closeInstall(dismissed) {
+    if (state.installJob === null) {
+      return;
+    }
+    if (dismissed) {
+      state.installDismissed.add(state.installJob); // Esc: iş beklemeye devam eder; satırdaki düğme yeniden açar.
+    }
+    state.installJob = null;
+    installModal.hidden = true;
+    const opener = state.installOpener;
+    state.installOpener = null;
+    if (opener && typeof opener.focus === 'function' && doc.contains(opener)) {
+      opener.focus();
+    }
+  }
+
+  // Durum her çizildiğinde: bekleyen indirme kalmadıysa pencere kapanır; yeni bekleyen indirme varsa (kapatılmamışsa) açılır.
+  function syncInstall() {
+    if (!installModal) {
+      return;
+    }
+    if (state.installJob !== null) {
+      if (pendingJob(state.installJob)) {
+        openInstall(state.installJob);
+      } else {
+        closeInstall(false);
+      }
+      return;
+    }
+    const next = (state.data.jobs || []).find((j) => awaitingInstall(j) && !state.installDismissed.has(j.id));
+    if (next) {
+      openInstall(next.id);
+    }
+  }
+
+  async function answerInstall(path) {
+    const id = state.installJob;
+    if (id === null || state.busy) {
+      return;
+    }
+    state.busy = true;
+    const buttons = [el('production-install-approve'), el('production-install-decline')];
+    buttons.forEach((b) => { b.disabled = true; });
+    el('production-install-message').hidden = true;
+    try {
+      const data = await post(`/uretim/is/${encodeURIComponent(id)}/${path}`, {});
+      state.busy = false;
+      closeInstall(false);
+      render(data);
+    } catch (error) {
+      state.busy = false;
+      const message = el('production-install-message');
+      message.textContent = failText(error);
+      message.hidden = false;
+    } finally {
+      buttons.forEach((b) => { b.disabled = false; });
+    }
+  }
+
+  if (installModal) {
+    el('production-install-approve').addEventListener('click', () => answerInstall('indir-onayla'));
+    el('production-install-decline').addEventListener('click', () => answerInstall('indir-reddet'));
+    installModal.addEventListener('click', (event) => {
+      if (event.target === installModal) {
+        closeInstall(true);
+      }
+    });
+    installModal.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeInstall(true);
+      } else if (event.key === 'Tab') {
+        const nodes = installFocusables();
+        const index = nodes.indexOf(doc.activeElement);
+        if (event.shiftKey && index <= 0) {
+          event.preventDefault();
+          nodes[nodes.length - 1].focus();
+        } else if (!event.shiftKey && index === nodes.length - 1) {
+          event.preventDefault();
+          nodes[0].focus();
+        }
+      }
+    });
+  }
+
   // --- Yükleme ---------------------------------------------------------------------------------------------------------------------
   async function load(profileId) {
     state.profileId = profileId;
     state.page = 1;
     state.checked.clear();
     state.data = null;
+    if (installModal) {
+      closeInstall(false);
+    }
     if (state.poll !== null) {
       timers.clearTimeout(state.poll);
       state.poll = null;
@@ -600,5 +758,5 @@ export function initProduction(doc, timers = globalThis) {
   if (bar && bar.dataset.selectedId) {
     load(bar.dataset.selectedId);
   }
-  return { load, state, openModal, closeModal };
+  return { load, state, openModal, closeModal, openInstall, closeInstall };
 }

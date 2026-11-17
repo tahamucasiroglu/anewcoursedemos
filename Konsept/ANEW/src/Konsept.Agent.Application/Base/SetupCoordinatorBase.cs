@@ -104,7 +104,9 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         for (var i = 0; i < _states.Length; i++)
         {
             var component = _states[i].Component;
-            var status = ComponentStatus.Waiting;
+
+            // İsteğe bağlı bileşen (ör. yerel model) ilk kurulumda indirilmez; üretim isteyince onayla kurulur (spec 0027).
+            var status = component.Required ? ComponentStatus.Waiting : ComponentStatus.Skipped;
             if (_installed.TryGetValue(component.Id, out var record) && string.Equals(record.Version, component.Version, StringComparison.Ordinal))
             {
                 if (await IsIntactAsync(component, record, cancellationToken).ConfigureAwait(false))
@@ -121,7 +123,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
             SetState(new ComponentState(component, status), raise: false);
         }
 
-        IsReady = _states.All(s => s.Status == ComponentStatus.Installed);
+        IsReady = _states.All(s => s.Status is ComponentStatus.Installed or ComponentStatus.Skipped);
         UpdatePercent();
         return !IsReady;
     }
@@ -158,10 +160,19 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
     }
 
     /// <inheritdoc />
-    public Task RunAsync(CancellationToken cancellationToken) => RunCoreAsync(null, cancellationToken);
+    public Task RunAsync(CancellationToken cancellationToken) =>
+        RunCoreAsync(s => s.Status is not ComponentStatus.Installed and not ComponentStatus.Skipped, cancellationToken);
 
     /// <inheritdoc />
-    public Task RetryAsync(string componentId, CancellationToken cancellationToken) => RunCoreAsync(componentId, cancellationToken);
+    public Task RetryAsync(string componentId, CancellationToken cancellationToken) =>
+        RunCoreAsync(s => string.Equals(s.Component.Id, componentId, StringComparison.Ordinal), cancellationToken);
+
+    /// <inheritdoc />
+    public Task InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(componentIds);
+        return RunCoreAsync(s => componentIds.Contains(s.Component.Id, StringComparer.Ordinal) && s.Status != ComponentStatus.Installed, cancellationToken);
+    }
 
     /// <summary>Kurulum olayını teknik loga yazar (şifre/token içermez; yalnızca bileşen adları ve sebepler).</summary>
     /// <param name="level">Seviye.</param>
@@ -188,7 +199,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         }
     }
 
-    private async Task RunCoreAsync(string? onlyId, CancellationToken cancellationToken)
+    private async Task RunCoreAsync(Func<ComponentState, bool> select, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
@@ -204,7 +215,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         try
         {
             var targets = Components
-                .Where(s => onlyId is null ? s.Status is not ComponentStatus.Installed and not ComponentStatus.Skipped : s.Component.Id == onlyId)
+                .Where(select)
                 .Select(s => s.Component)
                 .ToList();
             Raise(new SetupEvent(SetupEventKind.Started));

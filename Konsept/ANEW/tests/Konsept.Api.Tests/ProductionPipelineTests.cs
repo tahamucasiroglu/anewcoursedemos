@@ -389,7 +389,7 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
         _factory.Agent.Sent.Where(s => s.ConnectionId == newConn).Select(s => s.Method).ShouldBe(["CheckTools", "RunStage", "RunStage"]);
     }
 
-    /// <summary>AC-16: ajan bağlı ve kurulum eksikse iş, hiçbir online çağrı ve harcama olmadan "Ajan kurulumu eksik: HyperFrames" ile Hata olur.</summary>
+    /// <summary>AC-16: ajan bağlı ve kurulum eksikse (ajan kuramıyorsa) iş, hiçbir online çağrı ve harcama olmadan "Ajan kurulumu eksik: HyperFrames…" ile Hata olur.</summary>
     /// <returns>Görev.</returns>
     [Fact]
     public async Task Pipeline_ToolsMissing_FailsBeforeAnyCall()
@@ -402,7 +402,9 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
         await Eventually.WithinAsync(() => Task.FromResult(Job(concept).Status == ProductionJobStatus.Failed), Limit, ct);
 
         var row = (await StateAsync(client, profile, ct)).GetProperty("jobs").EnumerateArray().Single();
-        row.GetProperty("error").GetString().ShouldBe("Ajan kurulumu eksik: HyperFrames");
+        // spec 0027 Req 2 (plan A-1): ajanın kuramadığı eksik için yönlendirici metin.
+        row.GetProperty("error").GetString().ShouldBe(
+            "Ajan kurulumu eksik: HyperFrames. Bu ajan sürümü bunları indirip kuramıyor; Üretim ayarlarından başka bir model seçin ya da ajanı güncelleyin.");
         _factory.Provider.Calls.ShouldBeEmpty();
         _factory.Spend.Records.Where(r => r.UserId == user).ShouldBeEmpty();
     }

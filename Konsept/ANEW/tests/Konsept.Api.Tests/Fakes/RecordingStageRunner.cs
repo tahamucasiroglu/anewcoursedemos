@@ -11,11 +11,14 @@ public sealed class RecordingStageRunner : IStageRunner
 
     private int _executed;
 
+    /// <summary>Gets or sets araç denetiminde eksik bildirilen araçlar (spec 0027 testleri).</summary>
+    public IReadOnlyList<string> Missing { get; set; } = [];
+
     /// <inheritdoc />
     public AgentToolCheckReply CheckTools(AgentToolCheckRequest request)
     {
         Interlocked.Increment(ref _executed);
-        return new AgentToolCheckReply([]);
+        return new AgentToolCheckReply([.. Missing]);
     }
 
     /// <inheritdoc />

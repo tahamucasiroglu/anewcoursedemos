@@ -27,6 +27,16 @@ public interface IAgentCommands
     /// <returns>Cevap ya da <c>null</c> (ajan yok/koptu).</returns>
     Task<AgentToolCheckReply?> CheckToolsAsync(Guid userId, AgentToolCheckRequest request, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Onaylanan eksik bileşenleri ajana kurdurur ve sonucu bekler (spec 0027 Req 5); indirme dakikalar sürebilir, zaman aşımı yoktur
+    /// (çağıranın iptali ya da bağlantı kopması keser).
+    /// </summary>
+    /// <param name="userId">Kullanıcı.</param>
+    /// <param name="request">Kurulacak bileşenler.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Cevap ya da <c>null</c> (ajan yok/koptu).</returns>
+    Task<AgentInstallReply?> InstallComponentsAsync(Guid userId, AgentInstallRequest request, CancellationToken cancellationToken);
+
     /// <summary>Yerel aşamayı çalıştırır ve sonucu bekler.</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="command">Komut.</param>

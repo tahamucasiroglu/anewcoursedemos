@@ -21,6 +21,13 @@ public interface IAgentChannel
     /// <returns>Cevap.</returns>
     Task<AgentToolCheckReply> CheckToolsAsync(string connectionId, AgentToolCheckRequest request, CancellationToken cancellationToken);
 
+    /// <summary>Bileşen kurulum komutu (spec 0027).</summary>
+    /// <param name="connectionId">Ajan bağlantısı.</param>
+    /// <param name="request">Kurulacak bileşenler.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Cevap.</returns>
+    Task<AgentInstallReply> InstallComponentsAsync(string connectionId, AgentInstallRequest request, CancellationToken cancellationToken);
+
     /// <summary>Yerel aşama (spec 0017 Req 13).</summary>
     /// <param name="connectionId">Bağlantı.</param>
     /// <param name="command">Komut.</param>

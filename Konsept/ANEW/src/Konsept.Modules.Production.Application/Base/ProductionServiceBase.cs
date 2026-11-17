@@ -4,8 +4,11 @@ using Konsept.Modules.AiGateway.Contracts.Abstract;
 using Konsept.Modules.AiGateway.Contracts.Dtos;
 using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Concepts.Contracts.Enums;
+using Konsept.Modules.Monitoring.Contracts.Dtos;
+using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Modules.Production.Application.Abstract;
 using Konsept.Modules.Production.Application.Dtos;
+using Konsept.Modules.Production.Application.Resources;
 using Konsept.Modules.Production.Domain.Entities;
 using Konsept.Modules.Production.Domain.Enums;
 using Konsept.Modules.Production.Domain.Rules;
@@ -47,6 +50,7 @@ public abstract class ProductionServiceBase(
     private static readonly ProductionJobStatus[] Running = [ProductionJobStatus.Producing, ProductionJobStatus.WaitingForAgent];
     private static readonly ProductionJobStatus[] Movable = [ProductionJobStatus.Queued, ProductionJobStatus.Stopped, ProductionJobStatus.Failed];
     private static readonly ProductionJobStatus[] Resumable = [ProductionJobStatus.Stopped, ProductionJobStatus.Failed];
+    private static readonly ProductionJobStatus[] Waiting = [ProductionJobStatus.WaitingForAgent];
 
     /// <inheritdoc />
     public Task<Result<ProductionStateDto>> GetAsync(Guid profileId, CancellationToken cancellationToken) =>
@@ -270,6 +274,60 @@ public abstract class ProductionServiceBase(
             cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<ProductionStateDto>> ApproveInstallAsync(Guid jobId, CancellationToken cancellationToken) =>
+        WithJobAsync(
+            jobId,
+            async (userId, job, _) =>
+            {
+                if (job.Status != ProductionJobStatus.WaitingForAgent || job.Progress?.Install is not { } install)
+                {
+                    return ProductionErrors.NoPendingInstall;
+                }
+
+                if (!install.Approved)
+                {
+                    await jobs.SetProgressAsync(userId, job.Id, job.Progress with { Install = install with { Approved = true } }, time.GetUtcNow(), CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
+
+                if (pipeline.Caller.Current() is { } caller)
+                {
+                    pipeline.Runner.Launch(userId, caller); // Ajan bağlıysa kurulum hemen; değilse ajan gelince tarama sürdürür.
+                }
+
+                return null;
+            },
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<ProductionStateDto>> DeclineInstallAsync(Guid jobId, CancellationToken cancellationToken) =>
+        WithJobAsync(
+            jobId,
+            async (userId, job, _) =>
+            {
+                if (job.Status != ProductionJobStatus.WaitingForAgent || job.Progress?.Install is not { } install)
+                {
+                    return ProductionErrors.NoPendingInstall;
+                }
+
+                var now = time.GetUtcNow();
+                if (!await jobs.TransitionAsync(userId, job.Id, Waiting, ProductionJobStatus.Failed, now, CancellationToken.None)
+                    .ConfigureAwait(false))
+                {
+                    return ProductionErrors.NoPendingInstall; // Bu arada durduruldu ya da sürdü.
+                }
+
+                var error = Format(ProductionText.PipelineInstallDeclined, string.Join(", ", install.Components.Select(c => c.Name)));
+                var progress = job.Progress;
+                var stage = PipelineRules.Order.Cast<PipelineStage?>().FirstOrDefault(s => progress.StateOf(s!.Value) is not (StageState.Done or StageState.Skipped));
+                progress = (stage is { } failed ? progress.With(failed, StageState.Failed) : progress) with { Install = null, Error = error, EndedAt = now };
+                await jobs.SetProgressAsync(userId, job.Id, progress, now, CancellationToken.None).ConfigureAwait(false);
+                await WriteDeclinedEventAsync(job, progress, error, now).ConfigureAwait(false);
+                return null;
+            },
+            cancellationToken);
+
+    /// <inheritdoc />
     public async Task<Result<IReadOnlyList<ProducedVideoDto>>> ListVideosAsync(Guid profileId, CancellationToken cancellationToken)
     {
         if (user.UserId is not { } userId)
@@ -308,6 +366,12 @@ public abstract class ProductionServiceBase(
             _ => Result<VideoStreamDto>.Failure(ProductionErrors.StreamFileMissing),
         };
     }
+
+    // params object[] (ReadOnlySpan aşırı yüklemesi değil): derleyici mimari testlerini bozan satır içi dizi türü üretmesin.
+    private static string Format(string format, params object[] args) => string.Format(System.Globalization.CultureInfo.InvariantCulture, format, args);
+
+    private static PendingInstallDto? ToDto(PendingInstall? install) =>
+        install is null ? null : new PendingInstallDto(install.Approved, [.. install.Components.Select(c => new InstallItemDto(c.Id, c.Name, c.DownloadBytes, c.InstalledBytes))]);
 
     private static StageDto ToDto(StageProgress s) => new(
         s.Stage switch
@@ -428,6 +492,25 @@ public abstract class ProductionServiceBase(
         return null;
     }
 
+    /// <summary>Reddedilen indirmenin Günlük olayı (spec 0027 Req 6); yazılamazsa iş yine Hata kalır.</summary>
+    private async Task WriteDeclinedEventAsync(ProductionJob job, JobProgress progress, string error, DateTimeOffset now)
+    {
+        try
+        {
+            var profile = await profiles.GetAsync(job.UserId, job.ProfileId, CancellationToken.None).ConfigureAwait(false);
+            var start = progress.StartedAt ?? now;
+            var message = Format(ProductionText.EventFailed, job.Title, JobTimeText.Duration(now - start), JobTimeText.Range(start, now), error);
+            await pipeline.Events.WriteAsync(
+                new SystemEventEntry(ProductionPipelineBase.EventType, SystemEventLevel.Error, message, job.UserId, progress.StartedAt, now, job.ProfileId, profile?.Name),
+                CancellationToken.None).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // Günlük yazılamasa da ret uygulanmış olur (hat ile aynı ilke).
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
+    }
+
     private async Task<IReadOnlyList<ModelInfo>?> ListedAsync(Guid userId, CancellationToken cancellationToken)
     {
         var all = await models.ListAllAsync(cancellationToken).ConfigureAwait(false);
@@ -466,7 +549,8 @@ public abstract class ProductionServiceBase(
                 ToDto(j.FixedSettings),
                 [.. (j.Progress?.Stages ?? []).Select(ToDto)],
                 j.Progress?.CostUsd ?? 0m,
-                j.Status == ProductionJobStatus.Failed ? j.Progress?.Error : null))],
+                j.Status == ProductionJobStatus.Failed ? j.Progress?.Error : null,
+                Running.Contains(j.Status) ? ToDto(j.Progress?.Install) : null))],
             block,
             block is null ? null : ProductionErrors.BlockText(block),
             [.. StartBlock.LanguageWarnings(settings, selectable, languages).Select(ProductionErrors.BlockText)],

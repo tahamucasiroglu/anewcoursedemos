@@ -121,6 +121,12 @@ public sealed partial class App : Avalonia.Application
             else
             {
                 window.Show();
+                if (Composition.Setup is { } ready)
+                {
+                    // Üretimin istediği bileşen sonradan kurulursa (spec 0027) ilerleme tray ipucunda görünür.
+                    _setup = ready;
+                    ready.Changed += (_, _) => Dispatcher.UIThread.Post(UpdateTrayMarker);
+                }
             }
             var notifier = Composition.Notifier ?? new WindowsBalloonNotifier(() => window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
             if (Composition.Updater is { } updater)

@@ -325,6 +325,8 @@ public abstract class KonseptApiClientBase(ApiClientOptions options) : IKonseptA
             ProductionCommand.StartRegeneration => (HttpMethod.Post, $"api/produced/{target:D}/regenerate"),
             ProductionCommand.RetryVersion => (HttpMethod.Post, $"api/produced/{target:D}/retry"),
             ProductionCommand.RemoveFailedVersion => (HttpMethod.Post, $"api/produced/{target:D}/remove-failed"),
+            ProductionCommand.ApproveInstall => (HttpMethod.Post, $"api/production/jobs/{target:D}/install/approve"),
+            ProductionCommand.DeclineInstall => (HttpMethod.Post, $"api/production/jobs/{target:D}/install/decline"),
             _ => (HttpMethod.Post, $"api/production/jobs/{target:D}/resume"),
         };
         if (method == HttpMethod.Get)

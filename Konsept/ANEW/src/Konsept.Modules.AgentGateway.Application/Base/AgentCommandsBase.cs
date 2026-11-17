@@ -29,6 +29,13 @@ public abstract class AgentCommandsBase(IAgentConnectionRegistry registry, IAgen
         SendAsync(userId, (id, ct) => channel.CheckToolsAsync(id, request, ct), new AgentToolCheckReply([AgentProtocol]), cancellationToken);
 
     /// <inheritdoc />
+    public Task<AgentInstallReply?> InstallComponentsAsync(Guid userId, AgentInstallRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return SendAsync(userId, (id, ct) => channel.InstallComponentsAsync(id, request, ct), new AgentInstallReply(false, request.Components), cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<AgentStageReply?> RunStageAsync(Guid userId, AgentStageCommand command, CancellationToken cancellationToken) =>
         SendAsync(userId, (id, ct) => channel.RunStageAsync(id, command, ct), new AgentStageReply(false, AgentStageReply.Failed), cancellationToken);
 

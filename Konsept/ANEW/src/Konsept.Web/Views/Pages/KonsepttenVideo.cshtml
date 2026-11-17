@@ -27,7 +27,9 @@
      data-text-state-pending="@UiText.ProductionStatePending" data-text-state-running="@UiText.ProductionStateRunning"
      data-text-state-done="@UiText.ProductionStateDone" data-text-state-skipped="@UiText.ProductionStateSkipped"
      data-text-state-failed="@UiText.ProductionStateFailed" data-text-stages="@UiText.ProductionStages" data-text-cost="@UiText.ProductionCost"
-     data-text-watch="@UiText.ProductionWatch" data-text-player="@UiText.ProductionPlayer">
+     data-text-watch="@UiText.ProductionWatch" data-text-player="@UiText.ProductionPlayer"
+     data-text-awaiting-install="@UiText.JobAwaitingInstall" data-text-installing="@UiText.JobInstalling" data-text-install-open="@UiText.ProductionInstallOpen"
+     data-text-install-text="@UiText.ProductionInstallText" data-text-install-item="@UiText.ProductionInstallItem" data-text-install-total="@UiText.ProductionInstallTotal">
     <section class="production__strip" aria-label="@UiText.ProductionStripLabel">
         <button type="button" class="concept-strip__models" id="production-models-open" aria-haspopup="dialog" aria-controls="production-models-modal"
                 title="@UiText.ProductionModelsOpen" disabled>
@@ -87,6 +89,19 @@
                 </div>
             </div>
         </section>
+    </div>
+</div>
+<div class="dialog-backdrop dialog-backdrop--confirm" id="production-install-modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="production-install-title" aria-describedby="production-install-text">
+        <h2 class="dialog__title" id="production-install-title">@UiText.ProductionInstallTitle</h2>
+        <p class="dialog__text" id="production-install-text"></p>
+        <ul class="production-install__list" id="production-install-list"></ul>
+        <p class="dialog__text" id="production-install-total"></p>
+        <p class="admin__message" id="production-install-message" role="alert" hidden></p>
+        <div class="dialog__actions">
+            <button type="button" class="button" id="production-install-decline">@UiText.ProductionInstallDecline</button>
+            <button type="button" class="button button--primary" id="production-install-approve">@UiText.ProductionInstallApprove</button>
+        </div>
     </div>
 </div>
 <div class="dialog-backdrop" id="production-models-modal" hidden>

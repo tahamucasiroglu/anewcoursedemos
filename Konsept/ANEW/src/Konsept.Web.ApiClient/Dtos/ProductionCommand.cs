@@ -56,4 +56,10 @@ public enum ProductionCommand
 
     /// <summary>Hata veren sürümü kaldır (kimlik: video; spec 0020).</summary>
     RemoveFailedVersion,
+
+    /// <summary>İşin bekleyen indirmesini onayla (kimlik: iş; spec 0027).</summary>
+    ApproveInstall,
+
+    /// <summary>İşin bekleyen indirmesini reddet (kimlik: iş; spec 0027).</summary>
+    DeclineInstall,
 }

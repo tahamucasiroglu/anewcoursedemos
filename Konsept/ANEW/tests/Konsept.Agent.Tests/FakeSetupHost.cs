@@ -63,13 +63,14 @@ public sealed class FakeSetupHost : ISetupHost
     /// <param name="id">Kimlik.</param>
     /// <param name="mirrored">Aynası var mı.</param>
     /// <param name="check">Hazır denetiminde beklenen metin.</param>
+    /// <param name="required">Zorunlu çekirdek bileşen mi (spec 0027: isteğe bağlı olan yalnızca istenince kurulur).</param>
     /// <returns>Bileşen.</returns>
-    public SetupComponent Add(string id, bool mirrored = false, string? check = "v1.0.0")
+    public SetupComponent Add(string id, bool mirrored = false, string? check = "v1.0.0", bool required = true)
     {
         var zip = Zip(id + "-root", "bin/tool.exe", id + " exe");
         var url = new Uri($"https://example.invalid/{id}.zip");
         Content[url] = zip;
-        return new SetupComponent(id, id.ToUpperInvariant(), "amaç", "MIT", "1.0.0", url, id + ".zip", Sha(zip), 1000, 2000, id + "-root", "bin/tool.exe", check is null ? null : "--version", check, true, mirrored);
+        return new SetupComponent(id, id.ToUpperInvariant(), "amaç", "MIT", "1.0.0", url, id + ".zip", Sha(zip), 1000, 2000, id + "-root", "bin/tool.exe", check is null ? null : "--version", check, required, mirrored);
     }
 
     /// <inheritdoc />
