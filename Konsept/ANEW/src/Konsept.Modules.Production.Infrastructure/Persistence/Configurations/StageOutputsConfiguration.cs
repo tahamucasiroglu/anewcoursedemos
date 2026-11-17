@@ -47,6 +47,15 @@ public sealed class StageOutputsConfiguration : IEntityTypeConfiguration<StageOu
                 v => JsonSerializer.Deserialize<List<PipelineStage>>(v, Json) ?? new List<PipelineStage>(),
                 new ValueComparer<IReadOnlyList<PipelineStage>>((a, b) => ReferenceEquals(a, b), v => v.Count, v => v))
             .IsRequired();
+        builder.Property(o => o.Signatures)
+            .HasColumnName("signatures")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, Json),
+                v => JsonSerializer.Deserialize<Dictionary<PipelineStage, string>>(v, Json) ?? new Dictionary<PipelineStage, string>(),
+                new ValueComparer<IReadOnlyDictionary<PipelineStage, string>>((a, b) => ReferenceEquals(a, b), v => v.Count, v => v))
+            .HasDefaultValueSql("'{}'::jsonb")
+            .IsRequired();
         builder.Property(o => o.UpdatedAt).HasColumnName("updated_at").IsRequired();
         builder.HasIndex(o => o.UserId).HasDatabaseName("ix_stage_outputs_user");
     }

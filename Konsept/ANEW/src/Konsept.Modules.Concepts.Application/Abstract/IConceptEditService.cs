@@ -12,16 +12,18 @@ public interface IConceptEditService
     /// <summary>Sahneleri kaydeder (çağrı yok).</summary>
     /// <param name="conceptId">Konsept.</param>
     /// <param name="request">Sahneler.</param>
+    /// <param name="regen">Yeniden üret bağlamı belirteci (spec 0020 Req 15): yalnızca geçerliyse "Video oldu" konsept düzenlenir.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Güncel konsept.</returns>
-    Task<Result<ConceptDetailDto>> SaveScenesAsync(Guid conceptId, SaveScenesRequest? request, CancellationToken cancellationToken);
+    Task<Result<ConceptDetailDto>> SaveScenesAsync(Guid conceptId, SaveScenesRequest? request, string? regen, CancellationToken cancellationToken);
 
     /// <summary>Talimatla yeniden üretimi arka planda başlatır ve hemen döner.</summary>
     /// <param name="conceptId">Konsept.</param>
     /// <param name="request">Talimat ve kaydedilmemiş sahneler.</param>
+    /// <param name="regen">Yeniden üret bağlamı belirteci (spec 0020 Req 15): yalnızca geçerliyse "Video oldu" konsept düzenlenir.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Revizyon durumu.</returns>
-    Task<Result<RevisionDto>> RegenerateAsync(Guid conceptId, RegenerateRequest? request, CancellationToken cancellationToken);
+    Task<Result<RevisionDto>> RegenerateAsync(Guid conceptId, RegenerateRequest? request, string? regen, CancellationToken cancellationToken);
 
     /// <summary>Revizyon durumu.</summary>
     /// <param name="conceptId">Konsept.</param>
@@ -31,9 +33,10 @@ public interface IConceptEditService
 
     /// <summary>Hazır revizyonu konseptin yerine koyar (durum değişmez).</summary>
     /// <param name="conceptId">Konsept.</param>
+    /// <param name="regen">Yeniden üret bağlamı belirteci (spec 0020 Req 15): yalnızca geçerliyse "Video oldu" konsept düzenlenir.</param>
     /// <param name="cancellationToken">İptal belirteci.</param>
     /// <returns>Güncel konsept.</returns>
-    Task<Result<ConceptDetailDto>> ApproveRevisionAsync(Guid conceptId, CancellationToken cancellationToken);
+    Task<Result<ConceptDetailDto>> ApproveRevisionAsync(Guid conceptId, string? regen, CancellationToken cancellationToken);
 
     /// <summary>Revizyonu atar; konsept aynen kalır.</summary>
     /// <param name="conceptId">Konsept.</param>

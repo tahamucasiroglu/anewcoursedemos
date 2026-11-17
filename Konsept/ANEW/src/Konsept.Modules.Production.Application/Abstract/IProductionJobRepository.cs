@@ -32,6 +32,12 @@ public interface IProductionJobRepository
     /// <returns>Görev.</returns>
     Task AddAsync(ProductionJob job, CancellationToken cancellationToken);
 
+    /// <summary>İş ekler; konseptin tamamlanmamış işi zaten varsa eklemez (tekil dizin; spec 0020 Req 8).</summary>
+    /// <param name="job">İş.</param>
+    /// <param name="cancellationToken">İptal belirteci.</param>
+    /// <returns>Eklendiyse <c>true</c>.</returns>
+    Task<bool> TryAddAsync(ProductionJob job, CancellationToken cancellationToken);
+
     /// <summary>İki işin konumunu, ikisi de <paramref name="movable"/> durumundaysa değiş tokuş eder (tek işlem).</summary>
     /// <param name="userId">Kullanıcı.</param>
     /// <param name="first">Birinci iş.</param>

@@ -48,6 +48,26 @@ public sealed class ProductionJobRepository : EfRepositoryBase<ProductionDbConte
     }
 
     /// <inheritdoc />
+    public async Task<bool> TryAddAsync(ProductionJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        Context.Jobs.Add(job);
+        try
+        {
+            await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            return false; // Konsept başına tek tamamlanmamış iş (spec 0020 Req 8: çift tıklama / yeniden gönderim).
+        }
+        finally
+        {
+            Context.Entry(job).State = EntityState.Detached;
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<bool> SwapAsync(
         Guid userId, ProductionJob first, ProductionJob second, IReadOnlyCollection<ProductionJobStatus> movable, CancellationToken cancellationToken)
     {

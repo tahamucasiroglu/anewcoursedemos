@@ -68,6 +68,22 @@ public sealed class InMemoryProductionJobRepository : IProductionJobRepository
     }
 
     /// <inheritdoc />
+    public Task<bool> TryAddAsync(ProductionJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        lock (_gate)
+        {
+            if (_rows.Any(j => j.ConceptId == job.ConceptId && j.Status != ProductionJobStatus.Completed))
+            {
+                return Task.FromResult(false); // Tekil dizin (spec 0020 Req 8).
+            }
+
+            _rows.Add(job);
+            return Task.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc />
     public Task<bool> SwapAsync(
         Guid userId, ProductionJob first, ProductionJob second, IReadOnlyCollection<ProductionJobStatus> movable, CancellationToken cancellationToken)
     {

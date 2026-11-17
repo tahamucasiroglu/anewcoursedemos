@@ -7,7 +7,9 @@ using Konsept.Modules.Concepts.Contracts.Dtos;
 using Konsept.Modules.Production.Application.Abstract;
 using Konsept.Modules.Production.Application.Dtos;
 using Konsept.Modules.Production.Application.Resources;
+using Konsept.Modules.Production.Application.Rules;
 using Konsept.Modules.Production.Domain.Entities;
+using Konsept.Modules.Production.Domain.Enums;
 using Konsept.Modules.Production.Domain.Rules;
 using Konsept.Modules.Profiles.Contracts.Abstract;
 using Konsept.Shared.Kernel.Abstract;
@@ -26,14 +28,23 @@ namespace Konsept.Modules.Production.Application.Base;
 /// <param name="models">Katalog (model adları).</param>
 /// <param name="user">İsteği yapan kullanıcı.</param>
 /// <param name="time">Saat (silinme anı — spec 0019).</param>
+/// <param name="jobs">İş deposu (spec 0020: sürmekte olan sürümün durumu, Sil engeli).</param>
 public abstract class ProducedVideoServiceBase(
     IProducedVideoRepository videos,
     IAgentCommands agents,
     IProfileGenerationReader profiles,
     IModelDirectory models,
     ICurrentUser user,
-    TimeProvider time) : IProducedVideoService
+    TimeProvider time,
+    IProductionJobRepository jobs) : IProducedVideoService
 {
+    /// <summary>Sürümü varken Sil'i pasif yapan durumlar (spec 0020 Req 12).</summary>
+    private static readonly ProductionJobStatus[] DeleteBlocking =
+        [ProductionJobStatus.Queued, ProductionJobStatus.Producing, ProductionJobStatus.WaitingForAgent];
+
+    /// <summary>Sil'le sıradan kalkan durumlar (spec 0020 Req 12).</summary>
+    private static readonly ProductionJobStatus[] DeleteRemovable = [ProductionJobStatus.Stopped, ProductionJobStatus.Failed];
+
     /// <summary>Liste parçası boyu (Req 1).</summary>
     public const int PageSize = 50;
 
@@ -62,13 +73,17 @@ public abstract class ProducedVideoServiceBase(
         }
 
         var rows = await videos.ListAsync(userId, profileId, cancellationToken).ConfigureAwait(false);
+        var active = (await jobs.ListActiveAsync(userId, cancellationToken).ConfigureAwait(false))
+            .GroupBy(j => j.ConceptId)
+            .ToDictionary(g => g.Key, g => JobNames.Active(g.First()));
         var items = rows
             .GroupBy(v => v.ConceptId)
             .Select(g =>
             {
                 var ordered = g.OrderBy(v => v.EndedAt).ToList();
                 var latest = ordered[^1];
-                return new ProducedLibraryItemDto(g.Key, latest.Title, latest.DurationSeconds, ordered[0].EndedAt, ordered.Count);
+                var badge = active.GetValueOrDefault(g.Key); // Sürmekte olan sürümün rozeti (spec 0020 Req 9).
+                return new ProducedLibraryItemDto(g.Key, latest.Title, latest.DurationSeconds, ordered[0].EndedAt, ordered.Count, badge?.Status, badge?.Stage);
             })
             .OrderByDescending(i => i.ProducedAt)
             .ThenByDescending(i => i.Id)
@@ -96,7 +111,14 @@ public abstract class ProducedVideoServiceBase(
         string? Name(string? id) => id is null ? null : names.GetValueOrDefault(id, id);
 
         var versions = rows.Select((v, i) => ToDto(v, i + 1, i == 0 ? null : rows[i - 1], Name)).ToList();
-        return Result<ProducedVideoDetailDto>.Success(new ProducedVideoDetailDto(videoId, rows[^1].Title, rows.Sum(v => v.CostUsd), versions));
+        var job = await ActiveJobAsync(userId, videoId, cancellationToken).ConfigureAwait(false);
+        return Result<ProducedVideoDetailDto>.Success(new ProducedVideoDetailDto(
+            videoId,
+            rows[^1].Title,
+            rows.Sum(v => v.CostUsd),
+            versions,
+            job is null ? null : JobNames.Active(job),
+            job is not null && DeleteBlocking.Contains(job.Status)));
     }
 
     /// <inheritdoc />
@@ -150,8 +172,22 @@ public abstract class ProducedVideoServiceBase(
 
         // Yalnızca veritabanı (Req 2): ajan çevrimdışıyken ve dosya yokken de çalışır; ajana komut gitmez, dosya diskte kalır.
         var rows = await videos.ListByConceptAsync(userId, videoId, cancellationToken).ConfigureAwait(false);
+        if (rows.Count == 0)
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.VideoNotFound);
+        }
+
+        // Spec 0020 Req 12: sırada/üretimde/ajan bekleyen sürüm varken Sil pasif; Durduruldu/Hata sürüm işi sıradan kalkar (hiçbir aşama çalışmaz).
+        if (await ActiveJobAsync(userId, videoId, cancellationToken).ConfigureAwait(false) is { } job)
+        {
+            if (DeleteBlocking.Contains(job.Status) || !await jobs.RemoveAsync(userId, job.Id, DeleteRemovable, CancellationToken.None).ConfigureAwait(false))
+            {
+                return Result<DeletedVideoItemDto>.Failure(ProductionErrors.DeleteWhileProducing);
+            }
+        }
+
         var at = time.GetUtcNow();
-        if (rows.Count == 0 || await videos.SoftDeleteAsync(userId, videoId, at, cancellationToken).ConfigureAwait(false) == 0)
+        if (await videos.SoftDeleteAsync(userId, videoId, at, cancellationToken).ConfigureAwait(false) == 0)
         {
             return Result<DeletedVideoItemDto>.Failure(ProductionErrors.VideoNotFound);
         }
@@ -301,4 +337,7 @@ public abstract class ProducedVideoServiceBase(
         });
         return string.Format(CultureInfo.InvariantCulture, ProductionText.ChangeSummary, string.Join(", ", parts));
     }
+
+    private async Task<ProductionJob?> ActiveJobAsync(Guid userId, Guid videoId, CancellationToken cancellationToken) =>
+        (await jobs.ListActiveAsync(userId, cancellationToken).ConfigureAwait(false)).FirstOrDefault(j => j.ConceptId == videoId);
 }

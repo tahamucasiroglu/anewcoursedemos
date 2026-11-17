@@ -38,6 +38,7 @@ public static class ProductionModule
         services.AddScoped<ProductionPipelineLinks>();
         services.AddScoped<IProductionService, ProductionService>();
         services.AddScoped<IProducedVideoService, ProducedVideoService>();
+        services.AddScoped<IVideoVersionService, VideoVersionService>(); // spec 0020.
         services.AddScoped<IDislikedVideoTitles, DislikedVideoTitles>(); // Concepts.Contracts: "beğenilmedi" negatif sinyali (spec 0019).
         services.AddScoped<IProductionPipeline, ProductionPipeline>();
         services.AddScoped<IProductionActivityReader, ProductionActivityReader>(); // AgentGateway.Contracts: iş sürerken güncelleme yok (spec 0023).

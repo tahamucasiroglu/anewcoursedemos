@@ -68,4 +68,16 @@
   <data name="ChangeProgressBar" xml:space="preserve"><value>ilerleme çubuğu</value></data>
   <data name="ChangeFormat" xml:space="preserve"><value>biçim</value></data>
   <data name="ChangeSummary" xml:space="preserve"><value>Değişti: {0}</value></data>
+  <data name="PipelineVersionOutputsLost" xml:space="preserve"><value>Önceki sürümün çıktıları bulunamadı; onaylanmamış online model çağrısı yapılmadı. Sürümü kaldırıp yeni sürümü yeniden başlatın.</value></data>
+  <data name="VersionActive" xml:space="preserve"><value>Bu video için zaten üretimde bir sürüm var.</value></data>
+  <data name="VersionFailedPending" xml:space="preserve"><value>Bu videonun hata veren bir sürümü var: önce Tekrar dene ya da Sürümü kaldır.</value></data>
+  <data name="VersionNoChange" xml:space="preserve"><value>Hiçbir ayar değişmedi.</value></data>
+  <data name="VersionOnlineConfirm" xml:space="preserve"><value>Online model çağrısı yapılacak; başlatmak için onay gerekli.</value></data>
+  <data name="VersionImageToggle" xml:space="preserve"><value>Görsel modeli açılıp kapatılamaz; yalnızca başka bir görsel modeline geçilebilir.</value></data>
+  <data name="VersionNotFailed" xml:space="preserve"><value>Bu videonun hata veren bir sürümü yok.</value></data>
+  <data name="VersionRemoveAgentOffline" xml:space="preserve"><value>Ajan bağlı değil — yarım kalan video dosyası silinemedi. Ajan bağlanınca tekrar deneyin.</value></data>
+  <data name="VersionRemovePartial" xml:space="preserve"><value>Yarım kalan video dosyası silinemedi; dosyayı kapatıp tekrar deneyin.</value></data>
+  <data name="RegenerateUnchanged" xml:space="preserve"><value>Konsept değişmedi.</value></data>
+  <data name="RegenerateContextInvalid" xml:space="preserve"><value>Yeniden üret bağlamı bulunamadı ya da süresi doldu; Üretilen Videolar'dan Yeniden üret'i tekrar açın.</value></data>
+  <data name="DeleteWhileProducing" xml:space="preserve"><value>Önce üretimi durdurun.</value></data>
 </root>

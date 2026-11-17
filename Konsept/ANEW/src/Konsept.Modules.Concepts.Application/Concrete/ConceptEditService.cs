@@ -1,6 +1,7 @@
 using Konsept.Modules.AiGateway.Contracts.Abstract;
 using Konsept.Modules.Concepts.Application.Abstract;
 using Konsept.Modules.Concepts.Application.Base;
+using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Profiles.Contracts.Abstract;
 
 namespace Konsept.Modules.Concepts.Application.Concrete;
@@ -13,6 +14,7 @@ namespace Konsept.Modules.Concepts.Application.Concrete;
 /// <param name="revisions">Revizyon kaydı.</param>
 /// <param name="launcher">Arka plan başlatıcı.</param>
 /// <param name="rules">Kurallar.</param>
+/// <param name="regeneration">Yeniden üret bağlamı.</param>
 /// <param name="time">Saat.</param>
 public sealed class ConceptEditService(
     IModelCaller caller,
@@ -22,4 +24,5 @@ public sealed class ConceptEditService(
     IConceptRevisionRegistry revisions,
     IConceptJobLauncher launcher,
     IConceptRuleSource rules,
-    TimeProvider time) : ConceptEditServiceBase(caller, profiles, models, concepts, revisions, launcher, rules, time);
+    IConceptRegenerationContext regeneration,
+    TimeProvider time) : ConceptEditServiceBase(caller, profiles, models, concepts, revisions, launcher, rules, regeneration, time);

@@ -30,6 +30,12 @@ public sealed record StageOutputs
     /// <summary>Gets o cihazda tamamlanan yerel aşamalar.</summary>
     public IReadOnlyList<PipelineStage> LocalDone { get; init; } = [];
 
+    /// <summary>
+    /// Gets aşama imzaları (spec 0020): tamamlanan aşamanın girdilerinin özeti (<see cref="Rules.VersionStages.Signatures"/>). Sürüm işi bir
+    /// aşamayı yalnızca imzası istenenle aynıysa yeniden kullanır.
+    /// </summary>
+    public IReadOnlyDictionary<PipelineStage, string> Signatures { get; init; } = new Dictionary<PipelineStage, string>();
+
     /// <summary>Gets son güncelleme (UTC).</summary>
     public DateTimeOffset UpdatedAt { get; init; }
 }

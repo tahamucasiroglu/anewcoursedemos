@@ -17,6 +17,7 @@ using Konsept.Modules.Monitoring.Contracts.Enums;
 using Konsept.Modules.Production.Application.Abstract;
 using Konsept.Modules.Production.Application.Dtos;
 using Konsept.Modules.Production.Application.Resources;
+using Konsept.Modules.Production.Application.Rules;
 using Konsept.Modules.Production.Domain.Entities;
 using Konsept.Modules.Production.Domain.Enums;
 using Konsept.Modules.Production.Domain.Rules;
@@ -86,6 +87,7 @@ public abstract class ProductionPipelineBase(
     private ConceptContent _content = null!;
     private JobProgress _progress = new();
     private StageOutputs _outputs = null!;
+    private IReadOnlyDictionary<PipelineStage, string> _desired = new Dictionary<PipelineStage, string>();
     private ModelCallerIdentity _caller = null!;
     private Guid? _checkedDevice;
     private bool _lastNotice;
@@ -172,7 +174,9 @@ public abstract class ProductionPipelineBase(
 
         var name = string.Join('-', slug.ToString().Split('-', StringSplitOptions.RemoveEmptyEntries));
         name = name.Length > 60 ? name[..60] : name;
-        return (name.Length == 0 ? "video" : name) + "-" + videoId.ToString("N")[..8] + ".mp4";
+        // UUIDv7'nin baştaki 8 hanesi zaman damgasıdır (~65 sn aynı kalır): aynı başlıklı iki sürüm aynı dosyaya yazmasın diye rastgele son
+        // haneler kullanılır (spec 0020: önceki sürümün dosyası değişmez).
+        return (name.Length == 0 ? "video" : name) + "-" + videoId.ToString("N")[^12..] + ".mp4";
     }
 
     private async Task<PipelineOutcome> RunJobAsync()
@@ -189,15 +193,31 @@ public abstract class ProductionPipelineBase(
 
         _content = content;
         // Metin ve çıktıyı etkileyen sabit ayarlar (review r1 M-2): ayar değişirse eski kod/ses/render yeniden kullanılmaz.
-        var hash = PipelineRules.Hash(JsonSerializer.Serialize(
-            new { content.Title, content.Scenes, _fix.CodeModel, _fix.Language, _fix.Format, _fix.Engine, _fix.ImageModel, _fix.AudioModel },
-            Json));
+        var hash = PipelineHashes.Full(content, _fix);
+        _desired = PipelineHashes.Signatures(content, _fix);
         var stored = await outputsStore.GetAsync(_job.UserId, _job.ConceptId, CancellationToken.None).ConfigureAwait(false);
-        _outputs = stored is not null && string.Equals(stored.TextHash, hash, StringComparison.Ordinal)
-            ? stored
-            : new StageOutputs { UserId = _job.UserId, ConceptId = _job.ConceptId, TextHash = hash, UpdatedAt = now }; // Metin değişti → baştan (Req 10).
+        if (_job.Version is { } version)
+        {
+            // Sürüm işi (spec 0020): aşamalar imzayla yeniden kullanılır; onaylanan aşamalar ilk başlangıçta her durumda geçersizlenir
+            // ("Yine de baştan üret" dahil), devamda yarım kalan aşamadan sürer (BR-10).
+            var reused = PipelineHashes.WithLegacySignatures(stored, content, version.BaseSettings)
+                ?? new StageOutputs { UserId = _job.UserId, ConceptId = _job.ConceptId, TextHash = hash, UpdatedAt = now };
+            _outputs = reused with { TextHash = hash };
+            if (firstStart)
+            {
+                _outputs = Invalidate(_outputs, version.Stages);
+                await SaveOutputsAsync().ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            _outputs = stored is not null && string.Equals(stored.TextHash, hash, StringComparison.Ordinal)
+                ? stored
+                : new StageOutputs { UserId = _job.UserId, ConceptId = _job.ConceptId, TextHash = hash, UpdatedAt = now }; // Metin değişti → baştan (Req 10).
+        }
+
         var device = agents.ConnectedDevice(_job.UserId);
-        _progress = _progress with { Stages = PipelineRules.Initial(_fix, _outputs, device) };
+        _progress = _progress with { Stages = Initial(device) };
         await SaveProgressAsync().ConfigureAwait(false);
         if (firstStart)
         {
@@ -247,10 +267,16 @@ public abstract class ProductionPipelineBase(
                     _outputs = _outputs with { LocalDevice = current, LocalDone = [] };
                     if (hadLocal)
                     {
-                        _progress = _progress with { Stages = PipelineRules.Initial(_fix, _outputs, current) };
+                        _progress = _progress with { Stages = Initial(current) };
                         continue;
                     }
                 }
+            }
+
+            if (_job.Version is { } approved && VersionStages.IsOnline(stage, _fix) && !approved.Stages.Contains(stage))
+            {
+                // Onaylanmamış online aşama çalışmaz (spec 0020 Req 3, H-3): önceki çıktı kaybolduysa iş durur, kullanıcı yeniden önizler.
+                return await FailAsync(stage, ProductionText.PipelineVersionOutputsLost).ConfigureAwait(false);
             }
 
             _progress = _progress.With(stage, StageState.Running);
@@ -260,9 +286,9 @@ public abstract class ProductionPipelineBase(
             {
                 case PipelineOutcome.Continue:
                     _progress = _progress.With(stage, StageState.Done, result.Device);
-                    if (stage is PipelineStage.Images or PipelineStage.Voice or PipelineStage.Render)
+                    if (stage != PipelineStage.Merge)
                     {
-                        _outputs = _outputs with { LocalDone = [.. _outputs.LocalDone.Append(stage).Distinct()] };
+                        _outputs = MarkDone(stage);
                         await SaveOutputsAsync().ConfigureAwait(false);
                     }
 
@@ -283,6 +309,49 @@ public abstract class ProductionPipelineBase(
         }
 
         return PipelineOutcome.Completed;
+    }
+
+    private static StageOutputs Invalidate(StageOutputs outputs, IEnumerable<PipelineStage> stages)
+    {
+        var drop = stages.SelectMany(s => VersionStages.Dependents(s).Append(s)).ToHashSet();
+        return outputs with
+        {
+            Signatures = outputs.Signatures.Where(p => !drop.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value),
+            LocalDone = [.. outputs.LocalDone.Where(s => !drop.Contains(s))],
+        };
+    }
+
+    /// <summary>Başlangıç aşamaları: sıradan işte 0017 kuralı, sürüm işinde imzalar (spec 0020).</summary>
+    private IReadOnlyList<StageProgress> Initial(Guid? device)
+    {
+        if (_job.Version is null)
+        {
+            return PipelineRules.Initial(_fix, _outputs, device);
+        }
+
+        var enabled = VersionStages.All(_fix);
+        return [.. PipelineRules.Order.Select(stage => new StageProgress(
+            stage,
+            !enabled.Contains(stage) ? StageState.Skipped
+            : VersionStages.Reusable(stage, _outputs, _desired, device) ? StageState.Done
+            : StageState.Pending))];
+    }
+
+    /// <summary>Aşama bitti: imzası yazılır, bağımlılarının çıktısı geçersizlenir (analiz → hepsi; kod/görsel → render).</summary>
+    private StageOutputs MarkDone(PipelineStage stage)
+    {
+        var outputs = Invalidate(_outputs, VersionStages.Dependents(stage));
+        var signatures = outputs.Signatures.ToDictionary(p => p.Key, p => p.Value);
+        if (_desired.TryGetValue(stage, out var signature))
+        {
+            signatures[stage] = signature;
+        }
+
+        return outputs with
+        {
+            Signatures = signatures,
+            LocalDone = PipelineRules.LocalStages.Contains(stage) ? [.. outputs.LocalDone.Append(stage).Distinct()] : outputs.LocalDone,
+        };
     }
 
     private Task<StageResult> RunStageAsync(PipelineStage stage) => stage switch
@@ -440,7 +509,8 @@ public abstract class ProductionPipelineBase(
     /// </summary>
     private async Task<(string? Code, StageResult? Failure)> FixCodeAsync(string code, string error, string failText)
     {
-        if (_progress.FixUsed)
+        // Online onayı olmayan sürüm işinde düzeltme çağrısı da yapılmaz (spec 0020 Req 3, AC-4).
+        if (_progress.FixUsed || _job.Version is { Online: false })
         {
             return (null, new StageResult(PipelineOutcome.Failed, failText));
         }
@@ -475,6 +545,8 @@ public abstract class ProductionPipelineBase(
     {
         var videoId = Guid.CreateVersion7(time.GetUtcNow());
         var fileName = FileNameOf(_job.Title, videoId);
+        _progress = _progress with { PendingFile = fileName }; // Sürümü kaldır yarım dosyayı bununla siler (spec 0020 Req 10).
+        await SaveProgressAsync().ConfigureAwait(false);
         var (result, _, _) = await LocalReplyAsync(AgentStageCommand.Merge, Scenes(code: false), videoId, fileName).ConfigureAwait(false);
         if (result.Outcome != PipelineOutcome.Continue)
         {
@@ -487,7 +559,7 @@ public abstract class ProductionPipelineBase(
             return new StageResult(PipelineOutcome.Stopped); // Bu arada Durdur: kayıt yok, sıra ilerlemez (review r1 M-1).
         }
 
-        _progress = _progress.With(PipelineStage.Merge, StageState.Done, result.Device) with { EndedAt = now };
+        _progress = _progress.With(PipelineStage.Merge, StageState.Done, result.Device) with { EndedAt = now, PendingFile = null };
         await SaveProgressAsync().ConfigureAwait(false);
         await videos.AddAsync(
             new ProducedVideo

@@ -20,6 +20,9 @@ public sealed record JobProgress
     /// <summary>Gets a value indicating whether render düzeltme çağrısı bu işte kullanıldı (iş başına en fazla 1, Req 12).</summary>
     public bool FixUsed { get; init; }
 
+    /// <summary>Gets birleştirmesi süren dosyanın adı (spec 0020 Req 10: Sürümü kaldır yarım dosyayı siler); yoksa <c>null</c>.</summary>
+    public string? PendingFile { get; init; }
+
     /// <summary>Gets ilk başlangıç (UTC).</summary>
     public DateTimeOffset? StartedAt { get; init; }
 

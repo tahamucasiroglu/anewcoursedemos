@@ -132,6 +132,7 @@ public sealed class ConceptsApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IConceptRepository>(Concepts);
             services.AddSingleton<ITopicSuggestionRepository>(Suggestions);
             services.AddSingleton<IProducedVideoRepository>(Videos); // Spec 0019: "beğenilmedi" negatif sinyali video kayıtlarından okunur.
+            services.AddSingleton<IProductionJobRepository>(new InMemoryProductionJobRepository()); // Spec 0020: Sil, videonun sürüm işine bakar.
         });
     }
 }

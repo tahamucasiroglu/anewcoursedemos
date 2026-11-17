@@ -5,6 +5,7 @@ using Konsept.Modules.AiGateway.Contracts.Dtos;
 using Konsept.Modules.Concepts.Application.Abstract;
 using Konsept.Modules.Concepts.Application.Dtos;
 using Konsept.Modules.Concepts.Application.Resources;
+using Konsept.Modules.Concepts.Contracts.Abstract;
 using Konsept.Modules.Concepts.Domain.Entities;
 using Konsept.Modules.Concepts.Domain.Enums;
 using Konsept.Modules.Concepts.Domain.Rules;
@@ -18,7 +19,8 @@ namespace Konsept.Modules.Concepts.Application.Base;
 /// (Üretildi/Onaylandı; S-5) → alan kuralları (sahne sayısı aynı, başlık/seslendirme dolu, süre pozitif tam sayı; talimat dolu) →
 /// (yeniden üretimde) konsept modeli seçilebilir mi → aynı konseptte süren yeniden üretim yok mu (G-3). Reddedilen istekte hiçbir online
 /// çağrı yapılmaz. Yeniden üretim arka planda koşar, istek hemen döner; sonuç revizyon olarak bellekte bekler, onaylanana ya da silinene
-/// kadar konsept değişmez (BR-6).
+/// kadar konsept değişmez (BR-6). "Video oldu" konsept yalnızca Yeniden üret bağlamında (spec 0020 Req 15, geçerli belirteç) düzenlenir;
+/// durumu değişmez.
 /// </summary>
 /// <param name="caller">Model çağrısı (çağıran kimliği).</param>
 /// <param name="profiles">Profil bağlamı (Profiles.Contracts).</param>
@@ -27,6 +29,7 @@ namespace Konsept.Modules.Concepts.Application.Base;
 /// <param name="revisions">Revizyon kaydı.</param>
 /// <param name="launcher">Arka plan başlatıcı.</param>
 /// <param name="rules">Kurallar.</param>
+/// <param name="regeneration">Yeniden üret bağlamı (spec 0020).</param>
 /// <param name="time">Saat.</param>
 public abstract class ConceptEditServiceBase(
     IModelCaller caller,
@@ -36,12 +39,13 @@ public abstract class ConceptEditServiceBase(
     IConceptRevisionRegistry revisions,
     IConceptJobLauncher launcher,
     IConceptRuleSource rules,
+    IConceptRegenerationContext regeneration,
     TimeProvider time) : IConceptEditService
 {
     /// <inheritdoc />
-    public async Task<Result<ConceptDetailDto>> SaveScenesAsync(Guid conceptId, SaveScenesRequest? request, CancellationToken cancellationToken)
+    public async Task<Result<ConceptDetailDto>> SaveScenesAsync(Guid conceptId, SaveScenesRequest? request, string? regen, CancellationToken cancellationToken)
     {
-        var found = await EditableAsync(conceptId, cancellationToken).ConfigureAwait(false);
+        var found = await EditableAsync(conceptId, regen, cancellationToken).ConfigureAwait(false);
         if (!found.IsSuccess)
         {
             return Result<ConceptDetailDto>.Failure(found.Error!);
@@ -61,9 +65,9 @@ public abstract class ConceptEditServiceBase(
     }
 
     /// <inheritdoc />
-    public async Task<Result<RevisionDto>> RegenerateAsync(Guid conceptId, RegenerateRequest? request, CancellationToken cancellationToken)
+    public async Task<Result<RevisionDto>> RegenerateAsync(Guid conceptId, RegenerateRequest? request, string? regen, CancellationToken cancellationToken)
     {
-        var found = await EditableAsync(conceptId, cancellationToken).ConfigureAwait(false);
+        var found = await EditableAsync(conceptId, regen, cancellationToken).ConfigureAwait(false);
         if (!found.IsSuccess)
         {
             return Result<RevisionDto>.Failure(found.Error!);
@@ -137,9 +141,9 @@ public abstract class ConceptEditServiceBase(
     }
 
     /// <inheritdoc />
-    public async Task<Result<ConceptDetailDto>> ApproveRevisionAsync(Guid conceptId, CancellationToken cancellationToken)
+    public async Task<Result<ConceptDetailDto>> ApproveRevisionAsync(Guid conceptId, string? regen, CancellationToken cancellationToken)
     {
-        var found = await EditableAsync(conceptId, cancellationToken).ConfigureAwait(false);
+        var found = await EditableAsync(conceptId, regen, cancellationToken).ConfigureAwait(false);
         if (!found.IsSuccess)
         {
             return Result<ConceptDetailDto>.Failure(found.Error!);
@@ -220,8 +224,10 @@ public abstract class ConceptEditServiceBase(
         Guid userId, Concept concept, IReadOnlyList<ConceptScene> scenes, bool wordRepetition, CancellationToken cancellationToken)
     {
         var mismatch = DurationFit.IsMismatch(scenes.Sum(s => s.DurationSeconds), concept.TargetDurationSeconds, rules.Rules.DurationTolerance);
+        // Video oldu konsept yalnızca bağlamda buraya gelir (EditableAsync); durum koşulu yazımın içinde kalır.
+        IReadOnlyList<ConceptStatus> allowed = concept.Status == ConceptStatus.VideoReady ? [ConceptStatus.VideoReady] : ConceptCodes.Editable;
         var changed = await concepts.UpdateScenesAsync(
-            userId, concept.Id, ConceptCodes.Editable, scenes, wordRepetition, mismatch, time.GetUtcNow(), CancellationToken.None).ConfigureAwait(false);
+            userId, concept.Id, allowed, scenes, wordRepetition, mismatch, time.GetUtcNow(), CancellationToken.None).ConfigureAwait(false);
         if (!changed)
         {
             return Result<ConceptDetailDto>.Failure(ConceptsErrors.LockedQueued); // Bu arada durum değişti.
@@ -246,7 +252,7 @@ public abstract class ConceptEditServiceBase(
             : Result<(ModelCallerIdentity, Concept)>.Success((who, found[0]));
     }
 
-    private async Task<Result<(ModelCallerIdentity Caller, Concept Concept)>> EditableAsync(Guid conceptId, CancellationToken cancellationToken)
+    private async Task<Result<(ModelCallerIdentity Caller, Concept Concept)>> EditableAsync(Guid conceptId, string? regen, CancellationToken cancellationToken)
     {
         var found = await OwnedAsync(conceptId, cancellationToken).ConfigureAwait(false);
         if (!found.IsSuccess)
@@ -257,6 +263,7 @@ public abstract class ConceptEditServiceBase(
         return found.Value.Concept.Status switch
         {
             ConceptStatus.Generated or ConceptStatus.Approved => found,
+            ConceptStatus.VideoReady when regeneration.IsOpen(found.Value.Caller.UserId, conceptId, regen) => found, // Yeniden üret bağlamı (spec 0020 Req 15).
             ConceptStatus.VideoReady => Result<(ModelCallerIdentity, Concept)>.Failure(ConceptsErrors.LockedVideo),
             _ => Result<(ModelCallerIdentity, Concept)>.Failure(ConceptsErrors.LockedQueued),
         };

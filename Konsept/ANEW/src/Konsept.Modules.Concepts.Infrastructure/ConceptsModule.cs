@@ -35,6 +35,7 @@ public static class ConceptsModule
         services.AddScoped<IConceptWorkService, ConceptWorkService>();
         services.AddScoped<IConceptService, ConceptService>();
         services.AddSingleton<IConceptRevisionRegistry, ConceptRevisionRegistry>();
+        services.AddSingleton<IConceptRegenerationContext, ConceptRegenerationContext>(); // Concepts.Contracts (Production açar, spec 0020).
         services.AddScoped<IConceptRevisionExecutor, ConceptRevisionExecutor>();
         services.AddScoped<IConceptEditService, ConceptEditService>();
         services.AddScoped<IConceptTrashService, ConceptTrashService>();

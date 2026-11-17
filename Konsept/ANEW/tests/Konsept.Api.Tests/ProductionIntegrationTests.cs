@@ -330,6 +330,92 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         Clips(await clips.ListFirstCompletionsAsync(ct)).ShouldBe(1); // B-130: kalıcı silme klip sayısını düşürmez.
     }
 
+    /// <summary>
+    /// Spec 0020 AC-7 (gerçek PostgreSQL): sürüm işinin <c>version</c> ve aşama imzalarının <c>signatures</c> sütunları yazılıp okunur; video
+    /// (konsept) başına tek tamamlanmamış iş dizini ikinci eklemeyi reddeder (çift tıklama), iş tamamlanınca yenisi eklenir; başka kullanıcı
+    /// videonun sürümlerini göremez (AC-15).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Versions_RealDatabase_OneActivePerVideo()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ProductionDbContext>();
+        var jobs = new ProductionJobRepository(db);
+        var (userId, profileId, concept) = (Guid.CreateVersion7(), Guid.CreateVersion7(), Guid.CreateVersion7());
+        var now = DateTimeOffset.UtcNow;
+        var settings = new FixedJobSettings { Engine = "local/hyperframes", AudioModel = "local/supertonic-3", Language = "tr", Format = "landscape", FixedAt = now };
+        ProductionJob Job() => new()
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            ProfileId = profileId,
+            ConceptId = concept,
+            Title = "Sürümlü",
+            Language = "tr",
+            Format = "landscape",
+            TargetDurationSeconds = 60,
+            Position = 1,
+            Status = ProductionJobStatus.Queued,
+            FixedSettings = settings with { AudioModel = "local/chatterbox-multilingual-v3" },
+            Version = new VersionRequest
+            {
+                Kind = VersionKind.NewVersion,
+                BaseVideoId = Guid.CreateVersion7(),
+                BaseSettings = settings,
+                Stages = [PipelineStage.Voice, PipelineStage.Merge],
+                Online = false,
+            },
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        var first = Job();
+        (await jobs.TryAddAsync(first, ct)).ShouldBeTrue();
+        (await jobs.TryAddAsync(Job(), ct)).ShouldBeFalse();
+        var read = (await jobs.GetAsync(userId, first.Id, ct))!;
+        (read.Version!.Kind, read.Version.Stages.Count, read.Version.BaseSettings.AudioModel, read.FixedSettings!.AudioModel)
+            .ShouldBe((VersionKind.NewVersion, 2, "local/supertonic-3", "local/chatterbox-multilingual-v3"));
+        (await jobs.ListActiveAsync(userId, ct)).Count(j => j.ConceptId == concept).ShouldBe(1);
+        (await jobs.TransitionAsync(userId, first.Id, [ProductionJobStatus.Queued], ProductionJobStatus.Completed, now, ct)).ShouldBeTrue();
+        (await jobs.TryAddAsync(Job(), ct)).ShouldBeTrue();
+
+        var outputs = new StageOutputRepository(db);
+        await outputs.UpsertAsync(
+            new StageOutputs
+            {
+                UserId = userId,
+                ConceptId = concept,
+                TextHash = new string('b', 64),
+                Signatures = new Dictionary<PipelineStage, string> { [PipelineStage.Voice] = "imza-ses", [PipelineStage.Render] = "imza-render" },
+                UpdatedAt = now,
+            },
+            ct);
+        db.ChangeTracker.Clear();
+        (await outputs.GetAsync(userId, concept, ct))!.Signatures[PipelineStage.Render].ShouldBe("imza-render");
+
+        var videos = new ProducedVideoRepository(db);
+        await videos.AddAsync(
+            new ProducedVideo
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                ProfileId = profileId,
+                ConceptId = concept,
+                JobId = first.Id,
+                Title = "Sürümlü",
+                ConceptText = "{}",
+                Engine = "local/hyperframes",
+                FileName = "surumlu.mp4",
+                StartedAt = now,
+                EndedAt = now,
+            },
+            ct);
+        (await videos.ListByConceptAsync(userId, concept, ct)).Count.ShouldBe(1);
+        (await videos.ListByConceptAsync(Guid.NewGuid(), concept, ct)).ShouldBeEmpty(); // AC-15: başkası göremez → "bulunamadı".
+    }
+
     private static async Task<JsonElement> State(HttpClient client, Guid profile, CancellationToken ct) =>
         await client.GetFromJsonAsync<JsonElement>($"/api/production/state?profileId={profile}", ct);
 

@@ -44,6 +44,9 @@ public sealed record ProductionJob
     /// <summary>Gets hat ilerlemesi (spec 0017); iş hiç başlamadıysa <c>null</c>.</summary>
     public JobProgress? Progress { get; init; }
 
+    /// <summary>Gets sürüm işi isteği (spec 0020); sıradan işte <c>null</c>.</summary>
+    public VersionRequest? Version { get; init; }
+
     /// <summary>Gets oluşturulma (UTC).</summary>
     public DateTimeOffset CreatedAt { get; init; }
 

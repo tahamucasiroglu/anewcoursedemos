@@ -218,6 +218,10 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
+                    b.Property<string>("Version")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("version");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConceptId")
@@ -337,6 +341,13 @@ namespace Konsept.Modules.Production.Infrastructure.Persistence.Migrations
                     b.Property<string>("Plan")
                         .HasColumnType("jsonb")
                         .HasColumnName("plan");
+
+                    b.Property<string>("Signatures")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("signatures")
+                        .HasDefaultValueSql("'{}'::jsonb");
 
                     b.Property<string>("TextHash")
                         .IsRequired()

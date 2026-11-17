@@ -68,6 +68,39 @@ public static class ProductionErrors
     /// <summary>Gets bazı dosyalar silinemedi (spec 0019 Req 4); kayıt Silinenler'de kalır, tekrar denenebilir.</summary>
     public static Error PurgePartial => new("production.purge_partial", ProductionText.PurgePartial, ErrorType.Conflict);
 
+    /// <summary>Gets videonun sırada/üretimde/durdurulmuş/ajan bekleyen sürümü var (spec 0020 Req 8, AC-7).</summary>
+    public static Error VersionActive => new("production.version_active", ProductionText.VersionActive, ErrorType.Conflict);
+
+    /// <summary>Gets videonun hata veren sürümü sırada (önce Tekrar dene / Sürümü kaldır; plan 0020 Risk 2).</summary>
+    public static Error VersionFailedPending => new("production.version_failed_pending", ProductionText.VersionFailedPending, ErrorType.Conflict);
+
+    /// <summary>Gets hiçbir ayar değişmedi (spec 0020 Req 1).</summary>
+    public static Error VersionNoChange => new("production.version_no_change", ProductionText.VersionNoChange, ErrorType.Conflict);
+
+    /// <summary>Gets online çağrı onayı yok (spec 0020 Req 3, H-3): iş oluşmaz.</summary>
+    public static Error VersionOnlineConfirm => new("production.online_confirmation_required", ProductionText.VersionOnlineConfirm, ErrorType.Conflict);
+
+    /// <summary>Gets görsel modeli açılıp kapatılamaz (plan 0020).</summary>
+    public static Error VersionImageToggle => new("production.version_image_toggle", ProductionText.VersionImageToggle, ErrorType.Validation);
+
+    /// <summary>Gets hata veren sürüm yok (Tekrar dene / Sürümü kaldır).</summary>
+    public static Error VersionNotFailed => new("production.version_not_failed", ProductionText.VersionNotFailed, ErrorType.Conflict);
+
+    /// <summary>Gets yarım dosya için ajan bağlı değil (spec 0020 Req 10); sürüm kaydı kalır.</summary>
+    public static Error VersionRemoveAgentOffline => new("production.version_remove_agent_offline", ProductionText.VersionRemoveAgentOffline, ErrorType.Conflict);
+
+    /// <summary>Gets yarım dosya silinemedi; sürüm kaydı kalır.</summary>
+    public static Error VersionRemovePartial => new("production.version_remove_partial", ProductionText.VersionRemovePartial, ErrorType.Conflict);
+
+    /// <summary>Gets konsept değişmedi ("Yine de baştan üret" seçilmedi; spec 0020 Req 5).</summary>
+    public static Error RegenerateUnchanged => new("production.regenerate_unchanged", ProductionText.RegenerateUnchanged, ErrorType.Conflict);
+
+    /// <summary>Gets Yeniden üret bağlamı geçersiz (spec 0020 Req 15).</summary>
+    public static Error RegenerateContextInvalid => new("production.regenerate_context_invalid", ProductionText.RegenerateContextInvalid, ErrorType.Conflict);
+
+    /// <summary>Gets üretimi süren sürüm varken Sil (spec 0020 Req 12).</summary>
+    public static Error DeleteWhileProducing => new("production.delete_while_producing", ProductionText.DeleteWhileProducing, ErrorType.Conflict);
+
     /// <summary>"Sırayla üret" pasif (Req 14): mesaj nedenin metni, <c>reason</c> kodu.</summary>
     /// <param name="reason">Neden kodu (<see cref="StartBlock"/>).</param>
     /// <returns>Hata.</returns>
