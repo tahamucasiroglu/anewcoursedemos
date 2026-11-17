@@ -21,11 +21,20 @@ public sealed class InMemoryUserBanRepository : IUserBanRepository
         }
     }
 
+    /// <summary>Gets or sets bir sonraki eklemede atılacak hata (yarıda kalan ban senaryosu, review r1 M-1).</summary>
+    public Exception? FailNext { get; set; }
+
     /// <inheritdoc />
     public Task AddAsync(UserBanRecord record, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
+            if (FailNext is { } failure)
+            {
+                FailNext = null;
+                throw failure;
+            }
+
             _records.Add(record);
         }
 

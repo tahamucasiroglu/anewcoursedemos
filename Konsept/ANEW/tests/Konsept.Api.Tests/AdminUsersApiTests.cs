@@ -44,12 +44,14 @@ public sealed class AdminUsersApiTests
         using var user = await AuthenticatedClient.CreateAsync(factory, ct);
         using var anonymous = factory.CreateClient();
         var target = await AddUserAsync(factory, "Hedef Kişi", "hedef@ornek.test", ct);
+        var banned = await AddUserAsync(factory, "Banlı Kişi", "banli@ornek.test", ct);
+        factory.Users.Users.Single(u => u.Id == banned).Ban(factory.Time.GetUtcNow()); // yetkisiz unban'ın değiştirmediği görülsün (review r1 I-3).
 
         foreach (var client in new[] { user, anonymous })
         {
             using var list = await client.GetAsync(new Uri(Users + "?search=he", UriKind.Relative), ct);
             using var ban = await client.PostAsJsonAsync($"{Users}/{target}/ban", new { reason = "x" }, ct);
-            using var unban = await client.PostAsJsonAsync($"{Users}/{target}/unban", new { }, ct);
+            using var unban = await client.PostAsJsonAsync($"{Users}/{banned}/unban", new { }, ct);
             var expected = client == user ? HttpStatusCode.Forbidden : HttpStatusCode.Unauthorized;
 
             list.StatusCode.ShouldBe(expected);
@@ -59,7 +61,36 @@ public sealed class AdminUsersApiTests
         }
 
         factory.Users.Users.Single(u => u.Id == target).IsBanned.ShouldBeFalse();
+        factory.Users.Users.Single(u => u.Id == banned).IsBanned.ShouldBeTrue();
         factory.Bans.Records.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Yarıda kalan ban (durum yazıldı, kayıt yazılamadı → 500) yeniden denenince tamamlanır: web oturumları ve ajan cihazı iptal edilir,
+    /// eski token reddedilir (review r1 M-1; AC-5, AC-6, AC-10).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Ban_FailedHalfway_RetryStillRevokesSessionsAndAgent()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var factory = new IdentityApiFactory();
+        using var admin = await factory.CreateAdminClientAsync(ct);
+        var (user, _, id) = await SignedInUserAsync(factory, ct);
+        using var agentHttp = factory.CreateClient();
+        await AgentPairing.PairAsync(user, agentHttp, factory.Services, ct, "YARIM-PC");
+        factory.Bans.FailNext = new InvalidOperationException("kayıt yazılamadı");
+
+        using var first = await admin.PostAsJsonAsync($"{Users}/{id}/ban", new { }, ct);
+        using var retry = await admin.PostAsJsonAsync($"{Users}/{id}/ban", new { }, ct);
+        using var session = await user.GetAsync(new Uri("/api/auth/session", UriKind.Relative), ct);
+
+        ((int)first.StatusCode).ShouldBe(500);
+        retry.StatusCode.ShouldBe(HttpStatusCode.OK);
+        factory.Sessions.Sessions.Where(s => s.UserId == id).ShouldAllBe(s => s.RevokedAt != null);
+        factory.AgentDevices.Devices.Where(d => d.UserId == id).ShouldAllBe(d => d.RevokedAt != null);
+        session.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        user.Dispose();
     }
 
     /// <summary>
@@ -264,7 +295,8 @@ public sealed class AdminUsersApiTests
         (await factoryAdmin.PostAsJsonAsync($"{Users}/{target}/ban", new { }, ct)).EnsureSuccessStatusCode();
         (await factoryAdmin.PostAsJsonAsync($"{Users}/{target}/ban", new { }, ct)).EnsureSuccessStatusCode();
 
-        recorder.Users.ShouldBe([target]); // ikinci (idempotent) ban yeniden durdurmaz.
+        recorder.Users.ShouldBe([target, target]); // plan 0024 A-3: tekrar ban da iptali (idempotent) yeniden çalıştırır (review r1 M-1).
+        baseFactory.Bans.Records.Count(r => r.UserId == target).ShouldBe(1); // kayıt yine tek.
         baseFactory.ProducedVideos.Rows.Count(v => v.UserId == target).ShouldBe(1);
         baseFactory.Users.Users.ShouldContain(u => u.Id == target);
     }

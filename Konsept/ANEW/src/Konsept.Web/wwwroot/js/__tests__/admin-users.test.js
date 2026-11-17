@@ -265,6 +265,27 @@ describe('admin Kullanıcılar (spec 0024)', () => {
       .toBe('Admin hesapları banlanamaz Hata no: X');
   });
 
+  it('filtreden çıkan son satır: önceki sayfa yüklenir, odak aramaya döner (review r1 L-2, AC-14)', async () => {
+    await openUsers(page([user()], { total: 26 }));
+    ajax.mockReturnValue(ajaxResolving($, page([user({ id: 'u-26' })], { total: 26, page: 2 })));
+    el('admin-user-next').click();
+    await flush();
+    button('u-26').click();
+
+    ajax.mockReturnValueOnce(ajaxResolving($, user({ id: 'u-26', status: 'banned' })))
+      .mockReturnValueOnce(ajaxResolving($, page([], { total: 25, page: 2, filtered: true })))
+      .mockReturnValueOnce(ajaxResolving($, page([user({ id: 'u-1' })], { total: 25, filtered: true })));
+    el('admin-ban-ok').click();
+    await flush();
+    await flush();
+    await flush();
+
+    expect(ajax).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/admin/kullanicilar?sayfa=1&ara=&durum=all' }));
+    expect(el('admin-user-rows').rows).toHaveLength(1);
+    expect(el('admin-ban-dialog').hidden).toBe(true);
+    expect(document.activeElement).toBe(el('admin-user-search'));
+  });
+
   it('Banı kaldır: vazgeçince değişmez; hata durumda Banlı kalır; başarıda Aktif ve kayıt (AC-10)', async () => {
     await openUsers(page([user({ status: 'banned' })]));
     button('u-1').click();

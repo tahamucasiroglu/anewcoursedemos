@@ -61,15 +61,17 @@ public abstract class AdminUserServiceBase(AdminUserDependencies dependencies) :
         }
 
         var now = Dependencies.TimeProvider.GetUtcNow();
-        if (await Dependencies.Users.SetBannedAsync(target.Id, now, cancellationToken).ConfigureAwait(false))
+        var changed = await Dependencies.Users.SetBannedAsync(target.Id, now, cancellationToken).ConfigureAwait(false);
+
+        // Anında etkili (Req 4): web oturumları + ajan cihazları (canlı bağlantıya oturum kapandı) + oturum sonu dinleyicileri
+        // (0006 Req 16 çalışan iş Durduruldu, 0014 Req 20 süren parti durur). Kayıttan önce ve zaten banlı hedefte de çalışır
+        // (iptal idempotent): yarıda kalmış bir ban yeniden denenince tamamlanır (review r1 M-1). İstek iptal edilse de sürer.
+        await Dependencies.Sessions.RevokeAllAsync(target.Id, CancellationToken.None).ConfigureAwait(false);
+        if (changed)
         {
-            // Durum değişti: ban istek iptal edilse de bütün olarak tamamlanır.
+            // Kayıt ve olay yalnızca durum değişiminde: tekrar ve eşzamanlı ban ikinci kayıt üretmez.
             await Dependencies.Bans.AddAsync(UserBanRecord.Create(target.Id, BanAction.Ban, AdminId, now, request?.Reason), CancellationToken.None).ConfigureAwait(false);
             await WriteEventAsync(IdentityEvents.Banned, target.Id).ConfigureAwait(false);
-
-            // Anında etkili (Req 4): web oturumları + ajan cihazları (canlı bağlantıya oturum kapandı) + oturum sonu dinleyicileri
-            // (0006 Req 16 çalışan iş Durduruldu, 0014 Req 20 süren parti durur).
-            await Dependencies.Sessions.RevokeAllAsync(target.Id, CancellationToken.None).ConfigureAwait(false);
         }
 
         return await RowAsync(target.Id, cancellationToken).ConfigureAwait(false);

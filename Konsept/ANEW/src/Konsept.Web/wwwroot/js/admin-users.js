@@ -126,6 +126,11 @@ export function initAdminUsers(doc, options) {
         return;
       }
       const items = data.items || [];
+      if (items.length === 0 && (data.total || 0) > 0 && state.page > 1) {
+        // Son sayfadaki satır filtreden çıktı (ör. Aktif'te ban): bir önceki sayfa yüklenir (review r1 L-2).
+        state.page -= 1;
+        return load();
+      }
       el('admin-user-rows').replaceChildren(...items.map(row));
       table.hidden = items.length === 0;
       status.textContent = items.length > 0 ? '' : (data.filtered ? t.textNoMatch : t.textEmpty);
@@ -194,12 +199,11 @@ export function initAdminUsers(doc, options) {
     }
     parts(dialog.kind).backdrop.hidden = true;
     state.dialog = null;
-    const target = dialog.opener && dialog.opener.isConnected
-      ? dialog.opener
-      : panel.querySelector(`button[data-user-id="${dialog.user.id}"]`);
-    if (target) {
-      target.focus();
-    }
+    // Satır filtreden çıktıysa odak arama alanına döner (review r1 L-2).
+    const target = (dialog.opener && dialog.opener.isConnected ? dialog.opener : null)
+      || panel.querySelector(`button[data-user-id="${dialog.user.id}"]`)
+      || el('admin-user-search');
+    target.focus();
   }
 
   async function confirm(kind) {
