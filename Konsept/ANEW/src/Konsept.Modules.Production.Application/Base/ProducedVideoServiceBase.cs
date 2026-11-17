@@ -218,12 +218,18 @@ public abstract class ProducedVideoServiceBase(
         }
 
         // Bir dosya bile kaldıysa kayıt kalır (yetim dosya bırakılmaz); tekrar denemede yalnızca kalanlar silinir (yok = silinmiş).
-        if (reply.Remaining is { Count: > 0 })
+        // Cevapta liste yoksa (bozuk/eski ajan) silindiği varsayılmaz — review r1 L-2.
+        if (reply.Remaining is null or { Count: > 0 })
         {
             return Result<DeletedVideoItemDto>.Failure(ProductionErrors.PurgePartial);
         }
 
-        await videos.PurgeAsync(userId, videoId, cancellationToken).ConfigureAwait(false);
+        // Eşzamanlı ikinci istek kaydı bulamazsa "kalıcı silindi" demez — review r1 L-1.
+        if (!await videos.PurgeAsync(userId, videoId, cancellationToken).ConfigureAwait(false))
+        {
+            return Result<DeletedVideoItemDto>.Failure(ProductionErrors.VideoNotFound);
+        }
+
         return Result<DeletedVideoItemDto>.Success(ToDeletedItem(videoId, rows));
     }
 

@@ -320,6 +320,7 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         (await new DislikedVideoTitles(videos).ListAsync(userId, profileId, ct)).Select(d => d.Title).ShouldBe(["İkinci"]);
         Clips(await clips.ListFirstCompletionsAsync(ct)).ShouldBe(1); // Silinenler'deki video sayılır.
 
+        (await videos.ListDeletedByConceptAsync(Guid.NewGuid(), concept, ct)).ShouldBeEmpty(); // Kalıcı silmenin sahiplik kapısı (review r1 M-1).
         (await videos.PurgeAsync(Guid.NewGuid(), concept, ct)).ShouldBeFalse(); // Başkası kalıcı silemez.
         (await videos.ListDeletedByConceptAsync(userId, concept, ct)).Count.ShouldBe(2);
         (await videos.PurgeAsync(userId, concept, ct)).ShouldBeTrue();

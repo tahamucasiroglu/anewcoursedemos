@@ -205,6 +205,9 @@ public sealed class VideoTrashTests : IClassFixture<ProductionApiFactory>
         await AddAsync(user, profile, video, "Açık dosya", DateTimeOffset.UtcNow.AddHours(-1));
         var locked = _factory.Videos.Rows.Where(v => v.ConceptId == video).Select(v => v.FileName).First();
         (await client.PostAsJsonAsync($"/api/produced/{video}/delete", new { }, ct)).EnsureSuccessStatusCode();
+        _factory.Agent.DeleteFiles = (_, _) => Task.FromResult(new AgentDeleteFilesReply(null!)); // Bozuk cevap: silindi sayılmaz (review r1 L-2).
+        (await client.PostAsJsonAsync($"/api/produced/deleted/{video}/purge", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        _factory.Videos.Rows.Count(v => v.ConceptId == video).ShouldBe(2);
         _factory.Agent.DeleteFiles = (_, _) => Task.FromResult(new AgentDeleteFilesReply([locked]));
 
         using var partial = await client.PostAsJsonAsync($"/api/produced/deleted/{video}/purge", new { }, ct);
@@ -216,7 +219,7 @@ public sealed class VideoTrashTests : IClassFixture<ProductionApiFactory>
         _factory.Agent.DeleteFiles = FakeAgentChannel.DefaultDeleteFiles;
         (await client.PostAsJsonAsync($"/api/produced/deleted/{video}/purge", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         _factory.Videos.Rows.ShouldNotContain(v => v.ConceptId == video);
-        _factory.Agent.Sent.Count(s => s.Method == "DeleteFiles").ShouldBe(2);
+        _factory.Agent.Sent.Count(s => s.Method == "DeleteFiles").ShouldBe(3);
     }
 
     /// <summary>

@@ -183,3 +183,13 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   (AC-5) ve iki temada kontrast; testler sahte ajan kanalı, açık dosyayı taklit eden alt sınıf ve jsdom ile — Source: plan 0019 Risk 4 — Severity:
   Low — Recommendation: kullanıcı testi (Pi + ajan PC: videoyu oynatıcıda açıkken Kalıcı sil → mesaj; kapatıp tekrar → kayıt gider) —
   Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+- **B-132** — 0019 kalıcı silmede odak: başarılı Kalıcı sil (Silinenler — Videolar) ve son videonun Sil'i sonrası odak `body`'ye düşüyor (0016
+  `deleted.js` ile aynı, B-104) — Source: plan 0019 review r1 L-3 — Severity: Low — Recommendation: odağı sonraki satırın düğmesine ya da liste
+  başlığına/boş duruma (tabindex=-1) taşı; B-104 ile birlikte — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+- **B-133** — 0019 eşzamanlı iki kalıcı silmede klip izi PK çakışması 500 verebilir (servis artık `false` dönüşü 404 sayıyor; izin INSERT
+  yarışı kalıyor) — Source: plan 0019 review r1 L-1 — Severity: Low — Recommendation: `INSERT … ON CONFLICT (concept_id) DO UPDATE SET
+  first_completed_at = LEAST(…)` ya da `DbUpdateException`'ı "zaten silindi" say — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+- **B-134** — 0019 bakım/ölçek: ajan dosya adı kuralı `VideoFileActionsBase` ve `VideoFileDeleterBase`'de iki kopya; Silinenler — Videolar
+  listesi profilin tüm silinmiş satırlarını belleğe alıp sayfalıyor (B-128 ile aynı kalıp) — Source: plan 0019 review r1 I-2, I-3 —
+  Severity: Low — Recommendation: ortak `VideoFileName.IsPlain` kuralı; video sayısı yüzleri aşarsa SQL'de `GROUP BY concept_id` + sayfalama —
+  Deferred by: tahamucasiroglu, 2026-11-17, standing approval
