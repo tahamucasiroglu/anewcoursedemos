@@ -297,7 +297,7 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
     /// <summary>
     /// uv kurulum sürecinin başlangıç bilgisi (spec 0028 Req 4): her paket hash'li (<c>--require-hashes</c>), bağımlılık çözümü yok (kilit tam
     /// liste), hedef bileşen klasörü (<c>--target</c>), yalnızca kurulu taşınabilir Python; uv yapılandırma dosyaları ve kullanıcının <c>UV_*</c> /
-    /// <c>PIP_*</c> ortam değişkenleri yok sayılır, Python indirmesi kapalı (kayıt defterine yazılmaz), önbellek ajan klasöründe, sistem sertifika deposu.
+    /// <c>PIP_*</c> ortam değişkenleri yok sayılır, Python indirmesi kapalı (kayıt defterine yazılmaz), önbellek ajan klasöründe (çalışma klasörü uv'nin klasörü), sistem sertifika deposu.
     /// </summary>
     /// <param name="uvExecutable">uv.</param>
     /// <param name="pythonExecutable">Python.</param>
@@ -314,7 +314,7 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            WorkingDirectory = cacheDirectory,
+            WorkingDirectory = Path.GetDirectoryName(uvExecutable)!, // Önbellek klasörü çalışma klasörü olamaz (uv reddeder; duman testi).
         };
         foreach (var arg in new[]
         {
@@ -335,7 +335,7 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
         info.Environment["UV_NO_CONFIG"] = "1";
         info.Environment["UV_PYTHON_DOWNLOADS"] = "never";
         info.Environment["UV_NO_PROGRESS"] = "1";
-        info.Environment["UV_NATIVE_TLS"] = "1";
+        info.Environment["UV_SYSTEM_CERTS"] = "1"; // Windows sertifika deposu (kurumsal vekil sunucularda HttpClient ile aynı davranış).
         return info;
     }
 

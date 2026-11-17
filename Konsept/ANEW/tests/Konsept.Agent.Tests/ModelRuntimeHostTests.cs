@@ -58,6 +58,8 @@ public sealed class ModelRuntimeHostTests : IDisposable
             info.Environment.ContainsKey("PIP_EXTRA_INDEX_URL").ShouldBeFalse();
             (info.Environment["UV_CACHE_DIR"], info.Environment["UV_NO_CONFIG"], info.Environment["UV_PYTHON_DOWNLOADS"]).ShouldBe((@"C:\c", "1", "never"));
             (info.CreateNoWindow, info.UseShellExecute).ShouldBe((true, false));
+            info.WorkingDirectory.ShouldBe(@"C:\a"); // Önbellek klasörünün içinde değil (uv reddeder).
+            info.Environment["UV_SYSTEM_CERTS"].ShouldBe("1");
         }
         finally
         {

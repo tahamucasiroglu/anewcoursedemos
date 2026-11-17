@@ -99,7 +99,7 @@ public sealed partial class MergeTemplateTests
         MergeTemplate.Filter(true, true, 10, 1920).ShouldNotContain("Yapay");
     }
 
-    /// <summary>AC-16: ajan kurulu olmayan araçları bildirir; yerel ses modeli koşucusu olmadığından seslendirme "kurulu değil" döner (B-116).</summary>
+    /// <summary>AC-16: ajan kurulu olmayan araçları bildirir; yerel ses modeli kurulu değilken seslendirme "kurulu değil" döner (0028 öncesi davranış, model aşamaları verilmeden).</summary>
     /// <returns>Görev.</returns>
     [Fact]
     public async Task StageRunner_ReportsMissingTools()
