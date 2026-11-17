@@ -106,7 +106,13 @@ netleştirme, her düzeltme turunda yeniden review ve "kasıtlı bozma" kanıtı
 - **Çıkış (BR-14):** web'den çıkış kullanıcının **tüm oturumlarını, ajan dahil** iptal eder (0012: `agent_devices` iptal +
   `IAgentDeviceRevocationListener` → "SessionClosed" bildirimi ve sunucu tarafı kesme; eski belirteç 401); sunucu ajanın SignalR
   bağlantısını kapatır.
-- **Ban (BR-13):** banlanan kullanıcının tüm token'ları anında iptal edilir.
+- **Ban (BR-13, 0024):** banlanan kullanıcının tüm token'ları anında iptal edilir: ban `identity.users.banned_at`'e tek koşullu
+  `UPDATE` ile yazılır (eşzamanlı istek tek kayıt), ardından 0002'nin `ISessionRevoker.RevokeAllAsync`'i çağrılır (web oturumları,
+  ajan cihazları + canlı bağlantıya "SessionClosed", oturum sonu dinleyicileri: 0006 çalışan iş Durduruldu, 0014 süren parti durur).
+  Ayrıca her istekte banlı kullanıcı dışlanır: oturum doğrulama JOIN'i (`banned_at IS NULL`), refresh, ajan belirteci sorgusu.
+  Banlı hesap doğru şifrede `identity.suspended` ("Hesabınız askıya alınmıştır.", sebep yok, sayaç değişmez); kilit ve yanlış şifre
+  0002 akışında. Admin hesapları sunucuda da banlanamaz. Ban/ban kaldırma kaydı `identity.user_bans` (yapan admin, an, sebep ≤500;
+  sebep yalnızca `admin.panel` uçlarında, olay metninde yok).
 
 **Yetkilendirme**
 - **Varsayılan: kapalı (default-deny).** Her API endpoint'i giriş ister; yalnızca login ve kayıt gibi açıkça
