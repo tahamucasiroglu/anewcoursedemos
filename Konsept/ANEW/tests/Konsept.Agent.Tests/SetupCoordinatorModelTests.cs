@@ -135,6 +135,33 @@ public sealed class SetupCoordinatorModelTests : IDisposable
         Directory.Exists(Path.Combine(Root, "components", "speech")).ShouldBeFalse();
     }
 
+    /// <summary>
+    /// Review r2: oturum sırasında bozulan, Kurulu görünen istenen model ilk istekte onarılır; sürümü eskimiş başka bir model Hazır denetiminde
+    /// Hata'ya düşürülmez (istenince yeniden kurulur).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Install_RepairsBrokenInstalled_IgnoresStaleOther()
+    {
+        var model = _host.AddFiles("model", ("a.bin", "ağırlık"));
+        var old = _host.AddFiles("old", ("b.bin", "eski"));
+        var first = await CreateAsync([model, old]);
+        await first.InstallAsync(["model", "old"], TestContext.Current.CancellationToken);
+
+        var updated = old with { Version = "yeni" };
+        var setup = await CreateAsync([model, updated]);
+        State(setup, "old").Status.ShouldBe(ComponentStatus.Skipped);
+        File.Delete(Path.Combine(Root, "components", "old", SetupComponent.FilesManifestName)); // Eski sürümün dosyası artık uyuşmuyor.
+        File.WriteAllText(Path.Combine(Root, "components", "model", "a.bin"), "bozuk!!"); // Oturum sırasında bozuldu (boyut değişti).
+
+        (await setup.InstallAsync(["model"], TestContext.Current.CancellationToken)).ShouldBeTrue();
+
+        State(setup, "model").Status.ShouldBe(ComponentStatus.Installed);
+        File.ReadAllText(Path.Combine(Root, "components", "model", "a.bin")).ShouldBe("ağırlık");
+        State(setup, "old").Status.ShouldBe(ComponentStatus.Skipped);
+        setup.IsReady.ShouldBeTrue();
+    }
+
     /// <summary>AC-10: ön kontrol yalnızca kurulacak bileşenleri sayar; Atlandı (isteğe bağlı) büyük model alan hesabına girmez.</summary>
     /// <returns>Görev.</returns>
     [Fact]

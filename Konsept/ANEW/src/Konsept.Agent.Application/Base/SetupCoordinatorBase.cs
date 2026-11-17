@@ -177,10 +177,21 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         RunCoreAsync(s => string.Equals(s.Component.Id, componentId, StringComparison.Ordinal), cancellationToken);
 
     /// <inheritdoc />
-    public Task<bool> InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken)
+    public async Task<bool> InstallAsync(IReadOnlyCollection<string> componentIds, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(componentIds);
-        return RunCoreAsync(s => componentIds.Contains(s.Component.Id, StringComparer.Ordinal) && s.Status != ComponentStatus.Installed, cancellationToken);
+
+        // Oturum sırasında bozulan (ör. karantinaya alınan) istenen bileşen Kurulu görünse de önce denetlenir; bozuksa onarılır (r2 Info-1).
+        foreach (var state in Components.Where(s => componentIds.Contains(s.Component.Id, StringComparer.Ordinal) && s.Status == ComponentStatus.Installed))
+        {
+            if (!_installed.TryGetValue(state.Component.Id, out var record) || !await IsIntactAsync(state.Component, record, cancellationToken).ConfigureAwait(false))
+            {
+                SetState(new ComponentState(state.Component, ComponentStatus.NeedsRepair), raise: true);
+            }
+        }
+
+        return await RunCoreAsync(s => componentIds.Contains(s.Component.Id, StringComparer.Ordinal) && s.Status != ComponentStatus.Installed, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>Kurulum olayını teknik loga yazar (şifre/token içermez; yalnızca bileşen adları ve sebepler).</summary>
@@ -539,7 +550,8 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         var allReady = true;
         foreach (var component in _catalog)
         {
-            if (!_installed.TryGetValue(component.Id, out var record))
+            // Sürümü listedekinden farklı kayıt (eskimiş isteğe bağlı model) denetlenmez: istenince yeniden kurulur (r2 Low-1).
+            if (!_installed.TryGetValue(component.Id, out var record) || !string.Equals(record.Version, component.Version, StringComparison.Ordinal))
             {
                 continue;
             }

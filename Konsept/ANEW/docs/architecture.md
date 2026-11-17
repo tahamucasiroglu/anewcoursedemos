@@ -149,7 +149,9 @@ karşılanmayan model `AgentToolCheckReply.Unsupported` → iş çağrısız "ek
 stable-diffusion.cpp `sd-cli` (Vulkan; GGUF Z-Image-Turbo/FLUX.2 klein + ortak Qwen3 4B), `image.marker` ile devam; ses = tüm sahneler tek
 `speech.py` sürecinde (arka uç supertonic/chatterbox; `-I`, `HF_HUB_OFFLINE=1`, önbellekler `%LOCALAPPDATA%\anewconcept\cache`), sonra FFmpeg
 ile sahne süresine oturtma (`VoiceFit`: ≤ 1,6 kat hız, doldur, kes) ve `voice.speech` (konuşma süresi) → birleştirmede altyazı bu süreye göre.
-GPU/bellek hatası çıktıdan tanınır → `gpu_unavailable` (CPU'ya düşülmez).
+GPU/bellek hatası çıktıdan tanınır → `gpu_unavailable` (CPU'ya düşülmez). Kilitler `uv pip compile <girdi> --generate-hashes --emit-index-url
+--python-version 3.12 --python-platform x86_64-pc-windows-msvc --exclude-newer <2 hafta önce>` ile üretilir; PyTorch ortamında `gradio` override ile
+çıkarılır ve `setuptools<81` sabitlenir (resemble-perth `pkg_resources` ister); kilit değişince bileşen sürümü artırılır (eski kayıt geçersiz sayılır).
 
 **Üretilen Videolar (0007):** Video = bir konseptin tamamlanmış sürüm kayıtları (`production.videos`; video kimliği konsept kimliği, sürüm
 numarası bitiş sırası). Kayıtta 0017 alanlarına ek süre (sahne planı toplamı), biçim ve sürümün online maliyeti (migration `AddVideoDetails`).
