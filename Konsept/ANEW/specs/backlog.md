@@ -188,7 +188,7 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   başlığına/boş duruma (tabindex=-1) taşı; B-104 ile birlikte — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
 - **B-133** — 0019 eşzamanlı iki kalıcı silmede klip izi PK çakışması 500 verebilir (servis artık `false` dönüşü 404 sayıyor; izin INSERT
   yarışı kalıyor) — Source: plan 0019 review r1 L-1 — Severity: Low — Recommendation: `INSERT … ON CONFLICT (concept_id) DO UPDATE SET
-  first_completed_at = LEAST(…)` ya da `DbUpdateException`'ı "zaten silindi" say — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
+  first_completed_at = LEAST(…)` ya da `DbUpdateException`'ı "zaten silindi" say; yeni 404 yolu (`PurgeAsync` false) için test ekle (r2 I-4: handler satırları silip cevap verir → 404) — Deferred by: tahamucasiroglu, 2026-11-17, standing approval
 - **B-134** — 0019 bakım/ölçek: ajan dosya adı kuralı `VideoFileActionsBase` ve `VideoFileDeleterBase`'de iki kopya; Silinenler — Videolar
   listesi profilin tüm silinmiş satırlarını belleğe alıp sayfalıyor (B-128 ile aynı kalıp) — Source: plan 0019 review r1 I-2, I-3 —
   Severity: Low — Recommendation: ortak `VideoFileName.IsPlain` kuralı; video sayısı yüzleri aşarsa SQL'de `GROUP BY concept_id` + sayfalama —
