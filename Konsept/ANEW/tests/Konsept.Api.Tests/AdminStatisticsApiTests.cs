@@ -216,6 +216,9 @@ public sealed class AdminStatisticsApiTests
         Items(await huge.Content.ReadFromJsonAsync<JsonElement>(ct)).ShouldBeEmpty();
         farDate.StatusCode.ShouldBe(HttpStatusCode.OK);
         factory.ErrorReports.Reports.ShouldBeEmpty(); // sınır girdisi otomatik hata kaydı açmaz.
+        var ancient = await admin.GetFromJsonAsync<JsonElement>(Activities + "?to=1999-12-31", ct); // review r2 L-3: yok sayılmaz.
+        ancient.GetProperty("total").GetInt32().ShouldBe(0);
+        ancient.GetProperty("filtered").GetBoolean().ShouldBeTrue();
     }
 
     /// <summary>

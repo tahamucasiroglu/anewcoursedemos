@@ -50,11 +50,11 @@
             </div>
             <div class="field">
                 <label class="field__label" for="admin-filter-from">@UiText.AdminFilterFrom</label>
-                <input class="field__input" type="date" id="admin-filter-from" />
+                <input class="field__input" type="date" id="admin-filter-from" min="2000-01-01" max="9998-12-31" />
             </div>
             <div class="field">
                 <label class="field__label" for="admin-filter-to">@UiText.AdminFilterTo</label>
-                <input class="field__input" type="date" id="admin-filter-to" />
+                <input class="field__input" type="date" id="admin-filter-to" min="2000-01-01" max="9998-12-31" />
             </div>
             <button type="submit" class="button button--primary">@UiText.AdminFilterApply</button>
         </form>

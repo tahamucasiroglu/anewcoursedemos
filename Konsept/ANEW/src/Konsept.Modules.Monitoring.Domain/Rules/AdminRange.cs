@@ -20,6 +20,12 @@ public static class AdminRange
     /// <summary>İstenebilecek en büyük sayfa (taşma koruması).</summary>
     public const int MaxPage = 1_000_000;
 
+    /// <summary>Filtrede kabul edilen en erken gün.</summary>
+    public static readonly DateOnly MinDate = new(2000, 1, 1);
+
+    /// <summary>Filtrede kabul edilen en geç gün (gün sınırı hesabı taşmasın diye).</summary>
+    public static readonly DateOnly MaxDate = new(9998, 12, 31);
+
     /// <summary>Sayfa numarasını 1…<see cref="MaxPage"/> aralığına çeker.</summary>
     /// <param name="page">İstenen sayfa.</param>
     /// <returns>Sayfa.</returns>
@@ -37,15 +43,19 @@ public static class AdminRange
     public static IReadOnlyList<DateOnly> DaysEndingAt(DateOnly today, int days) =>
         [.. Enumerable.Range(0, days).Select(i => today.AddDays(i - days + 1))];
 
-    /// <summary>Tarih metnini (<see cref="JournalDay.DateFormat"/>) çözer.</summary>
+    /// <summary>Tarih metnini (<see cref="JournalDay.DateFormat"/>) çözer; aralık dışı gün sınıra çekilir (filtre anlamını korur).</summary>
     /// <param name="value">Metin.</param>
     /// <returns>Gün ya da geçersiz/boşsa <c>null</c>.</returns>
-    public static DateOnly? ParseDate(string? value) =>
-        !string.IsNullOrWhiteSpace(value)
-        && DateOnly.TryParseExact(value.Trim(), JournalDay.DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day)
-            && day.Year is >= 2000 and <= 9998
-            ? day
-            : null; // Aralık dışı gün (ör. 9999-12-31) geçersiz sayılır: gün sınırı hesabı taşmaz.
+    public static DateOnly? ParseDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || !DateOnly.TryParseExact(value.Trim(), JournalDay.DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+        {
+            return null;
+        }
+
+        return day < MinDate ? MinDate : day > MaxDate ? MaxDate : day;
+    }
 
     /// <summary>Kullanıcı aramasını çözer.</summary>
     /// <param name="value">Arama metni.</param>

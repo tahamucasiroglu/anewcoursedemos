@@ -45,7 +45,8 @@ public sealed class AdminRulesTests
         AdminRange.Matches("veli", "Ayşe", "ayse@ornek.test").ShouldBeFalse();
         AdminRange.Matches("VELI", "Veli Demir", "veli@baska.test").ShouldBeTrue(); // review r1 M-3: tr-TR'de I≠i.
         AdminRange.Matches("GMAIL", "Ali", "ali@gmail.com").ShouldBeTrue();
-        AdminRange.ParseDate("9999-12-31").ShouldBeNull(); // review r1 L-1: gün sınırı taşmaz.
+        AdminRange.ParseDate("9999-12-31").ShouldBe(new DateOnly(9998, 12, 31)); // review r1 L-1 / r2 L-3: sınıra çekilir, taşmaz.
+        AdminRange.ParseDate("1999-12-31").ShouldBe(new DateOnly(2000, 1, 1)); // filtre anlamı korunur (yok sayılmaz).
         AdminRange.ParsePage(int.MaxValue).ShouldBe(AdminRange.MaxPage);
         AdminRange.ParsePage(0).ShouldBe(1);
         AdminRange.ParsePage(null).ShouldBe(1);
