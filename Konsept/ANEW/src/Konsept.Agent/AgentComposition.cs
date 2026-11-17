@@ -8,6 +8,7 @@ using Konsept.Agent.Infrastructure.Concrete;
 using Konsept.Agent.Infrastructure.Logging;
 using Konsept.Agent.Infrastructure.Settings;
 using Konsept.Agent.Infrastructure.Setup;
+using Konsept.Agent.Infrastructure.Update;
 
 namespace Konsept.Agent;
 
@@ -25,6 +26,7 @@ namespace Konsept.Agent;
 /// <param name="Reports">Hata bildirimi merkezi (spec 0022); testlerde verilmeyebilir.</param>
 /// <param name="Notifier">Windows bildirimi (spec 0022); testlerde sahte.</param>
 /// <param name="Setup">İlk kurulum (spec 0009); verilmezse kurulum ekranı açılmaz (eski testler).</param>
+/// <param name="Updater">Ajan güncellemesi (spec 0023); verilmezse "Güncellemeleri denetle" yalnızca bilgi verir.</param>
 internal sealed record AgentComposition(
     AgentSettings Settings,
     IAgentInfoProvider Info,
@@ -34,8 +36,12 @@ internal sealed record AgentComposition(
     IAgentSessionCoordinator? Session = null,
     IErrorReportCenter? Reports = null,
     IDesktopNotifier? Notifier = null,
-    ISetupCoordinator? Setup = null)
+    ISetupCoordinator? Setup = null,
+    IAgentUpdater? Updater = null)
 {
+    /// <summary>Güncelleme açık anahtarının AssemblyMetadata anahtarı (spec 0023).</summary>
+    public const string UpdatePublicKeyMetadata = "AgentUpdatePublicKey";
+
     /// <summary>Kod durumu sorgu aralığı.</summary>
     public static readonly TimeSpan PairingPollInterval = TimeSpan.FromSeconds(2);
 
@@ -86,15 +92,39 @@ internal sealed record AgentComposition(
             TimeProvider.System,
             logging.Logger);
         logging.AlertSink.Attach(reports);
+        var setupHost = new WindowsSetupHost(new HttpClient());
         var setup = new SetupCoordinator(
             ComponentCatalog.Load(),
-            new WindowsSetupHost(new HttpClient()),
+            setupHost,
             setupState,
             root,
             AgentPaths.DefaultVideoFolder,
             new Uri(settings.SiteUrl, "ajan-bilesenleri/"),
             logging.Logger);
+        var updater = new AgentUpdater(
+            info.Version,
+            new Uri(settings.SiteUrl, "ajan-guncelleme/"),
+            setupHost,
+            new Ed25519ManifestVerifier(AgentSettingsLoader.ReadMetadata(typeof(App).Assembly).GetValueOrDefault(UpdatePublicKeyMetadata)),
+            CreateInstallation(),
+            connection,
+            TimeProvider.System,
+            logging.Logger);
         logging.Logger.Information("Ajan başladı: sürüm {Version}, sunucu {Server}", info.Version, settings.ServerUrl);
-        return new AgentComposition(settings, info, connection, new ShellBrowserLauncher(), logging, session, reports, Setup: setup);
+        return new AgentComposition(settings, info, connection, new ShellBrowserLauncher(), logging, session, reports, Setup: setup, Updater: updater);
     }
+
+    /// <summary>Kurulu kopyayı (spec 0023; HKCU kayıtları, Başlat menüsü) gerçek Windows bileşenleriyle kurar.</summary>
+    /// <returns>Kurulu kopya.</returns>
+    public static AgentInstallation CreateInstallation() =>
+        new(AgentPaths.InstallRoot, Environment.GetFolderPath(Environment.SpecialFolder.Programs), new WindowsInstallHost());
+
+    /// <summary>
+    /// Ajan siteden indirilen exe olarak mı çalışıyor (<c>anewconcept-ajan*.exe</c>; yalnızca o zaman kendini kurulum yerine kopyalar ve kaydeder,
+    /// B-77); geliştirme derlemesinde (<c>Konsept.Agent.exe</c>, testler) <c>false</c>.
+    /// </summary>
+    /// <param name="processPath">Çalışan exe.</param>
+    /// <returns>Yayın exe'si mi.</returns>
+    public static bool IsReleaseExecutable(string? processPath) =>
+        Path.GetFileName(processPath ?? string.Empty).StartsWith("anewconcept-ajan", StringComparison.OrdinalIgnoreCase);
 }

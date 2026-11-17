@@ -40,4 +40,8 @@
   <ItemGroup Condition="'$(AgentSiteUrl)' != ''">
     <AssemblyMetadata Include="AgentSiteUrl" Value="$(AgentSiteUrl)" />
   </ItemGroup>
+  <!-- Spec 0023: güncelleme listesinin Ed25519 açık anahtarı (base64); deploy.sh AGENT_UPDATE_KEY'den türetir. Yoksa güncelleme denetimi kapalı. -->
+  <ItemGroup Condition="'$(AgentUpdatePublicKey)' != ''">
+    <AssemblyMetadata Include="AgentUpdatePublicKey" Value="$(AgentUpdatePublicKey)" />
+  </ItemGroup>
 </Project>

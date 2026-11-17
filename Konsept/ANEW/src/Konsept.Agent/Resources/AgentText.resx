@@ -104,4 +104,40 @@
   <data name="PurposeNode" xml:space="preserve"><value>Video şablonlarını çalıştıran JavaScript ortamı</value></data>
   <data name="PurposeFfmpeg" xml:space="preserve"><value>Video render motoru (kodlama ve birleştirme)</value></data>
   <data name="PurposeChromium" xml:space="preserve"><value>Video karelerini çizen başsız tarayıcı</value></data>
+  <data name="TrayCheckUpdates" xml:space="preserve"><value>Güncellemeleri denetle</value></data>
+  <data name="TrayUpdateAvailable" xml:space="preserve"><value>Yeni sürüm hazır: {0} — Şimdi güncelle</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>Yeni sürüm hazır: {0}</value></data>
+  <data name="UpdateUpToDate" xml:space="preserve"><value>Ajan güncel (sürüm {0})</value></data>
+  <data name="UpdateTitle" xml:space="preserve"><value>ANEW Konsept · Güncelleme</value></data>
+  <data name="UpdateHeading" xml:space="preserve"><value>Şu an bunları güncelliyoruz</value></data>
+  <data name="UpdateIntro" xml:space="preserve"><value>Yalnızca değişen bileşenler güncellenir. Güncelleme yönetici izni istemez; videolarınız ve ayarlarınız korunur.</value></data>
+  <data name="UpdateAgentName" xml:space="preserve"><value>ANEW Konsept ajanı</value></data>
+  <data name="UpdateRowDetail" xml:space="preserve"><value>Kurulu sürüm {0} → yeni sürüm {1}</value></data>
+  <data name="UpdateNow" xml:space="preserve"><value>Şimdi güncelle</value></data>
+  <data name="UpdateClose" xml:space="preserve"><value>Kapat</value></data>
+  <data name="UpdateWaitingProduction" xml:space="preserve"><value>Üretim sürüyor; iş bitince ya da durdurulunca güncellenecek</value></data>
+  <data name="UpdateVerificationFailed" xml:space="preserve"><value>Güncelleme doğrulanamadı, mevcut sürümle devam ediliyor</value></data>
+  <data name="UpdateDone" xml:space="preserve"><value>Güncelleme tamamlandı</value></data>
+  <data name="UpdateRolledBack" xml:space="preserve"><value>Yeni sürüm başlatılamadı, önceki sürüme dönüldü</value></data>
+  <data name="UpdateRequiredNotice" xml:space="preserve"><value>Ajan güncellemesi gerekli (sunucu sürümü {0})</value></data>
+  <data name="UpdateUnavailable" xml:space="preserve"><value>Güncelleme sunucusuna ulaşılamadı; daha sonra yeniden denenecek</value></data>
+  <data name="UpdateDisabled" xml:space="preserve"><value>Bu derlemede güncelleme denetimi kapalı</value></data>
+  <data name="UpdateStatusWaiting" xml:space="preserve"><value>Bekliyor</value></data>
+  <data name="UpdateStatusDownloading" xml:space="preserve"><value>İndiriliyor %{0}</value></data>
+  <data name="UpdateStatusVerifying" xml:space="preserve"><value>Doğrulanıyor</value></data>
+  <data name="UpdateStatusInstalling" xml:space="preserve"><value>Kuruluyor</value></data>
+  <data name="UpdateStatusDone" xml:space="preserve"><value>Güncellendi</value></data>
+  <data name="UpdateReportSummary" xml:space="preserve"><value>Güncelleme hatası: {0} — {1}</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>Güncellemeler denetleniyor…</value></data>
+  <data name="UninstallTitle" xml:space="preserve"><value>ANEW Konsept · Kaldır</value></data>
+  <data name="UninstallHeading" xml:space="preserve"><value>ANEW Konsept kaldırılıyor</value></data>
+  <data name="UninstallDetail" xml:space="preserve"><value>Ajan, bileşenleri, Başlat menüsü kısayolu ve başlangıç kaydı silinecek. Bilgisayarınızdaki başka programlara dokunulmaz.</value></data>
+  <data name="UninstallQuestion" xml:space="preserve"><value>Videolarınız da silinsin mi?</value></data>
+  <data name="UninstallVideoFolder" xml:space="preserve"><value>Video klasörü: {0}</value></data>
+  <data name="UninstallYes" xml:space="preserve"><value>Evet, videoları da sil</value></data>
+  <data name="UninstallNo" xml:space="preserve"><value>Hayır, videoları koru</value></data>
+  <data name="UninstallRunning" xml:space="preserve"><value>Kaldırılıyor…</value></data>
+  <data name="UninstallDone" xml:space="preserve"><value>Kaldırıldı</value></data>
+  <data name="UninstallPartial" xml:space="preserve"><value>Kaldırıldı; bazı dosyalar kullanımda olduğu için silinemedi.</value></data>
+  <data name="UpdateLineStarted" xml:space="preserve"><value>Güncelleme başladı; yeni sürüm indiriliyor</value></data>
 </root>

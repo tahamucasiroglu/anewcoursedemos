@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Konsept.Agent.UninstallWindow"
+        Width="520" Height="320" MinWidth="420" MinHeight="280"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource KonseptWindowBackground}"
+        Foreground="{DynamicResource KonseptWindowForeground}"
+        Icon="/Assets/app-icon.png">
+  <!--
+    Kaldırma (spec 0023 Req 11, 14): "Videolarınız da silinsin mi?" — varsayılan Hayır (odak ve Enter Hayır'da); sonra "Kaldırılıyor…" ve
+    "Kaldırıldı". Metinler resx'ten.
+  -->
+  <StackPanel Margin="20" Spacing="10">
+    <TextBlock x:Name="HeadingText" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource KonseptAccentBrush}" />
+    <TextBlock x:Name="DetailText" TextWrapping="Wrap" />
+    <TextBlock x:Name="QuestionText" TextWrapping="Wrap" FontWeight="SemiBold" />
+    <TextBlock x:Name="VideoFolderText" TextWrapping="Wrap" Foreground="{DynamicResource KonseptMutedBrush}" />
+    <StackPanel x:Name="AnswerPanel" Orientation="Horizontal" Spacing="8">
+      <Button x:Name="NoButton" Classes="accent" IsDefault="True" />
+      <Button x:Name="YesButton" />
+    </StackPanel>
+    <TextBlock x:Name="StatusText" TextWrapping="Wrap" FontWeight="SemiBold" />
+    <Button x:Name="CloseButton" IsVisible="False" />
+  </StackPanel>
+</Window>

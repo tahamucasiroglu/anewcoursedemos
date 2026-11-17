@@ -28,6 +28,7 @@ public sealed partial class SetupWindow : Window
     private CancellationToken _stop;
     private Func<Task<string?>>? _pickFolder;
     private bool _closing;
+    private bool _updating;
 
     /// <summary>Initializes a new instance of the <see cref="SetupWindow"/> class.</summary>
     public SetupWindow()
@@ -84,6 +85,12 @@ public sealed partial class SetupWindow : Window
     /// <summary>Gets tamamlanma metni.</summary>
     internal string DoneDisplay => DoneText.Text ?? string.Empty;
 
+    /// <summary>Gets ekran başlığı (kurulum ya da güncelleme).</summary>
+    internal string HeadingDisplay => HeadingText.Text ?? string.Empty;
+
+    /// <summary>Gets listelenen bileşen kimlikleri.</summary>
+    internal IReadOnlyList<string> ListedComponents => [.. _rows.Keys];
+
     /// <summary>Gets akan satırlar.</summary>
     internal IReadOnlyList<string> Lines => _lines;
 
@@ -119,7 +126,18 @@ public sealed partial class SetupWindow : Window
         VideoFolderBox.Text = setup.VideoFolder;
         ComponentList.Children.Clear();
         _rows.Clear();
-        foreach (var state in setup.Components)
+
+        // Güncelleme (spec 0023 Req 5): kurulu bileşen varken ekran "Şu an bunları güncelliyoruz" başlığıyla açılır ve yalnızca kurulmamış/değişen
+        // bileşenleri listeler (yeni ajan sürümü yeni bileşen sürümleri getirdiğinde).
+        _updating = setup.Components.Any(s => s.Status == ComponentStatus.Installed);
+        if (_updating)
+        {
+            Title = AgentText.UpdateTitle;
+            HeadingText.Text = AgentText.UpdateHeading;
+            IntroText.Text = AgentText.UpdateIntro;
+        }
+
+        foreach (var state in setup.Components.Where(s => !_updating || s.Status != ComponentStatus.Installed))
         {
             AddRow(state);
         }
@@ -373,7 +391,7 @@ public sealed partial class SetupWindow : Window
 
         if (e.Kind == SetupEventKind.Ready)
         {
-            DoneText.Text = AgentText.SetupDone;
+            DoneText.Text = _updating ? AgentText.UpdateDone : AgentText.SetupDone;
             CurrentText.Text = string.Empty;
             Completed?.Invoke(this, EventArgs.Empty);
         }

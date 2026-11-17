@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Konsept.Agent.UpdateWindow"
+        Width="600" Height="520" MinWidth="460" MinHeight="420"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource KonseptWindowBackground}"
+        Foreground="{DynamicResource KonseptWindowForeground}"
+        Icon="/Assets/app-icon.png">
+  <!--
+    Ajan güncelleme ekranı (spec 0023 Req 2, 3, 5, 7): 0009 kurulum ekranının görünümü — "Şu an bunları güncelliyoruz" başlığı, yalnızca
+    güncellenecek satır (ajanın kendisi), satır durumu, ilerleme, akan Türkçe satırlar, Hata satırında Tekrar dene / Hatayı bildir.
+    Bileşenler yeni ajanın ilk açılışında aynı başlıklı kurulum ekranında güncellenir. Renkler App.axaml paletinden; metinler resx'ten.
+  -->
+  <DockPanel Margin="20">
+    <StackPanel DockPanel.Dock="Top" Spacing="6">
+      <TextBlock x:Name="HeadingText" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource KonseptAccentBrush}" />
+      <TextBlock x:Name="IntroText" TextWrapping="Wrap" />
+      <Border x:Name="AgentRow" Padding="10" CornerRadius="6" BorderThickness="1" Margin="0,6,0,0"
+              BorderBrush="{DynamicResource KonseptBorderBrush}">
+        <StackPanel Spacing="2">
+          <TextBlock x:Name="RowName" FontWeight="SemiBold" />
+          <TextBlock x:Name="RowDetail" TextWrapping="Wrap" />
+          <TextBlock x:Name="RowStatus" FontWeight="SemiBold" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button x:Name="RetryButton" IsVisible="False" />
+            <Button x:Name="ReportButton" IsVisible="False" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+    <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,10,0,0">
+      <ProgressBar x:Name="Progress" Minimum="0" Maximum="100" Height="10" />
+      <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontWeight="SemiBold" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button x:Name="StartButton" Classes="accent" />
+        <Button x:Name="CloseButton" />
+      </StackPanel>
+    </StackPanel>
+    <Grid RowDefinitions="Auto,*">
+      <TextBlock Grid.Row="0" x:Name="LogLabel" FontWeight="SemiBold" Margin="0,8,0,4" />
+      <ListBox Grid.Row="1" x:Name="LogList" Background="{DynamicResource KonseptSurfaceBrush}" />
+    </Grid>
+  </DockPanel>
+</Window>

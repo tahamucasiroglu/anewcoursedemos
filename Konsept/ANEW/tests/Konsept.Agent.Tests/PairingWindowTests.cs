@@ -84,7 +84,7 @@ public sealed class PairingWindowTests
             CurrentApp.TrayMenu.Items.OfType<NativeMenuItem>()
                 .Where(i => i is not NativeMenuItemSeparator && i.IsEnabled)
                 .Select(i => i.Header)
-                .ShouldBe(["Siteye git", "Çıkış"]);
+                .ShouldBe(["Siteye git", "Güncellemeleri denetle", "Çıkış"]); // spec 0023 Req 12 (plan 0023 A-2).
         }
         finally
         {

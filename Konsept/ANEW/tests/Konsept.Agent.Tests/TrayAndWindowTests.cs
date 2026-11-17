@@ -28,7 +28,7 @@ public sealed class TrayAndWindowTests
             .Where(i => i is not NativeMenuItemSeparator && i.IsEnabled)
             .Select(i => i.Header)
             .ToList();
-        headers.ShouldBe(["Siteye git", "Çıkış"]);
+        headers.ShouldBe(["Siteye git", "Güncellemeleri denetle", "Çıkış"]); // spec 0023 Req 12 ekledi (plan 0023 A-2); 0001/0009 öğeleri aynı.
         icons[0].ToolTipText.ShouldBe("ANEW Konsept Ajan");
     }
 
