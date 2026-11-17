@@ -60,7 +60,7 @@ public sealed class AiCallSecretLeakTests : IAsyncLifetime
         {
             _status = status;
             var before = _handler.Requests.Count;
-            using var response = await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "glm/glm-4.6" }, ct);
+            using var response = await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "glm/glm-5.3" }, ct);
             var text = await response.Content.ReadAsStringAsync(ct);
             bodies.Add(text);
             text.ShouldContain(message);

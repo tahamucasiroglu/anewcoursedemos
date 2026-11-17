@@ -92,8 +92,8 @@ public sealed class RoleRulesTests
     {
         RoleModelPermissions.For(Role.User, [], []).ShouldBe(["model.use:*"]);
         RoleModelPermissions.For(Role.Admin, null, null).ShouldBe(["model.use:*"]);
-        RoleModelPermissions.For(Role.User, ["openai/gpt-5-mini", "glm/glm-4.6"], []).ShouldBe(["model.use:openai/gpt-5-mini", "model.use:glm/glm-4.6"]);
-        RoleModelPermissions.For(Role.Admin, ["openai/gpt-5-mini"], []).ShouldBe(["model.use:*"]);
+        RoleModelPermissions.For(Role.User, ["openai/gpt-6.1-terra", "glm/glm-5.3"], []).ShouldBe(["model.use:openai/gpt-6.1-terra", "model.use:glm/glm-5.3"]);
+        RoleModelPermissions.For(Role.Admin, ["openai/gpt-6.1-terra"], []).ShouldBe(["model.use:*"]);
         RoleModelPermissions.For((Role)99, [], []).ShouldBeEmpty();
         Permissions.ModelUseAll.ShouldBe("model.use:*");
     }

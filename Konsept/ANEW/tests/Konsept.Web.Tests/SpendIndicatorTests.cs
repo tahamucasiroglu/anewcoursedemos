@@ -107,22 +107,22 @@ public sealed class SpendIndicatorTests
         var ct = TestContext.Current.CancellationToken;
         await using var factory = new WebFactory();
         using var client = await factory.CreateSignedInClientAsync(ct);
-        factory.Api.TrialCallAsync("anthropic/claude-sonnet-4-5", Arg.Any<CancellationToken>())
+        factory.Api.TrialCallAsync("anthropic/claude-sonnet-5-5", Arg.Any<CancellationToken>())
             .Returns(Result<TrialCallResponse>.Failure(new Error("ai.no_permission", "Bu modeli kullanma yetkiniz yok", ErrorType.Validation)));
 
-        using var withoutToken = await client.PostAsJsonAsync("/ayarlar/modeller/dene", new { modelId = "anthropic/claude-sonnet-4-5" }, ct);
+        using var withoutToken = await client.PostAsJsonAsync("/ayarlar/modeller/dene", new { modelId = "anthropic/claude-sonnet-5-5" }, ct);
         withoutToken.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         await factory.Api.DidNotReceive().TrialCallAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>());
 
         var page = await WebFactory.GetDocumentAsync(client, "/ayarlar", ct);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/ayarlar/modeller/dene") { Content = JsonContent.Create(new { modelId = "anthropic/claude-sonnet-4-5" }) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/ayarlar/modeller/dene") { Content = JsonContent.Create(new { modelId = "anthropic/claude-sonnet-5-5" }) };
         request.Headers.Add("RequestVerificationToken", page.QuerySelector("meta[name='csrf-token']")!.GetAttribute("content")!);
         request.Headers.Add("X-Requested-With", "XMLHttpRequest");
         using var response = await client.SendAsync(request, ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("message").GetString().ShouldBe("Bu modeli kullanma yetkiniz yok");
-        await factory.Api.Received(1).TrialCallAsync("anthropic/claude-sonnet-4-5", Arg.Any<CancellationToken>());
+        await factory.Api.Received(1).TrialCallAsync("anthropic/claude-sonnet-5-5", Arg.Any<CancellationToken>());
         page.GetElementById("settings")!.GetAttribute("data-text-no-permission").ShouldBe("Yetki yok");
     }
 

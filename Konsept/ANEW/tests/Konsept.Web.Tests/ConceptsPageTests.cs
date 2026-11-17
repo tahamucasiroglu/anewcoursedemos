@@ -124,12 +124,12 @@ public sealed class ConceptsPageTests
         var other = Guid.CreateVersion7();
         var settings = new ConceptSettingsResponse(
             id,
-            [new RoleModelResponse("concept", "anthropic/claude-opus-4-5", "Claude Opus 4.5", "high")],
+            [new RoleModelResponse("concept", "anthropic/claude-opus-5-5", "Claude Opus 5.5", "high")],
             "calm",
             null,
             null,
             true,
-            [new SelectableModelResponse("anthropic/claude-opus-4-5", "Claude Opus 4.5", ["low", "medium", "high"], "high")]);
+            [new SelectableModelResponse("anthropic/claude-opus-5-5", "Claude Opus 5.5", ["low", "medium", "high"], "high")]);
         factory.Api.GetConceptSettingsAsync(id, Arg.Any<CancellationToken>()).Returns(Result<ConceptSettingsResponse>.Success(settings));
         factory.Api.GetConceptSettingsAsync(other, Arg.Any<CancellationToken>()).Returns(Result<ConceptSettingsResponse>.Failure(
             new Error("profiles.not_found", "Profil bulunamadı.", ErrorType.NotFound)));
@@ -149,7 +149,7 @@ public sealed class ConceptsPageTests
         }
 
         using var client = await factory.CreateSignedInClientAsync(ct);
-        var body = new { models = new[] { new { role = "concept", modelId = "openai/gpt-5", effort = (string?)null } } };
+        var body = new { models = new[] { new { role = "concept", modelId = "openai/gpt-6.1-sol", effort = (string?)null } } };
         using var withoutToken = await client.PostAsJsonAsync($"/konsept-ayarlari/{id}", body, ct);
         withoutToken.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         await factory.Api.DidNotReceive().SaveConceptSettingsAsync(Arg.Any<Guid>(), Arg.Any<SaveConceptSettingsApiRequest?>(), Arg.Any<CancellationToken>());
@@ -160,7 +160,7 @@ public sealed class ConceptsPageTests
 
         read.StatusCode.ShouldBe(HttpStatusCode.OK);
         var json = JsonDocument.Parse(await read.Content.ReadAsStringAsync(ct)).RootElement;
-        json.GetProperty("roles")[0].GetProperty("modelName").GetString().ShouldBe("Claude Opus 4.5");
+        json.GetProperty("roles")[0].GetProperty("modelName").GetString().ShouldBe("Claude Opus 5.5");
         json.GetProperty("wordCheck").GetBoolean().ShouldBeTrue();
         notFound.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         save.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -168,7 +168,7 @@ public sealed class ConceptsPageTests
             .ShouldBe("Bu model seçilemez: kullanma yetkiniz ya da geçerli bir API key'iniz yok.");
         await factory.Api.Received(1).SaveConceptSettingsAsync(
             id,
-            Arg.Is<SaveConceptSettingsApiRequest?>(r => r != null && r.Models!.Count == 1 && r.Models[0].ModelId == "openai/gpt-5" && r.FineTune == null && r.WordCheck == null),
+            Arg.Is<SaveConceptSettingsApiRequest?>(r => r != null && r.Models!.Count == 1 && r.Models[0].ModelId == "openai/gpt-6.1-sol" && r.FineTune == null && r.WordCheck == null),
             Arg.Any<CancellationToken>());
     }
 

@@ -33,7 +33,7 @@ public abstract class TrialCallServiceBase(IAiCallGateway gateway, ICatalogSourc
             return Result<TrialCallDto>.Failure(AiGatewayErrors.SignInRequired);
         }
 
-        var model = catalog.Catalog.Models.FirstOrDefault(m => string.Equals(m.Id, request?.ModelId, StringComparison.Ordinal));
+        var model = catalog.Catalog.Find(request?.ModelId);
         if (model is null)
         {
             return Result<TrialCallDto>.Failure(AiGatewayErrors.ModelNotFound);

@@ -292,7 +292,7 @@ public sealed class VideoTrashTests : IClassFixture<ProductionApiFactory>
                 JobId = Guid.CreateVersion7(),
                 Title = title,
                 ConceptText = "{}",
-                CodeModel = "anthropic/claude-sonnet-4-5",
+                CodeModel = "anthropic/claude-sonnet-5-5",
                 Engine = "local/hyperframes",
                 FileName = "video-" + id.ToString("N") + ".mp4",
                 StartedAt = endedAt.AddMinutes(-4),

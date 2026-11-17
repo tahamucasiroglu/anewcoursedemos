@@ -13,7 +13,7 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed class AiCallApiTests : IClassFixture<AiGatewayApiFactory>
 {
-    private const string Sonnet = "anthropic/claude-sonnet-4-5";
+    private const string Sonnet = "anthropic/claude-sonnet-5-5";
     private readonly AiGatewayApiFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="AiCallApiTests"/> class.</summary>
@@ -33,12 +33,12 @@ public sealed class AiCallApiTests : IClassFixture<AiGatewayApiFactory>
     public async Task Trial_RestrictedModel_DirectRequestRejected_CatalogShowsNoPermission()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var factory = new AiGatewayApiFactory { UserModelPermissions = "openai/gpt-5-mini" };
+        await using var factory = new AiGatewayApiFactory { UserModelPermissions = "openai/gpt-6.1-terra" };
         using var client = await factory.CreateUserClientAsync(ct);
         (await client.PutAsJsonAsync("/api/ai/keys/anthropic", new { apiKey = ApiKeyApiTests.NewKey("sk-ant-") }, ct)).EnsureSuccessStatusCode();
 
         using var denied = await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = Sonnet }, ct);
-        using var noKey = await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "openai/gpt-5-mini" }, ct);
+        using var noKey = await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "openai/gpt-6.1-terra" }, ct);
         var catalog = await client.GetFromJsonAsync<JsonElement>("/api/ai/catalog", ct);
 
         denied.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -49,8 +49,8 @@ public sealed class AiCallApiTests : IClassFixture<AiGatewayApiFactory>
         var availability = catalog.GetProperty("models").EnumerateArray()
             .ToDictionary(m => m.GetProperty("id").GetString()!, m => m.GetProperty("availability").GetString(), StringComparer.Ordinal);
         availability[Sonnet].ShouldBe("no_permission");
-        availability["openai/gpt-5-mini"].ShouldBe("no_key");
-        availability.Where(p => p.Key != "openai/gpt-5-mini").ShouldAllBe(p => p.Value == "no_permission");
+        availability["openai/gpt-6.1-terra"].ShouldBe("no_key");
+        availability.Where(p => p.Key != "openai/gpt-6.1-terra").ShouldAllBe(p => p.Value == "no_permission");
     }
 
     /// <summary>
@@ -75,12 +75,12 @@ public sealed class AiCallApiTests : IClassFixture<AiGatewayApiFactory>
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         body.GetProperty("text").GetString().ShouldNotBeNullOrWhiteSpace();
-        body.GetProperty("costUsd").GetDecimal().ShouldBe(0.00081m); // 120 × 3 / 1M + 30 × 15 / 1M
+        body.GetProperty("costUsd").GetDecimal().ShouldBe(0.00054m); // 120 × 2 / 1M + 30 × 10 / 1M (Sonnet 5.5; plan 0026 A-1)
         var call = _factory.Provider.Calls.Last(c => c.Call.ApiKey == key).Call;
         call.MaxOutputTokens.ShouldBe(4096);
         var record = _factory.Spend.Records.Single(r => r.UserId == userId);
         record.Purpose.ShouldBe(CallPurpose.Trial);
-        month.GetProperty("totalUsd").GetDecimal().ShouldBe(0.00081m);
+        month.GetProperty("totalUsd").GetDecimal().ShouldBe(0.00054m);
         (await anonymous.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = Sonnet }, ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         (await anonymous.GetAsync(new Uri("/api/ai/spend/month", UriKind.Relative), ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
@@ -94,7 +94,7 @@ public sealed class AiCallApiTests : IClassFixture<AiGatewayApiFactory>
         using var client = await _factory.CreateUserClientAsync(ct);
 
         (await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "yok/model" }, ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "openai/gpt-image-1" }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.PostAsJsonAsync("/api/ai/calls/trial", new { modelId = "openai/gpt-image-2.6-flare" }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await client.PostAsJsonAsync("/api/ai/calls/trial", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

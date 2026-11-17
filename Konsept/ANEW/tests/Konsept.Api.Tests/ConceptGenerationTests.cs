@@ -506,7 +506,7 @@ public sealed class ConceptGenerationTests : IClassFixture<ConceptsApiFactory>
         _factory.Concepts.Rows.Count(c => c.ProfileId == profile).ShouldBe(0);
         var calls = _factory.Provider.CallsOf(CallRole.Concept);
         calls.Count.ShouldBe(2);
-        calls.ShouldAllBe(c => c.MaxOutputTokens == 64000); // Sonnet 4.5 katalog limiti.
+        calls.ShouldAllBe(c => c.MaxOutputTokens == 128000); // Sonnet 5.5 katalog limiti (plan 0026 A-1).
     }
 
     /// <summary>

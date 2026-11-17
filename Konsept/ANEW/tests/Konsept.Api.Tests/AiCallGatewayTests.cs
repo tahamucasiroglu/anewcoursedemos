@@ -15,8 +15,9 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed class AiCallGatewayTests
 {
-    private const string Sonnet = "anthropic/claude-sonnet-4-5";
-    private const string Opus = "anthropic/claude-opus-4-5";
+    private const string Sonnet = "anthropic/claude-sonnet-5-5";
+    private const string Opus = "anthropic/claude-opus-5-5";
+    private const string RouterSonnet = "openrouter/anthropic/claude-sonnet-5.5";
     private readonly GatewayHarness _h = new();
     private readonly Guid _user = Guid.CreateVersion7();
 
@@ -51,7 +52,7 @@ public sealed class AiCallGatewayTests
         _h.AddKey(_user, "anthropic");
         var gateway = _h.Gateway();
 
-        foreach (var denied in new[] { Array.Empty<string>(), ["model.use:openai/gpt-5"], ["model.use:anthropic/*"], ["admin.panel"] })
+        foreach (var denied in new[] { Array.Empty<string>(), ["model.use:openai/gpt-6.1-sol"], ["model.use:anthropic/*"], ["admin.panel"] })
         {
             var result = await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet, denied));
             result.Error!.Message.ShouldBe("Bu modeli kullanma yetkiniz yok");
@@ -98,8 +99,8 @@ public sealed class AiCallGatewayTests
         var gateway = _h.Gateway();
 
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet));
-        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 64001 });
-        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 64000 });
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 128001 });
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 128000 });
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 1000 });
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 1 });
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 0 });
@@ -108,7 +109,7 @@ public sealed class AiCallGatewayTests
         await _h.CallAsync(changed, GatewayHarness.Request(_user, Sonnet));
         await _h.CallAsync(changed, GatewayHarness.Request(_user, Sonnet) with { MaxOutputTokens = 9000 });
 
-        _h.Provider.Calls.Select(c => c.Call.MaxOutputTokens).ShouldBe([64000, 64000, 64000, 1000, 1, 64000, 64000, 5000, 5000]);
+        _h.Provider.Calls.Select(c => c.Call.MaxOutputTokens).ShouldBe([128000, 128000, 128000, 1000, 1, 128000, 128000, 5000, 5000]); // Plan 0026 A-1: Sonnet 5.5 limiti 128000.
     }
 
     /// <summary>AC-4: sınıra takılan çıktı "yarım kaldı" olarak döner ve kaydedilir; sağlayıcı tam 1 kez çağrılır (devam/tekrar yok).</summary>
@@ -133,9 +134,12 @@ public sealed class AiCallGatewayTests
     public async Task Gateway_Effort_UnsupportedRejected_DefaultApplied()
     {
         _h.AddKey(_user, "anthropic");
+        _h.AddKey(_user, "openrouter");
         var gateway = _h.Gateway();
 
-        foreach (var (model, effort) in new[] { (Opus, "max"), (Opus, "HIGH"), (Sonnet, "low"), (Opus, "extreme") })
+        // Plan 0026 A-1: Opus 5.5 ve Sonnet 5.5 low…max destekler; desteklenmeyen düzey "xhigh" (katalogda yok), efor desteklemeyen
+        // model OpenRouter Sonnet.
+        foreach (var (model, effort) in new[] { (Opus, "xhigh"), (Opus, "HIGH"), (RouterSonnet, "low"), (Opus, "extreme") })
         {
             var rejected = await _h.CallAsync(gateway, GatewayHarness.Request(_user, model) with { Effort = effort });
             rejected.Error!.Message.ShouldBe("Bu model seçilen efor seviyesini desteklemiyor.");
@@ -144,10 +148,10 @@ public sealed class AiCallGatewayTests
         _h.Provider.Calls.ShouldBeEmpty();
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Opus));
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Opus) with { Effort = "low" });
-        await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet));
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, RouterSonnet));
 
-        _h.Provider.Calls.Select(c => c.Call.Effort).ShouldBe(["high", "low", null]);
-        _h.Spend.Records.Select(r => r.Effort).ShouldBe(["high", "low", null]);
+        _h.Provider.Calls.Select(c => c.Call.Effort).ShouldBe(["medium", "low", null]);
+        _h.Spend.Records.Select(r => r.Effort).ShouldBe(["medium", "low", null]);
     }
 
     /// <summary>
@@ -300,7 +304,7 @@ public sealed class AiCallGatewayTests
 
     /// <summary>
     /// AC-9: başarılı metin çağrısının kaydı zaman, kullanıcı, sağlayıcı, model, efor, amaç, profil, token ve maliyeti taşır; 1 234
-    /// giriş + 567 çıkış token Sonnet'te (3 / 15 USD) tam 0,012207 USD; sınır değerler (1 token, 0 token) kesirleri kaybetmez.
+    /// giriş + 567 çıkış token Opus 5.5'te (4 / 20 USD) tam 0,016276 USD; sınır değerler (1 token, 0 token) kesirleri kaybetmez.
     /// </summary>
     /// <returns>Görev.</returns>
     [Fact]
@@ -317,8 +321,8 @@ public sealed class AiCallGatewayTests
         var gateway = _h.Gateway();
 
         var result = await _h.CallAsync(gateway, GatewayHarness.Request(_user, Opus) with { Purpose = CallPurpose.Review, ProfileId = profile, Effort = "medium" });
-        await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-haiku-4-5"));
-        await _h.CallAsync(gateway, GatewayHarness.Request(_user, "openai/gpt-5-mini"));
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-haiku-5-5"));
+        await _h.CallAsync(gateway, GatewayHarness.Request(_user, "openai/gpt-6.1-terra"));
         await _h.CallAsync(gateway, GatewayHarness.Request(_user, Sonnet));
 
         var record = _h.Spend.Records[0];
@@ -331,13 +335,13 @@ public sealed class AiCallGatewayTests
         record.ProfileId.ShouldBe(profile);
         record.InputTokens.ShouldBe(1234);
         record.OutputTokens.ShouldBe(567);
-        record.CostUsd.ShouldBe(0.020345m); // 1234 × 5 / 1M + 567 × 25 / 1M
+        record.CostUsd.ShouldBe(0.016276m); // 1234 × 4 / 1M + 567 × 20 / 1M (plan 0026 A-1)
         record.IsEstimated.ShouldBeFalse();
-        result.Value.CostUsd.ShouldBe(0.020345m);
-        _h.Spend.Records.Skip(1).Select(r => r.CostUsd).ShouldBe([0.000001m, 0.000002m, 0m]);
+        result.Value.CostUsd.ShouldBe(0.016276m);
+        _h.Spend.Records.Skip(1).Select(r => r.CostUsd).ShouldBe([0.0000001m, 0.000005m, 0m]); // Haiku 5.5 1 giriş (0,10 USD/1M), GPT-6.1 Terra 1 çıkış (5 USD/1M).
     }
 
-    /// <summary>AC-9 (Sonnet örneği): 1 234 giriş + 567 çıkış token → 0,003702 + 0,008505 = 0,012207 USD, 6 hane hassasiyet.</summary>
+    /// <summary>AC-9 (Sonnet örneği; plan 0026 A-1: Sonnet 5.5, 2 / 10 USD): 1 234 giriş + 567 çıkış token → 0,002468 + 0,005670 = 0,008138 USD, 6 hane hassasiyet.</summary>
     /// <returns>Görev.</returns>
     [Fact]
     public async Task Gateway_SonnetExample_SixDecimalCost()
@@ -347,8 +351,8 @@ public sealed class AiCallGatewayTests
 
         await _h.CallAsync(_h.Gateway(), GatewayHarness.Request(_user, Sonnet));
 
-        decimal.Round(_h.Spend.Records.Single().CostUsd, 6).ShouldBe(0.012207m);
-        _h.Spend.Records.Single().CostUsd.ShouldBe(0.012207m);
+        decimal.Round(_h.Spend.Records.Single().CostUsd, 6).ShouldBe(0.008138m);
+        _h.Spend.Records.Single().CostUsd.ShouldBe(0.008138m);
     }
 
     /// <summary>AC-9: yanıtında maliyet bildiren sağlayıcıda (OpenRouter) kayıt bildirilen maliyeti taşır.</summary>
@@ -359,7 +363,7 @@ public sealed class AiCallGatewayTests
         _h.AddKey(_user, "openrouter");
         _h.Provider.Enqueue(ProviderAttempt.Completed("metin", 1000, 1000) with { ReportedCostUsd = 0.0123456789m });
 
-        await _h.CallAsync(_h.Gateway(), GatewayHarness.Request(_user, "openrouter/anthropic/claude-sonnet-4.5"));
+        await _h.CallAsync(_h.Gateway(), GatewayHarness.Request(_user, "openrouter/anthropic/claude-sonnet-5.5"));
 
         var record = _h.Spend.Records.ShouldHaveSingleItem();
         record.CostUsd.ShouldBe(0.0123456789m);
@@ -374,14 +378,14 @@ public sealed class AiCallGatewayTests
         _h.AddKey(_user, "openai");
         _h.Provider.Enqueue(ProviderAttempt.Completed(null, null, null) with { Images = ["aGVsbG8=", "d29ybGQ="] });
 
-        var result = await _h.CallAsync(_h.Gateway(), GatewayHarness.Request(_user, "openai/gpt-image-1") with { Purpose = CallPurpose.Image, ImageCount = 2 });
+        var result = await _h.CallAsync(_h.Gateway(), GatewayHarness.Request(_user, "openai/gpt-image-2.6-flare") with { Purpose = CallPurpose.Image, ImageCount = 2 });
 
         result.Value.Images.Count.ShouldBe(2);
         _h.Provider.Calls.Single().Call.ImageCount.ShouldBe(2);
         _h.Provider.Calls.Single().Call.MaxOutputTokens.ShouldBeNull();
         var record = _h.Spend.Records.ShouldHaveSingleItem();
         record.ImageCount.ShouldBe(2);
-        record.CostUsd.ShouldBe(0.084m);
+        record.CostUsd.ShouldBe(0.088m); // 2 × 0,044 (plan 0026 A-1)
         record.IsEstimated.ShouldBeFalse();
     }
 
@@ -405,7 +409,7 @@ public sealed class AiCallGatewayTests
         await _h.CallAsync(gateway, request);
         await _h.CallAsync(gateway, request);
 
-        var expected = (request.Prompt.Length + 3) / 4 * 3m / 1_000_000m;
+        var expected = (request.Prompt.Length + 3) / 4 * 2m / 1_000_000m; // Sonnet 5.5 giriş fiyatı (plan 0026 A-1).
         var records = _h.Spend.Records;
         records[0].IsEstimated.ShouldBeTrue();
         records[0].CostUsd.ShouldBe(expected);
@@ -429,7 +433,7 @@ public sealed class AiCallGatewayTests
         var repriced = _h.Gateway(GatewayHarness.Seed(s => GatewayHarness.Model(s, Sonnet)["inputPricePerMillionUsd"] = 7.123456m));
         await _h.CallAsync(repriced, GatewayHarness.Request(_user, Sonnet));
 
-        _h.Spend.Records.Select(r => r.CostUsd).ShouldBe([3.00m, 7.123456m]);
+        _h.Spend.Records.Select(r => r.CostUsd).ShouldBe([2.00m, 7.123456m]); // Sonnet 5.5 giriş fiyatı (plan 0026 A-1).
     }
 
     /// <summary>
@@ -475,5 +479,38 @@ public sealed class AiCallGatewayTests
 
         result.IsSuccess.ShouldBeTrue();
         _h.Provider.Calls.Count.ShouldBe(1);
+    }
+
+    /// <summary>
+    /// Spec 0026 AC-3: katalogdan kaldırılan eski kimlikle gelen çağrı (sabitlenmiş iş, sürüm tabanı) yerine geçen modelin API adıyla
+    /// sağlayıcıya gider ve harcama yeni kimlik ve fiyatla kaydedilir; eski efor yeni modelde varsa korunur, yoksa yeni modelin
+    /// varsayılanı kullanılır. Güncel kimlikte desteklenmeyen efor yine reddedilir; bilinmeyen kimlik bulunamaz.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task ReplacedModelId_CallsReplacementAndRecordsNewId()
+    {
+        _h.AddKey(_user, "anthropic");
+        _h.AddKey(_user, "glm");
+        _h.AddKey(_user, "openai");
+        _h.Provider.Default = ProviderAttempt.Completed("metin", 1_000_000, 0);
+        var gateway = _h.Gateway();
+
+        var sonnet = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-sonnet-4-5"));
+        var opus = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "anthropic/claude-opus-4-5") with { Effort = "low" });
+        var glm = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "glm/glm-4.6") with { Effort = "high" });
+        var rejected = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "glm/glm-5.3") with { Effort = "high" });
+        var unknown = await _h.CallAsync(gateway, GatewayHarness.Request(_user, "openai/gpt-4"));
+
+        sonnet.Value.ModelId.ShouldBe(Sonnet);
+        opus.Value.ModelId.ShouldBe(Opus);
+        glm.Value.ModelId.ShouldBe("glm/glm-5.3");
+        rejected.Error!.Message.ShouldBe("Bu model seçilen efor seviyesini desteklemiyor.");
+        unknown.IsSuccess.ShouldBeFalse();
+        _h.Provider.Calls.Select(c => c.Call.Model.ProviderModelName).ShouldBe(["claude-sonnet-5-5", "claude-opus-5-5", "glm-5.3"]);
+        _h.Provider.Calls.Select(c => c.Call.Effort).ShouldBe(["high", "low", null]);
+        _h.Spend.Records.Select(r => r.ModelId).ShouldBe([Sonnet, Opus, "glm/glm-5.3"]);
+        _h.Spend.Records.Select(r => r.CostUsd).ShouldBe([2.00m, 4.00m, 1.40m]);
+        _h.Spend.Records.Select(r => r.Effort).ShouldBe(["high", "low", null]);
     }
 }

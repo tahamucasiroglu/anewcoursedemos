@@ -102,7 +102,7 @@ public sealed class ProducedVideosTests : IClassFixture<ProductionApiFactory>
         versions[0].GetProperty("costUsd").GetDecimal().ShouldBe(0.004m);
         versions[0].GetProperty("audioModel").ValueKind.ShouldBe(JsonValueKind.Null);
         versions[0].GetProperty("imageModel").ValueKind.ShouldBe(JsonValueKind.Null);
-        versions[0].GetProperty("codeModel").GetString().ShouldNotBe("anthropic/claude-sonnet-4-5"); // Katalog adı.
+        versions[0].GetProperty("codeModel").GetString().ShouldNotBe("anthropic/claude-sonnet-5-5"); // Katalog adı.
         versions[0].GetProperty("codeModel").GetString().ShouldNotBeNullOrWhiteSpace();
         versions[0].GetProperty("engine").GetString().ShouldNotBeNullOrWhiteSpace();
         versions[1].GetProperty("audioModel").GetString().ShouldNotBeNullOrWhiteSpace();
@@ -272,7 +272,7 @@ public sealed class ProducedVideosTests : IClassFixture<ProductionApiFactory>
                 JobId = Guid.CreateVersion7(),
                 Title = title,
                 ConceptText = text,
-                CodeModel = "anthropic/claude-sonnet-4-5",
+                CodeModel = "anthropic/claude-sonnet-5-5",
                 AudioModel = audio,
                 Engine = "local/hyperframes",
                 Subtitles = audio is not null,

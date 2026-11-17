@@ -24,8 +24,8 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed class ProductionApiTests : IClassFixture<ProductionApiFactory>
 {
-    private const string Sonnet = "anthropic/claude-sonnet-4-5";
-    private const string Opus = "anthropic/claude-opus-4-5";
+    private const string Sonnet = "anthropic/claude-sonnet-5-5";
+    private const string Opus = "anthropic/claude-opus-5-5";
 
     private static readonly ConceptScene[] Scenes =
     [
@@ -58,11 +58,11 @@ public sealed class ProductionApiTests : IClassFixture<ProductionApiFactory>
         var state = await StateAsync(client, profile, ct);
 
         Ids(state, "video_engine").ShouldBe(["local/hyperframes"]);
-        Ids(state, "image").Order(StringComparer.Ordinal).ShouldBe(["local/flux2-klein-4b", "local/z-image-turbo", "openai/gpt-image-1"]);
+        Ids(state, "image").Order(StringComparer.Ordinal).ShouldBe(["local/flux2-klein-4b", "local/z-image-turbo", "openai/gpt-image-2.6-flare"]);
         Ids(state, "audio").Order(StringComparer.Ordinal).ShouldBe(["local/chatterbox-multilingual-v3", "local/supertonic-3"]);
         Ids(state, "text").ShouldNotBeEmpty();
         Models(state).Where(m => m.GetProperty("kind").GetString() == "text").ShouldAllBe(m => !m.GetProperty("local").GetBoolean());
-        Models(state).Single(m => m.GetProperty("id").GetString() == "openai/gpt-image-1").GetProperty("local").GetBoolean().ShouldBeFalse();
+        Models(state).Single(m => m.GetProperty("id").GetString() == "openai/gpt-image-2.6-flare").GetProperty("local").GetBoolean().ShouldBeFalse();
         Models(state).Single(m => m.GetProperty("id").GetString() == "local/supertonic-3").GetProperty("local").GetBoolean().ShouldBeTrue();
         Models(state).ShouldAllBe(m => !m.GetProperty("name").GetString()!.Contains("Revideo") && !m.GetProperty("name").GetString()!.Contains("Motion Canvas"));
         state.GetProperty("settings").GetProperty("engine").GetString().ShouldBe("local/hyperframes");
@@ -117,15 +117,16 @@ public sealed class ProductionApiTests : IClassFixture<ProductionApiFactory>
         using var client = await _factory.CreateUserClientAsync(ct);
         var profile = await ProfileAsync(client, ct);
         var opus = Models(await StateAsync(client, profile, ct)).Single(m => m.GetProperty("id").GetString() == Opus);
-        opus.GetProperty("effortLevels").EnumerateArray().Select(e => e.GetString()).ShouldBe(["low", "medium", "high"]);
+        opus.GetProperty("effortLevels").EnumerateArray().Select(e => e.GetString()).ShouldBe(["low", "medium", "high", "max"]);
 
         (await SaveAsync(client, profile, Settings(code: Opus, effort: "low"), ct)).Dispose();
         (await StateAsync(client, profile, ct)).GetProperty("settings").GetProperty("codeEffort").GetString().ShouldBe("low");
 
-        (await SaveAsync(client, profile, Settings(code: Opus, effort: "max"), ct)).Dispose();
-        (await StateAsync(client, profile, ct)).GetProperty("settings").GetProperty("codeEffort").GetString().ShouldBe("high");
+        // Plan 0026 A-1: Opus 5.5 low…max destekler (varsayılan medium); desteklenmeyen "xhigh", eforsuz model OpenRouter Sonnet.
+        (await SaveAsync(client, profile, Settings(code: Opus, effort: "xhigh"), ct)).Dispose();
+        (await StateAsync(client, profile, ct)).GetProperty("settings").GetProperty("codeEffort").GetString().ShouldBe("medium");
 
-        (await SaveAsync(client, profile, Settings(code: Sonnet, effort: "low"), ct)).Dispose();
+        (await SaveAsync(client, profile, Settings(code: "openrouter/anthropic/claude-sonnet-5.5", effort: "low"), ct)).Dispose();
         (await StateAsync(client, profile, ct)).GetProperty("settings").GetProperty("codeEffort").ValueKind.ShouldBe(JsonValueKind.Null);
 
         using var wrongKind = await SaveAsync(client, profile, Settings(code: "local/supertonic-3"), ct);
@@ -143,7 +144,7 @@ public sealed class ProductionApiTests : IClassFixture<ProductionApiFactory>
         var ct = TestContext.Current.CancellationToken;
         await using var factory = new ProductionApiFactory
         {
-            UserModelPermissions = "openai/gpt-5-mini,local/hyperframes,local/supertonic-3,local/z-image-turbo",
+            UserModelPermissions = "openai/gpt-6.1-terra,local/hyperframes,local/supertonic-3,local/z-image-turbo",
         };
         using var client = await factory.CreateUserClientAsync(ct);
         var profile = await ProfileAsync(client, ct);
@@ -153,13 +154,13 @@ public sealed class ProductionApiTests : IClassFixture<ProductionApiFactory>
 
         var state = await StateAsync(client, profile, ct);
         Availability(state, Sonnet).ShouldBe("no_permission");
-        Availability(state, "openai/gpt-5-mini").ShouldBe("no_key");
+        Availability(state, "openai/gpt-6.1-terra").ShouldBe("no_key");
         using var denied = await SaveAsync(client, profile, Settings(code: Sonnet), ct);
         denied.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await denied.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("title").GetString().ShouldBe("Bu modeli kullanma yetkiniz yok");
         (await StateAsync(client, profile, ct)).GetProperty("settings").GetProperty("codeModel").ValueKind.ShouldBe(JsonValueKind.Null);
 
-        (await SaveAsync(client, profile, Settings(code: "openai/gpt-5-mini"), ct)).EnsureSuccessStatusCode();
+        (await SaveAsync(client, profile, Settings(code: "openai/gpt-6.1-terra"), ct)).EnsureSuccessStatusCode();
         var noKey = await StateAsync(client, profile, ct);
         noKey.GetProperty("startBlock").GetString().ShouldBe("no_key");
         noKey.GetProperty("startBlockMessage").GetString().ShouldBe("API key yok — Ayarlar");

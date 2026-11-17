@@ -9,13 +9,13 @@ namespace Konsept.Modules.AiGateway.Domain.Entities;
 /// </summary>
 public sealed class ModelEntry
 {
-    /// <summary>Gets kararlı kimlik (ör. <c>anthropic/claude-sonnet-4-5</c>).</summary>
+    /// <summary>Gets kararlı kimlik (ör. <c>anthropic/claude-sonnet-5-5</c>).</summary>
     public required string Id { get; init; }
 
     /// <summary>Gets bağlı olduğu sağlayıcının kimliği.</summary>
     public required string ProviderId { get; init; }
 
-    /// <summary>Gets sağlayıcı API'sindeki model adı (ör. <c>claude-sonnet-4-5</c>); yoksa kimliğin ilk <c>/</c>'den sonrası.</summary>
+    /// <summary>Gets sağlayıcı API'sindeki model adı (ör. <c>claude-sonnet-5-5</c>); yoksa kimliğin ilk <c>/</c>'den sonrası.</summary>
     public string? ApiModel { get; init; }
 
     /// <summary>Gets sağlayıcı API'sine gönderilecek model adı.</summary>

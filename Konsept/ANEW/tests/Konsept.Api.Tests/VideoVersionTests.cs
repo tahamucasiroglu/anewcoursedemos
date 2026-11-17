@@ -26,13 +26,13 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed partial class VideoVersionTests : IClassFixture<VersionApiFactory>
 {
-    private const string Sonnet = "anthropic/claude-sonnet-4-5";
+    private const string Sonnet = "anthropic/claude-sonnet-5-5";
     private const string Html = "<!doctype html><html><body><div>sahne</div></body></html>";
     private const string Supertonic = "local/supertonic-3";
     private const string Chatterbox = "local/chatterbox-multilingual-v3";
     private const string ZImage = "local/z-image-turbo";
     private const string Flux = "local/flux2-klein-4b";
-    private const string GptImage = "openai/gpt-image-1";
+    private const string GptImage = "openai/gpt-image-2.6-flare";
     private const string Busy = "Bu video için zaten üretimde bir sürüm var.";
 
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(20);

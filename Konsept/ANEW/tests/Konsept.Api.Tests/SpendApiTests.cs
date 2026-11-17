@@ -53,7 +53,7 @@ public sealed class SpendApiTests : IClassFixture<AiGatewayApiFactory>
                 UserId = userId,
                 OccurredAt = at,
                 ProviderId = "anthropic",
-                ModelId = "anthropic/claude-sonnet-4-5",
+                ModelId = "anthropic/claude-sonnet-5-5",
                 ProfileId = profile,
                 CostUsd = cost,
             },

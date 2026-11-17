@@ -33,9 +33,9 @@ const catalog = () => ({
   version: '1.1.0',
   providers: [{ id: 'anthropic', name: 'Anthropic' }, { id: 'openai', name: 'OpenAI' }],
   models: [
-    { id: 'anthropic/claude-sonnet-4-5', providerId: 'anthropic', providerName: 'Anthropic', name: 'Claude Sonnet 4.5', kind: 'text', availability: 'no_permission' },
-    { id: 'openai/gpt-5-mini', providerId: 'openai', providerName: 'OpenAI', name: 'GPT-5 mini', kind: 'text', availability: 'available' },
-    { id: 'openai/gpt-image-1', providerId: 'openai', providerName: 'OpenAI', name: 'gpt-image-1', kind: 'image', availability: 'available' },
+    { id: 'anthropic/claude-sonnet-5-5', providerId: 'anthropic', providerName: 'Anthropic', name: 'Claude Sonnet 5.5', kind: 'text', availability: 'no_permission' },
+    { id: 'openai/gpt-6.1-terra', providerId: 'openai', providerName: 'OpenAI', name: 'GPT-6.1 Terra', kind: 'text', availability: 'available' },
+    { id: 'openai/gpt-image-2.6-flare', providerId: 'openai', providerName: 'OpenAI', name: 'gpt-image-2.6-flare', kind: 'image', availability: 'available' },
   ],
 });
 
@@ -66,20 +66,20 @@ describe('Modeller: Yetki yok ve Dene (spec 0013)', () => {
   it('AC-2/Req 3: yetkisiz model "Yetki yok" görünür ve denenemez; yalnızca kullanılabilir metin modelinde "Dene" vardır', async () => {
     await initSettings(document);
 
-    expect(row('anthropic/claude-sonnet-4-5').querySelector('.badge').textContent).toBe('Yetki yok');
-    expect(row('anthropic/claude-sonnet-4-5').querySelector('.model-row__trial-button')).toBeNull();
-    expect(row('openai/gpt-image-1').querySelector('.model-row__trial-button')).toBeNull();
-    const button = row('openai/gpt-5-mini').querySelector('.model-row__trial-button');
+    expect(row('anthropic/claude-sonnet-5-5').querySelector('.badge').textContent).toBe('Yetki yok');
+    expect(row('anthropic/claude-sonnet-5-5').querySelector('.model-row__trial-button')).toBeNull();
+    expect(row('openai/gpt-image-2.6-flare').querySelector('.model-row__trial-button')).toBeNull();
+    const button = row('openai/gpt-6.1-terra').querySelector('.model-row__trial-button');
     expect(button.textContent).toBe('Dene');
-    expect(button.getAttribute('aria-label')).toBe('GPT-5 mini modelini dene (ücretli kısa çağrı)');
+    expect(button.getAttribute('aria-label')).toBe('GPT-6.1 Terra modelini dene (ücretli kısa çağrı)');
   });
 
   it('Dene: sürerken pasif ve tek istek; sonuç metni, token ve maliyet ($, Türkçe virgül) gösterir', async () => {
     let release;
     routes['POST /ayarlar/modeller/dene'] = () => $.Deferred((d) => { release = () => d.resolve({ text: 'Merhaba', truncated: false, inputTokens: 12, outputTokens: 34, costUsd: 0.00081, isEstimated: false }); }).promise();
     await initSettings(document);
-    const button = row('openai/gpt-5-mini').querySelector('.model-row__trial-button');
-    const result = row('openai/gpt-5-mini').querySelector('.model-row__trial');
+    const button = row('openai/gpt-6.1-terra').querySelector('.model-row__trial-button');
+    const result = row('openai/gpt-6.1-terra').querySelector('.model-row__trial');
 
     button.click();
     button.click();
@@ -90,7 +90,7 @@ describe('Modeller: Yetki yok ve Dene (spec 0013)', () => {
 
     const posts = calls.filter((c) => c.method === 'POST');
     expect(posts).toHaveLength(1);
-    expect(JSON.parse(posts[0].data)).toEqual({ modelId: 'openai/gpt-5-mini' });
+    expect(JSON.parse(posts[0].data)).toEqual({ modelId: 'openai/gpt-6.1-terra' });
     expect(result.textContent).toBe('Yanıt: Merhaba · 12 giriş / 34 çıkış token · $0,000810');
     expect(result.getAttribute('role')).toBe('status');
     expect(button.disabled).toBe(false);
@@ -98,8 +98,8 @@ describe('Modeller: Yetki yok ve Dene (spec 0013)', () => {
 
   it('Dene: Api\'nin Türkçe nedeni (key yok, yetki yok, sağlayıcı reddi) gösterilir; bilinmeyen hatada korelasyon no', async () => {
     await initSettings(document);
-    const button = row('openai/gpt-5-mini').querySelector('.model-row__trial-button');
-    const result = row('openai/gpt-5-mini').querySelector('.model-row__trial');
+    const button = row('openai/gpt-6.1-terra').querySelector('.model-row__trial-button');
+    const result = row('openai/gpt-6.1-terra').querySelector('.model-row__trial');
 
     routes['POST /ayarlar/modeller/dene'] = fail(400, { message: 'OpenAI için API key girilmemiş — Ayarlar' });
     button.click();

@@ -13,13 +13,13 @@ public sealed class VersionStagesTests
     private const string ElevenLabs = "elevenlabs/eleven-multilingual-v2";
     private const string ZImage = "local/z-image-turbo";
     private const string Flux = "local/flux2-klein-4b";
-    private const string GptImage = "openai/gpt-image-1";
+    private const string GptImage = "openai/gpt-image-2.6-flare";
 
     private static readonly FixedJobSettings Base = new()
     {
         Subtitles = true,
         ProgressBar = false,
-        CodeModel = "anthropic/claude-sonnet-4-5",
+        CodeModel = "anthropic/claude-sonnet-5-5",
         Engine = "local/hyperframes",
         ImageModel = ZImage,
         AudioModel = Supertonic,

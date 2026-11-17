@@ -25,7 +25,7 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiFactory>
 {
-    private const string Sonnet = "anthropic/claude-sonnet-4-5";
+    private const string Sonnet = "anthropic/claude-sonnet-5-5";
     private const string Html = "<!doctype html><html><body><div>sahne</div></body></html>";
 
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(20);
@@ -530,7 +530,7 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
     public async Task Pipeline_AgentCommands_NoKey_OnlyOwnerAgent()
     {
         var ct = TestContext.Current.CancellationToken;
-        var (client, profile, user, conn) = await SetupAsync(ct, image: "openai/gpt-image-1");
+        var (client, profile, user, conn) = await SetupAsync(ct, image: "openai/gpt-image-2.6-flare");
         var (_, _, otherUser, otherConn) = await SetupAsync(ct, reset: false);
         var concept = Seed(profile, user, "Online Görsel");
         await EnqueueAndStartAsync(client, profile, [concept], ct);
@@ -632,7 +632,7 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
     public async Task Pipeline_AgentHandlerError_FailsOnce_NoPaidRetry()
     {
         var ct = TestContext.Current.CancellationToken;
-        var (client, profile, user, _) = await SetupAsync(ct, image: "openai/gpt-image-1");
+        var (client, profile, user, _) = await SetupAsync(ct, image: "openai/gpt-image-2.6-flare");
         _factory.Agent.Stage = (conn, cmd, token) => throw new Microsoft.AspNetCore.SignalR.HubException("işleyici yok");
         var concept = Seed(profile, user, "Uyumsuz Ajan");
         await EnqueueAndStartAsync(client, profile, [concept], ct);
@@ -815,7 +815,7 @@ public sealed partial class ProductionPipelineTests : IClassFixture<PipelineApiF
         created.EnsureSuccessStatusCode();
         var profile = (await created.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("id").GetGuid();
         await KeyAsync(client, "anthropic", ct);
-        if (image == "openai/gpt-image-1")
+        if (image == "openai/gpt-image-2.6-flare")
         {
             await KeyAsync(client, "openai", ct);
         }

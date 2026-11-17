@@ -47,7 +47,7 @@ public sealed class PipelineRulesTests
     [Fact]
     public void RequiredTools_CoreEngineAndLocalModels()
     {
-        PipelineRules.RequiredTools(Fixed("openai/gpt-image-1", "local/supertonic-3"))
+        PipelineRules.RequiredTools(Fixed("openai/gpt-image-2.6-flare", "local/supertonic-3"))
             .ShouldBe(["node", "ffmpeg", "chromium", "hyperframes", "supertonic-3"]);
         PipelineRules.ToolName("supertonic-3").ShouldBe("Supertonic 3");
         PipelineRules.AfterFailure(1).ShouldBe((2, false));
@@ -84,7 +84,7 @@ public sealed class PipelineRulesTests
     private static FixedJobSettings Fixed(string? image, string? audio) => new()
     {
         Engine = "local/hyperframes",
-        CodeModel = "anthropic/claude-sonnet-4-5",
+        CodeModel = "anthropic/claude-sonnet-5-5",
         ImageModel = image,
         AudioModel = audio,
         Language = "tr",

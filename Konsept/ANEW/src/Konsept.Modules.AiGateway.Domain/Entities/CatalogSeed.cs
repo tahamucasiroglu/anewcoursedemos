@@ -20,4 +20,26 @@ public sealed class CatalogSeed
 
     /// <summary>Gets modeller.</summary>
     public IReadOnlyList<ModelEntry> Models { get; init; } = [];
+
+    /// <summary>
+    /// Gets katalogdan kaldırılan eski kimlik → yerine geçen güncel kimlik (spec 0026 Req 2). Eski kimlik listelenmez; geçmiş
+    /// kayıtlardan (sabitlenmiş iş, sürüm tabanı) gelen çağrı yerine geçen girişe gider.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> ReplacedModels { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Kimliğin girişini bulur: doğrudan eşleşme, yoksa yerine geçen giriş (spec 0026 Req 4).</summary>
+    /// <param name="id">Model kimliği.</param>
+    /// <returns>Giriş; bilinmiyorsa <c>null</c>.</returns>
+    public ModelEntry? Find(string? id)
+    {
+        if (id is null)
+        {
+            return null;
+        }
+
+        return Models.FirstOrDefault(m => string.Equals(m.Id, id, StringComparison.Ordinal))
+            ?? (ReplacedModels.TryGetValue(id, out var current)
+                ? Models.FirstOrDefault(m => string.Equals(m.Id, current, StringComparison.Ordinal))
+                : null);
+    }
 }

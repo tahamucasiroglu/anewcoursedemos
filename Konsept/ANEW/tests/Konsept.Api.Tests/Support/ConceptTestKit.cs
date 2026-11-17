@@ -11,13 +11,13 @@ namespace Konsept.Api.Tests.Support;
 public static class ConceptTestKit
 {
     /// <summary>Konsept rolü modeli.</summary>
-    public const string ConceptModel = "anthropic/claude-sonnet-4-5";
+    public const string ConceptModel = "anthropic/claude-sonnet-5-5";
 
     /// <summary>Anlamca tekrar denetimi modeli.</summary>
-    public const string DedupeModel = "anthropic/claude-haiku-4-5";
+    public const string DedupeModel = "anthropic/claude-haiku-5-5";
 
     /// <summary>Konu önerisi modeli.</summary>
-    public const string TopicModel = "anthropic/claude-opus-4-5";
+    public const string TopicModel = "anthropic/claude-opus-5-5";
 
     /// <summary>Profil oluşturur, Anthropic key'i ekler ve üç rol için model seçer.</summary>
     /// <param name="client">İstemci.</param>

@@ -44,7 +44,7 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         using var client = await AuthenticatedClient.CreateAsync(_factory, ct, email);
         var profile = await ProfileApiTests.CreateAsync(client, "Üretim Gerçek", ct);
         var userId = (Guid)(await _factory.Database.ScalarAsync($"SELECT id FROM identity.users WHERE email = '{email}'"))!;
-        var settings = new { subtitles = true, progressBar = true, codeModel = "anthropic/claude-sonnet-4-5", codeEffort = (string?)null, engine = "local/hyperframes", imageModel = (string?)null, audioModel = "local/supertonic-3" };
+        var settings = new { subtitles = true, progressBar = true, codeModel = "anthropic/claude-sonnet-5-5", codeEffort = (string?)null, engine = "local/hyperframes", imageModel = (string?)null, audioModel = "local/supertonic-3" };
         (await client.PutAsJsonAsync($"/api/production/settings?profileId={profile}", settings, ct)).EnsureSuccessStatusCode();
         (await client.PutAsJsonAsync($"/api/production/settings?profileId={profile}", settings with { progressBar = false }, ct)).EnsureSuccessStatusCode();
 
@@ -73,7 +73,7 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         {
             Subtitles = true,
             ProgressBar = false,
-            CodeModel = "anthropic/claude-sonnet-4-5",
+            CodeModel = "anthropic/claude-sonnet-5-5",
             Engine = "local/hyperframes",
             AudioModel = "local/supertonic-3",
             Language = "tr",
@@ -88,7 +88,7 @@ public sealed class ProductionIntegrationTests : IClassFixture<IntegrationApiFac
         running.GetProperty("jobs")[0].GetProperty("status").GetString().ShouldBe("producing");
         running.GetProperty("startBlock").GetString().ShouldBe("running_here");
         var fix = running.GetProperty("jobs")[0].GetProperty("fixed");
-        fix.GetProperty("settings").GetProperty("codeModel").GetString().ShouldBe("anthropic/claude-sonnet-4-5");
+        fix.GetProperty("settings").GetProperty("codeModel").GetString().ShouldBe("anthropic/claude-sonnet-5-5");
         (fix.GetProperty("language").GetString(), fix.GetProperty("format").GetString(), fix.GetProperty("targetDurationSeconds").GetInt32()).ShouldBe(("tr", "portrait", 60));
         (await State(client, profile, ct)).GetProperty("settings").GetProperty("progressBar").GetBoolean().ShouldBeFalse(); // Upsert.
         (await concepts.UpdateScenesAsync(userId, ids[1], [ConceptStatus.Generated, ConceptStatus.Approved], [new("X", "Y", "Z", 60)], false, false, DateTimeOffset.UtcNow, ct))

@@ -49,7 +49,7 @@ public abstract class AiCallGatewayBase(
     {
         ArgumentNullException.ThrowIfNull(request);
         var seed = catalog.Catalog;
-        var model = seed.Models.FirstOrDefault(m => string.Equals(m.Id, request.ModelId, StringComparison.Ordinal));
+        var model = seed.Find(request.ModelId); // Eski (kaldırılmış) kimlik yerine geçen girişe çözülür (spec 0026 Req 4).
         var entry = model is null ? null : seed.Providers.FirstOrDefault(p => string.Equals(p.Id, model.ProviderId, StringComparison.Ordinal));
         if (model is null || entry is null)
         {
@@ -73,9 +73,15 @@ public abstract class AiCallGatewayBase(
             return Result<AiCallResult>.Failure(AiGatewayErrors.KeyUnreadable(entry.Name));
         }
 
-        if (request.Effort is { } asked && !model.EffortLevels.Contains(asked, StringComparer.Ordinal))
+        var effort = request.Effort;
+        if (effort is { } asked && !model.EffortLevels.Contains(asked, StringComparer.Ordinal))
         {
-            return Result<AiCallResult>.Failure(AiGatewayErrors.EffortUnsupported);
+            if (string.Equals(model.Id, request.ModelId, StringComparison.Ordinal))
+            {
+                return Result<AiCallResult>.Failure(AiGatewayErrors.EffortUnsupported);
+            }
+
+            effort = null; // Eski kimlikle kaydedilmiş efor yerine geçen modelde yok: model varsayılanı (spec 0026 Req 4).
         }
 
         var isImage = model.Kind == ModelKind.Image;
@@ -88,7 +94,7 @@ public abstract class AiCallGatewayBase(
             entry,
             model,
             apiKey,
-            request.Effort ?? model.DefaultEffort,
+            effort ?? model.DefaultEffort,
             isImage ? null : ClampOutput(request.MaxOutputTokens, model.OutputTokenLimit),
             request.System,
             request.Prompt,

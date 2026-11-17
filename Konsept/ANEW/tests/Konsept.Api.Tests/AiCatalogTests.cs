@@ -105,7 +105,7 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
     {
         var ct = TestContext.Current.CancellationToken;
         var seed = JsonNode.Parse(EmbeddedCatalogSource.ReadEmbeddedJson())!;
-        var sonnet = seed["models"]!.AsArray().Single(m => (string?)m!["id"] == "anthropic/claude-sonnet-4-5")!;
+        var sonnet = seed["models"]!.AsArray().Single(m => (string?)m!["id"] == "anthropic/claude-sonnet-5-5")!;
         sonnet["outputTokenLimit"] = 12345;
         sonnet["timeoutSeconds"] = 77;
         sonnet["inputPricePerMillionUsd"] = 0.123456m;
@@ -114,7 +114,7 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
 
         var catalog = await client.GetFromJsonAsync<JsonElement>("/api/ai/catalog", ct);
 
-        var model = catalog.GetProperty("models").EnumerateArray().Single(m => m.GetProperty("id").GetString() == "anthropic/claude-sonnet-4-5");
+        var model = catalog.GetProperty("models").EnumerateArray().Single(m => m.GetProperty("id").GetString() == "anthropic/claude-sonnet-5-5");
         model.GetProperty("outputTokenLimit").GetInt32().ShouldBe(12345);
         model.GetProperty("timeoutSeconds").GetInt32().ShouldBe(77);
         model.GetProperty("inputPricePerMillionUsd").GetDecimal().ShouldBe(0.123456m);
@@ -210,5 +210,96 @@ public sealed class AiCatalogTests : IClassFixture<AiGatewayApiFactory>
         listed.Select(m => m.Id).ShouldBe(seed.Models.Where(m => m.Kind == ModelKind.Text).Select(m => m.Id));
         listed.ShouldAllBe(m => m.Selectable);
         seed.Models.Count(m => m.Kind is ModelKind.Audio or ModelKind.VideoEngine).ShouldBe(4);
+    }
+
+    /// <summary>
+    /// Spec 0026 AC-1: katalog API'si güncel online modelleri spec tablosundaki API adı, efor, varsayılan efor, çıktı limiti ve fiyatla
+    /// döner; kaldırılan eski kimlikler listede yoktur; yerel girişler değişmez.
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Catalog_CurrentOnlineModels_MatchSpecTable()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await _factory.CreateUserClientAsync(ct);
+        string[] all = ["low", "medium", "high", "max"];
+        var expected = new (string Id, string Api, string[] Efforts, string? Default, int? Limit, decimal? In, decimal? Out, decimal? Image)[]
+        {
+            ("anthropic/claude-opus-5-5", "claude-opus-5-5", all, "medium", 128000, 4m, 20m, null),
+            ("anthropic/claude-sonnet-5-5", "claude-sonnet-5-5", all, "high", 128000, 2m, 10m, null),
+            ("anthropic/claude-haiku-5-5", "claude-haiku-5-5", all, "medium", 128000, 0.10m, 0.50m, null),
+            ("openai/gpt-6-astra", "gpt-6-astra", all, "medium", 128000, 10m, 50m, null),
+            ("openai/gpt-6.1-sol", "gpt-6.1-sol", all, "medium", 128000, 2m, 10m, null),
+            ("openai/gpt-6.1-terra", "gpt-6.1-terra", all, "medium", 128000, 1m, 5m, null),
+            ("openai/gpt-image-2.6-flare", "gpt-image-2.6-flare", [], null, null, null, null, 0.044m),
+            ("openrouter/anthropic/claude-sonnet-5.5", "anthropic/claude-sonnet-5.5", [], null, 128000, 2m, 10m, null),
+            ("openrouter/anthropic/claude-opus-5.5", "anthropic/claude-opus-5.5", [], null, 128000, 4m, 20m, null),
+            ("glm/glm-5.3", "glm-5.3", [], null, 128000, 1.40m, 4.40m, null),
+            ("kimi/kimi-k3.1-pro", "kimi-k3.1-pro", [], null, 131072, 2m, 10m, null),
+        };
+
+        var catalog = await client.GetFromJsonAsync<JsonElement>("/api/ai/catalog", ct);
+        var online = catalog.GetProperty("models").EnumerateArray().Where(m => !m.GetProperty("local").GetBoolean()).ToList();
+        var seed = new EmbeddedCatalogSource().Catalog;
+
+        online.Select(m => m.GetProperty("id").GetString()).ShouldBe(expected.Select(e => e.Id));
+        foreach (var e in expected)
+        {
+            var model = online.Single(m => m.GetProperty("id").GetString() == e.Id);
+            seed.Models.Single(m => m.Id == e.Id).ProviderModelName.ShouldBe(e.Api, e.Id);
+            model.GetProperty("effortLevels").EnumerateArray().Select(x => x.GetString()).ShouldBe(e.Efforts, e.Id);
+            Value(model, "defaultEffort").ShouldBe(e.Default, e.Id);
+            Value(model, "outputTokenLimit").ShouldBe(e.Limit is { } limit ? (decimal)limit : null, e.Id);
+            Value(model, "inputPricePerMillionUsd").ShouldBe(e.In, e.Id);
+            Value(model, "outputPricePerMillionUsd").ShouldBe(e.Out, e.Id);
+            Value(model, "pricePerImageUsd").ShouldBe(e.Image, e.Id);
+        }
+
+        var ids = catalog.GetProperty("models").EnumerateArray().Select(m => m.GetProperty("id").GetString()).ToList();
+        seed.ReplacedModels.Keys.ShouldAllBe(old => !ids.Contains(old));
+        catalog.GetProperty("models").EnumerateArray().Where(m => m.GetProperty("local").GetBoolean()).Select(m => m.GetProperty("id").GetString())
+            .ShouldBe(["local/z-image-turbo", "local/flux2-klein-4b", "local/supertonic-3", "local/chatterbox-multilingual-v3", "local/hyperframes", "local/remotion"]);
+    }
+
+    /// <summary>
+    /// Spec 0026 AC-2: her yerine geçen eşlemesi katalogda var olan, eski modelin türünde, kendisi yerine geçilmemiş bir girişe işaret
+    /// eder; eski kimlik katalog girişi değildir; <see cref="Modules.AiGateway.Domain.Entities.CatalogSeed.Find"/> eski kimliği yeni
+    /// girişe çözer. Profiles ve Production veri migration'larının eşlemesi katalogla aynıdır (plan 0026, AC-4 taşıması).
+    /// </summary>
+    [Fact]
+    public void ReplacedModels_PointToCurrentSameKindEntries()
+    {
+        var seed = new EmbeddedCatalogSource().Catalog;
+        var expected = seed.ReplacedModels.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => (p.Key, p.Value)).ToList();
+
+        expected.Count.ShouldBe(9);
+        foreach (var (oldId, newId) in expected)
+        {
+            seed.Models.ShouldNotContain(m => m.Id == oldId, oldId);
+            var entry = seed.Models.SingleOrDefault(m => m.Id == newId);
+            entry.ShouldNotBeNull(newId);
+            entry.Local.ShouldBeFalse(newId);
+            entry.ProviderId.ShouldBe(oldId[..oldId.IndexOf('/', StringComparison.Ordinal)], oldId);
+            entry.Kind.ShouldBe(oldId.Contains("gpt-image", StringComparison.Ordinal) ? ModelKind.Image : ModelKind.Text, oldId);
+            seed.ReplacedModels.ContainsKey(newId).ShouldBeFalse(newId);
+            seed.Find(oldId).ShouldBeSameAs(entry);
+            seed.Find(newId).ShouldBeSameAs(entry);
+        }
+
+        seed.Find("openai/gpt-4").ShouldBeNull();
+        seed.Find(null).ShouldBeNull();
+        Konsept.Modules.Profiles.Infrastructure.Persistence.Migrations.ReplaceRetiredModels.Replaced.OrderBy(r => r.Old, StringComparer.Ordinal).ShouldBe(expected);
+        Konsept.Modules.Production.Infrastructure.Persistence.Migrations.ReplaceRetiredModels.Replaced.OrderBy(r => r.Old, StringComparer.Ordinal).ShouldBe(expected);
+    }
+
+    private static object? Value(JsonElement model, string name)
+    {
+        var value = model.GetProperty(name);
+        return value.ValueKind switch
+        {
+            JsonValueKind.Null => null,
+            JsonValueKind.Number => value.GetDecimal(),
+            _ => value.GetString(),
+        };
     }
 }

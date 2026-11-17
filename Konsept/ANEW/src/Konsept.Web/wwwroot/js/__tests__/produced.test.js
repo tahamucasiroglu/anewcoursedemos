@@ -53,7 +53,7 @@ const scenes = (narration) => [
 ];
 const version = (id, number, extra = {}) => ({
   id, number, status: 'completed', changes: number === 1 ? 'İlk sürüm' : 'Değişti: konsept metni', costUsd: 0, durationSeconds: 1812, format: 'landscape',
-  startedAt: '2026-11-02T07:01:00Z', endedAt: '2026-11-02T07:05:00Z', codeModel: 'Claude Sonnet 4.5', engine: 'HyperFrames', imageModel: null,
+  startedAt: '2026-11-02T07:01:00Z', endedAt: '2026-11-02T07:05:00Z', codeModel: 'Claude Sonnet 5.5', engine: 'HyperFrames', imageModel: null,
   audioModel: null, subtitles: false, progressBar: true, aiVoiceNotice: false, conceptTitle: 'Kuşatma', scenes: scenes(`Metin ${number}`), ...extra,
 });
 const DETAIL = {
@@ -195,7 +195,7 @@ describe('Üretilen Videolar (spec 0007)', () => {
     expect([...el('produced-scenes').querySelectorAll('li')].map((li) => li.textContent)).toEqual(['1. AçılışMetin 2', '2. SonBir çağ kapanıyor.']);
     const details = [...el('produced-details').children].map((n) => n.textContent);
     expect(details).toEqual([
-      'Sürüm ücreti', '$1,24', 'Tüm sürümlerin toplamı', '$1,24', 'Video kodu modeli', 'Claude Sonnet 4.5', 'Video motoru', 'HyperFrames',
+      'Sürüm ücreti', '$1,24', 'Tüm sürümlerin toplamı', '$1,24', 'Video kodu modeli', 'Claude Sonnet 5.5', 'Video motoru', 'HyperFrames',
       'Görsel modeli', 'Kapalı', 'Ses motoru', 'Supertonic 3', 'Altyazı', 'Açık', 'İlerleme çubuğu', 'Açık', 'Video süresi', '30 dk 12 sn',
       'Biçim', 'Dikey', 'Başlangıç', '10:01', 'Bitiş', '00:30', 'Yapay zekâ ile üretilmiş ses', 'Açık',
     ]);

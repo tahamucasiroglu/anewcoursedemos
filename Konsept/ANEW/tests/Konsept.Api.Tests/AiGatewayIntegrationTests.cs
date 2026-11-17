@@ -166,7 +166,7 @@ public sealed class AiGatewayIntegrationTests : IClassFixture<IntegrationApiFact
         UserId = userId,
         OccurredAt = at,
         ProviderId = "anthropic",
-        ModelId = "anthropic/claude-sonnet-4-5",
+        ModelId = "anthropic/claude-sonnet-5-5",
         Effort = null,
         Purpose = CallPurpose.Trial,
         InputTokens = 10,

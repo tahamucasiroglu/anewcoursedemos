@@ -51,9 +51,9 @@ const catalog = () => ({
   providers: [{ id: 'anthropic', name: 'Anthropic' }, { id: 'openai', name: 'OpenAI' }, { id: 'kimi', name: 'Kimi' }],
   models: [
     { id: 'anthropic/claude', providerId: 'anthropic', providerName: 'Anthropic', name: 'Claude', kind: 'text', availability: 'no_key' },
-    { id: 'openai/gpt-5', providerId: 'openai', providerName: 'OpenAI', name: 'GPT-5', kind: 'text', availability: 'available' },
-    { id: 'openai/gpt-image-1', providerId: 'openai', providerName: 'OpenAI', name: 'gpt-image-1', kind: 'image', availability: 'available' },
-    { id: 'kimi/k2', providerId: 'kimi', providerName: 'Kimi', name: 'Kimi K2', kind: 'text', availability: 'unreadable' },
+    { id: 'openai/gpt-6.1-sol', providerId: 'openai', providerName: 'OpenAI', name: 'GPT-6.1 Sol', kind: 'text', availability: 'available' },
+    { id: 'openai/gpt-image-2.6-flare', providerId: 'openai', providerName: 'OpenAI', name: 'gpt-image-2.6-flare', kind: 'image', availability: 'available' },
+    { id: 'kimi/k2', providerId: 'kimi', providerName: 'Kimi', name: 'Kimi K3.1 Pro', kind: 'text', availability: 'unreadable' },
   ],
 });
 
@@ -281,8 +281,8 @@ describe('Ayarlar (spec 0004)', () => {
     const names = () => [...document.querySelectorAll('#model-list .model-row__name')].map((n) => n.textContent);
     const badge = (id) => document.querySelector(`[data-model-id="${id}"] .badge`).textContent;
 
-    expect(names()).toEqual(['Claude', 'GPT-5', 'gpt-image-1', 'Kimi K2']);
-    expect(badge('openai/gpt-5')).toBe('Kullanılabilir');
+    expect(names()).toEqual(['Claude', 'GPT-6.1 Sol', 'gpt-image-2.6-flare', 'Kimi K3.1 Pro']);
+    expect(badge('openai/gpt-6.1-sol')).toBe('Kullanılabilir');
     expect(badge('anthropic/claude')).toBe('Key yok');
     expect(badge('kimi/k2')).toBe('Key okunamıyor');
     expect([...document.querySelectorAll('#model-provider option')].map((o) => o.textContent)).toEqual(['Tümü', 'Anthropic', 'OpenAI', 'Kimi']);
@@ -291,7 +291,7 @@ describe('Ayarlar (spec 0004)', () => {
     const provider = document.getElementById('model-provider');
     kind.value = 'image';
     kind.dispatchEvent(new Event('change'));
-    expect(names()).toEqual(['gpt-image-1']);
+    expect(names()).toEqual(['gpt-image-2.6-flare']);
     provider.value = 'kimi';
     provider.dispatchEvent(new Event('change'));
     expect(names()).toEqual([]);
@@ -299,7 +299,7 @@ describe('Ayarlar (spec 0004)', () => {
     expect(document.getElementById('model-list').hidden).toBe(true);
     kind.value = '';
     kind.dispatchEvent(new Event('change'));
-    expect(names()).toEqual(['Kimi K2']);
+    expect(names()).toEqual(['Kimi K3.1 Pro']);
     expect(document.getElementById('models-empty').hidden).toBe(true);
   });
 

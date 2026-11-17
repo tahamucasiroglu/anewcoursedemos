@@ -15,8 +15,9 @@ namespace Konsept.Api.Tests;
 /// </summary>
 public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFactory>
 {
-    private const string Opus = "anthropic/claude-opus-4-5";
-    private const string Sonnet = "anthropic/claude-sonnet-4-5";
+    private const string Opus = "anthropic/claude-opus-5-5";
+    private const string Sonnet = "anthropic/claude-sonnet-5-5";
+    private const string RouterSonnet = "openrouter/anthropic/claude-sonnet-5.5";
     private readonly ConceptSettingsApiFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="ConceptSettingsApiTests"/> class.</summary>
@@ -54,7 +55,7 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
 
     /// <summary>
     /// AC-3: yalnızca geçerli key'i olan sağlayıcıların ve yetkili olunan metin modelleri listelenir; "Key yok" (GLM), "Key okunamıyor"
-    /// (Kimi), yetkisiz (Sonnet, GPT-5) ve görsel model (gpt-image-1) listelenmez; yerel/Ollama katalogda hiç yok.
+    /// (Kimi), yetkisiz (Sonnet, GPT-6.1 Sol) ve görsel model (gpt-image-2.6-flare) listelenmez; yerel/Ollama katalogda hiç yok.
     /// </summary>
     /// <returns>Görev.</returns>
     [Fact]
@@ -69,10 +70,10 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
         var settings = await GetAsync(client, profile, ct);
         var models = settings.GetProperty("models").EnumerateArray().ToList();
 
-        models.Select(m => m.GetProperty("id").GetString()).ShouldBe([Opus, "openai/gpt-5-mini"]);
-        models[0].GetProperty("name").GetString().ShouldBe("Claude Opus 4.5");
-        models[0].GetProperty("effortLevels").EnumerateArray().Select(e => e.GetString()).ShouldBe(["low", "medium", "high"]);
-        models[0].GetProperty("defaultEffort").GetString().ShouldBe("high");
+        models.Select(m => m.GetProperty("id").GetString()).ShouldBe([Opus, "openai/gpt-6.1-terra"]);
+        models[0].GetProperty("name").GetString().ShouldBe("Claude Opus 5.5");
+        models[0].GetProperty("effortLevels").EnumerateArray().Select(e => e.GetString()).ShouldBe(["low", "medium", "high", "max"]);
+        models[0].GetProperty("defaultEffort").GetString().ShouldBe("medium"); // Opus 5.5 (plan 0026 A-1).
         models.ShouldAllBe(m => !m.GetProperty("id").GetString()!.Contains("ollama", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -91,7 +92,7 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
         await SetupKeysAsync(factory, client, ct);
         (await PutAsync(client, profile, new { models = new[] { Role("concept", Opus, "medium") } }, ct)).EnsureSuccessStatusCode();
 
-        foreach (var model in new[] { Sonnet, "openai/gpt-5", "glm/glm-4.6", "kimi/kimi-k2", "openai/gpt-image-1", "ollama/llama3" })
+        foreach (var model in new[] { Sonnet, "openai/gpt-6.1-sol", "glm/glm-5.3", "kimi/kimi-k3.1-pro", "openai/gpt-image-2.6-flare", "ollama/llama3" })
         {
             using var response = await PutAsync(client, profile, new { models = new[] { Role("concept", model, null) }, wordCheck = true }, ct);
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest, model);
@@ -115,8 +116,10 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
         using var client = await _factory.CreateUserClientAsync(ct);
         var profile = await ProfileApiTests.CreateAsync(client, "Kanal", ct);
         await PutKeyAsync(client, "anthropic", ct);
+        await PutKeyAsync(client, "openrouter", ct);
 
-        using var save = await PutAsync(client, profile, new { models = new[] { Role("concept", Opus, null), Role("dedupe", Sonnet, null), Role("topic", null, null) } }, ct);
+        // Plan 0026 A-1: Sonnet 5.5 efor destekler; efor desteklemeyen model OpenRouter Sonnet.
+        using var save = await PutAsync(client, profile, new { models = new[] { Role("concept", Opus, null), Role("dedupe", RouterSonnet, null), Role("topic", null, null) } }, ct);
         var saved = await save.Content.ReadFromJsonAsync<JsonElement>(ct);
         var reloaded = await GetAsync(client, profile, ct);
 
@@ -124,9 +127,9 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
         foreach (var settings in new[] { saved, reloaded })
         {
             RoleOf(settings, "concept").GetProperty("modelId").GetString().ShouldBe(Opus);
-            RoleOf(settings, "concept").GetProperty("modelName").GetString().ShouldBe("Claude Opus 4.5");
-            RoleOf(settings, "concept").GetProperty("effort").GetString().ShouldBe("high");
-            RoleOf(settings, "dedupe").GetProperty("modelName").GetString().ShouldBe("Claude Sonnet 4.5");
+            RoleOf(settings, "concept").GetProperty("modelName").GetString().ShouldBe("Claude Opus 5.5");
+            RoleOf(settings, "concept").GetProperty("effort").GetString().ShouldBe("medium");
+            RoleOf(settings, "dedupe").GetProperty("modelName").GetString().ShouldBe("Claude Sonnet 5.5 (OpenRouter)");
             RoleOf(settings, "dedupe").GetProperty("effort").ValueKind.ShouldBe(JsonValueKind.Null);
             RoleOf(settings, "topic").GetProperty("modelId").ValueKind.ShouldBe(JsonValueKind.Null);
         }
@@ -147,9 +150,11 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
         using var client = await _factory.CreateUserClientAsync(ct);
         var profile = await ProfileApiTests.CreateAsync(client, "Kanal", ct);
         await PutKeyAsync(client, "anthropic", ct);
+        await PutKeyAsync(client, "openrouter", ct);
 
-        using var max = await PutAsync(client, profile, new { models = new[] { Role("concept", Opus, "max") } }, ct);
-        using var noEffortModel = await PutAsync(client, profile, new { models = new[] { Role("concept", Sonnet, "high") } }, ct);
+        // Plan 0026 A-1: Opus 5.5 "max"ı destekler; desteklenmeyen düzey "xhigh", eforsuz model OpenRouter Sonnet.
+        using var max = await PutAsync(client, profile, new { models = new[] { Role("concept", Opus, "xhigh") } }, ct);
+        using var noEffortModel = await PutAsync(client, profile, new { models = new[] { Role("concept", RouterSonnet, "high") } }, ct);
         using var badRole = await PutAsync(client, profile, new { models = new[] { Role("video", Opus, null) } }, ct);
         using var twice = await PutAsync(client, profile, new { models = new[] { Role("concept", Opus, null), Role("concept", Sonnet, null) } }, ct);
 
@@ -284,10 +289,10 @@ public sealed class ConceptSettingsApiTests : IClassFixture<ConceptSettingsApiFa
     private static async Task PutKeyAsync(HttpClient client, string provider, CancellationToken ct) =>
         (await client.PutAsJsonAsync($"/api/ai/keys/{provider}", new { apiKey = "sk-test-" + Guid.NewGuid().ToString("N") }, ct)).EnsureSuccessStatusCode();
 
-    // Yetki: Opus, GPT-5 mini, gpt-image-1, Kimi, GLM (Sonnet ve GPT-5 yetkisiz).
+    // Yetki: Opus, GPT-6.1 Terra, gpt-image-2.6-flare, Kimi, GLM (Sonnet ve GPT-6.1 Sol yetkisiz).
     private static ConceptSettingsApiFactory RestrictedFactory() => new()
     {
-        UserModelPermissions = "anthropic/claude-opus-4-5,openai/gpt-5-mini,openai/gpt-image-1,kimi/kimi-k2,glm/glm-4.6",
+        UserModelPermissions = "anthropic/claude-opus-5-5,openai/gpt-6.1-terra,openai/gpt-image-2.6-flare,kimi/kimi-k3.1-pro,glm/glm-5.3",
     };
 
     // Key: Anthropic ve OpenAI geçerli; Kimi okunamaz (çözülemeyen şifreli metin); GLM yok.

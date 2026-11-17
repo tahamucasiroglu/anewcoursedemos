@@ -48,9 +48,9 @@ function pageHtml() {
     </div>`;
 }
 
-const OPUS = { id: 'anthropic/claude-opus-4-5', name: 'Claude Opus 4.5', effortLevels: ['low', 'medium', 'high'], defaultEffort: 'high' };
-const SONNET = { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4.5', effortLevels: [], defaultEffort: null };
-const GPT = { id: 'openai/gpt-5-mini', name: 'GPT-5 mini', effortLevels: ['low', 'medium', 'high'], defaultEffort: 'medium' };
+const OPUS = { id: 'anthropic/claude-opus-5-5', name: 'Claude Opus 5.5', effortLevels: ['low', 'medium', 'high'], defaultEffort: 'high' };
+const SONNET = { id: 'anthropic/claude-sonnet-5-5', name: 'Claude Sonnet 5.5', effortLevels: [], defaultEffort: null };
+const GPT = { id: 'openai/gpt-6.1-terra', name: 'GPT-6.1 Terra', effortLevels: ['low', 'medium', 'high'], defaultEffort: 'medium' };
 
 function settingsOf(extra = {}) {
   return {
@@ -111,8 +111,8 @@ describe('Konseptler şeridi (spec 0005)', () => {
 
   it('AC-1: özet biçimi — model + efor, efor yoksa yalnızca ad, seçim yoksa "seçilmedi"', () => {
     expect(effortLabel('high')).toBe('High');
-    expect(roleSummary({ modelId: 'x', modelName: 'Claude Opus 4.5', effort: 'high' }, 'seçilmedi')).toBe('Claude Opus 4.5 High');
-    expect(roleSummary({ modelId: 'x', modelName: 'GLM-4.6', effort: null }, 'seçilmedi')).toBe('GLM-4.6');
+    expect(roleSummary({ modelId: 'x', modelName: 'Claude Opus 5.5', effort: 'high' }, 'seçilmedi')).toBe('Claude Opus 5.5 High');
+    expect(roleSummary({ modelId: 'x', modelName: 'GLM-5.3', effort: null }, 'seçilmedi')).toBe('GLM-5.3');
     expect(roleSummary({ modelId: null }, 'seçilmedi')).toBe('seçilmedi');
   });
 
@@ -127,8 +127,8 @@ describe('Konseptler şeridi (spec 0005)', () => {
     document.body.innerHTML = pageHtml();
     await start(settingsOf({ wordCheck: true }));
     expect(calls[calls.length - 1]).toMatchObject({ method: 'GET', url: '/konsept-ayarlari/p1' });
-    expect(strip('concept')).toBe('Claude Opus 4.5 High');
-    expect(strip('dedupe')).toBe('Claude Sonnet 4.5');
+    expect(strip('concept')).toBe('Claude Opus 5.5 High');
+    expect(strip('dedupe')).toBe('Claude Sonnet 5.5');
     expect(strip('topic')).toBe('seçilmedi');
     expect(group('tone')).toBe('L-calm');
     expect(group('audience')).toBe('Belirtilmedi');
@@ -194,8 +194,8 @@ describe('Konseptler şeridi (spec 0005)', () => {
     });
     expect(posts()[0].headers.RequestVerificationToken).toBe('test-token');
     expect(modalShown()).toBe(false);
-    expect(strip('dedupe')).toBe('Claude Opus 4.5 Low');
-    expect(strip('topic')).toBe('GPT-5 mini Medium');
+    expect(strip('dedupe')).toBe('Claude Opus 5.5 Low');
+    expect(strip('topic')).toBe('GPT-6.1 Terra Medium');
     expect(document.activeElement).toBe(el('concept-models-open'));
     expect(el('concept-settings-status').textContent).toBe('Kaydedildi');
   });
@@ -240,7 +240,7 @@ describe('Konseptler şeridi (spec 0005)', () => {
     expect(modalShown()).toBe(true);
     expect(el('concept-models-status').textContent).toBe('Kaydedilemedi, önceki seçim korundu. Biraz sonra tekrar deneyin.');
     expect(el('concept-model-concept').value).toBe(OPUS.id);
-    expect(strip('concept')).toBe('Claude Opus 4.5 High');
+    expect(strip('concept')).toBe('Claude Opus 5.5 High');
 
     el('concept-models-close').click(); // Değişiklik kalmadı: kapanır, yeni istek yok.
     await flush();
@@ -317,10 +317,10 @@ describe('Konseptler şeridi (spec 0005)', () => {
   it('Review r1 F-2: artık seçilemeyen kayıtlı model, başka rol değiştirilince gönderilmez (silinmez)', async () => {
     await start(settingsOf({ roles: [
       { role: 'concept', modelId: OPUS.id, modelName: OPUS.name, effort: 'high' },
-      { role: 'dedupe', modelId: 'glm/glm-4.6', modelName: 'GLM-4.6', effort: null },
+      { role: 'dedupe', modelId: 'glm/glm-5.3', modelName: 'GLM-5.3', effort: null },
       { role: 'topic', modelId: null, modelName: null, effort: null },
     ] }));
-    expect(strip('dedupe')).toBe('GLM-4.6');
+    expect(strip('dedupe')).toBe('GLM-5.3');
     el('concept-models-open').click();
     change(el('concept-model-topic'), SONNET.id);
     routes['POST /konsept-ayarlari/p1'] = ok(settingsOf());
