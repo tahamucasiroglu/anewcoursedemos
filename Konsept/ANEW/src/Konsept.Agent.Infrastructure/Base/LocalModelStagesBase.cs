@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using Konsept.Agent.Application.Abstract;
 using Konsept.Agent.Domain.Entities;
 using Konsept.Agent.Domain.Rules;
+using Konsept.Agent.Infrastructure.Setup;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Serilog;
 
@@ -77,7 +78,7 @@ public abstract class LocalModelStagesBase(
                 [ModelRunTemplate.Language] = command.Language,
             });
             var result = await RunModelAsync(model, values, dir, cancellationToken).ConfigureAwait(false);
-            if (Failure(id, result, File.Exists(temp)) is { } failure)
+            if (Failure(model.Component, result, File.Exists(temp)) is { } failure)
             {
                 DeleteFiles(temp);
                 return failure;
@@ -142,7 +143,7 @@ public abstract class LocalModelStagesBase(
                 [ModelRunTemplate.Language] = command.Language,
             });
             var result = await RunModelAsync(model, values, workDirectory, cancellationToken).ConfigureAwait(false);
-            if (Failure(id, result, File.Exists(output)) is { } failure)
+            if (Failure(model.Component, result, File.Exists(output)) is { } failure)
             {
                 return failure;
             }
@@ -238,9 +239,9 @@ public abstract class LocalModelStagesBase(
             return null;
         }
 
-        var installed = setup.Load().Installed;
+        var installed = UsableComponents.Of(setup.Load(), catalog, installRoot);
         var closure = ComponentRules.Closure(id, catalog);
-        if (!closure.All(installed.ContainsKey) || catalog.FirstOrDefault(c => c.Id == run.Tool) is not { } tool || !closure.Contains(run.Tool))
+        if (!closure.All(installed.Contains) || catalog.FirstOrDefault(c => c.Id == run.Tool) is not { } tool || !closure.Contains(run.Tool))
         {
             return null;
         }
@@ -268,15 +269,19 @@ public abstract class LocalModelStagesBase(
             cancellationToken).ConfigureAwait(false);
     }
 
-    private AgentStageReply? Failure(string id, ProcessResult result, bool outputExists)
+    private AgentStageReply? Failure(SetupComponent component, ProcessResult result, bool outputExists)
     {
         if (result.Ok && outputExists)
         {
             return null;
         }
 
+        var id = component.Id;
         var tail = result.Output.Length > 2000 ? result.Output[^2000..] : result.Output;
-        if (!result.TimedOut && LocalModelRules.IsGpuFailure(result.Output))
+
+        // Bellek hatası ancak model ekran kartında çalışıyorsa ekran kartına yazılır (CPU modelinin RAM hatası değil; review r1 L-2).
+        var onGpu = component.Gpu is not null || result.Output.Contains("cuda", StringComparison.OrdinalIgnoreCase);
+        if (!result.TimedOut && onGpu && LocalModelRules.IsGpuFailure(result.Output))
         {
             _logger.Error("Yerel model ekran kartında çalışamadı; CPU'ya düşülmedi: {Model} (çıkış {Exit})", id, result.ExitCode);
             _logger.Warning("Yerel model çıktısının sonu: {Output}", tail);

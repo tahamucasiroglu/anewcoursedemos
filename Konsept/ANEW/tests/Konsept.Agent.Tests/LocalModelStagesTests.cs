@@ -19,7 +19,9 @@ public sealed class LocalModelStagesTests : IDisposable
 {
     private readonly DirectoryInfo _root = Directory.CreateTempSubdirectory("anewconcept-stages-");
     private readonly FakeProcesses _processes = new();
-    private readonly IReadOnlyList<SetupComponent> _catalog = ComponentCatalog.Load(null);
+    // Gerçek liste; model dosyalarının boyutu testte küçültülür (dosyalar yerinde/boyut doğru denetimi; review r1 M-1).
+    private readonly IReadOnlyList<SetupComponent> _catalog =
+        [.. ComponentCatalog.Load(null).Select(c => c.Files is null ? c : c with { Files = [.. c.Files.Select(f => f with { Bytes = 3 })] })];
     private readonly ISetupStateStore _store = Substitute.For<ISetupStateStore>();
     private readonly Dictionary<string, InstalledComponent> _installed = [];
 
@@ -147,6 +149,42 @@ public sealed class LocalModelStagesTests : IDisposable
         reply.Unsupported.ShouldNotBeNull().ShouldHaveSingleItem().ShouldBe(new AgentUnsupportedTool("z-image-turbo", AgentUnsupportedTool.GpuRequired, 4096));
     }
 
+    /// <summary>
+    /// Review r1 M-1: sürümü listedekinden farklı (yeni ajan sürümü) ya da dosyası eksik/boyutu bozuk model kurulu sayılmaz: araç denetiminde eksik
+    /// (kurulabilir, 0027 onarımı önerir), aşama çalıştırılmaz (tool_missing).
+    /// </summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task StaleOrBrokenModel_IsMissing()
+    {
+        Install("ffmpeg", "python", "uv", "speech-onnx", "supertonic-3");
+        var runner = Runner(null);
+        var request = new AgentToolCheckRequest(["ffmpeg", "supertonic-3"]);
+        runner.CheckTools(request).Missing.ShouldBeEmpty();
+
+        File.WriteAllText(Path.Combine(Root, "components", "supertonic-3", "onnx", "vocoder.onnx"), "bozuk dosya");
+        runner.CheckTools(request).Missing.ShouldBe(["supertonic-3"]);
+
+        Install("supertonic-3");
+        _installed["supertonic-3"] = new InstalledComponent("eski-sürüm", "x");
+        runner.CheckTools(request).Missing.ShouldBe(["supertonic-3"]);
+        var command = Command(AgentStageCommand.Voice, audio: "local/supertonic-3", scenes: [Scene(0, 5, "Merhaba.", null)]);
+        (await runner.RunAsync(command)).ShouldBe(new AgentStageReply(false, AgentStageReply.ToolMissing, "supertonic-3"));
+        _processes.Calls.ShouldBeEmpty();
+    }
+
+    /// <summary>Review r1 L-2: CPU'da çalışan modelin bellek hatası "Ekran kartı kullanılamadı" değil, failed olur.</summary>
+    /// <returns>Görev.</returns>
+    [Fact]
+    public async Task Voice_CpuMemoryError_IsNotGpu()
+    {
+        Install("ffmpeg", "python", "uv", "speech-onnx", "supertonic-3");
+        _processes.Fail = new ProcessResult(2, "speech runner error: RuntimeException: onnxruntime Failed to allocate memory for requested buffer");
+        var command = Command(AgentStageCommand.Voice, audio: "local/supertonic-3", scenes: [Scene(0, 5, "Merhaba.", null)]);
+
+        (await Runner(null).RunAsync(command)).ShouldBe(new AgentStageReply(false, AgentStageReply.Failed));
+    }
+
     /// <summary>AC-8: birleştirmede altyazı sahnenin konuşma süresine göre zamanlanır.</summary>
     [Fact]
     public void Subtitles_SpeechSeconds()
@@ -183,11 +221,17 @@ public sealed class LocalModelStagesTests : IDisposable
     {
         foreach (var id in ids)
         {
-            _installed[id] = new InstalledComponent("1", "x");
             var component = _catalog.Single(c => c.Id == id);
+            _installed[id] = new InstalledComponent(component.Version, "x");
             var exe = Path.Combine(Root, "components", id, component.Executable);
             Directory.CreateDirectory(Path.GetDirectoryName(exe)!);
             File.WriteAllText(exe, id);
+            foreach (var file in component.Files ?? [])
+            {
+                var path = Path.Combine(Root, "components", id, file.Path);
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllText(path, "abc");
+            }
         }
     }
 

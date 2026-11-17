@@ -96,6 +96,7 @@ public abstract class ProcessRunnerBase : IProcessRunner
         try
         {
             process.Kill(entireProcessTree: true);
+            process.WaitForExit(5000); // Öldürülen sürecin tutamaçları (çalışma klasörü) bırakılsın.
         }
         catch (InvalidOperationException)
         {

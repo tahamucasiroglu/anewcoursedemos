@@ -40,7 +40,7 @@ public static class LocalModelRules
     /// <param name="height">Yükseklik.</param>
     /// <returns>İşaret.</returns>
     public static string ImageMarker(string model, string prompt, int width, int height) =>
-        Hash(string.Join('\n', model, prompt, width.ToString(CultureInfo.InvariantCulture), height.ToString(CultureInfo.InvariantCulture)));
+        Hash(string.Join('\n', new[] { model, prompt, width.ToString(CultureInfo.InvariantCulture), height.ToString(CultureInfo.InvariantCulture) }));
 
     /// <summary>Ses işareti: model, dil, sahne süresi ve metnin özeti.</summary>
     /// <param name="model">Model.</param>
@@ -49,7 +49,7 @@ public static class LocalModelRules
     /// <param name="narration">Metin.</param>
     /// <returns>İşaret.</returns>
     public static string VoiceMarker(string model, string language, int seconds, string narration) =>
-        Hash(string.Join('\n', model, language, seconds.ToString(CultureInfo.InvariantCulture), narration));
+        Hash(string.Join('\n', new[] { model, language, seconds.ToString(CultureInfo.InvariantCulture), narration }));
 
     /// <summary>Süreç çıktısı ekran kartı/bellek hatası mı.</summary>
     /// <param name="output">Çıktı.</param>

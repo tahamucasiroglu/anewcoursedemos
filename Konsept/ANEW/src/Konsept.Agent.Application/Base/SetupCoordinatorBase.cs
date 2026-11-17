@@ -432,6 +432,7 @@ public abstract class SetupCoordinatorBase : ISetupCoordinator, IProgress<double
         }
 
         _current = component;
+        SetStatus(component, ComponentStatus.Verifying); // Yeniden denemede var olan GB'lık dosyalar önce doğrulanır (review r1 L-3).
         var total = (double)Math.Max(1, files.Sum(f => f.Bytes));
         long done = 0;
         foreach (var file in files)

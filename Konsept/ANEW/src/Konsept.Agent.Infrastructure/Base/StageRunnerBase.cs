@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Konsept.Agent.Application.Abstract;
 using Konsept.Agent.Domain.Entities;
 using Konsept.Agent.Domain.Rules;
+using Konsept.Agent.Infrastructure.Setup;
 using Konsept.Modules.AgentGateway.Contracts.Dtos;
 using Serilog;
 
@@ -16,7 +17,9 @@ namespace Konsept.Agent.Infrastructure.Base;
 /// <param name="logger">Teknik log.</param>
 /// <param name="catalog">Çözülmüş bileşen listesi (spec 0028: bağımlılıklar ve ekran kartı gereksinimi); verilmezse yalnızca kurulu mu bakılır.</param>
 /// <param name="gpu">Tespit edilen ekran kartı ya da <c>null</c>.</param>
-public abstract class StageRunnerBase(ISetupStateStore setup, ILogger logger, IReadOnlyList<SetupComponent>? catalog = null, GpuInfo? gpu = null) : IStageRunner
+/// <param name="installRoot">Kurulum yeri (model dosyalarının yerinde olduğu denetimi; review r1 M-1) ya da <c>null</c>.</param>
+public abstract class StageRunnerBase(ISetupStateStore setup, ILogger logger, IReadOnlyList<SetupComponent>? catalog = null, GpuInfo? gpu = null, string? installRoot = null)
+    : IStageRunner
 {
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _running = new();
 
@@ -29,7 +32,8 @@ public abstract class StageRunnerBase(ISetupStateStore setup, ILogger logger, IR
         ArgumentNullException.ThrowIfNull(request);
 
         // Eksik modelin kurulu olmayan bağımlılıkları da eksiktir; ekran kartı gereksinimi karşılanmayan model desteklenmez (spec 0028 Req 2, 6).
-        var result = ComponentRules.Check(request.Tools, catalog ?? [], setup.Load().Installed.Keys.ToHashSet(StringComparer.Ordinal), gpu);
+        // Sürümü değişmiş ya da dosyası bozulmuş model kurulu sayılmaz → eksik + kurulabilir (0027 onarımı önerir; review r1 M-1).
+        var result = ComponentRules.Check(request.Tools, catalog ?? [], UsableComponents.Of(setup.Load(), catalog ?? [], installRoot), gpu);
         return new AgentToolCheckReply(
             result.Missing,
             Unsupported: result.Unsupported.Count == 0

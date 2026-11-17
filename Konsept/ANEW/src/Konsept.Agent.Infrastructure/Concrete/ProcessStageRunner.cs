@@ -38,7 +38,7 @@ public sealed class ProcessStageRunner(
     ILocalModelStages? models = null,
     IReadOnlyList<SetupComponent>? catalog = null,
     GpuInfo? gpu = null)
-    : StageRunnerBase(setup, logger, catalog, gpu)
+    : StageRunnerBase(setup, logger, catalog, gpu, Path.GetFullPath(installRoot))
 {
     /// <summary>NVENC ile sahne klibi.</summary>
     public const string Mp4Clip = "clip.mp4";

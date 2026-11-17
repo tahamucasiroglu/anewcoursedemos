@@ -13,7 +13,8 @@ namespace Konsept.Agent.Infrastructure.Setup;
 /// </summary>
 /// <param name="http">İndirme istemcisi.</param>
 /// <param name="inactivityTimeout">Gövdeden veri gelmeden geçebilecek en uzun süre; verilmezse 30 sn (review r1 M-1).</param>
-public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeout = null) : ISetupHost
+/// <param name="logger">Teknik log (uv kurulum hatasının sebebi; spec 0028 review r1 L-1); verilmezse yazılmaz.</param>
+public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeout = null, Serilog.ILogger? logger = null) : ISetupHost
 {
     /// <summary>Varsayılan hareketsizlik süresi: bağlantı sessizce koparsa indirme bu süre sonunda başarısız sayılır.</summary>
     public static readonly TimeSpan DefaultInactivityTimeout = TimeSpan.FromSeconds(30);
@@ -261,7 +262,7 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
             }
 
             _ = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
-            _ = process.StandardError.ReadToEndAsync(CancellationToken.None);
+            var error = process.StandardError.ReadToEndAsync(CancellationToken.None);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(PythonTimeout);
             try
@@ -270,9 +271,24 @@ public sealed class WindowsSetupHost(HttpClient http, TimeSpan? inactivityTimeou
             }
             catch (OperationCanceledException)
             {
-                process.Kill(entireProcessTree: true);
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch (InvalidOperationException)
+                {
+                    // Süreç tam o anda bitti.
+                }
+
                 cancellationToken.ThrowIfCancellationRequested();
+                logger?.Warning("Python ortamı kurulumu süre sınırını aştı: {Component}", componentId);
                 return false;
+            }
+
+            if (process.ExitCode != 0)
+            {
+                var text = await error.ConfigureAwait(false);
+                logger?.Warning("Python ortamı kurulamadı: {Component} uv çıkış {Exit}; çıktının sonu: {Output}", componentId, process.ExitCode, text.Length > 2000 ? text[^2000..] : text);
             }
 
             return process.ExitCode == 0;

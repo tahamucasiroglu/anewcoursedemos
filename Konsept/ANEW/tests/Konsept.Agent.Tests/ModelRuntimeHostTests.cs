@@ -95,7 +95,8 @@ public sealed class ModelRuntimeHostTests : IDisposable
         echo.Ok.ShouldBeFalse();
 
         var watch = Stopwatch.StartNew();
-        var slow = new ProcessSpec(cmd, ["/c", "ping -n 30 127.0.0.1 >nul"], _root.FullName, env, TimeSpan.FromMilliseconds(500));
+        // Öldürülen torun süreç (ping) kısa süre klasörü tutabilir: geçici test klasörü yerine sistem geçici klasöründe çalışır.
+        var slow = new ProcessSpec(cmd, ["/c", "ping -n 30 127.0.0.1 >nul"], Path.GetTempPath(), env, TimeSpan.FromMilliseconds(500));
         (await runner.RunAsync(slow, TestContext.Current.CancellationToken)).TimedOut.ShouldBeTrue();
         watch.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(15));
 

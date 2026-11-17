@@ -70,7 +70,7 @@ internal sealed record AgentComposition(
         var catalog = ComponentCatalog.Load(gpu);
         var models = new LocalModelStages(catalog, setupState, root, new ProcessRunner(), logging.Logger);
         var stages = new ProcessStageRunner(setupState, root, videoFolder, renderer, logging.Logger, models, catalog, gpu);
-        var setupHost = new WindowsSetupHost(new HttpClient());
+        var setupHost = new WindowsSetupHost(new HttpClient(), logger: logging.Logger);
         var setup = new SetupCoordinator(
             catalog,
             setupHost,

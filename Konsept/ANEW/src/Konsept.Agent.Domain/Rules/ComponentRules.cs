@@ -119,7 +119,8 @@ public static class ComponentRules
     public static string FilesManifest(IEnumerable<ComponentFile> files)
     {
         ArgumentNullException.ThrowIfNull(files);
-        return string.Concat(files.Select(f => f.Sha256 + " " + f.Bytes.ToString(CultureInfo.InvariantCulture) + " " + f.Path + "\n"));
+        // Açık dizi: params ReadOnlySpan aşırı yüklemesi mimari testleri düşürür (docs/conventions.md, Known traps).
+        return string.Concat(files.Select(f => string.Join(' ', new[] { f.Sha256, f.Bytes.ToString(CultureInfo.InvariantCulture), f.Path }) + "\n"));
     }
 
     /// <summary>Dosya listesi metninin SHA-256'sı (katalogdaki hash ile karşılaştırılır).</summary>

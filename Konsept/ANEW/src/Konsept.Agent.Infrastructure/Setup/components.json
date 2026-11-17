@@ -136,11 +136,11 @@
     "name": "Ses ortamı (PyTorch)",
     "purpose": "Chatterbox seslendirmesini çalıştıran Python paketleri (NVIDIA kartta CUDA, yoksa CPU)",
     "license": "BSD-3-Clause (PyTorch) · MIT (Chatterbox) · paketler kendi lisanslarıyla",
-    "version": "0.1.7",
+    "version": "0.1.7-r2",
     "url": "https://pypi.org/project/chatterbox-tts/0.1.7/",
     "fileName": "speech-torch.txt",
-    "sha256": "60d167761bb45c9d4aacba160f57d554ce32fa55667f8bede434428ce2e90564",
-    "downloadBytes": 414114556,
+    "sha256": "26b1a0950dc97f8315c0db4173b93a31e17df35aa80559b6441f65ad5f178649",
+    "downloadBytes": 414302527,
     "installedBytes": 1747944637,
     "archiveRoot": null,
     "executable": "chatterbox/__init__.py",
@@ -158,16 +158,16 @@
         "id": "cuda",
         "gpu": "nvidia",
         "minVramMb": 8192,
-        "sha256": "9cdf8d4393a54d5fb72afc75d56807e865bfa7d6853d64a9f072aef9428c8e8e",
-        "downloadBytes": 2741642540,
+        "sha256": "224852e4ca4b35c59ed47cc2fbf233abf492799fbdbdbfef42b17576ebda0031",
+        "downloadBytes": 2741830511,
         "installedBytes": 5237175156
       },
       {
         "id": "cpu",
         "gpu": null,
         "minVramMb": 0,
-        "sha256": "60d167761bb45c9d4aacba160f57d554ce32fa55667f8bede434428ce2e90564",
-        "downloadBytes": 414114556,
+        "sha256": "26b1a0950dc97f8315c0db4173b93a31e17df35aa80559b6441f65ad5f178649",
+        "downloadBytes": 414302527,
         "installedBytes": 1747944637
       }
     ]
