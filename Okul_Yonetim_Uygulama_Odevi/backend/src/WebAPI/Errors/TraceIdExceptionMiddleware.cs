@@ -10,7 +10,8 @@ namespace OkulYonetim.WebAPI.Errors;
 /// <summary>
 /// nArchitecture hata middleware'inin bu projeye uyarlanmış hali: her hata izleme numarasıyla bir kez loglanır
 /// (beklenmeyen hata Error, iş hataları Warning). İş hatalarının yanıtı nArchitecture'daki gibidir; beklenmeyen
-/// hatada yanıt yalnızca genel Türkçe mesaj ve izleme numarası taşır (ayrıntı sızdırılmaz).
+/// hatada yanıt yalnızca genel Türkçe mesaj ve izleme numarası taşır (ayrıntı sızdırılmaz). İstemci isteği iptal ettiyse
+/// (sayfa kapandı) bu hata sayılmaz: Information olarak loglanır, yanıt yazılmaz.
 /// </summary>
 public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
 {
@@ -31,7 +32,11 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(exception);
-        if (IsExpected(exception))
+        if (IsClientAbort(context, exception))
+        {
+            this.logger.LogInformation("İstek istemci tarafından iptal edildi: {Method} {Path}", context.Request.Method, context.Request.Path);
+        }
+        else if (IsExpected(exception))
         {
             this.logger.LogWarning("İş hatası ({ExceptionType}): {Reason}", exception.GetType().Name, exception.Message);
         }
@@ -47,6 +52,11 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
     {
         ArgumentNullException.ThrowIfNull(response);
         Exception error = (Exception)exception;
+        if (IsClientAbort(response.HttpContext, error))
+        {
+            return Task.CompletedTask;
+        }
+
         return IsExpected(error)
             ? base.HandleExceptionAsync(response, (object)error)
             : WriteUnexpectedErrorAsync(response);
@@ -66,6 +76,9 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
         response.StatusCode = StatusCodes.Status500InternalServerError;
         await response.WriteAsJsonAsync(problem, options: null, contentType: MediaTypeNames.Application.ProblemJson).ConfigureAwait(false);
     }
+
+    private static bool IsClientAbort(HttpContext context, Exception exception) =>
+        exception is OperationCanceledException && context.RequestAborted.IsCancellationRequested;
 
     private static bool IsExpected(Exception exception) =>
         exception is BusinessException or ValidationException or AuthorizationException or NotFoundException or ConflictException;
