@@ -20,6 +20,7 @@ WhatsApp, push, AI, ses→metin) port arayüzlerinin arkasındadır; MVP'de saht
 | Web paneli | React 19 + TypeScript + Vite |
 | Mobil | React Native + Expo (TypeScript) |
 | Ortak istemci | `packages/api-client` — OpenAPI'den üretilen TypeScript istemcisi |
+| Ortak tema | `packages/theme` — açık/koyu renk sözlüğü (`tokens.json`), Sistem/Açık/Koyu seçim mantığı, kontrast hesabı (spec 0002) |
 
 **Klasör düzeni**
 ```
@@ -27,7 +28,7 @@ backend/
   Directory.Build.props · Directory.Packages.props · .editorconfig · OkulYonetim.sln
   src/   Domain · Application · Persistence · Infrastructure · WebAPI
   tests/ Unit · Integration · Architecture
-web/ · mobile/ · packages/api-client/
+web/ · mobile/ · packages/api-client/ · packages/theme/
 ```
 
 ## Modules / components and ownership
@@ -57,6 +58,8 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - Dış dünya: yalnızca `Application`'da tanımlı port arayüzleri (`IPaymentProvider`, `ISmsSender`,
   `IMessagingChannel`, `IPushNotifier`, `IAiTextGenerator`, `ISpeechToText`, `IFileStorage`); uygulamaları `Infrastructure`'da.
 - İstemciler (web, mobil): yalnızca HTTP API, yalnızca `packages/api-client` üzerinden.
+- Renkler (web, mobil): yalnızca `packages/theme` (`tokens.json`). Mobil doğrudan kullanır; web aynı değerleri
+  `web/src/theme/theme.css` değişkenlerinde tutar (test birebir eşitliği doğrular). Tema seçimi yalnızca cihazda saklanır.
 - Port çağrıları zaman aşımı + yeniden deneme ile yapılır; başarısızlık "beklemede" durumuna düşer, isteği çökertmez.
 
 ## Logging (ADR-0003)
@@ -100,6 +103,8 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 9. **K2** Uyarılar hatadır, tüm projelerde (`Directory.Build.props`: `TreatWarningsAsErrors`).
 10. **K3** Her tipin başında kısa Türkçe `/// <summary>`; üyeler için ayrı summary yazılmaz (architecture testi XML belgesinden doğrular).
 11. `IgnoreQueryFilters()` / ham SQL yalnızca izinli listedeki yerlerde (architecture testi; T5).
+12. `web/` ve `mobile/` kodunda renk değeri (`#…`, `rgb(…)`, `hsl(…)`) yazılmaz; renk yalnızca ortak temadan (ESLint
+    `no-restricted-syntax`; web CSS'i için `cssVariables.test.ts`).
 
 ## Deliberately out of scope
 - Mikroservisler, ayrı veritabanları.

@@ -28,6 +28,9 @@
 2. SQL yalnızca EF Core (parametreli); ham SQL/`IgnoreQueryFilters` yalnızca izinli listede (T5).
 3. Excel/e-Okul içe aktarma: dosya boyutu ve tip sınırı; formül hücreleri değer olarak okunur. Dışa aktarma: `=`, `+`, `-`, `@` ile başlayan hücreler kaçışlanır (CSV/formül enjeksiyonu).
 4. Hata yanıtlarında stack trace, SQL, kişisel veri yok (`docs/conventions.md` Error handling).
+4a. Web'de tek satır içi betik var: tema ön betiği (`web/index.html`, spec 0002) — yalnızca tarayıcıdaki tema seçimini okur,
+    ağ isteği yapmaz. İçerik Güvenlik Politikası (CSP) eklendiğinde bu betik `script-src` için özeti (hash) ile izinlenir;
+    `unsafe-inline` açılmaz.
 5. AI'a yalnızca görev için gereken alanlar gönderilir (veri minimizasyonu); sağlayıcı sözleşmesinde "eğitimde kullanılmaz" şartı zorunlu.
 
 ## AuthN / AuthZ
