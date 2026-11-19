@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors, type ColorScheme } from "@okul/theme";
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
 import App from "../../App";
 import tr from "../i18n/tr.json";
@@ -142,5 +142,37 @@ describe("saklama hatası (AC-7)", () => {
     expect(checked(tr["theme.system"])).toBe(true);
     await fireEvent.press(radio(tr["theme.dark"]));
     expect(background()).toBe(themeColors.dark.background);
+  });
+
+  it("okuma 500 ms'de bitmezse Sistem ile açılır; geç gelen kayıt seçimi ezmez (review round 1, L-1)", async () => {
+    jest.useFakeTimers();
+    try {
+      mockDevice = "dark";
+      let resolveLate: (value: string | null) => void = () => {};
+      jest.spyOn(AsyncStorage, "getItem").mockReturnValueOnce(
+        new Promise<string | null>((resolve) => {
+          resolveLate = resolve;
+        }),
+      );
+      await render(<App />);
+      await act(async () => {
+        jest.advanceTimersByTime(499);
+      });
+      expect(screen.queryByTestId("screen")).toBeNull();
+
+      await act(async () => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(checked(tr["theme.system"])).toBe(true);
+      expect(background()).toBe(themeColors.dark.background);
+
+      await act(async () => {
+        resolveLate("light");
+      });
+      expect(checked(tr["theme.system"])).toBe(true);
+      expect(background()).toBe(themeColors.dark.background);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
