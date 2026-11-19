@@ -54,8 +54,10 @@ fi
 
 say "Pi'ye kopyalanıyor…"
 # Hazırlık klasörü Pi'de rastgele adla açılır (tahmin edilebilir /tmp yolu yok; review round 1, M-1)
-STAGE="$(ssh -o BatchMode=yes "$PI_SSH" 'mktemp -d /tmp/okul-deploy.XXXXXXXXXX')"
-[[ "$STAGE" =~ ^/tmp/okul-deploy\.[A-Za-z0-9]{10}$ ]] || die "Pi'de hazırlık klasörü açılamadı."
+# Değer önce doğrulanır, ancak sonra STAGE'e (temizlikte silinecek yol) atanır (review round 3, L-2)
+stage_candidate="$(ssh -o BatchMode=yes "$PI_SSH" 'mktemp -d /tmp/okul-deploy.XXXXXXXXXX')"
+[[ "$stage_candidate" =~ ^/tmp/okul-deploy\.[A-Za-z0-9]{10}$ ]] || die "Pi'de hazırlık klasörü açılamadı."
+STAGE="$stage_candidate"
 (cd "$OUT" && tar -cf - ${UNITS//,/ }) | ssh -o BatchMode=yes "$PI_SSH" "tar -C '$STAGE' -xf -"
 
 say "Etkinleştiriliyor ve kontrol ediliyor…"
