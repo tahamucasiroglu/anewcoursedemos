@@ -51,7 +51,7 @@
             "type": "string"
           }
         },
-        "description": "Sistem durumu yanıtı. Yalnızca durum (\"healthy\" / \"unavailable\") ve Türkçe mesaj taşır;\nsürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001). Durum metni tek yerde,\n`From` içinde `SystemHealthStatus`'tan türetilir; `Kind` yalnızca sunucu içindir (JSON'a yazılmaz)."
+        "description": "Sistem durumu yanıtı. Yalnızca durum (\"healthy\" / \"unavailable\") ve Türkçe mesaj taşır;\nsürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001). Tek doğruluk kaynağı\n`Kind`'dır (JSON'a yazılmaz); `Status` metni yalnızca kurucuda ondan hesaplanır, bu yüzden ikisi\nayrışamaz. Dışarıdan yalnızca `From` ile oluşturulur."
       }
     }
   },

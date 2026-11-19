@@ -4,14 +4,29 @@ namespace OkulYonetim.Application.Features.SystemHealth.Queries.GetSystemHealth;
 
 /// <summary>
 /// Sistem durumu yanıtı. Yalnızca durum ("healthy" / "unavailable") ve Türkçe mesaj taşır;
-/// sürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001). Durum metni tek yerde,
-/// <c>From</c> içinde <c>SystemHealthStatus</c>'tan türetilir; <c>Kind</c> yalnızca sunucu içindir (JSON'a yazılmaz).
+/// sürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001). Tek doğruluk kaynağı
+/// <c>Kind</c>'dır (JSON'a yazılmaz); <c>Status</c> metni yalnızca kurucuda ondan hesaplanır, bu yüzden ikisi
+/// ayrışamaz. Dışarıdan yalnızca <c>From</c> ile oluşturulur.
 /// </summary>
-public sealed record SystemHealthResponse(string Status, string Message)
+public sealed class SystemHealthResponse
 {
-    [JsonIgnore]
-    public SystemHealthStatus Kind { get; init; }
+    private SystemHealthResponse(SystemHealthStatus kind, string message)
+    {
+        this.Kind = kind;
+        this.Status = kind == SystemHealthStatus.Healthy ? "healthy" : "unavailable";
+        this.Message = message;
+    }
 
-    public static SystemHealthResponse From(SystemHealthStatus kind, string message) =>
-        new(kind == SystemHealthStatus.Healthy ? "healthy" : "unavailable", message) { Kind = kind };
+    [JsonInclude]
+    [JsonRequired]
+    public string Status { get; private init; }
+
+    [JsonInclude]
+    [JsonRequired]
+    public string Message { get; private init; }
+
+    [JsonIgnore]
+    public SystemHealthStatus Kind { get; }
+
+    public static SystemHealthResponse From(SystemHealthStatus kind, string message) => new(kind, message);
 }
