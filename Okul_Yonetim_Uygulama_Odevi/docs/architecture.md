@@ -83,7 +83,9 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - **MVP deneme ortamı: Raspberry Pi** (yerel ağda, uzaktan erişim). **API ve web orada çalışır**; kısa süreli
   denemeler için kurulup kaldırılır. Bu yüzden: API `linux-arm64` için yayımlanabilir olmalı; tüm adres/port/
   bağlantı/log yolu ayarları ortam değişkeniyle verilir (koda veya Windows yoluna bağlı değil); web statik
-  dosya olarak sunulur. Pi kurulumu ve dağıtımı **ayrı bir spec** ile gelir (numarası açıldığında verilir).
+  dosya olarak sunulur. Pi kurulumu ve dağıtımı spec 0003 ile geldi (`docs/deploy-pi.md`): web nginx ile ayrı birim
+  (port 8080, `/api` içeride API'ye iletilir), API systemd servisi (`okul` kullanıcısı, yalnızca `127.0.0.1:5080`),
+  Pi'deki PostgreSQL 17, kısıtlı veritabanı kullanıcısı `okul_app`; dağıtım/geri alma `tools/pi/`.
 - Mobil uygulama, Pi'deki API'ye yerel ağ adresiyle bağlanır (adres ortam ayarından).
 
 ## Forbidden dependencies (make them testable)

@@ -12,8 +12,13 @@
 - Veritabanı kullanıcısı (karar: plan 0001, Risks 5): yerel geliştirme ve testler `postgres` kullanıcısıyla çalışır
   (test veritabanı oluşturup silmek için); ayrı, kısıtlı bir uygulama kullanıcısı açılmadı. Bilgi yalnızca
   user-secrets'ta (`WebAPI`: `ConnectionStrings:OkulDb`, `tests/Integration`: `ConnectionStrings:TestServer`).
-  Pilot/üretim ortamında (ör. Raspberry Pi kurulum spec'i) uygulama süper kullanıcıyla çalıştırılmaz — o spec'te
-  yalnızca kendi veritabanına yetkili bir kullanıcı tanımlanır.
+  Pilot/üretim ortamında uygulama süper kullanıcıyla çalıştırılmaz.
+- **Raspberry Pi deneme ortamı (spec 0003):** uygulama `okul_app` ile bağlanır — süper kullanıcı değil, veritabanı/rol
+  açamaz, `pg_hba.conf`'taki işaretli blokla yalnızca `okul` veritabanına ve yalnızca `127.0.0.1`'den bağlanabilir;
+  `okul` veritabanının sahibidir (migration'ları açılışta uygular). Şifre Pi'de üretilir (`openssl rand`), psql'e
+  stdin'den verilir, yalnızca `/etc/okul/okul-api.env` (root:root 600) içinde durur; systemd servise ortam değişkeni
+  olarak verir. Betiklerde `set -x` yasak, şifre ekrana basılmaz (`tools/check/pi-config.mjs` denetler). API root
+  olmayan `okul` sistem kullanıcısıyla, sertleştirilmiş systemd ayarlarıyla ve yalnızca `127.0.0.1`'de çalışır.
 
 ## Sensitive data protection
 1. **Şifre:** ASP.NET Core Identity `PasswordHasher` (PBKDF2) veya Argon2id ile hash; düz metin hiçbir yerde (DB, log, hata, yanıt) yok.
