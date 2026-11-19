@@ -1,6 +1,7 @@
 # Okul Yönetim API — systemd servisi (spec 0003). setup-remote.sh @...@ yer tutucularını pi.conf'tan doldurur.
 # API yalnızca 127.0.0.1'i dinler; dışarıya nginx (web portu) üzerinden açılır. Root olmayan "okul" kullanıcısıyla
-# çalışır. Veritabanı bağlantısı (şifre dahil) /etc/okul/okul-api.env'de: yalnızca root okur, systemd servise verir.
+# çalışır. Veritabanı bağlantısı (şifre dahil) /etc/okul/okul-api.env'de, oturum imza anahtarı /etc/okul/okul-jwt.env'de
+# (spec 0004): yalnızca root okur, systemd servise verir.
 # Web sayfayla aynı adresten (nginx) çalıştığı için CORS izni gerekmez; Pi IP'si değişince bu dosya değişmez.
 [Unit]
 Description=Okul Yonetim API
@@ -14,6 +15,7 @@ Group=okul
 WorkingDirectory=/opt/okul/api/current
 ExecStart=/opt/okul/api/current/OkulYonetim.WebAPI
 EnvironmentFile=/etc/okul/okul-api.env
+EnvironmentFile=/etc/okul/okul-jwt.env
 Environment=ASPNETCORE_URLS=http://127.0.0.1:@API_PORT@
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=Database__MigrateOnStartup=true

@@ -32,7 +32,7 @@ for (const script of scripts) {
 //    secret, write_env_file içindeki $1) ve şifre dosyasını okuyan komutlar aranır; her komut (; && || ile ayrılan
 //    parça) ayrı denetlenir. Asıl güvence review + VERIFY'daki çıktı/log taramasıdır.
 const secretVar = /\$\{?(password|pw|pass|secret)\b/i;
-const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?ENV_FILE\b|okul-api\.env)/;
+const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?(ENV|JWT)_FILE\b|okul-(api|jwt)\.env)/;
 
 // Tırnak içindeki ; & | karakterleri komut ayırıcı sayılmaz (SQL ve bağlantı cümlesinde geçer; review round 2, M-1).
 // Yerine boşluk konur: kelime karakteri ("_") olsaydı "$password;" → "$password_" olur, değişken tanınmazdı (round 3, L-1).
@@ -121,6 +121,32 @@ for (const forbidden of ["SUPERUSER ", "CREATEDB ", "CREATEROLE "]) {
 for (const required of ["NOSUPERUSER", "NOCREATEDB", "NOCREATEROLE", "chmod 600", "reject", "REVOKE CONNECT"]) {
   if (!setup.includes(required)) fail(`setup-remote.sh: '${required}' bulunamadı`);
 }
+// Veritabanı şifre dosyası da 600 izinli geçici dosyayla yazılmalı. Genel "chmod 600" araması yetmez: spec 0004'teki
+// imza anahtarı adımında da geçtiği için buradan silinmesi gözden kaçardı (VERIFY bozma denemesi, spec 0004).
+const envWriter = setup.match(/write_env_file\(\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+if (!/chmod 600 "\$tmp"/.test(envWriter)) fail("setup-remote.sh: write_env_file şifre dosyasını 600 izinli geçici dosyayla yazmalı");
+
+// Oturum imza anahtarı (spec 0004): rastgele üretilir, yalnızca yoksa eklenir (tekrar çalıştırmada değişmez), 600 izinli
+// geçici dosya üzerinden yazılır ve ekrana basılmaz.
+const jwt = setup.match(/ensure_jwt_key\(\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+if (!jwt) fail("setup-remote.sh: ensure_jwt_key (oturum imza anahtarı) bulunamadı");
+else {
+  if (!/if \[ -s "\$JWT_FILE" \]; then[\s\S]*?return/.test(jwt)) fail("setup-remote.sh: imza anahtarı varsa korunmalı (tekrar üretilmemeli)");
+  if (!/openssl rand -base64 48/.test(jwt)) fail("setup-remote.sh: imza anahtarı openssl rand ile (en az 32 bayt) üretilmeli");
+  if (!/chmod 600 "\$tmp"/.test(jwt)) fail("setup-remote.sh: imza anahtarı 600 izinli geçici dosyayla yazılmalı");
+  const writes = jwt.split("\n").filter((line) => line.includes("Jwt__SigningKey=%s"));
+  if (/\b(say|echo)\b[^\n]*openssl/.test(jwt) || writes.length !== 1 || !writes[0].trimEnd().endsWith('> "$tmp"')) fail("setup-remote.sh: imza anahtarı ekrana basılmamalı");
+  if (!/^\s*ensure_jwt_key$/m.test(setup.replace(jwt, ""))) fail("setup-remote.sh: ensure_jwt_key kurulumda çağrılmalı");
+}
+
+// Okul açma sarmalayıcısı (spec 0004): şifre argüman değil (komut gizli girişle sorar); argümanlar printf %q ile taşınır;
+// komut servis kullanıcısıyla ve servisin env dosyasıyla çalışır.
+const createSchool = read(path.join(piDir, "create-school.sh"));
+if (/--sifre|--password/i.test(createSchool)) fail("create-school.sh: şifre argümanla verilmemeli");
+if (!/printf ' %q'/.test(createSchool)) fail("create-school.sh: argümanlar printf %q ile taşınmalı (okul adında boşluk)");
+if (!/systemd-run --pty --quiet --uid=okul --gid=okul -p EnvironmentFile=\/etc\/okul\/okul-api\.env -p EnvironmentFile=\/etc\/okul\/okul-jwt\.env/.test(createSchool)) {
+  fail("create-school.sh: komut okul kullanıcısıyla, servis env dosyasıyla (systemd-run --pty) çalışmalı");
+}
 
 // Web derlemesi Git Bash'te: VITE_API_BASE_URL'in yol çevirisi kapalı olmalı ve pakette yerel yol koruması bulunmalı
 // (VERIFY V-1). Öz-sınama: koruma kalıbı gerçek bozuk değeri yakalar, doğru paketi yakalamaz.
@@ -145,6 +171,7 @@ expectLine(service, /^User=okul$/m, "servis: User=okul olmalı (root değil)");
 expectLine(service, /^Restart=always$/m, "servis: Restart=always olmalı");
 expectLine(service, /^Environment=ASPNETCORE_URLS=http:\/\/127\.0\.0\.1:@API_PORT@$/m, "servis: API yalnızca 127.0.0.1'i dinlemeli");
 expectLine(service, /^EnvironmentFile=\/etc\/okul\/okul-api\.env$/m, "servis: bağlantı bilgisi /etc/okul/okul-api.env'den gelmeli");
+expectLine(service, /^EnvironmentFile=\/etc\/okul\/okul-jwt\.env$/m, "servis: oturum imza anahtarı /etc/okul/okul-jwt.env'den gelmeli (spec 0004)");
 expectLine(service, /^NoNewPrivileges=true$/m, "servis: NoNewPrivileges=true olmalı");
 expectLine(service, /^ProtectSystem=strict$/m, "servis: ProtectSystem=strict olmalı");
 expectLine(service, /^WantedBy=multi-user\.target$/m, "servis: açılışta başlamalı (WantedBy=multi-user.target)");

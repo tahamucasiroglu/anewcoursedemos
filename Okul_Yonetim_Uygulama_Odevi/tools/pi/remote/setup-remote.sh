@@ -17,6 +17,7 @@ DB_NAME=okul
 DB_ROLE=okul_app
 ETC_DIR=/etc/okul
 ENV_FILE=/etc/okul/okul-api.env
+JWT_FILE=/etc/okul/okul-jwt.env
 HBA_BEGIN='# okul-begin (spec 0003 — Okul Yönetim; uninstall-remote.sh siler)'
 HBA_END='# okul-end'
 # Şifre içeren SQL bu oturumda sunucu loguna yazılmasın (review round 1, L-2; round 2, L-1): komut logu, hata
@@ -70,6 +71,22 @@ write_env_file() {
     "$DB_NAME" "$DB_ROLE" "$1" > "$tmp"
   chown root:root "$tmp"
   mv -f "$tmp" "$ENV_FILE"
+}
+
+# Oturum imza anahtarı (spec 0004): ayrı dosyada (yalnızca root, 600); yoksa bir kez üretilir, varsa dokunulmaz
+# (değişseydi herkesin oturumu kapanırdı). Veritabanı şifre dosyası okunmaz/değişmez. Anahtar ekrana basılmaz.
+ensure_jwt_key() {
+  if [ -s "$JWT_FILE" ]; then
+    say "oturum imza anahtarı zaten var (dokunulmadı)"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp "$ETC_DIR/.okul-jwt.env.XXXXXX")"
+  chmod 600 "$tmp"
+  printf 'Jwt__SigningKey=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" > "$tmp"
+  chown root:root "$tmp"
+  mv -f "$tmp" "$JWT_FILE"
+  say "oturum imza anahtarı üretildi: $JWT_FILE ($(stat -c '%U:%G %a' "$JWT_FILE"))"
 }
 
 ensure_hba_block() {
@@ -129,6 +146,7 @@ step_database() {
   pg -c "REVOKE CONNECT ON DATABASE $DB_NAME FROM PUBLIC" >/dev/null
   pg -c "GRANT CONNECT ON DATABASE $DB_NAME TO $DB_ROLE" >/dev/null
   ensure_hba_block
+  ensure_jwt_key
   say "şifre dosyası: $ENV_FILE ($(stat -c '%U:%G %a' "$ENV_FILE"))"
 }
 
