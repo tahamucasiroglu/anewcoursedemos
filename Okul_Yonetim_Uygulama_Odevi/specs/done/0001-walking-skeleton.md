@@ -1,6 +1,6 @@
 # Spec 0001 — Walking skeleton (yürüyen iskelet)
 
-- Status: In progress
+- Status: Shipped
 - Mode: lite
 - Plan: `specs/plans/0001-plan.md`
 - Self-critique: done
@@ -85,34 +85,58 @@ iki hızda (fast ve full) yeşil olur ve arkasında çalışan süreç bırakmaz
 - Hızlı profil süresi kriter değildir; plan/build'de 3 koşunun ortancası raporlanır.
 
 ## Acceptance criteria
-- [ ] AC-1 — Veritabanı ayaktayken sistem durumu sorgusu "çalışıyor" sonucunu ve kaynak dosyasındaki Türkçe mesajı döndürür; yanıtta sürüm, sunucu, bağlantı veya hata ayrıntısı bulunmaz.
-- [ ] AC-2 — Veritabanına ulaşılamadığında veya 3 saniyede yanıt alınamadığında sorgu "hizmet dışı" sonucunu 503 durum koduyla ve Türkçe mesajla döndürür; iç hata ayrıntısı yanıtta yer almaz.
-- [ ] AC-3 — Web paneli dört durumu doğru metinle gösterir: yükleniyor, çalışıyor, hizmet dışı, sunucuya ulaşılamıyor; son ikisinde "Tekrar dene" yeniden sorgular.
-- [ ] AC-4 — Mobil uygulama aynı dört durumu ve "Tekrar dene" davranışını gösterir.
-- [ ] AC-5 — Web ve mobil durumu yalnızca ortak istemci üzerinden sorgular; ortak istemci API tanımından üretilir.
-- [ ] AC-6 — Bir dosyaya ikinci bir tip eklemek veya dosya adını tip adından farklı yapmak derlemeyi kırar.
-- [ ] AC-7 — Herhangi bir derleme uyarısı (ör. kullanılmayan değişken) derlemeyi kırar — tüm backend projelerinde.
-- [ ] AC-8 — Açıklaması (summary) olmayan veya boş olan bir tip mimari testi kırmızıya düşürür; üye açıklaması istenmez.
-- [ ] AC-9 — Yasak bağımlılıklardan birini eklemek (ör. Domain'den EF Core'a referans) mimari testi kırmızıya düşürür.
-- [ ] AC-10 — Veritabanı testleri kendi test veritabanını açar ve koşu sonunda siler; önceden kalmış test veritabanları temizlenir; geliştirme veritabanı değişmez.
-- [ ] AC-11 — `./scripts/check --fast` ve `./scripts/check` yeşildir; önkoşul eksikse (ör. PostgreSQL kapalı) kırmızıdır ve hangi önkoşulun eksik olduğunu söyler.
-- [ ] AC-12 — Residue testi iki profilde de temizdir (kontrol sonrası arkada çalışan süreç kalmaz).
-- [ ] AC-13 — API çalışırken her istek, o günün tarihli log dosyasına yöntem, yol, durum kodu, süre ve izleme numarasıyla yazılır; beklenmeyen bir hata, kullanıcıya dönen izleme numarasıyla aynı numarayla bir kez Error olarak yazılır; istek gövdesi yazılmaz.
-- [ ] AC-14 — Log seviyesi ayardan değiştirilebilir: varsayılanda Debug satırları yazılmaz; seviye Debug yapılınca yazılır. Log klasörü ayardan verilir; 30 günden eski dosyalar tutulmaz.
-- [ ] AC-15 — Tarayıcı istekleri yalnızca ayarda tanımlı web adresinden kabul edilir; başka bir adresten gelen istek izin almaz. Web ve mobil API adresini ortam ayarından alır.
+- [x] AC-1 — Veritabanı ayaktayken sistem durumu sorgusu "çalışıyor" sonucunu ve kaynak dosyasındaki Türkçe mesajı döndürür; yanıtta sürüm, sunucu, bağlantı veya hata ayrıntısı bulunmaz.
+- [x] AC-2 — Veritabanına ulaşılamadığında veya 3 saniyede yanıt alınamadığında sorgu "hizmet dışı" sonucunu 503 durum koduyla ve Türkçe mesajla döndürür; iç hata ayrıntısı yanıtta yer almaz.
+- [x] AC-3 — Web paneli dört durumu doğru metinle gösterir: yükleniyor, çalışıyor, hizmet dışı, sunucuya ulaşılamıyor; son ikisinde "Tekrar dene" yeniden sorgular.
+- [x] AC-4 — Mobil uygulama aynı dört durumu ve "Tekrar dene" davranışını gösterir.
+- [x] AC-5 — Web ve mobil durumu yalnızca ortak istemci üzerinden sorgular; ortak istemci API tanımından üretilir.
+- [x] AC-6 — Bir dosyaya ikinci bir tip eklemek veya dosya adını tip adından farklı yapmak derlemeyi kırar.
+- [x] AC-7 — Herhangi bir derleme uyarısı (ör. kullanılmayan değişken) derlemeyi kırar — tüm backend projelerinde.
+- [x] AC-8 — Açıklaması (summary) olmayan veya boş olan bir tip mimari testi kırmızıya düşürür; üye açıklaması istenmez.
+- [x] AC-9 — Yasak bağımlılıklardan birini eklemek (ör. Domain'den EF Core'a referans) mimari testi kırmızıya düşürür.
+- [x] AC-10 — Veritabanı testleri kendi test veritabanını açar ve koşu sonunda siler; önceden kalmış test veritabanları temizlenir; geliştirme veritabanı değişmez.
+- [x] AC-11 — `./scripts/check --fast` ve `./scripts/check` yeşildir; önkoşul eksikse (ör. PostgreSQL kapalı) kırmızıdır ve hangi önkoşulun eksik olduğunu söyler.
+- [x] AC-12 — Residue testi iki profilde de temizdir (kontrol sonrası arkada çalışan süreç kalmaz).
+- [x] AC-13 — API çalışırken her istek, o günün tarihli log dosyasına yöntem, yol, durum kodu, süre ve izleme numarasıyla yazılır; beklenmeyen bir hata, kullanıcıya dönen izleme numarasıyla aynı numarayla bir kez Error olarak yazılır; istek gövdesi yazılmaz.
+- [x] AC-14 — Log seviyesi ayardan değiştirilebilir: varsayılanda Debug satırları yazılmaz; seviye Debug yapılınca yazılır. Log klasörü ayardan verilir; 30 günden eski dosyalar tutulmaz.
+- [x] AC-15 — Tarayıcı istekleri yalnızca ayarda tanımlı web adresinden kabul edilir; başka bir adresten gelen istek izin almaz. Web ve mobil API adresini ortam ayarından alır.
 
 ## Definition of Done
-- [ ] Every acceptance criterion mapped to proof (test or reproducible observation)
-- [ ] `scripts/check` green
-- [ ] Independent review done; real findings fixed, noise rejected with written rationale, deferred ones in `specs/backlog.md`
-- [ ] Docs / ADRs updated if behavior or architecture changed
-- [ ] Spec moved to `specs/done/` (it becomes immutable there)
+- [x] Every acceptance criterion mapped to proof (test or reproducible observation)
+- [x] `scripts/check` green
+- [x] Independent review done; real findings fixed, noise rejected with written rationale, deferred ones in `specs/backlog.md`
+- [x] Docs / ADRs updated if behavior or architecture changed
+- [x] Spec moved to `specs/done/` (it becomes immutable there)
 
 ## Scorecard (fill at ship — honest numbers make the process improvable)
 | Metric | Value |
 |---|---|
-| Spec revisions | |
-| Fix rounds | |
-| Review findings: real / noise / deferred | |
-| Regressions introduced | |
-| Bugs escaped to production | |
+| Spec revisions | 0 (onaydan sonra; loglama ve ortam gereksinimleri onaydan önce eklendi) |
+| Fix rounds | 3 (fix-1: review round 1, fix-2: review round 2, fix-3: VERIFY V-1) |
+| Review findings: real / noise / deferred | 19 / 1 / 3 (round 1: 16/0/2, round 2: 3/1/1); VERIFY: 1 real |
+| Regressions introduced | 0 |
+| Bugs escaped to production | 0 (henüz üretim yok) |
+
+## Verification evidence
+VERIFY 2026-11-19, QA (lite, ana oturum). Tam yeşil: `CHECK GREEN (full, 10 steps, 75 s) @085f19f`; ship commit'i ayrıca tam koşuyla doğrulandı.
+Kasıtlı bozmalar repo dışı geçici kopyada yapıldı, hiçbiri commit edilmedi (betikler: `Promtlar/Sources/0001/kaynak/`).
+
+| Acceptance criterion | Evidence | Status |
+|---|---|---|
+| AC-1 | `SystemHealthEndpointTests.cs::Get_DatabaseUp_ReturnsHealthyWithTurkishMessage`, `GetSystemHealthQueryHandlerTests.cs::Handle_DatabaseReachable_ReturnsHealthyWithTurkishMessage` | PASS |
+| AC-2 | `SystemHealthEndpointTests.cs::Get_DatabaseUnreachable_Returns503WithoutDetails`; `Handle_ProbeTimesOut_ReturnsUnavailable` + `Handle_ProbeAnswersJustBeforeTimeout_ReturnsHealthy` (spec değeri 3 sn); bozma: süre 30 sn → ilk test kırmızı, 2 sn → ikinci test kırmızı (fix-3 sonrası) | PASS |
+| AC-3 | `web/src/features/system-status/SystemStatus.test.tsx` (9 test); ekran S-1…S-4 web | PASS |
+| AC-4 | `mobile/src/features/system-status/SystemStatusScreen.test.tsx` (9 test); ekran S-1…S-4 mobil (Expo web çıktısı) | PASS |
+| AC-5 | ESLint `no-restricted-globals` / `no-restricted-properties` (deneme dosyasıyla kırmızı görüldü); `tools/check/api-client-fresh.mjs` (fix-1'de eski istemciyi yakaladı) | PASS |
+| AC-6 | Bozma: dosyaya ikinci enum → `SA1402`; ikinci record → `SA1402`; dosya adı ≠ tip adı → `SA1649` (derleme kırıldı) | PASS |
+| AC-7 | Bozma: kullanılmayan değişken Domain'de ve Unit test projesinde → `CS0219` (derleme kırıldı) | PASS |
+| AC-8 | Bozma: boş summary ve silinmiş summary → `TypeSummaryTests.cs::EveryType_HasNonEmptySummary` kırmızı | PASS |
+| AC-9 | Bozma: API → OkulDbContext (`WebApi_DoesNotTouchDbContextOrEfCore`), Application → Serilog (`Application_DoesNotDependOnLowerLayersOrExternalSdks`), Domain → EF Core (`Domain_DoesNotUseEfCoreOrOuterLayers`) kırmızı | PASS |
+| AC-10 | `TestDatabaseLifecycleTests.cs::Run_CreatesOwnDatabase_DropsItAndRemovesLeftovers` (eşzamanlı koşunun veritabanı korunur) | PASS |
+| AC-11 | Tam/hızlı check yeşil; `OKUL_DB_PORT=5999 ./scripts/check` → `CHECK FAILED (full) prerequisite not met: node tools/check/pg-ready.mjs` + "PostgreSQL'e ulaşılamıyor (localhost:5999)" | PASS |
+| AC-12 | `RESIDUE CLEAN (full, 2 runs)` ve `(fast, 2 runs)` @5ae5f6b; sonrasında `check.conf` değişmedi | PASS |
+| AC-13 | `RequestLoggingTests.cs::Request_WritesDailyFileLine_WithTraceId_NoBody`, `RequestLoggingTests.cs::UnhandledError_LoggedOnce_WithResponseTraceId`, `RequestCancellationTests.cs::ClientAbort_IsLoggedAsInformation_NotError` | PASS |
+| AC-14 | `LoggingSetupTests.cs::DefaultLevel_IsInformation_DebugSuppressed`, `ConfiguredDebug_WritesDebug`, `FileSink_Retains30Days_DailyRolling` | PASS |
+| AC-15 | `CorsTests.cs::AllowedOrigin_GetsCorsHeader_OtherOrigin_DoesNot`; `web/src/config.test.ts`, `mobile/src/config.test.ts` | PASS |
+
+Ekran görüntüleri S-1 yükleniyor · S-2 çalışıyor · S-3 hizmet dışı · S-4 ulaşılamıyor (web 1280×720, mobil 414×800; sahte API, başsız Chrome) — agent-captured, judged by tahamucasiroglu at SHIP, 2026-11-19. Kullanıcı isteğiyle `Promtlar/Sources/0001/` altında saklanır.
