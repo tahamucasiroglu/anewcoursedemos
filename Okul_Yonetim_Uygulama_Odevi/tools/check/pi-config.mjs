@@ -122,6 +122,20 @@ for (const required of ["NOSUPERUSER", "NOCREATEDB", "NOCREATEROLE", "chmod 600"
   if (!setup.includes(required)) fail(`setup-remote.sh: '${required}' bulunamadı`);
 }
 
+// Web derlemesi Git Bash'te: VITE_API_BASE_URL'in yol çevirisi kapalı olmalı ve pakette yerel yol koruması bulunmalı
+// (VERIFY V-1). Öz-sınama: koruma kalıbı gerçek bozuk değeri yakalar, doğru paketi yakalamaz.
+const deploy = read(path.join(piDir, "deploy.sh"));
+if (!/MSYS2_ENV_CONV_EXCL=VITE_API_BASE_URL\b[^\n]*VITE_API_BASE_URL=\//.test(deploy)) {
+  fail("deploy.sh: web derlemesinde VITE_API_BASE_URL için MSYS2_ENV_CONV_EXCL olmalı (Git Bash '/' değerini 'C:/Program Files/Git/' yapar)");
+}
+const guard = deploy.match(/grep -rqE '([^']+)' "\$OUT\/web"/);
+if (!guard) fail("deploy.sh: web paketinde yerel yol koruması (grep -rqE … \"$OUT/web\") bulunamadı");
+else {
+  const re = new RegExp(guard[1]);
+  if (!re.test('baseUrl:"C:/Program Files/Git/"') || !re.test("file:///C:/x")) fail("deploy.sh: yerel yol koruması bozuk değeri yakalamıyor");
+  if (re.test('fetch("/api/system-health")') || re.test("http://192.168.1.102:8080/")) fail("deploy.sh: yerel yol koruması doğru paketi reddediyor");
+}
+
 // 3) Servis dosyası
 const service = read(path.join(remoteDir, "okul-api.service"));
 const expectLine = (text, pattern, message) => { if (!pattern.test(text)) fail(message); };
