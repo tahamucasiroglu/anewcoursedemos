@@ -4,6 +4,7 @@
   "description": "Okul Yönetim Platformu — web, mobil ve ortak API istemcisi (npm workspaces). Backend: backend/ (.NET).",
   "workspaces": [
     "packages/api-client",
+    "packages/theme",
     "web",
     "mobile"
   ],
