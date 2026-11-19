@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Domain: varlıklar. nArchitecture gereği yalnızca NArchitecture.Core.Persistence (temel Entity) — ADR-0005. -->
+  <PropertyGroup>
+    <RootNamespace>OkulYonetim.Domain</RootNamespace>
+    <AssemblyName>OkulYonetim.Domain</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NArchitecture.Core.Persistence" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>OkulYonetim.Infrastructure</RootNamespace>
+    <AssemblyName>OkulYonetim.Infrastructure</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction" />
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+</Project>

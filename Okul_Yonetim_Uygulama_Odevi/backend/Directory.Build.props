@@ -1,0 +1,31 @@
+<Project>
+  <!--
+    Tüm backend projelerine otomatik uygulanan ortak derleme kuralları (docs/conventions.md, "Enforced by tooling").
+    K2 — uyarı = hata: tek bir uyarı bile derlemeyi kırar.
+    K3 — tip başına summary: XML belge dosyası üretilir; tiplerin summary'si mimari testte doğrulanır,
+         üye summary'si istenmez (CS1591 kapalı).
+    K1 — dosya başına tek tip: StyleCop SA1402/SA1649 (.editorconfig'de error).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+</Project>

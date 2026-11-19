@@ -22,3 +22,13 @@ extensions/vscode/*.vsix
 
 # Uygulama logları (ADR-0003) — repoya girmez
 logs/
+
+# Derleme / paket çıktıları
+bin/
+obj/
+node_modules/
+dist/
+.expo/
+web-build/
+*.tsbuildinfo
+coverage/

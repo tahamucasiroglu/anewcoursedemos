@@ -1,0 +1,48 @@
+# Okul Yönetim Platformu — backend kod kuralları (docs/conventions.md, "Enforced by tooling").
+# Seviyeler BuildRulesTests tarafından doğrulanır; bir kuralı gevşetmek mimari testi kırar.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yaml,yml,props,csproj,xml}]
+indent_size = 2
+
+[*.cs]
+# --- StyleCop: yalnızca bizim seçtiğimiz kurallar açık; diğer kategoriler kapalı ---
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.DocumentationRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.LayoutRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.MaintainabilityRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.NamingRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.OrderingRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.ReadabilityRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.SpacingRules.severity = none
+dotnet_analyzer_diagnostic.category-StyleCop.CSharp.SpecialRules.severity = none
+
+# K1 — dosya başına tek tip; dosya adı = tip adı
+dotnet_diagnostic.SA1402.severity = error
+dotnet_diagnostic.SA1649.severity = error
+
+# K3 — üye summary'si istenmez (tip summary'si mimari testte)
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.CS1591.severity = none
+
+# T1 — Türkçe I/ı: kültüre bağlı metin işlemleri
+dotnet_diagnostic.CA1304.severity = error
+dotnet_diagnostic.CA1309.severity = error
+dotnet_diagnostic.CA1311.severity = error
+
+# Loglama — mesaj şablonu zorunlu (docs/conventions.md, Logging)
+dotnet_diagnostic.CA2254.severity = error
+# LoggerMessage delegeleri zorunlu değil (gürültü)
+dotnet_diagnostic.CA1848.severity = none
+# Log argümanı "pahalı olabilir" ipucu — basit değişkenlerde de tetikleniyor; kapsamlı loglamayı (ADR-0003) zorlaştırır
+dotnet_diagnostic.CA1873.severity = none
+
+# Otomatik üretilen kod (migration'lar) K1/K3'ten muaf
+[**/Migrations/*.cs]
+generated_code = true

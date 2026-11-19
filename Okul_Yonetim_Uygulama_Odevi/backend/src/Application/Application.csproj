@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>OkulYonetim.Application</RootNamespace>
+    <AssemblyName>OkulYonetim.Application</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NArchitecture.Core.Application" />
+    <PackageReference Include="NArchitecture.Core.Mediator" />
+    <PackageReference Include="NArchitecture.Core.Localization.Abstraction" />
+    <PackageReference Include="NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- nArchitecture YAML metinleri: çıktı klasörüne Features/<Modül>/Resources/Locales/ olarak kopyalanır -->
+    <None Update="Features\**\Resources\Locales\*.yaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

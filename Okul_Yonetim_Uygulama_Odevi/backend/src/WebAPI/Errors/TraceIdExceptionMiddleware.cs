@@ -1,0 +1,72 @@
+using System.Net.Mime;
+using Microsoft.AspNetCore.Mvc;
+using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
+using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Middleware;
+using NArchitecture.Core.Localization.Abstraction;
+using NArchitectureLogger = NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction.ILogger;
+
+namespace OkulYonetim.WebAPI.Errors;
+
+/// <summary>
+/// nArchitecture hata middleware'inin bu projeye uyarlanmış hali: her hata izleme numarasıyla bir kez loglanır
+/// (beklenmeyen hata Error, iş hataları Warning). İş hatalarının yanıtı nArchitecture'daki gibidir; beklenmeyen
+/// hatada yanıt yalnızca genel Türkçe mesaj ve izleme numarası taşır (ayrıntı sızdırılmaz).
+/// </summary>
+public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
+{
+    private static readonly string[] Locales = ["tr"];
+    private readonly ILogger<TraceIdExceptionMiddleware> logger;
+
+    public TraceIdExceptionMiddleware(
+        RequestDelegate next,
+        IHttpContextAccessor contextAccessor,
+        NArchitectureLogger loggerService,
+        ILogger<TraceIdExceptionMiddleware> logger)
+        : base(next, contextAccessor, loggerService)
+    {
+        this.logger = logger;
+    }
+
+    protected override Task LogException(HttpContext context, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(exception);
+        if (IsExpected(exception))
+        {
+            this.logger.LogWarning("İş hatası ({ExceptionType}): {Reason}", exception.GetType().Name, exception.Message);
+        }
+        else
+        {
+            this.logger.LogError(exception, "Beklenmeyen hata: {Method} {Path}", context.Request.Method, context.Request.Path);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    protected override Task HandleExceptionAsync(HttpResponse response, dynamic exception)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        Exception error = (Exception)exception;
+        return IsExpected(error)
+            ? base.HandleExceptionAsync(response, (object)error)
+            : WriteUnexpectedErrorAsync(response);
+    }
+
+    private static async Task WriteUnexpectedErrorAsync(HttpResponse response)
+    {
+        ILocalizationService localization = response.HttpContext.RequestServices.GetRequiredService<ILocalizationService>();
+        string message = await localization.GetLocalizedAsync("UnexpectedError", Locales, "Common").ConfigureAwait(false);
+        ProblemDetails problem = new()
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = message,
+        };
+        problem.Extensions["traceId"] = response.HttpContext.TraceIdentifier;
+
+        response.StatusCode = StatusCodes.Status500InternalServerError;
+        await response.WriteAsJsonAsync(problem, options: null, contentType: MediaTypeNames.Application.ProblemJson).ConfigureAwait(false);
+    }
+
+    private static bool IsExpected(Exception exception) =>
+        exception is BusinessException or ValidationException or AuthorizationException or NotFoundException or ConflictException;
+}

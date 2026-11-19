@@ -1,0 +1,42 @@
+<Project>
+  <!-- Merkezi paket sürümleri (docs/security.md, Dependencies). Yeni paket = plan onayı. .NET 10 hattı (ADR-0001). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- nArchitecture -->
+    <PackageVersion Include="NArchitecture.Core.Application" Version="2.0.0" />
+    <PackageVersion Include="NArchitecture.Core.Mediator" Version="2.0.0" />
+    <PackageVersion Include="NArchitecture.Core.Persistence" Version="2.0.0" />
+    <PackageVersion Include="NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi" Version="2.0.0" />
+    <PackageVersion Include="NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction" Version="2.0.0" />
+    <PackageVersion Include="NArchitecture.Core.Localization.Abstraction" Version="2.0.0" />
+    <PackageVersion Include="NArchitecture.Core.Localization.Resource.Yaml.DependencyInjection" Version="2.0.0" />
+    <!-- Veri erişimi -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
+    <!-- Web API -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.15" />
+    <!-- Loglama (ADR-0003) -->
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Serilog.Settings.Configuration" Version="10.0.1" />
+    <!-- Analizör -->
+    <PackageVersion Include="StyleCop.Analyzers" Version="1.3.180" />
+    <!-- Test -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
+    <PackageVersion Include="TngTech.ArchUnitNET.xUnitV3" Version="0.13.5" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />
+  </ItemGroup>
+</Project>
