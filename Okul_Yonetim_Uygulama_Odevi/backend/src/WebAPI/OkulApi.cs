@@ -22,6 +22,9 @@ public static class OkulApi
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+        // Yanıtlarda sunucu bilgisi sızdırılmaz ("Server: Kestrel" başlığı kapalı) — spec 0001, gereksinim 1.
+        builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
         builder.Services.AddSerilog(
             (services, configuration) => LoggingSetup.Configure(configuration, builder.Configuration).ReadFrom.Services(services),
             preserveStaticLogger: true);
