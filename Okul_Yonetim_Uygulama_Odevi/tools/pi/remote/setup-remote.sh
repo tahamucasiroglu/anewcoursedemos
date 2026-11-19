@@ -17,9 +17,10 @@ DB_NAME=okul
 DB_ROLE=okul_app
 ETC_DIR=/etc/okul
 ENV_FILE=/etc/okul/okul-api.env
-NGINX_MARK=/etc/okul/nginx-installed-by-okul
 HBA_BEGIN='# okul-begin (spec 0003 — Okul Yönetim; uninstall-remote.sh siler)'
 HBA_END='# okul-end'
+# Şifre içeren SQL bu oturumda sunucu loguna yazılmasın (review round 1, L-2): ne komut logu ne hata durumunda STATEMENT satırı
+NO_LOG_SQL="SET log_statement = 'none'; SET log_min_error_statement = 'panic'; "
 
 say() { printf '  %s\n' "$*"; }
 die() { printf 'HATA: %s\n' "$*" >&2; exit 1; }
@@ -38,7 +39,6 @@ step_nginx() {
     say "nginx kuruluyor (apt)…"
     DEBIAN_FRONTEND=noninteractive apt-get update -qq
     DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx >/dev/null
-    touch "$NGINX_MARK"
     # Yeni kurulan nginx'in varsayılan sitesi 80'i dinler; Pi'deki diğer işlere yer kalsın diye kapatılır.
     rm -f /etc/nginx/sites-enabled/default
   fi
@@ -105,11 +105,11 @@ step_database() {
   if [ "$role_exists" = "0" ] || [ ! -s "$ENV_FILE" ]; then
     password="$(openssl rand -hex 24)"
     if [ "$role_exists" = "0" ]; then
-      printf "CREATE ROLE %s LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '%s';\n" \
+      printf "${NO_LOG_SQL}CREATE ROLE %s LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '%s';\n" \
         "$DB_ROLE" "$password" | pg -q >/dev/null
       say "veritabanı kullanıcısı $DB_ROLE oluşturuldu (yönetici değil, veritabanı/rol açamaz)"
     else
-      printf "ALTER ROLE %s PASSWORD '%s';\n" "$DB_ROLE" "$password" | pg -q >/dev/null
+      printf "${NO_LOG_SQL}ALTER ROLE %s PASSWORD '%s';\n" "$DB_ROLE" "$password" | pg -q >/dev/null
       say "şifre dosyası yoktu: $DB_ROLE için yeni şifre üretildi"
     fi
     write_env_file "$password"
