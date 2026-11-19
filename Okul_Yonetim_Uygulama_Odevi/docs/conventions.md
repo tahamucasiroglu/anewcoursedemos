@@ -81,6 +81,7 @@ Altyapı ve dosya düzeni: `docs/architecture.md` "Logging" (ADR-0003). Kodda:
 - T6 — `dotnet build/test` MSBuild node'ları ve VBCSCompiler'ı arkada bırakır (residue) — `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` — from bootstrap 2026-11-19.
 - T7 — Liste sorgularında N+1 / tracking maliyeti ("10 saniyede yoklama") — okumada `AsNoTracking()` + `Select` ile DTO projeksiyonu — from bootstrap 2026-11-19.
 - T8 — ArchUnitNET `Types()` yüklenmemiş paketlerin (Npgsql, Serilog…) tiplerini içermez; onlara bakan "bağımlı olmamalı" kuralı sessizce boş geçer — dış paket kümelerini `Types(true)` ile kur ve her kümeye bir pozitif kontrol testi yaz — from spec 0001, review round 1 (H-1).
+- T9 — nArchitecture `LoggingBehavior`, `ILoggableRequest` işaretli isteği bütünüyle (tüm alanlarıyla) JSON olarak loglar — kişisel veri (S2/S3: TC, telefon, şifre, sağlık…) taşıyan Command/Query'ye `ILoggableRequest` konmaz; gerekirse yalnızca kimlik numaralarını loglayan ayrı bir log satırı yazılır — from spec 0001, review round 1 (I-1).
 - T10 — EF Core, yeni (boş) veritabanında ilk `Migrate()` sırasında henüz olmayan `__EFMigrationsHistory` tablosunu sorgulayıp `Microsoft.EntityFrameworkCore.Database.Command` kaynağından bir `[ERR]` satırı yazar; zararsızdır, yalnızca ilk kurulumda görülür — log testlerinde Error satırlarını kaynağa göre süz; üretimde ilk kurulumdaki bu satırı hata sanma — from spec 0001, fix-1 (L-1).
 
 ## Enforced by tooling
