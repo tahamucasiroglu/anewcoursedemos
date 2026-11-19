@@ -1,0 +1,39 @@
+# Yol haritası — neredeyiz?
+
+> Kaynak: `okul-yonetim-platformu-kapsam.md` (Faz 1 = MVP). Bu dosya "neredeyiz?" sorusunun cevabıdır.
+> **Her ship'te güncellenir:** biten satırın durumu ✅ ve spec numarası yazılır; sıra değişirse kullanıcı kararıyla
+> değişir. Ertelenen bulgular ayrı yerde: `specs/backlog.md`.
+
+**Son güncelleme:** 2026-11-19 · spec 0003 ship edildi.
+
+## Biten altyapı
+| Spec | Ne | Durum |
+|---|---|---|
+| 0001 | Uygulama iskeleti: API + web + mobil + PostgreSQL + loglama + "sistem durumu" ekranı | ✅ 2026-11-19 |
+| 0002 | Tema ve açık/koyu mod (web + mobil ortak renkler, seçim hatırlanır) | ✅ 2026-11-19 |
+| 0003 | Raspberry Pi deneme ortamı: `http://192.168.1.102:8080`, tek komutla dağıtım ve geri dönüş, kısıtlı veritabanı kullanıcısı | ✅ 2026-11-19 |
+
+## Faz 1 (MVP) — sıralı iş listesi
+Durum: ⬜ başlanmadı · 🔄 sürüyor · ✅ bitti. Her satır bir `/new-feature` olarak açılır. Büyük maddeler analizde
+daha küçük spec'lere bölünebilir; "sonra" diye işaretlenenler aynı modülün sonraki adımıdır.
+
+| Sıra | Feature | Kapsamdan (ne içerir) | Neden bu sırada | Durum |
+|---|---|---|---|---|
+| 1 | **Giriş ve roller + kurum/şube** | Kullanıcı girişi; roller: kurucu/yönetici, öğretmen, veli, muhasebe/idari; bir kişinin birden çok rolü; her okulun (kurumun) verisinin ayrı tutulması | Her şeyin temeli: kim giriyor, hangi okulun verisini görüyor | ⬜ |
+| 2 | **Kurum ve akademik yapı** | Şube, sınıf, şube-sınıf eşleşmesi, dönem, akademik takvim. Sonra: ders programı (elle + Excel'den alma) | Öğrenci ve yoklama sınıfa bağlı | ⬜ |
+| 3 | **Öğrenci ve veli kayıtları** | Öğrenci kartı, birden çok veli, kardeş bağlantısı, sağlık notu/alerji, teslim alabilecek kişiler. Sonra: Excel ve e-Okul çıktısından alma | Yoklama ve iletişim öğrenciye bağlı | ⬜ |
+| 4 | **Yoklama ve devamsızlık** | Öğretmen mobilden 10 saniyede yoklama alır; devamsız öğrencinin velisine otomatik bildirim | Kapsamda MVP'nin ilk maddesi | ⬜ |
+| 5 | **Veli iletişimi** | Duyuru (okul/sınıf/öğrenci) + okundu bilgisi; öğretmen-veli mesajı, mesai dışı sessiz mod; onay formları (gezi izni vb.); fotoğraf/dosya paylaşımı | | ⬜ |
+| 6 | **AI: sesli nottan veli mesajı** | Öğretmenin 20 sn'lik sesli notunu kibar bir veli mesajına çevirir; öğretmen onaylamadan gönderilmez | Kapsama göre "satış demosunun yıldızı"; mesajlaşmaya bağlı | ⬜ |
+| 7 | **Ödev ve not takibi** | Ödev verme, teslim durumu, yazılı/sözlü not; velide sade özet | | ⬜ |
+| 8 | **AI: haftalık gelişim özeti** | Yoklama, ödev, not ve öğretmen notlarından çocuğa özel haftalık veli özeti | Önce bu verilerin olması gerekir | ⬜ |
+| 9 | **Tahsilat ve ön muhasebe** | Yıllık ücret, taksit planı, indirim/burs, gecikme hatırlatması, makbuz, cari takibi. Online ödeme sağlayıcısı sonra (backlog B-1) | | ⬜ |
+| 10 | **Randevu** | Öğretmen müsaitlik takvimi, veliden randevu talebi | | ⬜ |
+| 11 | **Yönetici paneli** | Günlük özet (devamsızlık, geciken ödemeler, okunmayan duyurular), temel raporlar, Excel'e aktarma | Diğer modüllerin verisini özetler | ⬜ |
+
+**Her feature'da birlikte gelenler:** web + mobil taraf (veli ve öğretmen için tek mobil uygulama, role göre ekran),
+Türkçe metinler, Pi'ye dağıtım. Push bildirim, kurum logosuyla markalı açılış: ilgili feature'larda (sağlayıcı: B-6).
+
+## Faz 1 dışı (şimdilik yapılmaz)
+Faz 2 (sınav analizi, servis, etüt, öğrenci uygulaması, rehberlik) ve Faz 3 (ön kayıt CRM'i, çok şube büyümesi,
+markalı uygulama), kapsamın "kapı" kuralına göre: önceki faz pilotta kanıtlanmadan başlamaz.
