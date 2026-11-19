@@ -85,13 +85,18 @@ public sealed class LayerDependencyTests
     }
 
     [Theory]
-    [InlineData("OkulYonetim.Infrastructure.Logging.SerilogLoggerAdapter", Serilog)]
-    [InlineData("OkulYonetim.Persistence.HealthChecks.NpgsqlDatabaseHealthProbe", EfCore)]
-    [InlineData("OkulYonetim.Persistence.Contexts.OkulDbContext", EfCore)]
-    public void PositiveControl_ExternalTypeSetsAreNotEmpty(string knownUser, string externalNamespace)
+    [InlineData(typeof(OkulYonetim.Infrastructure.Logging.SerilogLoggerAdapter), Serilog)]
+    [InlineData(typeof(OkulYonetim.Persistence.HealthChecks.NpgsqlDatabaseHealthProbe), EfCore)]
+    [InlineData(typeof(OkulYonetim.Persistence.Contexts.OkulDbContext), EfCore)]
+    public void PositiveControl_ExternalTypeSetsAreNotEmpty(System.Type knownUserType, string externalNamespace)
     {
         // Bu tipler o pakete gerçekten bağımlı: "bağımlı olmamalı" kuralı ihlal vermeli. Vermiyorsa küme boştur ve
         // yukarıdaki yasak kuralları hiçbir zaman kırmızıya düşemez.
+        // Tip derleyiciyle verilir (typeof): yeniden adlandırılırsa derleme kırılır, kontrol boşuna yeşil kalmaz.
+        ArgumentNullException.ThrowIfNull(knownUserType);
+        string knownUser = knownUserType.FullName!;
+        Types().That().HaveFullName(knownUser).GetObjects(Architecture).ShouldNotBeEmpty($"{knownUser} mimaride bulunmalı");
+
         TypesShouldConjunction mustFail = Types().That().HaveFullName(knownUser)
             .Should().NotDependOnAny(External(externalNamespace));
 
