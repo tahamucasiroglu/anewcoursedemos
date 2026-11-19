@@ -35,7 +35,16 @@ public static class OkulApi
         builder.Services.AddYamlResourceLocalization();
         builder.Services.AddOkulCors(builder.Configuration);
         builder.Services.AddControllers();
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options => options.AddSchemaTransformer((schema, _, _) =>
+        {
+            // XML açıklamaları Windows'ta CRLF ile gelir; üretilen openapi.json her makinede aynı olsun (LF).
+            if (schema.Description is not null)
+            {
+                schema.Description = schema.Description.Replace("\r\n", "\n", StringComparison.Ordinal);
+            }
+
+            return Task.CompletedTask;
+        }));
 
         WebApplication app = builder.Build();
 
