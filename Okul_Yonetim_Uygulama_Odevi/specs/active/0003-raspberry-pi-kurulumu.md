@@ -1,9 +1,9 @@
 # Spec 0003 — Raspberry Pi kurulumu (MVP deneme ortamı)
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0003-plan.md`
-- Self-critique: pending (öz eleştiri boşlukları onay bekliyor)
+- Self-critique: done
 
 ## Intent
 Proje sahibi uygulamayı kendi bilgisayarı dışında, yerel ağ üzerinden erişilen gerçeğe yakın bir ortamda denemek
@@ -43,6 +43,11 @@ açma / HTTPS / alan adı, otomatik yedekleme, birden çok Pi, gerçek okul veri
     şifreyi bozmaz.
 12. **Belge:** Kurulum, dağıtım, geri alma, kaldırma ve mobil bağlantı adımları Türkçe tek bir belgede.
 13. Pi'deki mevcut uygulamalar ve portları (5090, 7100–7105) kurulumdan ve dağıtımdan sonra aynı çalışır.
+14. **Tek adres ayarı (Ö-1):** Pi'nin ağ adresi, SSH tanımı ve portlar tek bir ayar dosyasından gelir; web paneli
+    sayfayla aynı adresteki API'yi kullandığı için Pi'nin IP'si değişince yeniden derlenmesi gerekmez. Belge, modemde
+    Pi'ye sabit IP verilmesini önerir.
+15. **Kilit (Ö-3):** Bir dağıtım sürerken ikinci bir dağıtım/geri alma başlamayı reddeder.
+16. **Disk (Ö-5):** Kurulum ve dağıtım, Pi'de 1 GB'tan az boş alan varsa durur ve uyarır.
 
 ## User experience
 Kullanıcı arayüzü değişmez (web ve mobil ekranları spec 0001/0002'deki gibi). İşletim akışı (komutlar):
@@ -59,7 +64,9 @@ Kullanıcı arayüzü değişmez (web ve mobil ekranları spec 0001/0002'deki gi
 - Pi'deki PostgreSQL **17** kullanılır (geliştirme 18); 18'e özgü özellik kullanılmaz (kullanıcı kararı, 2026-11-19).
 - Yalnızca yerel ağ, düz HTTP; internete açma, HTTPS, alan adı kapsam dışı (backlog'a yazılır).
 - Otomatik yedekleme kapsam dışı (Pi'deki veri deneme verisidir); birden çok Pi, mağaza derlemesi kapsam dışı.
-- Geri alma yalnızca uygulama sürümünü değiştirir; veritabanı şeması ileri yönlüdür (geri alınmaz).
+- Geri alma yalnızca uygulama sürümünü değiştirir; veritabanı şeması ileri yönlüdür (geri alınmaz). Geri dönülen sürümden
+  sonra eklenmiş migration varsa komut uyarı verir (Ö-2).
+- Dağıtım sırasında API yeniden başlarken birkaç saniyelik kesinti kabul edilir (deneme ortamı, Ö-4).
 - Kaldırma yalnızca kullanıcı "kaldır" dediğinde çalıştırılır (kullanıcı kararı).
 - Pi'ye değiştiren her uzak komuttan önce kullanıcı onayı alınır (agent davranışı).
 - Size: tek yetenek (deneme ortamına kurulum/dağıtım), 12 kabul kriteri — kriterlerin çoğu aynı kurulumun güvenlik
@@ -71,8 +78,8 @@ Kullanıcı arayüzü değişmez (web ve mobil ekranları spec 0001/0002'deki gi
 - [ ] AC-3 — API root olmayan, oturum açamayan ayrı bir sistem kullanıcısıyla çalışır; Pi yeniden başlatıldığında ve API süreci öldürüldüğünde kendiliğinden yeniden çalışır.
 - [ ] AC-4 — Uygulamanın veritabanı kullanıcısı kendi veritabanında migration'ları uygular; başka bir veritabanına bağlanamaz; süper kullanıcı değildir; veritabanı veya rol oluşturamaz.
 - [ ] AC-5 — Veritabanı şifresi yalnızca root'un okuyabildiği bir dosyadadır; repoda, kurulum/dağıtım çıktılarında ve API loglarında geçmez.
-- [ ] AC-6 — Dağıtım tek komuttur; sonunda sistem durumu "çalışıyor" doğrulanır ve sürüm bildirilir; Pi'de en fazla son 2 sürüm kalır.
-- [ ] AC-7 — Dağıtım sonrası kontrol başarısızsa komut hata verir ve önceki sürüm otomatik olarak geri gelir (web açılır, "çalışıyor"); elle "önceki sürüme dön" komutu da aynı sonucu verir.
+- [ ] AC-6 — Dağıtım tek komuttur; sonunda sistem durumu "çalışıyor" doğrulanır ve sürüm bildirilir; Pi'de en fazla son 2 sürüm kalır; başka bir dağıtım sürerken ikincisi reddedilir; 1 GB'tan az boş alanda durur.
+- [ ] AC-7 — Dağıtım sonrası kontrol başarısızsa komut hata verir ve önceki sürüm otomatik olarak geri gelir (web açılır, "çalışıyor"); elle "önceki sürüme dön" komutu da aynı sonucu verir; geri dönülen sürümden sonra migration eklenmişse uyarı verilir.
 - [ ] AC-8 — Yalnızca web dağıtılınca API yeniden başlatılmaz; yalnızca API dağıtılınca web dosyaları değişmez.
 - [ ] AC-9 — API logları `/var/log/okul` altında günlük dosyalara yazılır; 30 günden eskiler silinir.
 - [ ] AC-10 — Mobil uygulama API adresi `http://192.168.1.102:8080` yapılınca Pi'deki API'den "Sistem çalışıyor" gösterir.
