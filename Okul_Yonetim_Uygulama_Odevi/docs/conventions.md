@@ -42,6 +42,18 @@
 - Kayıt yok **veya başka kiracıya/yetkisiz şubeye ait** → **404** ("var ama sizin değil" bilgisi sızdırılmaz).
 - Beklenmeyen → 500; yanıtta yalnızca genel mesaj + `traceId`. Stack trace, SQL, kişisel veri **asla** yanıtta olmaz.
 - Loglarda kişisel veri maskelenir (`docs/security.md`).
+- Beklenmeyen hata, global middleware'de **bir kez** Error seviyesinde `traceId` ile loglanır; aynı hata katman katman yeniden loglanmaz.
+
+## Logging
+Altyapı ve dosya düzeni: `docs/architecture.md` "Logging" (ADR-0003). Kodda:
+- Logger `ILogger<T>` ile enjekte edilir; statik logger yok.
+- **Mesaj şablonu** kullanılır, string birleştirme/interpolasyon değil: `logger.LogInformation("Öğrenci {StudentId} kaydedildi", id)`
+  (CA2254 — uyarı = hata kuralıyla derlemeyi kırar).
+- Seviyeler: **Debug** ayrıntı (varsayılan kapalı) · **Information** iş olayı (kayıt oluştu, yoklama alındı) ·
+  **Warning** beklenen ama olağandışı (iş kuralı ihlali, dış servis yeniden deneme) · **Error** beklenmeyen hata ·
+  **Critical** uygulama ayağa kalkamıyor (ör. veritabanı başlangıçta yok).
+- Her Command handler en az bir Information iş olayı loglar; her `catch` ya yeniden fırlatır ya da Warning/Error loglar (sessiz yutma yok).
+- Log alanlarında yalnızca **kimlikler** (StudentId, TenantId, UserId) — isim, TC, telefon, e-posta yazılmaz.
 - Port (dış servis) hataları: zaman aşımı + yeniden deneme + "beklemede" durumu; istek çökmez.
 
 ## Data rules

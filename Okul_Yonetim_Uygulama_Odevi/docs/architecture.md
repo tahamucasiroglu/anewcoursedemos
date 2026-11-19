@@ -59,6 +59,30 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - İstemciler (web, mobil): yalnızca HTTP API, yalnızca `packages/api-client` üzerinden.
 - Port çağrıları zaman aşımı + yeniden deneme ile yapılır; başarısızlık "beklemede" durumuna düşer, isteği çökertmez.
 
+## Logging (ADR-0003)
+- **Kapsamlı loglama** ilk spec'ten itibaren: Serilog (nArchitecture'ın log altyapısı), `ILogger<T>` ile.
+- **Günlük dosyalar:** `logs/okul-api-YYYYMMDD.log` — her gün yeni dosya; tek dosya 100 MB'ı aşarsa aynı gün içinde
+  bölünür; **30 gün** saklanır, eskisi otomatik silinir. Klasör yolu ayardan; `logs/` repoya girmez.
+- **Seviye ayarlanabilir:** ayar dosyası / ortam değişkeni (`Serilog__MinimumLevel__Default`); uygulama yeniden
+  derlenmeden değişir. Varsayılan **Information ve üstü**.
+- **Biçim:** insanın okuyacağı tek satır: zaman (yerel saat + ofset), seviye, `traceId`, kaynak sınıf, mesaj,
+  hata varsa exception. Geliştirmede konsola da yazılır.
+- **Ne loglanır:** her HTTP isteği (yöntem, yol, durum kodu, süre, `traceId`, kiracı/kullanıcı **kimliği**);
+  her Command'ın başlangıç/bitişi (nArchitecture logging pipeline); iş olayları (Information); iş kuralı ihlali
+  ve dış servis aksaklığı (Warning); her beklenmeyen hata, bir kez, `traceId` ile (Error). Kullanıcıya gösterilen
+  `traceId` log satırını bulmayı sağlar.
+- **Ne loglanmaz:** istek/yanıt gövdesi, şifre, token, TC kimlik no, sağlık verisi, telefon/e-posta/adres
+  (maskelenir) — `docs/security.md`.
+- Web/mobil istemci hataları MVP'de yalnızca geliştirici konsolunda; sunucuya toplanması backlog'da.
+
+## Runtime environments (ADR-0004)
+- **Geliştirme:** Windows makine — API, web (Vite), PostgreSQL 18 yerel servis.
+- **MVP deneme ortamı: Raspberry Pi** (yerel ağda, uzaktan erişim). **API ve web orada çalışır**; kısa süreli
+  denemeler için kurulup kaldırılır. Bu yüzden: API `linux-arm64` için yayımlanabilir olmalı; tüm adres/port/
+  bağlantı/log yolu ayarları ortam değişkeniyle verilir (koda veya Windows yoluna bağlı değil); web statik
+  dosya olarak sunulur. Pi kurulumu ve dağıtımı **ayrı bir spec** (0002) ile gelir.
+- Mobil uygulama, Pi'deki API'ye yerel ağ adresiyle bağlanır (adres ortam ayarından).
+
 ## Forbidden dependencies (make them testable)
 `tests/Architecture` (NetArchTest) ve derleme kuralları bunları zorlar; hepsi `scripts/check` içinde.
 

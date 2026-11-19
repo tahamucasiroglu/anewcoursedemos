@@ -19,3 +19,6 @@ Thumbs.db
 extensions/vscode/node_modules/
 extensions/vscode/out/
 extensions/vscode/*.vsix
+
+# Uygulama logları (ADR-0003) — repoya girmez
+logs/
