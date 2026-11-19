@@ -84,9 +84,11 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - Mobil uygulama, Pi'deki API'ye yerel ağ adresiyle bağlanır (adres ortam ayarından).
 
 ## Forbidden dependencies (make them testable)
-`tests/Architecture` (NetArchTest) ve derleme kuralları bunları zorlar; hepsi `scripts/check` içinde.
+`tests/Architecture` (ArchUnitNET) ve derleme kuralları bunları zorlar; hepsi `scripts/check` içinde.
 
-1. `Domain` hiçbir projeye ve hiçbir altyapı paketine (EF Core dahil) bağımlı olmaz.
+1. `Domain` hiçbir projeye bağımlı olmaz; paket olarak yalnızca nArchitecture'ın temel varlık paketine
+   (`NArchitecture.Core.Persistence`, `Entity<TId>`) referans verir. Domain **kodu** EF Core tiplerini kullanamaz
+   (mimari test tip düzeyinde denetler) — ADR-0005.
 2. `Application` → `Persistence` / `Infrastructure` / `WebAPI` bağımlılığı yasak; yalnızca kendi arayüzlerini kullanır.
 3. `WebAPI` controller'ları iş mantığı içermez ve `DbContext`'e bağımlı olmaz; yalnızca Command/Query gönderir.
 4. Bir modül başka bir modülün repository'sine, varlık konfigürasyonuna veya tablosuna doğrudan erişmez.
@@ -105,5 +107,5 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - Gerçek ödeme/SMS/WhatsApp entegrasyonu (portlar hazır; sağlayıcı yok — `specs/backlog.md`).
 - e-Fatura/e-Arşiv, Google/Microsoft SSO, WhatsApp Business (Faz 2).
 - Tam LMS / canlı ders, tam muhasebe / bordro, MEB süreçlerinin yerine geçmek, devlet okulları, veliler arası grup sohbeti (kapsam dokümanı "Kapsam dışı").
-- Çoklu dil: MVP yalnızca Türkçe (metinler yine de resx / i18n dosyalarında).
+- Çoklu dil: MVP yalnızca Türkçe (metinler yine de YAML / `tr.json` dosyalarında).
 - PostgreSQL Row-Level Security (ikinci savunma hattı — backlog).

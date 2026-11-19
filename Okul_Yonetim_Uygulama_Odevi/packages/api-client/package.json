@@ -1,0 +1,21 @@
+{
+  "name": "@okul/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web ve mobilin API'ye tek giriş noktası. Tipler backend'in ürettiği openapi.json'dan otomatik üretilir.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "generate": "openapi-typescript openapi.json -o src/schema.d.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "~6.0.3"
+  }
+}

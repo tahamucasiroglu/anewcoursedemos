@@ -1,0 +1,63 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "OkulYonetim.WebAPI | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/system-health": {
+      "get": {
+        "tags": [
+          "SystemHealth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SystemHealthResponse": {
+        "required": [
+          "status",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "description": "Sistem durumu yanıtı. Yalnızca durum (\"healthy\" / \"unavailable\") ve Türkçe mesaj taşır;\r\nsürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001)."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "SystemHealth"
+    }
+  ]
+}

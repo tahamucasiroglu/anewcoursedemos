@@ -11,13 +11,16 @@
 | Katman | Araç | Yer | Profil |
 |---|---|---|---|
 | Unit | xUnit v3 + Shouldly + NSubstitute | `backend/tests/Unit` | fast |
-| Architecture | xUnit v3 + NetArchTest + XML-doc summary testi (K3) | `backend/tests/Architecture` | fast |
+| Architecture | xUnit v3 + ArchUnitNET + XML-doc summary testi (K3) + derleme kuralı testi | `backend/tests/Architecture` | fast |
 | Integration | xUnit v3 + `WebApplicationFactory` + gerçek PostgreSQL 18 (yerel servis) | `backend/tests/Integration` | full |
 | Web component | Vitest + React Testing Library | `web/` | fast |
 | Mobil component | Jest + React Native Testing Library | `mobile/` | fast |
 | e2e (tarayıcı) | **yok** | — | — |
 
-- Fast/full ayrımı **seçiciyle**: .NET'te `Category=Integration` trait'i; fast adım `--filter "Category!=Integration"`, full adım `--filter "Category=Integration"` (Two speeds, kural 4).
+- Fast/full ayrımı **seçiciyle**: .NET'te `Category=Integration` trait'i; test çalıştırıcı Microsoft.Testing.Platform
+  (`backend/global.json`). `tools/check/dotnet-test.sh fast` → `--filter-not-trait Category=Integration`,
+  `full` → `--filter-trait Category=Integration`. Seçiciye uyan testi olmayan proje 8 çıkış koduyla biter (yok sayılır),
+  ama **toplam test sayısı 0 ise adım kırmızıdır** (Two speeds, kural 4).
 - Test adı: `<Metot>_<Durum>_<Beklenen>`.
 - **Test verisi:** integration koşusu her seferinde yeni `okul_test_<guid>` veritabanı açar, migration'ları uygular, sonunda siler; başlangıçta artakalan `okul_test_*` veritabanları temizlenir. Geliştirme veritabanı (`okul_dev`) testlerde asla kullanılmaz. Bağlantı bilgisi user-secrets / ortam değişkeninden.
 - **Determinizm:** `FakeTimeProvider` (sabit saat, `Europe/Istanbul`), kültür `tr-TR`, sabit seed; dış servisler sahte port uygulamalarıyla; web/mobil testlerinde animasyonlar kapalı (reduced motion).

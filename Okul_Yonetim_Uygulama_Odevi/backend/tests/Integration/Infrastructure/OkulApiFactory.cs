@@ -45,9 +45,30 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing && Directory.Exists(this.LogFolder))
+        if (disposing)
         {
-            Directory.Delete(this.LogFolder, recursive: true);
+            DeleteFolder(this.LogFolder);
+        }
+    }
+
+    // Log dosyası kapandıktan hemen sonra Windows (ör. virüs tarayıcı) dosyayı kısa süre tutabilir; temizlik bu geçici
+    // kilidi en fazla ~5 sn bekler. Test doğrulamalarına dokunmaz; yalnızca geride klasör kalmamasını sağlar.
+    private static void DeleteFolder(string folder)
+    {
+        for (int attempt = 1; Directory.Exists(folder); attempt++)
+        {
+            try
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+            catch (IOException) when (attempt < 50)
+            {
+                Thread.Sleep(100);
+            }
+            catch (UnauthorizedAccessException) when (attempt < 50)
+            {
+                Thread.Sleep(100);
+            }
         }
     }
 

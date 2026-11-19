@@ -1,0 +1,24 @@
+{
+  "name": "okul-yonetim",
+  "private": true,
+  "description": "Okul Yönetim Platformu — web, mobil ve ortak API istemcisi (npm workspaces). Backend: backend/ (.NET).",
+  "workspaces": [
+    "packages/api-client",
+    "web",
+    "mobile"
+  ],
+  "scripts": {
+    "api-client:generate": "npm --workspace @okul/api-client run generate",
+    "lint": "npm --workspaces run lint",
+    "typecheck": "npm --workspaces run typecheck",
+    "test": "npm --workspaces --if-present run test"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
+  }
+}

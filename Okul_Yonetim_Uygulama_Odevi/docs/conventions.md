@@ -11,16 +11,20 @@
 - `/// <summary>` açıklamaları: **Türkçe**.
 - Commit messages: **Türkçe açıklama**; Conventional Commits tür kelimesi ve plan referansı İngilizce (protokol):
   `feat(okul/yoklama): toplu yoklama ucu eklendi [plan 0003/2]` (`docs/git.md`).
-- Kullanıcıya görünen metinler: Türkçe; **koda gömülmez** — .NET'te `.resx` (ör. `Messages.resx`, anahtar
-  `Student.NotFound`), web/mobilde `tr.json`. MVP tek dil; yeni dil = yeni kaynak dosyası.
+- Kullanıcıya görünen metinler: Türkçe; **koda gömülmez** — .NET'te nArchitecture YAML yerelleştirmesi
+  (`Application/Features/<Modül>/Resources/Locales/<ad>.tr.yaml`, anahtar → metin; bölüm adı = özellik klasörü adı,
+  ör. `SystemHealth`), web/mobilde `tr.json`. MVP tek dil; yeni dil = yeni kaynak dosyası (ADR-0005).
 - Agent messages (handoff summaries, refusals, `Next:` lines): chat language; command names, file
   paths and protocol fields verbatim.
 
 ## Language & framework versions
-- .NET SDK 10.0.4xx, C# 14, `net10.0`; `NArchitecture.Core.*` 2.0.0; EF Core 10 + Npgsql; PostgreSQL 18.
-- Node.js 26 (web/mobil araçları), TypeScript strict; React 19 + Vite; React Native + Expo.
-- Paket sürümleri merkezi: `backend/Directory.Packages.props` (Central Package Management); npm tarafında lock dosyası commit edilir.
-- Kesin sürümler walking skeleton planında sabitlenir.
+- .NET SDK 10.0.4xx (`backend/global.json`), C# latest, `net10.0`; `NArchitecture.Core.*` 2.0.0; EF Core 10.0.15 +
+  Npgsql EF 10.0.3; Serilog.AspNetCore 10.0.0; PostgreSQL 18.7. Test çalıştırıcı: Microsoft.Testing.Platform (xUnit v3).
+- Node.js 26 (`.nvmrc`), npm workspaces (`web`, `mobile`, `packages/api-client`); TypeScript ~6.0 strict;
+  React 19.3.0 (web ve mobil **aynı** sürüm — Expo SDK 58'in istediği); Vite 8; Expo SDK 58 / React Native 0.88;
+  ESLint 10 (web ve mobil aynı kural seti).
+- Paket sürümleri merkezi: `backend/Directory.Packages.props` (Central Package Management); npm tarafında
+  `package-lock.json` commit edilir. Kesin sürümler spec 0001 planında (plan 0001, Risks 3).
 
 ## Naming
 - nArchitecture düzeni: `Application/Features/<Modül>/Commands/<Eylem>/<Eylem><Varlık>Command.cs`,
@@ -36,7 +40,7 @@
 
 ## Error handling
 - nArchitecture global exception middleware; tüm hatalar **RFC 9457 ProblemDetails**.
-- İş kuralı ihlali → `BusinessException` → 400 (Türkçe mesaj, resx'ten).
+- İş kuralı ihlali → `BusinessException` → 400 (Türkçe mesaj, YAML yerelleştirmesinden).
 - Doğrulama → `ValidationException` (FluentValidation) → 400, alan bazlı liste.
 - Yetki yok → `AuthorizationException` → 403.
 - Kayıt yok **veya başka kiracıya/yetkisiz şubeye ait** → **404** ("var ama sizin değil" bilgisi sızdırılmaz).
@@ -82,8 +86,10 @@ Walking skeleton ile devreye girer (`backend/Directory.Build.props`, `backend/.e
 - **K2:** `TreatWarningsAsErrors=true`, `EnforceCodeStyleInBuild=true`, `Nullable=enable`, `AnalysisLevel=latest-recommended` — tüm projeler.
 - **K1:** StyleCop.Analyzers SA1402 (dosyada tek tip), SA1649 (dosya adı = tip adı) — error.
 - **K3:** `GenerateDocumentationFile=true`; CS1591 ve SA1600 kapalı (üye summary'si istenmez); architecture testi her tipin XML belgesinde boş olmayan `<summary>` arar.
-- T1: CA1304, CA1309, CA1311 — error.
+- T1: CA1304, CA1309, CA1311 — error. Log: CA2254 (şablon) error; CA1848 ve CA1873 kapalı (performans ipuçları, kapsamlı loglamayı zorlaştırır).
 - Otomatik üretilen kod (migration'lar, OpenAPI istemcisi) `.editorconfig`'de `generated_code = true` ile K1/K3'ten muaf.
-- Yasak bağımlılıklar 1–5, 7, 11: NetArchTest architecture testleri.
+- Yasak bağımlılıklar 1–5: ArchUnitNET architecture testleri (`backend/tests/Architecture/LayerDependencyTests.cs`);
+  7: ESLint `no-restricted-globals` / `no-restricted-imports` (fetch/axios yalnızca `@okul/api-client`'ta);
+  ortak istemcinin güncelliği: `tools/check/api-client-fresh.mjs`.
 - Web/mobil: `tsc --strict`, `eslint --max-warnings 0` (K2 karşılığı), dosya başına tek bileşen.
 - Paket güvenliği: `dotnet list package --vulnerable --include-transitive`, `npm audit --audit-level=high`.

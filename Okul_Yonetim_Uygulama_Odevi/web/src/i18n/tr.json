@@ -1,0 +1,6 @@
+{
+  "app.title": "Okul Yönetim Platformu",
+  "status.loading": "Sistem durumu kontrol ediliyor…",
+  "status.unreachable": "Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
+  "status.retry": "Tekrar dene"
+}

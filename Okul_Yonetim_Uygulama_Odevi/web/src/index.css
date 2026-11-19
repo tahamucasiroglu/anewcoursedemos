@@ -1,0 +1,41 @@
+:root {
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.status--healthy {
+  border-color: #15803d;
+}
+
+.status--unavailable,
+.status--unreachable {
+  border-color: #b91c1c;
+}
+
+.status button {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
