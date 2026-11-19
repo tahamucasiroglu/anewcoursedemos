@@ -1,23 +1,31 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OkulYonetim.WebAPI;
 
 namespace OkulYonetim.Tests.Integration.Infrastructure;
 
 /// <summary>
-/// Testler için API: verilen veritabanı bağlantısı, testlere özel log klasörü ve CORS ayarıyla kurulur.
-/// İsteğe bağlı olarak "/__test/throw" yolunda kasıtlı beklenmeyen hata üreten bir uç ekler (AC-13 için).
+/// Testler için API: verilen veritabanı bağlantısı, testlere özel log klasörü, CORS ayarı ve test imza anahtarıyla
+/// kurulur. İsteğe bağlı: "/__test/throw" kasıtlı hata ucu (spec 0001 AC-13), sahte saat (spec 0004 kilit/oturum süreleri),
+/// giriş hız sınırı ve istemci IP'si (her isteğe yerel vekil adresi verilir; X-Forwarded-For başlığı gerçek IP'yi taşır).
 /// </summary>
 public sealed class OkulApiFactory : WebApplicationFactory<Program>
 {
+    public const string TestSigningKey = "okul-test-imza-anahtari-en-az-32-bayt-0123456789";
+
     private readonly string connectionString;
     private readonly bool addThrowingEndpoint;
+    private readonly TimeProvider? timeProvider;
+    private readonly int loginRateLimitPerMinute;
 
-    public OkulApiFactory(string connectionString, bool addThrowingEndpoint = false)
+    public OkulApiFactory(string connectionString, bool addThrowingEndpoint = false, TimeProvider? timeProvider = null, int loginRateLimitPerMinute = 1000)
     {
         this.connectionString = connectionString;
         this.addThrowingEndpoint = addThrowingEndpoint;
+        this.timeProvider = timeProvider;
+        this.loginRateLimitPerMinute = loginRateLimitPerMinute;
         this.LogFolder = Path.Combine(Path.GetTempPath(), "okul-api-test-logs-" + Guid.NewGuid().ToString("N"));
     }
 
@@ -36,10 +44,22 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("FileLogging:Folder", this.LogFolder);
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
-        if (this.addThrowingEndpoint)
+        builder.UseSetting("Jwt:SigningKey", TestSigningKey);
+        builder.UseSetting("Auth:LoginRateLimitPerMinute", this.loginRateLimitPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.ConfigureServices(services =>
         {
-            builder.ConfigureServices(services => services.AddSingleton<IStartupFilter, ThrowingEndpointStartupFilter>());
-        }
+            services.AddSingleton<IStartupFilter, LoopbackRemoteAddressStartupFilter>();
+            if (this.timeProvider is not null)
+            {
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton(this.timeProvider);
+            }
+
+            if (this.addThrowingEndpoint)
+            {
+                services.AddSingleton<IStartupFilter, ThrowingEndpointStartupFilter>();
+            }
+        });
     }
 
     protected override void Dispose(bool disposing)

@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Http;
 namespace OkulYonetim.Tests.Integration.Infrastructure;
 
 /// <summary>
-/// Yalnızca testte: uygulamanın tüm hattı kurulduktan sonra "/__test/throw" isteğinde kasıtlı bir beklenmeyen
-/// hata fırlatan, "/__test/slow" isteğinde ise istemci iptal edene kadar bekleyen son halka ekler; böylece hata
-/// yakalama ve loglama gerçek hat üzerinden sınanır.
+/// Yalnızca testte: "/__test/throw" isteğinde kasıtlı beklenmeyen hata fırlatan, "/__test/slow" isteğinde istemci iptal
+/// edene kadar bekleyen iki uç ekler; hata yakalama ve loglama gerçek hat üzerinden sınanır. Uçlar açıkça anonimdir —
+/// API'nin "varsayılan reddet" kuralı (spec 0004) bu yardımcı uçlara takılmasın diye.
 /// </summary>
 public sealed class ThrowingEndpointStartupFilter : IStartupFilter
 {
@@ -18,17 +18,10 @@ public sealed class ThrowingEndpointStartupFilter : IStartupFilter
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
     {
         next(app);
-        app.Run(async context =>
+        app.UseEndpoints(endpoints =>
         {
-            if (context.Request.Path == Path)
-            {
-                throw new InvalidOperationException(SecretMessage);
-            }
-
-            if (context.Request.Path == SlowPath)
-            {
-                await Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted);
-            }
+            endpoints.MapGet(Path, (Func<HttpContext, Task>)(_ => throw new InvalidOperationException(SecretMessage))).AllowAnonymous();
+            endpoints.MapGet(SlowPath, (Func<HttpContext, Task>)(context => Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted))).AllowAnonymous();
         });
     };
 }
