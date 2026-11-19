@@ -46,6 +46,28 @@ describe("SystemStatusScreen", () => {
     expect(screen.getByText("Tekrar dene")).toBeTruthy();
   });
 
+  it("Tekrar dene basınca yeniden yükleniyor durumuna döner", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("Network request failed"));
+    fetchMock.mockReturnValueOnce(new Promise(() => {}));
+    await render(<SystemStatusScreen />);
+
+    await fireEvent.press(await screen.findByText("Tekrar dene"));
+
+    expect(screen.getByText("Sistem durumu kontrol ediliyor…")).toBeTruthy();
+    expect(screen.queryByText("Tekrar dene")).toBeNull();
+  });
+
+  it("hizmet dışından Tekrar dene ile çalışıyor durumuna geçer", async () => {
+    fetchMock.mockResolvedValueOnce(json(503, { status: "unavailable", message: "Sistem şu anda hizmet dışı" }));
+    fetchMock.mockResolvedValueOnce(json(200, { status: "healthy", message: "Sistem çalışıyor" }));
+    await render(<SystemStatusScreen />);
+
+    await fireEvent.press(await screen.findByText("Tekrar dene"));
+
+    expect(await screen.findByText(/Sistem çalışıyor/)).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("Tekrar dene yeniden sorgular ve sonucu gösterir", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("Network request failed"));
     fetchMock.mockResolvedValueOnce(json(200, { status: "healthy", message: "Sistem çalışıyor" }));

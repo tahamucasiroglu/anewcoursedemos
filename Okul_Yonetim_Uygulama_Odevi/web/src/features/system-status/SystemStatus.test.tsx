@@ -46,6 +46,28 @@ describe("SystemStatus", () => {
     expect(screen.getByRole("button", { name: "Tekrar dene" })).toBeInTheDocument();
   });
 
+  it("Tekrar dene basınca yeniden yükleniyor durumuna döner", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    fetchMock.mockReturnValueOnce(new Promise(() => {}));
+    render(<SystemStatus />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Tekrar dene" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Sistem durumu kontrol ediliyor…");
+    expect(screen.queryByRole("button", { name: "Tekrar dene" })).not.toBeInTheDocument();
+  });
+
+  it("hizmet dışından Tekrar dene ile çalışıyor durumuna geçer", async () => {
+    fetchMock.mockResolvedValueOnce(json(503, { status: "unavailable", message: "Sistem şu anda hizmet dışı" }));
+    fetchMock.mockResolvedValueOnce(json(200, { status: "healthy", message: "Sistem çalışıyor" }));
+    render(<SystemStatus />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Tekrar dene" }));
+
+    expect(await screen.findByText(/Sistem çalışıyor/)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("Tekrar dene yeniden sorgular ve sonucu gösterir", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
     fetchMock.mockResolvedValueOnce(json(200, { status: "healthy", message: "Sistem çalışıyor" }));
