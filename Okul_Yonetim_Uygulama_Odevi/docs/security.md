@@ -9,6 +9,11 @@
   Repoda yalnızca değerleri boş `appsettings.Example.json` / `.env.example`. Bu kapsam: DB bağlantı cümlesi,
   JWT imza anahtarı, Data Protection anahtarları, HMAC anahtarı, ileride sağlayıcı API anahtarları.
 - Yerel PostgreSQL süper kullanıcı şifresi yalnızca geliştirme makinesindedir; repoya yazılmaz.
+- Veritabanı kullanıcısı (karar: plan 0001, Risks 5): yerel geliştirme ve testler `postgres` kullanıcısıyla çalışır
+  (test veritabanı oluşturup silmek için); ayrı, kısıtlı bir uygulama kullanıcısı açılmadı. Bilgi yalnızca
+  user-secrets'ta (`WebAPI`: `ConnectionStrings:OkulDb`, `tests/Integration`: `ConnectionStrings:TestServer`).
+  Pilot/üretim ortamında (ör. Raspberry Pi, spec 0002) uygulama süper kullanıcıyla çalıştırılmaz — o spec'te
+  yalnızca kendi veritabanına yetkili bir kullanıcı tanımlanır.
 
 ## Sensitive data protection
 1. **Şifre:** ASP.NET Core Identity `PasswordHasher` (PBKDF2) veya Argon2id ile hash; düz metin hiçbir yerde (DB, log, hata, yanıt) yok.
