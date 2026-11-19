@@ -1,0 +1,70 @@
+== env dosyası (izin + özet)
+root:root 600
+f00ee4076f97a59c
+== dinlenen portlar
+0.0.0.0:111
+0.0.0.0:22
+0.0.0.0:5090
+0.0.0.0:8080
+[::]:111
+127.0.0.1:5080
+127.0.0.1:5432
+127.0.0.1:7100
+127.0.0.1:7101
+127.0.0.1:7102
+127.0.0.1:7103
+127.0.0.1:7104
+127.0.0.1:7105
+[::1]:5432
+[::]:22
+[::]:8080
+== servisler (running)
+accounts-daemon.service
+avahi-daemon.service
+bluetooth.service
+cron.service
+dbus.service
+getty@tty1.service
+lightdm.service
+muskitakip-web.service
+NetworkManager.service
+nfs-blkmap.service
+nginx.service
+okul-api.service
+polkit.service
+postgresql@17-main.service
+rpcbind.service
+serial-getty@ttyAMA10.service
+ssh.service
+systemd-journald.service
+systemd-logind.service
+systemd-timesyncd.service
+systemd-udevd.service
+tmautoclip-canli-admin.service
+tmautoclip-canli-api.service
+tmautoclip-canli-web.service
+udisks2.service
+upower.service
+user@1000.service
+wpa_supplicant.service
+== okul-api
+MainPID=417857
+NRestarts=0
+User=okul
+ActiveState=active
+UnitFileState=enabled
+== sürümler
+web current -> releases/20261119193111-9991115
+20261119192833-9991115
+20261119193111-9991115
+api current -> releases/20261119193111-9991115
+20261119192846-9991115
+20261119193111-9991115
+== veritabanları
+okul
+postgres
+template0
+template1
+tmautoclip_canli
+== pg_hba okul dışı özet
+d197702d538c9622
