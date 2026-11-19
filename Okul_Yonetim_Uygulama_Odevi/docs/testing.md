@@ -22,7 +22,7 @@
   `full` → `--filter-trait Category=Integration`. Seçiciye uyan testi olmayan proje 8 çıkış koduyla biter (yok sayılır),
   ama **toplam test sayısı 0 ise adım kırmızıdır** (Two speeds, kural 4).
 - Test adı: `<Metot>_<Durum>_<Beklenen>`.
-- **Test verisi:** integration koşusu her seferinde yeni `okul_test_<guid>` veritabanı açar, migration'ları uygular, sonunda siler; başlangıçta artakalan `okul_test_*` veritabanları temizlenir. Geliştirme veritabanı (`okul_dev`) testlerde asla kullanılmaz. Bağlantı bilgisi user-secrets / ortam değişkeninden.
+- **Test verisi:** integration koşusu her seferinde yeni `okul_test_<UTC zaman>_<guid>` veritabanı açar, migration'ları uygular, sonunda siler; başlangıçta yalnızca 1 saatten eski (yarıda kalmış) `okul_test_*` artıkları temizlenir — aynı anda çalışan başka bir koşunun veritabanına dokunulmaz. Geliştirme veritabanı (`okul_dev`) testlerde asla kullanılmaz. Bağlantı bilgisi user-secrets / ortam değişkeninden.
 - **Determinizm:** `FakeTimeProvider` (sabit saat, `Europe/Istanbul`), kültür `tr-TR`, sabit seed; dış servisler sahte port uygulamalarıyla; web/mobil testlerinde animasyonlar kapalı (reduced motion).
 - **Resource hygiene:** `dotnet` adımları `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` ile; watch/dev server check'te yok (T6).
 

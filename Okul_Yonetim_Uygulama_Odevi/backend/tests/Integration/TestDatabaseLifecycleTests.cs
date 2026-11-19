@@ -39,12 +39,23 @@ public sealed class TestDatabaseLifecycleTests
         await own.DisposeAsync();
         (await TestDatabase.ExistsAsync(own.Name)).ShouldBeFalse();
 
-        // Yarıda kalmış bir koşunun artığı temizlenir; bu koşununki kalır
-        string leftover = TestDatabase.NamePrefix + "artik_" + Guid.NewGuid().ToString("N");
+        // Yarıda kalmış (1 saatten eski) bir koşunun artığı temizlenir; bu koşununki ve eşzamanlı başka bir koşunun
+        // yeni veritabanı kalır
+        string leftover = TestDatabase.NewName(DateTime.UtcNow.AddHours(-2));
+        string concurrent = TestDatabase.NewName(DateTime.UtcNow);
         await TestDatabase.CreateAsync(leftover);
-        await TestDatabase.RemoveLeftoversAsync(except: this.shared.Name);
-        (await TestDatabase.ExistsAsync(leftover)).ShouldBeFalse();
-        (await TestDatabase.ExistsAsync(this.shared.Name)).ShouldBeTrue();
+        await TestDatabase.CreateAsync(concurrent);
+        try
+        {
+            await TestDatabase.RemoveLeftoversAsync(except: this.shared.Name);
+            (await TestDatabase.ExistsAsync(leftover)).ShouldBeFalse();
+            (await TestDatabase.ExistsAsync(concurrent)).ShouldBeTrue("eşzamanlı koşunun veritabanı silinmemeli");
+            (await TestDatabase.ExistsAsync(this.shared.Name)).ShouldBeTrue();
+        }
+        finally
+        {
+            await TestDatabase.DropAsync(concurrent);
+        }
     }
 
     private static async Task<long> CountMigrationsAsync(string connectionString)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
@@ -5,16 +6,20 @@ namespace OkulYonetim.Tests.Integration.Infrastructure;
 
 /// <summary>
 /// Test veritabanı yaşam döngüsü (docs/testing.md, spec 0001 AC-10): koşu başında (assembly fixture) artakalan
-/// okul_test_* veritabanlarını siler, kendine ait okul_test_&lt;guid&gt; veritabanını açar; bitince siler. Sunucu bağlantısı repoda değil,
+/// (1 saatten eski) okul_test_* veritabanlarını siler, kendine ait okul_test_&lt;zaman&gt;_&lt;guid&gt; veritabanını açar; bitince siler.
+/// Eşzamanlı başka bir koşunun yeni veritabanına dokunmaz. Sunucu bağlantısı repoda değil,
 /// user-secrets veya ortam değişkenindeki "ConnectionStrings:TestServer" ayarından gelir. Geliştirme veritabanına dokunmaz.
 /// </summary>
 public sealed class TestDatabase : IAsyncLifetime
 {
     public const string NamePrefix = "okul_test_";
 
+    public static readonly TimeSpan LeftoverAge = TimeSpan.FromHours(1);
+    private const string StampFormat = "yyyyMMddHHmmss";
+
     public TestDatabase()
     {
-        this.Name = NamePrefix + Guid.NewGuid().ToString("N");
+        this.Name = NewName(DateTime.UtcNow);
         this.ConnectionString = new NpgsqlConnectionStringBuilder(ServerConnectionString) { Database = this.Name }.ConnectionString;
     }
 
@@ -44,6 +49,9 @@ public sealed class TestDatabase : IAsyncLifetime
         return await command.ExecuteScalarAsync().ConfigureAwait(false) is not null;
     }
 
+    public static async Task DropAsync(string name) =>
+        await ExecuteOnServerAsync($"DROP DATABASE IF EXISTS \"{name}\" WITH (FORCE)").ConfigureAwait(false);
+
     public static async Task CreateAsync(string name) =>
         await ExecuteOnServerAsync($"CREATE DATABASE \"{name}\"").ConfigureAwait(false);
 
@@ -61,10 +69,26 @@ public sealed class TestDatabase : IAsyncLifetime
             }
         }
 
-        foreach (string name in leftovers.Where(n => n != except))
+        foreach (string name in leftovers.Where(n => n != except && IsStale(n, DateTime.UtcNow)))
         {
             await ExecuteOnServerAsync($"DROP DATABASE IF EXISTS \"{name}\" WITH (FORCE)").ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Adı oluşturma zamanını (UTC) taşır: okul_test_yyyyMMddHHmmss_guid.</summary>
+    public static string NewName(DateTime utc) =>
+        NamePrefix + utc.ToString(StampFormat, CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N");
+
+    /// <summary>
+    /// Artık mı? Yalnızca 1 saatten eski (veya zaman damgası okunamayan eski biçimli) test veritabanları artıktır;
+    /// eşzamanlı başka bir koşunun yeni veritabanına dokunulmaz.
+    /// </summary>
+    public static bool IsStale(string name, DateTime utcNow)
+    {
+        string rest = name.Length > NamePrefix.Length ? name[NamePrefix.Length..] : string.Empty;
+        string stamp = rest.Length >= StampFormat.Length ? rest[..StampFormat.Length] : rest;
+        return !DateTime.TryParseExact(stamp, StampFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out DateTime created)
+            || utcNow - created > LeftoverAge;
     }
 
     private static async Task ExecuteOnServerAsync(string sql)
