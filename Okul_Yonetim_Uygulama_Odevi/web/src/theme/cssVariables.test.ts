@@ -31,6 +31,7 @@ it("index.css'te renk değeri yok, yalnızca değişken kullanılır", () => {
 
 it("tema seçici kabı odak çerçevesini kırpmaz (AC-11; review round 1, M-1)", () => {
   const start = indexCss.indexOf(".theme-switcher {");
+  expect(start, ".theme-switcher kuralı index.css'te bulunmalı").toBeGreaterThanOrEqual(0);
   const rule = indexCss.slice(start, indexCss.indexOf("}", start));
   expect(rule).not.toMatch(/overflow\s*:\s*(hidden|clip)/);
 });
