@@ -47,10 +47,12 @@ if [[ ",$UNITS," == *",web,"* ]]; then
 fi
 
 say "Pi'ye kopyalanıyor…"
-(cd "$OUT" && tar -cf - ${UNITS//,/ }) | ssh -o BatchMode=yes "$PI_SSH" \
-  "rm -rf /tmp/okul-deploy-$VERSION && mkdir -p /tmp/okul-deploy-$VERSION && tar -C /tmp/okul-deploy-$VERSION -xf -"
+# Hazırlık klasörü Pi'de rastgele adla açılır (tahmin edilebilir /tmp yolu yok; review round 1, M-1)
+STAGE="$(ssh -o BatchMode=yes "$PI_SSH" 'mktemp -d /tmp/okul-deploy.XXXXXXXXXX')"
+[[ "$STAGE" =~ ^/tmp/okul-deploy\.[A-Za-z0-9]{10}$ ]] || die "Pi'de hazırlık klasörü açılamadı."
+(cd "$OUT" && tar -cf - ${UNITS//,/ }) | ssh -o BatchMode=yes "$PI_SSH" "tar -C '$STAGE' -xf -"
 
 say "Etkinleştiriliyor ve kontrol ediliyor…"
 LOCKED=0
-run_remote activate-remote.sh activate "$UNITS" "$VERSION" "$WEB_PORT" "$KEEP_RELEASES"
+run_remote activate-remote.sh activate "$UNITS" "$VERSION" "$WEB_PORT" "$KEEP_RELEASES" "$STAGE"
 say "Hazır: http://$PI_ADDRESS:$WEB_PORT  (sürüm $VERSION)"

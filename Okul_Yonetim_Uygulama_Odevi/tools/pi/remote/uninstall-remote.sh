@@ -35,16 +35,29 @@ if systemctl is-active --quiet postgresql; then
   fi
   hba="$(pg -c 'show hba_file')"
   if grep -q "^$HBA_BEGIN_PREFIX" "$hba"; then
-    cp -p "$hba" "/tmp/pg_hba.conf.bak-okul-uninstall"
+    # Blok beklenen biçimde mi (review round 1, L-3): başlangıç ve bitiş işareti tam bir kez, aralarında tam 3 kural.
+    # Değilse dosyaya dokunulmaz — diğer projelerin satırları yanlışlıkla silinmesin.
+    begins="$(grep -c "^$HBA_BEGIN_PREFIX" "$hba" || true)"
+    ends="$(grep -cx "$HBA_END" "$hba" || true)"
+    inner="$(awk -v b="$HBA_BEGIN_PREFIX" -v e="$HBA_END" 'index($0,b)==1{s=1;next} s&&$0==e{s=0;next} s{n++} END{print n+0}' "$hba")"
+    if [ "$begins" != "1" ] || [ "$ends" != "1" ] || [ "$inner" != "3" ]; then
+      printf 'HATA: pg_hba.conf içindeki okul bloğu beklenen biçimde değil (başlangıç=%s bitiş=%s kural=%s); dosyaya dokunulmadı, elle kontrol edin.\n' \
+        "$begins" "$ends" "$inner" >&2
+      exit 1
+    fi
+    # Yedek yalnızca root'un erişebildiği /etc/okul içinde (tahmin edilebilir /tmp yolu yok; review round 1, M-1)
+    install -d -m 700 -o root -g root /etc/okul
+    backup="$(mktemp /etc/okul/pg_hba.conf.uninstall.XXXXXX)"
+    cp -p "$hba" "$backup"
     awk -v b="$HBA_BEGIN_PREFIX" -v e="$HBA_END" 'index($0,b)==1{skip=1;next} skip&&$0==e{skip=0;next} !skip' \
-      "/tmp/pg_hba.conf.bak-okul-uninstall" > "$hba"
+      "$backup" > "$hba"
     if [ "$(pg -c 'select count(*) from pg_hba_file_rules where error is not null')" != "0" ]; then
-      cp -p "/tmp/pg_hba.conf.bak-okul-uninstall" "$hba"
+      cp -p "$backup" "$hba"
       printf 'HATA: pg_hba.conf doğrulanamadı; eski hâli geri kondu.\n' >&2
       exit 1
     fi
     pg -c 'select pg_reload_conf()' >/dev/null
-    rm -f "/tmp/pg_hba.conf.bak-okul-uninstall"
+    rm -f "$backup"
     say "pg_hba okul bloğu silindi"
   fi
 fi
