@@ -58,6 +58,11 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - Dış dünya: yalnızca `Application`'da tanımlı port arayüzleri (`IPaymentProvider`, `ISmsSender`,
   `IMessagingChannel`, `IPushNotifier`, `IAiTextGenerator`, `ISpeechToText`, `IFileStorage`); uygulamaları `Infrastructure`'da.
 - İstemciler (web, mobil): yalnızca HTTP API, yalnızca `packages/api-client` üzerinden.
+- Oturum (spec 0004): istemciler oturumu `packages/api-client`'taki `AuthSession` ile yürütür (giriş, okul seçimi, 401'de
+  tek yenileme, çıkış); web ve mobil aynı akış durumunu (`authFlow`) çizer, yalnızca yenileme anahtarının taşınması farklı
+  (web: HttpOnly çerez, mobil: güvenli depo). Geliştirmede web `/api`'yi vite vekiliyle yerel API'ye iletir (Pi'deki
+  gibi aynı adres). Kurum/şube duvarı Persistence'ta global query filter'dır ve oturumdan (`ICurrentSession`) beslenir;
+  filtreyi delen okuma (`IgnoreQueryFilters`) yalnızca izinli iki depoda (architecture testi denetler).
 - Renkler (web, mobil): yalnızca `packages/theme` (`tokens.json`). Mobil doğrudan kullanır; web aynı değerleri
   `web/src/theme/theme.css` değişkenlerinde tutar (test birebir eşitliği doğrular). Tema seçimi yalnızca cihazda saklanır.
 - Port çağrıları zaman aşımı + yeniden deneme ile yapılır; başarısızlık "beklemede" durumuna düşer, isteği çökertmez.

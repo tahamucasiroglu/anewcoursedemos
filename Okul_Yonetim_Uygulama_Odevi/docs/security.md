@@ -16,7 +16,8 @@
 - **Raspberry Pi deneme ortamı (spec 0003):** uygulama `okul_app` ile bağlanır — süper kullanıcı değil, veritabanı/rol
   açamaz, `pg_hba.conf`'taki işaretli blokla yalnızca `okul` veritabanına ve yalnızca `127.0.0.1`'den bağlanabilir;
   `okul` veritabanının sahibidir (migration'ları açılışta uygular). Şifre Pi'de üretilir (`openssl rand`), psql'e
-  stdin'den verilir, yalnızca `/etc/okul/okul-api.env` (root:root 600) içinde durur; systemd servise ortam değişkeni
+  stdin'den verilir, yalnızca `/etc/okul/okul-api.env` (root:root 600) içinde durur; oturum imza anahtarı ayrı
+  `/etc/okul/okul-jwt.env` (root:root 600) dosyasında, yalnızca yoksa üretilir (spec 0004); systemd servise ortam değişkeni
   olarak verir. Betiklerde `set -x` yasak, şifre ekrana basılmaz (`tools/check/pi-config.mjs` denetler — sezgisel bir
   denetimdir: şifre taşıyan değişken adları ve şifre dosyasını okuyan komutlar aranır; asıl güvence review ve VERIFY'daki
   çıktı/log taramasıdır). Şifreli SQL'de sunucu komut logu oturum için kapatılır. Root'un geçici dosyaları tahmin
@@ -42,14 +43,21 @@
 5. AI'a yalnızca görev için gereken alanlar gönderilir (veri minimizasyonu); sağlayıcı sözleşmesinde "eğitimde kullanılmaz" şartı zorunlu.
 
 ## AuthN / AuthZ
-1. **Varsayılan: reddet.** Her uç nokta kimlik doğrulama ister; anonim uçlar (giriş, şifre sıfırlama) açıkça listelenir.
-2. JWT erişim token'ı 15 dk + döndürmeli, iptal edilebilir refresh token (`NArchitecture.Core.Security`).
+1. **Varsayılan: reddet.** Her uç nokta kimlik doğrulama ister (genel yetki kuralı); anonim uçlar açıkça listelenir ve
+   bir test listeyi denetler (spec 0004: `system-health`, `auth/login`, `auth/refresh`).
+2. **Oturum (spec 0004):** JWT erişim anahtarı 15 dk (HS256, `sub`/`sid`/`tid`); yenileme anahtarı 32 rastgele bayt,
+   veritabanında yalnızca SHA-256 özeti, her kullanımda döner, 7 gün kullanılmazsa düşer. Her istekte oturum
+   veritabanından denetlenir (çıkış/iptal anında etkili). Web yenileme anahtarını **HttpOnly, SameSite=Strict çerezde**
+   (`/api/auth` yolu) tutar, JavaScript görmez; mobil telefonun **güvenli deposunda** (`expo-secure-store`). Erişim
+   anahtarı yalnızca bellekte. Şifre özeti ASP.NET Identity PBKDF2; kullanıcı yoksa da özet doğrulanır (zamanlama farkı
+   yok). Uygulama kendi küçük oturum kodunu kullanır (`NArchitecture.Core.Security` kullanılmadı — plan 0004).
 3. **2FA (TOTP):** Kurucu/Yönetici ve Muhasebe için **zorunlu**; Öğretmen ve Veli için isteğe bağlı. **MVP demosuna kadar
    ertelendi** (kullanıcı kararı 2026-11-19, spec 0004: "önce mvp olarak okullara gösterip fikir alalım"); gerçek okul
    verisiyle pilota açılmadan önce zorunlu (backlog B-17). Çok bilinen şifre listesi de aynı adıma ertelendi; MVP'de şifre
    kuralı en az 8 karakter.
 4. **Üç katmanlı yetki:** (a) rol (`ISecuredRequest`), (b) kurum + şube (oturumdan, global query filter), (c) ilişki: veli yalnızca kendi çocuğunu, öğretmen yalnızca kendi sınıflarını görür.
-5. Giriş denemesi hız sınırı + hesap kilitleme.
+5. Giriş denemesi hız sınırı (IP başına dakikada 20) + hesap kilitleme (3 hata → 15 dk; bilinmeyen e-posta da aynı
+   yanıtı ve kilidi alır, hesap varlığı sızdırılmaz). Giriş/çıkış/kilit/okul seçimi audit'e yazılır.
 6. **Audit log:** öğrenci kartı görüntüleme/değiştirme, sağlık verisi okuma, tahsilat, rol ve rıza değişiklikleri — kim, ne, hangi kayıt, ne zaman, IP. Yalnızca eklenir; değiştirilemez/silinemez.
 7. Kiracı/şube dışı kayıt → 404 (varlık bilgisi sızdırılmaz).
 

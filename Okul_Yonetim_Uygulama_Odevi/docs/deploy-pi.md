@@ -12,7 +12,7 @@
 | Ağ geçidi | nginx `/api/…` isteklerini içeride API'ye iletir; dışarıya açık tek port 8080 |
 | Sürümler | `/opt/okul/{api,web}/releases/<UTC zaman>-<git sha>`; etkin olan `current`; birim başına son **2** sürüm |
 | Veritabanı | Pi'deki **PostgreSQL 17**; veritabanı `okul`, kullanıcı `okul_app` (yönetici değil, yalnızca `okul`'a bağlanır) |
-| Gizli bilgi | `/etc/okul/okul-api.env` — bağlantı bilgisi ve şifre; **yalnızca root okur (600)**; repoda/sohbette/logda yok |
+| Gizli bilgi | `/etc/okul/okul-api.env` — bağlantı bilgisi ve şifre; `/etc/okul/okul-jwt.env` — oturum imza anahtarı (spec 0004). İkisini de **yalnızca root okur (600)**; repoda/sohbette/logda yok |
 | Loglar | `/var/log/okul/okul-api-YYYYMMDD.log`, 30 gün |
 
 ## Komutlar
@@ -23,6 +23,7 @@
 | Yalnızca web / yalnızca API | `bash tools/pi/deploy.sh web` · `bash tools/pi/deploy.sh api` |
 | Önceki sürüme dön | `bash tools/pi/rollback.sh` (veya `web` / `api`) |
 | Durum (salt okuma) | `bash tools/pi/status.sh` |
+| Okul + kurucu hesabı aç (spec 0004) | `bash tools/pi/create-school.sh --okul "Çınar Koleji" --sube "Merkez" --ad "Ayşe Yılmaz" --eposta ayse@ornek.com` — şifre ekranda görünmeden iki kez sorulur (argüman değil); e-posta zaten varsa sorulmaz ve şifre değişmez; aynı okul tekrar verilirse "Zaten var" der |
 | Kaldır (**yalnızca istendiğinde**) | `bash tools/pi/uninstall.sh` → `KALDIR` yazılır (etkileşimsiz: `--onay KALDIR`) |
 
 **Dağıtım ne yapar:** API'yi Pi için (.NET gömülü, `linux-arm64`) ve web'i derler → Pi'ye kopyalar → yeni sürüme geçer →
