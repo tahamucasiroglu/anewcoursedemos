@@ -1,0 +1,37 @@
+# Okul Yönetim API — systemd servisi (spec 0003). setup-remote.sh @...@ yer tutucularını pi.conf'tan doldurur.
+# API yalnızca 127.0.0.1'i dinler; dışarıya nginx (web portu) üzerinden açılır. Root olmayan "okul" kullanıcısıyla
+# çalışır. Veritabanı bağlantısı (şifre dahil) /etc/okul/okul-api.env'de: yalnızca root okur, systemd servise verir.
+[Unit]
+Description=Okul Yonetim API
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=okul
+Group=okul
+WorkingDirectory=/opt/okul/api/current
+ExecStart=/opt/okul/api/current/OkulYonetim.WebAPI
+EnvironmentFile=/etc/okul/okul-api.env
+Environment=ASPNETCORE_URLS=http://127.0.0.1:@API_PORT@
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=Database__MigrateOnStartup=true
+Environment=FileLogging__Folder=/var/log/okul
+Environment=Cors__AllowedOrigins__0=http://@PI_ADDRESS@:@WEB_PORT@
+Environment=DOTNET_NOLOGO=1
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/log/okul
+
+[Install]
+WantedBy=multi-user.target
