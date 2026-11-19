@@ -1,9 +1,9 @@
 # Spec 0002 — Tema ve açık/koyu mod
 
-- Status: Draft
+- Status: Approved
 - Mode: lite
 - Plan: `specs/plans/0002-plan.md`
-- Self-critique: pending (öz eleştiri boşlukları onay bekliyor)
+- Self-critique: done
 
 ## Intent
 Okul yöneticisi, öğretmen ve veli uygulamayı açtığında "sade/ham" değil, bakımlı ve tutarlı bir görünüm görmeli;
@@ -20,8 +20,9 @@ yok), yazı boyutu ayarı, yeni ekran.
    tek yerden değiştirilebilir (ileride kurum markası).
 2. **Üç mod seçeneği:** "Sistem" (cihaz ayarına uyar), "Açık", "Koyu". Varsayılan "Sistem".
 3. **Mod seçici:** Başlığın sağ üstünde üç parçalı seçici; her parçada yazı (ve yardımcı simge); seçili olan
-   görünür biçimde ve ekran okuyucuya "seçili" olarak belirtilir.
-4. **Anında geçiş:** Bir seçenek seçilince tüm ekran yeniden açmaya gerek kalmadan o moda geçer.
+   görünür biçimde ve ekran okuyucuya "seçili" olarak belirtilir. Dar ekranda (320 piksel) taşmaz; gerekirse alt satıra iner.
+4. **Anında geçiş:** Bir seçenek seçilince tüm ekran yeniden açmaya gerek kalmadan o moda geçer; mobil durum çubuğu ve
+   tarayıcının yerleşik parçaları (kaydırma çubuğu, form kutuları) da dahil.
 5. **Hatırlama:** Seçim cihaz başına saklanır (web'de tarayıcıda, mobilde telefonda); sunucuya gönderilmez. Uygulama
    yeniden açıldığında son seçim geçerlidir.
 6. **Cihazı izleme:** "Sistem" seçiliyken cihazın modu değişirse uygulama anında uyar. "Açık" veya "Koyu" seçiliyken
@@ -58,14 +59,16 @@ yok), yazı boyutu ayarı, yeni ekran.
   bir sonraki açılışta görür); yeni ekran; geçiş animasyonu.
 - Seçim yalnızca cihazda tutulur, kişisel veri değildir. Sensitive area: none.
 - Yeni dış servis veya sunucu değişikliği yok; API davranışı değişmez.
+- Mobil doğrulama (öz eleştiri Ö-4): gerçek iOS/Android cihazda görsel doğrulama yapılamıyor; mantık testlerle,
+  görünüm Expo web çıktısının ekran görüntüleriyle kanıtlanır. Kullanıcı isterse kendi telefonunda Expo Go ile bakar.
 - Size: tek kullanıcı yeteneği (görünüm modu), 11 kabul kriteri — bölünmeden tek spec olarak öneriliyor
   (kriterlerin çoğu aynı seçicinin sınır durumları).
 
 ## Acceptance criteria
 - [ ] AC-1 — Web ve mobil aynı renk sözlüğünü kullanır: aynı mod ve aynı rol (zemin, metin, ana renk, başarılı, hata) için iki tarafta aynı renk değeri vardır; ana renk tek bir tanımdan gelir.
 - [ ] AC-2 — Hiç seçim yapılmamışsa seçici "Sistem"i seçili gösterir; cihaz açık moddaysa açık, koyu moddaysa koyu görünüm gelir; cihaz bir tercih bildirmiyorsa açık görünüm gelir.
-- [ ] AC-3 — Seçici başlığın sağ üstünde "Sistem", "Açık", "Koyu" seçeneklerini yazıyla gösterir; seçili olan görsel olarak ve ekran okuyucu için "seçili" olarak belirtilir; metinler Türkçe metin dosyasındandır.
-- [ ] AC-4 — "Açık" veya "Koyu" seçilince ekran yeniden açılmadan o moda geçer ve cihaz ayarından bağımsız kalır.
+- [ ] AC-3 — Seçici başlığın sağ üstünde "Sistem", "Açık", "Koyu" seçeneklerini yazıyla gösterir; seçili olan görsel olarak ve ekran okuyucu için "seçili" olarak belirtilir; metinler Türkçe metin dosyasındandır; 320 piksel genişlikte başlık ve seçici taşmadan sığar (gerekirse seçici alt satıra iner).
+- [ ] AC-4 — "Açık" veya "Koyu" seçilince ekran yeniden açılmadan o moda geçer ve cihaz ayarından bağımsız kalır; mobilde üstteki durum çubuğu (saat, pil) ve web'de tarayıcının yerleşik parçaları (kaydırma çubuğu, form kutuları) da seçilen moda uyar.
 - [ ] AC-5 — Seçim hatırlanır: web'de sayfa yenilenince veya yeniden açılınca, mobilde uygulama yeniden başlatılınca son seçim (Sistem, Açık veya Koyu) geçerlidir; seçim sunucuya gönderilmez.
 - [ ] AC-6 — "Sistem" seçiliyken cihazın modu değişirse görünüm yeniden açmadan değişir; "Açık" veya "Koyu" seçiliyken cihaz değişikliği görünümü değiştirmez.
 - [ ] AC-7 — Kayıtlı seçim bozuk, bilinmeyen bir değer veya okunamıyorsa (saklama kapalı/hata) uygulama hata göstermeden "Sistem" ile açılır ve seçici çalışmaya devam eder.
