@@ -28,3 +28,9 @@ describe.each<ColorScheme>(["light", "dark"])("%s mod CSS değişkenleri", (sche
 it("index.css'te renk değeri yok, yalnızca değişken kullanılır", () => {
   expect(indexCss).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
 });
+
+it("tema seçici kabı odak çerçevesini kırpmaz (AC-11; review round 1, M-1)", () => {
+  const start = indexCss.indexOf(".theme-switcher {");
+  const rule = indexCss.slice(start, indexCss.indexOf("}", start));
+  expect(rule).not.toMatch(/overflow\s*:\s*(hidden|clip)/);
+});
