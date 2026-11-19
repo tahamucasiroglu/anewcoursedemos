@@ -33,22 +33,56 @@ for (const script of scripts) {
 //    parça) ayrı denetlenir. Asıl güvence review + VERIFY'daki çıktı/log taramasıdır.
 const secretVar = /\$\{?(password|pw|pass|secret)\b/i;
 const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?ENV_FILE\b|okul-api\.env)/;
-for (const script of scripts) {
-  const statements = read(script).replace(/\\\r?\n/g, " ").split("\n");
+
+// Tırnak içindeki ; & | karakterleri komut ayırıcı sayılmaz (SQL ve bağlantı cümlesinde geçer; review round 2, M-1).
+function neutralizeQuoted(code) {
+  return code.replace(/'[^']*'|"(?:[^"\\]|\\.)*"/g, (quoted) => quoted.replace(/[;&|]/g, "_"));
+}
+
+/** Bir betik metninde şifre basma / şifre dosyası okuma / izleme modu sorunlarını döndürür (öz-sınamada da kullanılır). */
+function secretLeaks(text, name) {
+  const problems = [];
+  const statements = text.replace(/\\\r?\n/g, " ").split("\n");
   let inEnvWriter = false;
   statements.forEach((line, i) => {
     const code = line.replace(/^\s*#.*$/, "");
     if (/^\s*write_env_file\(\)/.test(code)) inEnvWriter = true;
     else if (/^\}/.test(code)) inEnvWriter = false;
-    if (/\bset\s+-[a-z]*x|\bbash\s+-x\b/.test(code)) fail(`${rel(script)}: izleme modu (set -x) yasak — gizli bilgi sızar: ${code.trim()}`);
-    if (readsEnvFile.test(code)) fail(`${rel(script)} (ifade ${i + 1}): şifre dosyası okunuyor/basılıyor: ${code.trim()}`);
-    for (const part of code.split(/;|&&|\|\|/)) {
-      const prints = /\b(echo|say|printf)\b/.test(part);
-      const carriesSecret = secretVar.test(part) || (inEnvWriter && /"\$1"/.test(part));
-      const safelyRouted = /\|\s*pg\b/.test(part) || />\s*"\$/.test(part);
-      if (prints && carriesSecret && !safelyRouted) fail(`${rel(script)} (ifade ${i + 1}): şifre ekrana yazdırılıyor: ${part.trim()}`);
-    }
+    if (/\bset\s+-[a-z]*x|\bbash\s+-x\b/.test(code)) problems.push(`${name}: izleme modu (set -x) yasak — gizli bilgi sızar: ${code.trim()}`);
+    if (readsEnvFile.test(code)) problems.push(`${name} (ifade ${i + 1}): şifre dosyası okunuyor/basılıyor: ${code.trim()}`);
+    const carries = (text) => secretVar.test(text) || (inEnvWriter && /"\$1"/.test(text));
+    const routed = (text) => /\|\s*pg\b/.test(text) || />\s*"\$/.test(text);
+    const prints = (text) => /\b(echo|say|printf)\b/.test(text);
+    // İfade bütün olarak ve tırnak dışındaki her komut parçası ayrı ayrı denetlenir
+    const parts = neutralizeQuoted(code).split(/;|&&|\|\|/);
+    const leaks = parts.some((part) => prints(part) && carries(part) && !routed(part))
+      || (parts.length === 1 && prints(code) && carries(code) && !routed(code));
+    if (leaks) problems.push(`${name} (ifade ${i + 1}): şifre ekrana yazdırılıyor: ${code.trim()}`);
   });
+  return problems;
+}
+
+for (const script of scripts) {
+  for (const problem of secretLeaks(read(script), rel(script))) fail(problem);
+}
+
+// Öz-sınama (kasıtlı bozmanın kalıcı hâli): kurulum betiğinin şifreyi ekrana basacak şekilde bozulmuş kopyaları
+// bellekte üretilir; her biri yakalanmazsa bu denetim işe yaramıyor demektir.
+const setupText = read(path.join(remoteDir, "setup-remote.sh"));
+const mutations = [
+  ["CREATE ROLE çıktısı psql yerine ekrana", /("\$password" \| pg -q >\/dev\/null)/, '"$password"'],
+  ["ALTER ROLE çıktısı psql yerine ekrana", /(ALTER ROLE %s PASSWORD '%s';\\n" "\$DB_ROLE" "\$password") \| pg -q >\/dev\/null/, "$1"],
+  ["bağlantı cümlesi dosya yerine ekrana", /("\$DB_NAME" "\$DB_ROLE" "\$1") > "\$tmp"/, "$1"],
+  ["şifre doğrudan basılıyor", /(    unset password)/, '    echo "$password"\n$1'],
+];
+for (const [label, pattern, replacement] of mutations) {
+  if (!pattern.test(setupText)) {
+    fail(`pi-config öz-sınama: '${label}' için kalıp setup-remote.sh'de bulunamadı (betik değiştiyse öz-sınamayı güncelleyin)`);
+    continue;
+  }
+  if (secretLeaks(setupText.replace(pattern, replacement), "öz-sınama").length === 0) {
+    fail(`pi-config öz-sınama: '${label}' bozması yakalanmadı`);
+  }
 }
 // Root'un kullandığı geçici yollar tahmin edilemez olmalı (review round 1, M-1): /tmp geçen satır ya mktemp ile
 // rastgele ad üretir ya da üretilen adı doğrular (=~).
@@ -59,7 +93,9 @@ for (const script of scripts) {
   });
 }
 const setup = read(path.join(remoteDir, "setup-remote.sh"));
-if (!/log_statement = 'none'/.test(setup)) fail("setup-remote.sh: şifreli SQL için sunucu komut logu kapatılmalı (review round 1, L-2)");
+for (const setting of ["log_statement = 'none'", "log_min_error_statement = 'panic'", "log_min_duration_statement = -1", "log_min_duration_sample = -1"]) {
+  if (!setup.includes(setting)) fail(`setup-remote.sh: şifreli SQL için '${setting}' ayarlanmalı (review round 1 L-2, round 2 L-1)`);
+}
 // Şifre psql'e komut satırıyla (-c) verilmez; stdin'den verilir (süreç listesinde görünmez)
 if (/-c\s+["'][^"']*PASSWORD/.test(setup)) fail("setup-remote.sh: şifre psql'e komut satırıyla veriliyor (-c); stdin kullanılmalı");
 if (!/PASSWORD '%s'.*\|\s*pg\b/.test(setup)) fail("setup-remote.sh: şifre psql'e stdin ile verilmiyor");
