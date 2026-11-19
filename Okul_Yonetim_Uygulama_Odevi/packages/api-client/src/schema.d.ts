@@ -54,7 +54,8 @@ export interface components {
     schemas: {
         /**
          * @description Sistem durumu yanıtı. Yalnızca durum ("healthy" / "unavailable") ve Türkçe mesaj taşır;
-         *     sürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001).
+         *     sürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001). Durum metni tek yerde,
+         *     `From` içinde `SystemHealthStatus`'tan türetilir; `Kind` yalnızca sunucu içindir (JSON'a yazılmaz).
          */
         SystemHealthResponse: {
             status: string;

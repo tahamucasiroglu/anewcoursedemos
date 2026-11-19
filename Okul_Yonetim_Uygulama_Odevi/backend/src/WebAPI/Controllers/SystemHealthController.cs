@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NArchitecture.Core.Mediator;
+using OkulYonetim.Application.Features.SystemHealth;
 using OkulYonetim.Application.Features.SystemHealth.Queries.GetSystemHealth;
 
 namespace OkulYonetim.WebAPI.Controllers;
@@ -28,7 +29,7 @@ public sealed class SystemHealthController : ControllerBase
     public async Task<ActionResult<SystemHealthResponse>> Get(CancellationToken cancellationToken)
     {
         SystemHealthResponse response = await this.sender.Send(new GetSystemHealthQuery(), cancellationToken).ConfigureAwait(false);
-        int statusCode = response.Status == "healthy" ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable;
+        int statusCode = response.Kind == SystemHealthStatus.Healthy ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable;
         return this.StatusCode(statusCode, response);
     }
 }

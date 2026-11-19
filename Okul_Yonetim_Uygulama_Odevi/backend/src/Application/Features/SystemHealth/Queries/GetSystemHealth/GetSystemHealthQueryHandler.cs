@@ -39,11 +39,12 @@ public sealed class GetSystemHealthQueryHandler : IRequestHandler<GetSystemHealt
     {
         bool reachable = await this.IsDatabaseReachableAsync(cancellationToken).ConfigureAwait(false);
         SystemHealthStatus status = reachable ? SystemHealthStatus.Healthy : SystemHealthStatus.Unavailable;
-        string statusText = reachable ? "healthy" : "unavailable";
         string message = await this.localization
             .GetLocalizedAsync(status.ToString(), Locales, LocaleSection)
             .ConfigureAwait(false);
 
+        SystemHealthResponse response = SystemHealthResponse.From(status, message);
+        string statusText = response.Status;
         if (reachable)
         {
             this.logger.LogInformation("Sistem durumu: {Status}", statusText);
@@ -53,7 +54,7 @@ public sealed class GetSystemHealthQueryHandler : IRequestHandler<GetSystemHealt
             this.logger.LogWarning("Sistem durumu: {Status} — veritabanına {TimeoutSeconds} sn içinde ulaşılamadı", statusText, DatabaseTimeoutSeconds);
         }
 
-        return new SystemHealthResponse(statusText, message);
+        return response;
     }
 
     private async Task<bool> IsDatabaseReachableAsync(CancellationToken cancellationToken)
