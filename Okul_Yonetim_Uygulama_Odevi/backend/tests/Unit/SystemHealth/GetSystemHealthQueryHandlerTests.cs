@@ -43,6 +43,9 @@ public sealed class GetSystemHealthQueryHandlerTests
         response.Message.ShouldBe("Sistem şu anda hizmet dışı");
     }
 
+    // Spec 0001 AC-2: değer spec'ten gelir, üretim sabitinden okunmaz; sabit değişirse bu testler kırmızıya düşer.
+    private static readonly TimeSpan SpecTimeout = TimeSpan.FromSeconds(3);
+
     [Fact]
     public async Task Handle_ProbeTimesOut_ReturnsUnavailable()
     {
@@ -52,7 +55,7 @@ public sealed class GetSystemHealthQueryHandlerTests
         Task<SystemHealthResponse> pending = this.CreateHandler().Handle(new GetSystemHealthQuery(), TestContext.Current.CancellationToken);
         pending.IsCompleted.ShouldBeFalse();
 
-        this.time.Advance(GetSystemHealthQueryHandler.DatabaseTimeout);
+        this.time.Advance(SpecTimeout);
         SystemHealthResponse response = await pending.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
         response.Status.ShouldBe("unavailable");
@@ -65,7 +68,7 @@ public sealed class GetSystemHealthQueryHandlerTests
         this.probe.CanConnectAsync(Arg.Any<CancellationToken>()).Returns(slow.Task);
 
         Task<SystemHealthResponse> pending = this.CreateHandler().Handle(new GetSystemHealthQuery(), TestContext.Current.CancellationToken);
-        this.time.Advance(GetSystemHealthQueryHandler.DatabaseTimeout - TimeSpan.FromMilliseconds(1));
+        this.time.Advance(SpecTimeout - TimeSpan.FromMilliseconds(1));
         slow.SetResult(true);
         SystemHealthResponse response = await pending.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
