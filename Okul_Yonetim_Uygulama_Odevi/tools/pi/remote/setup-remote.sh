@@ -19,8 +19,9 @@ ETC_DIR=/etc/okul
 ENV_FILE=/etc/okul/okul-api.env
 HBA_BEGIN='# okul-begin (spec 0003 — Okul Yönetim; uninstall-remote.sh siler)'
 HBA_END='# okul-end'
-# Şifre içeren SQL bu oturumda sunucu loguna yazılmasın (review round 1, L-2): ne komut logu ne hata durumunda STATEMENT satırı
-NO_LOG_SQL="SET log_statement = 'none'; SET log_min_error_statement = 'panic'; "
+# Şifre içeren SQL bu oturumda sunucu loguna yazılmasın (review round 1, L-2; round 2, L-1): komut logu, hata
+# durumunda STATEMENT satırı ve yavaş komut logu (duration) kapalı
+NO_LOG_SQL="SET log_statement = 'none'; SET log_min_error_statement = 'panic'; SET log_min_duration_statement = -1; SET log_min_duration_sample = -1; "
 
 say() { printf '  %s\n' "$*"; }
 die() { printf 'HATA: %s\n' "$*" >&2; exit 1; }

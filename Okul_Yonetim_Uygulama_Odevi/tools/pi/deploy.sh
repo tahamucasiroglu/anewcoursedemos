@@ -18,10 +18,16 @@ SHA="$(git -C "$SOURCE" rev-parse --short HEAD 2>/dev/null || echo yerel)"
 VERSION="$(date -u +%Y%m%d%H%M%S)-$SHA"
 OUT="$(mktemp -d)"
 LOCKED=0
+STAGE=""
 
 cleanup() {
   rm -rf "$OUT"
-  if [ "$LOCKED" = 1 ]; then run_remote activate-remote.sh release >/dev/null 2>&1 || true; fi
+  # Etkinleştirme başlamadan yarıda kalındıysa Pi'deki hazırlık klasörü SSH kullanıcısıyla (root değil) silinir
+  # (review round 2, I-2); etkinleştirme başladıysa onu activate-remote.sh siler.
+  if [ "$LOCKED" = 1 ]; then
+    if [ -n "$STAGE" ]; then ssh -o BatchMode=yes "$PI_SSH" "rm -rf '$STAGE'" >/dev/null 2>&1 || true; fi
+    run_remote activate-remote.sh release >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT
 
