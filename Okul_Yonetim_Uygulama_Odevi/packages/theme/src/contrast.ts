@@ -16,7 +16,9 @@ export const contrastPairs: ReadonlyArray<readonly [ColorRole, ColorRole, number
   ["border", "surface", NON_TEXT_MIN],
   ["border", "background", NON_TEXT_MIN],
   ["success", "surface", NON_TEXT_MIN],
+  ["success", "background", NON_TEXT_MIN],
   ["danger", "surface", NON_TEXT_MIN],
+  ["danger", "background", NON_TEXT_MIN],
   ["focus", "background", NON_TEXT_MIN],
   ["focus", "surface", NON_TEXT_MIN],
 ];
