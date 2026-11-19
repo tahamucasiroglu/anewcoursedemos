@@ -23,7 +23,7 @@
 | Yalnızca web / yalnızca API | `bash tools/pi/deploy.sh web` · `bash tools/pi/deploy.sh api` |
 | Önceki sürüme dön | `bash tools/pi/rollback.sh` (veya `web` / `api`) |
 | Durum (salt okuma) | `bash tools/pi/status.sh` |
-| Kaldır (**yalnızca istendiğinde**) | `bash tools/pi/uninstall.sh` → `KALDIR` yazılır |
+| Kaldır (**yalnızca istendiğinde**) | `bash tools/pi/uninstall.sh` → `KALDIR` yazılır (etkileşimsiz: `--onay KALDIR`) |
 
 **Dağıtım ne yapar:** API'yi Pi için (.NET gömülü, `linux-arm64`) ve web'i derler → Pi'ye kopyalar → yeni sürüme geçer →
 `http://127.0.0.1:8080/api/system-health` "healthy" mi bakar. Değilse **kendiliğinden önceki sürüme döner** ve hata
@@ -35,7 +35,8 @@ dönülen sürümden sonra eklenmiş bir migration varsa komut uyarı verir.
 ## Erişim
 - Tarayıcı: `http://192.168.1.102:8080`
 - Mobil (Expo Go, telefon aynı ağda): `mobile/.env.local` içine `EXPO_PUBLIC_API_BASE_URL=http://192.168.1.102:8080`
-  yazıp `npm --workspace mobile run start` → telefonda Expo Go ile QR kodu okutun.
+  yazıp `npm --workspace mobile run start` → telefonda Expo Go ile QR kodu okutun. (Expo'nun **tarayıcı** sürümü Pi'ye
+  farklı adresten bağlandığı için CORS'a takılır; Pi'de geliştirme adresine CORS izni açılmaz — telefon kullanılır.)
 - **Pi'nin IP'si değişirse:** `tools/pi/pi.conf` içinde `PI_ADDRESS`'i ve mobildeki adresi güncelleyin; web yeniden
   derlenmez (sayfayla aynı adresi kullanır). Öneri: modemde Pi'ye sabit IP verin.
 

@@ -17,7 +17,10 @@
   açamaz, `pg_hba.conf`'taki işaretli blokla yalnızca `okul` veritabanına ve yalnızca `127.0.0.1`'den bağlanabilir;
   `okul` veritabanının sahibidir (migration'ları açılışta uygular). Şifre Pi'de üretilir (`openssl rand`), psql'e
   stdin'den verilir, yalnızca `/etc/okul/okul-api.env` (root:root 600) içinde durur; systemd servise ortam değişkeni
-  olarak verir. Betiklerde `set -x` yasak, şifre ekrana basılmaz (`tools/check/pi-config.mjs` denetler). API root
+  olarak verir. Betiklerde `set -x` yasak, şifre ekrana basılmaz (`tools/check/pi-config.mjs` denetler — sezgisel bir
+  denetimdir: şifre taşıyan değişken adları ve şifre dosyasını okuyan komutlar aranır; asıl güvence review ve VERIFY'daki
+  çıktı/log taramasıdır). Şifreli SQL'de sunucu komut logu oturum için kapatılır. Root'un geçici dosyaları tahmin
+  edilemez adlıdır (`mktemp`), dağıtım hazırlık klasörünün sahibi ve bağlantı olmadığı doğrulanır. API root
   olmayan `okul` sistem kullanıcısıyla, sertleştirilmiş systemd ayarlarıyla ve yalnızca `127.0.0.1`'de çalışır.
 
 ## Sensitive data protection
