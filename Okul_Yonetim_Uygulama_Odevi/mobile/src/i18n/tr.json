@@ -2,5 +2,9 @@
   "app.title": "Okul Yönetim Platformu",
   "status.loading": "Sistem durumu kontrol ediliyor…",
   "status.unreachable": "Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
-  "status.retry": "Tekrar dene"
+  "status.retry": "Tekrar dene",
+  "theme.label": "Tema",
+  "theme.system": "Sistem",
+  "theme.light": "Açık",
+  "theme.dark": "Koyu"
 }
