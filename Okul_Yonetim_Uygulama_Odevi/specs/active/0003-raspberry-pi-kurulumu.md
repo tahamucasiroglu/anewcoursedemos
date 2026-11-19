@@ -75,7 +75,7 @@ Kullanıcı arayüzü değişmez (web ve mobil ekranları spec 0001/0002'deki gi
 ## Acceptance criteria
 - [ ] AC-1 — Kurulum + dağıtımdan sonra aynı ağdaki bir tarayıcıda `http://192.168.1.102:8080` web panelini açar ve gerçek API + Pi'deki PostgreSQL 17 üzerinden "Sistem çalışıyor" görünür; sayfa yenilenince de açılır.
 - [ ] AC-2 — API yalnızca Pi'nin içinden dinler: ağdan API portuna doğrudan bağlantı kurulamaz; `/api` istekleri yalnızca `8080` üzerinden (nginx) çalışır.
-- [ ] AC-3 — API root olmayan, oturum açamayan ayrı bir sistem kullanıcısıyla çalışır; Pi yeniden başlatıldığında ve API süreci öldürüldüğünde kendiliğinden yeniden çalışır.
+- [ ] AC-3 — API root olmayan, oturum açamayan ayrı bir sistem kullanıcısıyla çalışır; API süreci öldürüldüğünde kendiliğinden yeniden çalışır; servis açılışta başlayacak şekilde etkindir (systemd `enabled`). Pi yeniden başlatma testi yapılmaz — kullanıcı kararı 2026-11-19: Pi'de başka işler çalışıyor, yeniden başlatma onları aksatır.
 - [ ] AC-4 — Uygulamanın veritabanı kullanıcısı kendi veritabanında migration'ları uygular; başka bir veritabanına bağlanamaz; süper kullanıcı değildir; veritabanı veya rol oluşturamaz.
 - [ ] AC-5 — Veritabanı şifresi yalnızca root'un okuyabildiği bir dosyadadır; repoda, kurulum/dağıtım çıktılarında ve API loglarında geçmez.
 - [ ] AC-6 — Dağıtım tek komuttur; sonunda sistem durumu "çalışıyor" doğrulanır ve sürüm bildirilir; Pi'de en fazla son 2 sürüm kalır; başka bir dağıtım sürerken ikincisi reddedilir; 1 GB'tan az boş alanda durur.
