@@ -107,9 +107,12 @@ describe("hatırlama (AC-5)", () => {
     fakeDevice("light");
     render(<App />);
     await userEvent.click(option(tr["theme.dark"]));
-    const urls = fetchMock.mock.calls.map(([request]) => request.url);
-    expect(urls.every((url) => url.endsWith("/api/system-health"))).toBe(true);
-    expect(urls.join(" ")).not.toMatch(/theme|dark/);
+    // Spec 0004: açılışta oturum kontrolü (/api/auth/refresh) da yapılır; ne adresinde ne gövdesinde tema bilgisi olmamalı.
+    const requests = fetchMock.mock.calls.map(([request]) => request);
+    const urls = requests.map((request) => request.url);
+    expect(urls.every((url) => url.endsWith("/api/system-health") || url.endsWith("/api/auth/refresh"))).toBe(true);
+    const bodies = await Promise.all(requests.map((request) => request.clone().text()));
+    expect([...urls, ...bodies].join(" ")).not.toMatch(/theme|dark/);
   });
 });
 

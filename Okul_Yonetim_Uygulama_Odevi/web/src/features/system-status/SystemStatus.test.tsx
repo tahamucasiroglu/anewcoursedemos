@@ -13,7 +13,11 @@ function json(status: number, body: unknown): Response {
 
 beforeEach(() => {
   fetchMock.mockReset();
-  vi.stubGlobal("fetch", fetchMock);
+  // Spec 0004: uygulama açılışta oturumu da dener (/api/auth/...); o istekler "oturum yok" (401) alır ve bu testlerin
+  // sayaçlarına/sırasına karışmaz — fetchMock yalnızca sistem durumu isteklerini görür.
+  vi.stubGlobal("fetch", (request: Request) =>
+    new URL(request.url, "http://x").pathname.startsWith("/api/auth/") ? Promise.resolve(json(401, {})) : fetchMock(request),
+  );
 });
 
 afterEach(() => {
