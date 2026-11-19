@@ -1,0 +1,22 @@
+# Backlog — deferred findings
+
+Findings a human triaged as **defer**: real, but fixed later by decision (`workflows/feature-development.md`,
+step 7). Nothing lands here without that decision; noise is rejected in the triage record, not parked here.
+
+- A criterion moved out at the ship gate (R-08, `→ moved to B-<n>`) lands here too, by the
+  human's ship decision; the entry names the spec and criterion.
+- One entry per finding, newest last. Delete the entry in the commit of the work that closes it.
+- An entry that grows into new behavior becomes a spec (`specs/active/`), not a fix.
+
+<!-- Format (labels stay English):
+- **B-<n>** — <finding, one line> — Source: spec <NNNN>, review round <n> (<file:line>) — Severity: <…>
+  — Recommendation: <the reviewer's action> — Deferred by: <name>, <YYYY-MM-DD>, <why>
+  A decision deferred at bootstrap (its REPORT) uses Source: bootstrap <YYYY-MM-DD>.
+-->
+
+- **B-1** — Gerçek ödeme sağlayıcı entegrasyonu (iyzico/Paycell) `IPaymentProvider` arkasına; MVP'de manuel tahsilat kaydı — Source: bootstrap 2026-11-19 — Severity: feature — Recommendation: sağlayıcı hesabı açılınca ayrı spec — Deferred by: tahamucasiroglu, 2026-11-19, hesap henüz yok
+- **B-2** — Gerçek SMS sağlayıcı (ör. Netgsm) `ISmsSender` arkasına; MVP'de log — Source: bootstrap 2026-11-19 — Severity: feature — Recommendation: hesap açılınca ayrı spec — Deferred by: tahamucasiroglu, 2026-11-19, hesap henüz yok
+- **B-3** — WhatsApp Business kanalı `IMessagingChannel` arkasına (kapsamda Faz 2) — Source: bootstrap 2026-11-19 — Severity: feature — Recommendation: Faz 2 kapısından sonra — Deferred by: tahamucasiroglu, 2026-11-19, hesap yok
+- **B-4** — AI ve ses→metin sağlayıcısı seçimi (`IAiTextGenerator`, `ISpeechToText`); "eğitimde kullanılmaz" sözleşme şartıyla — Source: bootstrap 2026-11-19 — Severity: decision — Recommendation: AI sesli not spec'inin ANALYZE aşamasında karar — Deferred by: tahamucasiroglu, 2026-11-19, MVP'de sahte port yeterli
+- **B-5** — PostgreSQL Row-Level Security ile ikinci kiracı izolasyon hattı (S1) — Source: bootstrap 2026-11-19 — Severity: hardening — Recommendation: MVP modülleri oturduktan sonra ayrı spec — Deferred by: tahamucasiroglu, 2026-11-19, global query filter + testler MVP için yeterli
+- **B-6** — Push bildirim sağlayıcısı (Expo push / FCM / APNs) `IPushNotifier` arkasına — Source: bootstrap 2026-11-19 — Severity: feature — Recommendation: mobil bildirim spec'inde — Deferred by: tahamucasiroglu, 2026-11-19, MVP'de sahte port

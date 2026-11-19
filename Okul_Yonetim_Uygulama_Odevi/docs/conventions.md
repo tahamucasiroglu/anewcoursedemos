@@ -1,0 +1,77 @@
+# Conventions
+
+> Her kural ya araçla zorlanır (tercih) ya da review'da kontrol edilir. Bootstrap 2026-11-19.
+
+## Language
+- Chat language (interviews, sessions): Turkish (`tr`)
+- Document language (docs/, specs, plans, ADRs, review and verify reports): Turkish (`tr`)
+- Always English (protocol, not prose): ANEW core files, template headings and field labels,
+  `Status:` values (Draft / Approved / In progress / Shipped), `Approved by / on:`, `Source:`.
+- Code identifiers: **English** (`Student`, `Guardian`, `InstallmentPlan`); tablo/kolon adları snake_case İngilizce.
+- `/// <summary>` açıklamaları: **Türkçe**.
+- Commit messages: **Türkçe açıklama**; Conventional Commits tür kelimesi ve plan referansı İngilizce (protokol):
+  `feat(okul/yoklama): toplu yoklama ucu eklendi [plan 0003/2]` (`docs/git.md`).
+- Kullanıcıya görünen metinler: Türkçe; **koda gömülmez** — .NET'te `.resx` (ör. `Messages.resx`, anahtar
+  `Student.NotFound`), web/mobilde `tr.json`. MVP tek dil; yeni dil = yeni kaynak dosyası.
+- Agent messages (handoff summaries, refusals, `Next:` lines): chat language; command names, file
+  paths and protocol fields verbatim.
+
+## Language & framework versions
+- .NET SDK 10.0.4xx, C# 14, `net10.0`; `NArchitecture.Core.*` 2.0.0; EF Core 10 + Npgsql; PostgreSQL 18.
+- Node.js 26 (web/mobil araçları), TypeScript strict; React 19 + Vite; React Native + Expo.
+- Paket sürümleri merkezi: `backend/Directory.Packages.props` (Central Package Management); npm tarafında lock dosyası commit edilir.
+- Kesin sürümler walking skeleton planında sabitlenir.
+
+## Naming
+- nArchitecture düzeni: `Application/Features/<Modül>/Commands/<Eylem>/<Eylem><Varlık>Command.cs`,
+  `...CommandHandler.cs`, `...CommandValidator.cs`; Query'ler aynı düzende; kurallar `Rules/<Varlık>BusinessRules.cs`.
+- **K1 — dosya başına tek tip:** bir dosyada yalnızca 1 class *veya* 1 interface *veya* 1 enum *veya* 1 record/struct;
+  dosya adı = tip adı. (StyleCop SA1402, SA1649 — error.)
+- **K3 — tip başına summary:** her tipin (class/interface/enum/record/struct) başında kısa Türkçe
+  `/// <summary>` — "bu ne işe yarar". Metot/property/alan için ayrı summary **yazılmaz**; önemli üyeler tipin
+  summary'sinde anlatılır.
+- Arayüzler `I` önekli; async metotlar `Async` sonekli; sınıflar varsayılan `sealed`.
+- Test adı: `<Metot>_<Durum>_<Beklenen>` (ör. `Handle_StudentFromOtherTenant_ThrowsNotFound`).
+- Kodda Türkçe terim karşılıkları `docs/domain.md` tablosundan (Kurum=`Tenant`, Şube=`Branch`, Sınıf=`Classroom`).
+
+## Error handling
+- nArchitecture global exception middleware; tüm hatalar **RFC 9457 ProblemDetails**.
+- İş kuralı ihlali → `BusinessException` → 400 (Türkçe mesaj, resx'ten).
+- Doğrulama → `ValidationException` (FluentValidation) → 400, alan bazlı liste.
+- Yetki yok → `AuthorizationException` → 403.
+- Kayıt yok **veya başka kiracıya/yetkisiz şubeye ait** → **404** ("var ama sizin değil" bilgisi sızdırılmaz).
+- Beklenmeyen → 500; yanıtta yalnızca genel mesaj + `traceId`. Stack trace, SQL, kişisel veri **asla** yanıtta olmaz.
+- Loglarda kişisel veri maskelenir (`docs/security.md`).
+- Port (dış servis) hataları: zaman aşımı + yeniden deneme + "beklemede" durumu; istek çökmez.
+
+## Data rules
+1. **Para:** C# `decimal`, PostgreSQL `numeric(18,2)`, TRY. Para için `float`/`double` yasak. Taksit bölmede kuruş farkı son taksite (BR-7).
+2. **Zaman:** DB'de UTC (`timestamptz`); gösterim `Europe/Istanbul`. Sadece-tarih alanları `DateOnly`/`date`. Saat `TimeProvider`'dan; testlerde `FakeTimeProvider`.
+3. **ID:** UUID v7 (`Guid.CreateVersion7()`); ardışık int ID dışarı açılmaz.
+4. **Kiracı alanları:** kiracıya ait her tabloda `tenant_id` (zorunlu), şubeye bağlıda `branch_id`; ikisi de **oturumdan** gelir, istemciden alınmaz.
+5. **Silme:** iş kayıtları soft delete (`deleted_at`); saklama süresi dolan kişisel veri anonimleştirilir.
+6. **Denetim alanları:** `created_at/by`, `updated_at/by`; hassas okuma/değişiklik ayrıca audit log'a.
+7. **TC kimlik no:** 11 hane + algoritma doğrulaması; şifreli saklanır, arama için HMAC parmak izi; gösterimde maskeli (`*******1234`).
+8. **Telefon:** E.164 (`+905xxxxxxxxx`).
+9. **Metin karşılaştırma:** kullanıcı aramalarında `tr-TR` (ICU collation); teknik değerler (e-posta, kod) `ToLowerInvariant` / `OrdinalIgnoreCase`.
+10. İçe aktarılan veriye (Excel/e-Okul) aynı doğrulamalar uygulanır.
+
+## Known traps
+- T1 — Türkçe I/ı: kültüre bağlı `ToUpper/ToLower/Compare` `tr-TR`'de "mail"→"MAİL" yapar — teknik değerlerde Invariant/Ordinal, kullanıcı metninde açık `tr-TR`; CA1304/CA1309/CA1311 error — from bootstrap 2026-11-19.
+- T2 — Windows Türkçe locale (`Turkish_Türkiye.1254`) ASCII dışı olduğu için PostgreSQL `initdb` çöker — kümeyi `--locale C` + UTF8 kur, Türkçe sıralamayı kolon bazında ICU `tr-TR` ile yap — from bootstrap 2026-11-19 (yaşandı).
+- T3 — Npgsql: `timestamptz`'e `Kind=Local/Unspecified` `DateTime` yazmak exception — `DateTimeOffset`/UTC ve `TimeProvider` kullan — from bootstrap 2026-11-19.
+- T4 — EF Core `decimal` hassasiyeti yapılandırılmazsa beklenmeyen kolon tipi — tüm para alanlarına convention ile `HasPrecision(18, 2)` — from bootstrap 2026-11-19.
+- T5 — `IgnoreQueryFilters()`, `FromSql` veya doğrudan `DbContext` kiracı filtresini deler (S1) — yalnızca izinli listede, gerekçe + review onayıyla — from bootstrap 2026-11-19.
+- T6 — `dotnet build/test` MSBuild node'ları ve VBCSCompiler'ı arkada bırakır (residue) — `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` — from bootstrap 2026-11-19.
+- T7 — Liste sorgularında N+1 / tracking maliyeti ("10 saniyede yoklama") — okumada `AsNoTracking()` + `Select` ile DTO projeksiyonu — from bootstrap 2026-11-19.
+
+## Enforced by tooling
+Walking skeleton ile devreye girer (`backend/Directory.Build.props`, `backend/.editorconfig`, `tests/Architecture`):
+- **K2:** `TreatWarningsAsErrors=true`, `EnforceCodeStyleInBuild=true`, `Nullable=enable`, `AnalysisLevel=latest-recommended` — tüm projeler.
+- **K1:** StyleCop.Analyzers SA1402 (dosyada tek tip), SA1649 (dosya adı = tip adı) — error.
+- **K3:** `GenerateDocumentationFile=true`; CS1591 ve SA1600 kapalı (üye summary'si istenmez); architecture testi her tipin XML belgesinde boş olmayan `<summary>` arar.
+- T1: CA1304, CA1309, CA1311 — error.
+- Otomatik üretilen kod (migration'lar, OpenAPI istemcisi) `.editorconfig`'de `generated_code = true` ile K1/K3'ten muaf.
+- Yasak bağımlılıklar 1–5, 7, 11: NetArchTest architecture testleri.
+- Web/mobil: `tsc --strict`, `eslint --max-warnings 0` (K2 karşılığı), dosya başına tek bileşen.
+- Paket güvenliği: `dotnet list package --vulnerable --include-transitive`, `npm audit --audit-level=high`.
