@@ -128,6 +128,8 @@ const deploy = read(path.join(piDir, "deploy.sh"));
 if (!/MSYS2_ENV_CONV_EXCL=VITE_API_BASE_URL\b[^\n]*VITE_API_BASE_URL=\//.test(deploy)) {
   fail("deploy.sh: web derlemesinde VITE_API_BASE_URL için MSYS2_ENV_CONV_EXCL olmalı (Git Bash '/' değerini 'C:/Program Files/Git/' yapar)");
 }
+if (/^[^#]*MSYS_NO_PATHCONV/m.test(deploy)) fail("deploy.sh: MSYS_NO_PATHCONV kullanılmaz — --outDir gibi yol argümanları da çevrilmez, derleme yanlış klasöre yazılır");
+if (!deploy.includes('[ -f "$OUT/web/index.html" ]')) fail("deploy.sh: web derlemesinin beklenen klasöre yazıldığı denetlenmeli");
 const guard = deploy.match(/grep -rqE '([^']+)' "\$OUT\/web"/);
 if (!guard) fail("deploy.sh: web paketinde yerel yol koruması (grep -rqE … \"$OUT/web\") bulunamadı");
 else {
