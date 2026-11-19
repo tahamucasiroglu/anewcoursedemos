@@ -80,6 +80,7 @@ Altyapı ve dosya düzeni: `docs/architecture.md` "Logging" (ADR-0003). Kodda:
 - T5 — `IgnoreQueryFilters()`, `FromSql` veya doğrudan `DbContext` kiracı filtresini deler (S1) — yalnızca izinli listede, gerekçe + review onayıyla — from bootstrap 2026-11-19.
 - T6 — `dotnet build/test` MSBuild node'ları ve VBCSCompiler'ı arkada bırakır (residue) — `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` — from bootstrap 2026-11-19.
 - T7 — Liste sorgularında N+1 / tracking maliyeti ("10 saniyede yoklama") — okumada `AsNoTracking()` + `Select` ile DTO projeksiyonu — from bootstrap 2026-11-19.
+- T8 — ArchUnitNET `Types()` yüklenmemiş paketlerin (Npgsql, Serilog…) tiplerini içermez; onlara bakan "bağımlı olmamalı" kuralı sessizce boş geçer — dış paket kümelerini `Types(true)` ile kur ve her kümeye bir pozitif kontrol testi yaz — from spec 0001, review round 1 (H-1).
 
 ## Enforced by tooling
 Walking skeleton ile devreye girer (`backend/Directory.Build.props`, `backend/.editorconfig`, `tests/Architecture`):

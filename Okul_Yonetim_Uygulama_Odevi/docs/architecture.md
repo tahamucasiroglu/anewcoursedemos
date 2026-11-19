@@ -90,7 +90,8 @@ modüllerin ekranlarında kullandığı ortak katmandır.
    (`NArchitecture.Core.Persistence`, `Entity<TId>`) referans verir. Domain **kodu** EF Core tiplerini kullanamaz
    (mimari test tip düzeyinde denetler) — ADR-0005.
 2. `Application` → `Persistence` / `Infrastructure` / `WebAPI` bağımlılığı yasak; yalnızca kendi arayüzlerini kullanır.
-3. `WebAPI` controller'ları iş mantığı içermez ve `DbContext`'e bağımlı olmaz; yalnızca Command/Query gönderir.
+3. `WebAPI` katmanı (controller'lar dahil) `OkulDbContext`'e, EF Core'a ve Npgsql'e bağımlı olmaz; controller'lar iş mantığı
+   içermez, yalnızca Command/Query gönderir. Şema geçişi Persistence'taki `MigrateOkulDatabase()` ile çağrılır.
 4. Bir modül başka bir modülün repository'sine, varlık konfigürasyonuna veya tablosuna doğrudan erişmez.
 5. Dış servis SDK'ları (ödeme, SMS, WhatsApp, push, AI) yalnızca `Infrastructure`'da referans edilir.
 6. `Ai` modülü veliye hiçbir şey göndermez (`Communication` portlarına bağımlı olmaz); yalnızca `AiDraft` üretir.

@@ -1,9 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using NArchitecture.Core.Localization.Resource.Yaml.DependencyInjection;
 using OkulYonetim.Application;
 using OkulYonetim.Infrastructure;
 using OkulYonetim.Persistence;
-using OkulYonetim.Persistence.Contexts;
 using OkulYonetim.WebAPI.Cors;
 using OkulYonetim.WebAPI.Errors;
 using OkulYonetim.WebAPI.Logging;
@@ -62,10 +60,9 @@ public static class OkulApi
 
     private static void MigrateDatabase(WebApplication app)
     {
-        using IServiceScope scope = app.Services.CreateScope();
         try
         {
-            scope.ServiceProvider.GetRequiredService<OkulDbContext>().Database.Migrate();
+            app.Services.MigrateOkulDatabase();
         }
 #pragma warning disable CA1031 // Veritabanı yoksa API yine açılır; sistem durumu "hizmet dışı" gösterir. Hata loglanır.
         catch (Exception exception)
