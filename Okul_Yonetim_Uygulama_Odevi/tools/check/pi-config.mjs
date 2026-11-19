@@ -28,17 +28,38 @@ for (const script of scripts) {
 
 // 2) İzleme modu yok, şifre ekrana basılmaz: şifre değişkeni yazdıran bir komut ancak psql'e boru (| pg) ya da
 //    dosyaya yönlendirme (> "...") ile kullanılabilir. "\" ile bölünmüş satırlar birleştirilerek denetlenir.
+//    Kuralın sınırı (docs/security.md): bu bir sezgisel denetimdir — şifre taşıyan değişken adları (password, pw, pass,
+//    secret, write_env_file içindeki $1) ve şifre dosyasını okuyan komutlar aranır; her komut (; && || ile ayrılan
+//    parça) ayrı denetlenir. Asıl güvence review + VERIFY'daki çıktı/log taramasıdır.
+const secretVar = /\$\{?(password|pw|pass|secret)\b/i;
+const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?ENV_FILE\b|okul-api\.env)/;
 for (const script of scripts) {
   const statements = read(script).replace(/\\\r?\n/g, " ").split("\n");
+  let inEnvWriter = false;
   statements.forEach((line, i) => {
     const code = line.replace(/^\s*#.*$/, "");
+    if (/^\s*write_env_file\(\)/.test(code)) inEnvWriter = true;
+    else if (/^\}/.test(code)) inEnvWriter = false;
     if (/\bset\s+-[a-z]*x|\bbash\s+-x\b/.test(code)) fail(`${rel(script)}: izleme modu (set -x) yasak — gizli bilgi sızar: ${code.trim()}`);
-    const printsPassword = /\b(echo|say|printf)\b/.test(code) && /\$\{?password\b/i.test(code);
-    const safelyRouted = /\|\s*pg\b/.test(code) || />\s*"\$/.test(code);
-    if (printsPassword && !safelyRouted) fail(`${rel(script)} (ifade ${i + 1}): şifre değişkeni ekrana yazdırılıyor: ${code.trim()}`);
+    if (readsEnvFile.test(code)) fail(`${rel(script)} (ifade ${i + 1}): şifre dosyası okunuyor/basılıyor: ${code.trim()}`);
+    for (const part of code.split(/;|&&|\|\|/)) {
+      const prints = /\b(echo|say|printf)\b/.test(part);
+      const carriesSecret = secretVar.test(part) || (inEnvWriter && /"\$1"/.test(part));
+      const safelyRouted = /\|\s*pg\b/.test(part) || />\s*"\$/.test(part);
+      if (prints && carriesSecret && !safelyRouted) fail(`${rel(script)} (ifade ${i + 1}): şifre ekrana yazdırılıyor: ${part.trim()}`);
+    }
+  });
+}
+// Root'un kullandığı geçici yollar tahmin edilemez olmalı (review round 1, M-1): /tmp geçen satır ya mktemp ile
+// rastgele ad üretir ya da üretilen adı doğrular (=~).
+for (const script of scripts) {
+  read(script).split("\n").forEach((line, i) => {
+    const code = line.replace(/^\s*#.*$/, "");
+    if (code.includes("/tmp/") && !/mktemp|=~/.test(code)) fail(`${rel(script)}:${i + 1}: tahmin edilebilir /tmp yolu: ${code.trim()}`);
   });
 }
 const setup = read(path.join(remoteDir, "setup-remote.sh"));
+if (!/log_statement = 'none'/.test(setup)) fail("setup-remote.sh: şifreli SQL için sunucu komut logu kapatılmalı (review round 1, L-2)");
 // Şifre psql'e komut satırıyla (-c) verilmez; stdin'den verilir (süreç listesinde görünmez)
 if (/-c\s+["'][^"']*PASSWORD/.test(setup)) fail("setup-remote.sh: şifre psql'e komut satırıyla veriliyor (-c); stdin kullanılmalı");
 if (!/PASSWORD '%s'.*\|\s*pg\b/.test(setup)) fail("setup-remote.sh: şifre psql'e stdin ile verilmiyor");
@@ -60,6 +81,7 @@ expectLine(service, /^NoNewPrivileges=true$/m, "servis: NoNewPrivileges=true olm
 expectLine(service, /^ProtectSystem=strict$/m, "servis: ProtectSystem=strict olmalı");
 expectLine(service, /^WantedBy=multi-user\.target$/m, "servis: açılışta başlamalı (WantedBy=multi-user.target)");
 if (/Password=/i.test(service)) fail("servis: şifre servis dosyasında olmamalı");
+if (/^Environment=Cors__/m.test(service)) fail("servis: CORS izni gerekmez (web aynı adresten çalışır; Pi IP'si değişince eskide kalır)");
 
 // 4) nginx
 const nginx = read(path.join(remoteDir, "nginx-okul.conf"));
