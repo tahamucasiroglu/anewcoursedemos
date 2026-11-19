@@ -48,8 +48,14 @@ if [[ ",$UNITS," == *",api,"* ]]; then
 fi
 if [[ ",$UNITS," == *",web,"* ]]; then
   say "Web derleniyor (API adresi: sayfayla aynı adres)…"
-  (cd "$SOURCE/web" && VITE_API_BASE_URL=/ npx vite build --outDir "$OUT/web" --emptyOutDir >/dev/null) \
-    || die "Web derlenemedi."
+  # Git Bash (MSYS), Windows programına giden ortam değişkenindeki "/" değerini yol sanıp "C:/Program Files/Git/"
+  # yapar; çeviri bu değişken için kapatılır (VERIFY V-1, docs/conventions.md "Known traps").
+  (cd "$SOURCE/web" && MSYS2_ENV_CONV_EXCL=VITE_API_BASE_URL MSYS_NO_PATHCONV=1 VITE_API_BASE_URL=/ \
+    npx vite build --outDir "$OUT/web" --emptyOutDir >/dev/null) || die "Web derlenemedi."
+  # Koruma: pakette yerel bir yol (C:/…, file:) varsa sayfa API'ye ulaşamaz → dağıtım durur, Pi'ye hiçbir şey gitmez
+  if grep -rqE '[A-Za-z]:/(Program Files|Users|msys|Windows)|file:///' "$OUT/web"; then
+    die "Web paketinde yerel bir yol var (ör. C:/Program Files/Git/); API adresi bozuk derlendi. Dağıtım durduruldu."
+  fi
 fi
 
 say "Pi'ye kopyalanıyor…"
