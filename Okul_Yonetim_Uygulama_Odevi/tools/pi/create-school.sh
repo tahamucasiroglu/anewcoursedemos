@@ -7,6 +7,8 @@
 . "$(dirname "$0")/lib.sh"
 
 [ "$#" -gt 0 ] || die "Kullanım: bash tools/pi/create-school.sh --okul \"Okul adı\" --sube \"Şube adı\" --ad \"Ad Soyad\" --eposta e-posta"
+# Şifre gizli girişle sorulur: gerçek bir terminal gerekir (yoksa komut sessizce bekler kalırdı — Pi denemesi, spec 0004).
+[ -t 0 ] && [ -t 1 ] || die "Bu komut şifreyi gizli sorar; bir terminalde (ör. Git Bash) çalıştırın, yönlendirme/boru olmadan."
 check_ssh
 
 # Okul adında boşluk ve Türkçe harf olabilir: her argüman uzak kabuk için ayrı ayrı kaçışlanır.
