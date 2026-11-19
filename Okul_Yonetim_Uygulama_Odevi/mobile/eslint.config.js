@@ -19,6 +19,10 @@ module.exports = tseslint.config(
     ignores: ["src/**/*.test.{ts,tsx}"],
     rules: {
       "no-restricted-globals": ["error", { name: "fetch", message: onlyApiClient }, { name: "XMLHttpRequest", message: onlyApiClient }],
+      "no-restricted-properties": [
+        "error",
+        ...["globalThis", "window", "self", "global"].map((object) => ({ object, property: "fetch", message: onlyApiClient })),
+      ],
       "no-restricted-imports": ["error", { paths: [{ name: "axios", message: onlyApiClient }] }],
     },
   },

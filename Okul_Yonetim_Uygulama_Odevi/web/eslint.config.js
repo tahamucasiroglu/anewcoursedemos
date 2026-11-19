@@ -16,6 +16,10 @@ export default tseslint.config(
     ignores: ["src/**/*.test.{ts,tsx}", "src/test/**"],
     rules: {
       "no-restricted-globals": ["error", { name: "fetch", message: "HTTP yalnızca @okul/api-client üzerinden." }, { name: "XMLHttpRequest", message: "HTTP yalnızca @okul/api-client üzerinden." }],
+      "no-restricted-properties": [
+        "error",
+        ...["globalThis", "window", "self", "global"].map((object) => ({ object, property: "fetch", message: "HTTP yalnızca @okul/api-client üzerinden." })),
+      ],
       "no-restricted-imports": ["error", { paths: [{ name: "axios", message: "HTTP yalnızca @okul/api-client üzerinden." }] }],
     },
   },
