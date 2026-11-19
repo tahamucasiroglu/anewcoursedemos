@@ -1,6 +1,6 @@
 # Spec 0004 — Giriş ve oturum (kurum + ilk şube + kurucu)
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0004-plan.md`
 - Self-critique: done
