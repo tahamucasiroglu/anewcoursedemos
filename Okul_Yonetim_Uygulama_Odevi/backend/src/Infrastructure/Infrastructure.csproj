@@ -9,5 +9,7 @@
   <ItemGroup>
     <PackageReference Include="NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction" />
     <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>
 </Project>

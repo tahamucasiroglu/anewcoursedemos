@@ -21,6 +21,9 @@
     <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <!-- Web API -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Identity.Core" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
     <PackageVersion Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.15" />
     <!-- Loglama (ADR-0003) -->
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />

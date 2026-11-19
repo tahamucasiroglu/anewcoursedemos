@@ -17,6 +17,7 @@
     <PackageReference Include="NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi" />
     <PackageReference Include="NArchitecture.Core.Localization.Resource.Yaml.DependencyInjection" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
