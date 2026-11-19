@@ -82,8 +82,8 @@ Altyapı ve dosya düzeni: `docs/architecture.md` "Logging" (ADR-0003). Kodda:
 - T7 — Liste sorgularında N+1 / tracking maliyeti ("10 saniyede yoklama") — okumada `AsNoTracking()` + `Select` ile DTO projeksiyonu — from bootstrap 2026-11-19.
 - T8 — ArchUnitNET `Types()` yüklenmemiş paketlerin (Npgsql, Serilog…) tiplerini içermez; onlara bakan "bağımlı olmamalı" kuralı sessizce boş geçer — dış paket kümelerini `Types(true)` ile kur ve her kümeye bir pozitif kontrol testi yaz — from spec 0001, review round 1 (H-1).
 - T9 — nArchitecture `LoggingBehavior`, `ILoggableRequest` işaretli isteği bütünüyle (tüm alanlarıyla) JSON olarak loglar — kişisel veri (S2/S3: TC, telefon, şifre, sağlık…) taşıyan Command/Query'ye `ILoggableRequest` konmaz; gerekirse yalnızca kimlik numaralarını loglayan ayrı bir log satırı yazılır — from spec 0001, review round 1 (I-1).
-- T11 — Web'deki tema ön betiği (`web/index.html`, `theme-pre-paint`) sayfa çizilmeden çalışmak zorunda olduğu için `@okul/theme` mantığının düz JS kopyasıdır; biri değişip öteki unutulursa açılışta yanlış mod görünür — tercih mantığını değiştirirken ikisini birlikte değiştir; `prePaint.test.ts` ikisini aynı vaka tablosuyla sınar — from spec 0002, plan.
 - T10 — EF Core, yeni (boş) veritabanında ilk `Migrate()` sırasında henüz olmayan `__EFMigrationsHistory` tablosunu sorgulayıp `Microsoft.EntityFrameworkCore.Database.Command` kaynağından bir `[ERR]` satırı yazar; zararsızdır, yalnızca ilk kurulumda görülür — log testlerinde Error satırlarını kaynağa göre süz; üretimde ilk kurulumdaki bu satırı hata sanma — from spec 0001, fix-1 (L-1).
+- T11 — Web'deki tema ön betiği (`web/index.html`, `theme-pre-paint`) sayfa çizilmeden çalışmak zorunda olduğu için `@okul/theme` mantığının düz JS kopyasıdır; biri değişip öteki unutulursa açılışta yanlış mod görünür — tercih mantığını değiştirirken ikisini birlikte değiştir; `prePaint.test.ts` ikisini aynı vaka tablosuyla sınar — from spec 0002, plan.
 
 ## Enforced by tooling
 Walking skeleton ile devreye girer (`backend/Directory.Build.props`, `backend/.editorconfig`, `tests/Architecture`):
@@ -96,5 +96,5 @@ Walking skeleton ile devreye girer (`backend/Directory.Build.props`, `backend/.e
   7: ESLint `no-restricted-globals` / `no-restricted-imports` (fetch/axios yalnızca `@okul/api-client`'ta);
   ortak istemcinin güncelliği: `tools/check/api-client-fresh.mjs`.
 - Web/mobil: `tsc --strict`, `eslint --max-warnings 0` (K2 karşılığı), dosya başına tek bileşen.
-- Renkler: yalnızca `@okul/theme`; kodda renk değeri ESLint ile yasak; iki modda tüm renk çiftleri WCAG AA (`packages/theme/src/contrast.test.ts`, `theme-test` adımı). Yeni bir renk rolü kullanılınca `contrastPairs`'e eklenir.
+- Renkler: yalnızca `@okul/theme`; kodda renk değeri ESLint ile yasak (`#…`, `rgb(…)`, `hsl(…)`; adla yazılan renkler — `"white"`, `"red"` — lint'e takılmaz ama aynı kural gereği yazılmaz, review'da kontrol edilir); iki modda tüm renk çiftleri WCAG AA (`packages/theme/src/contrast.test.ts`, `theme-test` adımı). Yeni bir renk rolü kullanılınca `contrastPairs`'e eklenir.
 - Paket güvenliği: `dotnet list package --vulnerable --include-transitive`, `npm audit --audit-level=high`.
