@@ -9,6 +9,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
+    // CSS işlenir: tema testleri CSS içeriğini okur (spec 0002, AC-1).
+    css: true,
     pool: "threads",
     maxWorkers: 1,
   },

@@ -1,0 +1,33 @@
+/*
+ * Ortak tema renkleri (spec 0002). Değerler packages/theme/tokens.json ile birebir aynıdır —
+ * cssVariables.test.ts farkı yakalar. Renk yalnızca buradan gelir; bileşen stillerinde renk değeri yazılmaz.
+ * data-theme, index.html'deki ön betik ve useThemePreference tarafından atanır.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-text-muted: #475569;
+  --color-border: #64748b;
+  --color-primary: #1e3a8a;
+  --color-on-primary: #ffffff;
+  --color-success: #15803d;
+  --color-danger: #b91c1c;
+  --color-focus: #1d4ed8;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-text: #f1f5f9;
+  --color-text-muted: #cbd5e1;
+  --color-border: #94a3b8;
+  --color-primary: #93c5fd;
+  --color-on-primary: #0f172a;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+  --color-focus: #bfdbfe;
+}
