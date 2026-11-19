@@ -50,7 +50,8 @@ describe.each<ColorScheme>(["light", "dark"])("%s modda renkler tokens.json'dan 
     await AsyncStorage.setItem(THEME_STORAGE_KEY, scheme);
     await renderApp();
     expect(background()).toBe(themeColors[scheme].background);
-    const title = screen.getByRole("header");
+    // Spec 0004: giriş kartı da başlık rolünde; burada uygulama başlığı adıyla seçilir.
+    const title = screen.getByRole("header", { name: "Okul Yönetim Platformu" });
     expect(StyleSheet.flatten(title.props.style).color).toBe(themeColors[scheme].text);
     const card = screen.getByTestId("system-status");
     expect(StyleSheet.flatten(card.props.style).borderColor).toBe(themeColors[scheme].border);

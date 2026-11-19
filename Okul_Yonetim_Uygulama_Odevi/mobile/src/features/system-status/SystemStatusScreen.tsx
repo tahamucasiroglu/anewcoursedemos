@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { t } from "../../i18n/t";
 import { ThemeSwitcher } from "../../theme/ThemeSwitcher";
@@ -8,9 +8,10 @@ import { useSystemStatus } from "./useSystemStatus";
 /**
  * Mobil sistem durumu ekranı (spec 0001): yükleniyor / çalışıyor / hizmet dışı / sunucuya ulaşılamıyor; son ikisinde
  * "Tekrar dene". Durum ekran okuyucuya duyurulur (accessibilityLiveRegion) ve yalnızca renkle değil metinle anlatılır.
- * Renkler ortak temadan; başlık satırında tema seçici var, dar ekranda alt satıra iner (spec 0002).
+ * Renkler ortak temadan; başlık satırında tema seçici var, dar ekranda alt satıra iner (spec 0002). Altında oturum
+ * alanı (giriş / okul seç / hoş geldin — spec 0004) çocuk olarak gelir.
  */
-export function SystemStatusScreen() {
+export function SystemStatusScreen({ children }: { children?: ReactNode }) {
   const { state, retry } = useSystemStatus();
   const { colors } = useTheme();
   const styles = useMemo(
@@ -61,6 +62,7 @@ export function SystemStatusScreen() {
           </Pressable>
         )}
       </View>
+      {children}
     </View>
   );
 }
