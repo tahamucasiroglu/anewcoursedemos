@@ -12,7 +12,7 @@
 - Veritabanı kullanıcısı (karar: plan 0001, Risks 5): yerel geliştirme ve testler `postgres` kullanıcısıyla çalışır
   (test veritabanı oluşturup silmek için); ayrı, kısıtlı bir uygulama kullanıcısı açılmadı. Bilgi yalnızca
   user-secrets'ta (`WebAPI`: `ConnectionStrings:OkulDb`, `tests/Integration`: `ConnectionStrings:TestServer`).
-  Pilot/üretim ortamında (ör. Raspberry Pi, spec 0002) uygulama süper kullanıcıyla çalıştırılmaz — o spec'te
+  Pilot/üretim ortamında (ör. Raspberry Pi kurulum spec'i) uygulama süper kullanıcıyla çalıştırılmaz — o spec'te
   yalnızca kendi veritabanına yetkili bir kullanıcı tanımlanır.
 
 ## Sensitive data protection

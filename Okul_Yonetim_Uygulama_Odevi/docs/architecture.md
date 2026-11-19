@@ -80,7 +80,7 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - **MVP deneme ortamı: Raspberry Pi** (yerel ağda, uzaktan erişim). **API ve web orada çalışır**; kısa süreli
   denemeler için kurulup kaldırılır. Bu yüzden: API `linux-arm64` için yayımlanabilir olmalı; tüm adres/port/
   bağlantı/log yolu ayarları ortam değişkeniyle verilir (koda veya Windows yoluna bağlı değil); web statik
-  dosya olarak sunulur. Pi kurulumu ve dağıtımı **ayrı bir spec** (0002) ile gelir.
+  dosya olarak sunulur. Pi kurulumu ve dağıtımı **ayrı bir spec** ile gelir (numarası açıldığında verilir).
 - Mobil uygulama, Pi'deki API'ye yerel ağ adresiyle bağlanır (adres ortam ayarından).
 
 ## Forbidden dependencies (make them testable)
