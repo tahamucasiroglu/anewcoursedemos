@@ -44,7 +44,10 @@
 ## AuthN / AuthZ
 1. **Varsayılan: reddet.** Her uç nokta kimlik doğrulama ister; anonim uçlar (giriş, şifre sıfırlama) açıkça listelenir.
 2. JWT erişim token'ı 15 dk + döndürmeli, iptal edilebilir refresh token (`NArchitecture.Core.Security`).
-3. **2FA (TOTP):** Kurucu/Yönetici ve Muhasebe için **zorunlu**; Öğretmen ve Veli için isteğe bağlı.
+3. **2FA (TOTP):** Kurucu/Yönetici ve Muhasebe için **zorunlu**; Öğretmen ve Veli için isteğe bağlı. **MVP demosuna kadar
+   ertelendi** (kullanıcı kararı 2026-11-19, spec 0004: "önce mvp olarak okullara gösterip fikir alalım"); gerçek okul
+   verisiyle pilota açılmadan önce zorunlu (backlog B-17). Çok bilinen şifre listesi de aynı adıma ertelendi; MVP'de şifre
+   kuralı en az 8 karakter.
 4. **Üç katmanlı yetki:** (a) rol (`ISecuredRequest`), (b) kurum + şube (oturumdan, global query filter), (c) ilişki: veli yalnızca kendi çocuğunu, öğretmen yalnızca kendi sınıflarını görür.
 5. Giriş denemesi hız sınırı + hesap kilitleme.
 6. **Audit log:** öğrenci kartı görüntüleme/değiştirme, sağlık verisi okuma, tahsilat, rol ve rıza değişiklikleri — kim, ne, hangi kayıt, ne zaman, IP. Yalnızca eklenir; değiştirilemez/silinemez.

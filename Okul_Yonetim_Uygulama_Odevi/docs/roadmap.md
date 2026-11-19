@@ -4,7 +4,7 @@
 > **Her ship'te güncellenir:** biten satırın durumu ✅ ve spec numarası yazılır; sıra değişirse kullanıcı kararıyla
 > değişir. Ertelenen bulgular ayrı yerde: `specs/backlog.md`.
 
-**Son güncelleme:** 2026-11-19 · spec 0003 ship edildi.
+**Son güncelleme:** 2026-11-19 · spec 0004 (giriş ve oturum) onaylandı; 1. madde 0004 + 0005 olarak bölündü.
 
 ## Biten altyapı
 | Spec | Ne | Durum |
@@ -19,7 +19,8 @@ daha küçük spec'lere bölünebilir; "sonra" diye işaretlenenler aynı modül
 
 | Sıra | Feature | Kapsamdan (ne içerir) | Neden bu sırada | Durum |
 |---|---|---|---|---|
-| 1 | **Giriş ve roller + kurum/şube** | Kullanıcı girişi; roller: kurucu/yönetici, öğretmen, veli, muhasebe/idari; bir kişinin birden çok rolü; her okulun (kurumun) verisinin ayrı tutulması | Her şeyin temeli: kim giriyor, hangi okulun verisini görüyor | ⬜ |
+| 1a | **Giriş ve oturum** (spec 0004) | Okul açma komutu (okul + ilk şube + kurucu); e-posta + şifre ile giriş/çıkış web + mobil; tek kimlik birden çok okul, okul seçimi; 3 hatada kilit; okul ve şube duvarı; audit | Her şeyin temeli: kim giriyor, hangi okulun verisini görüyor | 🔄 |
+| 1b | **Şube ve kullanıcı yönetimi** (spec 0005) | Kurucu web'den şube ve kullanıcı ekler, rol/şube verir; geçici şifre, şifre sıfırlama; SMTP'ye hazır e-posta | Diğer rollerin girebilmesi için | ⬜ |
 | 2 | **Kurum ve akademik yapı** | Şube, sınıf, şube-sınıf eşleşmesi, dönem, akademik takvim. Sonra: ders programı (elle + Excel'den alma) | Öğrenci ve yoklama sınıfa bağlı | ⬜ |
 | 3 | **Öğrenci ve veli kayıtları** | Öğrenci kartı, birden çok veli, kardeş bağlantısı, sağlık notu/alerji, teslim alabilecek kişiler. Sonra: Excel ve e-Okul çıktısından alma | Yoklama ve iletişim öğrenciye bağlı | ⬜ |
 | 4 | **Yoklama ve devamsızlık** | Öğretmen mobilden 10 saniyede yoklama alır; devamsız öğrencinin velisine otomatik bildirim | Kapsamda MVP'nin ilk maddesi | ⬜ |
@@ -33,6 +34,11 @@ daha küçük spec'lere bölünebilir; "sonra" diye işaretlenenler aynı modül
 
 **Her feature'da birlikte gelenler:** web + mobil taraf (veli ve öğretmen için tek mobil uygulama, role göre ekran),
 Türkçe metinler, Pi'ye dağıtım. Push bildirim, kurum logosuyla markalı açılış: ilgili feature'larda (sağlayıcı: B-6).
+
+## Pilot öncesi zorunlu (gerçek okul verisinden önce)
+| Ne | Neden | Durum |
+|---|---|---|
+| 2FA (kurucu/yönetici ve muhasebe zorunlu) + çok bilinen şifre listesi — backlog B-17 | Güvenlik kuralı; MVP demosu için ertelendi (kullanıcı kararı 2026-11-19) | ⬜ |
 
 ## Faz 1 dışı (şimdilik yapılmaz)
 Faz 2 (sınav analizi, servis, etüt, öğrenci uygulaması, rehberlik) ve Faz 3 (ön kayıt CRM'i, çok şube büyümesi,
