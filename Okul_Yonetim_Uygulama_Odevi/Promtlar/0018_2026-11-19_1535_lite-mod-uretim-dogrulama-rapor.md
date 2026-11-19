@@ -46,7 +46,7 @@ Ayrıca: Promtlar 0010–0017'deki saatler gerçek saatlere göre düzeltildi (�
 **Açık kararlar (önerilerimle):**
 1. **AI/ses→metin sağlayıcısı (B-4):** "Sesli nottan veli mesajı" spec'inin ANALYZE aşamasında karar verilmesini öneriyorum; o zamana kadar sahte port.
 2. **Profil kararı (R-13):** Walking skeleton'ın PLAN kapısında; fast ve full profillerinin ikisi de bu makinede çalışabilir görünüyor (.NET 10, Node 26, PostgreSQL 18 kurulu).
-3. **Commit:** Bootstrap çıktısı üst repoda `main`'e iki commit olarak atıldı: biri bootstrap, biri Promtlar (aşağıda). Push sende.
+3. **Commit:** Üst repoda `main`e 3 commit atıldı: `4cd4ed7` bootstrap çıktısı, `15d67be` Promtlar 0001–0018, `b6a8df1` betiklere çalıştırma izni (+x). Push sende.
 
 **İlk spec — walking skeleton:** Uçtan uca en küçük dilim. Backend çözümü (5 katman + `Directory.Build.props`/`.editorconfig` ile K1–K3), architecture testleri, PostgreSQL'e bağlanan bir sağlık ucu + test veritabanı yaşam döngüsünü kanıtlayan bir integration testi, web ve mobil iskeletleri, ortak api-client. Amaç `check.conf` adımlarını açmak. PLAN kapısında doctor'ın profil kararı, BUILD'de residue testi var.
 
