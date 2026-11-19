@@ -35,8 +35,16 @@ const secretVar = /\$\{?(password|pw|pass|secret)\b/i;
 const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?ENV_FILE\b|okul-api\.env)/;
 
 // Tırnak içindeki ; & | karakterleri komut ayırıcı sayılmaz (SQL ve bağlantı cümlesinde geçer; review round 2, M-1).
+// Yerine boşluk konur: kelime karakteri ("_") olsaydı "$password;" → "$password_" olur, değişken tanınmazdı (round 3, L-1).
 function neutralizeQuoted(code) {
-  return code.replace(/'[^']*'|"(?:[^"\\]|\\.)*"/g, (quoted) => quoted.replace(/[;&|]/g, "_"));
+  return code.replace(/'[^']*'|"(?:[^"\\]|\\.)*"/g, (quoted) => quoted.replace(/[;&|]/g, " "));
+}
+
+/** Şifre içeren her SQL printf'i sunucu logunu kapatan önekle (${NO_LOG_SQL}) başlamalı (round 3, I-1). */
+function noLogPrefixMissing(text) {
+  return text.replace(/\\\r?\n/g, " ").split("\n")
+    .filter((line) => /PASSWORD '%s'/.test(line) && /\bprintf\b/.test(line) && !/printf "\$\{NO_LOG_SQL\}/.test(line))
+    .map((line) => line.trim());
 }
 
 /** Bir betik metninde şifre basma / şifre dosyası okuma / izleme modu sorunlarını döndürür (öz-sınamada da kullanılır). */
@@ -74,6 +82,7 @@ const mutations = [
   ["ALTER ROLE çıktısı psql yerine ekrana", /(ALTER ROLE %s PASSWORD '%s';\\n" "\$DB_ROLE" "\$password") \| pg -q >\/dev\/null/, "$1"],
   ["bağlantı cümlesi dosya yerine ekrana", /("\$DB_NAME" "\$DB_ROLE" "\$1") > "\$tmp"/, "$1"],
   ["şifre doğrudan basılıyor", /(    unset password)/, '    echo "$password"\n$1'],
+  ["çok komutlu satırda tırnak içinde şifre", /(    unset password)/, '    true && say "sifre $password; tamam"\n$1'],
 ];
 for (const [label, pattern, replacement] of mutations) {
   if (!pattern.test(setupText)) {
@@ -93,6 +102,13 @@ for (const script of scripts) {
   });
 }
 const setup = read(path.join(remoteDir, "setup-remote.sh"));
+for (const line of noLogPrefixMissing(setup)) fail(`setup-remote.sh: şifreli SQL \${NO_LOG_SQL} önekiyle başlamalı: ${line}`);
+// Öz-sınama: önek CREATE ya da ALTER satırından silinirse yakalanmalı
+for (const [label, sql] of [["CREATE ROLE", "CREATE ROLE %s LOGIN"], ["ALTER ROLE", "ALTER ROLE %s PASSWORD"]]) {
+  const withPrefix = 'printf "${NO_LOG_SQL}' + sql;
+  if (!setup.includes(withPrefix)) fail(`pi-config öz-sınama: ${label} satırında \${NO_LOG_SQL} öneki bulunamadı`);
+  else if (noLogPrefixMissing(setup.replace(withPrefix, 'printf "' + sql)).length === 0) fail(`pi-config öz-sınama: ${label} öneki silinmesi yakalanmadı`);
+}
 for (const setting of ["log_statement = 'none'", "log_min_error_statement = 'panic'", "log_min_duration_statement = -1", "log_min_duration_sample = -1"]) {
   if (!setup.includes(setting)) fail(`setup-remote.sh: şifreli SQL için '${setting}' ayarlanmalı (review round 1 L-2, round 2 L-1)`);
 }
