@@ -173,7 +173,7 @@ public sealed class AnnouncementHandlers :
             throw await this.guard.ForbiddenAsync().ConfigureAwait(false);
         }
 
-        int page = Math.Max(1, request.Page);
+        int page = request.Page;
         int take = (page * PageSize) + 1;
         IReadOnlyList<ChildRow> children = await this.guard.ChildrenAsync(caller, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<FeedAnnouncementRow> rows = await this.announcements.ListForGuardianAsync(caller.UserId, take, cancellationToken).ConfigureAwait(false);

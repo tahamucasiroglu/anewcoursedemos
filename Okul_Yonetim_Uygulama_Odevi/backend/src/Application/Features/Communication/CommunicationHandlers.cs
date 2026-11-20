@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using NArchitecture.Core.Localization.Abstraction;
 using NArchitecture.Core.Mediator;
+using OkulYonetim.Application.Features.Communication.Announcements;
 using OkulYonetim.Application.Features.Students;
 using OkulYonetim.Application.Features.Students.Queries.ListGuardianContacts;
 using OkulYonetim.Application.Features.Students.Queries.ListMyChildren;
@@ -137,7 +138,7 @@ public sealed class CommunicationHandlers :
         ArgumentNullException.ThrowIfNull(request);
         (Guid userId, IReadOnlyList<ChildRow> children) = await this.MyChildrenAsync(cancellationToken).ConfigureAwait(false);
         Dictionary<Guid, string> names = children.ToDictionary(c => c.Id, c => c.FullName);
-        IReadOnlyList<GuardianNotice> list = await this.notices.ListForGuardianAsync(userId, names.Keys, Math.Clamp(request.Max, 1, 1000), cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<GuardianNotice> list = await this.notices.ListForGuardianAsync(userId, names.Keys, Math.Clamp(request.Max, 1, (ListMyFeedQueryValidator.MaxPage * AnnouncementHandlers.PageSize) + 1), cancellationToken).ConfigureAwait(false);
         if (list.Count == 0)
         {
             return [];

@@ -48,6 +48,7 @@ public static class CommunicationMessages
     public const string DaysRequired = "DaysRequired";
     public const string DaysInvalid = "DaysInvalid";
     public const string TooManyRequests = "TooManyRequests";
+    public const string PageRange = "PageRange";
 
     private static readonly string[] Locales = ["tr"];
 

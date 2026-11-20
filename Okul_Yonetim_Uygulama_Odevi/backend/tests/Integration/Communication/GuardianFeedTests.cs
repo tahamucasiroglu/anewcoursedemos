@@ -14,7 +14,7 @@ namespace OkulYonetim.Tests.Integration.Communication;
 /// <summary>
 /// Spec 0011 AC-3: veli seçili okulda yalnızca alıcısı olduğu duyuruları yeniden eskiye, sayfa başına 20 görür (farklı
 /// şubelerdeki çocuklarınınkiler dahil); başka velinin çocuğuna özel ve başka okulun duyurusu listede yok, doğrudan
-/// istendiğinde 404; okunmamışlar işaretli; boşken liste boş. Sınıf/öğrenci kapsamında ilgili çocuğun adı satırdadır.
+/// istendiğinde 404; okunmamışlar işaretli; boşken liste boş; sayfa 1–500 dışı 400 (review L-3). Sınıf/öğrenci kapsamında ilgili çocuğun adı satırdadır.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class GuardianFeedTests
@@ -59,6 +59,27 @@ public sealed class GuardianFeedTests
         newest.GetProperty("authorName").GetString().ShouldNotBeNullOrEmpty();
         newest.GetProperty("childNames").EnumerateArray().Select(n => n.GetString()).ShouldBe(["Ali Yılmaz"]);
         first.GetProperty("items")[1].GetProperty("isRead").GetBoolean().ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Feed_PageOutOfRange_400_NoOverflow()
+    {
+        using OkulApiFactory factory = CommunicationTestData.Factory(this.database);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        await PublishedAsync(client, w.Class.Teacher, Plain("Classroom", w.Class.ClassroomId));
+
+        foreach (int page in new[] { 0, -1, 501, int.MaxValue, 107374183 })
+        {
+            var (status, body, _) = await FeedAsync(client, w.AliMother.Token, page);
+            status.ShouldBe(HttpStatusCode.BadRequest, $"sayfa {page}");
+            Messages(body).ShouldContain("Sayfa 1 ile 500 arasında olmalı");
+        }
+
+        var (lastStatus, last, _) = await FeedAsync(client, w.AliMother.Token, 500);
+        lastStatus.ShouldBe(HttpStatusCode.OK);
+        last.GetProperty("items").GetArrayLength().ShouldBe(0);
+        last.GetProperty("hasMore").GetBoolean().ShouldBeFalse();
     }
 
     [Fact]
