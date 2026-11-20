@@ -13,7 +13,7 @@ namespace OkulYonetim.Application.Features.Administration.Members;
 /// <summary>
 /// Kişi yönetimi (spec 0005 gereksinim 3–10): ekleme (yeni kişiye bir kez gösterilen geçici şifre; var olan kişiye
 /// yalnızca rol), profil, roller, pasifleştirme ve kurucunun şifre sıfırlaması. Yalnızca seçili okulun kurucusu; kişi bu
-/// okulda değilse "bulunamadı". Değişiklikler okul başına sıralıdır: "en az bir etkin yönetici", "kendi rolünü/kendini"
+/// okulda değilse "bulunamadı". Hesap açma, üyelik ve rol atama ortak <see cref="MemberAccounts"/> çekirdeğiyle (spec 0009 veli bağlama da kullanır). Değişiklikler okul başına sıralıdır: "en az bir etkin yönetici", "kendi rolünü/kendini"
 /// korumaları ve tekrar ekleme kontrolü eşzamanlı isteklerle atlatılamaz. Geçici şifre yalnızca yanıtta döner.
 /// </summary>
 public sealed class MemberAdminHandlers :
@@ -38,6 +38,7 @@ public sealed class MemberAdminHandlers :
     private readonly IMemberDirectory directory;
     private readonly IPasswordHasher passwordHasher;
     private readonly ITemporaryPasswordGenerator passwords;
+    private readonly MemberAccounts accounts;
     private readonly IUnitOfWork unitOfWork;
     private readonly ILocalizationService localization;
     private readonly TimeProvider timeProvider;
@@ -55,6 +56,7 @@ public sealed class MemberAdminHandlers :
         IMemberDirectory directory,
         IPasswordHasher passwordHasher,
         ITemporaryPasswordGenerator passwords,
+        MemberAccounts accounts,
         IUnitOfWork unitOfWork,
         ILocalizationService localization,
         TimeProvider timeProvider,
@@ -71,6 +73,7 @@ public sealed class MemberAdminHandlers :
         this.directory = directory;
         this.passwordHasher = passwordHasher;
         this.passwords = passwords;
+        this.accounts = accounts;
         this.unitOfWork = unitOfWork;
         this.localization = localization;
         this.timeProvider = timeProvider;
@@ -110,16 +113,11 @@ public sealed class MemberAdminHandlers :
             }
             else
             {
-                temporaryPassword = this.passwords.Generate();
-                PhoneNumber.TryNormalize(request.Phone, out string? phone);
-                user = User.Create(request.Email, request.FullName, this.passwordHasher.Hash(temporaryPassword), now, phone);
-                this.users.Add(user);
-                this.audit.Record(AuditAction.UserCreated, tenantId, actorId, nameof(User), user.Id);
+                (user, temporaryPassword) = this.accounts.CreateUser(tenantId, actorId, request.Email, request.FullName, request.Phone, now);
             }
 
-            this.memberships.Add(TenantMembership.Create(user.Id, tenantId, now));
-            this.audit.Record(AuditAction.MemberAdded, tenantId, actorId, nameof(User), user.Id);
-            this.AddAssignments(user.Id, tenantId, actorId, plan, now);
+            this.accounts.AddMembership(user.Id, tenantId, actorId, now);
+            this.accounts.AddAssignments(user.Id, tenantId, actorId, plan, now);
             await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
             this.logger.LogInformation("Kişi eklendi: kişi {UserId}, kurum {TenantId}, yeni hesap: {NewAccount}", user.Id, tenantId, temporaryPassword is not null);
@@ -179,7 +177,7 @@ public sealed class MemberAdminHandlers :
                 this.audit.Record(AuditAction.RoleRevoked, tenantId, actorId, nameof(RoleAssignment), assignment.Id);
             }
 
-            this.AddAssignments(request.UserId, tenantId, actorId, [.. plan.Where(p => !current.Any(a => a.Role == p.Role && a.BranchId == p.BranchId))], now);
+            this.accounts.AddAssignments(request.UserId, tenantId, actorId, [.. plan.Where(p => !current.Any(a => a.Role == p.Role && a.BranchId == p.BranchId))], now);
             await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -261,18 +259,6 @@ public sealed class MemberAdminHandlers :
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
         return await this.DetailAsync(request.UserId, actorId, tenantId, cancellationToken).ConfigureAwait(false);
-    }
-
-    private void AddAssignments(Guid userId, Guid tenantId, Guid actorId, IEnumerable<(Role Role, Guid? BranchId)> plan, DateTimeOffset now)
-    {
-        foreach ((Role role, Guid? branchId) in plan)
-        {
-            RoleAssignment assignment = role == Role.Founder
-                ? RoleAssignment.Founder(userId, tenantId, now)
-                : RoleAssignment.ForBranch(userId, tenantId, role, branchId!.Value, now);
-            this.roleAssignments.Add(assignment);
-            this.audit.Record(AuditAction.RoleAssigned, tenantId, actorId, nameof(RoleAssignment), assignment.Id);
-        }
     }
 
     private async Task EnsureOnlyThisTenantAsync(Guid userId, Guid tenantId, string messageKey, CancellationToken cancellationToken)

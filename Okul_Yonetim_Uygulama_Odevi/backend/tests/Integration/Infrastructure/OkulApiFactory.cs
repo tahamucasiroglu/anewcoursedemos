@@ -9,7 +9,7 @@ namespace OkulYonetim.Tests.Integration.Infrastructure;
 /// <summary>
 /// Testler için API: verilen veritabanı bağlantısı, testlere özel log klasörü, CORS ayarı ve test imza anahtarıyla
 /// kurulur. İsteğe bağlı: "/__test/throw" kasıtlı hata ucu (spec 0001 AC-13), sahte saat (spec 0004 kilit/oturum süreleri),
-/// giriş hız sınırı, servis değiştirme (ör. eşzamanlılık testinde bekleten şifre doğrulayıcı) ve istemci IP'si (her isteğe yerel vekil adresi verilir; X-Forwarded-For başlığı gerçek IP'yi taşır).
+/// giriş hız sınırı, sağlık bilgisi anahtarı (verilmezse anahtarsız — spec 0009 AC-10), servis değiştirme (ör. eşzamanlılık testinde bekleten şifre doğrulayıcı) ve istemci IP'si (her isteğe yerel vekil adresi verilir; X-Forwarded-For başlığı gerçek IP'yi taşır).
 /// </summary>
 public sealed class OkulApiFactory : WebApplicationFactory<Program>
 {
@@ -18,12 +18,16 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
     /// <summary>Testlere özel iki adımlı doğrulama şifreleme anahtarı (32 bayt; spec 0007). Gerçek ortamda kullanılmaz.</summary>
     public const string TestTwoFactorKey = "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=";
 
+    /// <summary>Testlere özel sağlık bilgisi şifreleme anahtarı (32 bayt; spec 0009) — iki adımlı doğrulamanınkinden ayrı.</summary>
+    public const string TestPersonalDataKey = "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=";
+
     private readonly string connectionString;
     private readonly bool addThrowingEndpoint;
     private readonly TimeProvider? timeProvider;
     private readonly int loginRateLimitPerMinute;
     private readonly Action<IServiceCollection>? configureServices;
     private readonly string? twoFactorKey;
+    private readonly string? personalDataKey;
 
     public OkulApiFactory(
         string connectionString,
@@ -31,8 +35,10 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
         TimeProvider? timeProvider = null,
         int loginRateLimitPerMinute = 1000,
         Action<IServiceCollection>? configureServices = null,
-        string? twoFactorKey = TestTwoFactorKey)
+        string? twoFactorKey = TestTwoFactorKey,
+        string? personalDataKey = TestPersonalDataKey)
     {
+        this.personalDataKey = personalDataKey;
         this.configureServices = configureServices;
         this.twoFactorKey = twoFactorKey;
         this.connectionString = connectionString;
@@ -61,6 +67,11 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
         if (this.twoFactorKey is not null)
         {
             builder.UseSetting("TwoFactor:EncryptionKey", this.twoFactorKey);
+        }
+
+        if (this.personalDataKey is not null)
+        {
+            builder.UseSetting("PersonalData:EncryptionKey", this.personalDataKey);
         }
 
         builder.UseSetting("Auth:LoginRateLimitPerMinute", this.loginRateLimitPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));

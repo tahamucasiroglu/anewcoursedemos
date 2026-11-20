@@ -1,6 +1,6 @@
 # Spec 0009 — Öğrenci ve veli kayıtları
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0009-plan.md`
 - Self-critique: done

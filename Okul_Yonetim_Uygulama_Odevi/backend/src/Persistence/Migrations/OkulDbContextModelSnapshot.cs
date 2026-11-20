@@ -665,6 +665,190 @@ namespace OkulYonetim.Persistence.Migrations
                     b.ToTable("terms", (string)null);
                 });
 
+            modelBuilder.Entity("OkulYonetim.Domain.Students.PickupPerson", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<string>("Relationship")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("relationship");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_pickup_persons");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_pickup_persons_student_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_pickup_persons_tenant_id");
+
+                    b.ToTable("pickup_persons", (string)null);
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Students.Student", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AllergyCipher")
+                        .HasColumnType("text")
+                        .HasColumnName("allergy_cipher");
+
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date")
+                        .HasColumnName("birth_date");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid?>("ClassroomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("classroom_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("HealthNoteCipher")
+                        .HasColumnType("text")
+                        .HasColumnName("health_note_cipher");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("SchoolNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("school_number");
+
+                    b.Property<string>("SchoolNumberKey")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("school_number_key");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_students");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("ix_students_branch_id");
+
+                    b.HasIndex("ClassroomId")
+                        .HasDatabaseName("ix_students_classroom_id");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_students_created_by");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_students_tenant_id");
+
+                    b.HasIndex("UpdatedBy")
+                        .HasDatabaseName("ix_students_updated_by");
+
+                    b.HasIndex("TenantId", "SchoolNumberKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_students_tenant_id_school_number_key")
+                        .HasFilter("school_number_key IS NOT NULL");
+
+                    b.ToTable("students", (string)null);
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Students.StudentGuardian", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("GuardianUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("guardian_user_id");
+
+                    b.Property<string>("Relationship")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("relationship");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_student_guardians");
+
+                    b.HasIndex("GuardianUserId")
+                        .HasDatabaseName("ix_student_guardians_guardian_user_id");
+
+                    b.HasIndex("StudentId", "GuardianUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_student_guardians_student_id_guardian_user_id");
+
+                    b.HasIndex("TenantId", "GuardianUserId")
+                        .HasDatabaseName("ix_student_guardians_tenant_id_guardian_user_id");
+
+                    b.ToTable("student_guardians", (string)null);
+                });
+
             modelBuilder.Entity("OkulYonetim.Domain.Identity.PasswordResetToken", b =>
                 {
                     b.HasOne("OkulYonetim.Domain.Identity.User", null)
@@ -817,6 +1001,84 @@ namespace OkulYonetim.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_terms_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Students.PickupPerson", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_pickup_persons_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_pickup_persons_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Students.Student", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_students_branches_branch_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Classroom", null)
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_students_classrooms_classroom_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_students_users_created_by");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_students_tenants_tenant_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_students_users_updated_by");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Students.StudentGuardian", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("GuardianUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_guardians_users_guardian_user_id");
+
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_guardians_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_guardians_tenants_tenant_id");
                 });
 #pragma warning restore 612, 618
         }
