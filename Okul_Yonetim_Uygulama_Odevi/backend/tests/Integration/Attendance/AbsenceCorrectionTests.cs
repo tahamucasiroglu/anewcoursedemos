@@ -42,7 +42,7 @@ public sealed class AbsenceCorrectionTests
         same.GetProperty("notifiedGuardians").GetInt32().ShouldBe(0);
         outbox.To(motherEmail).Length.ShouldBe(1, "ikinci kayıt yeni e-posta üretmez");
         (await NoticeCountAsync(factory, ali)).ShouldBe(1);
-        (await StatusAsync(client, HttpMethod.Post, "/api/notices/read", mother)).ShouldBe(System.Net.HttpStatusCode.NoContent);
+        (await MarkReadAsync(client, mother, (await NoticesAsync(client, mother)).Body)).ShouldBe(System.Net.HttpStatusCode.NoContent);
         (await UnreadAsync(client, mother)).ShouldBe(0);
 
         JsonElement corrected = await SavedAsync(client, c.Teacher, c.ClassroomId, Marks(all, (ali, "Present"), (ayse, "Late")));

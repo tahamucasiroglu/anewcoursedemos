@@ -32,8 +32,9 @@ public sealed class GuardianNoticeRepository : IGuardianNoticeRepository
     public Task<int> CountUnreadAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, CancellationToken cancellationToken) =>
         this.context.GuardianNotices.CountAsync(n => n.GuardianUserId == guardianUserId && n.ReadAt == null && studentIds.Contains(n.StudentId), cancellationToken);
 
-    public async Task<IReadOnlyList<GuardianNotice>> ListUnreadAsync(Guid guardianUserId, CancellationToken cancellationToken) =>
-        await this.context.GuardianNotices.Where(n => n.GuardianUserId == guardianUserId && n.ReadAt == null)
+    public async Task<IReadOnlyList<GuardianNotice>> ListUnreadShownAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, IReadOnlyCollection<Guid> noticeIds, DateTimeOffset upTo, CancellationToken cancellationToken) =>
+        await this.context.GuardianNotices
+            .Where(n => n.GuardianUserId == guardianUserId && n.ReadAt == null && studentIds.Contains(n.StudentId) && noticeIds.Contains(n.Id) && n.UpdatedAt <= upTo)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public void Add(GuardianNotice notice) => this.context.GuardianNotices.Add(notice);

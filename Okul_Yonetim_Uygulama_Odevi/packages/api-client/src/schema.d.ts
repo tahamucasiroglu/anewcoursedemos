@@ -3184,7 +3184,13 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MarkNoticesReadRequest"];
+                    "text/json": components["schemas"]["MarkNoticesReadRequest"];
+                    "application/*+json": components["schemas"]["MarkNoticesReadRequest"];
+                };
+            };
             responses: {
                 /** @description No Content */
                 204: {
@@ -3193,6 +3199,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": unknown;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Forbidden */
@@ -3744,6 +3759,16 @@ export interface components {
             password: string;
             /** @default false */
             refreshTokenInBody: boolean;
+        };
+        /**
+         * @description Bildirimleri okundu yapma (spec 0010, 0010 review F-3): ekranda gösterilen bildirimlerin kimlikleri ve listenin en yeni
+         *     zamanı (listenin ilk satırının `at` değeri, olduğu gibi). Yalnızca bunlar okundu olur; arada gelen ya da düzeltilen
+         *     bildirim okunmamış kalır.
+         */
+        MarkNoticesReadRequest: {
+            noticeIds: null | string[];
+            /** Format: date-time */
+            upTo: null | string;
         };
         /**
          * @description Kişi kartı: liste satırı + istek sahibinin kendisi mi; kurucu bu kişinin şifresini sıfırlayabilir mi ve ad/telefonunu

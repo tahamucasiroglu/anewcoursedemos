@@ -145,5 +145,5 @@ export type {
   SaveButtonTexts,
   TeacherOption,
 } from "./attendance/attendanceForms";
-export { noticeBadges, noticesLinkText } from "./notices/noticeText";
+export { markReadBody, noticeBadges, noticesLinkText } from "./notices/noticeText";
 export type { NoticeView } from "./notices/noticeText";

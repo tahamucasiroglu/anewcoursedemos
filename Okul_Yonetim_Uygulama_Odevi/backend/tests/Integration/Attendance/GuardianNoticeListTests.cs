@@ -15,7 +15,8 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// <summary>
 /// Spec 0010 AC-9 (BR-2): veli yalnızca kendi çocuklarının bildirimlerini — farklı şubedeki kardeş dahil — yeniden eskiye
 /// görür; liste en fazla 50; hoş geldin'deki okunmamış sayısı doğru, "okundu" sonrası sıfır; bildirimi olmayan velinin
-/// listesi boş; başka velinin bildirimi görünmez; veli olmayan 403.
+/// listesi boş; başka velinin bildirimi görünmez; veli olmayan 403. "Okundu" yalnızca ekranda gösterilenleri işaretler: liste
+/// ile istek arasında gelen ya da düzeltilen bildirim okunmamış kalır (0010 review F-3).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class GuardianNoticeListTests
@@ -58,7 +59,7 @@ public sealed class GuardianNoticeListTests
         (await UnreadAsync(client, guardian)).ShouldBe(2);
         (await NoticesAsync(client, otherGuardian)).Body.EnumerateArray().Select(n => n.GetProperty("studentId").GetGuid()).ShouldBe([stranger]);
 
-        (await StatusAsync(client, HttpMethod.Post, "/api/notices/read", guardian)).ShouldBe(HttpStatusCode.NoContent);
+        (await MarkReadAsync(client, guardian, list)).ShouldBe(HttpStatusCode.NoContent);
 
         (await UnreadAsync(client, guardian)).ShouldBe(0);
         (await NoticesAsync(client, guardian)).Body.EnumerateArray().ShouldAllBe(n => n.GetProperty("isRead").GetBoolean());
@@ -91,7 +92,41 @@ public sealed class GuardianNoticeListTests
         list[49].GetProperty("day").GetString().ShouldBe("2026-09-06");
         (await UnreadAsync(client, guardian)).ShouldBe(55, "sayı listeyle sınırlı değil");
         (await StatusAsync(client, HttpMethod.Get, "/api/notices", c.Teacher)).ShouldBe(HttpStatusCode.Forbidden);
-        (await StatusAsync(client, HttpMethod.Post, "/api/notices/read", c.Founder)).ShouldBe(HttpStatusCode.Forbidden);
+        (await MarkReadAsync(client, c.Founder, JsonDocument.Parse("[]").RootElement)).ShouldBe(HttpStatusCode.Forbidden);
         (await UnreadAsync(client, c.Teacher)).ShouldBe(0, "veli olmayana sayı 0");
+    }
+
+    [Fact]
+    public async Task MarkRead_OnlyShownNotices_NewAndCorrectedAfterListStayUnread()
+    {
+        FakeTimeProvider time = new(Morning);
+        using OkulApiFactory factory = Factory(this.database, new CapturingOutbox(), time);
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        Guid ayse = await StudentAsync(client, c, "Ayşe Yılmaz");
+        Guid can = await StudentAsync(client, c, "Can Yılmaz");
+        (string guardian, _, string email, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+        await LinkAsync(client, c.Founder, ayse, Guardian(email));
+        await LinkAsync(client, c.Founder, can, Guardian(email));
+        Guid[] all = [ali, ayse, can];
+        await SavedAsync(client, c.Teacher, c.ClassroomId, Marks(all, (ali, "Absent"), (ayse, "Absent")));
+
+        JsonElement shown = (await NoticesAsync(client, guardian)).Body;
+        shown.GetArrayLength().ShouldBe(2);
+        time.Advance(TimeSpan.FromMinutes(5));
+        await SavedAsync(client, c.Teacher, c.ClassroomId, Marks(all, (ali, "Absent"), (ayse, "Present"), (can, "Absent")));
+        (await UnreadAsync(client, guardian)).ShouldBe(3, "Ali, Ayşe düzeltmesi ve Can");
+
+        (await MarkReadAsync(client, guardian, shown)).ShouldBe(HttpStatusCode.NoContent);
+
+        (await UnreadAsync(client, guardian)).ShouldBe(2, "listeden sonra gelen (Can) ve düzeltilen (Ayşe) okunmamış kalır");
+        JsonElement now = (await NoticesAsync(client, guardian)).Body;
+        Dictionary<string, (bool IsRead, string? Kind)> byName = now.EnumerateArray().ToDictionary(
+            n => n.GetProperty("studentName").GetString()!,
+            n => (n.GetProperty("isRead").GetBoolean(), n.GetProperty("kind").GetString()));
+        byName["Ali Yılmaz"].ShouldBe((true, "Absent"));
+        byName["Ayşe Yılmaz"].ShouldBe((false, "Corrected"));
+        byName["Can Yılmaz"].ShouldBe((false, "Absent"));
     }
 }

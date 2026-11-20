@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { callApi, formatDay, noticeBadges, type AuthSession, type Me, type NoticeView } from "@okul/api-client";
+import { callApi, formatDay, markReadBody, noticeBadges, type AuthSession, type Me, type NoticeView } from "@okul/api-client";
 import { t } from "../../i18n/t";
 
 type State = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; notices: NoticeView[] };
@@ -13,7 +13,7 @@ interface Props {
 /**
  * Velinin bildirimleri (spec 0010, "#/bildirimler", yalnızca veli; değilse "Bu sayfaya erişiminiz yok."): yalnızca kendi
  * çocuklarınınkiler, en yenisi üstte, en fazla 50; okunmamışlar "Yeni" etiketi ve kalın yazıyla, düzeltilen yoklama
- * "Düzeltildi" etiketiyle. Liste gelince hepsi okundu yapılır ve Hoş geldin'deki sayı yenilenir (<c>onRead</c>). Durumlar:
+ * "Düzeltildi" etiketiyle. Liste gelince gösterilenler okundu yapılır (arada gelen okunmamış kalır — review F-3) ve Hoş geldin'deki sayı yenilenir (<c>onRead</c>). Durumlar:
  * yükleniyor, boş ("Henüz bildirim yok"), dolu, hata + tekrar dene.
  */
 export function NoticesPage({ me, client, onRead }: Props) {
@@ -42,7 +42,8 @@ export function NoticesPage({ me, client, onRead }: Props) {
       }
 
       setState({ kind: "ready", notices: outcome.data });
-      if (outcome.data.some((n) => !n.isRead) && (await callApi(client.POST("/api/notices/read"))).ok && active) {
+      const body = markReadBody(outcome.data);
+      if (body && outcome.data.some((n) => !n.isRead) && (await callApi(client.POST("/api/notices/read", { body }))).ok && active) {
         readCallback.current();
       }
     });

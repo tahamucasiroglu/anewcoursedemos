@@ -22,7 +22,10 @@ function json(status: number, body: unknown): Response {
   return new Response(body === null ? null : JSON.stringify(body), { status, headers: { "Content-Type": status >= 400 ? "application/problem+json" : "application/json" } });
 }
 
+let readBodies: unknown[] = [];
+
 function fakeApi(list: Handler, options: { roles?: string[]; unread?: number[] } = {}) {
+  readBodies = [];
   const requests: string[] = [];
   const unread = [...(options.unread ?? [0])];
   globalThis.fetch = (async (request: Request) => {
@@ -45,6 +48,7 @@ function fakeApi(list: Handler, options: { roles?: string[]; unread?: number[] }
     }
 
     if (path === "/api/notices/read") {
+      readBodies.push(JSON.parse(await request.clone().text()));
       return new Response(null, { status: 204 });
     }
 
@@ -95,6 +99,8 @@ describe.each(["light", "dark"] as const)("Bildirimler — %s tema", (mode) => {
       `Düzeltildi, 20.11.2026, ${corrected.text}`,
     ]);
     expect(requests).toContain("POST /api/notices/read");
+    // 0010 review F-3: yalnızca gösterilenler ve listenin en yeni zamanı (olduğu gibi) gider.
+    expect(readBodies).toEqual([{ noticeIds: ["n1", "n2"], upTo: "2026-11-20T09:05:00Z" }]);
 
     await fireEvent.press(screen.getByRole("button", { name: "Hoş geldin'e dön" }));
     expect(await screen.findByRole("button", { name: "Bildirimler" })).toBeTruthy();

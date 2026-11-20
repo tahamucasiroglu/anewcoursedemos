@@ -153,8 +153,11 @@ public sealed class CommunicationHandlers :
 
     public async Task<int> Handle(MarkMyNoticesReadCommand request, CancellationToken cancellationToken)
     {
-        (Guid userId, _) = await this.MyChildrenAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<GuardianNotice> unread = await this.notices.ListUnreadAsync(userId, cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(request);
+        (Guid userId, IReadOnlyList<ChildRow> children) = await this.MyChildrenAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<GuardianNotice> unread = children.Count == 0 || request.NoticeIds!.Count == 0
+            ? []
+            : await this.notices.ListUnreadShownAsync(userId, [.. children.Select(c => c.Id)], request.NoticeIds, request.UpTo!.Value, cancellationToken).ConfigureAwait(false);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         foreach (GuardianNotice notice in unread)
         {

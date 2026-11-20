@@ -3265,11 +3265,41 @@
         "tags": [
           "Notices"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNoticesReadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNoticesReadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNoticesReadRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "No Content",
             "content": {
               "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
             }
           },
           "403": {
@@ -4421,6 +4451,33 @@
           }
         },
         "description": "Giriş isteği: e-posta, şifre ve yenileme anahtarının nasıl verileceği — mobil `refreshTokenInBody: true` ile\ngövdede alır; web (varsayılan) yalnızca HttpOnly çerezle alır."
+      },
+      "MarkNoticesReadRequest": {
+        "required": [
+          "noticeIds",
+          "upTo"
+        ],
+        "type": "object",
+        "properties": {
+          "noticeIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "upTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Bildirimleri okundu yapma (spec 0010, 0010 review F-3): ekranda gösterilen bildirimlerin kimlikleri ve listenin en yeni\nzamanı (listenin ilk satırının `at` değeri, olduğu gibi). Yalnızca bunlar okundu olur; arada gelen ya da düzeltilen\nbildirim okunmamış kalır."
       },
       "MemberDetail": {
         "required": [

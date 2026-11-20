@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
-import { callApi, formatDay, noticeBadges, type AuthSession, type NoticeView } from "@okul/api-client";
+import { callApi, formatDay, markReadBody, noticeBadges, type AuthSession, type NoticeView } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
 
@@ -14,7 +14,7 @@ interface Props {
 /**
  * Velinin bildirimleri (spec 0010 gereksinim 8, yalnızca veli): yalnızca kendi çocuklarınınkiler, en yenisi üstte, en fazla
  * 50. Okunmamışlar "Yeni" etiketiyle ve kalın yazıyla belirgin; düzeltilen yoklama "Düzeltildi" etiketiyle. Liste gelince
- * hepsi okundu yapılır (Hoş geldin'deki sayı sıfırlanır). Durumlar: yükleniyor, boş ("Henüz bildirim yok"), dolu, hata +
+ * gösterilenler okundu yapılır (Hoş geldin'deki sayı sıfırlanır; arada gelen okunmamış kalır — review F-3). Durumlar: yükleniyor, boş ("Henüz bildirim yok"), dolu, hata +
  * tekrar dene. Liste kayar (FlatList), "Geri" altta sabit (0010 review F-2).
  */
 export function NoticesScreen({ client, onBack }: Props) {
@@ -31,8 +31,9 @@ export function NoticesScreen({ client, onBack }: Props) {
 
       if (outcome.ok) {
         setState({ kind: "ready", notices: outcome.data });
-        if (outcome.data.some((n) => !n.isRead)) {
-          void callApi(client.POST("/api/notices/read"));
+        const body = markReadBody(outcome.data);
+        if (body && outcome.data.some((n) => !n.isRead)) {
+          void callApi(client.POST("/api/notices/read", { body }));
         }
       } else {
         setState({ kind: "error", message: outcome.unreachable ? t("notices.unreachable") : outcome.message ?? t("notices.loadError") });

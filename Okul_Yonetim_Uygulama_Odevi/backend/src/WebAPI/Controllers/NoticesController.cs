@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using NArchitecture.Core.Mediator;
 using OkulYonetim.Application.Features.Communication;
 using OkulYonetim.WebAPI.Auth;
+using OkulYonetim.WebAPI.Controllers.Contracts;
 
 namespace OkulYonetim.WebAPI.Controllers;
 
 /// <summary>
 /// Velinin bildirimleri (spec 0010; okul seçilmiş olmalı): liste (yalnızca kendi bağlı çocuklarınınki, yeniden eskiye, en
-/// fazla 50) ve "hepsi okundu". Veli rolü olmayan 403.
+/// fazla 50) ve "gösterilenler okundu" (yalnızca listede gösterilen bildirimler; review F-3). Veli rolü olmayan 403.
 /// </summary>
 [ApiController]
 [Produces("application/json")]
@@ -31,10 +32,12 @@ public sealed class NoticesController : ControllerBase
 
     [HttpPost("read")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> MarkRead(CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkRead(MarkNoticesReadRequest request, CancellationToken cancellationToken)
     {
-        await this.sender.Send(new MarkMyNoticesReadCommand(), cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(request);
+        await this.sender.Send(new MarkMyNoticesReadCommand(request.NoticeIds, request.UpTo), cancellationToken).ConfigureAwait(false);
         return this.NoContent();
     }
 }

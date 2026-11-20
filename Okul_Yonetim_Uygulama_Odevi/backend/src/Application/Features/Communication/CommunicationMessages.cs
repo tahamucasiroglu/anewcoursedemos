@@ -15,6 +15,7 @@ public static class CommunicationMessages
     public const string AbsentSubject = "AbsentSubject";
     public const string CorrectedSubject = "CorrectedSubject";
     public const string EmailFooter = "EmailFooter";
+    public const string ShownNoticesRequired = "ShownNoticesRequired";
 
     private static readonly string[] Locales = ["tr"];
 
@@ -23,4 +24,7 @@ public static class CommunicationMessages
         ArgumentNullException.ThrowIfNull(localization);
         return localization.GetLocalizedAsync(key, Locales, Section);
     }
+
+    public static string CommunicationText(this ILocalizationService localization, string key) =>
+        localization.CommunicationTextAsync(key).GetAwaiter().GetResult();
 }
