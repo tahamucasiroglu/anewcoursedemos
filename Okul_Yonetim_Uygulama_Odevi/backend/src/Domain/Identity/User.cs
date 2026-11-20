@@ -25,6 +25,18 @@ public sealed class User
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static User Create(string email, string fullName, string passwordHash, DateTimeOffset now) =>
-        new(Guid.CreateVersion7(now), EmailAddress.Normalize(email), fullName.Trim(), passwordHash, now);
+    public string? Phone { get; private set; }
+
+    public static User Create(string email, string fullName, string passwordHash, DateTimeOffset now, string? phone = null) =>
+        new(Guid.CreateVersion7(now), EmailAddress.Normalize(email), fullName.Trim(), passwordHash, now) { Phone = phone };
+
+    /// <summary>Kurucunun düzenleyebildiği bilgiler (spec 0005): ad-soyad ve telefon. E-posta kimliktir, değişmez.</summary>
+    public void UpdateProfile(string fullName, string? phone)
+    {
+        this.FullName = fullName.Trim();
+        this.Phone = phone;
+    }
+
+    /// <summary>Şifre özetini değiştirir (kurucunun sıfırlaması — spec 0005); düz şifre alınmaz.</summary>
+    public void ChangePasswordHash(string passwordHash) => this.PasswordHash = passwordHash;
 }

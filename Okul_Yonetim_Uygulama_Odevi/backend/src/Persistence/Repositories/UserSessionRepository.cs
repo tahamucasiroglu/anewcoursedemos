@@ -24,5 +24,15 @@ public sealed class UserSessionRepository : IUserSessionRepository
     public Task<UserSession?> FindByPreviousRefreshTokenHashAsync(string refreshTokenHash, CancellationToken cancellationToken) =>
         this.context.UserSessions.FirstOrDefaultAsync(s => s.PreviousRefreshTokenHash == refreshTokenHash, cancellationToken);
 
+    public async Task RevokeAllForUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        List<UserSession> open = await this.context.UserSessions.Where(s => s.UserId == userId && s.RevokedAt == null)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (UserSession session in open)
+        {
+            session.Revoke(now);
+        }
+    }
+
     public void Add(UserSession session) => this.context.UserSessions.Add(session);
 }

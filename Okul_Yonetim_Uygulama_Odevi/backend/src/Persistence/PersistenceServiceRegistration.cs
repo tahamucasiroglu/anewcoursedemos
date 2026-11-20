@@ -27,6 +27,8 @@ public static class PersistenceServiceRegistration
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IRoleAssignmentRepository, RoleAssignmentRepository>();
+        services.AddScoped<ITenantMembershipRepository, TenantMembershipRepository>();
+        services.AddScoped<IMemberDirectory, MemberDirectory>();
         services.AddScoped<IUserSessionRepository, UserSessionRepository>();
         services.AddScoped<ILoginThrottleRepository, LoginThrottleRepository>();
         services.AddScoped<IAuditLog, EfAuditLog>();

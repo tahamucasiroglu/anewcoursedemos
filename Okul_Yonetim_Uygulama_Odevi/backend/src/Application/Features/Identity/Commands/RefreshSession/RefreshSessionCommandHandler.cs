@@ -19,6 +19,7 @@ namespace OkulYonetim.Application.Features.Identity.Commands.RefreshSession;
 public sealed class RefreshSessionCommandHandler : IRequestHandler<RefreshSessionCommand, AuthResult>
 {
     private readonly IUserSessionRepository sessions;
+    private readonly IRoleAssignmentRepository roleAssignments;
     private readonly IAuditLog audit;
     private readonly IUnitOfWork unitOfWork;
     private readonly ITokenService tokens;
@@ -30,6 +31,7 @@ public sealed class RefreshSessionCommandHandler : IRequestHandler<RefreshSessio
 
     public RefreshSessionCommandHandler(
         IUserSessionRepository sessions,
+        IRoleAssignmentRepository roleAssignments,
         IAuditLog audit,
         IUnitOfWork unitOfWork,
         ITokenService tokens,
@@ -40,6 +42,7 @@ public sealed class RefreshSessionCommandHandler : IRequestHandler<RefreshSessio
         ILogger<RefreshSessionCommandHandler> logger)
     {
         this.sessions = sessions;
+        this.roleAssignments = roleAssignments;
         this.audit = audit;
         this.unitOfWork = unitOfWork;
         this.tokens = tokens;
@@ -84,7 +87,7 @@ public sealed class RefreshSessionCommandHandler : IRequestHandler<RefreshSessio
         UserSession? session = await this.sessions.FindByRefreshTokenHashAsync(presentedHash, cancellationToken).ConfigureAwait(false);
         if (session is not null)
         {
-            if (!session.IsActive(now))
+            if (!session.IsActive(now) || !await this.HasSchoolAccessAsync(session, cancellationToken).ConfigureAwait(false))
             {
                 return null;
             }
@@ -114,6 +117,12 @@ public sealed class RefreshSessionCommandHandler : IRequestHandler<RefreshSessio
         this.logger.LogWarning("Eski yenileme anahtarı yeniden kullanıldı; oturum {SessionId} iptal edildi", previous.Id);
         return null;
     }
+
+    // Seçili okulda pasifleştirilen ya da bütün rolleri alınan kişi o okul için yenileme alamaz (spec 0005): istemci
+    // Giriş'e döner, yeniden girişte etkin okullarını görür.
+    private async Task<bool> HasSchoolAccessAsync(UserSession session, CancellationToken cancellationToken) =>
+        session.TenantId is not { } tenantId
+        || (await this.roleAssignments.ListForUserInTenantAsync(session.UserId, tenantId, cancellationToken).ConfigureAwait(false)).Count > 0;
 
     private async Task<AuthResult> IssueAsync(UserSession session, string? refreshToken, DateTimeOffset now, CancellationToken cancellationToken)
     {

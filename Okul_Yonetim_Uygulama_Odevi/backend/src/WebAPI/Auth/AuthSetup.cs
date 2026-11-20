@@ -19,6 +19,9 @@ public static class AuthSetup
 {
     public const string TenantSelectedPolicy = "TenantSelected";
 
+    /// <summary>Seçili okulda kurucu/yönetici (spec 0005); kurucu bilgisi her istekte veritabanından okunur (rol alınınca bir sonraki istekte geçerli).</summary>
+    public const string TenantFounderPolicy = "TenantFounder";
+
     public static IServiceCollection AddOkulAuth(this IServiceCollection services, IConfiguration configuration)
     {
         JwtOptions options = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
@@ -54,7 +57,9 @@ public static class AuthSetup
         });
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
-            .AddPolicy(TenantSelectedPolicy, policy => policy.RequireAuthenticatedUser().RequireClaim(JwtTokenService.TenantClaim));
+            .AddPolicy(TenantSelectedPolicy, policy => policy.RequireAuthenticatedUser().RequireClaim(JwtTokenService.TenantClaim))
+            .AddPolicy(TenantFounderPolicy, policy => policy.RequireAuthenticatedUser().RequireClaim(JwtTokenService.TenantClaim)
+                .RequireAssertion(context => context.Resource is HttpContext http && http.RequestServices.GetRequiredService<ICurrentSession>().IsFounder));
         return services;
     }
 

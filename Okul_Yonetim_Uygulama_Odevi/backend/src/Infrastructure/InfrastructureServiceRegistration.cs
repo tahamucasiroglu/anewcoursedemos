@@ -18,6 +18,7 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<NArchitectureLogger, SerilogLoggerAdapter>();
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
+        services.AddSingleton<ITemporaryPasswordGenerator, TemporaryPasswordGenerator>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         return services;
     }

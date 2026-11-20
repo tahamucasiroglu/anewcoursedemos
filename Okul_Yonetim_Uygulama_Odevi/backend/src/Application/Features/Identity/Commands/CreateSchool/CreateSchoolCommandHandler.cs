@@ -20,6 +20,7 @@ public sealed class CreateSchoolCommandHandler : IRequestHandler<CreateSchoolCom
     private readonly ITenantRepository tenants;
     private readonly IBranchRepository branches;
     private readonly IRoleAssignmentRepository roleAssignments;
+    private readonly ITenantMembershipRepository memberships;
     private readonly IAuditLog audit;
     private readonly IUnitOfWork unitOfWork;
     private readonly IPasswordHasher passwordHasher;
@@ -32,6 +33,7 @@ public sealed class CreateSchoolCommandHandler : IRequestHandler<CreateSchoolCom
         ITenantRepository tenants,
         IBranchRepository branches,
         IRoleAssignmentRepository roleAssignments,
+        ITenantMembershipRepository memberships,
         IAuditLog audit,
         IUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher,
@@ -43,6 +45,7 @@ public sealed class CreateSchoolCommandHandler : IRequestHandler<CreateSchoolCom
         this.tenants = tenants;
         this.branches = branches;
         this.roleAssignments = roleAssignments;
+        this.memberships = memberships;
         this.audit = audit;
         this.unitOfWork = unitOfWork;
         this.passwordHasher = passwordHasher;
@@ -86,6 +89,7 @@ public sealed class CreateSchoolCommandHandler : IRequestHandler<CreateSchoolCom
         this.tenants.Add(tenant);
         this.branches.Add(branch);
         this.roleAssignments.Add(founder);
+        this.memberships.Add(TenantMembership.Create(user.Id, tenant.Id, now));
 
         this.audit.Add(AuditEntry.Record(AuditAction.TenantCreated, now, tenant.Id, targetType: nameof(Tenant), targetId: tenant.Id, origin: request.Origin));
         this.audit.Add(AuditEntry.Record(AuditAction.BranchCreated, now, tenant.Id, targetType: nameof(Branch), targetId: branch.Id, origin: request.Origin));

@@ -12,5 +12,10 @@ public interface IBranchRepository
 
     Task<Branch?> FindVisibleAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Seçili okulda aynı adlı (harf farkı gözetmeden) etkin şube; <paramref name="exceptId"/> hariç.</summary>
+    Task<bool> ActiveNameExistsAsync(string name, Guid? exceptId, CancellationToken cancellationToken);
+
+    Task<int> CountActiveAsync(CancellationToken cancellationToken);
+
     void Add(Branch branch);
 }

@@ -11,5 +11,8 @@ public interface IUserSessionRepository
 
     Task<UserSession?> FindByPreviousRefreshTokenHashAsync(string refreshTokenHash, CancellationToken cancellationToken);
 
+    /// <summary>Kişinin bütün açık oturumlarını iptal eder (kurucunun şifre sıfırlaması — spec 0005).</summary>
+    Task RevokeAllForUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken);
+
     void Add(UserSession session);
 }

@@ -13,4 +13,13 @@ public enum AuditAction
     UserCreated = 8,
     RoleAssigned = 9,
     RefreshTokenReused = 10,
+    BranchUpdated = 11,
+    BranchDeactivated = 12,
+    BranchActivated = 13,
+    MemberProfileUpdated = 14,
+    RoleRevoked = 15,
+    MemberDeactivated = 16,
+    MemberActivated = 17,
+    PasswordReset = 18,
+    MemberAdded = 19,
 }

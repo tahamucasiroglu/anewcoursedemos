@@ -31,7 +31,7 @@ public sealed class TenantRepository : ITenantRepository
 
     public Task<Tenant?> FindFoundedByNameAsync(Guid founderUserId, string name, CancellationToken cancellationToken)
     {
-        string pattern = EscapeLikePattern(name);
+        string pattern = LikePattern.Escape(name);
         return this.context.Tenants.IgnoreQueryFilters()
             .Where(t => EF.Functions.ILike(t.Name, pattern))
             .Where(t => this.context.RoleAssignments.IgnoreQueryFilters()
@@ -41,9 +41,4 @@ public sealed class TenantRepository : ITenantRepository
 
     public void Add(Tenant tenant) => this.context.Tenants.Add(tenant);
 
-    // ILIKE harf duyarsız tam eşleşme: ad içindeki joker karakterler (\ % _) kaçışlanır, böylece "%" adı her okulu eşlemez.
-    private static string EscapeLikePattern(string value) =>
-        value.Replace(@"\", @"\\", StringComparison.Ordinal)
-            .Replace("%", @"\%", StringComparison.Ordinal)
-            .Replace("_", @"\_", StringComparison.Ordinal);
 }

@@ -30,6 +30,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<ICurrentSession>(provider => provider.GetRequiredService<CurrentSession>());
         services.AddScoped<SessionAuthenticator>();
         services.AddScoped<UserTenantDirectory>();
+        services.AddScoped<Features.Administration.AdminGuard>();
+        services.AddScoped<Features.Administration.AdminAudit>();
         return services;
     }
 }
