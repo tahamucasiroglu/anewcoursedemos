@@ -61,6 +61,12 @@ public static class IdentityTestData
             }
 
             userId = user.Id;
+            Guid id = user.Id;
+            if (!await context.Memberships.IgnoreQueryFilters().AnyAsync(m => m.UserId == id && m.TenantId == tenantId))
+            {
+                context.Memberships.Add(TenantMembership.Create(user.Id, tenantId, DateTimeOffset.UtcNow));
+            }
+
             context.RoleAssignments.Add(role == Role.Founder
                 ? RoleAssignment.Founder(user.Id, tenantId, DateTimeOffset.UtcNow)
                 : RoleAssignment.ForBranch(user.Id, tenantId, role, branchId!.Value, DateTimeOffset.UtcNow));
