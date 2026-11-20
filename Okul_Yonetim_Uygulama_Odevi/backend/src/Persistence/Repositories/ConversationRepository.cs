@@ -9,7 +9,8 @@ namespace OkulYonetim.Persistence.Repositories;
 /// <summary>
 /// Konuşma deposu (spec 0011): konuşma ve mesaj kurum filtreli; listeler yalnızca kişinin taraf olduğu konuşmalar. Okunmamış
 /// sayısı veritabanında sayılır: karşı tarafın, kişinin son okuma zamanından sonraki mesajları. Öğrenci adı öğrenci
-/// filtresinden, kişi adı kişi tablosundan; okumalar izlemesiz projeksiyon (T7). Mesaj sırası gönderim zamanıdır.
+/// filtresinden, kişi adı kişi tablosundan; okumalar izlemesiz projeksiyon (T7). Mesaj sırası gönderim zamanı, eşitlikte
+/// kimliktir; "Daha eski" imleci aynı (zaman, kimlik) çiftidir.
 /// </summary>
 public sealed class ConversationRepository : IConversationRepository
 {
@@ -74,12 +75,13 @@ public sealed class ConversationRepository : IConversationRepository
                 .Where(m => m.Id == beforeId && m.ConversationId == conversationId)
                 .Select(m => (DateTimeOffset?)m.SentAt)
                 .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            if (cursor is null)
+            if (cursor is not { } sentAt)
             {
                 return [];
             }
 
-            query = query.Where(m => m.SentAt < cursor.Value);
+            // İmleç (zaman, kimlik) — sıralamayla aynı: aynı anda gönderilmiş mesajlar sayfa sınırında kaybolmaz (review L-1).
+            query = query.Where(m => m.SentAt < sentAt || (m.SentAt == sentAt && m.Id < beforeId));
         }
 
         return await query.OrderByDescending(m => m.SentAt).ThenByDescending(m => m.Id).Take(take)
