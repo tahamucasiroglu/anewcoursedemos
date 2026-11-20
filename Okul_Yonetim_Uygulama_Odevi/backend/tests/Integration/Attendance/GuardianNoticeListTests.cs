@@ -17,7 +17,8 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// görür; liste en fazla 50; hoş geldin'deki okunmamış sayısı doğru, "okundu" sonrası sıfır; bildirimi olmayan velinin
 /// listesi boş; başka velinin bildirimi görünmez; veli olmayan 403. "Okundu" listenin en yeni zamanına kadar değişen bütün
 /// okunmamışları işaretler — listede gösterilmeyen (50'den eski) bildirimler de; liste ile istek arasında gelen ya da düzeltilen
-/// bildirim okunmamış kalır (0010 review F-3); zaman "+03:00" ile gelse de çalışır (0010 review 2).
+/// bildirim okunmamış kalır (0010 review F-3); zaman "+03:00" ile gelse de çalışır; başka velinin bildirimi okunmaz
+/// (0010 review 2).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class GuardianNoticeListTests
@@ -150,5 +151,29 @@ public sealed class GuardianNoticeListTests
         (await MarkReadAsync(client, guardian, list, turkey)).ShouldBe(HttpStatusCode.NoContent, "UTC olmayan zaman 500 vermez (0010 review 2, bulgu 2)");
 
         (await UnreadAsync(client, guardian)).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task MarkRead_ByAnotherGuardian_OthersNoticesStayUnread()
+    {
+        using OkulApiFactory factory = Factory(this.database, new CapturingOutbox());
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        Guid stranger = await StudentAsync(client, c, "Yabancı Öğrenci");
+        (string mother, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+        (string father, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali, "Father");
+        (string otherGuardian, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, stranger);
+        await SavedAsync(client, c.Teacher, c.ClassroomId, [(ali, "Absent"), (stranger, "Absent")]);
+        JsonElement othersList = (await NoticesAsync(client, otherGuardian)).Body;
+        JsonElement fathersList = (await NoticesAsync(client, father)).Body;
+        string farFuture = Morning.AddYears(1).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+
+        (await MarkReadAsync(client, mother, othersList, farFuture)).ShouldBe(HttpStatusCode.NoContent);
+        (await MarkReadAsync(client, mother, fathersList, farFuture)).ShouldBe(HttpStatusCode.NoContent);
+
+        (await UnreadAsync(client, mother)).ShouldBe(0, "annenin kendi bildirimi okundu");
+        (await UnreadAsync(client, father)).ShouldBe(1, "aynı çocuğun babasının bildirimi annenin isteğiyle okunmaz");
+        (await UnreadAsync(client, otherGuardian)).ShouldBe(1, "başka velinin bildirimi okunmaz");
     }
 }
