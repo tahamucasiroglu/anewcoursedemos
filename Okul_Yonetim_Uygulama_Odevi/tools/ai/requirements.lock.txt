@@ -1,4 +1,3 @@
-Using Python 3.12.16 environment at: tools\ai\.venv
 anyio==4.16.0
 av==15.1.0
 click==8.5.1
