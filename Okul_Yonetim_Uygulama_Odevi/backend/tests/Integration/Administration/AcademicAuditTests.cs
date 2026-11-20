@@ -1,7 +1,11 @@
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
+using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Compliance;
+using OkulYonetim.Persistence.Repositories;
 using OkulYonetim.Tests.Integration.Identity;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -70,27 +74,52 @@ public sealed class AcademicAuditTests
         entries.Select(e => e.TargetType).Distinct().ShouldBe(["GradeLevel", "Term", "Classroom", "CalendarEntry"], ignoreOrder: true);
     }
 
+    /// <summary>
+    /// Review L-1: iki isteğin kural kontrolü kapıyla (<see cref="RaceGate"/>) kesin olarak çakıştırılır. İlk istek sıra
+    /// içindeki okumada (sınıf adı kontrolü / dönem listesi) ikinci istek gönderildikten sonra en fazla 2 sn bekletilir.
+    /// Okul başına sıra varken ikinci istek bu okumaya giremez, ilk istek bitince kuralı görüp reddedilir; sıra olmasaydı
+    /// ikisi de "yok" görür ve iki kayıt oluşurdu.
+    /// </summary>
     [Fact]
     public async Task SameClassroomOrOverlappingTermsAtOnce_OnlyOneIsCreated()
     {
-        using OkulApiFactory factory = new(this.database.ConnectionString);
+        RaceGate classroomGate = new();
+        RaceGate termGate = new();
+        using OkulApiFactory factory = new(this.database.ConnectionString, configureServices: services =>
+        {
+            services.RemoveAll<IClassroomRepository>();
+            services.AddScoped<ClassroomRepository>();
+            services.AddScoped<IClassroomRepository>(sp => new GatedClassroomRepository(sp.GetRequiredService<ClassroomRepository>(), classroomGate));
+            services.RemoveAll<ITermRepository>();
+            services.AddScoped<TermRepository>();
+            services.AddScoped<ITermRepository>(sp => new GatedTermRepository(sp.GetRequiredService<TermRepository>(), termGate));
+        });
         using HttpClient client = factory.CreateClient();
         SchoolSeed a = await CreateSchoolAsync(factory);
         string token = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
         Guid level = await CreateGradeLevelAsync(client, token, "5. sınıf", 5);
         Guid term = await CreateTermAsync(client, token, "Güz", "2026-09-01", "2027-01-22");
 
-        var classrooms = await Task.WhenAll(Enumerable.Range(0, 2).Select(i =>
-            CallAsync(client, HttpMethod.Post, "/api/admin/classrooms", token, new { termId = term, branchId = a.BranchId, gradeLevelId = level, name = i == 0 ? "5-A" : "5-a" })));
-        classrooms.Count(r => r.Status == HttpStatusCode.OK).ShouldBe(1);
-        Detail(classrooms.Single(r => r.Status != HttpStatusCode.OK).Body).ShouldBe("Bu adla bir sınıf zaten var");
+        classroomGate.Enabled = true;
+        var firstClassroom = CallAsync(client, HttpMethod.Post, "/api/admin/classrooms", token, new { termId = term, branchId = a.BranchId, gradeLevelId = level, name = "5-A" });
+        await classroomGate.FirstEntered.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        var secondClassroom = CallAsync(client, HttpMethod.Post, "/api/admin/classrooms", token, new { termId = term, branchId = a.BranchId, gradeLevelId = level, name = "5-a" });
+        var classrooms = await Task.WhenAll(firstClassroom, secondClassroom);
+        classroomGate.SecondEnteredWhileFirstWaited.ShouldBe(false, "ikinci istek sırayı beklemeden ad kontrolüne girdi");
+        classrooms[0].Status.ShouldBe(HttpStatusCode.OK);
+        classrooms[1].Status.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(classrooms[1].Body).ShouldBe("Bu adla bir sınıf zaten var");
         (await QueryAsync(factory, c => c.Classrooms.IgnoreQueryFilters().CountAsync(x => x.TermId == term))).ShouldBe(1);
 
-        var terms = await Task.WhenAll(
-            CallAsync(client, HttpMethod.Post, "/api/admin/terms", token, new { name = "Bahar", startDate = "2027-02-08", endDate = "2027-06-18" }),
-            CallAsync(client, HttpMethod.Post, "/api/admin/terms", token, new { name = "Bahar 2", startDate = "2027-06-18", endDate = "2027-08-31" }));
-        terms.Count(r => r.Status == HttpStatusCode.OK).ShouldBe(1);
-        Detail(terms.Single(r => r.Status != HttpStatusCode.OK).Body).ShouldBe("Bu tarihler başka bir dönemle çakışıyor");
+        termGate.Enabled = true;
+        var firstTerm = CallAsync(client, HttpMethod.Post, "/api/admin/terms", token, new { name = "Bahar", startDate = "2027-02-08", endDate = "2027-06-18" });
+        await termGate.FirstEntered.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        var secondTerm = CallAsync(client, HttpMethod.Post, "/api/admin/terms", token, new { name = "Bahar 2", startDate = "2027-06-18", endDate = "2027-08-31" });
+        var terms = await Task.WhenAll(firstTerm, secondTerm);
+        termGate.SecondEnteredWhileFirstWaited.ShouldBe(false, "ikinci istek sırayı beklemeden çakışma kontrolüne girdi");
+        terms[0].Status.ShouldBe(HttpStatusCode.OK);
+        terms[1].Status.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(terms[1].Body).ShouldBe("Bu tarihler başka bir dönemle çakışıyor");
         (await QueryAsync(factory, c => c.Terms.IgnoreQueryFilters().CountAsync(t => t.TenantId == a.TenantId))).ShouldBe(2);
     }
 }
