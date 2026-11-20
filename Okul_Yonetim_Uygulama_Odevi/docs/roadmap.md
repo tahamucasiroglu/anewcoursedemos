@@ -4,7 +4,7 @@
 > **Her ship'te güncellenir:** biten satırın durumu ✅ ve spec numarası yazılır; sıra değişirse kullanıcı kararıyla
 > değişir. Ertelenen bulgular ayrı yerde: `specs/backlog.md`.
 
-**Son güncelleme:** 2026-11-20 · 1c "Platform yönetim paneli" eklendi; spec 0005 onaylandı, 0006 ondan bölündü; 0004 ship tek gözlem bekliyor.
+**Son güncelleme:** 2026-11-20 · 0006 ve 0007 VERIFY tamam (13/13 + 13/13); 0004, 0005, 0006, 0007 ship onayı bekliyor.
 
 ## Biten altyapı
 | Spec | Ne | Durum |
@@ -23,7 +23,7 @@ daha küçük spec'lere bölünebilir; "sonra" diye işaretlenenler aynı modül
 | 1b | **Şube ve kullanıcı yönetimi** (spec 0005) | Kurucu web'den şube ve kullanıcı ekler, rol/şube verir, pasifleştirir; geçici şifre, kurucunun şifre sıfırlaması | Diğer rollerin girebilmesi için | 🔄 VERIFY 13/13 kanıtlı; **ship onayı bekliyor** |
 | 1b-2 | **Şifre işlemleri ve e-posta** (spec 0006) | Şifremi değiştir (web + mobil), şifremi unuttum (30 dk tek kullanımlık bağlantı), SMTP'ye hazır e-posta (bilgiler girilmeden) | 0005'ten bölündü (kullanıcı kararı 2026-11-20) | 🔄 spec 0006 (Profilim ile birlikte): VERIFY 13/13 kanıtlı; **ship onayı bekliyor** |
 | 1b-3 | **Profilim (ad, telefon)** | Kişi kendi ad-soyad ve telefonunu düzenler (web + mobil); iki okulda kayıtlı kişinin bilgisini yalnızca kendisi değiştirebildiği için gerekli | 0005 review tur 2 notu (kullanıcı kararı 2026-11-20); spec 0006 içinde | 🔄 spec 0006 |
-| 1c | **Platform yönetim paneli** | Platform sahibinin (proje sahibi) paneli: okul ekle (okul + ilk şube + kurucu), okulları listele, okulu pasifleştir. Bütün okulları gören tek rol → kendi spec'i, ayrı rolü ve 2 adımlı doğrulama ister. Komut (`create-school`) ilk platform yöneticisi ve acil durum için kalır | Kullanıcı isteği 2026-11-20; 0005'in kurucu paneli ekran kalıbını kullanır | 🔄 spec 0007: build bitti, review'da |
+| 1c | **Platform yönetim paneli** | Platform sahibinin (proje sahibi) paneli: okul ekle (okul + ilk şube + kurucu), okulları listele, okulu pasifleştir. Bütün okulları gören tek rol → kendi spec'i, ayrı rolü ve 2 adımlı doğrulama ister. Komut (`create-school`) ilk platform yöneticisi ve acil durum için kalır | Kullanıcı isteği 2026-11-20; 0005'in kurucu paneli ekran kalıbını kullanır | 🔄 spec 0007: VERIFY 13/13 kanıtlı; **ship onayı bekliyor** (Pi adımları ship'te kullanıcıda) |
 | 2 | **Kurum ve akademik yapı** | Şube, sınıf, şube-sınıf eşleşmesi, dönem, akademik takvim. Sonra: ders programı (elle + Excel'den alma) | Öğrenci ve yoklama sınıfa bağlı | ⬜ |
 | 3 | **Öğrenci ve veli kayıtları** | Öğrenci kartı, birden çok veli, kardeş bağlantısı, sağlık notu/alerji, teslim alabilecek kişiler. Sonra: Excel ve e-Okul çıktısından alma | Yoklama ve iletişim öğrenciye bağlı | ⬜ |
 | 4 | **Yoklama ve devamsızlık** | Öğretmen mobilden 10 saniyede yoklama alır; devamsız öğrencinin velisine otomatik bildirim | Kapsamda MVP'nin ilk maddesi | ⬜ |
