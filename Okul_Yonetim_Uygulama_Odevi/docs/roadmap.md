@@ -19,7 +19,7 @@ daha küçük spec'lere bölünebilir; "sonra" diye işaretlenenler aynı modül
 
 | Sıra | Feature | Kapsamdan (ne içerir) | Neden bu sırada | Durum |
 |---|---|---|---|---|
-| 1a | **Giriş ve oturum** (spec 0004) | Okul açma komutu (okul + ilk şube + kurucu); e-posta + şifre ile giriş/çıkış web + mobil; tek kimlik birden çok okul, okul seçimi; 3 hatada kilit; okul ve şube duvarı; audit | Her şeyin temeli: kim giriyor, hangi okulun verisini görüyor | 🔄 |
+| 1a | **Giriş ve oturum** (spec 0004) | Okul açma komutu (okul + ilk şube + kurucu); e-posta + şifre ile giriş/çıkış web + mobil; tek kimlik birden çok okul, okul seçimi; 3 hatada kilit; okul ve şube duvarı; audit | Her şeyin temeli: kim giriyor, hangi okulun verisini görüyor | 🔄 Kod bitti, Pi'de çalışıyor, VERIFY'da 12/13 kanıtlı; **ship tek gözlem bekliyor:** okul açma komutunda şifrenin terminalde görünmediği (AC-1, hassas alan — kanıtsız kapanamaz). Kullanıcı kendi kurucu hesabını açarken bakacak |
 | 1b | **Şube ve kullanıcı yönetimi** (spec 0005) | Kurucu web'den şube ve kullanıcı ekler, rol/şube verir; geçici şifre, şifre sıfırlama; SMTP'ye hazır e-posta | Diğer rollerin girebilmesi için | ⬜ |
 | 1c | **Platform yönetim paneli** | Platform sahibinin (proje sahibi) paneli: okul ekle (okul + ilk şube + kurucu), okulları listele, okulu pasifleştir. Bütün okulları gören tek rol → kendi spec'i, ayrı rolü ve 2 adımlı doğrulama ister. Komut (`create-school`) ilk platform yöneticisi ve acil durum için kalır | Kullanıcı isteği 2026-11-20; 0005'in kurucu paneli ekran kalıbını kullanır | ⬜ |
 | 2 | **Kurum ve akademik yapı** | Şube, sınıf, şube-sınıf eşleşmesi, dönem, akademik takvim. Sonra: ders programı (elle + Excel'den alma) | Öğrenci ve yoklama sınıfa bağlı | ⬜ |
