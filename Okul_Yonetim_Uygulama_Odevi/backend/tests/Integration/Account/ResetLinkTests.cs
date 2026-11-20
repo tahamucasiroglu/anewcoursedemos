@@ -1,0 +1,121 @@
+using System.Net;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Time.Testing;
+using OkulYonetim.Domain.Compliance;
+using OkulYonetim.Domain.Identity;
+using OkulYonetim.Tests.Integration.Identity;
+using OkulYonetim.Tests.Integration.Infrastructure;
+using Shouldly;
+using static OkulYonetim.Tests.Integration.Account.AccountTestData;
+using static OkulYonetim.Tests.Integration.Administration.AdminTestData;
+using static OkulYonetim.Tests.Integration.Identity.IdentityTestData;
+
+namespace OkulYonetim.Tests.Integration.Account;
+
+/// <summary>Spec 0006 AC-7, AC-8: bağlantı 30 dk ve tek kullanımlık; yeni bağlantı / şifre değişikliği eskileri geçersiz kılar; yenileme bütün oturumları kapatır ve kilidi açar.</summary>
+[Trait("Category", "Integration")]
+public sealed class ResetLinkTests
+{
+    private const string Invalid = "Bu bağlantı geçersiz ya da süresi dolmuş";
+    private readonly TestDatabase database;
+
+    public ResetLinkTests(TestDatabase database)
+    {
+        this.database = database;
+    }
+
+    [Fact]
+    public async Task ValidLink_ResetsPassword_ClosesAllSessions_UnlocksAccount_WorksOnce()
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("yenile");
+        Guid personId = await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+        JsonElement session = await LoginAsync(client, person);
+        for (int i = 0; i < 3; i++)
+        {
+            using HttpResponseMessage fail = await PostLoginAsync(client, person, "Yanlis-Sifre-" + i);
+        }
+
+        await ForgotAsync(client, person);
+        string token = TokenFrom(outbox.To(person).Single());
+        (await PostAnonymousAsync(client, "/api/auth/reset-password/check", new { token })).Raw.ShouldContain("true");
+
+        var shortPassword = await ResetAsync(client, token, "kisa");
+        shortPassword.Status.ShouldBe(HttpStatusCode.BadRequest);
+        (await ResetAsync(client, token, NewPassword, NewPassword + "x")).Status.ShouldBe(HttpStatusCode.BadRequest);
+        var done = await ResetAsync(client, token);
+
+        done.Status.ShouldBe(HttpStatusCode.NoContent, done.Raw);
+        (await StatusAsync(client, HttpMethod.Get, "/api/me", AccessToken(session))).ShouldBe(HttpStatusCode.Unauthorized);
+        using (HttpResponseMessage old = await PostLoginAsync(client, person, Password))
+        {
+            old.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        }
+
+        (await LoginAsync(client, person, NewPassword)).GetProperty("accessToken").GetString().ShouldNotBeNullOrEmpty();
+        var again = await ResetAsync(client, token, "Bir-Daha-2026");
+        again.Status.ShouldBe(HttpStatusCode.BadRequest);
+        again.Raw.ShouldContain(Invalid);
+        (await PostAnonymousAsync(client, "/api/auth/reset-password/check", new { token })).Raw.ShouldContain("false");
+        string stored = await QueryAsync(factory, c => c.PasswordResetTokens.Where(t => t.UserId == personId).Select(t => t.TokenHash).SingleAsync());
+        stored.ShouldNotBe(token);
+        stored.ShouldNotContain(token);
+    }
+
+    [Fact]
+    public async Task ExpiredReplacedChangedAndFakeLinks_AreRejected_PasswordUnchanged()
+    {
+        CapturingOutbox outbox = new();
+        FakeTimeProvider time = new(DateTimeOffset.UtcNow);
+        using OkulApiFactory factory = Factory(this.database, outbox, time);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("gecersiz");
+        Guid personId = await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+
+        await ForgotAsync(client, person);
+        string expired = TokenFrom(outbox.To(person).Last());
+        time.Advance(TimeSpan.FromMinutes(31));
+        (await ResetAsync(client, expired)).Raw.ShouldContain(Invalid);
+
+        await ForgotAsync(client, person);
+        string replaced = TokenFrom(outbox.To(person).Last());
+        await ForgotAsync(client, person);
+        string latest = TokenFrom(outbox.To(person).Last());
+        (await ResetAsync(client, replaced)).Raw.ShouldContain(Invalid);
+
+        string founder = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        (await StatusAsync(client, HttpMethod.Post, $"/api/admin/members/{personId}/reset-password", founder)).ShouldBe(HttpStatusCode.OK);
+        (await ResetAsync(client, latest)).Raw.ShouldContain(Invalid);
+
+        time.Advance(TimeSpan.FromMinutes(16));
+        await ForgotAsync(client, person);
+        string beforeChange = TokenFrom(outbox.To(person).Last());
+        string hashAfterAdminReset = await QueryAsync(factory, c => c.Users.Where(u => u.Id == personId).Select(u => u.PasswordHash).SingleAsync());
+        (await ResetAsync(client, "uydurma-anahtar-0123456789")).Raw.ShouldContain(Invalid);
+        (await QueryAsync(factory, c => c.Users.Where(u => u.Id == personId).Select(u => u.PasswordHash).SingleAsync())).ShouldBe(hashAfterAdminReset);
+        (await ResetAsync(client, beforeChange)).Status.ShouldBe(HttpStatusCode.NoContent, "en son bağlantı hâlâ geçerli");
+    }
+
+    [Fact]
+    public async Task ChangingPassword_InvalidatesOpenLinks()
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("degisti");
+        await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+        await ForgotAsync(client, person);
+        string token = TokenFrom(outbox.To(person).Single());
+        string access = AccessToken(await LoginAsync(client, person));
+
+        (await StatusAsync(client, HttpMethod.Post, "/api/account/change-password", access, new { currentPassword = Password, newPassword = NewPassword, newPasswordRepeat = NewPassword })).ShouldBe(HttpStatusCode.NoContent);
+
+        (await ResetAsync(client, token, "Baska-Sifre-2026")).Raw.ShouldContain(Invalid);
+    }
+}

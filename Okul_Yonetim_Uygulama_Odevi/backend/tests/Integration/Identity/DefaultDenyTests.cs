@@ -19,7 +19,7 @@ namespace OkulYonetim.Tests.Integration.Identity;
 [Trait("Category", "Integration")]
 public sealed class DefaultDenyTests
 {
-    private static readonly string[] AllowedAnonymous = ["GET api/system-health", "POST api/auth/login", "POST api/auth/refresh"];
+    private static readonly string[] AllowedAnonymous = ["GET api/system-health", "POST api/auth/forgot-password", "POST api/auth/login", "POST api/auth/refresh", "POST api/auth/reset-password", "POST api/auth/reset-password/check"];
     private readonly TestDatabase database;
 
     public DefaultDenyTests(TestDatabase database)
