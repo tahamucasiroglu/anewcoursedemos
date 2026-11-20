@@ -47,7 +47,9 @@
    bir test listeyi denetler (spec 0004: `system-health`, `auth/login`, `auth/refresh`).
 2. **Oturum (spec 0004):** JWT erişim anahtarı 15 dk (HS256, `sub`/`sid`/`tid`); yenileme anahtarı 32 rastgele bayt,
    veritabanında yalnızca SHA-256 özeti, her kullanımda döner, 7 gün kullanılmazsa düşer. Her istekte oturum
-   veritabanından denetlenir (çıkış/iptal anında etkili). Web yenileme anahtarını **HttpOnly, SameSite=Strict çerezde**
+   veritabanından denetlenir (çıkış/iptal anında etkili). Aynı e-postanın girişleri ve aynı anahtarın yenilemeleri
+   veritabanı kilidiyle sıraya girer (eşzamanlı isteklerle kilit atlatılamaz). Döndürülen eski anahtar 30 sn geçer
+   (birden çok sekme aynı anda yeniler); daha sonra gelirse çalınmış sayılır: oturum iptal, audit `RefreshTokenReused`. Web yenileme anahtarını **HttpOnly, SameSite=Strict çerezde**
    (`/api/auth` yolu) tutar, JavaScript görmez; mobil telefonun **güvenli deposunda** (`expo-secure-store`). Erişim
    anahtarı yalnızca bellekte. Şifre özeti ASP.NET Identity PBKDF2; kullanıcı yoksa da özet doğrulanır (zamanlama farkı
    yok). Uygulama kendi küçük oturum kodunu kullanır (`NArchitecture.Core.Security` kullanılmadı — plan 0004).

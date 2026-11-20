@@ -42,7 +42,9 @@
 - nArchitecture global exception middleware; tüm hatalar **RFC 9457 ProblemDetails**.
 - İş kuralı ihlali → `BusinessException` → 400 (Türkçe mesaj, YAML yerelleştirmesinden).
 - Doğrulama → `ValidationException` (FluentValidation) → 400, alan bazlı liste.
-- Yetki yok → `AuthorizationException` → 403.
+- Yetki yok → `AuthorizationException` → 403. İstisna (spec 0004): giriş, kilit ve geçersiz/süresi dolmuş oturum da
+  `AuthorizationException` ile atılır ama **401** döner (kimlik doğrulanamadı); seçili okul olmadan okul gerektiren
+  uç 403 alır.
 - Kayıt yok **veya başka kiracıya/yetkisiz şubeye ait** → **404** ("var ama sizin değil" bilgisi sızdırılmaz).
 - Beklenmeyen → 500; yanıtta yalnızca genel mesaj + `traceId`. Stack trace, SQL, kişisel veri **asla** yanıtta olmaz.
 - Loglarda kişisel veri maskelenir (`docs/security.md`).
