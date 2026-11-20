@@ -333,3 +333,21 @@ it("velide 'Mesai saatlerim' yok", async () => {
   expect(screen.getByRole("button", { name: "Mesajlar" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Mesai saatlerim" })).toBeNull();
 });
+
+it("yeni mesaj: kişiler alınamazsa hata + 'Tekrar dene' yeniden yükler", async () => {
+  let calls = 0;
+  fakeApi({
+    "GET /api/conversations": () => json(200, []),
+    "GET /api/conversations/contacts": () =>
+      ++calls === 1 ? json(500, {}) : json(200, { asGuardian: [{ studentId: "c1", studentName: "Can Ak", teachers: [] }], asTeacher: [] }),
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Mesajlar" }));
+  await fireEvent.press(await screen.findByRole("button", { name: "Yeni mesaj" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Kişiler alınamadı.");
+  await fireEvent.press(screen.getByRole("button", { name: "Tekrar dene" }));
+  expect(await screen.findByRole("button", { name: "Can Ak" })).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(calls).toBe(2);
+});

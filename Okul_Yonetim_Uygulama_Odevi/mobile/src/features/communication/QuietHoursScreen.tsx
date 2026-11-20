@@ -26,13 +26,14 @@ interface Props {
 /**
  * "Mesai saatlerim" (spec 0011 gereksinim 6; AC-9, AC-13 — öğretmen): başlangıç ve bitiş "SS:DD" (Türkiye saati, 15 dk
  * adım), gün düğmeleri (Pzt…Paz; erişilebilirlik etiketi tam gün adı ve seçili durumu). Alan hatası varsa istek gitmez;
- * kaydedince "Kaydedildi"; "Sessiz modu kapat" ile kapatılır. Saat seçici paketi yok (plan Risks 7). İçerik kayar, "Geri"
+ * kaydedince "Kaydedildi"; "Sessiz modu kapat" ile kapatılır; yükleme hatasında "Tekrar dene". Saat seçici paketi yok (plan Risks 7). İçerik kayar, "Geri"
  * altta sabit.
  */
 export function QuietHoursScreen({ client, onBack }: Props) {
   const styles = useAuthStyles();
   const own = useCommunicationStyles();
   const [state, setState] = useState<State>({ kind: "loading" });
+  const [reload, setReload] = useState(0);
   const [start, setStart] = useState("08:00");
   const [end, setEnd] = useState("17:00");
   const [days, setDays] = useState<WeekDay[]>(DEFAULT_DAYS);
@@ -62,7 +63,7 @@ export function QuietHoursScreen({ client, onBack }: Props) {
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, reload]);
 
   const failure = (outcome: { unreachable: boolean; message?: string | null }) =>
     setResult({ error: true, text: outcome.unreachable ? t("communication.unreachable") : outcome.message ?? t("quiet.saveError") });
@@ -126,7 +127,21 @@ export function QuietHoursScreen({ client, onBack }: Props) {
         {t("quiet.title")}
       </Text>
       {state.kind === "loading" && <Text style={styles.notice}>{t("quiet.loading")}</Text>}
-      {state.kind === "error" && <Text style={styles.error} accessibilityRole="alert">{state.message}</Text>}
+      {state.kind === "error" && (
+        <>
+          <Text style={styles.error} accessibilityRole="alert">{state.message}</Text>
+          <Pressable
+            style={styles.button}
+            accessibilityRole="button"
+            onPress={() => {
+              setState({ kind: "loading" });
+              setReload((n) => n + 1);
+            }}
+          >
+            <Text style={styles.buttonText}>{t("communication.retry")}</Text>
+          </Pressable>
+        </>
+      )}
       {state.kind === "ready" && (
         <ScrollView style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
           <Text style={styles.notice}>{state.enabled ? t("quiet.on") : t("quiet.off")}</Text>

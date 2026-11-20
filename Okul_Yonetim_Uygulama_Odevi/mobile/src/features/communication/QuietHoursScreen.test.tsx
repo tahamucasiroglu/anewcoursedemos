@@ -20,8 +20,11 @@ function json(status: number, body: unknown): Response {
 
 let puts: unknown[] = [];
 
-function fakeApi(current: unknown, roles = ["Teacher"]) {
+let quietGets = 0;
+
+function fakeApi(current: unknown, roles = ["Teacher"], failFirstGet = false) {
   puts = [];
+  quietGets = 0;
   globalThis.fetch = (async (request: Request) => {
     const path = new URL(request.url).pathname;
     if (path === "/api/system-health") {
@@ -37,7 +40,7 @@ function fakeApi(current: unknown, roles = ["Teacher"]) {
     }
 
     if (path === "/api/me/quiet-hours" && request.method === "GET") {
-      return json(200, current);
+      return ++quietGets === 1 && failFirstGet ? json(500, {}) : json(200, current);
     }
 
     if (path === "/api/me/quiet-hours" && request.method === "PUT") {
@@ -125,4 +128,15 @@ it("'Sessiz modu kapat' kapatır", async () => {
   expect(screen.getByText("Sessiz mod kapalı: her veli mesajı bildirim üretir.")).toBeTruthy();
   expect(puts).toEqual([{ enabled: false, start: null, end: null, days: null }]);
   expect(screen.queryByRole("button", { name: "Sessiz modu kapat" })).toBeNull();
+});
+
+it("yükleme hatası: uyarı ve 'Tekrar dene' kayıtlı saatleri getirir", async () => {
+  fakeApi({ enabled: true, start: "09:00", end: "15:00", days: ["Monday"] }, ["Teacher"], true);
+  await openQuietHours();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Mesai saatleri alınamadı.");
+  await fireEvent.press(screen.getByRole("button", { name: "Tekrar dene" }));
+  expect(await screen.findByDisplayValue("09:00")).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(quietGets).toBe(2);
 });

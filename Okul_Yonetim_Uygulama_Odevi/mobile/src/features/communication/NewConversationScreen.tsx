@@ -28,11 +28,12 @@ interface Props {
 
 /**
  * "Yeni mesaj" (spec 0011 UX): veli çocuk → öğretmen, öğretmen sınıf → öğrenci → veli seçer (iki rolü olan ikisini de görür);
- * seçilen kişiyle o öğrenci için konuşma açılır (varsa var olan döner). Seçenekler kayar (ScrollView), "Geri" altta sabit.
+ * seçilen kişiyle o öğrenci için konuşma açılır (varsa var olan döner). Yükleme hatasında "Tekrar dene". Seçenekler kayar (ScrollView), "Geri" altta sabit.
  */
 export function NewConversationScreen({ client, onStarted, onBack }: Props) {
   const styles = useAuthStyles();
   const [state, setState] = useState<State>({ kind: "loading" });
+  const [reload, setReload] = useState(0);
   const [step, setStep] = useState<Step>({ kind: "root" });
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export function NewConversationScreen({ client, onStarted, onBack }: Props) {
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, reload]);
 
   const start = async (studentId: string, person: ContactPerson) => {
     setStarting(true);
@@ -135,7 +136,21 @@ export function NewConversationScreen({ client, onStarted, onBack }: Props) {
         {t("contacts.title")}
       </Text>
       {state.kind === "loading" && <Text style={styles.notice}>{t("contacts.loading")}</Text>}
-      {state.kind === "error" && <Text style={styles.error} accessibilityRole="alert">{state.message}</Text>}
+      {state.kind === "error" && (
+        <>
+          <Text style={styles.error} accessibilityRole="alert">{state.message}</Text>
+          <Pressable
+            style={styles.button}
+            accessibilityRole="button"
+            onPress={() => {
+              setState({ kind: "loading" });
+              setReload((n) => n + 1);
+            }}
+          >
+            <Text style={styles.buttonText}>{t("communication.retry")}</Text>
+          </Pressable>
+        </>
+      )}
       {state.kind === "ready" && (
         <ScrollView testID="contacts-list" style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
           {body()}
