@@ -57,6 +57,8 @@ public sealed class StudentRegistrationTests
     [InlineData("birthDate", "1926-11-19", "Doğum tarihi 100 yıldan eski olamaz")]
     [InlineData("schoolNumber", "123456789012345678901", "Okul numarası en fazla 20 karakter olabilir")]
     [InlineData("schoolNumber", "12-A", "Okul numarası yalnızca harf ve rakam içerebilir")]
+    [InlineData("schoolNumber", "Ş12", "Okul numarası yalnızca harf ve rakam içerebilir")] // yalnız ASCII (A-4; 0009 VERIFY V-1)
+    [InlineData("schoolNumber", "ı5", "Okul numarası yalnızca harf ve rakam içerebilir")]
     [InlineData("healthNote", "LONG_NOTE", "Sağlık notu en fazla 1000 karakter olabilir")]
     [InlineData("allergy", "LONG_ALLERGY", "Alerji en fazla 500 karakter olabilir")]
     public async Task Create_InvalidField_Returns400WithFieldMessage_AndCreatesNothing(string field, string? value, string message)

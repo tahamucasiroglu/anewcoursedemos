@@ -129,6 +129,20 @@ it("ekleme formu: alan hataları istek göndermeden ve alanla ilişkili; sunucu 
   expect(api.sent("POST", /^\/api\/admin\/students$/)).toHaveLength(1);
 });
 
+it.each(["Ş12", "ı5"])("okul numarasında Türkçe harf (%s): yalnız ASCII harf ve rakam — alan hatası, istek gitmez (A-4; 0009 VERIFY V-1)", async (number) => {
+  const api = await openPage([["GET", /^\/api\/admin\/students$/, () => json(200, page([]))]]);
+  await userEvent.click(await screen.findByRole("button", { name: "Öğrenci ekle" }));
+  await userEvent.type(screen.getByLabelText("Ad soyad"), "Yeni Öğrenci");
+  await userEvent.type(screen.getByLabelText("Doğum tarihi"), "2018-05-04");
+  await userEvent.type(screen.getByLabelText("Okul numarası"), number);
+  await userEvent.selectOptions(screen.getByLabelText("Şube"), branchA.id);
+  await userEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+
+  expect(screen.getByLabelText("Okul numarası")).toHaveAccessibleDescription("Okul numarası yalnızca harf ve rakam içerebilir");
+  expect(screen.getByLabelText("Okul numarası")).toHaveAttribute("aria-invalid", "true");
+  expect(api.sent("POST", /^\/api\/admin\/students$/)).toHaveLength(0);
+});
+
 it("ekleme yalnızca klavyeyle: gönderilirken düğme kilitli, kayıttan sonra kart açılır", async () => {
   let release: () => void = () => undefined;
   const api = await openPage([
