@@ -4,7 +4,7 @@ using OkulYonetim.Domain.Attendance;
 
 namespace OkulYonetim.Application.Features.Attendance;
 
-/// <summary>Yoklama kaydı: gün zorunlu; öğrenci listesi zorunlu, en fazla <see cref="MaxEntries"/>, her öğrenci bir kez; durum Var/Yok/Geç.</summary>
+/// <summary>Yoklama kaydı: gün ve ekranın sürümü (0 ya da daha büyük) zorunlu; öğrenci listesi zorunlu, en fazla <see cref="MaxEntries"/>, her öğrenci bir kez; durum Var/Yok/Geç.</summary>
 public sealed class SaveTodayAttendanceCommandValidator : AbstractValidator<SaveTodayAttendanceCommand>
 {
     public const int MaxEntries = 500;
@@ -12,6 +12,7 @@ public sealed class SaveTodayAttendanceCommandValidator : AbstractValidator<Save
     public SaveTodayAttendanceCommandValidator(ILocalizationService localization)
     {
         this.RuleFor(c => c.Day).NotNull().WithMessage(_ => localization.AttendanceText(AttendanceMessages.DayRequired));
+        this.RuleFor(c => c.Version).NotNull().GreaterThanOrEqualTo(0).WithMessage(_ => localization.AttendanceText(AttendanceMessages.VersionRequired));
         this.RuleFor(c => c.Entries).NotNull().WithMessage(_ => localization.AttendanceText(AttendanceMessages.EntriesRequired));
         this.RuleFor(c => c.Entries!.Count).LessThanOrEqualTo(MaxEntries)
             .When(c => c.Entries is not null)

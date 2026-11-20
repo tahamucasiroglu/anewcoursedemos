@@ -23,11 +23,11 @@ function student(i: number, status = "Present") {
 }
 
 function sheet(overrides: Record<string, unknown> = {}) {
-  return { classroomId: "k1", classroomName: "5-A", branchName: "Merkez", day: "2026-11-20", isSchoolDay: true, isSaved: false, savedTime: null, students: [student(1), student(2)], ...overrides };
+  return { classroomId: "k1", classroomName: "5-A", branchName: "Merkez", day: "2026-11-20", isSchoolDay: true, isSaved: false, savedTime: null, students: [student(1), student(2)], version: 0, ...overrides };
 }
 
 function result(overrides: Record<string, unknown> = {}) {
-  return { present: 37, absent: 3, late: 0, notifiedGuardians: 3, studentsWithoutGuardian: 0, savedTime: "12:00", ...overrides };
+  return { present: 37, absent: 3, late: 0, notifiedGuardians: 3, studentsWithoutGuardian: 0, savedTime: "12:00", version: 1, ...overrides };
 }
 
 function json(status: number, body: unknown): Response {
@@ -123,7 +123,7 @@ describe.each(["light", "dark"] as const)("Yoklama — %s tema", (mode) => {
     expect(taps).toBe(5);
     expect(screen.getByTestId("attendance-saved")).toHaveTextContent("Kaydedildi, saat 12:00");
     const put = requests.find((r) => r.method === "PUT");
-    expect(put?.body).toMatchObject({ day: "2026-11-20" });
+    expect(put?.body).toMatchObject({ day: "2026-11-20", version: 0 });
     const entries = (put?.body as { entries: { studentId: string; status: string }[] }).entries;
     expect(entries).toHaveLength(40);
     expect(entries.filter((e) => e.status === "Absent").map((e) => e.studentId)).toEqual(["s3", "s17", "s40"]);
@@ -165,6 +165,32 @@ describe.each(["light", "dark"] as const)("Yoklama — %s tema", (mode) => {
     expect(screen.getByRole("radio", { name: "Öğrenci 02: Geç" }).props.accessibilityState).toMatchObject({ checked: true });
     expect(screen.getByRole("button", { name: "Kaydet (1 yok, 1 geç)" })).toBeTruthy();
   });
+});
+
+it("eski ekran (0010 review F-1): 409 → liste yenilenir, sunucunun mesajı gösterilir; sonraki kayıt yeni sürümle gider", async () => {
+  let opened = 0;
+  const requests = fakeApi({
+    classrooms: () => json(200, [classA]),
+    today: () => json(200, ++opened === 1 ? sheet() : sheet({ isSaved: true, savedTime: "09:10", students: [student(1, "Absent"), student(2)], version: 1 })),
+    save: async (request) => {
+      const body = (await request.clone().json()) as { version: number };
+      return body.version === 0
+        ? json(409, { detail: "Yoklama siz açtıktan sonra başka biri tarafından kaydedildi; liste yenilendi." })
+        : json(200, result({ present: 2, absent: 0, notifiedGuardians: 1, version: 2 }));
+    },
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Yoklama al" }));
+  await fireEvent.press(await screen.findByRole("button", { name: "Kaydet" }));
+
+  expect(await screen.findByText("Yoklama siz açtıktan sonra başka biri tarafından kaydedildi; liste yenilendi.")).toBeTruthy();
+  expect(screen.getByRole("radio", { name: "Öğrenci 01: Yok" }).props.accessibilityState).toMatchObject({ checked: true });
+  expect(screen.getByText("Kaydedildi, saat 09:10")).toBeTruthy();
+
+  await fireEvent.press(screen.getByRole("radio", { name: "Öğrenci 01: Var" }));
+  await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
+  expect(await screen.findByText("Kaydedildi — 2 var, 0 yok, 0 geç. 1 veliye bildirim gitti.")).toBeTruthy();
+  expect(requests.filter((r) => r.method === "PUT").map((r) => (r.body as { version: number }).version)).toEqual([0, 1]);
 });
 
 it("okul günü değil: liste yok, kaydet yok", async () => {

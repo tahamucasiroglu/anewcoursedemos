@@ -53,7 +53,7 @@ public sealed class AttendanceSpeedTests
 
             (Guid, string)[] absent = [.. students.Skip(run * 3).Take(3).Select(id => (id, "Absent"))];
             watch.Restart();
-            var (saveStatus, result, _) = await SaveAsync(client, c.Teacher, c.ClassroomId, Marks(students, absent));
+            var (saveStatus, result, _) = await SaveAsync(client, c.Teacher, c.ClassroomId, Marks(students, absent), version: view.GetProperty("version").GetInt32());
             saves.Add(watch.Elapsed);
             saveStatus.ShouldBe(HttpStatusCode.OK);
             result.GetProperty("absent").GetInt32().ShouldBe(3);

@@ -127,6 +127,7 @@ export {
   fillText,
   initialMarks,
   saveBody,
+  isStaleSave,
   saveButtonText,
   saveResultText,
   setMark,

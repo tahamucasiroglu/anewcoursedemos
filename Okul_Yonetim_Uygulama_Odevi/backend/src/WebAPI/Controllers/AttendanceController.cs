@@ -9,7 +9,8 @@ namespace OkulYonetim.WebAPI.Controllers;
 
 /// <summary>
 /// Yoklama uçları (spec 0010; okul seçilmiş olmalı): "Sınıflarım", bugünkü liste ve kaydetme. Öğretmen rolü olmayan 403;
-/// atanmadığı, başka şubenin/okulun ya da pasif sınıf 404. Gün kuralı ve okul günü ihlali 400.
+/// atanmadığı, başka şubenin/okulun ya da pasif sınıf 404. Gün kuralı ve okul günü ihlali 400. Ekran açıldıktan sonra
+/// başkası kaydettiyse ve bu kayıt bir durumu değiştirecekse 409 (hiçbir şey yazılmaz; istemci listeyi yeniler).
 /// </summary>
 [ApiController]
 [Produces("application/json")]
@@ -42,9 +43,10 @@ public sealed class AttendanceController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AttendanceSaveResult>> Save(Guid id, SaveAttendanceRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return this.Ok(await this.sender.Send(new SaveTodayAttendanceCommand(id, request.Day, request.Entries), cancellationToken).ConfigureAwait(false));
+        return this.Ok(await this.sender.Send(new SaveTodayAttendanceCommand(id, request.Day, request.Entries, request.Version), cancellationToken).ConfigureAwait(false));
     }
 }

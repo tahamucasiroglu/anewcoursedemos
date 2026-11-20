@@ -3,7 +3,9 @@ namespace OkulYonetim.Domain.Attendance;
 /// <summary>
 /// Bir sınıfın bir günlük yoklaması (spec 0010 C-1): kurum, şube, sınıf, gün (Türkiye günü), son kaydeden kişi, ilk kayıt ve
 /// son güncelleme zamanı. Sınıf + gün tekildir; aynı gün yeniden kaydetmek bu satırı günceller (düzeltme). Öğrenci
-/// durumları <see cref="AttendanceEntry"/> satırlarındadır.
+/// durumları <see cref="AttendanceEntry"/> satırlarındadır. <see cref="Revision"/> her kayıtta bir artar (ilk kayıt 1):
+/// ekranın açıldığı sürüm kaydetmede geri gelir, arada başkası kaydettiyse eski ekran üzerine yazamaz (iyimser eşzamanlılık,
+/// 0010 review F-1).
 /// </summary>
 public sealed class AttendanceSheet
 {
@@ -17,6 +19,7 @@ public sealed class AttendanceSheet
         this.RecordedBy = recordedBy;
         this.CreatedAt = createdAt;
         this.UpdatedAt = updatedAt;
+        this.Revision = 1;
     }
 
     public Guid Id { get; private set; }
@@ -35,6 +38,8 @@ public sealed class AttendanceSheet
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    public int Revision { get; private set; }
+
     public static AttendanceSheet Start(Guid tenantId, Guid branchId, Guid classroomId, DateOnly day, Guid recordedBy, DateTimeOffset now) =>
         new(Guid.CreateVersion7(now), tenantId, branchId, classroomId, day, recordedBy, now, now);
 
@@ -42,5 +47,6 @@ public sealed class AttendanceSheet
     {
         this.RecordedBy = recordedBy;
         this.UpdatedAt = now;
+        this.Revision++;
     }
 }

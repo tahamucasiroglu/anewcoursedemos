@@ -20,6 +20,8 @@ public static class AttendanceMessages
     public const string StudentRepeated = "StudentRepeated";
     public const string StatusInvalid = "StatusInvalid";
     public const string TooManyRequests = "TooManyRequests";
+    public const string VersionRequired = "VersionRequired";
+    public const string StaleSheet = "StaleSheet";
 
     private static readonly string[] Locales = ["tr"];
 

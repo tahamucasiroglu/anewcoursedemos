@@ -43,9 +43,18 @@ export function countMarks(marks: AttendanceMarks): AttendanceCounts {
   return counts;
 }
 
-/** Kaydetme isteğinin gövdesi: gün (sunucunun verdiği bugün) ve her öğrencinin durumu. */
-export function saveBody(day: string, marks: AttendanceMarks) {
-  return { day, entries: Object.entries(marks).map(([studentId, status]) => ({ studentId, status })) };
+/**
+ * Kaydetme isteğinin gövdesi: gün (sunucunun verdiği bugün), her öğrencinin durumu ve ekranın açıldığı yoklama sürümü
+ * (listedeki `version`, kayıttan sonra sonucun `version`'u). Arada başkası kaydettiyse sunucu 409 döner; ekran
+ * listeyi yeniler (0010 review F-1).
+ */
+export function saveBody(day: string, marks: AttendanceMarks, version: number | string) {
+  return { day, entries: Object.entries(marks).map(([studentId, status]) => ({ studentId, status })), version: Number(version) };
+}
+
+/** Kaydetme 409 döndü mü (ekran eski: başkası arada kaydetti)? */
+export function isStaleSave(outcome: { ok: boolean; unreachable?: boolean; status?: number }): boolean {
+  return !outcome.ok && outcome.unreachable === false && outcome.status === 409;
 }
 
 /** "{n}" gibi yer tutucuları doldurur (tek geçiş; değerdeki süslü parantez yeniden açılmaz). */

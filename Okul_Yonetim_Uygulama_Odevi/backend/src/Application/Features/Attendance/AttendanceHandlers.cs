@@ -23,7 +23,7 @@ namespace OkulYonetim.Application.Features.Attendance;
 /// Kaydetme sınıf + gün başına sıradadır (<c>attendance:&lt;sınıf&gt;:&lt;gün&gt;</c>): eşzamanlı iki kayıttan ikincisi
 /// sırayı bekler, ilkinin yazdığını görür ve "değişen öğrenci yok" bulur — tek yoklama, tek bildirim (AC-11). Liste
 /// sınıfın o anki kayıtlı öğrencileridir; listede olmayan öğrenci için gelen durum yok sayılır, gelmeyen öğrenci "Var"
-/// sayılır (plan Risks 7). Yoklama ve veli bildirimleri (Communication komutu) aynı işlemde yazılır; e-postalar ancak
+/// sayılır (plan Risks 7). Ekranın sürümü güncel değilse ve kayıt bir durumu değiştirecekse 409 (0010 review F-1). Yoklama ve veli bildirimleri (Communication komutu) aynı işlemde yazılır; e-postalar ancak
 /// commit'ten sonra kuyruğa girer. Her kayıt/düzeltme audit'li (sınıf, gün, değişen öğrenci sayısı); loglarda yalnızca
 /// kimlik ve sayı.
 /// </para>
@@ -98,7 +98,7 @@ public sealed class AttendanceHandlers :
         SchoolDay day = await this.sender.Send(new GetSchoolDayQuery(classroom.TermId), cancellationToken).ConfigureAwait(false);
         if (!day.IsSchoolDay)
         {
-            return new AttendanceSheetView(classroom.Id, classroom.Name, classroom.BranchName, day.Today, false, false, null, []);
+            return new AttendanceSheetView(classroom.Id, classroom.Name, classroom.BranchName, day.Today, false, false, null, [], 0);
         }
 
         IReadOnlyList<RosterStudent> roster = await this.sender.Send(new ListClassroomRosterQuery(classroom.Id), cancellationToken).ConfigureAwait(false);
@@ -114,7 +114,8 @@ public sealed class AttendanceHandlers :
             true,
             sheet is not null,
             sheet is null ? null : this.Clock(sheet.UpdatedAt),
-            [.. roster.Select(s => new AttendanceStudentRow(s.Id, s.FullName, statuses.GetValueOrDefault(s.Id, AttendanceStatus.Present).ToString()))]);
+            [.. roster.Select(s => new AttendanceStudentRow(s.Id, s.FullName, statuses.GetValueOrDefault(s.Id, AttendanceStatus.Present).ToString()))],
+            sheet?.Revision ?? 0);
     }
 
     public async Task<AttendanceSaveResult> Handle(SaveTodayAttendanceCommand request, CancellationToken cancellationToken)
@@ -155,7 +156,26 @@ public sealed class AttendanceHandlers :
             DateTimeOffset now = this.timeProvider.GetUtcNow();
             AttendanceSheet? sheet = await this.attendance.FindSheetAsync(classroom.Id, day.Today, cancellationToken).ConfigureAwait(false);
             bool isNew = sheet is null;
-            Dictionary<Guid, AttendanceEntry> existing = [];
+            Dictionary<Guid, AttendanceEntry> existing = sheet is null
+                ? []
+                : (await this.attendance.ListEntriesAsync(sheet.Id, cancellationToken).ConfigureAwait(false)).ToDictionary(e => e.StudentId);
+
+            // İyimser eşzamanlılık (0010 review F-1): ekran açıldıktan sonra başkası kaydettiyse ve bu kayıt bir öğrencinin
+            // durumunu değiştirecekse eski ekran üzerine yazamaz — hiçbir şey yazılmaz, istemci listeyi yeniler. Aynı durumları
+            // gönderen eski ekran (iki öğretmen aynı yoklamayı aldı) bir şeyi geri almadığı için kabul edilir (AC-11).
+            int current = sheet?.Revision ?? 0;
+            if (request.Version!.Value != current
+                && roster.Any(s => !existing.TryGetValue(s.Id, out AttendanceEntry? e) || e.Status != requested.GetValueOrDefault(s.Id, AttendanceStatus.Present)))
+            {
+                this.logger.LogInformation(
+                    "Yoklama eski ekrandan kaydedilmek istendi, reddedildi: sınıf {ClassroomId}, gün {Day}, ekran sürümü {Version}, güncel sürüm {Current}",
+                    classroom.Id,
+                    day.Today,
+                    request.Version.Value,
+                    current);
+                throw new ConflictException(await this.localization.AttendanceTextAsync(AttendanceMessages.StaleSheet).ConfigureAwait(false));
+            }
+
             if (sheet is null)
             {
                 sheet = AttendanceSheet.Start(tenantId, classroom.BranchId, classroom.Id, day.Today, userId, now);
@@ -163,7 +183,6 @@ public sealed class AttendanceHandlers :
             }
             else
             {
-                existing = (await this.attendance.ListEntriesAsync(sheet.Id, cancellationToken).ConfigureAwait(false)).ToDictionary(e => e.StudentId);
                 sheet.Touch(userId, now);
             }
 
@@ -234,7 +253,7 @@ public sealed class AttendanceHandlers :
                 changed,
                 absent.Count,
                 notices.NotifiedGuardians);
-            return new AttendanceSaveResult(present, absent.Count, late, notices.NotifiedGuardians, notices.StudentsWithoutGuardian, this.Clock(now));
+            return new AttendanceSaveResult(present, absent.Count, late, notices.NotifiedGuardians, notices.StudentsWithoutGuardian, this.Clock(now), sheet.Revision);
         }
     }
 

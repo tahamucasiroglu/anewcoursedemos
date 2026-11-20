@@ -69,12 +69,25 @@ public static class AttendanceTestData
     public static Task<(HttpStatusCode Status, JsonElement Body, string Raw)> TodayAsync(HttpClient client, string token, Guid classroomId) =>
         CallAsync(client, HttpMethod.Get, $"/api/attendance/classrooms/{classroomId}/today", token);
 
-    public static Task<(HttpStatusCode Status, JsonElement Body, string Raw)> SaveAsync(HttpClient client, string token, Guid classroomId, IEnumerable<(Guid StudentId, string Status)> entries, string day = Today) =>
-        CallAsync(client, HttpMethod.Put, $"/api/attendance/classrooms/{classroomId}/today", token, new
+    /// <summary>
+    /// Kaydetme. <paramref name="version"/> ekranın açıldığı yoklama sürümüdür; verilmezse ekran şimdi açılmış sayılır (önce
+    /// bugünkü liste okunur, okunamazsa 0) — eski ekranı sınayan testler sürümü açıkça verir (0010 review F-1).
+    /// </summary>
+    public static async Task<(HttpStatusCode Status, JsonElement Body, string Raw)> SaveAsync(HttpClient client, string token, Guid classroomId, IEnumerable<(Guid StudentId, string Status)> entries, string day = Today, int? version = null)
+    {
+        if (version is null)
+        {
+            var (status, body, _) = await TodayAsync(client, token, classroomId);
+            version = status == HttpStatusCode.OK ? body.GetProperty("version").GetInt32() : 0;
+        }
+
+        return await CallAsync(client, HttpMethod.Put, $"/api/attendance/classrooms/{classroomId}/today", token, new
         {
             day,
             entries = entries.Select(e => new { studentId = e.StudentId, status = e.Status }).ToArray(),
+            version,
         });
+    }
 
     /// <summary>Sınıfın bütün öğrencileri "Present"; verilenler kendi durumlarıyla.</summary>
     public static IEnumerable<(Guid StudentId, string Status)> Marks(IEnumerable<Guid> all, params (Guid StudentId, string Status)[] overrides) =>

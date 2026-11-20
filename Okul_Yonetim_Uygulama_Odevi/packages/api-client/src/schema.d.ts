@@ -2281,6 +2281,15 @@ export interface paths {
                         "application/json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         post?: never;
@@ -3476,7 +3485,8 @@ export interface components {
         };
         /**
          * @description Kaydetme sonucu (spec 0010 gereksinim 4): var/yok/geç sayıları, bu kayıtla bildirim giden veli sayısı, velisi kayıtlı
-         *     olmayan devamsız öğrenci sayısı ve kayıt saati (Türkiye saatiyle `SS:DD`). Metni istemci kurar.
+         *     olmayan devamsız öğrenci sayısı, kayıt saati (Türkiye saatiyle `SS:DD`) ve yoklamanın yeni sürümü (aynı ekrandan
+         *     sonraki düzeltme bunu gönderir). Metni istemci kurar.
          */
         AttendanceSaveResult: {
             /** Format: int32 */
@@ -3490,10 +3500,13 @@ export interface components {
             /** Format: int32 */
             studentsWithoutGuardian: number | string;
             savedTime: string;
+            /** Format: int32 */
+            version: number | string;
         };
         /**
          * @description Bugünkü yoklama ekranı (spec 0010 gereksinim 3, 5): sınıf, şube, gün (Türkiye günü), okul günü mü, kaydedildi mi ve
          *     kayıt saati (Türkiye saatiyle `SS:DD`), öğrenciler Türkçe ad sırasıyla. Okul günü değilse öğrenci listesi boştur.
+         *     `Version` yoklamanın sürümüdür (henüz kaydedilmediyse 0); kaydetmede aynen geri gönderilir (0010 review F-1).
          */
         AttendanceSheetView: {
             /** Format: uuid */
@@ -3506,6 +3519,8 @@ export interface components {
             isSaved: boolean;
             savedTime: null | string;
             students: components["schemas"]["AttendanceStudentRow"][];
+            /** Format: int32 */
+            version: number | string;
         };
         /** @description Yoklama listesindeki öğrenci ve durumu (`Present`, `Absent`, `Late`; kayıt yoksa `Present`). */
         AttendanceStudentRow: {
@@ -3898,11 +3913,16 @@ export interface components {
             role: string;
             branchIds: string[];
         };
-        /** @description Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı) ve öğrenci durumları. */
+        /**
+         * @description Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı), öğrenci durumları ve ekranın
+         *     açıldığı yoklama sürümü (listedeki `version`; henüz kaydedilmemişse 0).
+         */
         SaveAttendanceRequest: {
             /** Format: date */
             day: null | string;
             entries: null | components["schemas"]["AttendanceEntryInput"][];
+            /** Format: int32 */
+            version: null | number | string;
         };
         /**
          * @description Okul takvimi (spec 0008 gereksinim 8, herkes salt okunur): güncel ya da yaklaşan dönem (yoksa boş) ve o dönemin

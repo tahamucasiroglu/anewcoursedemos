@@ -5,6 +5,7 @@ import {
   countMarks,
   fillText,
   initialMarks,
+  isStaleSave,
   saveBody,
   saveButtonText,
   saveResultText,
@@ -29,7 +30,8 @@ interface Props {
  * Bir sınıfın bugünkü yoklaması (spec 0010, web): öğrenciler Türkçe ad sırasıyla, her birinde Var / Yok / Geç (yerel radio
  * — klavyeyle ok tuşları, etiket "Ayşe Yılmaz: Yok"); düğmede sayılar ("Kaydet (3 yok, 1 geç)"), onay iletişimi yok.
  * Durumlar: yükleniyor, erişim yok, okul günü değil, öğrenci yok (kaydet kapalı), kaydedildi (saat), kaydediliyor (düğme
- * kilitli), hata (işaretler korunur, tekrar Kaydet). Sonuç ve hatalar duyurulur.
+ * kilitli), hata (işaretler korunur, tekrar Kaydet). Sonuç ve hatalar duyurulur. Ekran açıldıktan sonra başkası kaydettiyse
+ * (409) liste yeniden okunur ve sunucunun mesajı gösterilir (0010 review F-1).
  */
 export function AttendanceList({ client, classroomId }: Props) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -75,7 +77,18 @@ export function AttendanceList({ client, classroomId }: Props) {
   const { sheet, marks, saving, result, saveError } = state;
   const save = async () => {
     setState({ ...state, saving: true, result: null, saveError: null });
-    const outcome = await callApi(client.PUT("/api/attendance/classrooms/{id}/today", { params: { path: { id: classroomId } }, body: saveBody(sheet.day, marks) }));
+    const outcome = await callApi(client.PUT("/api/attendance/classrooms/{id}/today", { params: { path: { id: classroomId } }, body: saveBody(sheet.day, marks, sheet.version) }));
+    if (isStaleSave(outcome)) {
+      const notice = (!outcome.ok && !outcome.unreachable && outcome.message) || t("attendance.stale");
+      const fresh = await callApi(client.GET("/api/attendance/classrooms/{id}/today", { params: { path: { id: classroomId } } }));
+      setState(
+        fresh.ok
+          ? { kind: "ready", sheet: fresh.data, marks: initialMarks(fresh.data.students), saving: false, result: null, saveError: notice }
+          : { kind: "error", message: fresh.unreachable ? t("attendance.unreachable") : fresh.message ?? t("attendance.loadError"), forbidden: false },
+      );
+      return;
+    }
+
     setState((s) => {
       if (s.kind !== "ready") {
         return s;
@@ -83,7 +96,7 @@ export function AttendanceList({ client, classroomId }: Props) {
 
       if (outcome.ok) {
         const text = saveResultText(outcome.data, { saved: t("attendance.result"), withoutGuardian: t("attendance.withoutGuardian") });
-        return { ...s, saving: false, result: text, sheet: { ...s.sheet, isSaved: true, savedTime: outcome.data.savedTime } };
+        return { ...s, saving: false, result: text, sheet: { ...s.sheet, isSaved: true, savedTime: outcome.data.savedTime, version: outcome.data.version } };
       }
 
       return { ...s, saving: false, saveError: outcome.unreachable ? t("attendance.unreachable") : outcome.message ?? t("attendance.saveError") };

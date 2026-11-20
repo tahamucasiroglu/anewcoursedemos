@@ -146,6 +146,7 @@
   "attendance.result": "Kaydedildi — {present} var, {absent} yok, {late} geç. {notified} veliye bildirim gitti.",
   "attendance.withoutGuardian": "{n} öğrencinin velisi kayıtlı değil.",
   "attendance.saveError": "Kaydedilemedi; işaretleriniz korunuyor. Tekrar deneyin.",
+  "attendance.stale": "Yoklama siz açtıktan sonra başka biri tarafından kaydedildi; liste yenilendi.",
   "attendance.forbidden": "Bu sayfaya erişiminiz yok.",
   "notices.link": "Bildirimler",
   "notices.linkCount": "Bildirimler ({n})",

@@ -12,11 +12,11 @@ export function student(i: number, status = "Present") {
 }
 
 export function sheet(overrides: Record<string, unknown> = {}) {
-  return { classroomId: "k1", classroomName: "5-A", branchName: "Merkez", day: "2026-11-20", isSchoolDay: true, isSaved: false, savedTime: null, students: [student(1), student(2)], ...overrides };
+  return { classroomId: "k1", classroomName: "5-A", branchName: "Merkez", day: "2026-11-20", isSchoolDay: true, isSaved: false, savedTime: null, students: [student(1), student(2)], version: 0, ...overrides };
 }
 
 export function saveResult(overrides: Record<string, unknown> = {}) {
-  return { present: 1, absent: 1, late: 0, notifiedGuardians: 2, studentsWithoutGuardian: 0, savedTime: "12:00", ...overrides };
+  return { present: 1, absent: 1, late: 0, notifiedGuardians: 2, studentsWithoutGuardian: 0, savedTime: "12:00", version: 1, ...overrides };
 }
 
 export function attendanceFake(routes: Route[], meOverrides: Record<string, unknown> | (() => Record<string, unknown>) = { roles: ["Teacher"] }) {

@@ -88,6 +88,10 @@ namespace OkulYonetim.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("recorded_by");
 
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");

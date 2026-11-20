@@ -67,7 +67,7 @@ describe.each(["light", "dark"] as const)("%s tema", (mode) => {
     expect(await screen.findByText("Kaydedildi — 1 var, 1 yok, 1 geç. 2 veliye bildirim gitti. 1 öğrencinin velisi kayıtlı değil.")).toHaveAttribute("role", "status");
     expect(screen.getByText("Kaydedildi, saat 12:00")).toBeInTheDocument();
     const put = api.requests.find((r) => r.method === "PUT")!;
-    expect(put.body).toEqual({ day: "2026-11-20", entries: [{ studentId: "s1", status: "Present" }, { studentId: "s2", status: "Absent" }, { studentId: "s3", status: "Late" }] });
+    expect(put.body).toEqual({ day: "2026-11-20", entries: [{ studentId: "s1", status: "Present" }, { studentId: "s2", status: "Absent" }, { studentId: "s3", status: "Late" }], version: 0 });
   });
 
   it("birden çok sınıf: Sınıflarım durumla → yoklama (kayıtlı saat ve durumlar) → Sınıflarıma dön listeyi yeniler", async () => {
@@ -105,6 +105,32 @@ it("kayıt hatası: işaretler korunur, tekrar Kaydet başarılı", async () => 
   expect(screen.getByRole("radio", { name: "Öğrenci 01: Yok" })).toBeChecked();
   await userEvent.click(screen.getByRole("button", { name: "Kaydet (1 yok)" }));
   expect(await screen.findByText("Kaydedildi — 1 var, 1 yok, 0 geç. 2 veliye bildirim gitti.")).toBeInTheDocument();
+});
+
+it("eski ekran (0010 review F-1): 409 → liste yenilenir, sunucunun mesajı duyurulur; sonraki kayıt yeni sürümle gider", async () => {
+  let opened = 0;
+  window.location.hash = "#/yoklama";
+  const api = start([
+    ["GET", /^\/api\/attendance\/classrooms$/, () => json(200, [classA])],
+    ["GET", today, () => json(200, ++opened === 1 ? sheet() : sheet({ isSaved: true, savedTime: "09:10", students: [student(1, "Absent"), student(2)], version: 1 }))],
+    ["PUT", today, async (request) => {
+      const body = (await request.clone().json()) as { version: number };
+      return body.version === 0
+        ? json(409, { detail: "Yoklama siz açtıktan sonra başka biri tarafından kaydedildi; liste yenilendi." })
+        : json(200, saveResult({ present: 2, absent: 0, version: 2 }));
+    }],
+  ]);
+
+  expect(await screen.findByRole("radio", { name: "Öğrenci 01: Var" })).toBeChecked();
+  await userEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Yoklama siz açtıktan sonra başka biri tarafından kaydedildi; liste yenilendi.");
+  expect(screen.getByRole("radio", { name: "Öğrenci 01: Yok" })).toBeChecked();
+  expect(screen.getByText("Kaydedildi, saat 09:10")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("radio", { name: "Öğrenci 01: Var" }));
+  await userEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+  expect(await screen.findByText("Kaydedildi — 2 var, 0 yok, 0 geç. 2 veliye bildirim gitti.")).toBeInTheDocument();
+  expect(api.requests.filter((r) => r.method === "PUT").map((r) => (r.body as { version: number }).version)).toEqual([0, 1]);
 });
 
 it("okul günü değil: liste ve kaydet yok", async () => {

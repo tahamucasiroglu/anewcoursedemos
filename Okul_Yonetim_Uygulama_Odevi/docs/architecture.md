@@ -89,7 +89,9 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   (`classrooms`, `classrooms/{id}/today` GET/PUT): her istekte veritabanından Öğretmen rolü (yoksa 403), sınıfa atama ve
   sınıfın şubesinde öğretmenlik (yoksa 404) denetlenir — `AttendanceGuard`. "Bugün" sunucunun Türkiye günüdür
   (`SchoolCalendar`); istemcinin günü yalnızca doğrulanır; dönem dışı ve takvimde tatil olan gün okul günü değildir. Kayıt
-  sınıf + gün başına sıradadır (`attendance:<sınıf>:<gün>`); yoklama ve veli bildirimleri aynı işlemde yazılır. Attendance
+  sınıf + gün başına sıradadır (`attendance:<sınıf>:<gün>`); yoklama ve veli bildirimleri aynı işlemde yazılır. İyimser
+  eşzamanlılık: liste yoklamanın sürümünü (`version`, yoksa 0) verir, kayıt onu geri gönderir; sıra içinde sürüm eskiyse ve
+  kayıt bir durumu değiştirecekse 409, hiçbir şey yazılmaz, istemci listeyi yeniler (review F-1). Attendance
   veliye doğrudan yazmaz: "yok" durumu değişen öğrencileri Communication'ın `NotifyAttendanceChangesCommand`'ına verir
   (veliye giden tek çıkış; spec 0011 duyuru/mesajı bu modülde genişletir). Bildirim veli + öğrenci + gün tekildir
   (`GuardianNotice`: `Absent` / `Corrected`); e-postalar commit'ten sonra `IEmailOutbox`'a bırakılır. Modüller arası okumalar

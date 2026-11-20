@@ -2461,6 +2461,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -3582,7 +3592,8 @@
           "late",
           "notifiedGuardians",
           "studentsWithoutGuardian",
-          "savedTime"
+          "savedTime",
+          "version"
         ],
         "type": "object",
         "properties": {
@@ -3628,9 +3639,17 @@
           },
           "savedTime": {
             "type": "string"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Kaydetme sonucu (spec 0010 gereksinim 4): var/yok/geç sayıları, bu kayıtla bildirim giden veli sayısı, velisi kayıtlı\nolmayan devamsız öğrenci sayısı ve kayıt saati (Türkiye saatiyle `SS:DD`). Metni istemci kurar."
+        "description": "Kaydetme sonucu (spec 0010 gereksinim 4): var/yok/geç sayıları, bu kayıtla bildirim giden veli sayısı, velisi kayıtlı\nolmayan devamsız öğrenci sayısı, kayıt saati (Türkiye saatiyle `SS:DD`) ve yoklamanın yeni sürümü (aynı ekrandan\nsonraki düzeltme bunu gönderir). Metni istemci kurar."
       },
       "AttendanceSheetView": {
         "required": [
@@ -3641,7 +3660,8 @@
           "isSchoolDay",
           "isSaved",
           "savedTime",
-          "students"
+          "students",
+          "version"
         ],
         "type": "object",
         "properties": {
@@ -3676,9 +3696,17 @@
             "items": {
               "$ref": "#/components/schemas/AttendanceStudentRow"
             }
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Bugünkü yoklama ekranı (spec 0010 gereksinim 3, 5): sınıf, şube, gün (Türkiye günü), okul günü mü, kaydedildi mi ve\nkayıt saati (Türkiye saatiyle `SS:DD`), öğrenciler Türkçe ad sırasıyla. Okul günü değilse öğrenci listesi boştur."
+        "description": "Bugünkü yoklama ekranı (spec 0010 gereksinim 3, 5): sınıf, şube, gün (Türkiye günü), okul günü mü, kaydedildi mi ve\nkayıt saati (Türkiye saatiyle `SS:DD`), öğrenciler Türkçe ad sırasıyla. Okul günü değilse öğrenci listesi boştur.\n`Version` yoklamanın sürümüdür (henüz kaydedilmediyse 0); kaydetmede aynen geri gönderilir (0010 review F-1)."
       },
       "AttendanceStudentRow": {
         "required": [
@@ -4968,7 +4996,8 @@
       "SaveAttendanceRequest": {
         "required": [
           "day",
-          "entries"
+          "entries",
+          "version"
         ],
         "type": "object",
         "properties": {
@@ -4987,9 +5016,18 @@
             "items": {
               "$ref": "#/components/schemas/AttendanceEntryInput"
             }
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı) ve öğrenci durumları."
+        "description": "Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı), öğrenci durumları ve ekranın\naçıldığı yoklama sürümü (listedeki `version`; henüz kaydedilmemişse 0)."
       },
       "SchoolCalendarView": {
         "required": [

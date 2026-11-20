@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   callApi,
   initialMarks,
+  isStaleSave,
   saveBody,
   saveResultText,
   setMark,
@@ -52,7 +53,8 @@ export function useMyClassrooms(client: Client) {
 /**
  * Bir sınıfın bugünkü yoklaması (spec 0010): liste (kayıtlı durumlar ya da herkes "Var"), dokunuşla durum değişimi ve tek
  * seferde kaydetme. Kaydederken düğme kilitli; hata olursa işaretler korunur (tekrar dene = yeniden Kaydet). Erişim yoksa
- * (403/404) "Bu sayfaya erişiminiz yok.".
+ * (403/404) "Bu sayfaya erişiminiz yok.". Ekran açıldıktan sonra başkası kaydettiyse (409) liste yeniden okunur ve sunucunun
+ * mesajı gösterilir (0010 review F-1).
  */
 export function useAttendanceSheet(client: Client, classroomId: string) {
   const [state, setState] = useState<SheetState>({ kind: "loading" });
@@ -93,8 +95,19 @@ export function useAttendanceSheet(client: Client, classroomId: string) {
     const { sheet, marks } = state;
     setState({ ...state, saving: true, saveError: null, result: null });
     const outcome = await callApi(
-      client.PUT("/api/attendance/classrooms/{id}/today", { params: { path: { id: classroomId } }, body: saveBody(sheet.day, marks) }),
+      client.PUT("/api/attendance/classrooms/{id}/today", { params: { path: { id: classroomId } }, body: saveBody(sheet.day, marks, sheet.version) }),
     );
+    if (isStaleSave(outcome)) {
+      const notice = (!outcome.ok && !outcome.unreachable && outcome.message) || t("attendance.stale");
+      const fresh = await callApi(client.GET("/api/attendance/classrooms/{id}/today", { params: { path: { id: classroomId } } }));
+      setState(
+        fresh.ok
+          ? { kind: "ready", sheet: fresh.data, marks: initialMarks(fresh.data.students), saving: false, result: null, saveError: notice }
+          : { kind: "error", message: failure(fresh), forbidden: false },
+      );
+      return;
+    }
+
     setState((s) => {
       if (s.kind !== "ready") {
         return s;
@@ -102,7 +115,7 @@ export function useAttendanceSheet(client: Client, classroomId: string) {
 
       if (outcome.ok) {
         const result = saveResultText(outcome.data, { saved: t("attendance.result"), withoutGuardian: t("attendance.withoutGuardian") });
-        return { ...s, saving: false, result, sheet: { ...s.sheet, isSaved: true, savedTime: outcome.data.savedTime } };
+        return { ...s, saving: false, result, sheet: { ...s.sheet, isSaved: true, savedTime: outcome.data.savedTime, version: outcome.data.version } };
       }
 
       const message = outcome.unreachable ? t("attendance.unreachable") : outcome.message ?? t("attendance.saveError");
