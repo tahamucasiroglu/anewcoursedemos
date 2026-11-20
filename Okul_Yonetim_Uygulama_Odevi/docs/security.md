@@ -118,6 +118,16 @@
     öğrenci adı loglanmaz (kaydetme komutu `ILoggableRequest` değildir — T9; loglarda yalnızca sınıf, yoklama ve kişi
     kimlikleri ve sayılar). Velinin bildirim listesi yalnızca kendi **bağı** olan çocuklarınındır. Yoklama kaydı ve düzeltmesi
     audit'te: kim, yoklama, ayrıntıda sınıf + gün + değişen öğrenci sayısı, IP.
+13. **Veli iletişimi (spec 0011):** rol ve ilişki her istekte veritabanından (`CommunicationGuard`): duyuru yayını kurucu ya da
+    öğretmen (öğretmen okul/şube kapsamında 403, atanmadığı sınıf ya da o sınıfta olmayan öğrenci 404); veli yalnızca alıcısı
+    olduğu duyuruyu görür ve yalnızca kapsanan ve kendisine bağlı çocuğu için onay verir; sonuçları (okundu, okumayanlar,
+    onay) yalnızca yayınlayan ve kurucu görür. Konuşma öğretmen–veli–öğrenci ilişkisi sürerken açılır ve yazılır (öğretmen
+    sınıfa atanmış ve şubesinde etkin Öğretmen, veli öğrenciye bağlı ve okulda etkin); konuşmayı yalnızca iki taraf okur —
+    kurucu dahil başkası 404. Duyuru, onay sorusu ve mesaj metni düz saklanır (alan şifrelemesi TC/sağlık/IBAN için; plan 0011
+    Risks 5), **loglanmaz** ve audit'e yazılmaz: metin taşıyan komutlar `ILoggableRequest` değildir (T9), handler logları ve
+    sahte bildirim göndericisinin satırları yalnızca tür ve kimlik içerir. Duyuru yayını, onay cevabı (verme/değiştirme) ve
+    mesai saatleri değişikliği audit'te (kim, hangi kayıt, ayrıntıda yalnızca kapsam/sayı/cevap/saat, IP); tek tek mesajlar
+    audit'e değil Information loguna (kimliklerle) yazılır.
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

@@ -39,7 +39,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Organization | Kurum, şube, sınıf seviyesi, sınıf, dönem, akademik takvim (spec 0008), sınıf öğretmeni bağı (spec 0010), ders programı; güncel dönem ve okul günü hesabı (`SchoolCalendar`, Türkiye günü; tatil günü okul günü değildir) | Tenant, Branch, GradeLevel, Classroom, Term, CalendarEntry, ClassroomTeacher, Timetable |
 | Students | Öğrenci kartı, veli bağı (kardeşlik bağdan çıkar), sağlık notu/alerji (şifreli), teslim alabilecek kişiler, velinin "Çocuklarım" görünümü (spec 0009); sonra nakil, Excel/e-Okul içe aktarma | Student, StudentGuardian, PickupPerson, Transfer |
 | Attendance | Günlük yoklama (spec 0010): öğretmenin "Sınıflarım"ı, bugünkü liste, Var/Yok/Geç kaydı ve düzeltmesi (yalnızca bugün, Türkiye günü); devamsızlık değişikliklerini Communication'a verir | AttendanceSheet, AttendanceEntry |
-| Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı**; spec 0010: veli devamsızlık bildirimi (uygulama içi + e-posta kuyruğu) ve velinin Bildirimler listesi | Announcement, Message, ConsentForm, GuardianNotice |
+| Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** (bildirim kapısı); spec 0010: veli devamsızlık bildirimi (uygulama içi + e-posta kuyruğu) ve velinin Bildirimler listesi; spec 0011: duyuru + okundu + onay formu, öğretmen–veli konuşması, mesai saatleri | Announcement, AnnouncementRecipient, AnnouncementStudent, ConsentResponse, Conversation, ConversationMessage, QuietHours, GuardianNotice |
 | Academics | Ödev, teslim durumu, not | Assignment, Grade |
 | Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması | FeeSchedule, InstallmentPlan, Payment, Ledger, Receipt |
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
@@ -99,6 +99,23 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `ListClassroomRosterQuery`, etkin veliler `ListGuardianContactsQuery`, velinin çocukları `ListMyChildrenQuery`. Veli uçları
   `api/notices` (GET, POST `read`): bildirimler yalnızca kişinin **bağlı** çocuklarınınkiler (bütün şubeler); okunmamış sayısı
   `/api/me`'de (`unreadNoticeCount`). Audit kaydı kısa bir `Detail` (yalnızca kimlik ve sayı) taşıyabilir.
+- Veli iletişimi (spec 0011): **bildirim kapısı** — veliye (ve mesai içindeyse öğretmene) giden her bildirim Communication'ın
+  `GuardianNotifier`'ından, kayıt commit edildikten **sonra** çıkar: bildirimler `IPushNotifier` portuna (MVP'de gerçek push
+  yok — `LoggingPushNotifier` yalnızca tür ve kimlikleri loglar; B-6), e-postalar `IEmailOutbox` kuyruğuna; gönderici hatası
+  yalnızca kimliklerle Warning loglanır, asıl işlem başarılı kalır. Diğer modüller iki adımla kullanır: işlem içinde kendi
+  Communication komutu (yoklama: `NotifyAttendanceChangesCommand` → `GuardianNotice`), commit sonrası
+  `DeliverNotificationsCommand` (B-30 ile yoklamanın e-posta adımı da buraya taşındı). Uçlar `api/announcements` (GET kurucu/
+  öğretmen listesi, POST yayın, GET `feed` velinin akışı — duyurular + "Okul bildirimi" olarak `GuardianNotice`'ler, 20'lik
+  sayfa; GET `{id}` ayrıntı — alıcı velinin ilk açışı okundu; GET `{id}/results`; POST `{id}/consent`), `api/conversations`
+  (GET, GET `contacts`, POST başlat, GET/POST `{id}/messages`) ve `api/me/quiet-hours` (GET, PUT). Rol ve ilişki her istekte
+  `CommunicationGuard`'da: öğretmen–sınıf ilişkisi yoklamayla aynı sınıf öğretmeni bağıdır; veli–öğrenci bağ üzerinden;
+  rol yoksa 403, ilişki yoksa 404. Yeni tablolar yalnızca kurum filtreli (velinin çocukları farklı şubelerde olabilir — BR-2);
+  şube/ilişki duvarı guard'da, filtre delme yok. Alıcılar yayın anında yazılır (`AnnouncementRecipient`, veli başına bir
+  satır); onay cevabı öğrenci başına tek satır, duyuru + öğrenci sırasında (`consent:<duyuru>:<öğrenci>`). Sessiz mod
+  `QuietHours.IsWorkingTime` ile Türkiye saatinde (`SchoolCalendar.TurkeyTime`). Okunmamış duyuru ve mesaj sayıları
+  `/api/me`'de (`unreadAnnouncementCount`, `unreadMessageCount`). Modüller arası okumalar: `ListStudentBriefsQuery` (kapsam
+  öğrencileri), `ListGuardianContactsQuery`, `ListClassroomRosterQuery`, `ListMyChildrenQuery`, `GetBranchByIdQuery`,
+  `GetClassroomByIdQuery`.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).

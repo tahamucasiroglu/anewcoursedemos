@@ -45,9 +45,12 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Yoklama (`Attendance`) | Bir sınıfın bir günlük devam kaydı (`AttendanceSheet` + öğrenci başına Var / Yok / Geç; spec 0010) | Yalnızca bugün (Türkiye günü) alınır ve aynı gün düzeltilir; ertesi gün kilitlenir. Dönem dışı ve takvimde tatil olan gün okul günü değildir; hafta sonu engellenmez. Ders saati bazlı yoklama ders programıyla gelir |
 | Sınıf öğretmeni (`ClassroomTeacher`) | Kurucunun bir sınıfa atadığı, o sınıfın şubesinde Öğretmen rolü olan kişi (spec 0010) | Öğretmen yalnızca atandığı sınıfların yoklamasını alır; bir sınıfın birden çok öğretmeni olabilir. Rolü alınan ya da pasifleştirilen kişinin ataması bir sonraki istekte geçersizdir |
 | Veli bildirimi (`GuardianNotice`) | "Yok" kaydedilen öğrencinin okulda etkin her velisine giden uygulama içi bildirim (+ e-posta kuyruğu; spec 0010) | Veli + öğrenci + gün başına bir tane; "Yok" düzeltilince "düzeltildi" olur ve veliye düzeltme bildirimi gider. Yalnızca öğrenci adı, gün, okul adı ve durum içerir |
-| Duyuru (`Announcement`) | Kurum/şube/sınıf/öğrenci kapsamlı yayın; okundu bilgisi | — |
-| Mesaj (`Message`) | Öğretmen-veli birebir yazışma | Veliler arası grup sohbeti **yok** (kapsam dışı) |
-| Onay formu (`ConsentForm`) | Gezi izni, etkinlik katılımı gibi veli onayı | KVKK rızasından (`ConsentRecord`) farklı |
+| Duyuru (`Announcement`) | Kurum/şube/sınıf/öğrenci kapsamlı yayın; okundu bilgisi (spec 0011) | Kurucu her kapsamda, öğretmen yalnızca kendi sınıfı ve o sınıfın öğrencisi; yayınlandıktan sonra değiştirilmez/silinmez. Alıcılar yayın anında belirlenir (`AnnouncementRecipient`, veli başına bir satır); okundu = velinin ayrıntıyı ilk açışı |
+| Mesaj (`ConversationMessage`) | Öğretmen-veli birebir yazışma; bir öğrenci bağlamında, öğretmen–veli–öğrenci üçlüsü için tek konuşma (`Conversation`, spec 0011) | Konuşmayı yalnızca iki taraf görür; ilişki bitince eski konuşma okunur, yeni mesaj gönderilemez. Veliler arası grup sohbeti **yok** (kapsam dışı) |
+| Onay formu (`ConsentResponse`) | Gezi izni, etkinlik katılımı gibi veli onayı: duyurunun "onay iste" hâli — tek soru, son gün (spec 0011) | Cevap **öğrenci başına** (son cevap geçerli, kim/ne zaman kayıtlı); son gün Türkiye saatiyle 23:59'a kadar. KVKK rızasından (`ConsentRecord`) farklı |
+| Mesai saatleri (`QuietHours`) | Öğretmenin tek mesai aralığı (Türkiye saati, 15 dk adım) ve iş günleri (spec 0011) | Tanımsızsa sessiz mod kapalı. Mesai dışında veli mesajı iletilir, öğretmene bildirim gitmez; birikmiş bildirim de sonra gönderilmez (BR-8) |
+| Bildirim kapısı | Veliye (ve mesai içinde öğretmene) giden her bildirimin tek çıkışı: Communication'ın `GuardianNotifier`'ı (spec 0011) | Kayıttan sonra çalışır; gönderici hatası işlemi bozmaz. MVP'de gerçek push yok (B-6) |
+| Okul bildirimi | Diğer modüllerin kapıdan verdiği öğrenciye özel bildirim (bugün: yoklamanın `GuardianNotice`'i); velinin duyuru akışında "Okul bildirimi" olarak görünür | Yayınlayan "okul"; yalnızca o öğrencinin bağlı velilerine görünür |
 | Ödev / Not (`Assignment` / `Grade`) | Ödev, teslim durumu; yazılı/sözlü not | — |
 | Ücret tarifesi / Taksit planı (`FeeSchedule` / `InstallmentPlan`) | Yıllık ücret ve taksitlere bölünmesi | İndirim ve burs tanımları dahil |
 | Tahsilat (`Payment`) | Alınan ödeme | MVP'de manuel kayıt (sağlayıcı yok) |
@@ -73,6 +76,7 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 - **BR-13 (spec 0008):** Sınıf bir döneme, bir şubeye ve bir seviyeye bağlıdır; dönemi ve şubesi sonradan değişmez; aynı dönem ve şubede aynı adlı (harf farkı gözetmeden) iki etkin sınıf, aynı okulda aynı adlı iki etkin seviye olamaz; seviye ve sınıf silinmez, pasifleştirilir; pasif şube ve pasif seviye yeni sınıfta seçilemez. Kurucu olmayan kişi yalnızca atandığı etkin şubelerin sınıflarını görür.
 - **BR-14 (spec 0009):** Veli yalnızca kendisine bağlı ve "ayrıldı" olmayan öğrencileri görür; aynı şubedeki başka öğrenci ona "bulunamadı"dır (veli rolü şube düzeyinde olsa da). Öğrencinin şubesi kayıttan sonra değişmez (nakil ayrı spec); okul numarası okulda harf farkı gözetmeden tekildir (ayrılan öğrenci numarasını tutar); bir öğrencinin en fazla 4 velisi, 10 teslim alabilecek kişisi olur; öğrenci silinmez.
 - **BR-9:** Bir öğrenci bir dönemde tek bir şubede ve tek bir sınıfta kayıtlıdır; şube değişikliği nakil kaydıdır, geçmiş korunur.
+- **BR-15 (spec 0011):** Duyurunun alıcıları yayın anında kapsamdaki öğrencilerin okulda etkin velileridir (sonradan sınıfa giren öğrencinin velisi o duyuruyu görmez); okundu veli başına sayılır. Onay formu cevabı öğrenci başınadır: öğrencinin herhangi bir velisi verir, son güne kadar değiştirir, son cevap geçerlidir.
 
 ## Key domain invariants
 - Bir kurumun verisi başka bir kuruma **asla** görünmez (BR-4).
