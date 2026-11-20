@@ -12,7 +12,8 @@ public sealed class SaveTodayAttendanceCommandValidator : AbstractValidator<Save
     public SaveTodayAttendanceCommandValidator(ILocalizationService localization)
     {
         this.RuleFor(c => c.Day).NotNull().WithMessage(_ => localization.AttendanceText(AttendanceMessages.DayRequired));
-        this.RuleFor(c => c.Version).NotNull().GreaterThanOrEqualTo(0).WithMessage(_ => localization.AttendanceText(AttendanceMessages.VersionRequired));
+        this.RuleFor(c => c.Version).NotNull().WithMessage(_ => localization.AttendanceText(AttendanceMessages.VersionRequired))
+            .GreaterThanOrEqualTo(0).WithMessage(_ => localization.AttendanceText(AttendanceMessages.VersionRequired));
         this.RuleFor(c => c.Entries).NotNull().WithMessage(_ => localization.AttendanceText(AttendanceMessages.EntriesRequired));
         this.RuleFor(c => c.Entries!.Count).LessThanOrEqualTo(MaxEntries)
             .When(c => c.Entries is not null)

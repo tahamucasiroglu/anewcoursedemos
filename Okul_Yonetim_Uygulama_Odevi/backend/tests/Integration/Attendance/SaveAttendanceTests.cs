@@ -84,6 +84,25 @@ public sealed class SaveAttendanceTests
         (await SheetCountAsync(factory, c.ClassroomId)).ShouldBe(0);
     }
 
+    [Fact]
+    public async Task Save_MissingVersion_IsRejectedWithTurkishMessage()
+    {
+        using OkulApiFactory factory = Factory(this.database, new CapturingOutbox());
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+
+        var (status, body, _) = await CallAsync(client, HttpMethod.Put, $"/api/attendance/classrooms/{c.ClassroomId}/today", c.Teacher, new
+        {
+            day = Today,
+            entries = new[] { new { studentId = ali, status = "Absent" } },
+        });
+
+        status.ShouldBe(HttpStatusCode.BadRequest);
+        Messages(body).ShouldContain("Ekranın yoklama sürümü eksik; listeyi yenileyin");
+        (await SheetCountAsync(factory, c.ClassroomId)).ShouldBe(0);
+    }
+
     private static Dictionary<Guid, string> Statuses(JsonElement view) =>
         view.GetProperty("students").EnumerateArray().ToDictionary(s => s.GetProperty("studentId").GetGuid(), s => s.GetProperty("status").GetString()!);
 }
