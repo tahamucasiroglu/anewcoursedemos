@@ -8,14 +8,14 @@ import { WelcomeScreen } from "./WelcomeScreen";
 
 /** Mobil oturum ekranı seçici: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004). */
 export function AuthGate() {
-  const { state, login, selectSchool, switchSchool, logout } = useAuthController();
+  const { state, login, retryResume, selectSchool, switchSchool, logout } = useAuthController();
   const styles = useAuthStyles();
 
   switch (state.kind) {
     case "restoring":
       return <Text style={styles.notice}>{t("auth.restoring")}</Text>;
     case "signedOut":
-      return <LoginScreen submitting={state.submitting} expired={state.expired} problem={state.problem} onSubmit={login} />;
+      return <LoginScreen submitting={state.submitting} expired={state.expired} problem={state.problem} onSubmit={login} onRetryResume={retryResume} />;
     case "selectingSchool":
       return <SchoolSelectScreen tenants={state.tenants} selecting={state.selecting} failed={state.failed} onSelect={selectSchool} />;
     case "loadingMe":

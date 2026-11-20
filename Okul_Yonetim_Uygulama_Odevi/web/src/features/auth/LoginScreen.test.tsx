@@ -152,6 +152,23 @@ describe.each(["light", "dark"] as const)("Giriş — %s tema", (mode) => {
 });
 
 describe("Giriş — klavye ve oturum sonu", () => {
+  it("açılışta ulaşılamıyorsa 'Tekrar dene' kayıtlı oturumu yeniden dener; sunucu dönünce hoş geldin gelir (review L-8)", async () => {
+    let up = false;
+    const api = fakeApi({
+      "POST /api/auth/refresh": () => (up ? json(200, tokens()) : new Response(null, { status: 502 })),
+      "GET /api/me": () => json(200, me()),
+    });
+    vi.stubGlobal("fetch", api.fetch);
+    render(<App />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.");
+
+    up = true;
+    await userEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
+
+    expect(await screen.findByRole("heading", { name: "Hoş geldiniz, Ayşe Kurucu" })).toBeInTheDocument();
+    expect(api.paths()).not.toContain("POST /api/auth/login");
+  });
+
   it("açılışta sunucuya ulaşılamıyorsa 'oturum sona erdi' değil 'ulaşılamıyor' gösterir (review L-2)", async () => {
     vi.stubGlobal("fetch", fakeApi({ "POST /api/auth/refresh": () => Promise.reject(new TypeError("Failed to fetch")) }).fetch);
     render(<App />);

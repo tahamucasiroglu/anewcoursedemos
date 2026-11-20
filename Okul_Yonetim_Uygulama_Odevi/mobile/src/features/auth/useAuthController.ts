@@ -37,6 +37,12 @@ export function useAuthController() {
     };
   }, [session, proceed]);
 
+  // Açılışta/oturumda sunucuya ulaşılamadıysa "Tekrar dene": kayıtlı oturumu yeniden dener (review L-8).
+  const retryResume = useCallback(async () => {
+    setState(initialAuthState);
+    await proceed(afterResume(await session.resume()));
+  }, [session, proceed]);
+
   const login = useCallback(
     async (email: string, password: string) => {
       setState({ kind: "signedOut", expired: false, submitting: true, problem: null });
@@ -69,5 +75,5 @@ export function useAuthController() {
     setState(signedOut());
   }, [session]);
 
-  return { state, login, selectSchool, switchSchool, logout };
+  return { state, login, retryResume, selectSchool, switchSchool, logout };
 }

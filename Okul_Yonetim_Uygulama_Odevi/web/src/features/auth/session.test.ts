@@ -109,3 +109,22 @@ it("yenileme anında sunucuya ulaşılamazsa oturum bitmiş sayılmaz: anahtar s
   expect(onExpired).not.toHaveBeenCalled();
   expect(store.value).toBe("kayitli");
 });
+
+it("yenileme ağ geçidinden 502 alırsa oturum bitmiş sayılmaz (Pi'de API yeniden başlarken; review L-6)", async () => {
+  const onExpired = vi.fn();
+  const store = memoryStore("kayitli");
+  const api = fakeApi({
+    "POST /api/auth/login": () => json(200, { ...tokens(), refreshToken: "kayitli" }),
+    "POST /api/auth/refresh": () => new Response("<html>502 Bad Gateway</html>", { status: 502 }),
+    "GET /api/me": () => json(401, {}),
+  });
+  vi.stubGlobal("fetch", api.fetch);
+  const session = new AuthSession({ baseUrl: "http://localhost:5080", delivery: "body", store, onExpired });
+  await session.login("a@ornek.test", "Gizli-Sifre-1");
+
+  await expect(session.me()).rejects.toThrow();
+  expect((await session.resume()).kind).toBe("unreachable");
+
+  expect(onExpired).not.toHaveBeenCalled();
+  expect(store.value).toBe("kayitli");
+});

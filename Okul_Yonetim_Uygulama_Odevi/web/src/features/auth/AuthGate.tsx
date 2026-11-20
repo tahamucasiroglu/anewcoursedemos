@@ -9,13 +9,13 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
-  const { state, login, selectSchool, switchSchool, logout } = useAuthController();
+  const { state, login, retryResume, selectSchool, switchSchool, logout } = useAuthController();
 
   switch (state.kind) {
     case "restoring":
       return <p className="notice" aria-busy="true">{t("auth.restoring")}</p>;
     case "signedOut":
-      return <LoginScreen submitting={state.submitting} expired={state.expired} problem={state.problem} onSubmit={login} />;
+      return <LoginScreen submitting={state.submitting} expired={state.expired} problem={state.problem} onSubmit={login} onRetryResume={retryResume} />;
     case "selectingSchool":
       return <SchoolSelectScreen tenants={state.tenants} selecting={state.selecting} failed={state.failed} onSelect={selectSchool} />;
     case "loadingMe":

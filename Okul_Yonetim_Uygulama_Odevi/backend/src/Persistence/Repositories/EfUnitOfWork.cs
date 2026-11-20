@@ -41,9 +41,16 @@ public sealed class EfUnitOfWork : IUnitOfWork
             await this.context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // İşlem süresince tutulan PostgreSQL kilidi; işlem bitince (commit/rollback) kendiliğinden bırakılır.
+            // İşlem süresince tutulan PostgreSQL kilidi; işlem bitince (commit/rollback) kendiliğinden bırakılır. Sıra
+            // beklemesi en fazla 5 sn (yalnız bu işlem için); aşılırsa istek reddedilir, bağlantı süresiz tutulmaz.
+            await this.context.Database.ExecuteSqlRawAsync("SET LOCAL lock_timeout = '5s'", cancellationToken).ConfigureAwait(false);
             await this.context.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken).ConfigureAwait(false);
             return new EfExclusiveScope(transaction);
+        }
+        catch (Npgsql.PostgresException exception) when (exception.SqlState == Npgsql.PostgresErrorCodes.LockNotAvailable)
+        {
+            await transaction.DisposeAsync().ConfigureAwait(false);
+            throw new ExclusiveLockTimeoutException("Aynı anahtar için sıra 5 sn içinde alınamadı.", exception);
         }
         catch
         {

@@ -12,6 +12,7 @@ public static class IdentityMessages
     public const string InvalidCredentials = "InvalidCredentials";
     public const string AccountLocked = "AccountLocked";
     public const string InvalidSession = "InvalidSession";
+    public const string TooManyRequests = "TooManyRequests";
     public const string TenantNotFound = "TenantNotFound";
     public const string EmailRequired = "EmailRequired";
     public const string EmailInvalid = "EmailInvalid";

@@ -120,6 +120,24 @@ describe.each(["light", "dark"] as const)("Mobil giriş — %s tema", (mode) => 
 });
 
 describe("Mobil oturum", () => {
+  it("açılışta 502 alınırsa anahtar korunur; 'Tekrar dene' oturumu yeniden dener (review L-6, L-8)", async () => {
+    await SecureStore.setItemAsync("okul.refreshToken", "kayitli");
+    let up = false;
+    const api = fakeApi({
+      "POST /api/auth/refresh": () => (up ? json(200, tokens({ refreshToken: "yenileme-2" })) : new Response(null, { status: 502 })),
+      "GET /api/me": () => json(200, me()),
+    });
+    await render(<App />);
+    expect(await screen.findByText("Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.")).toBeTruthy();
+    expect(await SecureStore.getItemAsync("okul.refreshToken")).toBe("kayitli");
+
+    up = true;
+    await fireEvent.press(screen.getByText("Tekrar dene", { exact: true }));
+
+    expect(await screen.findByText("Hoş geldiniz, Ayşe Kurucu")).toBeTruthy();
+    expect(api.paths()).not.toContain("POST /api/auth/login");
+  });
+
   it("gönderilirken düğme kilitli ve 'Giriş yapılıyor…' yazar (review L-3)", async () => {
     fakeApi({ "POST /api/auth/login": () => new Promise<Response>(() => {}) });
     await render(<App />);

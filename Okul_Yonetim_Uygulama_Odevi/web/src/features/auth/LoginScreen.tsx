@@ -7,6 +7,7 @@ interface Props {
   expired: boolean;
   problem: LoginProblem | null;
   onSubmit: (email: string, password: string) => void;
+  onRetryResume: () => void;
 }
 
 /**
@@ -14,7 +15,7 @@ interface Props {
  * sunucu hatası (hatalı bilgi, kilit, hız sınırı) ve "ulaşılamıyor" ekran okuyucuya duyurulur (role=alert).
  * Gönderilirken düğme kilitlidir. "Tekrar dene" aynı bilgilerle yeniden gönderir.
  */
-export function LoginScreen({ submitting, expired, problem, onSubmit }: Props) {
+export function LoginScreen({ submitting, expired, problem, onSubmit, onRetryResume }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LoginFormErrors>({});
@@ -79,7 +80,7 @@ export function LoginScreen({ submitting, expired, problem, onSubmit }: Props) {
           {submitting ? t("auth.submitting") : t("auth.submit")}
         </button>
         {problem?.kind === "unreachable" && !submitting && (
-          <button type="button" className="secondary" onClick={() => submit()}>
+          <button type="button" className="secondary" onClick={() => (problem.resume ? onRetryResume() : submit())}>
             {t("auth.retry")}
           </button>
         )}

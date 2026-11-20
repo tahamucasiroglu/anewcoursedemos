@@ -63,7 +63,7 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
     {
         ArgumentNullException.ThrowIfNull(request);
         string email = EmailAddress.Normalize(request.Email);
-        IExclusiveScope scope = await this.unitOfWork.BeginExclusiveAsync("login:" + email, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.BeginAsync("login:" + email, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             try
@@ -78,6 +78,19 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
                 await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
                 throw;
             }
+        }
+    }
+
+    private async Task<IExclusiveScope> BeginAsync(string key, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await this.unitOfWork.BeginExclusiveAsync(key, cancellationToken).ConfigureAwait(false);
+        }
+        catch (ExclusiveLockTimeoutException)
+        {
+            this.logger.LogWarning("Giriş reddedildi: aynı e-postaya çok sayıda eşzamanlı istek");
+            throw new AuthorizationException(await this.localization.GetAsync(IdentityMessages.TooManyRequests).ConfigureAwait(false));
         }
     }
 

@@ -59,7 +59,17 @@ public sealed class RefreshSessionCommandHandler : IRequestHandler<RefreshSessio
         }
 
         string presentedHash = this.tokens.HashRefreshToken(request.RefreshToken);
-        IExclusiveScope scope = await this.unitOfWork.BeginExclusiveAsync("refresh:" + presentedHash, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope;
+        try
+        {
+            scope = await this.unitOfWork.BeginExclusiveAsync("refresh:" + presentedHash, cancellationToken).ConfigureAwait(false);
+        }
+        catch (ExclusiveLockTimeoutException)
+        {
+            this.logger.LogWarning("Oturum yenileme reddedildi: aynı anahtarla çok sayıda eşzamanlı istek");
+            throw new AuthorizationException(await this.localization.GetAsync(IdentityMessages.TooManyRequests).ConfigureAwait(false));
+        }
+
         await using (scope.ConfigureAwait(false))
         {
             AuthResult? result = await this.TryRefreshAsync(presentedHash, cancellationToken).ConfigureAwait(false);

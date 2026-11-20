@@ -62,7 +62,7 @@ export class AuthSession {
       return { kind: "rejected", status: 401, message: null };
     }
 
-    return this.authenticate(() => this.postRefresh());
+    return this.refreshOutcome();
   }
 
   async selectTenant(tenantId: string): Promise<AuthOutcome> {
@@ -106,6 +106,15 @@ export class AuthSession {
     }
   }
 
+  /**
+   * Yenileme sonucu: yalnızca sunucunun açık reddi (401/400/403) oturumu bitirir. Ağ geçidi/sunucu hatası (5xx, ör. Pi'de
+   * API yeniden başlarken nginx 502) ve 429 geçicidir: "ulaşılamıyor" sayılır, kayıtlı oturum silinmez (review L-6).
+   */
+  private async refreshOutcome(): Promise<AuthOutcome> {
+    const outcome = await this.authenticate(() => this.postRefresh());
+    return outcome.kind === "rejected" && (outcome.status >= 500 || outcome.status === 429) ? { kind: "unreachable" } : outcome;
+  }
+
   private async postRefresh() {
     const refreshToken = this.options.delivery === "body" ? await this.options.store?.get() : null;
     return this.client.POST("/api/auth/refresh", { body: refreshToken ? { refreshToken } : {} });
@@ -114,7 +123,7 @@ export class AuthSession {
   /** Oturumu bir kez yeniler; aynı anda gelen 401'ler aynı yenilemeyi bekler. Sonuç: "ok" | "rejected" | "unreachable". */
   private refresh(): Promise<AuthOutcome["kind"]> {
     this.refreshing ??= (async () => {
-      const outcome = await this.authenticate(() => this.postRefresh());
+      const outcome = await this.refreshOutcome();
       if (outcome.kind === "rejected") {
         this.accessToken = null;
         await this.options.store?.set(null);

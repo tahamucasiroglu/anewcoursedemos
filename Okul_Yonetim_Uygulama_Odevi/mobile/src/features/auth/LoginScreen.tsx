@@ -10,13 +10,14 @@ interface Props {
   expired: boolean;
   problem: LoginProblem | null;
   onSubmit: (email: string, password: string) => void;
+  onRetryResume: () => void;
 }
 
 /**
  * Mobil giriş ekranı (spec 0004): web ile aynı kurallar ve metinler. Alan hataları istek gönderilmeden gösterilir;
  * hatalar ekran okuyucuya duyurulur (accessibilityRole="alert" + canlı bölge). Gönderilirken düğme kilitli.
  */
-export function LoginScreen({ submitting, expired, problem, onSubmit }: Props) {
+export function LoginScreen({ submitting, expired, problem, onSubmit, onRetryResume }: Props) {
   const styles = useAuthStyles();
   const { colors } = useTheme();
   const [email, setEmail] = useState("");
@@ -89,7 +90,7 @@ export function LoginScreen({ submitting, expired, problem, onSubmit }: Props) {
           <Text style={styles.buttonText}>{submitting ? t("auth.submitting") : t("auth.submit")}</Text>
         </Pressable>
         {problem?.kind === "unreachable" && !submitting && (
-          <Pressable style={styles.secondary} onPress={submit} accessibilityRole="button">
+          <Pressable style={styles.secondary} onPress={() => (problem.resume ? onRetryResume() : submit())} accessibilityRole="button">
             <Text style={styles.secondaryText}>{t("auth.retry")}</Text>
           </Pressable>
         )}
