@@ -1,7 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, Text, TextInput, View } from "react-native";
-import { callApi, validateMessage, type AuthSession, type CommunicationFieldError, type ConversationRow, type MessageView } from "@okul/api-client";
+import {
+  callApi,
+  discardVoiceDraft,
+  validateMessage,
+  type AuthSession,
+  type CommunicationFieldError,
+  type ConversationRow,
+  type MessageView,
+  type VoiceMessageDraft,
+} from "@okul/api-client";
 import { t, type TextKey } from "../../i18n/t";
+import { VoiceNoteButton } from "../ai/VoiceNoteButton";
 import { useAuthStyles } from "../auth/useAuthStyles";
 import { useCommunicationStyles } from "./useCommunicationStyles";
 
@@ -21,6 +31,9 @@ interface Props {
  * olur; eski sayfa tekrarsız ve güncel durumun üzerine eklenir, hata verirse not gösterir). Yazma: boş ya da 2000'i aşan
  * mesaj alan hatası verir, istek gitmez; gönderirken düğme kilitli; sunucu hatası duyurulur; öğretmen mesai dışındaysa "mesajınız iletildi" notu. İlişki bittiyse alan kapalı ve "Bu konuşmaya artık mesaj
  * gönderilemez.". Mesajlar kayar (FlatList), yazma alanı ve "Geri" altta sabit.
+ * Spec 0012 (AC-12): öğretmende ve ilişki sürerken "Sesli not" düğmesi; kayıt/dönüştürme sürerken gönder kilitli; gelen taslak
+ * mesaj kutusuna yazılır, üstünde "AI taslağı — göndermeden önce kontrol edin", açılır kaynak döküm ve "Vazgeç" (taslak
+ * silinir). "Gönder" taslağın onayıdır: mesaj öğretmenin son metniyle, taslak kimliğiyle gider. Velide düğme yok.
  */
 export function ConversationScreen({ client, conversationId, onBack }: Props) {
   const styles = useAuthStyles();
@@ -33,6 +46,35 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [olderError, setOlderError] = useState<string | null>(null);
   const [note, setNote] = useState<{ error: boolean; text: string } | null>(null);
+  const [draft, setDraft] = useState<{ id: string; transcript: string } | null>(null);
+  const [showSource, setShowSource] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+
+  const onDraft = useCallback((received: VoiceMessageDraft) => {
+    setDraft({ id: received.draftId, transcript: received.transcript });
+    setText(received.draft);
+    setFieldError(undefined);
+    setNote(null);
+    setShowSource(false);
+  }, []);
+
+  const discard = async () => {
+    if (!draft) {
+      return;
+    }
+
+    setDiscarding(true);
+    const outcome = await discardVoiceDraft(client, draft.id);
+    setDiscarding(false);
+    if (outcome.ok || (!outcome.unreachable && outcome.status === 404)) {
+      setDraft(null);
+      setText("");
+      setNote(null);
+    } else {
+      setNote({ error: true, text: outcome.unreachable ? t("communication.unreachable") : outcome.message ?? t("voice.discardError") });
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -92,9 +134,11 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
     }
 
     setSending(true);
-    const outcome = await callApi(client.POST("/api/conversations/{id}/messages", { params: { path: { id: conversationId } }, body: { body: text.trim() } }));
+    const body = draft ? { body: text.trim(), aiDraftId: draft.id } : { body: text.trim() };
+    const outcome = await callApi(client.POST("/api/conversations/{id}/messages", { params: { path: { id: conversationId } }, body }));
     setSending(false);
     if (outcome.ok) {
+      setDraft(null);
       const sent = outcome.data.message;
       setState((current) => (current.kind === "ready" && !current.messages.some((m) => m.id === sent.id) ? { ...current, messages: [...current.messages, sent] } : current));
       setText("");
@@ -153,13 +197,46 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
             )}
           />
           {!state.canSend && <Text style={styles.error} accessibilityRole="alert">{t("messages.cannotSend")}</Text>}
+          {state.canSend && state.conversation.myRole === "Teacher" && !draft && (
+            <VoiceNoteButton client={client} conversationId={conversationId} onDraft={onDraft} onBusyChange={setVoiceBusy} />
+          )}
+          {draft && (
+            <View testID="ai-draft">
+              <Text style={styles.notice} accessibilityRole="text">
+                {t("voice.draftLabel")}
+              </Text>
+              <Pressable
+                style={styles.secondary}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showSource }}
+                onPress={() => setShowSource((shown) => !shown)}
+              >
+                <Text style={styles.secondaryText}>{showSource ? t("voice.sourceHide") : t("voice.source")}</Text>
+              </Pressable>
+              {showSource && (
+                <Text style={styles.notice} testID="ai-draft-source">
+                  {draft.transcript}
+                </Text>
+              )}
+              <Pressable
+                style={[styles.secondary, discarding && styles.buttonDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel={t("voice.discard")}
+                accessibilityState={{ disabled: discarding || sending, busy: discarding }}
+                disabled={discarding || sending}
+                onPress={() => void discard()}
+              >
+                <Text style={styles.secondaryText}>{t("voice.discard")}</Text>
+              </Pressable>
+            </View>
+          )}
           <TextInput
             style={[styles.input, own.multiline, fieldError && styles.inputInvalid]}
             accessibilityLabel={t("messages.input")}
             accessibilityHint={fieldError ? t(`messages.field.${fieldError}` as TextKey) : undefined}
             value={text}
             onChangeText={setText}
-            editable={state.canSend && !sending}
+            editable={state.canSend && !sending && !voiceBusy}
             multiline
           />
           {fieldError && (
@@ -173,10 +250,10 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
             </Text>
           )}
           <Pressable
-            style={[styles.button, (sending || !state.canSend) && styles.buttonDisabled]}
+            style={[styles.button, (sending || voiceBusy || !state.canSend) && styles.buttonDisabled]}
             accessibilityRole="button"
-            accessibilityState={{ disabled: sending || !state.canSend, busy: sending }}
-            disabled={sending || !state.canSend}
+            accessibilityState={{ disabled: sending || voiceBusy || !state.canSend, busy: sending }}
+            disabled={sending || voiceBusy || !state.canSend}
             onPress={() => void send()}
           >
             <Text style={styles.buttonText}>{sending ? t("messages.sending") : t("messages.send")}</Text>

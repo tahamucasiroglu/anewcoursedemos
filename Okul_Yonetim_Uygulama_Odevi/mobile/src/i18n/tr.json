@@ -258,5 +258,18 @@
   "day.Sunday": "Pazar",
   "communication.unreachable": "Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
   "communication.retry": "Tekrar dene",
-  "communication.welcomeBack": "Hoş geldin'e dön"
+  "communication.welcomeBack": "Hoş geldin'e dön",
+  "voice.record": "Sesli not",
+  "voice.recordHint": "En fazla 60 saniye kaydeder; yazıya döküp mesaj taslağı hazırlar",
+  "voice.stop": "Durdur",
+  "voice.recording": "Kaydediliyor… {n} sn",
+  "voice.converting": "Dönüştürülüyor…",
+  "voice.permissionDenied": "Mikrofon izni verilmedi.",
+  "voice.recordError": "Ses kaydı başlatılamadı.",
+  "voice.error": "Sesli not dönüştürülemedi.",
+  "voice.draftLabel": "AI taslağı — göndermeden önce kontrol edin",
+  "voice.source": "Kaynak: sesli notun dökümü",
+  "voice.sourceHide": "Kaynağı gizle",
+  "voice.discard": "Vazgeç",
+  "voice.discardError": "Taslak silinemedi."
 }

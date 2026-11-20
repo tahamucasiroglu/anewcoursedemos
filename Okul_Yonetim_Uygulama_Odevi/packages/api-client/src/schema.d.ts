@@ -2137,6 +2137,123 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai/voice-message-drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: uuid */
+                        conversationId?: string;
+                    } & {
+                        audio?: components["schemas"]["IFormFile"];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VoiceMessageDraftDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/drafts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/announcements": {
         parameters: {
             query?: never;
@@ -4581,6 +4698,8 @@ export interface components {
             /** Format: int32 */
             sortOrder: null | number | string;
         };
+        /** Format: binary */
+        IFormFile: string;
         /** @description Veli ekleme isteği: ad-soyad, e-posta, isteğe bağlı telefon ve yakınlık (`Mother` / `Father` / `Other`). */
         LinkGuardianRequest: {
             fullName: string;
@@ -4913,9 +5032,11 @@ export interface components {
             /** Format: uuid */
             tenantId: string;
         };
-        /** @description Mesaj (spec 0011): metin (boş olamaz, en fazla 2000 karakter). */
+        /** @description Mesaj (spec 0011): metin (boş olamaz, en fazla 2000 karakter); spec 0012: sesli nottan gelen AI taslağının kimliği (varsa — gönderim taslağın onayıdır). */
         SendMessageRequest: {
             body: null | string;
+            /** Format: uuid */
+            aiDraftId?: null | string;
         };
         /** @description Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum. */
         SiblingRow: {
@@ -5128,6 +5249,15 @@ export interface components {
         UpdateProfileRequest: {
             fullName: null | string;
             phone: null | string;
+        };
+        /** @description Sesli not taslağı yanıtı (spec 0012 AC-1): taslak kimliği (göndermede verilir), kaynak döküm (BR-6), taslak metin (en fazla 1000) ve ses süresi. */
+        VoiceMessageDraftDto: {
+            /** Format: uuid */
+            draftId: string;
+            transcript: string;
+            draft: string;
+            /** Format: double */
+            durationSeconds: number | string;
         };
     };
     responses: never;

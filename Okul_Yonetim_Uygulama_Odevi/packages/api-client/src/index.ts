@@ -196,3 +196,5 @@ export type {
   UnreadGuardianRow,
   WeekDay,
 } from "./communication/communicationForms";
+export { discardVoiceDraft, uploadVoiceNote, VOICE_NOTE_MAX_BYTES, VOICE_NOTE_MAX_SECONDS } from "./ai/voiceNote";
+export type { VoiceMessageDraft, VoiceNoteFile } from "./ai/voiceNote";
