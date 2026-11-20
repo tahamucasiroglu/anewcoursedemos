@@ -48,7 +48,10 @@ public sealed class SchoolDeactivationTests
         deactivated.Body.GetProperty("isActive").GetBoolean().ShouldBeFalse();
         (await StatusAsync(client, HttpMethod.Get, "/api/me", AccessToken(founderInA))).ShouldBe(HttpStatusCode.Unauthorized);
         (await StatusAsync(client, HttpMethod.Get, "/api/me", teacherToken)).ShouldBe(HttpStatusCode.Unauthorized);
-        (await PostAsync(client, "/api/auth/refresh", new { refreshToken = founderInA.GetProperty("refreshToken").GetString() })).Status.ShouldBe(HttpStatusCode.Unauthorized);
+        // Okul seçimi aynı oturumu sürdürür: yenileme anahtarı girişte verilendir (VERIFY V-1: seçim yanıtında anahtar yok).
+        string refreshToken = founderAuth.GetProperty("refreshToken").GetString()!;
+        refreshToken.ShouldNotBeNullOrEmpty();
+        (await PostAsync(client, "/api/auth/refresh", new { refreshToken })).Status.ShouldBe(HttpStatusCode.Unauthorized, "pasif okul seçili oturum yenilenemez");
         JsonElement relogin = await LoginAsync(client, a.FounderEmail);
         relogin.GetProperty("tenants").EnumerateArray().Select(t => t.GetProperty("id").GetGuid()).ShouldBe([b.TenantId]);
         (await CallAsync(client, HttpMethod.Get, "/api/me", AccessToken(relogin))).Body.GetProperty("tenant").GetProperty("id").GetGuid().ShouldBe(b.TenantId, "başka okulu etkilenmez");

@@ -31,6 +31,7 @@ public sealed class PlatformCreateSchoolTests
         FakeTimeProvider time = Clock();
         using OkulApiFactory factory = new(this.database.ConnectionString, timeProvider: time);
         using HttpClient client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Forwarded-For", "203.0.113.99");
         (SchoolSeed admin, string token, _) = await SignedInPlatformAdminAsync(factory, client, time);
         string email = UniqueEmail("yeni-kurucu");
         string name = $"Panel Okulu {Guid.NewGuid():N}";
@@ -48,7 +49,7 @@ public sealed class PlatformCreateSchoolTests
         me.GetProperty("tenant").GetProperty("name").GetString().ShouldBe(name);
         List<AuditEntry> audit = await QueryAsync(factory, c => c.AuditEntries.Where(e => e.TenantId == tenantId && e.Action != AuditAction.LoginSucceeded).ToListAsync());
         audit.Select(e => e.Action).ShouldBe([AuditAction.TenantCreated, AuditAction.BranchCreated, AuditAction.UserCreated, AuditAction.RoleAssigned], ignoreOrder: true);
-        audit.ShouldAllBe(e => e.ActorUserId == admin.FounderId && e.Origin == "platform paneli");
+        audit.ShouldAllBe(e => e.ActorUserId == admin.FounderId && e.Origin == "platform paneli" && e.IpAddress == "203.0.113.99");
     }
 
     [Fact]
@@ -83,6 +84,8 @@ public sealed class PlatformCreateSchoolTests
     [InlineData("Okul", "Merkez", "Ad Soyad", "gecersiz", "Geçerli bir e-posta girin")]
     [InlineData("Okul", "Merkez", "Ad Soyad", "", "E-posta zorunludur")]
     [InlineData("UZUN", "Merkez", "Ad Soyad", "x@ornek.test", "En fazla 100 karakter olabilir")]
+    [InlineData("Okul", "UZUN", "Ad Soyad", "x@ornek.test", "En fazla 100 karakter olabilir")]
+    [InlineData("Okul", "Merkez", "UZUN", "x@ornek.test", "En fazla 100 karakter olabilir")]
     public async Task InvalidFields_AreRejected_AndNothingIsCreated(string school, string branch, string founder, string email, string message)
     {
         FakeTimeProvider time = Clock();
@@ -92,8 +95,10 @@ public sealed class PlatformCreateSchoolTests
         string tag = Guid.NewGuid().ToString("N");
         string schoolName = school switch { "UZUN" => new string('a', 101), "Okul" => $"Okul {tag}", _ => school };
         string founderEmail = email == "x@ornek.test" ? UniqueEmail("hatali") : email;
+        string branchName = branch == "UZUN" ? new string('b', 101) : branch;
+        string founderName = founder == "UZUN" ? new string('c', 101) : founder;
 
-        var result = await CallAsync(client, HttpMethod.Post, Schools, token, new { schoolName, branchName = branch, founderName = founder, founderEmail });
+        var result = await CallAsync(client, HttpMethod.Post, Schools, token, new { schoolName, branchName, founderName, founderEmail });
 
         result.Status.ShouldBe(HttpStatusCode.BadRequest);
         Regex.Unescape(result.Raw).ShouldContain(message);
