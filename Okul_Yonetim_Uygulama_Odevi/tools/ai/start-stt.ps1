@@ -1,11 +1,13 @@
 ﻿# Yerel ses -> metin servisini başlatır (spec 0012, AC-10). Ön planda çalışır; Ctrl+C ile durur.
 # Varsayılan yalnızca bu bilgisayar (127.0.0.1:8765). Yerel ağ demosu: -ListenHost 0.0.0.0 (tools/ai/README.md —
 # Windows güvenlik duvarında yalnızca Pi'nin adresine izin verin).
+# Varsayılan cihaz CPU (int8): 6 GB ekran kartında Ollama (gemma3:4b) ile birlikte GPU'da tutulan Whisper belleği taşırıp
+# metin üretimini ~30 kat yavaşlattı (plan 0012 Build evidence). Kart boşsa: -Device cuda.
 param(
     [string]$ListenHost = "127.0.0.1",
     [int]$Port = 8765,
     [string]$Model = "medium",
-    [ValidateSet("auto", "cuda", "cpu")][string]$Device = "auto"
+    [ValidateSet("auto", "cuda", "cpu")][string]$Device = "cpu"
 )
 
 $ErrorActionPreference = "Stop"
