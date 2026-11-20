@@ -35,6 +35,9 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IClassroomTeacherRepository, ClassroomTeacherRepository>();
         services.AddScoped<IAttendanceRepository, AttendanceRepository>();
         services.AddScoped<IGuardianNoticeRepository, GuardianNoticeRepository>();
+        services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<IQuietHoursRepository, QuietHoursRepository>();
         services.AddScoped<IRoleAssignmentRepository, RoleAssignmentRepository>();
         services.AddScoped<ITenantMembershipRepository, TenantMembershipRepository>();
         services.AddScoped<IMemberDirectory, MemberDirectory>();

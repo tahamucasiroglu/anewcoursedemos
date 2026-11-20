@@ -49,12 +49,14 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
         IReadOnlyList<string> roles = [];
         IReadOnlyList<BranchSummary> branches = [];
         int unreadNotices = 0;
+        CommunicationUnread unread = new(0, 0);
         if (tenant is not null)
         {
             IReadOnlyList<RoleAssignment> assignments = await this.roleAssignments.ListForUserInTenantAsync(user.Id, tenant.Id, cancellationToken).ConfigureAwait(false);
             roles = [.. assignments.Select(a => a.Role).Distinct().Order().Select(r => r.ToString())];
             branches = await this.sender.Send(new GetBranchesQuery(), cancellationToken).ConfigureAwait(false);
             unreadNotices = await this.sender.Send(new CountMyUnreadNoticesQuery(), cancellationToken).ConfigureAwait(false);
+            unread = await this.sender.Send(new CountMyCommunicationUnreadQuery(), cancellationToken).ConfigureAwait(false);
         }
 
         IReadOnlyList<TenantSummary> all = await this.tenantDirectory.ListAsync(user.Id, cancellationToken).ConfigureAwait(false);
@@ -66,6 +68,8 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
             branches,
             all,
             this.currentSession.IsPlatformAdmin,
-            unreadNotices);
+            unreadNotices,
+            unread.Announcements,
+            unread.Messages);
     }
 }

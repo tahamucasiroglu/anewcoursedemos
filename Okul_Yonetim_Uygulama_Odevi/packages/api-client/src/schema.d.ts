@@ -2137,6 +2137,319 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StaffAnnouncementRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishAnnouncementRequest"];
+                    "text/json": components["schemas"]["PublishAnnouncementRequest"];
+                    "application/*+json": components["schemas"]["PublishAnnouncementRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AnnouncementPublished"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/announcements/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeedPage"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/announcements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AnnouncementDetail"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/announcements/{id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AnnouncementResults"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/announcements/{id}/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ConsentAnswerRequest"];
+                    "text/json": components["schemas"]["ConsentAnswerRequest"];
+                    "application/*+json": components["schemas"]["ConsentAnswerRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ConsentChildView"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/attendance/classrooms": {
         parameters: {
             query?: never;
@@ -2990,6 +3303,230 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ConversationRow"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StartConversationRequest"];
+                    "text/json": components["schemas"]["StartConversationRequest"];
+                    "application/*+json": components["schemas"]["StartConversationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ConversationRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversations/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MessageContacts"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conversations/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    before?: string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ConversationThread"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SendMessageRequest"];
+                    "text/json": components["schemas"]["SendMessageRequest"];
+                    "application/*+json": components["schemas"]["SendMessageRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MessageSent"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -3392,6 +3929,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/quiet-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuietHoursView"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["QuietHoursRequest"];
+                    "text/json": components["schemas"]["QuietHoursRequest"];
+                    "application/*+json": components["schemas"]["QuietHoursRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuietHoursView"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calendar": {
         parameters: {
             query?: never;
@@ -3491,6 +4115,40 @@ export interface components {
             userId: string;
             existingAccount: boolean;
             temporaryPassword: null | string;
+        };
+        /** @description Duyuru ayrıntısı: başlık, metin, kapsam, yayınlayan, zaman, onay sorusu ve son gün, onay açık mı (son gün 23:59'a kadar, Türkiye saati) ve — velide — kapsamdaki çocuklarının onay durumu. */
+        AnnouncementDetail: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            body: string;
+            scope: string;
+            authorName: string;
+            /** Format: date-time */
+            publishedAt: string;
+            consentQuestion: null | string;
+            /** Format: date */
+            consentDeadline: null | string;
+            consentOpen: boolean;
+            children: components["schemas"]["ConsentChildView"][];
+        };
+        /** @description Yayın sonucu: duyuru kimliği ve alıcı veli sayısı. */
+        AnnouncementPublished: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            recipientCount: number | string;
+        };
+        /** @description Sonuçlar: alıcı ve okuyan veli sayısı ("X / Y veli okudu"), okumayan veliler (ad + çocuk adları) ve onay formunda öğrenci bazında onay/ret/cevapsız. */
+        AnnouncementResults: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            recipientCount: number | string;
+            /** Format: int32 */
+            readCount: number | string;
+            unread: components["schemas"]["UnreadGuardianRow"][];
+            consent: null | components["schemas"]["ConsentSummary"];
         };
         /** @description Kaydedilen yoklamada bir öğrencinin durumu: `Present`, `Absent` ya da `Late`. */
         AttendanceEntryInput: {
@@ -3636,6 +4294,13 @@ export interface components {
             branchName: string;
             classroomName: null | string;
         };
+        /** @description Velinin çocuğu ve çocuğun sınıfında yazılabilecek öğretmenler. */
+        ChildTeachers: {
+            /** Format: uuid */
+            studentId: string;
+            studentName: string;
+            teachers: components["schemas"]["ContactPerson"][];
+        };
         /** @description Yönetim sınıf listesi: gösterilen dönem (istenmediyse güncel, yoksa en yeni dönem; dönem yoksa boş) ve sınıflar. */
         ClassroomAdminList: {
             /** Format: uuid */
@@ -3662,6 +4327,13 @@ export interface components {
             gradeLevelSortOrder: number | string;
             name: string;
             isActive: boolean;
+        };
+        /** @description Öğretmenin sınıfı ve sınıftaki öğrenciler (velileriyle). */
+        ClassroomContacts: {
+            /** Format: uuid */
+            classroomId: string;
+            classroomName: string;
+            students: components["schemas"]["StudentContacts"][];
         };
         /**
          * @description Sınıf açma/düzenleme isteği: dönem, şube, seviye ve ad. Düzenlemede yalnızca ad ve seviye kullanılır; dönem ve şube
@@ -3707,12 +4379,89 @@ export interface components {
             assigned: components["schemas"]["TeacherOption"][];
             candidates: components["schemas"]["TeacherOption"][];
         };
+        /** @description Onay cevabı (spec 0011): öğrenci ve cevap (`Approved` = Onaylıyorum, `Declined` = Onaylamıyorum). */
+        ConsentAnswerRequest: {
+            /** Format: uuid */
+            studentId: null | string;
+            answer: null | string;
+        };
+        /** @description Bir öğrencinin onay durumu: öğrenci, cevap (`Approved`/`Declined`; cevapsızsa boş), cevaplayan velinin adı ve zamanı. */
+        ConsentChildView: {
+            /** Format: uuid */
+            studentId: string;
+            studentName: string;
+            answer: null | string;
+            answeredByName: null | string;
+            /** Format: date-time */
+            answeredAt: null | string;
+        };
+        /** @description Onay formu sonucu: onay, ret ve cevapsız öğrenci sayıları ve öğrenci listesi. */
+        ConsentSummary: {
+            /** Format: int32 */
+            approved: number | string;
+            /** Format: int32 */
+            declined: number | string;
+            /** Format: int32 */
+            pending: number | string;
+            students: components["schemas"]["ConsentChildView"][];
+        };
+        /** @description Yazılabilecek kişi: kimlik ve ad-soyad (e-posta ve telefon verilmez). */
+        ContactPerson: {
+            /** Format: uuid */
+            userId: string;
+            fullName: string;
+        };
+        /** @description Konuşma listesi satırı: öğrenci, karşı taraf, kişinin bu konuşmadaki rolü (`Teacher`/`Guardian`), son mesaj zamanı ve okunmamış sayısı. */
+        ConversationRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            studentId: string;
+            studentName: string;
+            /** Format: uuid */
+            counterpartUserId: string;
+            counterpartName: string;
+            myRole: string;
+            /** Format: date-time */
+            lastMessageAt: string;
+            /** Format: int32 */
+            unreadCount: number | string;
+        };
+        /** @description Konuşma ekranı: konuşma satırı, yeni mesaj gönderilebilir mi (ilişki sürüyor mu), mesajlar (eskiden yeniye) ve daha eski mesaj var mı. */
+        ConversationThread: {
+            conversation: components["schemas"]["ConversationRow"];
+            canSend: boolean;
+            messages: components["schemas"]["MessageView"][];
+            hasMore: boolean;
+        };
         /** @description Panelden okul ekle: okul adı, ilk şube adı, kurucu ad-soyad ve e-posta. */
         CreateSchoolRequest: {
             schoolName: null | string;
             branchName: null | string;
             founderName: null | string;
             founderEmail: null | string;
+        };
+        /** @description Akıştaki satır: tür (`Announcement` ya da `SchoolNotice` — diğer modüllerin "Okul bildirimi"), başlık (okul bildiriminde bildirim metni), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu. */
+        FeedItem: {
+            kind: string;
+            /** Format: uuid */
+            id: string;
+            title: string;
+            authorName: null | string;
+            childNames: string[];
+            /** Format: date-time */
+            at: string;
+            isRead: boolean;
+            requiresConsent: boolean;
+        };
+        /** @description Akışın bir sayfası: satırlar, sayfa numarası, sonraki sayfa var mı ve okunmamış duyuru sayısı. */
+        FeedPage: {
+            items: components["schemas"]["FeedItem"][];
+            /** Format: int32 */
+            page: number | string;
+            hasMore: boolean;
+            /** Format: int32 */
+            unreadCount: number | string;
         };
         /** @description Şifremi unuttum isteği. */
         ForgotPasswordRequest: {
@@ -3827,7 +4576,8 @@ export interface components {
         /**
          * @description "Ben kimim" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,
          *     Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
-         *     platform yöneticisi ve kodla açılmış oturum) ve velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0).
+         *     platform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış
+         *     duyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011).
          */
         MeResponse: {
             fullName: string;
@@ -3843,10 +4593,39 @@ export interface components {
              * @default 0
              */
             unreadNoticeCount: number | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            unreadAnnouncementCount: number | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            unreadMessageCount: number | string;
+        };
+        /** @description Yeni mesaj seçenekleri: veli tarafı (çocuk → öğretmenler) ve öğretmen tarafı (sınıf → öğrenci → veliler); rolü olmayan taraf boş. */
+        MessageContacts: {
+            asGuardian: components["schemas"]["ChildTeachers"][];
+            asTeacher: components["schemas"]["ClassroomContacts"][];
         };
         /** @description Bilgi mesajı yanıtı (ör. "Bu e-posta sistemde kayıtlıysa …"). */
         MessageResponse: {
             message: string;
+        };
+        /** @description Gönderilen mesaj ve öğretmenin mesai saatleri dışında mı (veli "mesajınız iletildi" bilgisini görür). */
+        MessageSent: {
+            message: components["schemas"]["MessageView"];
+            outsideWorkingHours: boolean;
+        };
+        /** @description Konuşmadaki mesaj: benim mi, metin ve zaman. */
+        MessageView: {
+            /** Format: uuid */
+            id: string;
+            mine: boolean;
+            body: string;
+            /** Format: date-time */
+            sentAt: string;
         };
         /** @description "Sınıflarım" satırı (spec 0010 gereksinim 2): sınıf, şube ve bugünkü yoklamanın alınıp alınmadığı. */
         MyClassroomRow: {
@@ -3910,6 +4689,38 @@ export interface components {
             status?: null | number | string;
             detail?: null | string;
             instance?: null | string;
+        };
+        /**
+         * @description Duyuru yayınlama (spec 0011): başlık, metin, kapsam (`School`, `Branch`, `Classroom`, `Student`) ve kapsam
+         *     kimliği (okulda boş); "Onay iste" seçiliyse soru ve son gün (`yyyy-MM-dd`, Türkiye günü).
+         */
+        PublishAnnouncementRequest: {
+            title: null | string;
+            body: null | string;
+            scope: null | string;
+            /** Format: uuid */
+            scopeId: null | string;
+            requestConsent: boolean;
+            consentQuestion: null | string;
+            /** Format: date */
+            consentDeadline: null | string;
+        };
+        /**
+         * @description Mesai saatleri (spec 0011): sessiz mod açık mı; açıksa başlangıç ve bitiş ("SS:DD", Türkiye saati, 15 dk adım) ve günler
+         *     (`Monday`…`Sunday`).
+         */
+        QuietHoursRequest: {
+            enabled: boolean;
+            start: null | string;
+            end: null | string;
+            days: null | string[];
+        };
+        /** @description Mesai saatleri: sessiz mod açık mı, başlangıç ve bitiş ("SS:DD", Türkiye saati) ve günler. */
+        QuietHoursView: {
+            enabled: boolean;
+            start: null | string;
+            end: null | string;
+            days: string[];
         };
         /** @description Oturum yenileme isteği: mobil anahtarı gövdede gönderir; boşsa (web) çerezdeki anahtar kullanılır. */
         RefreshRequest: {
@@ -3991,6 +4802,10 @@ export interface components {
             /** Format: uuid */
             tenantId: string;
         };
+        /** @description Mesaj (spec 0011): metin (boş olamaz, en fazla 2000 karakter). */
+        SendMessageRequest: {
+            body: null | string;
+        };
         /** @description Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum. */
         SiblingRow: {
             /** Format: uuid */
@@ -3999,6 +4814,37 @@ export interface components {
             branchName: string;
             classroomName: null | string;
             isActive: boolean;
+        };
+        /** @description Kurucu/öğretmen duyuru listesindeki satır: başlık, kapsam, yayınlayan, zaman, onay formu mu (son gün) ve okundu sayısı (X / Y). */
+        StaffAnnouncementRow: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            scope: string;
+            authorName: string;
+            /** Format: date-time */
+            publishedAt: string;
+            requiresConsent: boolean;
+            /** Format: date */
+            consentDeadline: null | string;
+            /** Format: int32 */
+            recipientCount: number | string;
+            /** Format: int32 */
+            readCount: number | string;
+        };
+        /** @description Konuşma başlatma (spec 0011): öğrenci ve karşı taraf (veli için öğretmen, öğretmen için veli). */
+        StartConversationRequest: {
+            /** Format: uuid */
+            studentId: null | string;
+            /** Format: uuid */
+            counterpartUserId: null | string;
+        };
+        /** @description Öğrenci ve yazılabilecek (okulda etkin) velileri. */
+        StudentContacts: {
+            /** Format: uuid */
+            studentId: string;
+            studentName: string;
+            guardians: components["schemas"]["ContactPerson"][];
         };
         /**
          * @description Kurucunun öğrenci kartı (spec 0009): bilgiler, sağlık bölümü, veliler, kardeşler (aynı veliye bağlı öğrenciler) ve
@@ -4161,6 +5007,11 @@ export interface components {
         TwoFactorSetupResult: {
             secret: string;
             otpAuthUri: string;
+        };
+        /** @description Duyuruyu henüz açmamış veli: ad-soyad ve duyurunun kapsadığı çocuklarının adları. */
+        UnreadGuardianRow: {
+            guardianName: string;
+            childNames: string[];
         };
         /** @description Profil isteği: ad-soyad ve telefon (e-posta değişmez; gönderilse de yok sayılır). */
         UpdateProfileRequest: {

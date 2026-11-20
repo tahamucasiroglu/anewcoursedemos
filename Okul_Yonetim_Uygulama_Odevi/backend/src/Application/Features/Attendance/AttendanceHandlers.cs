@@ -5,6 +5,7 @@ using NArchitecture.Core.Localization.Abstraction;
 using NArchitecture.Core.Mediator;
 using OkulYonetim.Application.Features.Administration;
 using OkulYonetim.Application.Features.Communication;
+using OkulYonetim.Application.Features.Communication.Notifications;
 using OkulYonetim.Application.Features.Organization;
 using OkulYonetim.Application.Features.Organization.Queries.GetSchoolDay;
 using OkulYonetim.Application.Features.Students;
@@ -23,8 +24,8 @@ namespace OkulYonetim.Application.Features.Attendance;
 /// Kaydetme sınıf + gün başına sıradadır (<c>attendance:&lt;sınıf&gt;:&lt;gün&gt;</c>): eşzamanlı iki kayıttan ikincisi
 /// sırayı bekler, ilkinin yazdığını görür ve "değişen öğrenci yok" bulur — tek yoklama, tek bildirim (AC-11). Liste
 /// sınıfın o anki kayıtlı öğrencileridir; listede olmayan öğrenci için gelen durum yok sayılır, gelmeyen öğrenci "Var"
-/// sayılır (plan Risks 7). Ekranın sürümü güncel değilse ve kayıt bir durumu değiştirecekse 409 (0010 review F-1). Yoklama ve veli bildirimleri (Communication komutu) aynı işlemde yazılır; e-postalar ancak
-/// commit'ten sonra kuyruğa girer. Her kayıt/düzeltme audit'li (sınıf, gün, değişen öğrenci sayısı); loglarda yalnızca
+/// sayılır (plan Risks 7). Ekranın sürümü güncel değilse ve kayıt bir durumu değiştirecekse 409 (0010 review F-1). Yoklama ve veli bildirimleri (Communication komutu) aynı işlemde yazılır; bildirim ve e-postalar
+/// ancak commit'ten sonra Communication'ın bildirim kapısından çıkar (spec 0011, B-30). Her kayıt/düzeltme audit'li (sınıf, gün, değişen öğrenci sayısı); loglarda yalnızca
 /// kimlik ve sayı.
 /// </para>
 /// </summary>
@@ -42,7 +43,6 @@ public sealed class AttendanceHandlers :
     private readonly ISender sender;
     private readonly AdminAudit audit;
     private readonly IUnitOfWork unitOfWork;
-    private readonly IEmailOutbox emailOutbox;
     private readonly ILocalizationService localization;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<AttendanceHandlers> logger;
@@ -55,7 +55,6 @@ public sealed class AttendanceHandlers :
         ISender sender,
         AdminAudit audit,
         IUnitOfWork unitOfWork,
-        IEmailOutbox emailOutbox,
         ILocalizationService localization,
         TimeProvider timeProvider,
         ILogger<AttendanceHandlers> logger)
@@ -67,7 +66,6 @@ public sealed class AttendanceHandlers :
         this.sender = sender;
         this.audit = audit;
         this.unitOfWork = unitOfWork;
-        this.emailOutbox = emailOutbox;
         this.localization = localization;
         this.timeProvider = timeProvider;
         this.logger = logger;
@@ -239,11 +237,9 @@ public sealed class AttendanceHandlers :
             await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
 
-            // Kayıt kalıcı olduktan sonra kuyruğa (spec 0006 kalıbı): geri alınan yoklama e-posta göndermez.
-            foreach (EmailMessage email in notices.Emails)
-            {
-                this.emailOutbox.Enqueue(email);
-            }
+            // Kayıt kalıcı olduktan sonra Communication'ın bildirim kapısına (spec 0011, backlog B-30): geri alınan yoklama
+            // bildirim ya da e-posta göndermez; veliye giden her şey tek çıkıştan geçer.
+            await this.sender.Send(new DeliverNotificationsCommand(notices.Pushes, notices.Emails), cancellationToken).ConfigureAwait(false);
 
             this.logger.LogInformation(
                 "Yoklama kaydedildi: sınıf {ClassroomId}, yoklama {SheetId}, gün {Day}, değişen {Changed}, yok {Absent}, bildirim giden veli {Notified}",

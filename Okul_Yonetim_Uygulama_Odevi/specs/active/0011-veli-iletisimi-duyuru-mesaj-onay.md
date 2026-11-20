@@ -1,6 +1,6 @@
 # Spec 0011 — Veli iletişimi: duyuru, okundu, onay formu, birebir mesaj ve sessiz mod
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0011-plan.md`
 - Self-critique: done

@@ -48,6 +48,28 @@ public sealed class StudentRepository : IStudentRepository
             .Select(s => new RosterStudent(s.Id, s.FullName))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<StudentBrief>> ListBriefsAsync(Guid? branchId, Guid? classroomId, IReadOnlyCollection<Guid>? ids, CancellationToken cancellationToken)
+    {
+        IQueryable<Student> query = this.context.Students.AsNoTracking().Where(s => s.IsActive);
+        if (branchId is { } branch)
+        {
+            query = query.Where(s => s.BranchId == branch);
+        }
+
+        if (classroomId is { } classroom)
+        {
+            query = query.Where(s => s.ClassroomId == classroom);
+        }
+
+        if (ids is not null)
+        {
+            query = query.Where(s => ids.Contains(s.Id));
+        }
+
+        return await query.Select(s => new StudentBrief(s.Id, s.FullName, s.BranchId, s.ClassroomId))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<IReadOnlyList<PickupPerson>> ListPickupPersonsAsync(Guid studentId, CancellationToken cancellationToken) =>
         await this.context.PickupPersons.Where(p => p.StudentId == studentId).OrderBy(p => p.Position)
             .ToListAsync(cancellationToken).ConfigureAwait(false);

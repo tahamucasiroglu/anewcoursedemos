@@ -63,4 +63,7 @@ public enum AuditAction
     ClassroomTeacherRemoved = 58,
     AttendanceRecorded = 59,
     AttendanceCorrected = 60,
+    AnnouncementPublished = 61,
+    ConsentAnswered = 62,
+    QuietHoursChanged = 63,
 }

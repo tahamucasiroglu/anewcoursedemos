@@ -2305,6 +2305,319 @@
         }
       }
     },
+    "/api/announcements": {
+      "get": {
+        "tags": [
+          "Announcements"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffAnnouncementRow"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Announcements"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishAnnouncementRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishAnnouncementRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishAnnouncementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementPublished"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/announcements/feed": {
+      "get": {
+        "tags": [
+          "Announcements"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedPage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/announcements/{id}": {
+      "get": {
+        "tags": [
+          "Announcements"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/announcements/{id}/results": {
+      "get": {
+        "tags": [
+          "Announcements"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResults"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/announcements/{id}/consent": {
+      "post": {
+        "tags": [
+          "Announcements"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentAnswerRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentAnswerRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentAnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentChildView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/attendance/classrooms": {
       "get": {
         "tags": [
@@ -3127,6 +3440,240 @@
         }
       }
     },
+    "/api/conversations": {
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Conversations"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartConversationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartConversationRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartConversationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationRow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conversations/contacts": {
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageContacts"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conversations/{id}/messages": {
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationThread"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageSent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me": {
       "get": {
         "tags": [
@@ -3490,6 +4037,92 @@
         }
       }
     },
+    "/api/me/quiet-hours": {
+      "get": {
+        "tags": [
+          "QuietHours"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuietHoursView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "QuietHours"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuietHoursRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuietHoursRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuietHoursRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuietHoursView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/calendar": {
       "get": {
         "tags": [
@@ -3594,6 +4227,137 @@
           }
         },
         "description": "Ekleme sonucu: kişi kimliği; e-posta sistemde zaten kayıtlıysa `ExistingAccount` (şifre üretilmez, değişmez);\ndeğilse bir kez gösterilecek geçici şifre. Bu yanıt dışında geçici şifre hiçbir yerde yer almaz."
+      },
+      "AnnouncementDetail": {
+        "required": [
+          "id",
+          "title",
+          "body",
+          "scope",
+          "authorName",
+          "publishedAt",
+          "consentQuestion",
+          "consentDeadline",
+          "consentOpen",
+          "children"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consentQuestion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "consentDeadline": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "consentOpen": {
+            "type": "boolean"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentChildView"
+            }
+          }
+        },
+        "description": "Duyuru ayrıntısı: başlık, metin, kapsam, yayınlayan, zaman, onay sorusu ve son gün, onay açık mı (son gün 23:59'a kadar, Türkiye saati) ve — velide — kapsamdaki çocuklarının onay durumu."
+      },
+      "AnnouncementPublished": {
+        "required": [
+          "id",
+          "recipientCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recipientCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Yayın sonucu: duyuru kimliği ve alıcı veli sayısı."
+      },
+      "AnnouncementResults": {
+        "required": [
+          "id",
+          "recipientCount",
+          "readCount",
+          "unread",
+          "consent"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recipientCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnreadGuardianRow"
+            }
+          },
+          "consent": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ConsentSummary"
+              }
+            ]
+          }
+        },
+        "description": "Sonuçlar: alıcı ve okuyan veli sayısı (\"X / Y veli okudu\"), okumayan veliler (ad + çocuk adları) ve onay formunda öğrenci bazında onay/ret/cevapsız."
       },
       "AttendanceEntryInput": {
         "required": [
@@ -4061,6 +4825,30 @@
         },
         "description": "Velinin \"Çocuklarım\" listesindeki satır (spec 0009 gereksinim 11): ad-soyad, şube ve sınıf."
       },
+      "ChildTeachers": {
+        "required": [
+          "studentId",
+          "studentName",
+          "teachers"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "teachers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactPerson"
+            }
+          }
+        },
+        "description": "Velinin çocuğu ve çocuğun sınıfında yazılabilecek öğretmenler."
+      },
       "ClassroomAdminList": {
         "required": [
           "termId",
@@ -4140,6 +4928,30 @@
           }
         },
         "description": "Yönetim ekranındaki sınıf: dönem, şube (adı ve etkin mi — pasif şubenin sınıfı \"şube pasif\" etiketiyle), seviye\n(adı ve sırası), sınıf adı ve durum."
+      },
+      "ClassroomContacts": {
+        "required": [
+          "classroomId",
+          "classroomName",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "classroomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentContacts"
+            }
+          }
+        },
+        "description": "Öğretmenin sınıfı ve sınıftaki öğrenciler (velileriyle)."
       },
       "ClassroomRequest": {
         "required": [
@@ -4275,6 +5087,203 @@
         },
         "description": "Bir sınıfın öğretmenleri (spec 0010 gereksinim 1): atanmış kişiler ve sınıfın şubesinde etkin Öğretmen olan adaylar,\nikisi de Türkçe ad sırasıyla."
       },
+      "ConsentAnswerRequest": {
+        "required": [
+          "studentId",
+          "answer"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "answer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Onay cevabı (spec 0011): öğrenci ve cevap (`Approved` = Onaylıyorum, `Declined` = Onaylamıyorum)."
+      },
+      "ConsentChildView": {
+        "required": [
+          "studentId",
+          "studentName",
+          "answer",
+          "answeredByName",
+          "answeredAt"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "answer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "answeredByName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "answeredAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Bir öğrencinin onay durumu: öğrenci, cevap (`Approved`/`Declined`; cevapsızsa boş), cevaplayan velinin adı ve zamanı."
+      },
+      "ConsentSummary": {
+        "required": [
+          "approved",
+          "declined",
+          "pending",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "approved": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "declined": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pending": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentChildView"
+            }
+          }
+        },
+        "description": "Onay formu sonucu: onay, ret ve cevapsız öğrenci sayıları ve öğrenci listesi."
+      },
+      "ContactPerson": {
+        "required": [
+          "userId",
+          "fullName"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "description": "Yazılabilecek kişi: kimlik ve ad-soyad (e-posta ve telefon verilmez)."
+      },
+      "ConversationRow": {
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "counterpartUserId",
+          "counterpartName",
+          "myRole",
+          "lastMessageAt",
+          "unreadCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "counterpartUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "counterpartName": {
+            "type": "string"
+          },
+          "myRole": {
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "unreadCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Konuşma listesi satırı: öğrenci, karşı taraf, kişinin bu konuşmadaki rolü (`Teacher`/`Guardian`), son mesaj zamanı ve okunmamış sayısı."
+      },
+      "ConversationThread": {
+        "required": [
+          "conversation",
+          "canSend",
+          "messages",
+          "hasMore"
+        ],
+        "type": "object",
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/ConversationRow"
+          },
+          "canSend": {
+            "type": "boolean"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageView"
+            }
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "description": "Konuşma ekranı: konuşma satırı, yeni mesaj gönderilebilir mi (ilişki sürüyor mu), mesajlar (eskiden yeniye) ve daha eski mesaj var mı."
+      },
       "CreateSchoolRequest": {
         "required": [
           "schoolName",
@@ -4310,6 +5319,91 @@
           }
         },
         "description": "Panelden okul ekle: okul adı, ilk şube adı, kurucu ad-soyad ve e-posta."
+      },
+      "FeedItem": {
+        "required": [
+          "kind",
+          "id",
+          "title",
+          "authorName",
+          "childNames",
+          "at",
+          "isRead",
+          "requiresConsent"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "childNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "requiresConsent": {
+            "type": "boolean"
+          }
+        },
+        "description": "Akıştaki satır: tür (`Announcement` ya da `SchoolNotice` — diğer modüllerin \"Okul bildirimi\"), başlık (okul bildiriminde bildirim metni), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu."
+      },
+      "FeedPage": {
+        "required": [
+          "items",
+          "page",
+          "hasMore",
+          "unreadCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedItem"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "unreadCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Akışın bir sayfası: satırlar, sayfa numarası, sonraki sayfa var mı ve okunmamış duyuru sayısı."
       },
       "ForgotPasswordRequest": {
         "required": [
@@ -4722,9 +5816,49 @@
             ],
             "format": "int32",
             "default": 0
+          },
+          "unreadAnnouncementCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "unreadMessageCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         },
-        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum) ve velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0)."
+        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış\nduyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011)."
+      },
+      "MessageContacts": {
+        "required": [
+          "asGuardian",
+          "asTeacher"
+        ],
+        "type": "object",
+        "properties": {
+          "asGuardian": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildTeachers"
+            }
+          },
+          "asTeacher": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassroomContacts"
+            }
+          }
+        },
+        "description": "Yeni mesaj seçenekleri: veli tarafı (çocuk → öğretmenler) ve öğretmen tarafı (sınıf → öğrenci → veliler); rolü olmayan taraf boş."
       },
       "MessageResponse": {
         "required": [
@@ -4737,6 +5871,48 @@
           }
         },
         "description": "Bilgi mesajı yanıtı (ör. \"Bu e-posta sistemde kayıtlıysa …\")."
+      },
+      "MessageSent": {
+        "required": [
+          "message",
+          "outsideWorkingHours"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/MessageView"
+          },
+          "outsideWorkingHours": {
+            "type": "boolean"
+          }
+        },
+        "description": "Gönderilen mesaj ve öğretmenin mesai saatleri dışında mı (veli \"mesajınız iletildi\" bilgisini görür)."
+      },
+      "MessageView": {
+        "required": [
+          "id",
+          "mine",
+          "body",
+          "sentAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mine": {
+            "type": "boolean"
+          },
+          "body": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Konuşmadaki mesaj: benim mi, metin ve zaman."
       },
       "MyClassroomRow": {
         "required": [
@@ -4949,6 +6125,131 @@
             ]
           }
         }
+      },
+      "PublishAnnouncementRequest": {
+        "required": [
+          "title",
+          "body",
+          "scope",
+          "scopeId",
+          "requestConsent",
+          "consentQuestion",
+          "consentDeadline"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "scope": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "scopeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "requestConsent": {
+            "type": "boolean"
+          },
+          "consentQuestion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "consentDeadline": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Duyuru yayınlama (spec 0011): başlık, metin, kapsam (`School`, `Branch`, `Classroom`, `Student`) ve kapsam\nkimliği (okulda boş); \"Onay iste\" seçiliyse soru ve son gün (`yyyy-MM-dd`, Türkiye günü)."
+      },
+      "QuietHoursRequest": {
+        "required": [
+          "enabled",
+          "start",
+          "end",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "start": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "days": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Mesai saatleri (spec 0011): sessiz mod açık mı; açıksa başlangıç ve bitiş (\"SS:DD\", Türkiye saati, 15 dk adım) ve günler\n(`Monday`…`Sunday`)."
+      },
+      "QuietHoursView": {
+        "required": [
+          "enabled",
+          "start",
+          "end",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "start": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Mesai saatleri: sessiz mod açık mı, başlangıç ve bitiş (\"SS:DD\", Türkiye saati) ve günler."
       },
       "RefreshRequest": {
         "type": "object",
@@ -5234,6 +6535,21 @@
         },
         "description": "Okul seçimi isteği: seçilecek okulun kimliği."
       },
+      "SendMessageRequest": {
+        "required": [
+          "body"
+        ],
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Mesaj (spec 0011): metin (boş olamaz, en fazla 2000 karakter)."
+      },
       "SiblingRow": {
         "required": [
           "id",
@@ -5265,6 +6581,114 @@
           }
         },
         "description": "Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum."
+      },
+      "StaffAnnouncementRow": {
+        "required": [
+          "id",
+          "title",
+          "scope",
+          "authorName",
+          "publishedAt",
+          "requiresConsent",
+          "consentDeadline",
+          "recipientCount",
+          "readCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiresConsent": {
+            "type": "boolean"
+          },
+          "consentDeadline": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "recipientCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Kurucu/öğretmen duyuru listesindeki satır: başlık, kapsam, yayınlayan, zaman, onay formu mu (son gün) ve okundu sayısı (X / Y)."
+      },
+      "StartConversationRequest": {
+        "required": [
+          "studentId",
+          "counterpartUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "counterpartUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "Konuşma başlatma (spec 0011): öğrenci ve karşı taraf (veli için öğretmen, öğretmen için veli)."
+      },
+      "StudentContacts": {
+        "required": [
+          "studentId",
+          "studentName",
+          "guardians"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "guardians": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactPerson"
+            }
+          }
+        },
+        "description": "Öğrenci ve yazılabilecek (okulda etkin) velileri."
       },
       "StudentDetail": {
         "required": [
@@ -5775,6 +7199,25 @@
         },
         "description": "Kurulum bilgisi: elle yazılabilir anahtar ve kare kodun adresi (yalnızca kurulum ekranında, bir kez)."
       },
+      "UnreadGuardianRow": {
+        "required": [
+          "guardianName",
+          "childNames"
+        ],
+        "type": "object",
+        "properties": {
+          "guardianName": {
+            "type": "string"
+          },
+          "childNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Duyuruyu henüz açmamış veli: ad-soyad ve duyurunun kapsadığı çocuklarının adları."
+      },
       "UpdateProfileRequest": {
         "required": [
           "fullName",
@@ -5828,6 +7271,9 @@
       "name": "AdminTerms"
     },
     {
+      "name": "Announcements"
+    },
+    {
       "name": "Attendance"
     },
     {
@@ -5840,6 +7286,9 @@
       "name": "Classrooms"
     },
     {
+      "name": "Conversations"
+    },
+    {
       "name": "Me"
     },
     {
@@ -5850,6 +7299,9 @@
     },
     {
       "name": "PlatformSchools"
+    },
+    {
+      "name": "QuietHours"
     },
     {
       "name": "SchoolCalendar"

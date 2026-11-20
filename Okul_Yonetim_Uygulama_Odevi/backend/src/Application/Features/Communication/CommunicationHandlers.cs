@@ -15,8 +15,9 @@ namespace OkulYonetim.Application.Features.Communication;
 /// <para>
 /// Bildirim: değişen her öğrencinin okulda etkin velisine (bağ + etkin üyelik + Veli rolü) uygulama içi bildirim. Veli + öğrenci
 /// + gün tekil: aynı gün ikinci "yok" bildirimi oluşmaz; "Yok" düzeltilince aynı bildirim "düzeltildi" olur ve yeniden
-/// okunmamış sayılır; yeniden "Yok" tekrar devamsızlık bildirimi olur. Kayıt çağıranın işlemindedir; e-postalar döndürülür ve
-/// çağıran commit'ten sonra kuyruğa bırakır (geri alınan işlem e-posta göndermez).
+/// okunmamış sayılır; yeniden "Yok" tekrar devamsızlık bildirimi olur. Kayıt çağıranın işlemindedir; bildirim ve e-postalar
+/// döndürülür ve çağıran commit'ten sonra bildirim kapısına (<c>DeliverNotificationsCommand</c>, spec 0011) verir — geri alınan
+/// işlem bildirim ya da e-posta göndermez.
 /// </para>
 /// <para>
 /// Velinin listesi, okunmamış sayısı ve "okundu" işlemi yalnızca seçili okulda veli rolündeki kişi içindir (değilse 403; sayı 0)
@@ -74,7 +75,7 @@ public sealed class CommunicationHandlers :
         int withoutGuardian = request.AbsentStudentIds.Distinct().Count(id => !byStudent.Contains(id));
         if (request.Changes.Count == 0)
         {
-            return new AttendanceNoticeResult([], 0, withoutGuardian);
+            return new AttendanceNoticeResult([], [], 0, withoutGuardian);
         }
 
         Dictionary<(Guid Guardian, Guid Student), GuardianNotice> existing =
@@ -85,6 +86,7 @@ public sealed class CommunicationHandlers :
         Templates templates = await this.TemplatesAsync().ConfigureAwait(false);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         List<Ports.EmailMessage> emails = [];
+        List<PushNotification> pushes = [];
         HashSet<Guid> notified = [];
         foreach (AttendanceChange change in request.Changes)
         {
@@ -100,7 +102,8 @@ public sealed class CommunicationHandlers :
 
                     if (notice is null)
                     {
-                        this.notices.Add(GuardianNotice.Absent(tenantId, contact.UserId, change.StudentId, request.Day, now));
+                        notice = GuardianNotice.Absent(tenantId, contact.UserId, change.StudentId, request.Day, now);
+                        this.notices.Add(notice);
                     }
                     else
                     {
@@ -120,19 +123,21 @@ public sealed class CommunicationHandlers :
                 string text = GuardianNoticeEmail.Render(change.IsAbsent ? templates.AbsentText : templates.CorrectedText, change.StudentName, request.Day, school);
                 string subject = GuardianNoticeEmail.Render(change.IsAbsent ? templates.AbsentSubject : templates.CorrectedSubject, change.StudentName, request.Day, school);
                 emails.Add(GuardianNoticeEmail.Build(contact, subject, text, templates.Footer));
+                pushes.Add(new PushNotification(tenantId, contact.UserId, PushNotificationKind.SchoolNotice, notice.Id));
                 notified.Add(contact.UserId);
             }
         }
 
         this.logger.LogInformation("Veli bildirimleri hazırlandı: okul {TenantId}, gün {Day}, bildirim {NoticeCount}, veli {GuardianCount}", tenantId, request.Day, emails.Count, notified.Count);
-        return new AttendanceNoticeResult(emails, notified.Count, withoutGuardian);
+        return new AttendanceNoticeResult(emails, pushes, notified.Count, withoutGuardian);
     }
 
     public async Task<IReadOnlyList<NoticeView>> Handle(ListMyNoticesQuery request, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
         (Guid userId, IReadOnlyList<ChildRow> children) = await this.MyChildrenAsync(cancellationToken).ConfigureAwait(false);
         Dictionary<Guid, string> names = children.ToDictionary(c => c.Id, c => c.FullName);
-        IReadOnlyList<GuardianNotice> list = await this.notices.ListForGuardianAsync(userId, names.Keys, MaxListed, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<GuardianNotice> list = await this.notices.ListForGuardianAsync(userId, names.Keys, Math.Clamp(request.Max, 1, 1000), cancellationToken).ConfigureAwait(false);
         if (list.Count == 0)
         {
             return [];

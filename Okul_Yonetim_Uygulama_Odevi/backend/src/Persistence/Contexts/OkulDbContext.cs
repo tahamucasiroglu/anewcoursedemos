@@ -14,7 +14,7 @@ namespace OkulYonetim.Persistence.Contexts;
 /// filtresiyle uygulanır: kurum yalnızca oturumdaki kurumu, şube yalnızca o kurumun ve (kurucu değilse) kişinin atandığı
 /// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması, üyelik, sınıf seviyesi, dönem ve takvim kaydı
 /// (silinmemiş) yalnızca o kurumunkileri, sınıf ve öğrenci yalnızca görünür şubelerinkileri (spec 0008, 0009), veli bağı ve teslim kişisi yalnızca o kurumunkileri, sınıf öğretmeni ataması ve yoklama görünür şubelerinkileri, yoklama satırı
-/// ve veli bildirimi o kurumunkileri gösterir (spec 0010). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
+/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
 /// göstermez. Filtre değerleri sorgu anında <see cref="ICurrentSession"/>'dan okunur. Filtreyi delen okumalar
 /// (<c>IgnoreQueryFilters</c>) yalnızca izinli listedeki depo metotlarındadır (T5).
 /// </summary>
@@ -70,6 +70,20 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<GuardianNotice> GuardianNotices => this.Set<GuardianNotice>();
 
+    public DbSet<Announcement> Announcements => this.Set<Announcement>();
+
+    public DbSet<AnnouncementRecipient> AnnouncementRecipients => this.Set<AnnouncementRecipient>();
+
+    public DbSet<AnnouncementStudent> AnnouncementStudents => this.Set<AnnouncementStudent>();
+
+    public DbSet<ConsentResponse> ConsentResponses => this.Set<ConsentResponse>();
+
+    public DbSet<Conversation> Conversations => this.Set<Conversation>();
+
+    public DbSet<ConversationMessage> ConversationMessages => this.Set<ConversationMessage>();
+
+    public DbSet<QuietHours> QuietHours => this.Set<QuietHours>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;
@@ -111,5 +125,16 @@ public sealed class OkulDbContext : DbContext
             s.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == s.BranchId));
         modelBuilder.Entity<AttendanceEntry>().HasQueryFilter(e => e.TenantId == this.CurrentTenantId);
         modelBuilder.Entity<GuardianNotice>().HasQueryFilter(n => n.TenantId == this.CurrentTenantId);
+
+        // Spec 0011: duyuru, alıcı, kapsanan öğrenci, onay cevabı, konuşma, mesaj ve mesai saatleri yalnızca kurum filtreli.
+        // Şube ve ilişki duvarı CommunicationGuard'dadır (velinin çocukları farklı şubelerde olabilir, BR-2): veli yalnızca
+        // alıcısı olduğu duyuruyu, konuşmayı yalnızca iki tarafı, sonuçları yalnızca yayınlayan ve kurucu görür (plan 0011 Risks 3).
+        modelBuilder.Entity<Announcement>().HasQueryFilter(a => a.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<AnnouncementRecipient>().HasQueryFilter(r => r.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<AnnouncementStudent>().HasQueryFilter(s => s.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<ConsentResponse>().HasQueryFilter(c => c.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<Conversation>().HasQueryFilter(c => c.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<ConversationMessage>().HasQueryFilter(m => m.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<QuietHours>().HasQueryFilter(q => q.TenantId == this.CurrentTenantId);
     }
 }

@@ -2,17 +2,20 @@ using System.Globalization;
 using NArchitecture.Core.Mediator;
 using OkulYonetim.Application.Features.Students.Queries.ListClassroomRoster;
 using OkulYonetim.Application.Features.Students.Queries.ListGuardianContacts;
+using OkulYonetim.Application.Features.Students.Queries.ListStudentBriefs;
 using OkulYonetim.Application.Ports;
 
 namespace OkulYonetim.Application.Features.Students;
 
 /// <summary>
 /// Diğer modüllerin öğrenci okumaları (spec 0010): yoklama listesi (Türkçe ad sırası, aynı adda kimlik sırası) ve bildirim
-/// için okulda etkin veliler. Uç yoktur; yetki denetimi çağıran modüldedir.
+/// için okulda etkin veliler; spec 0011: duyuru kapsamı ve mesaj ilişkisi için öğrencilerin kısa bilgisi (şube, sınıf). Uç yoktur;
+/// yetki denetimi çağıran modüldedir.
 /// </summary>
 public sealed class StudentLookupHandlers :
     IRequestHandler<ListClassroomRosterQuery, IReadOnlyList<RosterStudent>>,
-    IRequestHandler<ListGuardianContactsQuery, IReadOnlyList<GuardianContact>>
+    IRequestHandler<ListGuardianContactsQuery, IReadOnlyList<GuardianContact>>,
+    IRequestHandler<ListStudentBriefsQuery, IReadOnlyList<StudentBrief>>
 {
     private static readonly StringComparer TurkishOrder = StringComparer.Create(CultureInfo.GetCultureInfo("tr-TR"), ignoreCase: true);
 
@@ -38,5 +41,13 @@ public sealed class StudentLookupHandlers :
         return request.StudentIds.Count == 0
             ? []
             : await this.guardians.ListActiveGuardianContactsAsync(request.StudentIds, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<StudentBrief>> Handle(ListStudentBriefsQuery request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request.Ids is { Count: 0 }
+            ? []
+            : await this.students.ListBriefsAsync(request.BranchId, request.ClassroomId, request.Ids, cancellationToken).ConfigureAwait(false);
     }
 }

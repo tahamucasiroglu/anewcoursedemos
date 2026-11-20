@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OkulYonetim.Application.Ports;
 using OkulYonetim.Infrastructure.Email;
 using OkulYonetim.Infrastructure.Logging;
+using OkulYonetim.Infrastructure.Notifications;
 using OkulYonetim.Infrastructure.Security;
 using NArchitectureLogger = NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction.ILogger;
 
@@ -10,7 +11,7 @@ namespace OkulYonetim.Infrastructure;
 
 /// <summary>
 /// Infrastructure katmanının servis kaydı: nArchitecture log arayüzünün Serilog adaptörü, şifre özeti ve oturum
-/// anahtarı servisi ("Jwt" ayarları), gizli değer ve kişisel veri şifreleyicileri (ayrı AES-GCM anahtarları — spec 0007, 0009), e-posta ("Email" ayarları; kuyruk + arka plan gönderici — spec 0006). Dış servis port uygulamaları (ödeme, SMS, AI…) ilgili özelliklerle buraya eklenir.
+/// anahtarı servisi ("Jwt" ayarları), gizli değer ve kişisel veri şifreleyicileri (ayrı AES-GCM anahtarları — spec 0007, 0009), e-posta ("Email" ayarları; kuyruk + arka plan gönderici — spec 0006), bildirim göndericisi (spec 0011: gerçek push yok, yalnızca kimlikleri loglayan sahte gönderici). Dış servis port uygulamaları (ödeme, SMS, AI…) ilgili özelliklerle buraya eklenir.
 /// </summary>
 public static class InfrastructureServiceRegistration
 {
@@ -27,6 +28,7 @@ public static class InfrastructureServiceRegistration
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         services.AddSingleton<IAppLinks, AppLinks>();
         services.AddSingleton<IEmailSender, EmailSender>();
+        services.AddSingleton<IPushNotifier, LoggingPushNotifier>();
         services.AddSingleton<BackgroundEmailOutbox>();
         services.AddSingleton<IEmailOutbox>(provider => provider.GetRequiredService<BackgroundEmailOutbox>());
         services.AddHostedService(provider => provider.GetRequiredService<BackgroundEmailOutbox>());
