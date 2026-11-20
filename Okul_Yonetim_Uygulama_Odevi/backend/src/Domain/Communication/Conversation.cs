@@ -48,17 +48,17 @@ public sealed class Conversation
         this.MarkReadBy(senderUserId, now);
     }
 
-    /// <summary>Taraf konuşmayı açtı: o ana kadarki mesajlar okunmuş olur.</summary>
-    public void MarkReadBy(Guid userId, DateTimeOffset now)
+    /// <summary>Taraf <paramref name="upTo"/> anına kadarki mesajları gördü (okuma zamanı yalnızca ileri gider).</summary>
+    public void MarkReadBy(Guid userId, DateTimeOffset upTo)
     {
-        if (userId == this.TeacherUserId)
+        if (userId == this.TeacherUserId && (this.TeacherReadAt is null || upTo > this.TeacherReadAt))
         {
-            this.TeacherReadAt = now;
+            this.TeacherReadAt = upTo;
         }
 
-        if (userId == this.GuardianUserId)
+        if (userId == this.GuardianUserId && (this.GuardianReadAt is null || upTo > this.GuardianReadAt))
         {
-            this.GuardianReadAt = now;
+            this.GuardianReadAt = upTo;
         }
     }
 }

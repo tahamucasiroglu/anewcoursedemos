@@ -1,11 +1,13 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
 using static OkulYonetim.Tests.Integration.Administration.AdminTestData;
 using static OkulYonetim.Tests.Integration.Attendance.AttendanceTestData;
 using static OkulYonetim.Tests.Integration.Communication.CommunicationTestData;
+using static OkulYonetim.Tests.Integration.Identity.IdentityTestData;
 
 namespace OkulYonetim.Tests.Integration.Communication;
 
@@ -106,6 +108,31 @@ public sealed class ConversationFlowTests
         JsonElement older = (await MessagesAsync(client, w.AliMother.Token, id, oldest)).Body;
         older.GetProperty("messages").EnumerateArray().Select(m => m.GetProperty("body").GetString()).ShouldBe(["Mesaj 1", "Mesaj 2", "Mesaj 3", "Mesaj 4", "Mesaj 5"]);
         older.GetProperty("hasMore").GetBoolean().ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Open_ReadMarkerIsNewestReturnedMessage_OlderPageDoesNotMarkRead()
+    {
+        FakeTimeProvider time = new(Morning);
+        using OkulApiFactory factory = Factory(this.database, time: time);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid id = await StartedAsync(client, w.Class.Teacher, w.Ali, w.AliMother.UserId);
+        JsonElement first = (await SendAsync(client, w.Class.Teacher, id, "Ali bugün çok iyiydi")).Body.GetProperty("message");
+        DateTimeOffset sentAt = first.GetProperty("sentAt").GetDateTimeOffset();
+        time.Advance(TimeSpan.FromMinutes(1));
+
+        (await MessagesAsync(client, w.AliMother.Token, id)).Status.ShouldBe(HttpStatusCode.OK);
+        (await QueryAsync(factory, c => c.Conversations.IgnoreQueryFilters().AsNoTracking().SingleAsync(x => x.Id == id))).GuardianReadAt
+            .ShouldBe(sentAt, "okundu = dönen en yeni mesajın zamanı, açılış anı değil");
+
+        time.Advance(TimeSpan.FromMinutes(1));
+        (await SendAsync(client, w.Class.Teacher, id, "Yarın gezi var")).Status.ShouldBe(HttpStatusCode.OK);
+        (await MessagesAsync(client, w.AliMother.Token, id, first.GetProperty("id").GetGuid())).Status.ShouldBe(HttpStatusCode.OK);
+        (await ConversationsAsync(client, w.AliMother.Token)).Body[0].GetProperty("unreadCount").GetInt32().ShouldBe(1, "'Daha eski' sayfası okundu yazmaz");
+
+        (await MessagesAsync(client, w.AliMother.Token, id)).Status.ShouldBe(HttpStatusCode.OK);
+        (await ConversationsAsync(client, w.AliMother.Token)).Body[0].GetProperty("unreadCount").GetInt32().ShouldBe(0);
     }
 
     [Fact]

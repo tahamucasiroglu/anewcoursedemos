@@ -146,8 +146,13 @@ public sealed class MessageHandlers :
         CommunicationCaller caller = await this.guard.CallerAsync(cancellationToken).ConfigureAwait(false);
         Conversation conversation = await this.PartyConversationAsync(request.Id, caller.UserId, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<ConversationMessage> page = await this.conversations.ListMessagesAsync(conversation.Id, request.Before, PageSize + 1, cancellationToken).ConfigureAwait(false);
-        conversation.MarkReadBy(caller.UserId, this.timeProvider.GetUtcNow());
-        await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        // Okundu = dönen en yeni mesajın zamanı ve yalnızca ilk sayfada (review L-2): okuma ile kayıt arasında gelen mesaj ve
+        // "Daha eski" sayfası okunmamış sayısını sıfırlamaz.
+        if (request.Before is null && page.Count > 0)
+        {
+            conversation.MarkReadBy(caller.UserId, page[0].SentAt);
+            await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         bool canSend = await this.guard.IsRelatedAsync(conversation.TeacherUserId, conversation.GuardianUserId, conversation.StudentId, cancellationToken).ConfigureAwait(false);
         ConversationRow row = (await this.conversations.ListForUserAsync(caller.UserId, conversation.Id, 1, cancellationToken).ConfigureAwait(false)).Single();
