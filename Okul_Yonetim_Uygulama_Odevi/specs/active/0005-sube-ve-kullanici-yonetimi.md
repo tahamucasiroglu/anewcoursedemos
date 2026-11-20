@@ -41,7 +41,10 @@ doğrulamayı ve platform panelini yapmaz.
 6. **Kullanıcı listesi ve kart:** Kurucu okulundaki kişileri listeler: ad-soyad, e-posta, roller ve şubeler, durum
    (etkin/pasif). Ad veya e-postayla arama; rol, şube ve duruma göre süzme; sayfa başına 25 kişi. Kişi kartında kurucu
    ad-soyad ve telefonu düzenleyebilir; e-posta değiştirilemez (kişinin kimliği; başka okullarda da kullanılıyor).
-   Başka okullardaki rol ve bilgiler hiçbir ekranda görünmez.
+   Ad-soyad ve telefon kişinin bütün okullarında ortaktır: kişi başka bir okulda da kayıtlıysa kurucu bunları
+   düzenleyemez, kartta nedeni yazar ("Bu kişi başka bir okulda da kayıtlı; adını ve telefonunu kendisi
+   değiştirebilir.") — bir okulun yöneticisi öbür okulun gördüğü bilgiyi değiştiremez (review M-2, kullanıcı kararı
+   2026-11-20). Başka okullardaki rol ve bilgiler hiçbir ekranda görünmez.
 7. **Rol ve şube verme/alma:** Kurucu kişiye rol ekler, rolün şubelerini değiştirir, rolü geri alır. Kişinin bu okulda
    hiç rolü kalmazsa pasif sayılır. Bir rol değişikliği kişinin açık oturumunda bir sonraki istekte geçerli olur.
 8. **Pasifleştirme:** Kurucu bir kişiyi **bu okulda** pasifleştirir ve yeniden etkinleştirir. Pasif kişi bu okulu
@@ -101,7 +104,7 @@ doğrulamayı ve platform panelini yapmaz.
 
 ## Acceptance criteria
 - [ ] AC-1 — Yetki: kurucu olmayan kişi (öğretmen, veli, muhasebe) Hoş geldin'de "Yönetim"i görmez; yönetim adresine giderse "Bu sayfaya erişiminiz yok." görür; şube/kullanıcı işlemlerini doğrudan denerse reddedilir ve hiçbir şey değişmez. Girişsiz istek reddedilir.
-- [ ] AC-2 — Okul duvarı: A okulunun kurucusu B okulunun şubesini veya kişisini (kimliğini bilerek bile) görüntüleyemez, düzenleyemez, pasifleştiremez, rol veremez, şifresini sıfırlayamaz — "bulunamadı" alır; A'nın listeleri yalnızca A'nın kayıtlarını içerir; iki okulda olan kişinin A'daki kartında B'deki rolleri ve bilgileri görünmez.
+- [ ] AC-2 — Okul duvarı: A okulunun kurucusu B okulunun şubesini veya kişisini (kimliğini bilerek bile) görüntüleyemez, düzenleyemez, pasifleştiremez, rol veremez, şifresini sıfırlayamaz — "bulunamadı" alır; A'nın listeleri yalnızca A'nın kayıtlarını içerir; iki okulda olan kişinin A'daki kartında B'deki rolleri ve bilgileri görünmez; A'nın kurucusu bu kişinin ad-soyad ve telefonunu değiştiremez (B'nin gördüğü bilgi değişmez).
 - [ ] AC-3 — Şube ekleme/düzenleme: ad zorunlu (boş → alan hatası, 100 karakterden uzun → hata), adres ve telefon isteğe bağlı; eklenen şube listede görünür ve atamada seçilebilir; aynı okulda aynı adla (harf farkı gözetmeden) ikinci etkin şube "Bu adla bir şube zaten var" ile reddedilir; başka okulda aynı ad serbesttir.
 - [ ] AC-4 — Şube pasifleştirme: pasif şube atamada seçilemez, o şubeye atanmış kişinin şube listesinden düşer, kurucunun listesinde "pasif" olarak kalır ve yeniden etkinleştirilebilir; okulun son etkin şubesi pasifleştirilemez (düğme pasif, neden yazılı; doğrudan denenirse reddedilir).
 - [ ] AC-5 — Yeni kişi ekleme: ad-soyad + e-posta + en az bir rol (şube gerektiren rolde en az bir etkin şube) ile kişi oluşur; geçici şifre (12 karakter, harf+rakam, 0/O/1/l/I içermez) sonuç ekranında bir kez gösterilir ve sonra hiçbir ekranda/yanıtta tekrar alınamaz; kişi bu şifreyle girer ve yalnızca atandığı şubeleri görür; ilk girişte şifre değiştirmesi istenmez. Eksik/geçersiz alanlarda (geçersiz telefon dahil) alan hatası gösterilir, istek gönderilmez ve hiçbir şey oluşmaz; geçerli telefon tek biçimde saklanır.
