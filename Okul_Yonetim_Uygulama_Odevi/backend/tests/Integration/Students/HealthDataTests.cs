@@ -117,6 +117,34 @@ public sealed class HealthDataTests
     }
 
     [Fact]
+    public async Task WithoutKey_ClearingStoredHealth_Rejected_StoredCipherUnchanged_NotAudited()
+    {
+        Guid id;
+        SchoolSeed a;
+        using (OkulApiFactory keyed = Factory(this.database))
+        {
+            using HttpClient keyedClient = keyed.CreateClient();
+            (a, string founderKeyed) = await SchoolAsync(keyed, keyedClient);
+            id = await CreateStudentAsync(keyedClient, founderKeyed, NewStudent(a.BranchId, "Silinmesin", healthNote: Note, allergy: Allergy));
+        }
+
+        using OkulApiFactory factory = Factory(this.database, personalDataKey: null);
+        using HttpClient client = factory.CreateClient();
+        string founder = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        Student before = (await StudentRowsAsync(factory, a.TenantId)).Single(s => s.Id == id);
+        string auditBefore = await AuditDumpAsync(factory, a.TenantId);
+
+        var (status, problem, _) = await CallAsync(client, HttpMethod.Put, $"/api/admin/students/{id}/health", founder, new { healthNote = "", allergy = (string?)null });
+
+        status.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(problem).ShouldBe("Sağlık bilgisi şu anda kaydedilemiyor.");
+        Student after = (await StudentRowsAsync(factory, a.TenantId)).Single(s => s.Id == id);
+        after.HealthNoteCipher.ShouldBe(before.HealthNoteCipher, "kayıtlı şifreli sağlık notu aynen kalır");
+        after.AllergyCipher.ShouldBe(before.AllergyCipher, "kayıtlı şifreli alerji aynen kalır");
+        (await AuditDumpAsync(factory, a.TenantId)).ShouldBe(auditBefore, "reddedilen istek audit'e 'güncellendi' yazmaz");
+    }
+
+    [Fact]
     public void EncryptionKey_IsNotInRepositorySettings()
     {
         string backend = FindBackendRoot();

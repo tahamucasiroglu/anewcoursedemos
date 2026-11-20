@@ -153,7 +153,7 @@ public sealed class StudentAdminHandlers :
         await using (scope.ConfigureAwait(false))
         {
             Student student = await this.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-            (string? noteCipher, string? allergyCipher) = await this.health.ProtectAsync(request.HealthNote, request.Allergy, student.Id).ConfigureAwait(false);
+            (string? noteCipher, string? allergyCipher) = await this.health.ProtectAsync(request.HealthNote, request.Allergy, student.Id, StudentHealth.HasAny(student)).ConfigureAwait(false);
             student.SetHealth(noteCipher, allergyCipher, this.timeProvider.GetUtcNow(), actorId);
             this.audit.Record(AuditAction.StudentHealthUpdated, tenantId, actorId, nameof(Student), student.Id);
             await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

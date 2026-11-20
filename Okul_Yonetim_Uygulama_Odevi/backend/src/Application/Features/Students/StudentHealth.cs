@@ -51,12 +51,16 @@ public sealed class StudentHealth
         }
     }
 
-    /// <summary>Boş alanlar <c>null</c>; dolu alan varsa ve anahtar yoksa iş kuralı hatası (log: "yapılandırılmamış").</summary>
-    public async Task<(string? NoteCipher, string? AllergyCipher)> ProtectAsync(string? healthNote, string? allergy, Guid? studentId)
+    /// <summary>
+    /// Boş alanlar <c>null</c>; dolu alan varsa ve anahtar yoksa iş kuralı hatası (log: "yapılandırılmamış"). Anahtar
+    /// yokken kayıtlı sağlık bilgisi (<paramref name="hasStoredHealth"/>) boş alanlarla da silinemez: görülemeyen veri
+    /// sessizce kaybolmasın diye aynı hata verilir.
+    /// </summary>
+    public async Task<(string? NoteCipher, string? AllergyCipher)> ProtectAsync(string? healthNote, string? allergy, Guid? studentId, bool hasStoredHealth = false)
     {
         string? note = Clean(healthNote);
         string? allergyText = Clean(allergy);
-        if (note is null && allergyText is null)
+        if (note is null && allergyText is null && (this.protector.IsConfigured || !hasStoredHealth))
         {
             return (null, null);
         }
