@@ -183,7 +183,12 @@ public sealed class ResetLinkTests
         {
             // Şifre değiştirme önce tamamlandıysa açıktaki bağlantı kurala göre geçersizleşir (gereksinim 6); kurtarma geri
             // alınmış sayılmaz, kişi yeni bağlantı ister. Geri alma, yalnızca kurtarma başarılı olup sonra ezilirse olur.
+            (await recovery).Status.ShouldBe(HttpStatusCode.BadRequest);
+            (await recovery).Raw.ShouldContain(Invalid);
             (await change).ShouldBe(HttpStatusCode.NoContent);
+            (await PostAnonymousAsync(client, "/api/auth/reset-password/check", new { token })).Raw.ShouldContain("false");
+            using HttpResponseMessage changed = await PostLoginAsync(client, person, AttackerPassword);
+            changed.StatusCode.ShouldBe(HttpStatusCode.OK);
             return;
         }
 
