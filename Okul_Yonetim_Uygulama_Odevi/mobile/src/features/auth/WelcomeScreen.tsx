@@ -65,12 +65,22 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalen
           </Pressable>
         )}
         {onFeed && isGuardian && (
-          <Pressable style={styles.secondary} onPress={onFeed} accessibilityRole="button">
+          <Pressable
+            style={styles.secondary}
+            onPress={onFeed}
+            accessibilityRole="button"
+            accessibilityLabel={countedText(me.unreadAnnouncementCount, t("feed.link"), t("feed.linkLabel"))}
+          >
             <Text style={styles.secondaryText}>{countedText(me.unreadAnnouncementCount, t("feed.link"), t("feed.linkCount"))}</Text>
           </Pressable>
         )}
         {onMessages && (isGuardian || isTeacher) && (
-          <Pressable style={styles.secondary} onPress={onMessages} accessibilityRole="button">
+          <Pressable
+            style={styles.secondary}
+            onPress={onMessages}
+            accessibilityRole="button"
+            accessibilityLabel={countedText(me.unreadMessageCount, t("messages.link"), t("messages.linkLabel"))}
+          >
             <Text style={styles.secondaryText}>{countedText(me.unreadMessageCount, t("messages.link"), t("messages.linkCount"))}</Text>
           </Pressable>
         )}

@@ -100,8 +100,11 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
       { unreadAnnouncements: 2, unreadMessages: 3 },
     );
     await signIn();
-    expect(screen.getByRole("button", { name: "Mesajlar (3)" })).toBeTruthy();
-    await fireEvent.press(screen.getByRole("button", { name: "Duyurular (2)" }));
+    // Ekran okuyucu sayıyı sözle okur; görünen metin parantezli kalır (review I-3).
+    expect(screen.getByRole("button", { name: "Mesajlar, 3 okunmamış mesaj" })).toHaveTextContent("Mesajlar (3)");
+    const feedButton = screen.getByRole("button", { name: "Duyurular, 2 okunmamış duyuru" });
+    expect(feedButton).toHaveTextContent("Duyurular (2)");
+    await fireEvent.press(feedButton);
 
     const rows = await screen.findAllByTestId("feed-row");
     const list = screen.getByTestId("feed-list");
@@ -132,7 +135,7 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
       "POST /api/conversations/k1/messages": () => sent,
     }, { unreadMessages: 3 });
     await signIn();
-    await fireEvent.press(screen.getByRole("button", { name: "Mesajlar (3)" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Mesajlar, 3 okunmamış mesaj" }));
 
     const row = await screen.findByTestId("conversation-row");
     expect(screen.getByTestId("conversations-list").type).toBe("RCTScrollView");
