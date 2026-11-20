@@ -121,3 +121,28 @@ export type {
   StudentRow,
   StudentSaved,
 } from "./students/studentForms";
+export {
+  ATTENDANCE_STATUSES,
+  countMarks,
+  fillText,
+  initialMarks,
+  saveBody,
+  saveButtonText,
+  saveResultText,
+  setMark,
+} from "./attendance/attendanceForms";
+export type {
+  AttendanceCounts,
+  AttendanceMarks,
+  AttendanceSaveResult,
+  AttendanceSheetView,
+  AttendanceStatus,
+  AttendanceStudentRow,
+  ClassroomTeachersView,
+  MyClassroomRow,
+  ResultTexts,
+  SaveButtonTexts,
+  TeacherOption,
+} from "./attendance/attendanceForms";
+export { noticeBadges, noticesLinkText } from "./notices/noticeText";
+export type { NoticeView } from "./notices/noticeText";

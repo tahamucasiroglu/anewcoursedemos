@@ -397,3 +397,70 @@ a {
   max-width: 100%;
   resize: vertical;
 }
+
+/* Yoklama (spec 0010): öğrenci başına üç seçim (Var / Yok / Geç) yerel radio düğmesi — klavyeyle ok tuşları, Tab sonraki
+   öğrenci; dokunma alanı en az 44×44; seçili durum işaretle ve kalın yazıyla da görünür; dar ekranda (320 px) satır sarar. */
+.attendance-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attendance-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.attendance-row legend {
+  float: left;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.attendance-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.attendance-choices label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.attendance-choices label:has(input:checked) {
+  font-weight: 600;
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+}
+
+.attendance-choices input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Veli bildirimleri (spec 0010): okunmamış kalın; uzun metin dar ekranda sarar. */
+.notice-list li {
+  overflow-wrap: anywhere;
+}
+
+.notice-list li.unread {
+  font-weight: 600;
+}

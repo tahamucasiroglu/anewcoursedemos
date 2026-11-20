@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import type { Me } from "@okul/api-client";
+import { noticesLinkText, type Me } from "@okul/api-client";
 import { t, type TextKey } from "../../i18n/t";
 import { useAuthStyles } from "./useAuthStyles";
 
@@ -10,6 +10,8 @@ interface Props {
   onAccount?: () => void;
   onCalendar?: () => void;
   onChildren?: () => void;
+  onAttendance?: () => void;
+  onNotices?: () => void;
 }
 
 const ROLE_KEYS: Record<string, TextKey> = {
@@ -21,9 +23,10 @@ const ROLE_KEYS: Record<string, TextKey> = {
 
 /**
  * Mobil hoş geldin ekranı (spec 0004): ad, okul, roller, şubeler (yoksa açık mesaj); okul değiştir ve çıkış. Seçili okulu
- * olan herkese "Okul takvimi" (spec 0008); yalnızca veli rolü olana "Çocuklarım" (spec 0009).
+ * olan herkese "Okul takvimi" (spec 0008); yalnızca veli rolü olana "Çocuklarım" (spec 0009) ve okunmamış sayılı "Bildirimler (n)", yalnızca öğretmene
+ * "Yoklama al" (spec 0010).
  */
-export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar, onChildren }: Props) {
+export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar, onChildren, onAttendance, onNotices }: Props) {
   const styles = useAuthStyles();
   return (
     <View style={styles.card} testID="welcome">
@@ -45,6 +48,16 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalen
         ))
       )}
       <View style={styles.actions}>
+        {onAttendance && me.roles.includes("Teacher") && (
+          <Pressable style={styles.button} onPress={onAttendance} accessibilityRole="button">
+            <Text style={styles.buttonText}>{t("attendance.link")}</Text>
+          </Pressable>
+        )}
+        {onNotices && me.roles.includes("Guardian") && (
+          <Pressable style={styles.secondary} onPress={onNotices} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{noticesLinkText(me.unreadNoticeCount, t("notices.link"), t("notices.linkCount"))}</Text>
+          </Pressable>
+        )}
         {onChildren && me.roles.includes("Guardian") && (
           <Pressable style={styles.secondary} onPress={onChildren} accessibilityRole="button">
             <Text style={styles.secondaryText}>{t("children.link")}</Text>

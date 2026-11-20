@@ -12,6 +12,7 @@ import {
 import { t } from "../../i18n/t";
 import { call } from "./adminApi";
 import { academicFieldText, failureText } from "./adminText";
+import { ClassroomTeachersEditor } from "./ClassroomTeachersEditor";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 type Client = AuthSession["client"];
@@ -25,7 +26,7 @@ interface Filters { termId: string; branchId: string; status: string }
  * süzgeci; liste (şube, seviye, ad, durum; pasif şubenin sınıfı "şube pasif"; yükleniyor / boş / dolu / hata + tekrar
  * dene); "Sınıf ekle" (şube, seviye, ad; dönem seçili dönem) ve "Düzenle" (ad, seviye); "Pasifleştir" (onaylı) /
  * "Etkinleştir". Dönem yoksa "Önce bir dönem ekleyin"; etkin seviye yoksa "Sınıf ekle" pasif ve nedeni yazılı. Pasif şube
- * ve seviye formlarda seçenek olarak çıkmaz.
+ * ve seviye formlarda seçenek olarak çıkmaz. Satırdaki "Öğretmenler" sınıf öğretmeni atamasını açar (spec 0010).
  */
 export function ClassroomsTab({ client }: { client: Client }) {
   const [meta, setMeta] = useState<MetaState>({ kind: "loading" });
@@ -36,6 +37,7 @@ export function ClassroomsTab({ client }: { client: Client }) {
   const [editing, setEditing] = useState<{ classroom: ClassroomAdminView | null; values: ClassroomFormValues } | null>(null);
   const [confirm, setConfirm] = useState<ClassroomAdminView | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [teachersFor, setTeachersFor] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -204,6 +206,9 @@ export function ClassroomsTab({ client }: { client: Client }) {
                 >
                   {t("academic.edit")}
                 </button>
+                <button type="button" className="secondary" aria-label={`${classroom.branchName} ${classroom.name}: ${t("classroomTeachers.open")}`} onClick={() => setTeachersFor(classroom.id)}>
+                  {t("classroomTeachers.open")}
+                </button>
                 {classroom.isActive ? (
                   <button type="button" className="secondary" onClick={() => setConfirm(classroom)}>{t("academic.deactivate")}</button>
                 ) : (
@@ -214,6 +219,7 @@ export function ClassroomsTab({ client }: { client: Client }) {
           ))}
         </ul>
       ))}
+      {teachersFor && <ClassroomTeachersEditor key={teachersFor} client={client} classroomId={teachersFor} onClose={() => setTeachersFor(null)} />}
       {confirm && <ConfirmDialog message={t("classrooms.confirmDeactivate")} onCancel={() => setConfirm(null)} onConfirm={() => setActive(confirm, false)} />}
     </div>
   );

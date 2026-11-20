@@ -1,4 +1,4 @@
-import type { Me } from "@okul/api-client";
+import { noticesLinkText, type Me } from "@okul/api-client";
 import { t, type TextKey } from "../../i18n/t";
 
 interface Props {
@@ -10,7 +10,8 @@ interface Props {
 /**
  * Hoş geldin ekranı (spec 0004): ad, seçili okul, o okuldaki roller ve görülebilen şubeler; şube yoksa açık mesaj.
  * "Okul değiştir" yalnızca birden çok okul varsa görünür; "Çıkış" oturumu kapatır. "Platform paneli" yalnızca platform
- * yöneticisinde (spec 0007). "Okul takvimi" seçili okulu olan herkese (spec 0008). "Öğrenciler" yalnızca kurucuya (spec 0009).
+ * yöneticisinde (spec 0007). "Okul takvimi" seçili okulu olan herkese (spec 0008). "Öğrenciler" yalnızca kurucuya (spec 0009). "Yoklama al" yalnızca
+ * öğretmene, okunmamış sayılı "Bildirimler (n)" yalnızca veliye (spec 0010).
  */
 export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
   return (
@@ -37,6 +38,16 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
         </dd>
       </dl>
       <div className="actions">
+        {me.roles.includes("Teacher") && (
+          <a className="button-link" href="#/yoklama">
+            {t("attendance.link")}
+          </a>
+        )}
+        {me.roles.includes("Guardian") && (
+          <a className="button-link" href="#/bildirimler">
+            {noticesLinkText(me.unreadNoticeCount, t("notices.link"), t("notices.linkCount"))}
+          </a>
+        )}
         <a className="button-link" href="#/hesabim">
           {t("account.link")}
         </a>

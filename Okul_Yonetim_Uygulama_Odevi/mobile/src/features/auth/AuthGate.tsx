@@ -5,6 +5,8 @@ import { AccountScreen } from "../account/AccountScreen";
 import { CalendarScreen } from "../calendar/CalendarScreen";
 import { ChildCardScreen } from "../children/ChildCardScreen";
 import { ChildrenScreen } from "../children/ChildrenScreen";
+import { MyClassroomsScreen } from "../attendance/MyClassroomsScreen";
+import { NoticesScreen } from "../notices/NoticesScreen";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { LoginScreen } from "./LoginScreen";
 import { SchoolSelectScreen } from "./SchoolSelectScreen";
@@ -15,7 +17,8 @@ import { WelcomeScreen } from "./WelcomeScreen";
 /**
  * Mobil oturum ekranı seçici: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004); girişte "Şifremi unuttum",
  * hoş geldin'de "Hesabım" (spec 0006). Platform yöneticisi girişte "web'den giriş yapın" mesajı görür (spec 0007).
- * Hoş geldin'de "Okul takvimi" (spec 0008, her rol) ve yalnızca velide "Çocuklarım" → çocuk kartı (spec 0009).
+ * Hoş geldin'de "Okul takvimi" (spec 0008, her rol) ve yalnızca velide "Çocuklarım" → çocuk kartı (spec 0009). Öğretmende "Yoklama al" → Sınıflarım/yoklama, velide
+ * "Bildirimler (n)"; bildirimlerden dönünce okunmamış sayısı için kişi bilgisi yenilenir (spec 0010).
  */
 export function AuthGate() {
   const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart } = useAuthController();
@@ -24,6 +27,8 @@ export function AuthGate() {
   const [account, setAccount] = useState(false);
   const [calendar, setCalendar] = useState(false);
   const [children, setChildren] = useState<{ childId: string | null } | null>(null);
+  const [attendance, setAttendance] = useState(false);
+  const [notices, setNotices] = useState(false);
   const [previousKind, setPreviousKind] = useState(state.kind);
 
   // Oturum durumundan çıkınca (çıkış, oturum düştü) Hesabım kapanır: sonraki girişte Hoş geldin açılır (review F-6).
@@ -33,6 +38,8 @@ export function AuthGate() {
       setAccount(false);
       setCalendar(false);
       setChildren(null);
+      setAttendance(false);
+      setNotices(false);
     }
 
     if (state.kind !== "signedOut") {
@@ -64,6 +71,22 @@ export function AuthGate() {
     case "loadingMe":
       return <Text style={styles.notice}>{t("welcome.loading")}</Text>;
     case "signedIn":
+      if (attendance) {
+        return <MyClassroomsScreen client={session.client} onBack={() => setAttendance(false)} />;
+      }
+
+      if (notices) {
+        return (
+          <NoticesScreen
+            client={session.client}
+            onBack={() => {
+              setNotices(false);
+              void reloadMe();
+            }}
+          />
+        );
+      }
+
       if (children) {
         return children.childId ? (
           <ChildCardScreen key={children.childId} client={session.client} childId={children.childId} onBack={() => setChildren({ childId: null })} />
@@ -79,7 +102,7 @@ export function AuthGate() {
       return account ? (
         <AccountScreen client={session.client} onBack={() => setAccount(false)} onProfileSaved={() => void reloadMe()} />
       ) : (
-        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} />
+        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} onAttendance={() => setAttendance(true)} onNotices={() => setNotices(true)} />
       );
   }
 }

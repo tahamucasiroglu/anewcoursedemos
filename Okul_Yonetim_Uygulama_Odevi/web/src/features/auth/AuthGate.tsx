@@ -1,7 +1,9 @@
 import { t } from "../../i18n/t";
 import { AccountPage } from "../account/AccountPage";
+import { AttendancePage } from "../attendance/AttendancePage";
 import { AdminPage } from "../admin/AdminPage";
 import { CalendarPage } from "../calendar/CalendarPage";
+import { NoticesPage } from "../notices/NoticesPage";
 import { PlatformPage } from "../platform/PlatformPage";
 import { StudentsPage } from "../students/StudentsPage";
 import { resetTokenFromRoute } from "@okul/api-client";
@@ -19,7 +21,8 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * Oturum durumuna göre ekranı seçer: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004, web); "#/yonetim"
  * adresinde yönetim sayfası (spec 0005); "#/hesabim" Hesabım, "#/sifremi-unuttum" ve "#/sifre-yenile" şifre işlemleri
  * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007); "#/takvim" okul
- * takvimi (spec 0008, her rol); "#/ogrenciler" öğrenci yönetimi (spec 0009, yalnızca kurucu). Kısa geçiş
+ * takvimi (spec 0008, her rol); "#/ogrenciler" öğrenci yönetimi (spec 0009, yalnızca kurucu); "#/yoklama" yoklama (öğretmen) ve
+ * "#/bildirimler" veli bildirimleri (spec 0010; okununca kişi bilgisi — okunmamış sayısı — yenilenir). Kısa geçiş
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
@@ -66,6 +69,14 @@ export function AuthGate() {
 
       if (path === "/takvim") {
         return <CalendarPage client={session.client} />;
+      }
+
+      if (path === "/yoklama") {
+        return <AttendancePage me={state.me} client={session.client} />;
+      }
+
+      if (path === "/bildirimler") {
+        return <NoticesPage me={state.me} client={session.client} onRead={() => void reloadMe()} />;
       }
 
       if (path === "/ogrenciler") {
