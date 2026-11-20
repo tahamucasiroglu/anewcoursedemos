@@ -42,6 +42,8 @@ Türkçe metinler, Pi'ye dağıtım. Push bildirim, kurum logosuyla markalı aç
 | Ne | Neden | Durum |
 |---|---|---|
 | 2FA (kurucu/yönetici ve muhasebe zorunlu) + çok bilinen şifre listesi — backlog B-17 | Güvenlik kuralı; MVP demosu için ertelendi (kullanıcı kararı 2026-11-19) | ⬜ |
+| KVKK veli aydınlatma metni + açık rıza akışı (sürümlü rıza kaydı; fotoğraf rızası öğrenci bazlı) | Öğrenci ve sağlık verisi özel nitelikli kişisel veri; spec 0009 analiz notu (önceden verilen onay, Promtlar 0082) | ⬜ |
+| Pi veritabanı günlük yedeği — backlog B-14 | Sağlık verisi şifreleme anahtarı ve veri kaybı riski (spec 0009 analiz notu) | ⬜ |
 
 ## Faz 1 dışı (şimdilik yapılmaz)
 Faz 2 (sınav analizi, servis, etüt, öğrenci uygulaması, rehberlik) ve Faz 3 (ön kayıt CRM'i, çok şube büyümesi,
