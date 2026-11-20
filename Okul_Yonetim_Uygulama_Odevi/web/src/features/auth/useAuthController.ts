@@ -73,5 +73,5 @@ export function useAuthController() {
     setState(signedOut());
   }, [session]);
 
-  return { state, login, retryResume, selectSchool, switchSchool, logout };
+  return { state, session, login, retryResume, selectSchool, switchSchool, logout };
 }

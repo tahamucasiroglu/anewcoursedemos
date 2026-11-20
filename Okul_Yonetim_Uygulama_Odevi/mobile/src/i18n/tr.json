@@ -23,7 +23,7 @@
   "school.title": "Okul seçin",
   "school.loading": "Okul açılıyor…",
   "school.error": "Okul seçilemedi. Lütfen tekrar deneyin.",
-  "school.none": "Bu hesaba bağlı okul yok.",
+  "school.none": "Bu hesaba bağlı etkin okul yok.",
   "welcome.greeting": "Hoş geldiniz,",
   "welcome.school": "Okul",
   "welcome.roles": "Rolleriniz",
