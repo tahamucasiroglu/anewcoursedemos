@@ -11,6 +11,8 @@ type State =
   | { kind: "error"; message: string }
   | { kind: "ready"; items: FeedItem[]; page: number; hasMore: boolean };
 
+const feedKey = (item: FeedItem) => `${item.kind}:${item.id}`;
+
 interface Props {
   client: AuthSession["client"];
   onBack: () => void;
@@ -20,7 +22,8 @@ interface Props {
  * Velinin duyuru akışı (spec 0011 gereksinim 2, 7; AC-13): alıcısı olduğu duyurular ve çocuklarının okul bildirimleri,
  * yeniden eskiye, 20'lik sayfalar ("Daha fazla"). Okunmamış satırda "Yeni" işareti (erişilebilirlik etiketi "okunmadı");
  * okul bildiriminin yayınlayanı "Okul bildirimi". Duyuruya dokununca ayrıntı açılır (sunucu okundu yazar); dönünce akış
- * yenilenir. Açılınca ve aşağı çekince yenilenir. Durumlar: yükleniyor, boş ("Henüz duyuru yok"), dolu, hata + tekrar dene.
+ * yenilenir. Açılınca ve aşağı çekince yenilenir; "Daha fazla" satırları `tür:kimlik` ile tekrarsız ekler, hata verirse not
+ * gösterir. Durumlar: yükleniyor, boş ("Henüz duyuru yok"), dolu, hata + tekrar dene.
  * Liste kayar (FlatList), "Geri" altta sabit (conventions T16).
  */
 export function FeedScreen({ client, onBack }: Props) {
@@ -30,6 +33,7 @@ export function FeedScreen({ client, onBack }: Props) {
   const [reload, setReload] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [moreError, setMoreError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
   const failure = useCallback(
@@ -46,6 +50,7 @@ export function FeedScreen({ client, onBack }: Props) {
       }
 
       setRefreshing(false);
+      setMoreError(null);
       if (outcome.ok) {
         setState({ kind: "ready", items: outcome.data.items, page: 1, hasMore: outcome.data.hasMore });
       } else {
@@ -76,12 +81,25 @@ export function FeedScreen({ client, onBack }: Props) {
       return;
     }
 
+    const from = state.page;
     setLoadingMore(true);
-    const outcome = await callApi(client.GET("/api/announcements/feed", { params: { query: { page: state.page + 1 } } }));
+    setMoreError(null);
+    const outcome = await callApi(client.GET("/api/announcements/feed", { params: { query: { page: from + 1 } } }));
     setLoadingMore(false);
-    if (outcome.ok) {
-      setState({ kind: "ready", items: [...state.items, ...outcome.data.items], page: state.page + 1, hasMore: outcome.data.hasMore });
+    if (!outcome.ok) {
+      setMoreError(failure(outcome));
+      return;
     }
+
+    // Arada yenilenmiş akışın üzerine eski sayfa yazılmaz; sayfalar arasında kayan satır iki kez görünmez (review L-6).
+    setState((current) => {
+      if (current.kind !== "ready" || current.page !== from) {
+        return current;
+      }
+
+      const seen = new Set(current.items.map(feedKey));
+      return { kind: "ready", items: [...current.items, ...outcome.data.items.filter((item) => !seen.has(feedKey(item)))], page: from + 1, hasMore: outcome.data.hasMore };
+    });
   };
 
   const renderItem = ({ item }: { item: FeedItem }) => {
@@ -139,7 +157,7 @@ export function FeedScreen({ client, onBack }: Props) {
           style={styles.scrollList}
           contentContainerStyle={styles.scrollContent}
           data={state.items}
-          keyExtractor={(item) => `${item.kind}:${item.id}`}
+          keyExtractor={feedKey}
           renderItem={renderItem}
           refreshControl={
             <RefreshControl
@@ -152,9 +170,12 @@ export function FeedScreen({ client, onBack }: Props) {
           }
           ListFooterComponent={
             state.hasMore ? (
-              <Pressable style={styles.secondary} accessibilityRole="button" disabled={loadingMore} accessibilityState={{ disabled: loadingMore, busy: loadingMore }} onPress={() => void loadMore()}>
-                <Text style={styles.secondaryText}>{loadingMore ? t("feed.loadingMore") : t("feed.more")}</Text>
-              </Pressable>
+              <>
+                {moreError && <Text style={styles.error} accessibilityRole="alert">{moreError}</Text>}
+                <Pressable style={styles.secondary} accessibilityRole="button" disabled={loadingMore} accessibilityState={{ disabled: loadingMore, busy: loadingMore }} onPress={() => void loadMore()}>
+                  <Text style={styles.secondaryText}>{loadingMore ? t("feed.loadingMore") : t("feed.more")}</Text>
+                </Pressable>
+              </>
             ) : undefined
           }
         />

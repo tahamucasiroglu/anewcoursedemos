@@ -351,3 +351,69 @@ it("yeni mesaj: kişiler alınamazsa hata + 'Tekrar dene' yeniden yükler", asyn
   expect(screen.queryByRole("alert")).toBeNull();
   expect(calls).toBe(2);
 });
+
+it("akış: 'Daha fazla' hatası not olarak görünür; yeniden denemede sayfalar arasında kayan satır iki kez görünmez", async () => {
+  let pageTwoCalls = 0;
+  fakeApi({
+    "GET /api/announcements/feed": (request) => {
+      if (new URL(request.url).searchParams.get("page") !== "2") {
+        return json(200, { items: [{ ...announcement, isRead: true }], page: 1, hasMore: true, unreadCount: 0 });
+      }
+
+      return ++pageTwoCalls === 1 ? json(500, {}) : json(200, { items: [{ ...announcement, isRead: true }, older], page: 2, hasMore: false, unreadCount: 0 });
+    },
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Duyurular" }));
+  await fireEvent.press(await screen.findByRole("button", { name: "Daha fazla" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Duyurular alınamadı.");
+  expect(screen.getAllByTestId("feed-row")).toHaveLength(1);
+  await fireEvent.press(screen.getByRole("button", { name: "Daha fazla" }));
+
+  expect(await screen.findByText("Veli toplantısı")).toBeTruthy();
+  expect(screen.getAllByTestId("feed-row").map((r) => r.props.accessibilityLabel)).toEqual([
+    "Onay formu, Müze gezisi, Elif Öğretmen · Can Ak · 20.11.2026",
+    "Veli toplantısı, Müdür · 19.11.2026",
+  ]);
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+it("konuşma: 'Daha eski' hatası not olarak görünür; gelen eski sayfa arada gönderilen mesajı silmez, tekrar eden mesaj bir kez", async () => {
+  let olderCalls = 0;
+  let release: () => void = () => undefined;
+  const held = new Promise<Response>((resolve) => {
+    release = () => resolve(json(200, { conversation, canSend: true, messages: [message("m4", "Eski mesaj"), message("m5", "Son mesaj")], hasMore: false }));
+  });
+  fakeApi({
+    "GET /api/conversations": () => json(200, [conversation]),
+    "GET /api/conversations/k1/messages": (request) => {
+      if (new URL(request.url).searchParams.get("before") !== "m5") {
+        return json(200, { conversation, canSend: true, messages: [message("m5", "Son mesaj")], hasMore: true });
+      }
+
+      return ++olderCalls === 1 ? json(500, {}) : held;
+    },
+    "POST /api/conversations/k1/messages": () => json(200, { message: message("m6", "Yeni mesaj", true), outsideWorkingHours: false }),
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Mesajlar" }));
+  await fireEvent.press(await screen.findByTestId("conversation-row"));
+  await screen.findByText("Son mesaj");
+
+  await fireEvent.press(screen.getByRole("button", { name: "Daha eski" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Mesajlar alınamadı.");
+
+  await fireEvent.press(screen.getByRole("button", { name: "Daha eski" }));
+  await fireEvent.changeText(screen.getByLabelText("Mesajınız"), "Yeni mesaj");
+  await fireEvent.press(screen.getByRole("button", { name: "Gönder" }));
+  expect(await screen.findByText("Yeni mesaj")).toBeTruthy();
+  release();
+
+  expect(await screen.findByText("Eski mesaj")).toBeTruthy();
+  expect(screen.getAllByTestId("message").map((m) => m.props.accessibilityLabel)).toEqual([
+    "Elif Öğretmen: Eski mesaj",
+    "Elif Öğretmen: Son mesaj",
+    "Siz: Yeni mesaj",
+  ]);
+});

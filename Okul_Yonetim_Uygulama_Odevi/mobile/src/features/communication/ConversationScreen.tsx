@@ -18,8 +18,8 @@ interface Props {
 
 /**
  * Tek konuşma (spec 0011 gereksinim 5, 6; AC-13): son 50 mesaj eskiden yeniye, "Daha eski" ile önceki 50 (açılınca okundu
- * olur). Yazma: boş ya da 2000'i aşan mesaj alan hatası verir, istek gitmez; gönderirken düğme kilitli; sunucu hatası
- * duyurulur; öğretmen mesai dışındaysa "mesajınız iletildi" notu. İlişki bittiyse alan kapalı ve "Bu konuşmaya artık mesaj
+ * olur; eski sayfa tekrarsız ve güncel durumun üzerine eklenir, hata verirse not gösterir). Yazma: boş ya da 2000'i aşan
+ * mesaj alan hatası verir, istek gitmez; gönderirken düğme kilitli; sunucu hatası duyurulur; öğretmen mesai dışındaysa "mesajınız iletildi" notu. İlişki bittiyse alan kapalı ve "Bu konuşmaya artık mesaj
  * gönderilemez.". Mesajlar kayar (FlatList), yazma alanı ve "Geri" altta sabit.
  */
 export function ConversationScreen({ client, conversationId, onBack }: Props) {
@@ -31,6 +31,7 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
   const [fieldError, setFieldError] = useState<CommunicationFieldError | undefined>();
   const [sending, setSending] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [olderError, setOlderError] = useState<string | null>(null);
   const [note, setNote] = useState<{ error: boolean; text: string } | null>(null);
 
   useEffect(() => {
@@ -57,13 +58,25 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
     }
 
     setLoadingOlder(true);
+    setOlderError(null);
     const outcome = await callApi(
       client.GET("/api/conversations/{id}/messages", { params: { path: { id: conversationId }, query: { before: state.messages[0].id } } }),
     );
     setLoadingOlder(false);
-    if (outcome.ok) {
-      setState({ ...state, messages: [...outcome.data.messages, ...state.messages], hasMore: outcome.data.hasMore });
+    if (!outcome.ok) {
+      setOlderError(outcome.unreachable ? t("communication.unreachable") : outcome.message ?? t("messages.loadError"));
+      return;
     }
+
+    // Güncel durumun üzerine eklenir (arada gönderilen mesaj kaybolmaz), aynı mesaj iki kez görünmez (review L-6).
+    setState((current) => {
+      if (current.kind !== "ready") {
+        return current;
+      }
+
+      const seen = new Set(current.messages.map((m) => m.id));
+      return { ...current, messages: [...outcome.data.messages.filter((m) => !seen.has(m.id)), ...current.messages], hasMore: outcome.data.hasMore };
+    });
   };
 
   const send = async () => {
@@ -82,7 +95,8 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
     const outcome = await callApi(client.POST("/api/conversations/{id}/messages", { params: { path: { id: conversationId } }, body: { body: text.trim() } }));
     setSending(false);
     if (outcome.ok) {
-      setState({ ...state, messages: [...state.messages, outcome.data.message] });
+      const sent = outcome.data.message;
+      setState((current) => (current.kind === "ready" && !current.messages.some((m) => m.id === sent.id) ? { ...current, messages: [...current.messages, sent] } : current));
       setText("");
       if (outcome.data.outsideWorkingHours) {
         setNote({ error: false, text: t("messages.outsideHours") });
@@ -124,9 +138,12 @@ export function ConversationScreen({ client, conversationId, onBack }: Props) {
             keyExtractor={(message) => message.id}
             ListHeaderComponent={
               state.hasMore ? (
-                <Pressable style={styles.secondary} accessibilityRole="button" disabled={loadingOlder} accessibilityState={{ disabled: loadingOlder, busy: loadingOlder }} onPress={() => void loadOlder()}>
-                  <Text style={styles.secondaryText}>{t("messages.older")}</Text>
-                </Pressable>
+                <>
+                  <Pressable style={styles.secondary} accessibilityRole="button" disabled={loadingOlder} accessibilityState={{ disabled: loadingOlder, busy: loadingOlder }} onPress={() => void loadOlder()}>
+                    <Text style={styles.secondaryText}>{t("messages.older")}</Text>
+                  </Pressable>
+                  {olderError && <Text style={styles.error} accessibilityRole="alert">{olderError}</Text>}
+                </>
               ) : undefined
             }
             renderItem={({ item: message }) => (
