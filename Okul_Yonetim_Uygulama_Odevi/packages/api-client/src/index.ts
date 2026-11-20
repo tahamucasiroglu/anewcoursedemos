@@ -15,5 +15,5 @@ export type {
 } from "./auth/session";
 export { validateLoginForm } from "./auth/loginForm";
 export type { LoginFieldError, LoginFormErrors } from "./auth/loginForm";
-export { afterAuth, initialAuthState, loadMe, signedOut } from "./auth/authFlow";
+export { afterAuth, afterResume, initialAuthState, loadMe, signedOut } from "./auth/authFlow";
 export type { AuthState, LoginProblem } from "./auth/authFlow";

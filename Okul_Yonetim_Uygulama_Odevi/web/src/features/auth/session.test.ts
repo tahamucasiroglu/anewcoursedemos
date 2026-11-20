@@ -89,3 +89,23 @@ it("mobil kipinde depoda anahtar yoksa açılışta sunucuya gitmeden 'oturum yo
   expect(outcome.kind).toBe("rejected");
   expect(api.requests).toHaveLength(0);
 });
+
+it("yenileme anında sunucuya ulaşılamazsa oturum bitmiş sayılmaz: anahtar silinmez, onExpired çağrılmaz (review L-2)", async () => {
+  const onExpired = vi.fn();
+  const store = memoryStore("kayitli");
+  const api = fakeApi({
+    "POST /api/auth/refresh": () => {
+      throw new TypeError("Failed to fetch");
+    },
+    "POST /api/auth/login": () => json(200, { ...tokens(), refreshToken: "kayitli" }),
+    "GET /api/me": () => json(401, {}),
+  });
+  vi.stubGlobal("fetch", api.fetch);
+  const session = new AuthSession({ baseUrl: "http://localhost:5080", delivery: "body", store, onExpired });
+  await session.login("a@ornek.test", "Gizli-Sifre-1");
+
+  await expect(session.me()).rejects.toThrow();
+
+  expect(onExpired).not.toHaveBeenCalled();
+  expect(store.value).toBe("kayitli");
+});

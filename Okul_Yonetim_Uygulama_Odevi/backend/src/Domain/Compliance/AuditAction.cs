@@ -12,4 +12,5 @@ public enum AuditAction
     BranchCreated = 7,
     UserCreated = 8,
     RoleAssigned = 9,
+    RefreshTokenReused = 10,
 }

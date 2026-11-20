@@ -35,6 +35,23 @@ public sealed class EfUnitOfWork : IUnitOfWork
 
     public void DiscardChanges() => this.context.ChangeTracker.Clear();
 
+    public async Task<IExclusiveScope> BeginExclusiveAsync(string key, CancellationToken cancellationToken)
+    {
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
+            await this.context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // İşlem süresince tutulan PostgreSQL kilidi; işlem bitince (commit/rollback) kendiliğinden bırakılır.
+            await this.context.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken).ConfigureAwait(false);
+            return new EfExclusiveScope(transaction);
+        }
+        catch
+        {
+            await transaction.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation };
 }

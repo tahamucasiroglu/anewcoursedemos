@@ -16,6 +16,8 @@ public sealed class UserSessionConfiguration : IEntityTypeConfiguration<UserSess
         builder.Property(s => s.Id).ValueGeneratedNever();
         builder.Property(s => s.RefreshTokenHash).HasMaxLength(128).IsRequired();
         builder.HasIndex(s => s.RefreshTokenHash).IsUnique();
+        builder.Property(s => s.PreviousRefreshTokenHash).HasMaxLength(128);
+        builder.HasIndex(s => s.PreviousRefreshTokenHash);
         builder.Property(s => s.CreatedIp).HasMaxLength(64);
         builder.HasOne<User>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Restrict);

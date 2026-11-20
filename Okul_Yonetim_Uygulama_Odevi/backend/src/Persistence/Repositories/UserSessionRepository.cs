@@ -21,5 +21,8 @@ public sealed class UserSessionRepository : IUserSessionRepository
     public Task<UserSession?> FindByRefreshTokenHashAsync(string refreshTokenHash, CancellationToken cancellationToken) =>
         this.context.UserSessions.FirstOrDefaultAsync(s => s.RefreshTokenHash == refreshTokenHash, cancellationToken);
 
+    public Task<UserSession?> FindByPreviousRefreshTokenHashAsync(string refreshTokenHash, CancellationToken cancellationToken) =>
+        this.context.UserSessions.FirstOrDefaultAsync(s => s.PreviousRefreshTokenHash == refreshTokenHash, cancellationToken);
+
     public void Add(UserSession session) => this.context.UserSessions.Add(session);
 }

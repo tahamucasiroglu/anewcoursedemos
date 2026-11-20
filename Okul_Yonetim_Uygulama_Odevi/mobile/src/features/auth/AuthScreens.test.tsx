@@ -120,6 +120,40 @@ describe.each(["light", "dark"] as const)("Mobil giriş — %s tema", (mode) => 
 });
 
 describe("Mobil oturum", () => {
+  it("gönderilirken düğme kilitli ve 'Giriş yapılıyor…' yazar (review L-3)", async () => {
+    fakeApi({ "POST /api/auth/login": () => new Promise<Response>(() => {}) });
+    await render(<App />);
+
+    await login("ayse@ornek.test", "Gizli-Sifre-1");
+
+    expect(await screen.findByText("Giriş yapılıyor…")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Giriş yapılıyor…" }).props.accessibilityState).toMatchObject({ disabled: true, busy: true });
+  });
+
+  it("oturum yenilenemezse giriş ekranına 'oturum sona erdi' ile döner ve kayıtlı anahtar silinir (review L-3)", async () => {
+    await SecureStore.setItemAsync("okul.refreshToken", "kayitli");
+    let refreshes = 0;
+    fakeApi({
+      "POST /api/auth/refresh": () => (refreshes++ === 0 ? json(200, tokens({ refreshToken: "yenileme-2" })) : json(401, {})),
+      "GET /api/me": () => json(401, {}),
+    });
+    await render(<App />);
+
+    expect(await screen.findByText("Oturumunuz sona erdi, tekrar giriş yapın.")).toBeTruthy();
+    expect(screen.getByText("Giriş yap")).toBeTruthy();
+    await waitFor(async () => expect(await SecureStore.getItemAsync("okul.refreshToken")).toBeNull());
+  });
+
+  it("açılışta sunucuya ulaşılamazsa 'ulaşılamıyor' gösterir, kayıtlı anahtar korunur (review L-2)", async () => {
+    await SecureStore.setItemAsync("okul.refreshToken", "kayitli");
+    fakeApi({ "POST /api/auth/refresh": () => Promise.reject(new TypeError("Network request failed")) });
+    await render(<App />);
+
+    expect(await screen.findByText("Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.")).toBeTruthy();
+    expect(await SecureStore.getItemAsync("okul.refreshToken")).toBe("kayitli");
+  });
+
+
   it("depoda geçerli oturum varsa açılışta doğrudan hoş geldin", async () => {
     await SecureStore.setItemAsync("okul.refreshToken", "kayitli");
     const api = fakeApi({ "POST /api/auth/refresh": () => json(200, tokens({ refreshToken: "yenileme-2" })), "GET /api/me": () => json(200, me()) });

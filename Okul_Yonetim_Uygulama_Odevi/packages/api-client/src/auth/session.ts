@@ -1,7 +1,8 @@
 // Oturum yönetimi (spec 0004): giriş, okul seçimi, yenileme, çıkış. Web ve mobil aynı kodu kullanır; farkı yalnızca
 // yenileme anahtarının taşınmasıdır: web "cookie" (HttpOnly çerez, JavaScript görmez), mobil "body" (güvenli depoda).
 // Erişim anahtarı yalnızca bellekte durur. Bir istek 401 alırsa oturum bir kez yenilenir ve istek tekrarlanır;
-// yenileme de başarısızsa oturum biter (onExpired) ve ekran giriş sayfasına döner.
+// yenileme sunucu tarafından reddedilirse oturum biter (onExpired) ve ekran giriş sayfasına döner. Sunucuya
+// ulaşılamıyorsa oturum bitmiş sayılmaz (kayıtlı anahtar silinmez); istek ağ hatasıyla sonuçlanır (review L-2).
 import createClient from "openapi-fetch";
 import type { components, paths } from "../schema";
 
@@ -36,7 +37,7 @@ export class AuthSession {
   readonly client;
   private readonly options: AuthSessionOptions;
   private accessToken: string | null = null;
-  private refreshing: Promise<boolean> | null = null;
+  private refreshing: Promise<AuthOutcome["kind"]> | null = null;
 
   constructor(options: AuthSessionOptions) {
     this.options = options;
@@ -110,17 +111,17 @@ export class AuthSession {
     return this.client.POST("/api/auth/refresh", { body: refreshToken ? { refreshToken } : {} });
   }
 
-  /** Oturumu bir kez yeniler; aynı anda gelen 401'ler aynı yenilemeyi bekler. */
-  private refresh(): Promise<boolean> {
+  /** Oturumu bir kez yeniler; aynı anda gelen 401'ler aynı yenilemeyi bekler. Sonuç: "ok" | "rejected" | "unreachable". */
+  private refresh(): Promise<AuthOutcome["kind"]> {
     this.refreshing ??= (async () => {
       const outcome = await this.authenticate(() => this.postRefresh());
-      if (outcome.kind !== "ok") {
+      if (outcome.kind === "rejected") {
         this.accessToken = null;
         await this.options.store?.set(null);
         this.options.onExpired?.();
       }
 
-      return outcome.kind === "ok";
+      return outcome.kind;
     })().finally(() => {
       this.refreshing = null;
     });
@@ -135,7 +136,12 @@ export class AuthSession {
       return response;
     }
 
-    return (await this.refresh()) ? globalThis.fetch(this.withToken(retry)) : response;
+    const refreshed = await this.refresh();
+    if (refreshed === "unreachable") {
+      throw new TypeError("Sunucuya ulaşılamıyor");
+    }
+
+    return refreshed === "ok" ? globalThis.fetch(this.withToken(retry)) : response;
   }
 
   private withToken(request: Request): Request {

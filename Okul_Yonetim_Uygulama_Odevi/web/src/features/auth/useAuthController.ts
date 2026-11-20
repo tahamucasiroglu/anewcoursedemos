@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AuthSession, afterAuth, initialAuthState, loadMe, signedOut, type AuthState } from "@okul/api-client";
+import { AuthSession, afterAuth, afterResume, initialAuthState, loadMe, signedOut, type AuthState } from "@okul/api-client";
 import { apiBaseUrl } from "../../config";
 
 /**
@@ -27,7 +27,7 @@ export function useAuthController() {
     let active = true;
     session.resume().then((outcome) => {
       if (active) {
-        void proceed(outcome.kind === "ok" ? afterAuth(outcome) : signedOut());
+        void proceed(afterResume(outcome));
       }
     });
     return () => {

@@ -9,5 +9,7 @@ public interface IUserSessionRepository
 
     Task<UserSession?> FindByRefreshTokenHashAsync(string refreshTokenHash, CancellationToken cancellationToken);
 
+    Task<UserSession?> FindByPreviousRefreshTokenHashAsync(string refreshTokenHash, CancellationToken cancellationToken);
+
     void Add(UserSession session);
 }

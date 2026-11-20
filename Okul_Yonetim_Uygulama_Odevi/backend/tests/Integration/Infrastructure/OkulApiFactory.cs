@@ -9,7 +9,7 @@ namespace OkulYonetim.Tests.Integration.Infrastructure;
 /// <summary>
 /// Testler için API: verilen veritabanı bağlantısı, testlere özel log klasörü, CORS ayarı ve test imza anahtarıyla
 /// kurulur. İsteğe bağlı: "/__test/throw" kasıtlı hata ucu (spec 0001 AC-13), sahte saat (spec 0004 kilit/oturum süreleri),
-/// giriş hız sınırı ve istemci IP'si (her isteğe yerel vekil adresi verilir; X-Forwarded-For başlığı gerçek IP'yi taşır).
+/// giriş hız sınırı, servis değiştirme (ör. eşzamanlılık testinde bekleten şifre doğrulayıcı) ve istemci IP'si (her isteğe yerel vekil adresi verilir; X-Forwarded-For başlığı gerçek IP'yi taşır).
 /// </summary>
 public sealed class OkulApiFactory : WebApplicationFactory<Program>
 {
@@ -19,9 +19,16 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
     private readonly bool addThrowingEndpoint;
     private readonly TimeProvider? timeProvider;
     private readonly int loginRateLimitPerMinute;
+    private readonly Action<IServiceCollection>? configureServices;
 
-    public OkulApiFactory(string connectionString, bool addThrowingEndpoint = false, TimeProvider? timeProvider = null, int loginRateLimitPerMinute = 1000)
+    public OkulApiFactory(
+        string connectionString,
+        bool addThrowingEndpoint = false,
+        TimeProvider? timeProvider = null,
+        int loginRateLimitPerMinute = 1000,
+        Action<IServiceCollection>? configureServices = null)
     {
+        this.configureServices = configureServices;
         this.connectionString = connectionString;
         this.addThrowingEndpoint = addThrowingEndpoint;
         this.timeProvider = timeProvider;
@@ -59,6 +66,8 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
             {
                 services.AddSingleton<IStartupFilter, ThrowingEndpointStartupFilter>();
             }
+
+            this.configureServices?.Invoke(services);
         });
     }
 

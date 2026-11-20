@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -42,6 +43,8 @@ public sealed class SessionTests
         }
 
         refreshed.GetProperty("refreshToken").GetString().ShouldNotBe(firstRefresh);
+        // Eski anahtar yalnızca 30 sn tolerans içinde geçer (birden çok sekme, review M-1); sonrasında reddedilir.
+        time.Advance(TimeSpan.FromSeconds(31));
         await RefreshAsync(client, firstRefresh, HttpStatusCode.Unauthorized);
     }
 
@@ -100,6 +103,53 @@ public sealed class SessionTests
 
         refreshed.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await ReadJsonAsync(refreshed)).GetProperty("refreshToken").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    /// <summary>Review M-1: aynı anahtarla aynı anda gelen yenilemeler (birden çok sekme) hepsi geçer; anahtarı yalnız biri döndürür.</summary>
+    [Fact]
+    public async Task Refresh_ConcurrentWithSameToken_AllSucceed_OnlyOneRotates_NewTokenWorks()
+    {
+        using OkulApiFactory factory = new(this.database.ConnectionString);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed school = await CreateSchoolAsync(factory);
+        string token = (await LoginAsync(client, school.FounderEmail)).GetProperty("refreshToken").GetString()!;
+
+        JsonElement[] results = await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => RefreshAsync(client, token, HttpStatusCode.OK)));
+
+        string[] rotated = [.. results.Select(r => r.GetProperty("refreshToken")).Where(t => t.ValueKind == JsonValueKind.String).Select(t => t.GetString()!)];
+        rotated.Length.ShouldBe(1);
+        foreach (JsonElement result in results)
+        {
+            using HttpResponseMessage me = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/me", AccessToken(result));
+            me.StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+
+        await RefreshAsync(client, rotated[0], HttpStatusCode.OK);
+    }
+
+    /// <summary>
+    /// Review M-1: eski (döndürülmüş) anahtar 30 sn içinde yalnızca erişim anahtarı alır; daha sonra gelirse anahtar
+    /// çalınmış sayılır — oturum iptal edilir (yeni anahtar da geçmez) ve audit'e "RefreshTokenReused" yazılır.
+    /// </summary>
+    [Fact]
+    public async Task Refresh_OldTokenAfterGrace_RevokesSessionAndIsAudited()
+    {
+        FakeTimeProvider time = new(DateTimeOffset.UtcNow);
+        using OkulApiFactory factory = new(this.database.ConnectionString, timeProvider: time);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed school = await CreateSchoolAsync(factory);
+        string first = (await LoginAsync(client, school.FounderEmail)).GetProperty("refreshToken").GetString()!;
+        string second = (await RefreshAsync(client, first, HttpStatusCode.OK)).GetProperty("refreshToken").GetString()!;
+
+        time.Advance(TimeSpan.FromSeconds(10));
+        JsonElement withinGrace = await RefreshAsync(client, first, HttpStatusCode.OK);
+        withinGrace.GetProperty("refreshToken").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        time.Advance(TimeSpan.FromSeconds(25));
+        await RefreshAsync(client, first, HttpStatusCode.Unauthorized);
+        await RefreshAsync(client, second, HttpStatusCode.Unauthorized);
+        (await QueryAsync(factory, c => c.AuditEntries.CountAsync(a => a.ActorUserId == school.FounderId && a.Action == OkulYonetim.Domain.Compliance.AuditAction.RefreshTokenReused)))
+            .ShouldBe(1);
     }
 
     private static async Task<JsonElement> RefreshAsync(HttpClient client, string refreshToken, HttpStatusCode expected)

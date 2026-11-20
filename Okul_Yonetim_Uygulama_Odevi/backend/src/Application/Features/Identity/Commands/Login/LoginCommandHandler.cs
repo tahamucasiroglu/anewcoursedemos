@@ -12,13 +12,12 @@ namespace OkulYonetim.Application.Features.Identity.Commands.Login;
 /// <summary>
 /// Giriş (spec 0004, gereksinim 3/6/7): önce e-postanın kilidi kontrol edilir; şifre yanlışsa ya da e-posta yoksa aynı
 /// mesajla reddedilir ve sayaç artar (3. hatada 15 dk kilit). Doğruysa sayaç sıfırlanır, oturum açılır; tek okul varsa
-/// seçilir, birden çoksa okul seçimi istenir. Her sonuç audit kaydına geçer (denenen e-posta, IP). Sayaç satırı
-/// eşzamanlı denemelerde çakışırsa işlem baştan yeniden denenir.
+/// seçilir, birden çoksa okul seçimi istenir. Her sonuç audit kaydına geçer (denenen e-posta, IP). Aynı e-postanın
+/// girişleri sıraya sokulur (kilit kontrolü → şifre → sayaç tek işlemde): eşzamanlı isteklerle 3 deneme sınırı aşılamaz
+/// (review H-1).
 /// </summary>
 public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResult>
 {
-    private const int MaxAttempts = 5;
-
     private readonly IUserRepository users;
     private readonly ILoginThrottleRepository throttles;
     private readonly IUserSessionRepository sessions;
@@ -64,16 +63,20 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
     {
         ArgumentNullException.ThrowIfNull(request);
         string email = EmailAddress.Normalize(request.Email);
-        for (int attempt = 1; ; attempt++)
+        IExclusiveScope scope = await this.unitOfWork.BeginExclusiveAsync("login:" + email, cancellationToken).ConfigureAwait(false);
+        await using (scope.ConfigureAwait(false))
         {
             try
             {
-                return await this.TryLoginAsync(email, request.Password, cancellationToken).ConfigureAwait(false);
+                AuthResult result = await this.TryLoginAsync(email, request.Password, cancellationToken).ConfigureAwait(false);
+                await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return result;
             }
-            catch (ConcurrencyConflictException) when (attempt < MaxAttempts)
+            catch (AuthorizationException)
             {
-                this.unitOfWork.DiscardChanges();
-                this.logger.LogWarning("Giriş sayacı eşzamanlı güncellendi; deneme {Attempt} yeniden yapılıyor", attempt);
+                // Ret de kalıcıdır: sayaç ve audit kaydı yazılmış olmalı.
+                await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
+                throw;
             }
         }
     }

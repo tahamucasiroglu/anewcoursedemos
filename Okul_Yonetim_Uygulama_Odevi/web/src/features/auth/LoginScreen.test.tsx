@@ -152,6 +152,15 @@ describe.each(["light", "dark"] as const)("Giriş — %s tema", (mode) => {
 });
 
 describe("Giriş — klavye ve oturum sonu", () => {
+  it("açılışta sunucuya ulaşılamıyorsa 'oturum sona erdi' değil 'ulaşılamıyor' gösterir (review L-2)", async () => {
+    vi.stubGlobal("fetch", fakeApi({ "POST /api/auth/refresh": () => Promise.reject(new TypeError("Failed to fetch")) }).fetch);
+    render(<App />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sunucuya ulaşılamıyor. Lütfen daha sonra tekrar deneyin.");
+    expect(screen.queryByText("Oturumunuz sona erdi, tekrar giriş yapın.")).not.toBeInTheDocument();
+  });
+
+
   it("akış yalnızca klavyeyle tamamlanır (Tab + Enter)", async () => {
     const api = fakeApi({
       "POST /api/auth/refresh": noSession,

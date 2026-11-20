@@ -1,7 +1,8 @@
 namespace OkulYonetim.Domain.Compliance;
 
 /// <summary>
-/// Audit kaydı: kim (kişi kimliği; giriş denemesinde denenen e-posta), ne, hangi kayıt, ne zaman, hangi IP. Yalnızca
+/// Audit kaydı: kim (kişi kimliği; giriş denemesinde denenen e-posta; komut işlemlerinde kaynak, ör. "komut satırı:
+/// okul@tmpi"), ne, hangi kayıt, ne zaman, hangi IP. Yalnızca
 /// eklenir — veritabanı değiştirmeyi ve silmeyi reddeder. Şifre ve oturum anahtarı asla içermez.
 /// </summary>
 public sealed class AuditEntry
@@ -31,6 +32,8 @@ public sealed class AuditEntry
 
     public string? IpAddress { get; private set; }
 
+    public string? Origin { get; private set; }
+
     public static AuditEntry Record(
         AuditAction action,
         DateTimeOffset now,
@@ -39,7 +42,8 @@ public sealed class AuditEntry
         string? attemptedEmail = null,
         string? targetType = null,
         Guid? targetId = null,
-        string? ipAddress = null) =>
+        string? ipAddress = null,
+        string? origin = null) =>
         new(Guid.CreateVersion7(now), now, action)
         {
             TenantId = tenantId,
@@ -48,5 +52,6 @@ public sealed class AuditEntry
             TargetType = targetType,
             TargetId = targetId,
             IpAddress = ipAddress,
+            Origin = origin,
         };
 }

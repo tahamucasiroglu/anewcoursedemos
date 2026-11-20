@@ -39,6 +39,10 @@ public sealed class CreateSchoolCliTests
         (await QueryAsync(factory, c => c.Tenants.IgnoreQueryFilters().CountAsync(t => t.Name == school))).ShouldBe(1);
         (await QueryAsync(factory, c => c.Branches.IgnoreQueryFilters().CountAsync(b => b.Name == "Bahçelievler"))).ShouldBeGreaterThanOrEqualTo(1);
         (await QueryAsync(factory, c => c.RoleAssignments.IgnoreQueryFilters().CountAsync(r => r.UserId == user.Id && r.Role == Role.Founder && r.BranchId == null))).ShouldBe(1);
+        Guid tenantId = await QueryAsync(factory, c => c.Tenants.IgnoreQueryFilters().Where(t => t.Name == school).Select(t => t.Id).SingleAsync());
+        List<string?> origins = await QueryAsync(factory, c => c.AuditEntries.Where(a => a.TenantId == tenantId).Select(a => a.Origin).ToListAsync());
+        origins.Count.ShouldBe(4);
+        origins.ShouldAllBe(o => o == $"komut satırı: {Environment.UserName}@{Environment.MachineName}");
         using HttpClient client = factory.CreateClient();
         (await PostLoginAsync(client, email, Secret)).StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
     }

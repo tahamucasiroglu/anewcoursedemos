@@ -5,7 +5,7 @@ namespace OkulYonetim.Infrastructure.Security;
 
 /// <summary>
 /// Erişim anahtarı ayarları ("Jwt" bölümü). İmza anahtarı repoda değil: geliştirmede user-secrets, Pi'de
-/// /etc/okul/okul-api.env (<c>Jwt__SigningKey</c>). En az 32 bayt olmalı; yoksa API başlamaz. Erişim anahtarı 15 dk geçerli.
+/// /etc/okul/okul-jwt.env (<c>Jwt__SigningKey</c>; root 600, setup.sh üretir). En az 32 bayt olmalı; yoksa API başlamaz. Erişim anahtarı 15 dk geçerli.
 /// Doğrulama parametreleri (yayıncı, hedef, imza, süre) API ile aynı yerden üretilir.
 /// </summary>
 public sealed class JwtOptions

@@ -38,12 +38,21 @@ export function afterAuth(outcome: AuthOutcome): AuthState {
   return { kind: "signedOut", expired: false, submitting: false, problem };
 }
 
+/**
+ * Açılıştaki sessiz yenilemenin sonucu: geçerli oturum → devam; sunucuya ulaşılamıyor → giriş ekranında "ulaşılamıyor"
+ * (kayıtlı oturum silinmez, tekrar açılınca denenir); oturum yok/geçersiz → boş giriş ekranı.
+ */
+export function afterResume(outcome: AuthOutcome): AuthState {
+  return outcome.kind === "rejected" ? signedOut() : afterAuth(outcome);
+}
+
 /** Oturumu kullanan ekranların ortak işlemleri; React tarafı (web/mobil) bunları setState ile bağlar. */
 export async function loadMe(session: AuthSession): Promise<AuthState> {
   try {
     const me = await session.me();
     return me ? { kind: "signedIn", me } : signedOut(true);
   } catch {
-    return signedOut(true);
+    // Ağ hatası oturumun bittiği anlamına gelmez (review L-2).
+    return { kind: "signedOut", expired: false, submitting: false, problem: { kind: "unreachable" } };
   }
 }

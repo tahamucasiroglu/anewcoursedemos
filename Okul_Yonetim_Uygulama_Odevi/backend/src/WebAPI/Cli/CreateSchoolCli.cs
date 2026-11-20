@@ -52,7 +52,7 @@ public static class CreateSchoolCli
                 }
             }
 
-            CreateSchoolResult result = await sender.Send(new CreateSchoolCommand(school, branch, fullName, email, password), cancellationToken).ConfigureAwait(false);
+            CreateSchoolResult result = await sender.Send(new CreateSchoolCommand(school, branch, fullName, email, password, $"komut satırı: {Environment.UserName}@{Environment.MachineName}"), cancellationToken).ConfigureAwait(false);
             await output.WriteLineAsync(result.AlreadyExisted
                 ? $"Zaten var: bu kişi \"{school.Trim()}\" okulunun kurucusu; hiçbir şey değiştirilmedi."
                 : $"Okul açıldı: {school.Trim()} · ilk şube: {branch.Trim()} · kurucu: {email.Trim()} ({(result.UserCreated ? "yeni hesap" : "mevcut hesap, şifresi değişmedi")})").ConfigureAwait(false);

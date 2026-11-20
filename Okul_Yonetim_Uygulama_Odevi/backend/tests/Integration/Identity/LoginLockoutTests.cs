@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -101,6 +103,49 @@ public sealed class LoginLockoutTests
     {
         using HttpResponseMessage response = await PostLoginAsync(client, email, password);
         return response.StatusCode;
+    }
+
+    /// <summary>
+    /// Review H-1: doğru şifre kilit kontrolünü geçtikten sonra aynı anda gelen 3 yanlış deneme hesabı kilitlerse, doğru
+    /// şifre artık oturum açmamalı. Düzeltmeden önce doğru istek, yanlışlar hesabı kilitlerken önceden okuduğu "kilitli
+    /// değil" bilgisiyle 200 alıyordu. Düzeltmeyle aynı e-postanın girişleri sıraya girer: yanlışlar doğru isteğin
+    /// bitmesini bekler (doğrulama sırasında bitemezler), sonra kilitlenir. Hiçbir yanıt 500 değildir.
+    /// </summary>
+    [Fact]
+    public async Task Login_CorrectPasswordRacingWithFailures_NeverSucceedsAfterAccountGotLocked()
+    {
+        GatedPasswordHasher hasher = new(Password);
+        using OkulApiFactory factory = new(this.database.ConnectionString, configureServices: services =>
+        {
+            services.RemoveAll<OkulYonetim.Application.Ports.IPasswordHasher>();
+            services.AddSingleton<OkulYonetim.Application.Ports.IPasswordHasher>(hasher);
+        });
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed school = await CreateSchoolAsync(factory);
+        hasher.Gate = true;
+
+        Task<HttpResponseMessage> correct = PostLoginAsync(client, school.FounderEmail, Password);
+        hasher.CorrectEntered.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken).ShouldBeTrue();
+        Task<HttpResponseMessage>[] wrong = [.. Enumerable.Range(1, 3).Select(i => PostLoginAsync(client, school.FounderEmail, Wrong + i))];
+        Task wrongDone = Task.WhenAll(wrong).ContinueWith(_ => hasher.WrongAttemptsDone.Set(), TaskScheduler.Default);
+        HttpResponseMessage[] all = await Task.WhenAll([correct, .. wrong]);
+        await wrongDone;
+
+        try
+        {
+            all.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK || r.StatusCode == HttpStatusCode.Unauthorized);
+            bool correctSucceeded = all[0].StatusCode == HttpStatusCode.OK;
+            (correctSucceeded && hasher.WrongAttemptsFinishedWhileCorrectWasVerifying == true)
+                .ShouldBeFalse("doğru şifre, hesap 3 yanlış denemeyle kilitlendikten sonra oturum açtı");
+            (await DetailAsync(client, school.FounderEmail, Wrong)).ShouldBe(Locked);
+        }
+        finally
+        {
+            foreach (HttpResponseMessage response in all)
+            {
+                response.Dispose();
+            }
+        }
     }
 
     private static async Task<string?> DetailAsync(HttpClient client, string email, string password)
