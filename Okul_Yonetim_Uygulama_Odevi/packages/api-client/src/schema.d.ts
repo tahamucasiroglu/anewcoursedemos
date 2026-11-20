@@ -2279,6 +2279,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/announcements/scope-classrooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScopeClassroom"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/announcements/scope-students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    classroomId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScopeStudent"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/announcements/{id}": {
         parameters: {
             query?: never;
@@ -4795,6 +4894,19 @@ export interface components {
             /** Format: int32 */
             activeMemberCount: number | string;
             founders: components["schemas"]["SchoolFounder"][];
+        };
+        /** @description Duyuru kapsamı için seçilebilen sınıf: kimlik, ad ve şube adı. */
+        ScopeClassroom: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            branchName: string;
+        };
+        /** @description Duyuru kapsamı için seçilebilen öğrenci: kimlik ve ad-soyad. */
+        ScopeStudent: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
         };
         /** @description Okul seçimi isteği: seçilecek okulun kimliği. */
         SelectTenantRequest: {

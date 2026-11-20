@@ -8,7 +8,8 @@ using OkulYonetim.WebAPI.Controllers.Contracts;
 namespace OkulYonetim.WebAPI.Controllers;
 
 /// <summary>
-/// Duyuru uçları (spec 0011; okul seçilmiş olmalı): kurucu/öğretmen listesi ve yayın, velinin akışı, ayrıntı (veli açınca
+/// Duyuru uçları (spec 0011; okul seçilmiş olmalı): kurucu/öğretmen listesi, yayın ve formun kapsam seçenekleri (sınıflar,
+/// sınıfın öğrencileri), velinin akışı, ayrıntı (veli açınca
 /// okundu), sonuçlar (yalnızca yayınlayan ve kurucu) ve onay cevabı (veli). Rol ve ilişki handler'da: rol yoksa 403, ilişkisi
 /// olmayan kayıt 404; alan hatası ve iş kuralı ihlali 400.
 /// </summary>
@@ -49,6 +50,19 @@ public sealed class AnnouncementsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<FeedPage>> Feed([FromQuery] int page = 1, CancellationToken cancellationToken = default) =>
         this.Ok(await this.sender.Send(new ListMyFeedQuery(page), cancellationToken).ConfigureAwait(false));
+
+    [HttpGet("scope-classrooms")]
+    [ProducesResponseType<IReadOnlyList<ScopeClassroom>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<ScopeClassroom>>> ScopeClassrooms(CancellationToken cancellationToken) =>
+        this.Ok(await this.sender.Send(new ListScopeClassroomsQuery(), cancellationToken).ConfigureAwait(false));
+
+    [HttpGet("scope-students")]
+    [ProducesResponseType<IReadOnlyList<ScopeStudent>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<ScopeStudent>>> ScopeStudents([FromQuery] Guid classroomId, CancellationToken cancellationToken) =>
+        this.Ok(await this.sender.Send(new ListScopeStudentsQuery(classroomId), cancellationToken).ConfigureAwait(false));
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType<AnnouncementDetail>(StatusCodes.Status200OK)]

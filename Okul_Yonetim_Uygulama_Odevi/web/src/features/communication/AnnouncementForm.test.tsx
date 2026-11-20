@@ -112,19 +112,25 @@ it("onay formu yayınlanır: gövde kapsam, soru ve son tarihi taşır; ayrınt�
   });
 });
 
-it("öğrenci kapsamı: önce sınıf, sonra o sınıfın öğrencisi (öğretmende bugünkü liste)", async () => {
-  const api = start([["GET", /^\/api\/attendance\/classrooms\/k1\/today$/, () => json(200, {
-    classroomId: "k1", classroomName: "5-A", branchName: "Merkez", day: "2026-11-20", isSchoolDay: true, isSaved: false, savedTime: null,
-    students: [{ studentId: "s1", fullName: "Ali Yılmaz", status: "Present" }], version: 0,
-  })], ["POST", /^\/api\/announcements$/, () => json(200, { id: announcementId, recipientCount: 2 })]], ["Teacher"]);
+it("öğrenci kapsamı: önce sınıf, sonra o sınıfın öğrencisi — kapsam ucundan, bütün sınıf (26. öğrenci de)", async () => {
+  const roster = Array.from({ length: 26 }, (_, i) => ({ id: `s${i + 1}`, fullName: `Öğrenci ${String(i + 1).padStart(2, "0")}` }));
+  const asked: string[] = [];
+  const api = start([
+    ["GET", /^\/api\/announcements\/scope-students$/, (request) => {
+      asked.push(new URL(request.url, "http://x").searchParams.get("classroomId") ?? "");
+      return json(200, roster);
+    }],
+    ["POST", /^\/api\/announcements$/, () => json(200, { id: announcementId, recipientCount: 2 })],
+  ], ["Teacher"]);
   await openForm();
   await userEvent.selectOptions(screen.getByLabelText("Kapsam"), "Student");
   await userEvent.selectOptions(await screen.findByLabelText("Sınıf"), "k1");
-  await userEvent.selectOptions(screen.getByLabelText("Öğrenci"), await screen.findByRole("option", { name: "Ali Yılmaz" }));
-  await userEvent.type(screen.getByLabelText("Başlık"), "Ali için");
+  await userEvent.selectOptions(screen.getByLabelText("Öğrenci"), await screen.findByRole("option", { name: "Öğrenci 26" }));
+  await userEvent.type(screen.getByLabelText("Başlık"), "Öğrenci 26 için");
   await userEvent.type(screen.getByLabelText("Metin"), "Not");
   await userEvent.click(screen.getByRole("button", { name: "Yayınla" }));
 
   expect(await screen.findByRole("heading", { name: "Müze gezisi" })).toBeInTheDocument();
-  expect(api.requests.find((r) => r.method === "POST" && r.path === "/api/announcements")!.body).toMatchObject({ scope: "Student", scopeId: "s1" });
+  expect(asked).toEqual(["k1"]);
+  expect(api.requests.find((r) => r.method === "POST" && r.path === "/api/announcements")!.body).toMatchObject({ scope: "Student", scopeId: "s26" });
 });

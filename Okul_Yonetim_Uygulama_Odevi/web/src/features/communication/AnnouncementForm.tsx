@@ -42,7 +42,8 @@ const empty: AnnouncementFormValues = {
  * Yeni duyuru formu (spec 0011 gereksinim 1, 4; AC-12): kapsam (öğretmende yalnızca sınıf/öğrenci), başlık, metin; "Onay
  * iste" seçilince soru ve son gün. Alan hatası varsa istek gönderilmez ve hata alanla ilişkilendirilir; gönderilirken düğme
  * kilitli; sunucu hatası (ör. "Bu kapsamda duyuru alacak veli yok.") duyurulur; yayınlanınca ayrıntıya geçilir. Öğrenci
- * kapsamında önce sınıf, sonra o sınıfın öğrencisi seçilir (kurucuda yönetim listesi, öğretmende bugünkü sınıf listesi).
+ * kapsamında önce sınıf, sonra o sınıfın öğrencisi seçilir; seçenekler yayının kabul ettiği kümedir (İletişim modülünün
+ * kapsam uçları: sınıfın bütün öğrencileri, sayfasız ve okul gününden bağımsız — review M-1).
  */
 export function AnnouncementForm({ client, isFounder, branches, onCancel, onPublished }: Props) {
   const scopes = isFounder ? ANNOUNCEMENT_SCOPES : TEACHER_SCOPES;
@@ -61,18 +62,17 @@ export function AnnouncementForm({ client, isFounder, branches, onCancel, onPubl
 
   useEffect(() => {
     let active = true;
-    const load = isFounder
-      ? call(client.GET("/api/classrooms")).then((o) => (o.ok ? o.data.map((c) => ({ id: c.id, label: `${c.name} · ${c.branchName}` })) : []))
-      : call(client.GET("/api/attendance/classrooms")).then((o) => (o.ok ? o.data.map((c) => ({ id: c.id, label: `${c.name} · ${c.branchName}` })) : []));
-    load.then((options) => {
-      if (active) {
-        setClassrooms(options);
-      }
-    });
+    call(client.GET("/api/announcements/scope-classrooms"))
+      .then((o) => (o.ok ? o.data.map((c) => ({ id: c.id, label: `${c.name} · ${c.branchName}` })) : []))
+      .then((options) => {
+        if (active) {
+          setClassrooms(options);
+        }
+      });
     return () => {
       active = false;
     };
-  }, [client, isFounder]);
+  }, [client]);
 
   useEffect(() => {
     if (studentClassroom === "") {
@@ -80,20 +80,17 @@ export function AnnouncementForm({ client, isFounder, branches, onCancel, onPubl
     }
 
     let active = true;
-    const load = isFounder
-      ? call(client.GET("/api/admin/students", { params: { query: { classroomId: studentClassroom, status: "Active" } } }))
-        .then((o) => (o.ok ? o.data.items.map((s) => ({ id: s.id, label: s.fullName })) : []))
-      : call(client.GET("/api/attendance/classrooms/{id}/today", { params: { path: { id: studentClassroom } } }))
-        .then((o) => (o.ok ? o.data.students.map((s) => ({ id: s.studentId, label: s.fullName })) : []));
-    load.then((options) => {
-      if (active) {
-        setStudents(options);
-      }
-    });
+    call(client.GET("/api/announcements/scope-students", { params: { query: { classroomId: studentClassroom } } }))
+      .then((o) => (o.ok ? o.data.map((s) => ({ id: s.id, label: s.fullName })) : []))
+      .then((options) => {
+        if (active) {
+          setStudents(options);
+        }
+      });
     return () => {
       active = false;
     };
-  }, [client, isFounder, studentClassroom]);
+  }, [client, studentClassroom]);
 
   const set = (next: Partial<AnnouncementFormValues>) => setValues((current) => ({ ...current, ...next }));
 

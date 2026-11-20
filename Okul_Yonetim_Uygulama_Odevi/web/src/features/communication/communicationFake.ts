@@ -55,18 +55,16 @@ export function results(overrides: Record<string, unknown> = {}) {
   };
 }
 
-export const classrooms = [{ id: "k1", termId: "t1", branchId: "b1", branchName: "Merkez", gradeLevelId: "g1", gradeLevelName: "5. sınıf", name: "5-A", isActive: true }];
-export const myClassrooms = [{ id: "k1", name: "5-A", branchName: "Merkez", takenToday: false }];
+export const scopeClassrooms = [{ id: "k1", name: "5-A", branchName: "Merkez" }];
 
 /** Liste, ayrıntı ve sonuç uçları hazır; ek uçlar önce eşlenir. */
 export function communicationFake(extra: Route[] = [], roles = ["Founder"]) {
   return attendanceFake([
     ...extra,
     ["GET", /^\/api\/announcements$/, () => json(200, [row()])],
+    ["GET", /^\/api\/announcements\/scope-classrooms$/, () => json(200, scopeClassrooms)],
     ["GET", /^\/api\/announcements\/[^/]+\/results$/, () => json(200, results())],
     ["GET", /^\/api\/announcements\/[^/]+$/, () => json(200, detail())],
-    ["GET", /^\/api\/classrooms$/, () => json(200, classrooms)],
-    ["GET", /^\/api\/attendance\/classrooms$/, () => json(200, myClassrooms)],
   ], { roles });
 }
 

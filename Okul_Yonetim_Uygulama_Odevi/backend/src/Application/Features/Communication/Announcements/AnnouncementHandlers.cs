@@ -8,6 +8,7 @@ using OkulYonetim.Application.Features.Communication.Notifications;
 using OkulYonetim.Application.Features.Organization;
 using OkulYonetim.Application.Features.Organization.Queries.GetBranchById;
 using OkulYonetim.Application.Features.Organization.Queries.GetClassroomById;
+using OkulYonetim.Application.Features.Organization.Queries.ListClassrooms;
 using OkulYonetim.Application.Features.Students;
 using OkulYonetim.Application.Features.Students.Queries.ListGuardianContacts;
 using OkulYonetim.Application.Features.Students.Queries.ListStudentBriefs;
@@ -39,7 +40,9 @@ public sealed class AnnouncementHandlers :
     IRequestHandler<ListMyFeedQuery, FeedPage>,
     IRequestHandler<GetAnnouncementQuery, AnnouncementDetail>,
     IRequestHandler<GetAnnouncementResultsQuery, AnnouncementResults>,
-    IRequestHandler<AnswerConsentCommand, ConsentChildView>
+    IRequestHandler<AnswerConsentCommand, ConsentChildView>,
+    IRequestHandler<ListScopeClassroomsQuery, IReadOnlyList<ScopeClassroom>>,
+    IRequestHandler<ListScopeStudentsQuery, IReadOnlyList<ScopeStudent>>
 {
     public const int PageSize = 20;
     public const int MaxStaffListed = 100;
@@ -354,6 +357,54 @@ public sealed class AnnouncementHandlers :
         return (await this.announcements.ListConsentAsync(announcement.Id, [studentId], cancellationToken).ConfigureAwait(false)).Single();
     }
 
+    public async Task<IReadOnlyList<ScopeClassroom>> Handle(ListScopeClassroomsQuery request, CancellationToken cancellationToken)
+    {
+        CommunicationCaller caller = await this.guard.CallerAsync(cancellationToken).ConfigureAwait(false);
+        if (caller.IsFounder)
+        {
+            return [.. (await this.sender.Send(new ListClassroomsQuery(null), cancellationToken).ConfigureAwait(false))
+                .Where(c => c.IsActive)
+                .Select(c => new ScopeClassroom(c.Id, c.Name, c.BranchName))];
+        }
+
+        if (!caller.IsTeacher)
+        {
+            throw await this.guard.ForbiddenAsync().ConfigureAwait(false);
+        }
+
+        return [.. (await this.guard.TeacherClassroomsAsync(caller, cancellationToken).ConfigureAwait(false))
+            .OrderBy(c => c.BranchName, TurkishOrder).ThenBy(c => c.Name, TurkishOrder).ThenBy(c => c.ClassroomId)
+            .Select(c => new ScopeClassroom(c.ClassroomId, c.Name, c.BranchName))];
+    }
+
+    public async Task<IReadOnlyList<ScopeStudent>> Handle(ListScopeStudentsQuery request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        CommunicationCaller caller = await this.guard.CallerAsync(cancellationToken).ConfigureAwait(false);
+        if (!caller.IsFounder && !caller.IsTeacher)
+        {
+            throw await this.guard.ForbiddenAsync().ConfigureAwait(false);
+        }
+
+        await this.RequireScopeClassroomAsync(caller, request.ClassroomId, cancellationToken).ConfigureAwait(false);
+        return [.. (await this.sender.Send(new ListStudentBriefsQuery(ClassroomId: request.ClassroomId), cancellationToken).ConfigureAwait(false))
+            .OrderBy(s => s.FullName, TurkishOrder).ThenBy(s => s.Id)
+            .Select(s => new ScopeStudent(s.Id, s.FullName))];
+    }
+
+    /// <summary>Sınıf kapsamı: kurucuda görünür sınıf, öğretmende kapının "kendi sınıfları"ndan biri; değilse 404.</summary>
+    private async Task RequireScopeClassroomAsync(CommunicationCaller caller, Guid classroomId, CancellationToken cancellationToken)
+    {
+        if (caller.IsFounder)
+        {
+            await this.sender.Send(new GetClassroomByIdQuery(classroomId), cancellationToken).ConfigureAwait(false);
+        }
+        else if (!(await this.guard.TeacherClassroomsAsync(caller, cancellationToken).ConfigureAwait(false)).Any(c => c.ClassroomId == classroomId))
+        {
+            throw await this.guard.NotFoundAsync(CommunicationMessages.ScopeNotFound).ConfigureAwait(false);
+        }
+    }
+
     /// <summary>Kapsamdaki görünür, ayrılmamış öğrenciler; kapsam görünmüyorsa ya da öğretmenin değilse 404.</summary>
     private async Task<IReadOnlyList<StudentBrief>> ScopeStudentsAsync(CommunicationCaller caller, AnnouncementScope scope, Guid? scopeId, CancellationToken cancellationToken)
     {
@@ -366,15 +417,7 @@ public sealed class AnnouncementHandlers :
                 return await this.sender.Send(new ListStudentBriefsQuery(BranchId: branch.Id), cancellationToken).ConfigureAwait(false);
             case AnnouncementScope.Classroom:
                 Guid classroomId = scopeId!.Value;
-                if (caller.IsFounder)
-                {
-                    await this.sender.Send(new GetClassroomByIdQuery(classroomId), cancellationToken).ConfigureAwait(false);
-                }
-                else if (!(await this.guard.TeacherClassroomsAsync(caller, cancellationToken).ConfigureAwait(false)).Any(c => c.ClassroomId == classroomId))
-                {
-                    throw await this.guard.NotFoundAsync(CommunicationMessages.ScopeNotFound).ConfigureAwait(false);
-                }
-
+                await this.RequireScopeClassroomAsync(caller, classroomId, cancellationToken).ConfigureAwait(false);
                 return await this.sender.Send(new ListStudentBriefsQuery(ClassroomId: classroomId), cancellationToken).ConfigureAwait(false);
             default:
                 IReadOnlyList<StudentBrief> found = await this.sender.Send(new ListStudentBriefsQuery(Ids: [scopeId!.Value]), cancellationToken).ConfigureAwait(false);
