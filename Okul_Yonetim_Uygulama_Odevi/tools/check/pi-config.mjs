@@ -32,7 +32,7 @@ for (const script of scripts) {
 //    secret, write_env_file içindeki $1) ve şifre dosyasını okuyan komutlar aranır; her komut (; && || ile ayrılan
 //    parça) ayrı denetlenir. Asıl güvence review + VERIFY'daki çıktı/log taramasıdır.
 const secretVar = /\$\{?(password|pw|pass|secret)\b/i;
-const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?(ENV|JWT|TWOFA)_FILE\b|okul-(api|jwt|2fa)\.env)/;
+const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?(ENV|JWT|TWOFA|DATA)_FILE\b|okul-(api|jwt|2fa|data)\.env)/;
 
 // Tırnak içindeki ; & | karakterleri komut ayırıcı sayılmaz (SQL ve bağlantı cümlesinde geçer; review round 2, M-1).
 // Yerine boşluk konur: kelime karakteri ("_") olsaydı "$password;" → "$password_" olur, değişken tanınmazdı (round 3, L-1).
@@ -151,6 +151,20 @@ else {
   if (!/^\s*ensure_twofactor_key$/m.test(setup.replace(twofa, ""))) fail("setup-remote.sh: ensure_twofactor_key kurulumda çağrılmalı");
 }
 
+// Kişisel veri şifreleme anahtarı (spec 0009): aynı kurallar; 32 bayt; yalnızca yoksa üretilir (değişirse sağlık bilgisi
+// çözülemez).
+const data = setup.match(/ensure_personal_data_key\(\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+if (!data) fail("setup-remote.sh: ensure_personal_data_key (kişisel veri şifreleme anahtarı) bulunamadı");
+else {
+  if (!/if \[ -s "\$DATA_FILE" \]; then[\s\S]*?return/.test(data)) fail("setup-remote.sh: kişisel veri anahtarı varsa korunmalı (değişirse sağlık bilgisi çözülemez)");
+  if (!/openssl rand -base64 32\b/.test(data)) fail("setup-remote.sh: kişisel veri anahtarı openssl rand ile 32 bayt üretilmeli");
+  if (!/chmod 600 "\$tmp"/.test(data)) fail("setup-remote.sh: kişisel veri anahtarı 600 izinli geçici dosyayla yazılmalı");
+  const writes = data.split("\n").filter((line) => line.includes("PersonalData__EncryptionKey=%s"));
+  if (/\b(say|echo)\b[^\n]*openssl/.test(data) || writes.length !== 1 || !writes[0].trimEnd().endsWith('> "$tmp"')) fail("setup-remote.sh: kişisel veri anahtarı ekrana basılmamalı");
+  if (!/^\s*ensure_personal_data_key$/m.test(setup.replace(data, ""))) fail("setup-remote.sh: ensure_personal_data_key kurulumda çağrılmalı");
+  if (/TWOFA_FILE/.test(data)) fail("setup-remote.sh: kişisel veri anahtarı iki adımlı doğrulama dosyasına yazılmamalı (ayrı anahtar)");
+}
+
 // Platform yöneticisi sarmalayıcısı (spec 0007): yalnızca üç komut; argümanlar printf %q ile; servis kullanıcısıyla.
 const platformAdmin = read(path.join(piDir, "platform-admin.sh"));
 if (!/grant-platform-admin\|revoke-platform-admin\|reset-two-factor\) ;;/.test(platformAdmin)) fail("platform-admin.sh: yalnızca üç platform komutuna izin verilmeli");
@@ -191,6 +205,7 @@ expectLine(service, /^Environment=ASPNETCORE_URLS=http:\/\/127\.0\.0\.1:@API_POR
 expectLine(service, /^EnvironmentFile=\/etc\/okul\/okul-api\.env$/m, "servis: bağlantı bilgisi /etc/okul/okul-api.env'den gelmeli");
 expectLine(service, /^EnvironmentFile=\/etc\/okul\/okul-jwt\.env$/m, "servis: oturum imza anahtarı /etc/okul/okul-jwt.env'den gelmeli (spec 0004)");
 expectLine(service, /^EnvironmentFile=-\/etc\/okul\/okul-2fa\.env$/m, "servis: iki adımlı doğrulama anahtarı /etc/okul/okul-2fa.env'den (isteğe bağlı) gelmeli (spec 0007)");
+expectLine(service, /^EnvironmentFile=-\/etc\/okul\/okul-data\.env$/m, "servis: sağlık bilgisi şifreleme anahtarı /etc/okul/okul-data.env'den (isteğe bağlı) gelmeli (spec 0009)");
 expectLine(service, /^NoNewPrivileges=true$/m, "servis: NoNewPrivileges=true olmalı");
 expectLine(service, /^ProtectSystem=strict$/m, "servis: ProtectSystem=strict olmalı");
 expectLine(service, /^WantedBy=multi-user\.target$/m, "servis: açılışta başlamalı (WantedBy=multi-user.target)");

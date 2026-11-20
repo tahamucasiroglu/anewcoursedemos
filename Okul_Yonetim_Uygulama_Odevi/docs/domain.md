@@ -37,9 +37,10 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Yenileme bağlantısı (`PasswordResetToken`) | "Şifremi unuttum" e-postasındaki tek kullanımlık, 30 dakikalık bağlantı | Yalnızca özeti saklanır; şifre değişince geçersizleşir |
 | Hesabım | Kişinin kendi profil ve şifre ekranı (spec 0006) | Hesap kişiye aittir, bütün okullarında geçerli; e-posta değiştirilemez |
 | Geçici şifre | Kurucunun kişi eklerken ya da sıfırlarken aldığı, bir kez gösterilen şifre | Kurucu kişiye kendisi iletir (e-posta gönderimi SMTP bilgisi girilince, 0006) |
-| Veli (`Guardian`) | Öğrenciyle velilik bağı olan kişi | Tek hesapla tüm çocuklarını görür |
-| Öğrenci kartı (`Student`) | Öğrencinin ana kaydı | Sağlık notu, alerji, teslim alabilecek kişiler dahil |
-| Kardeş bağlantısı | Aynı veliye bağlı öğrenciler | Farklı şubelerde olabilirler |
+| Veli (`Guardian`) | Veli rolü olan kişi (kullanıcı) + öğrenciyle velilik bağı (`StudentGuardian`: yakınlık Anne / Baba / Diğer; spec 0009) | Tek hesapla tüm çocuklarını görür; yalnızca bağlı olduğu ve ayrılmamış çocukları. Kurucu öğrencinin kartından ekler (yeni kişiye geçici şifre — spec 0005 akışı); bir öğrencinin en fazla 4 velisi |
+| Öğrenci kartı (`Student`) | Öğrencinin ana kaydı: ad-soyad, doğum tarihi, okul numarası (okulda tekil), şube (kayıttan sonra değişmez), sınıf (isteğe bağlı, aynı şubenin) | Sağlık notu ve alerji şifreli; silinmez, "ayrıldı" yapılır ve geri alınabilir (spec 0009) |
+| Teslim alabilecek kişi (`PickupPerson`) | Öğrenciyi okuldan alabilecek kişi: ad-soyad, yakınlık (serbest metin), telefon | Hesap değil, kartta bir liste; en fazla 10 kişi; veliler kendiliğinden girmez (spec 0009) |
+| Kardeş bağlantısı | Aynı veliye bağlı öğrenciler | Ayrı kayıt yok: veli bağından çıkar (bağ kalkınca kardeşlik de kalkar); farklı şubelerde olabilirler |
 | Nakil (`Transfer`) | Öğrencinin şube/sınıf değiştirmesi kaydı | Geçmiş korunur |
 | Yoklama (`Attendance`) | Ders/gün bazlı devam kaydı | Devamsızlıkta veliye otomatik bildirim |
 | Duyuru (`Announcement`) | Kurum/şube/sınıf/öğrenci kapsamlı yayın; okundu bilgisi | — |
@@ -68,6 +69,7 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 - **BR-11 (spec 0005):** Bir okulda en az bir etkin kurucu/yönetici kalır; kurucu kendi yönetici rolünü alamaz ve kendini pasifleştiremez.
 - **BR-12 (spec 0008):** Aynı okulda iki dönemin günleri çakışamaz (bir dönemin bitiş günü öbürünün başlangıç günüyse çakışır); dönem en fazla 366 gün sürer; dönem silinmez ve pasifleştirilmez; tarih düzenlemesi takvim kayıtlarını dönemin dışında bırakamaz; takvim kaydının iki günü de dönemin içindedir.
 - **BR-13 (spec 0008):** Sınıf bir döneme, bir şubeye ve bir seviyeye bağlıdır; dönemi ve şubesi sonradan değişmez; aynı dönem ve şubede aynı adlı (harf farkı gözetmeden) iki etkin sınıf, aynı okulda aynı adlı iki etkin seviye olamaz; seviye ve sınıf silinmez, pasifleştirilir; pasif şube ve pasif seviye yeni sınıfta seçilemez. Kurucu olmayan kişi yalnızca atandığı etkin şubelerin sınıflarını görür.
+- **BR-14 (spec 0009):** Veli yalnızca kendisine bağlı ve "ayrıldı" olmayan öğrencileri görür; aynı şubedeki başka öğrenci ona "bulunamadı"dır (veli rolü şube düzeyinde olsa da). Öğrencinin şubesi kayıttan sonra değişmez (nakil ayrı spec); okul numarası okulda harf farkı gözetmeden tekildir (ayrılan öğrenci numarasını tutar); bir öğrencinin en fazla 4 velisi, 10 teslim alabilecek kişisi olur; öğrenci silinmez.
 - **BR-9:** Bir öğrenci bir dönemde tek bir şubede ve tek bir sınıfta kayıtlıdır; şube değişikliği nakil kaydıdır, geçmiş korunur.
 
 ## Key domain invariants

@@ -18,6 +18,8 @@ EnvironmentFile=/etc/okul/okul-api.env
 EnvironmentFile=/etc/okul/okul-jwt.env
 # İki adımlı doğrulama anahtarı (spec 0007); yoksa servis yine açılır, yalnızca platform yöneticisi girişi reddedilir.
 EnvironmentFile=-/etc/okul/okul-2fa.env
+# Sağlık bilgisi şifreleme anahtarı (spec 0009); yoksa servis yine açılır, yalnızca sağlık alanları kapalı.
+EnvironmentFile=-/etc/okul/okul-data.env
 Environment=ASPNETCORE_URLS=http://127.0.0.1:@API_PORT@
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=Database__MigrateOnStartup=true

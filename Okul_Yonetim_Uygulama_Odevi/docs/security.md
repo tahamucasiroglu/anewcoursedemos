@@ -26,7 +26,15 @@
 
 ## Sensitive data protection
 1. **Şifre:** ASP.NET Core Identity `PasswordHasher` (PBKDF2) veya Argon2id ile hash; düz metin hiçbir yerde (DB, log, hata, yanıt) yok.
-2. **TC kimlik no, sağlık notu, alerji, IBAN:** alan düzeyinde şifreli (AES-GCM; anahtar ASP.NET Core Data Protection ile, repo dışında). TC araması ayrı HMAC parmak izi kolonu ile.
+2. **TC kimlik no, sağlık notu, alerji, IBAN:** alan düzeyinde şifreli (AES-GCM, repo dışında anahtar). TC araması ayrı HMAC parmak izi kolonu ile.
+   **Karar (plan 0009 Risks 2, R-10 kapanışı):** anahtar ASP.NET Core Data Protection anahtar halkasıyla değil, spec 0007'deki
+   gibi **ortam ayarındaki 32 baytlık AES-GCM anahtarıyla** verilir (Data Protection halkası Pi'de kalıcı ve yedekli dizin
+   ister — B-16). Kişisel veri anahtarı iki adımlı doğrulama anahtarından **ayrıdır** (`PersonalData:EncryptionKey`; Pi'de
+   `/etc/okul/okul-data.env`, root 600, yalnızca yoksa üretilir): biri sızarsa öteki korunur. Ortak çekirdek
+   `AesGcmCipher` (rastgele 12 baytlık nonce + 16 baytlık etiket). Anahtar yoksa ya da bozuksa uygulama açılır; öğrenci kartı
+   çalışır, sağlık alanları "gösterilemiyor", dolu sağlık bilgisi kaydetme reddedilir (sunucu logunda "yapılandırılmamış").
+   **Anahtar kaybı = kayıtlı sağlık bilgisi okunamaz:** anahtar dosyası veritabanı yedeğiyle birlikte ama ayrı yerde
+   saklanmalı (B-14). Sağlık metni log, hata yanıtı ve audit kaydına yazılmaz; komutları `ILoggableRequest` değildir (T9).
 3. **Telefon, e-posta, adres:** DB'de düz (iletişim için gerekli); loglarda maskeli; yalnızca yetkili rollere görünür.
 4. **Kart bilgisi:** sistemde **hiç** saklanmaz ve sistemden geçmez; sağlayıcının barındırılan ödeme sayfası/token'ı (PCI-DSS kapsamı dışı).
 5. **Loglar:** Serilog maskeleme kuralları; ham istek/yanıt gövdesi loglanmaz; S2/S3 verisi loga yazılmaz.
@@ -94,6 +102,14 @@
     girişler etkilenmez. Panel yetkisi her istekte veritabanından okunur (yetki alınınca bir sonraki istek reddedilir).
     Panel okulların içine erişmez; yalnızca özet (ad, tarih, durum, sayılar, kurucu ad + e-posta). Doğrulama anahtarı, 6 haneli
     kodlar, geçici şifre ve bekleme anahtarı log, hata yanıtı ve audit kaydında geçmez. Kurtarma: `reset-two-factor` komutu.
+11. **Öğrenci ve veli (spec 0009):** öğrenci yönetimi yalnızca seçili okulun kurucusu/yöneticisi (`TenantFounder` + sıra
+    içinde yeniden denetim); "Çocuklarım" yalnızca seçili okulda veli rolü olan kişi, öğrenciyi yalnızca kendi bağı
+    üzerinden görür (ayrılan ya da bağı kalkan öğrenci bir sonraki istekte 404). Veli bağlama spec 0005'in hesap
+    kurallarını kullanır (yeni kişiye bir kez gösterilen geçici şifre; var olan kişinin şifresi ve adı değişmez; bu okulda
+    pasif kişi bağlanamaz). Öğrenci ekleme/düzenleme/ayrıldı/geri al, kart görüntüleme (kurucu ve veli), sağlık okuma ve
+    değişikliği, veli bağlama/kaldırma ve teslim kişisi değişikliği audit'e yazılır; loglarda ve audit'te yalnızca
+    kimlikler (öğrenci adı, sağlık metni, geçici şifre yok). KVKK veli rıza akışı bu spec'te yok — gerçek veriyle pilottan
+    önce zorunlu (`docs/roadmap.md`).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

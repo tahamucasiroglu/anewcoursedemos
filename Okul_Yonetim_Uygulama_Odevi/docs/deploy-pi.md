@@ -12,7 +12,7 @@
 | Ağ geçidi | nginx `/api/…` isteklerini içeride API'ye iletir; dışarıya açık tek port 8080 |
 | Sürümler | `/opt/okul/{api,web}/releases/<UTC zaman>-<git sha>`; etkin olan `current`; birim başına son **2** sürüm |
 | Veritabanı | Pi'deki **PostgreSQL 17**; veritabanı `okul`, kullanıcı `okul_app` (yönetici değil, yalnızca `okul`'a bağlanır) |
-| Gizli bilgi | `/etc/okul/okul-api.env` — bağlantı bilgisi ve şifre; `/etc/okul/okul-jwt.env` — oturum imza anahtarı (spec 0004); `/etc/okul/okul-2fa.env` — iki adımlı doğrulama şifreleme anahtarı (spec 0007). Hepsini **yalnızca root okur (600)**; repoda/sohbette/logda yok |
+| Gizli bilgi | `/etc/okul/okul-api.env` — bağlantı bilgisi ve şifre; `/etc/okul/okul-jwt.env` — oturum imza anahtarı (spec 0004); `/etc/okul/okul-2fa.env` — iki adımlı doğrulama şifreleme anahtarı (spec 0007); `/etc/okul/okul-data.env` — sağlık bilgisi şifreleme anahtarı (spec 0009, ayrı anahtar). Hepsini **yalnızca root okur (600)**; repoda/sohbette/logda yok |
 | Loglar | `/var/log/okul/okul-api-YYYYMMDD.log`, 30 gün |
 
 ## Komutlar
@@ -85,3 +85,17 @@ Bu spec'te Pi'ye dokunulmadı; yayınlarken (ship) kullanıcı şu sırayla çal
 
 Anahtar dosyası yoksa servis yine açılır; yalnızca platform yöneticisi girişi "iki adımlı doğrulama yapılandırılmamış"
 ile reddedilir. Telefon kaybında: `reset-two-factor` (sonraki girişte yeniden kurulum).
+
+## Öğrenci ve veli kayıtları — spec 0009
+
+Bu spec'te Pi'ye dokunulmadı; yayınlarken (ship) kullanıcı şu sırayla çalıştırır:
+
+1. `bash tools/pi/setup.sh database` — `/etc/okul/okul-data.env` (sağlık notu ve alerji şifreleme anahtarı,
+   `PersonalData__EncryptionKey`) yoksa üretir (root, 600; ekrana basılmaz; varsa dokunmaz). Servis dosyası için
+   `bash tools/pi/setup.sh service` (servis yeniden başlar).
+2. `bash tools/pi/deploy.sh` — yeni sürüm; `StudentsAndGuardians` geçişi açılışta uygulanır (yalnızca yeni tablolar).
+
+Anahtar dosyası yoksa servis yine açılır; öğrenci kartı çalışır, yalnızca sağlık alanları "Sağlık bilgisi şu anda
+gösterilemiyor." gösterir ve dolu sağlık bilgisi kaydedilemez. **Anahtar kaybolursa kayıtlı sağlık bilgisi okunamaz:**
+`/etc/okul/okul-data.env` dosyasını veritabanı yedeğinden ayrı, güvenli bir yerde saklayın (B-14 ile birlikte). Anahtar
+değiştirilmemeli; değişirse eski kayıtlar "gösterilemiyor" olur.

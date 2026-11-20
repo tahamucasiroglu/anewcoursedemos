@@ -37,7 +37,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Module | Single responsibility | Owns |
 |---|---|---|
 | Organization | Kurum, şube, sınıf seviyesi, sınıf, dönem, akademik takvim (spec 0008), ders programı; güncel dönem ve okul günü hesabı (`SchoolCalendar`, Türkiye günü) | Tenant, Branch, GradeLevel, Classroom, Term, CalendarEntry, Timetable |
-| Students | Öğrenci kartı, veli, kardeş bağı, nakil, Excel/e-Okul içe aktarma | Student, Guardian, Transfer |
+| Students | Öğrenci kartı, veli bağı (kardeşlik bağdan çıkar), sağlık notu/alerji (şifreli), teslim alabilecek kişiler, velinin "Çocuklarım" görünümü (spec 0009); sonra nakil, Excel/e-Okul içe aktarma | Student, StudentGuardian, PickupPerson, Transfer |
 | Attendance | Yoklama ve devamsızlık bildirimi tetikleme | Attendance |
 | Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** | Announcement, Message, ConsentForm |
 | Academics | Ödev, teslim durumu, not | Assignment, Grade |
@@ -75,6 +75,15 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `api/admin/classrooms` (`TenantFounder`, okul başına sıra + audit); her rol için `api/calendar` (güncel/yaklaşan dönem ve
   kayıtları) ve `api/classrooms` (görünür etkin sınıflar — öğrenci ve yoklama spec'lerinin okuma ucu). Güncel dönem
   `SchoolCalendar`'da Türkiye gününe göre hesaplanır (`Europe/Istanbul`, bulunamazsa sabit UTC+3).
+- Öğrenci ve veli (spec 0009): öğrenci filtresi sınıf gibi şubenin görünürlüğünü miras alır (`Branches.Any(b => b.Id == s.BranchId)`);
+  veli bağı ve teslim kişisi kurum filtreli. Kurucu uçları `api/admin/students` (`TenantFounder`, okul başına sıra + audit; kart
+  okunuşu da audit'li), veli uçları `api/my/children` (seçili okulda veli rolü; öğrenci **yalnızca oturumdaki kişinin bağı**
+  üzerinden okunur — veli rolü şube düzeyinde olduğu için şube filtresi tek başına yetmez). **İstisna (modüller arası
+  yazma, plan 0009 Risks 3):** veli bağlama Identity varlıklarını (kişi, üyelik, rol) yazar; Mediator komutu kendi
+  işlemini açtığından iç içe komut/kilit kurulamaz. Bu yüzden kişi açma + üyelik + rol çekirdeği Administration'da kilitsiz
+  `MemberAccounts` hizmetidir; kişi yönetimi (0005) ve veli bağlama aynı çekirdeği okul + kişi sırası (`AdminGuard.LockAsync`)
+  içinde, tek kayıtta kullanır. Sağlık notu ve alerji `IPersonalDataProtector` (AES-GCM, ayrı ortam anahtarı
+  `PersonalData:EncryptionKey`) ile şifreli; düz metin yalnızca `StudentHealth` ile istek/yanıt arasında dolaşır.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).

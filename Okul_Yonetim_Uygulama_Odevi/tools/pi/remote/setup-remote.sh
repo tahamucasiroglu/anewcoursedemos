@@ -19,6 +19,7 @@ ETC_DIR=/etc/okul
 ENV_FILE=/etc/okul/okul-api.env
 JWT_FILE=/etc/okul/okul-jwt.env
 TWOFA_FILE=/etc/okul/okul-2fa.env
+DATA_FILE=/etc/okul/okul-data.env
 HBA_BEGIN='# okul-begin (spec 0003 — Okul Yönetim; uninstall-remote.sh siler)'
 HBA_END='# okul-end'
 # Şifre içeren SQL bu oturumda sunucu loguna yazılmasın (review round 1, L-2; round 2, L-1): komut logu, hata
@@ -106,6 +107,22 @@ ensure_twofactor_key() {
   say "iki adımlı doğrulama anahtarı üretildi: $TWOFA_FILE ($(stat -c '%U:%G %a' "$TWOFA_FILE"))"
 }
 
+# Kişisel veri (sağlık notu, alerji) şifreleme anahtarı (spec 0009): iki adımlı doğrulama anahtarından AYRI. Yalnızca yoksa
+# üretilir (değişirse kayıtlı sağlık bilgisi çözülemez — yedeklenmeli); root 600; ekrana basılmaz.
+ensure_personal_data_key() {
+  if [ -s "$DATA_FILE" ]; then
+    say "kişisel veri şifreleme anahtarı zaten var (dokunulmadı)"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp "$ETC_DIR/.okul-data.env.XXXXXX")"
+  chmod 600 "$tmp"
+  printf 'PersonalData__EncryptionKey=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" > "$tmp"
+  chown root:root "$tmp"
+  mv -f "$tmp" "$DATA_FILE"
+  say "kişisel veri şifreleme anahtarı üretildi: $DATA_FILE ($(stat -c '%U:%G %a' "$DATA_FILE"))"
+}
+
 ensure_hba_block() {
   local hba backup errors
   hba="$(pg -c 'show hba_file')"
@@ -165,6 +182,7 @@ step_database() {
   ensure_hba_block
   ensure_jwt_key
   ensure_twofactor_key
+  ensure_personal_data_key
   say "şifre dosyası: $ENV_FILE ($(stat -c '%U:%G %a' "$ENV_FILE"))"
 }
 

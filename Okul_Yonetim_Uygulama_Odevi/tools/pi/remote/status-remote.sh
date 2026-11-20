@@ -30,6 +30,7 @@ echo "== gizli bilgi dosyası"
 printf '  /etc/okul/okul-api.env: %s\n' "$(stat -c '%U:%G %a' /etc/okul/okul-api.env 2>/dev/null || echo yok)"
 printf '  /etc/okul/okul-jwt.env: %s\n' "$(stat -c '%U:%G %a' /etc/okul/okul-jwt.env 2>/dev/null || echo yok)"
 printf '  /etc/okul/okul-2fa.env: %s\n' "$(stat -c '%U:%G %a' /etc/okul/okul-2fa.env 2>/dev/null || echo yok)"
+printf '  /etc/okul/okul-data.env: %s\n' "$(stat -c '%U:%G %a' /etc/okul/okul-data.env 2>/dev/null || echo yok)"
 echo "== loglar"
 ls -1 /var/log/okul 2>/dev/null | sed 's/^/  /' | tail -n 5
 echo "== disk"
