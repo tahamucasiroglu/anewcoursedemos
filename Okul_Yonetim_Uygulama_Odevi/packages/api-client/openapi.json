@@ -1389,6 +1389,564 @@
         }
       }
     },
+    "/api/admin/students": {
+      "get": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classroomId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentPage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}": {
+      "get": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}/health": {
+      "put": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentHealthRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentHealthRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentHealthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}/activate": {
+      "post": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}/guardians": {
+      "post": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkGuardianRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkGuardianRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkGuardianRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkGuardianResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}/guardians/{userId}": {
+      "delete": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/students/{id}/pickup-persons": {
+      "put": {
+        "tags": [
+          "AdminStudents"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupPersonsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupPersonsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupPersonsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/terms": {
       "get": {
         "tags": [
@@ -2310,6 +2868,88 @@
         }
       }
     },
+    "/api/my/children": {
+      "get": {
+        "tags": [
+          "MyChildren"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildRow"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/my/children/{id}": {
+      "get": {
+        "tags": [
+          "MyChildren"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildCard"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/schools": {
       "get": {
         "tags": [
@@ -2813,6 +3453,85 @@
         },
         "description": "Şifre değiştirme isteği."
       },
+      "ChildCard": {
+        "required": [
+          "id",
+          "fullName",
+          "birthDate",
+          "schoolNumber",
+          "branchName",
+          "classroomName",
+          "health",
+          "pickupPersons"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "schoolNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "health": {
+            "$ref": "#/components/schemas/StudentHealthView"
+          },
+          "pickupPersons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PickupPersonView"
+            }
+          }
+        },
+        "description": "Velinin gördüğü salt okunur öğrenci kartı (spec 0009 C-7): ad-soyad, doğum tarihi, okul numarası, şube, sınıf, sağlık\nbölümü ve teslim alabilecek kişiler. Diğer velilerin bilgisi ve kardeş kartları bilinçli olarak yoktur."
+      },
+      "ChildRow": {
+        "required": [
+          "id",
+          "fullName",
+          "branchName",
+          "classroomName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Velinin \"Çocuklarım\" listesindeki satır (spec 0009 gereksinim 11): ad-soyad, şube ve sınıf."
+      },
       "ClassroomAdminList": {
         "required": [
           "termId",
@@ -3075,6 +3794,60 @@
           }
         },
         "description": "Sınıf seviyesi ekleme/düzenleme isteği: ad ve sıra numarası (1–99)."
+      },
+      "LinkGuardianRequest": {
+        "required": [
+          "fullName",
+          "email",
+          "phone",
+          "relationship"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "relationship": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Veli ekleme isteği: ad-soyad, e-posta, isteğe bağlı telefon ve yakınlık (`Mother` / `Father` / `Other`)."
+      },
+      "LinkGuardianResult": {
+        "required": [
+          "userId",
+          "existingAccount",
+          "temporaryPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "existingAccount": {
+            "type": "boolean"
+          },
+          "temporaryPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Veli bağlama sonucu: kişi kimliği; e-posta sistemde zaten kayıtlıysa `ExistingAccount` (hesap açılmaz, şifre\ndeğişmez); değilse bir kez gösterilecek geçici şifre. Bu yanıt dışında geçici şifre hiçbir yerde yer almaz."
       },
       "LoginRequest": {
         "required": [
@@ -3393,6 +4166,64 @@
         },
         "description": "Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok."
       },
+      "PickupPersonInput": {
+        "required": [
+          "fullName",
+          "relationship",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "description": "Teslim alabilecek kişi girişi: ad-soyad (≤ 100), yakınlık (≤ 50) ve telefon (spec 0005 kuralı) — üçü zorunlu."
+      },
+      "PickupPersonsRequest": {
+        "required": [
+          "persons"
+        ],
+        "type": "object",
+        "properties": {
+          "persons": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PickupPersonInput"
+            }
+          }
+        },
+        "description": "Teslim alabilecek kişilerin yeni listesi (en fazla 10; ad-soyad, yakınlık, telefon)."
+      },
+      "PickupPersonView": {
+        "required": [
+          "fullName",
+          "relationship",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "description": "Teslim alabilecek kişi satırı (kurucu ve veli kartı): ad-soyad, yakınlık ve telefon (E.164)."
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -3679,6 +4510,373 @@
         },
         "description": "Okul seçimi isteği: seçilecek okulun kimliği."
       },
+      "SiblingRow": {
+        "required": [
+          "id",
+          "fullName",
+          "branchName",
+          "classroomName",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "description": "Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum."
+      },
+      "StudentDetail": {
+        "required": [
+          "id",
+          "fullName",
+          "birthDate",
+          "schoolNumber",
+          "branchId",
+          "branchName",
+          "classroomId",
+          "classroomName",
+          "isActive",
+          "health",
+          "guardians",
+          "siblings",
+          "pickupPersons"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "schoolNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "health": {
+            "$ref": "#/components/schemas/StudentHealthView"
+          },
+          "guardians": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentGuardianView"
+            }
+          },
+          "siblings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiblingRow"
+            }
+          },
+          "pickupPersons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PickupPersonView"
+            }
+          }
+        },
+        "description": "Kurucunun öğrenci kartı (spec 0009): bilgiler, sağlık bölümü, veliler, kardeşler (aynı veliye bağlı öğrenciler) ve\nteslim alabilecek kişiler. Her okunuşu audit'e geçer (kart görüntüleme; sağlık okunduysa ayrıca sağlık okuma)."
+      },
+      "StudentGuardianView": {
+        "required": [
+          "userId",
+          "fullName",
+          "email",
+          "phone",
+          "relationship"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "relationship": {
+            "type": "string"
+          }
+        },
+        "description": "Kurucunun kartındaki veli satırı: kişi kimliği, ad-soyad, e-posta, telefon ve yakınlık (Mother/Father/Other)."
+      },
+      "StudentHealthRequest": {
+        "required": [
+          "healthNote",
+          "allergy"
+        ],
+        "type": "object",
+        "properties": {
+          "healthNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allergy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Öğrenci kartının sağlık bölümü: sağlık notu ve alerji (boş = sil)."
+      },
+      "StudentHealthView": {
+        "required": [
+          "available",
+          "healthNote",
+          "allergy"
+        ],
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "healthNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allergy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Kartın sağlık bölümü: şifre çözülebildiyse `Available` true ve alanlar (boşsa `null`); şifreleme anahtarı\nayarlı değilse ya da veri çözülemezse `Available` false, alanlar boş — istemci \"Sağlık bilgisi şu anda\ngösterilemiyor.\" yazar."
+      },
+      "StudentPage": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentRow"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Öğrenci listesinin bir sayfası (25'lik): satırlar, süzgeçten sonraki toplam, sayfa numarası ve boyutu."
+      },
+      "StudentRequest": {
+        "required": [
+          "fullName",
+          "birthDate",
+          "schoolNumber",
+          "branchId",
+          "classroomId",
+          "healthNote",
+          "allergy"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "schoolNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "classroomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "healthNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allergy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Öğrenci ekleme/düzenleme isteği (spec 0009): ad-soyad, doğum tarihi (`yyyy-MM-dd`), okul numarası, şube, sınıf;\neklemede ayrıca sağlık notu ve alerji. Düzenlemede şube kayıttakiyle aynı olmalı, sağlık alanları kullanılmaz (ayrı uç)."
+      },
+      "StudentRow": {
+        "required": [
+          "id",
+          "fullName",
+          "schoolNumber",
+          "branchId",
+          "branchName",
+          "classroomId",
+          "classroomName",
+          "guardianCount",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "schoolNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "guardianCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "description": "Kurucunun öğrenci listesindeki satır (spec 0009 gereksinim 4): ad-soyad, okul numarası, şube, sınıf, veli sayısı ve\ndurum (etkin / ayrıldı). Sağlık bilgisi bilinçli olarak yoktur."
+      },
+      "StudentSaved": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "description": "Öğrenci değişikliklerinin yanıtı: yalnızca öğrenci kimliği. Kart (sağlık bilgisiyle) ayrıca okunur — böylece her sağlık\nokuması kart okumasından geçer ve audit'e yazılır."
+      },
       "SystemHealthResponse": {
         "required": [
           "status",
@@ -3876,6 +5074,9 @@
       "name": "AdminMembers"
     },
     {
+      "name": "AdminStudents"
+    },
+    {
       "name": "AdminTerms"
     },
     {
@@ -3889,6 +5090,9 @@
     },
     {
       "name": "Me"
+    },
+    {
+      "name": "MyChildren"
     },
     {
       "name": "PlatformSchools"

@@ -3,6 +3,8 @@ import { Pressable, Text, View } from "react-native";
 import { t } from "../../i18n/t";
 import { AccountScreen } from "../account/AccountScreen";
 import { CalendarScreen } from "../calendar/CalendarScreen";
+import { ChildCardScreen } from "../children/ChildCardScreen";
+import { ChildrenScreen } from "../children/ChildrenScreen";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { LoginScreen } from "./LoginScreen";
 import { SchoolSelectScreen } from "./SchoolSelectScreen";
@@ -13,7 +15,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
 /**
  * Mobil oturum ekranı seçici: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004); girişte "Şifremi unuttum",
  * hoş geldin'de "Hesabım" (spec 0006). Platform yöneticisi girişte "web'den giriş yapın" mesajı görür (spec 0007).
- * Hoş geldin'de "Okul takvimi" (spec 0008, her rol).
+ * Hoş geldin'de "Okul takvimi" (spec 0008, her rol) ve yalnızca velide "Çocuklarım" → çocuk kartı (spec 0009).
  */
 export function AuthGate() {
   const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart } = useAuthController();
@@ -21,6 +23,7 @@ export function AuthGate() {
   const [forgot, setForgot] = useState(false);
   const [account, setAccount] = useState(false);
   const [calendar, setCalendar] = useState(false);
+  const [children, setChildren] = useState<{ childId: string | null } | null>(null);
   const [previousKind, setPreviousKind] = useState(state.kind);
 
   // Oturum durumundan çıkınca (çıkış, oturum düştü) Hesabım kapanır: sonraki girişte Hoş geldin açılır (review F-6).
@@ -29,6 +32,7 @@ export function AuthGate() {
     if (state.kind !== "signedIn") {
       setAccount(false);
       setCalendar(false);
+      setChildren(null);
     }
 
     if (state.kind !== "signedOut") {
@@ -60,6 +64,14 @@ export function AuthGate() {
     case "loadingMe":
       return <Text style={styles.notice}>{t("welcome.loading")}</Text>;
     case "signedIn":
+      if (children) {
+        return children.childId ? (
+          <ChildCardScreen key={children.childId} client={session.client} childId={children.childId} onBack={() => setChildren({ childId: null })} />
+        ) : (
+          <ChildrenScreen client={session.client} onOpen={(childId) => setChildren({ childId })} onBack={() => setChildren(null)} />
+        );
+      }
+
       if (calendar) {
         return <CalendarScreen client={session.client} onBack={() => setCalendar(false)} />;
       }
@@ -67,7 +79,7 @@ export function AuthGate() {
       return account ? (
         <AccountScreen client={session.client} onBack={() => setAccount(false)} onProfileSaved={() => void reloadMe()} />
       ) : (
-        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} />
+        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} />
       );
   }
 }

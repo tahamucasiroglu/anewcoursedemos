@@ -131,7 +131,8 @@ button:focus-visible {
 }
 
 .auth-form input,
-.auth-form select {
+.auth-form select,
+.auth-form textarea {
   padding: 0.5rem 0.75rem;
   font: inherit;
   color: var(--color-text);
@@ -140,13 +141,15 @@ button:focus-visible {
   border-radius: 0.375rem;
 }
 
-.auth-form input:focus-visible {
+.auth-form input:focus-visible,
+.auth-form textarea:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
 .auth-form input[aria-invalid="true"],
-.auth-form select[aria-invalid="true"] {
+.auth-form select[aria-invalid="true"],
+.auth-form textarea[aria-invalid="true"] {
   border-color: var(--color-danger);
 }
 
@@ -386,4 +389,11 @@ a {
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--color-border);
   overflow-wrap: anywhere;
+}
+
+/* Öğrenci kartı (spec 0009): çok satırlı sağlık alanları dar ekranda taşmaz. */
+.auth-form textarea {
+  min-height: 5rem;
+  max-width: 100%;
+  resize: vertical;
 }

@@ -1337,6 +1337,494 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    search?: string;
+                    branchId?: string;
+                    classroomId?: string;
+                    status?: string;
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudentRequest"];
+                    "text/json": components["schemas"]["StudentRequest"];
+                    "application/*+json": components["schemas"]["StudentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentDetail"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudentRequest"];
+                    "text/json": components["schemas"]["StudentRequest"];
+                    "application/*+json": components["schemas"]["StudentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudentHealthRequest"];
+                    "text/json": components["schemas"]["StudentHealthRequest"];
+                    "application/*+json": components["schemas"]["StudentHealthRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}/guardians": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["LinkGuardianRequest"];
+                    "text/json": components["schemas"]["LinkGuardianRequest"];
+                    "application/*+json": components["schemas"]["LinkGuardianRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LinkGuardianResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}/guardians/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{id}/pickup-persons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PickupPersonsRequest"];
+                    "text/json": components["schemas"]["PickupPersonsRequest"];
+                    "application/*+json": components["schemas"]["PickupPersonsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/terms": {
         parameters: {
             query?: never;
@@ -2284,6 +2772,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/my/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChildRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/my/children/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChildCard"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/schools": {
         parameters: {
             query?: never;
@@ -2617,6 +3204,30 @@ export interface components {
             newPassword: null | string;
             newPasswordRepeat: null | string;
         };
+        /**
+         * @description Velinin gördüğü salt okunur öğrenci kartı (spec 0009 C-7): ad-soyad, doğum tarihi, okul numarası, şube, sınıf, sağlık
+         *     bölümü ve teslim alabilecek kişiler. Diğer velilerin bilgisi ve kardeş kartları bilinçli olarak yoktur.
+         */
+        ChildCard: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            /** Format: date */
+            birthDate: string;
+            schoolNumber: null | string;
+            branchName: string;
+            classroomName: null | string;
+            health: components["schemas"]["StudentHealthView"];
+            pickupPersons: components["schemas"]["PickupPersonView"][];
+        };
+        /** @description Velinin "Çocuklarım" listesindeki satır (spec 0009 gereksinim 11): ad-soyad, şube ve sınıf. */
+        ChildRow: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+        };
         /** @description Yönetim sınıf listesi: gösterilen dönem (istenmediyse güncel, yoksa en yeni dönem; dönem yoksa boş) ve sınıflar. */
         ClassroomAdminList: {
             /** Format: uuid */
@@ -2697,6 +3308,23 @@ export interface components {
             name: string;
             /** Format: int32 */
             sortOrder: null | number | string;
+        };
+        /** @description Veli ekleme isteği: ad-soyad, e-posta, isteğe bağlı telefon ve yakınlık (`Mother` / `Father` / `Other`). */
+        LinkGuardianRequest: {
+            fullName: string;
+            email: string;
+            phone: null | string;
+            relationship: null | string;
+        };
+        /**
+         * @description Veli bağlama sonucu: kişi kimliği; e-posta sistemde zaten kayıtlıysa `ExistingAccount` (hesap açılmaz, şifre
+         *     değişmez); değilse bir kez gösterilecek geçici şifre. Bu yanıt dışında geçici şifre hiçbir yerde yer almaz.
+         */
+        LinkGuardianResult: {
+            /** Format: uuid */
+            userId: string;
+            existingAccount: boolean;
+            temporaryPassword: null | string;
         };
         /**
          * @description Giriş isteği: e-posta, şifre ve yenileme anahtarının nasıl verileceği — mobil `refreshTokenInBody: true` ile
@@ -2794,6 +3422,22 @@ export interface components {
             existingAccount: boolean;
             temporaryPassword: null | string;
         };
+        /** @description Teslim alabilecek kişi girişi: ad-soyad (≤ 100), yakınlık (≤ 50) ve telefon (spec 0005 kuralı) — üçü zorunlu. */
+        PickupPersonInput: {
+            fullName: string;
+            relationship: string;
+            phone: string;
+        };
+        /** @description Teslim alabilecek kişilerin yeni listesi (en fazla 10; ad-soyad, yakınlık, telefon). */
+        PickupPersonsRequest: {
+            persons: null | components["schemas"]["PickupPersonInput"][];
+        };
+        /** @description Teslim alabilecek kişi satırı (kurucu ve veli kartı): ad-soyad, yakınlık ve telefon (E.164). */
+        PickupPersonView: {
+            fullName: string;
+            relationship: string;
+            phone: string;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -2870,6 +3514,115 @@ export interface components {
         SelectTenantRequest: {
             /** Format: uuid */
             tenantId: string;
+        };
+        /** @description Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum. */
+        SiblingRow: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+            isActive: boolean;
+        };
+        /**
+         * @description Kurucunun öğrenci kartı (spec 0009): bilgiler, sağlık bölümü, veliler, kardeşler (aynı veliye bağlı öğrenciler) ve
+         *     teslim alabilecek kişiler. Her okunuşu audit'e geçer (kart görüntüleme; sağlık okunduysa ayrıca sağlık okuma).
+         */
+        StudentDetail: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            /** Format: date */
+            birthDate: string;
+            schoolNumber: null | string;
+            /** Format: uuid */
+            branchId: string;
+            branchName: string;
+            /** Format: uuid */
+            classroomId: null | string;
+            classroomName: null | string;
+            isActive: boolean;
+            health: components["schemas"]["StudentHealthView"];
+            guardians: components["schemas"]["StudentGuardianView"][];
+            siblings: components["schemas"]["SiblingRow"][];
+            pickupPersons: components["schemas"]["PickupPersonView"][];
+        };
+        /** @description Kurucunun kartındaki veli satırı: kişi kimliği, ad-soyad, e-posta, telefon ve yakınlık (Mother/Father/Other). */
+        StudentGuardianView: {
+            /** Format: uuid */
+            userId: string;
+            fullName: string;
+            email: string;
+            phone: null | string;
+            relationship: string;
+        };
+        /** @description Öğrenci kartının sağlık bölümü: sağlık notu ve alerji (boş = sil). */
+        StudentHealthRequest: {
+            healthNote: null | string;
+            allergy: null | string;
+        };
+        /**
+         * @description Kartın sağlık bölümü: şifre çözülebildiyse `Available` true ve alanlar (boşsa `null`); şifreleme anahtarı
+         *     ayarlı değilse ya da veri çözülemezse `Available` false, alanlar boş — istemci "Sağlık bilgisi şu anda
+         *     gösterilemiyor." yazar.
+         */
+        StudentHealthView: {
+            available: boolean;
+            healthNote: null | string;
+            allergy: null | string;
+        };
+        /** @description Öğrenci listesinin bir sayfası (25'lik): satırlar, süzgeçten sonraki toplam, sayfa numarası ve boyutu. */
+        StudentPage: {
+            items: components["schemas"]["StudentRow"][];
+            /** Format: int32 */
+            total: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        /**
+         * @description Öğrenci ekleme/düzenleme isteği (spec 0009): ad-soyad, doğum tarihi (`yyyy-MM-dd`), okul numarası, şube, sınıf;
+         *     eklemede ayrıca sağlık notu ve alerji. Düzenlemede şube kayıttakiyle aynı olmalı, sağlık alanları kullanılmaz (ayrı uç).
+         */
+        StudentRequest: {
+            fullName: string;
+            /** Format: date */
+            birthDate: null | string;
+            schoolNumber: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: uuid */
+            classroomId: null | string;
+            healthNote: null | string;
+            allergy: null | string;
+        };
+        /**
+         * @description Kurucunun öğrenci listesindeki satır (spec 0009 gereksinim 4): ad-soyad, okul numarası, şube, sınıf, veli sayısı ve
+         *     durum (etkin / ayrıldı). Sağlık bilgisi bilinçli olarak yoktur.
+         */
+        StudentRow: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            schoolNumber: null | string;
+            /** Format: uuid */
+            branchId: string;
+            branchName: string;
+            /** Format: uuid */
+            classroomId: null | string;
+            classroomName: null | string;
+            /** Format: int32 */
+            guardianCount: number | string;
+            isActive: boolean;
+        };
+        /**
+         * @description Öğrenci değişikliklerinin yanıtı: yalnızca öğrenci kimliği. Kart (sağlık bilgisiyle) ayrıca okunur — böylece her sağlık
+         *     okuması kart okumasından geçer ve audit'e yazılır.
+         */
+        StudentSaved: {
+            /** Format: uuid */
+            id: string;
         };
         /**
          * @description Sistem durumu yanıtı. Yalnızca durum ("healthy" / "unavailable") ve Türkçe mesaj taşır;
