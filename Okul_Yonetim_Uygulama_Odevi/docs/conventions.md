@@ -77,7 +77,7 @@ Altyapı ve dosya düzeni: `docs/architecture.md` "Logging" (ADR-0003). Kodda:
 ## Known traps
 - T1 — Türkçe I/ı: kültüre bağlı `ToUpper/ToLower/Compare` `tr-TR`'de "mail"→"MAİL" yapar — teknik değerlerde Invariant/Ordinal, kullanıcı metninde açık `tr-TR`; CA1304/CA1309/CA1311 error — from bootstrap 2026-11-19.
 - T2 — Windows Türkçe locale (`Turkish_Türkiye.1254`) ASCII dışı olduğu için PostgreSQL `initdb` çöker — kümeyi `--locale C` + UTF8 kur, Türkçe sıralamayı kolon bazında ICU `tr-TR` ile yap — from bootstrap 2026-11-19 (yaşandı).
-- T3 — Npgsql: `timestamptz`'e `Kind=Local/Unspecified` `DateTime` yazmak exception — `DateTimeOffset`/UTC ve `TimeProvider` kullan — from bootstrap 2026-11-19.
+- T3 — Npgsql: `timestamptz`'e `Kind=Local/Unspecified` `DateTime` yazmak exception — `DateTimeOffset`/UTC ve `TimeProvider` kullan; istemciden gelen `DateTimeOffset` sorguya girmeden önce `ToUniversalTime()` (ör. "+03:00" ile gelen zaman Npgsql'de 500 verir) — from bootstrap 2026-11-19; ek: spec 0010, review round 2.
 - T4 — EF Core `decimal` hassasiyeti yapılandırılmazsa beklenmeyen kolon tipi — tüm para alanlarına convention ile `HasPrecision(18, 2)` — from bootstrap 2026-11-19.
 - T5 — `IgnoreQueryFilters()`, `FromSql` veya doğrudan `DbContext` kiracı filtresini deler (S1) — yalnızca izinli listede, gerekçe + review onayıyla — from bootstrap 2026-11-19.
 - T6 — `dotnet build/test` MSBuild node'ları ve VBCSCompiler'ı arkada bırakır (residue) — `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` — from bootstrap 2026-11-19.

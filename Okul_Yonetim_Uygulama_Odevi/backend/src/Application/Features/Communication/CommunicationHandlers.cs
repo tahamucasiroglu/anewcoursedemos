@@ -162,7 +162,7 @@ public sealed class CommunicationHandlers :
         (Guid userId, IReadOnlyList<ChildRow> children) = await this.MyChildrenAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<GuardianNotice> unread = children.Count == 0
             ? []
-            : await this.notices.ListUnreadUpToAsync(userId, [.. children.Select(c => c.Id)], request.UpTo!.Value, cancellationToken).ConfigureAwait(false);
+            : await this.notices.ListUnreadUpToAsync(userId, [.. children.Select(c => c.Id)], request.UpTo!.Value.ToUniversalTime(), cancellationToken).ConfigureAwait(false);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         foreach (GuardianNotice notice in unread)
         {

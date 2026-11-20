@@ -17,7 +17,7 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// görür; liste en fazla 50; hoş geldin'deki okunmamış sayısı doğru, "okundu" sonrası sıfır; bildirimi olmayan velinin
 /// listesi boş; başka velinin bildirimi görünmez; veli olmayan 403. "Okundu" listenin en yeni zamanına kadar değişen bütün
 /// okunmamışları işaretler — listede gösterilmeyen (50'den eski) bildirimler de; liste ile istek arasında gelen ya da düzeltilen
-/// bildirim okunmamış kalır (0010 review F-3, review 2).
+/// bildirim okunmamış kalır (0010 review F-3); zaman "+03:00" ile gelse de çalışır (0010 review 2).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class GuardianNoticeListTests
@@ -131,5 +131,24 @@ public sealed class GuardianNoticeListTests
         byName["Ali Yılmaz"].ShouldBe((true, "Absent"));
         byName["Ayşe Yılmaz"].ShouldBe((false, "Corrected"));
         byName["Can Yılmaz"].ShouldBe((false, "Absent"));
+    }
+
+    [Fact]
+    public async Task MarkRead_UpToWithOffset_IsConvertedToUtc()
+    {
+        using OkulApiFactory factory = Factory(this.database, new CapturingOutbox());
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        (string guardian, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+        await SavedAsync(client, c.Teacher, c.ClassroomId, [(ali, "Absent")]);
+        JsonElement list = (await NoticesAsync(client, guardian)).Body;
+        string turkey = DateTimeOffset.Parse(list[0].GetProperty("at").GetString()!, System.Globalization.CultureInfo.InvariantCulture)
+            .ToOffset(TimeSpan.FromHours(3)).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        turkey.ShouldEndWith("+03:00");
+
+        (await MarkReadAsync(client, guardian, list, turkey)).ShouldBe(HttpStatusCode.NoContent, "UTC olmayan zaman 500 vermez (0010 review 2, bulgu 2)");
+
+        (await UnreadAsync(client, guardian)).ShouldBe(0);
     }
 }
