@@ -464,3 +464,27 @@ a {
 .notice-list li.unread {
   font-weight: 600;
 }
+
+/* İletişim (spec 0011): duyuru başlığı bağlantı görünümlü düğme; onay kutusu satır içi; uzun metin dar ekranda sarar. */
+.card button.link-button {
+  padding: 0;
+  color: var(--color-primary);
+  background: none;
+  text-align: start;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.card label.check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.announcement {
+  overflow-wrap: anywhere;
+}
+
+.announcement-body {
+  white-space: pre-wrap;
+}

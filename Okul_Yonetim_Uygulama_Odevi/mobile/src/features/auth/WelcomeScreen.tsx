@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { noticesLinkText, type Me } from "@okul/api-client";
+import { countedText, noticesLinkText, type Me } from "@okul/api-client";
 import { t, type TextKey } from "../../i18n/t";
 import { useAuthStyles } from "./useAuthStyles";
 
@@ -12,6 +12,9 @@ interface Props {
   onChildren?: () => void;
   onAttendance?: () => void;
   onNotices?: () => void;
+  onFeed?: () => void;
+  onMessages?: () => void;
+  onQuietHours?: () => void;
 }
 
 const ROLE_KEYS: Record<string, TextKey> = {
@@ -24,9 +27,12 @@ const ROLE_KEYS: Record<string, TextKey> = {
 /**
  * Mobil hoş geldin ekranı (spec 0004): ad, okul, roller, şubeler (yoksa açık mesaj); okul değiştir ve çıkış. Seçili okulu
  * olan herkese "Okul takvimi" (spec 0008); yalnızca veli rolü olana "Çocuklarım" (spec 0009) ve okunmamış sayılı "Bildirimler (n)", yalnızca öğretmene
- * "Yoklama al" (spec 0010).
+ * "Yoklama al" (spec 0010). Spec 0011: velide okunmamış sayılı "Duyurular (n)", veli ve öğretmende "Mesajlar (n)", öğretmende
+ * "Mesai saatlerim".
  */
-export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar, onChildren, onAttendance, onNotices }: Props) {
+export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar, onChildren, onAttendance, onNotices, onFeed, onMessages, onQuietHours }: Props) {
+  const isTeacher = me.roles.includes("Teacher");
+  const isGuardian = me.roles.includes("Guardian");
   const styles = useAuthStyles();
   return (
     <View style={styles.card} testID="welcome">
@@ -56,6 +62,21 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalen
         {onNotices && me.roles.includes("Guardian") && (
           <Pressable style={styles.secondary} onPress={onNotices} accessibilityRole="button">
             <Text style={styles.secondaryText}>{noticesLinkText(me.unreadNoticeCount, t("notices.link"), t("notices.linkCount"))}</Text>
+          </Pressable>
+        )}
+        {onFeed && isGuardian && (
+          <Pressable style={styles.secondary} onPress={onFeed} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{countedText(me.unreadAnnouncementCount, t("feed.link"), t("feed.linkCount"))}</Text>
+          </Pressable>
+        )}
+        {onMessages && (isGuardian || isTeacher) && (
+          <Pressable style={styles.secondary} onPress={onMessages} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{countedText(me.unreadMessageCount, t("messages.link"), t("messages.linkCount"))}</Text>
+          </Pressable>
+        )}
+        {onQuietHours && isTeacher && (
+          <Pressable style={styles.secondary} onPress={onQuietHours} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{t("quiet.link")}</Text>
           </Pressable>
         )}
         {onChildren && me.roles.includes("Guardian") && (

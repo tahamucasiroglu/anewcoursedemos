@@ -7,6 +7,9 @@ import { ChildCardScreen } from "../children/ChildCardScreen";
 import { ChildrenScreen } from "../children/ChildrenScreen";
 import { MyClassroomsScreen } from "../attendance/MyClassroomsScreen";
 import { NoticesScreen } from "../notices/NoticesScreen";
+import { ConversationsScreen } from "../communication/ConversationsScreen";
+import { FeedScreen } from "../communication/FeedScreen";
+import { QuietHoursScreen } from "../communication/QuietHoursScreen";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { LoginScreen } from "./LoginScreen";
 import { SchoolSelectScreen } from "./SchoolSelectScreen";
@@ -18,7 +21,8 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * Mobil oturum ekranı seçici: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004); girişte "Şifremi unuttum",
  * hoş geldin'de "Hesabım" (spec 0006). Platform yöneticisi girişte "web'den giriş yapın" mesajı görür (spec 0007).
  * Hoş geldin'de "Okul takvimi" (spec 0008, her rol) ve yalnızca velide "Çocuklarım" → çocuk kartı (spec 0009). Öğretmende "Yoklama al" → Sınıflarım/yoklama, velide
- * "Bildirimler (n)"; bildirimlerden dönünce okunmamış sayısı için kişi bilgisi yenilenir (spec 0010).
+ * "Bildirimler (n)"; bildirimlerden dönünce okunmamış sayısı için kişi bilgisi yenilenir (spec 0010). Velide "Duyurular (n)",
+ * veli ve öğretmende "Mesajlar (n)", öğretmende "Mesai saatlerim" (spec 0011); dönünce sayılar için kişi bilgisi yenilenir.
  */
 export function AuthGate() {
   const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart } = useAuthController();
@@ -29,6 +33,7 @@ export function AuthGate() {
   const [children, setChildren] = useState<{ childId: string | null } | null>(null);
   const [attendance, setAttendance] = useState(false);
   const [notices, setNotices] = useState(false);
+  const [communication, setCommunication] = useState<"feed" | "messages" | "quietHours" | null>(null);
   const [previousKind, setPreviousKind] = useState(state.kind);
 
   // Oturum durumundan çıkınca (çıkış, oturum düştü) Hesabım kapanır: sonraki girişte Hoş geldin açılır (review F-6).
@@ -40,6 +45,7 @@ export function AuthGate() {
       setChildren(null);
       setAttendance(false);
       setNotices(false);
+      setCommunication(null);
     }
 
     if (state.kind !== "signedOut") {
@@ -87,6 +93,21 @@ export function AuthGate() {
         );
       }
 
+      if (communication) {
+        const back = () => {
+          setCommunication(null);
+          void reloadMe();
+        };
+        switch (communication) {
+          case "feed":
+            return <FeedScreen client={session.client} onBack={back} />;
+          case "messages":
+            return <ConversationsScreen client={session.client} onBack={back} />;
+          default:
+            return <QuietHoursScreen client={session.client} onBack={back} />;
+        }
+      }
+
       if (children) {
         return children.childId ? (
           <ChildCardScreen key={children.childId} client={session.client} childId={children.childId} onBack={() => setChildren({ childId: null })} />
@@ -102,7 +123,7 @@ export function AuthGate() {
       return account ? (
         <AccountScreen client={session.client} onBack={() => setAccount(false)} onProfileSaved={() => void reloadMe()} />
       ) : (
-        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} onAttendance={() => setAttendance(true)} onNotices={() => setNotices(true)} />
+        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} onAttendance={() => setAttendance(true)} onNotices={() => setNotices(true)} onFeed={() => setCommunication("feed")} onMessages={() => setCommunication("messages")} onQuietHours={() => setCommunication("quietHours")} />
       );
   }
 }

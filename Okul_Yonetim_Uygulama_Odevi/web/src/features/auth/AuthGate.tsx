@@ -3,6 +3,7 @@ import { AccountPage } from "../account/AccountPage";
 import { AttendancePage } from "../attendance/AttendancePage";
 import { AdminPage } from "../admin/AdminPage";
 import { CalendarPage } from "../calendar/CalendarPage";
+import { CommunicationPage } from "../communication/CommunicationPage";
 import { NoticesPage } from "../notices/NoticesPage";
 import { PlatformPage } from "../platform/PlatformPage";
 import { StudentsPage } from "../students/StudentsPage";
@@ -22,7 +23,8 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * adresinde yönetim sayfası (spec 0005); "#/hesabim" Hesabım, "#/sifremi-unuttum" ve "#/sifre-yenile" şifre işlemleri
  * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007); "#/takvim" okul
  * takvimi (spec 0008, her rol); "#/ogrenciler" öğrenci yönetimi (spec 0009, yalnızca kurucu); "#/yoklama" yoklama (öğretmen) ve
- * "#/bildirimler" veli bildirimleri (spec 0010; okununca kişi bilgisi — okunmamış sayısı — yenilenir). Kısa geçiş
+ * "#/bildirimler" veli bildirimleri (spec 0010; okununca kişi bilgisi — okunmamış sayısı — yenilenir); "#/iletisim" duyurular
+ * (spec 0011, kurucu ve öğretmen). Kısa geçiş
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
@@ -77,6 +79,10 @@ export function AuthGate() {
 
       if (path === "/bildirimler") {
         return <NoticesPage me={state.me} client={session.client} onRead={() => void reloadMe()} />;
+      }
+
+      if (path === "/iletisim") {
+        return <CommunicationPage me={state.me} client={session.client} />;
       }
 
       if (path === "/ogrenciler") {
