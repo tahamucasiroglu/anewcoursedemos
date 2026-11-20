@@ -59,6 +59,7 @@ export function TermsTab({ client }: { client: Client }) {
       </div>
       {editing && (
         <TermForm
+          key={editing.id ?? "new"}
           client={client}
           id={editing.id}
           initial={editing.values}

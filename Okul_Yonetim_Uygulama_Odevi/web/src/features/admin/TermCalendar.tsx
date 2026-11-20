@@ -92,6 +92,7 @@ export function TermCalendar({ client, term, onClose }: Props) {
           </div>
           {editing && (
             <EntryForm
+              key={editing.id ?? "new"}
               client={client}
               term={term}
               id={editing.id}

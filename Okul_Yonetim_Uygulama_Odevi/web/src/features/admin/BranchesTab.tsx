@@ -73,6 +73,7 @@ export function BranchesTab({ client }: { client: Client }) {
       </div>
       {editing && (
         <BranchForm
+          key={editing.id ?? "new"}
           client={client}
           id={editing.id}
           initial={editing.values}

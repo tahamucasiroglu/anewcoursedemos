@@ -132,3 +132,38 @@ it("Takvim alt paneli: kayıt yoksa 'Bu dönemde takvim kaydı yok.'; Takvimi ka
   await userEvent.click(screen.getByRole("button", { name: "Takvimi kapat" }));
   expect(screen.queryByText("Bu dönemde takvim kaydı yok.")).not.toBeInTheDocument();
 });
+
+// Review tur 1, M-1: takvim kaydı formu düzenlenen kayda bağlı anahtarla yeniden kurulur.
+it("Takvim: bayramı düzenle → sınav haftasını düzenle → form sınavın değerlerini gösterir ve PUT sınava gider; düzenlerken Kayıt ekle → form boş", async () => {
+  const api = await openTab([
+    ["GET", /^\/api\/admin\/terms$/, () => json(200, [termAutumn])],
+    ["GET", /^\/api\/admin\/terms\/[^/]+\/calendar-entries$/, () => json(200, [holiday, examWeek])],
+    ["PUT", /^\/api\/admin\/calendar-entries\/[^/]+$/, () => json(200, examWeek)],
+  ]);
+  await userEvent.click(await screen.findByRole("button", { name: "Takvim" }));
+  const panel = await screen.findByRole("region", { name: "Takvim: 2026-2027 Güz" });
+  await within(panel).findAllByRole("listitem");
+
+  await userEvent.click(within(panel).getAllByRole("button", { name: "Düzenle" })[0]);
+  expect(within(panel).getByLabelText("Başlık")).toHaveValue("Cumhuriyet Bayramı");
+  await userEvent.click(within(panel).getAllByRole("button", { name: "Düzenle" })[1]);
+  const form = within(panel).getByRole("form", { name: "Düzenle" });
+  expect(within(form).getByLabelText("Başlık")).toHaveValue("Ara sınav haftası");
+  expect(within(form).getByLabelText("Tür")).toHaveValue("Exam");
+  expect(within(form).getByLabelText("Başlangıç")).toHaveValue("2026-11-09");
+  expect(within(form).getByLabelText("Bitiş")).toHaveValue("2026-11-13");
+
+  await userEvent.click(within(form).getByRole("button", { name: "Kaydet" }));
+  await waitFor(() => expect(api.sent("PUT", /calendar-entries\/[^/]+$/)).toHaveLength(1));
+  const put = api.sent("PUT", /calendar-entries\/[^/]+$/)[0];
+  expect(new URL(put.url, "http://x").pathname).toBe(`/api/admin/calendar-entries/${examWeek.id}`);
+  expect(await put.json()).toMatchObject({ title: "Ara sınav haftası", kind: "Exam", startDate: "2026-11-09", endDate: "2026-11-13" });
+
+  await waitFor(() => expect(within(panel).queryByRole("form")).not.toBeInTheDocument());
+  const [editHoliday] = await within(panel).findAllByRole("button", { name: "Düzenle" });
+  await userEvent.click(editHoliday);
+  await userEvent.click(within(panel).getByRole("button", { name: "Kayıt ekle" }));
+  const empty = within(panel).getByRole("form", { name: "Kayıt ekle" });
+  expect(within(empty).getByLabelText("Başlık")).toHaveValue("");
+  expect(within(empty).getByLabelText("Tür")).toHaveValue("");
+});

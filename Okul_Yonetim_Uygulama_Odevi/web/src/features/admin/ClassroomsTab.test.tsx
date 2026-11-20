@@ -146,3 +146,44 @@ it("pasifleştir onay ister; Vazgeç istek göndermez, Onayla gönderir", async 
   await userEvent.click(screen.getByRole("button", { name: "Onayla" }));
   await waitFor(() => expect(api.sent("POST", /deactivate$/)).toHaveLength(1));
 });
+
+// Review tur 1, M-1: aynı yerde çizilen form düzenlenen kayda bağlı anahtarla yeniden kurulur — bir satırdan ötekine
+// geçince eski değerler kalmaz, "Sınıf ekle" düzenleme formunu boşaltır.
+const roomB = classroom({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaab2", gradeLevelId: levelPrep.id, gradeLevelName: levelPrep.name, name: "H-B" });
+
+it("5-A'yı düzenle → H-B'yi düzenle → form H-B'nin değerlerini gösterir ve PUT H-B'ye gider", async () => {
+  const api = await openTab(
+    [
+      ["GET", /^\/api\/admin\/classrooms$/, () => json(200, { termId: termAutumn.id, items: [classroom(), roomB] })],
+      ["PUT", /^\/api\/admin\/classrooms\/[^/]+$/, () => json(200, roomB)],
+    ],
+    { levels: [levelPrep, levelFifth] },
+  );
+  await screen.findByText("H-B");
+  await userEvent.click(screen.getAllByRole("button", { name: "Düzenle" })[0]);
+  expect(within(screen.getByRole("form", { name: "Düzenle" })).getByLabelText("Sınıf adı")).toHaveValue("5-A");
+
+  await userEvent.click(screen.getAllByRole("button", { name: "Düzenle" })[1]);
+  const form = screen.getByRole("form", { name: "Düzenle" });
+  expect(within(form).getByLabelText("Sınıf adı")).toHaveValue("H-B");
+  expect(within(form).getByLabelText("Sınıf seviyesi")).toHaveValue(levelPrep.id);
+
+  await userEvent.type(within(form).getByLabelText("Sınıf adı"), "2");
+  await userEvent.click(within(form).getByRole("button", { name: "Kaydet" }));
+  await waitFor(() => expect(api.sent("PUT", /classrooms\/[^/]+$/)).toHaveLength(1));
+  const put = api.sent("PUT", /classrooms\/[^/]+$/)[0];
+  expect(new URL(put.url, "http://x").pathname).toBe(`/api/admin/classrooms/${roomB.id}`);
+  expect(((await put.json()) as { name: string; gradeLevelId: string })).toMatchObject({ name: "H-B2", gradeLevelId: levelPrep.id });
+});
+
+it("düzenlerken 'Sınıf ekle' → form boş", async () => {
+  await openTab([["GET", /^\/api\/admin\/classrooms$/, () => json(200, { termId: termAutumn.id, items: [classroom()] })]], { levels: [levelPrep, levelFifth] });
+  await userEvent.click(await screen.findByRole("button", { name: "Düzenle" }));
+  expect(within(screen.getByRole("form", { name: "Düzenle" })).getByLabelText("Sınıf adı")).toHaveValue("5-A");
+
+  await userEvent.click(screen.getByRole("button", { name: "Sınıf ekle" }));
+  const form = screen.getByRole("form", { name: "Sınıf ekle" });
+  expect(within(form).getByLabelText("Sınıf adı")).toHaveValue("");
+  expect(within(form).getByLabelText("Sınıf seviyesi")).toHaveValue("");
+  expect(within(form).getByLabelText("Şube")).toHaveValue("");
+});

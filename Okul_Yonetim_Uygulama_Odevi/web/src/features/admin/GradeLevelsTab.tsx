@@ -73,6 +73,7 @@ export function GradeLevelsTab({ client }: { client: Client }) {
       </div>
       {editing && (
         <GradeLevelForm
+          key={editing.id ?? "new"}
           client={client}
           id={editing.id}
           initial={editing.values}

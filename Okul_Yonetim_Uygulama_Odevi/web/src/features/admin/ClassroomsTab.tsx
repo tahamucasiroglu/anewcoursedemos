@@ -160,6 +160,7 @@ export function ClassroomsTab({ client }: { client: Client }) {
       </div>
       {editing && list.kind === "ready" && list.list.termId && (
         <ClassroomForm
+          key={editing.classroom?.id ?? "new"}
           client={client}
           termId={list.list.termId}
           classroom={editing.classroom}
