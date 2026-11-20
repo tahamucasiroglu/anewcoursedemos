@@ -18,6 +18,9 @@ public sealed class PasswordResetTokenRepository : IPasswordResetTokenRepository
     public Task<PasswordResetToken?> FindByHashAsync(string tokenHash, CancellationToken cancellationToken) =>
         this.context.PasswordResetTokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
 
+    public Task<Guid?> FindOwnerIdAsync(string tokenHash, CancellationToken cancellationToken) =>
+        this.context.PasswordResetTokens.AsNoTracking().Where(t => t.TokenHash == tokenHash).Select(t => (Guid?)t.UserId).FirstOrDefaultAsync(cancellationToken);
+
     public Task<int> CountCreatedSinceAsync(Guid userId, DateTimeOffset since, CancellationToken cancellationToken) =>
         this.context.PasswordResetTokens.CountAsync(t => t.UserId == userId && t.CreatedAt > since, cancellationToken);
 

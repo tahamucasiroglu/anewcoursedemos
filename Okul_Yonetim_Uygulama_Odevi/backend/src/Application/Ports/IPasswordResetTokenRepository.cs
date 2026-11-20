@@ -7,6 +7,9 @@ public interface IPasswordResetTokenRepository
 {
     Task<PasswordResetToken?> FindByHashAsync(string tokenHash, CancellationToken cancellationToken);
 
+    /// <summary>Bağlantının sahibi (izlemesiz okuma; sıra almadan önce kullanılır).</summary>
+    Task<Guid?> FindOwnerIdAsync(string tokenHash, CancellationToken cancellationToken);
+
     /// <summary>Kişi için <paramref name="since"/> sonrasında üretilen bağlantı sayısı (e-posta başına sınır).</summary>
     Task<int> CountCreatedSinceAsync(Guid userId, DateTimeOffset since, CancellationToken cancellationToken);
 

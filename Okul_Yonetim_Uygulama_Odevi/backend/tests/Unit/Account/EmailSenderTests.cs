@@ -48,8 +48,50 @@ public sealed class EmailSenderTests
         string data = await server.ReceivedAsync();
         data.ShouldContain("RCPT TO:<veli@ornek.test>");
         data.ShouldContain("MAIL FROM:<okul@ornek.test>");
-        DecodeHeaders(data).ShouldContain("Okul Yönetim — şifre yenileme");
+        string decoded = DecodeHeaders(data);
+        decoded.ShouldContain("Okul Yönetim — şifre yenileme");
+        decoded.ShouldMatch("(?m)^From: .*Okul Yönetim.*<okul@ornek.test>");
+        DecodeBody(data).ShouldContain("http://okul/#/sifre-yenile?anahtar=GIZLI-ANAHTAR-123");
         string.Join('\n', log.Lines).ShouldNotContain("GIZLI-ANAHTAR-123");
+    }
+
+    /// <summary>Review F-2: bağlantı ayardaki web adresiyle başlar; anahtar "#" sonrasında ve kodlanmış.</summary>
+    [Theory]
+    [InlineData("http://okul:8080/", "http://okul:8080/#/sifre-yenile?anahtar=a%2Bb")]
+    [InlineData("https://okul.example", "https://okul.example/#/sifre-yenile?anahtar=a%2Bb")]
+    public void PasswordResetLink_StartsWithConfiguredWebAddress(string webBaseUrl, string expected) =>
+        new AppLinks(Options.Create(new EmailOptions { WebBaseUrl = webBaseUrl })).PasswordReset("a+b").ShouldBe(expected);
+
+    /// <summary>Review F-2: bağlantıyı kabul edip hiç yanıt vermeyen sunucu — gönderim ayar süresi civarında biter.</summary>
+    [Fact]
+    public async Task SilentServer_GivesUpAfterTimeout()
+    {
+        TcpListener silent = new(IPAddress.Loopback, 0);
+        silent.Start();
+        Task<TcpClient> accepted = silent.AcceptTcpClientAsync(TestContext.Current.CancellationToken).AsTask();
+        int port = ((IPEndPoint)silent.LocalEndpoint).Port;
+        EmailOptions options = new() { Host = "127.0.0.1", Port = port, UseStartTls = false, FromAddress = "okul@ornek.test", WebBaseUrl = "http://okul", TimeoutSeconds = 2, UserName = "kullanici", Password = "GIZLI-SMTP-SIFRE" };
+        ListLogger<BackgroundEmailOutbox> log = new();
+        EmailSender sender = new(Options.Create(options), new Env("Production", Path.GetTempPath()), new ListLogger<EmailSender>());
+        System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
+
+        await Should.ThrowAsync<Exception>(() => sender.SendAsync(Message, TestContext.Current.CancellationToken));
+
+        watch.Elapsed.ShouldBeInRange(TimeSpan.FromSeconds(1.5), TimeSpan.FromSeconds(8));
+        using BackgroundEmailOutbox outbox = new(sender, log);
+        await outbox.StartAsync(TestContext.Current.CancellationToken);
+        outbox.Enqueue(Message);
+        for (int i = 0; i < 200 && !log.Lines.Any(l => l.Contains("gönderilemedi", StringComparison.Ordinal)); i++)
+        {
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+
+        await outbox.StopAsync(TestContext.Current.CancellationToken);
+        string text = string.Join('\n', log.Lines);
+        text.ShouldContain("E-posta gönderilemedi");
+        text.ShouldNotContain("GIZLI-SMTP-SIFRE");
+        silent.Stop();
+        (await accepted).Dispose();
     }
 
     [Fact]
@@ -110,7 +152,61 @@ public sealed class EmailSenderTests
     private static string DecodeHeaders(string data)
     {
         // "=?utf-8?B?...?=" kodlu konu satırlarını çöz.
-        return System.Text.RegularExpressions.Regex.Replace(data, @"=\?utf-8\?B\?([^?]+)\?=", m => Encoding.UTF8.GetString(Convert.FromBase64String(m.Groups[1].Value)), System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        string b = System.Text.RegularExpressions.Regex.Replace(data, @"=\?utf-8\?B\?([^?]+)\?=", m => Encoding.UTF8.GetString(Convert.FromBase64String(m.Groups[1].Value)), System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return System.Text.RegularExpressions.Regex.Replace(b, @"=\?utf-8\?Q\?([^?]+)\?=", m => DecodeQ(m.Groups[1].Value), System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    private static string DecodeQ(string value)
+    {
+        List<byte> bytes = [];
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '=' && i + 2 < value.Length)
+            {
+                bytes.Add(Convert.ToByte(value.Substring(i + 1, 2), 16));
+                i += 2;
+            }
+            else
+            {
+                bytes.Add((byte)(value[i] == '_' ? ' ' : value[i]));
+            }
+        }
+
+        return Encoding.UTF8.GetString([.. bytes]);
+    }
+
+    private static string DecodeBody(string data)
+    {
+        string[] parts = data.Split(["\r\n\r\n", "\n\n"], 2, StringSplitOptions.None);
+        string headers = parts[0];
+        string rest = parts.Length > 1 ? parts[1] : string.Empty;
+        string body = string.Join("\r\n", rest.Split('\n').Select(l => l.TrimEnd('\r')).TakeWhile(l => l != "."));
+        if (headers.Contains("Content-Transfer-Encoding: base64", StringComparison.OrdinalIgnoreCase))
+        {
+            return Encoding.UTF8.GetString(Convert.FromBase64String(string.Concat(body.Where(c => !char.IsWhiteSpace(c)))));
+        }
+
+        if (headers.Contains("quoted-printable", StringComparison.OrdinalIgnoreCase))
+        {
+            string joined = System.Text.RegularExpressions.Regex.Replace(body, "=\r?\n", string.Empty);
+            List<byte> bytes = [];
+            for (int i = 0; i < joined.Length; i++)
+            {
+                if (joined[i] == '=' && i + 2 < joined.Length && Uri.IsHexDigit(joined[i + 1]) && Uri.IsHexDigit(joined[i + 2]))
+                {
+                    bytes.Add(Convert.ToByte(joined.Substring(i + 1, 2), 16));
+                    i += 2;
+                }
+                else
+                {
+                    bytes.AddRange(Encoding.UTF8.GetBytes(joined[i].ToString()));
+                }
+            }
+
+            return Encoding.UTF8.GetString([.. bytes]);
+        }
+
+        return body;
     }
 
     private sealed class FlakySender : IEmailSender
@@ -189,7 +285,7 @@ public sealed class EmailSenderTests
         {
             using TcpClient client = await this.listener.AcceptTcpClientAsync();
             using NetworkStream stream = client.GetStream();
-            using StreamReader reader = new(stream, Encoding.ASCII);
+            using StreamReader reader = new(stream, Encoding.UTF8);
             using StreamWriter writer = new(stream, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true };
             StringBuilder all = new();
             await writer.WriteLineAsync("220 sahte ESMTP");

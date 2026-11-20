@@ -156,6 +156,7 @@ public sealed class AccountHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         string email = EmailAddress.Normalize(request.Email);
+        EmailMessage? outgoing = null;
         IExclusiveScope scope = await this.LockAsync(["reset-request:" + email], cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
@@ -163,6 +164,9 @@ public sealed class AccountHandlers :
             User? user = await this.users.FindByEmailAsync(email, cancellationToken).ConfigureAwait(false);
             if (user is null)
             {
+                // Kayıtlı yolla aynı veritabanı okumaları (review F-4): yanıt süresi hesabın varlığını ele vermesin.
+                await this.resetTokens.CountCreatedSinceAsync(Guid.Empty, now - LinkWindow, cancellationToken).ConfigureAwait(false);
+                await this.resetTokens.RevokeAllForUserAsync(Guid.Empty, now, cancellationToken).ConfigureAwait(false);
                 this.audit.Add(AuditEntry.Record(AuditAction.PasswordResetRequested, now, attemptedEmail: email, ipAddress: this.client.IpAddress));
                 this.logger.LogInformation("Şifre yenileme isteği: kayıtlı olmayan e-posta, e-posta gönderilmedi");
             }
@@ -179,12 +183,18 @@ public sealed class AccountHandlers :
                 this.resetTokens.Add(stored);
                 this.Record(AuditAction.PasswordResetRequested, user.Id, targetId: stored.Id);
                 string subject = await this.localization.GetAsync(AccountMessages.ResetEmailSubject).ConfigureAwait(false);
-                this.emailOutbox.Enqueue(PasswordResetEmail.Build(user.Id, user.Email, user.FullName, subject, this.links.PasswordReset(token)));
+                outgoing = PasswordResetEmail.Build(user.Id, user.Email, user.FullName, subject, this.links.PasswordReset(token));
                 this.logger.LogInformation("Şifre yenileme bağlantısı üretildi: kişi {UserId}", user.Id);
             }
 
             await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // Kayıt kalıcı olduktan sonra kuyruğa (review F-3): kayıt başarısızsa geçersiz bağlantı içeren e-posta gitmez.
+        if (outgoing is not null)
+        {
+            this.emailOutbox.Enqueue(outgoing);
         }
 
         return await this.localization.GetAsync(AccountMessages.ResetRequested).ConfigureAwait(false);
@@ -206,12 +216,15 @@ public sealed class AccountHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         string hash = this.tokens.HashRefreshToken(request.Token);
-        PasswordResetToken? found = await this.resetTokens.FindByHashAsync(hash, cancellationToken).ConfigureAwait(false);
-        User? owner = found is null ? null : await this.users.FindByIdAsync(found.UserId, cancellationToken).ConfigureAwait(false);
+        // Sıradan önce yalnızca sahibini öğren (izlemesiz): sıra içindeki okuma veritabanından taze gelsin (review F-1).
+        Guid? ownerId = await this.resetTokens.FindOwnerIdAsync(hash, cancellationToken).ConfigureAwait(false);
+        User? owner = ownerId is { } id ? await this.users.FindByIdAsync(id, cancellationToken).ConfigureAwait(false) : null;
         List<string> keys = ["reset-link:" + hash];
         if (owner is not null)
         {
+            // Kişinin şifresini değiştiren her yolla aynı sıra: kendi değişikliği ("login:") ve kurucu sıfırlaması ("member-admin:").
             keys.Add("login:" + owner.Email);
+            keys.Add("member-admin:" + owner.Id.ToString("N"));
         }
 
         bool valid;
@@ -220,8 +233,9 @@ public sealed class AccountHandlers :
         {
             DateTimeOffset now = this.timeProvider.GetUtcNow();
 
-            // Sıra içinde yeniden oku: aynı bağlantı aynı anda iki kez kullanılamaz.
-            PasswordResetToken? token = found is null ? null : await this.resetTokens.FindByHashAsync(hash, cancellationToken).ConfigureAwait(false);
+            // Sıra içinde ilk (izlenen) okuma: önceki isteğin "kullanıldı" ya da başka yolun "iptal" kaydını görür; aynı bağlantı
+            // aynı anda iki kez kullanılamaz, şifre değişirken bekleyen bağlantı isteği de geçersiz olur.
+            PasswordResetToken? token = owner is null ? null : await this.resetTokens.FindByHashAsync(hash, cancellationToken).ConfigureAwait(false);
             valid = token is not null && owner is not null && token.IsUsable(now);
             if (!valid)
             {

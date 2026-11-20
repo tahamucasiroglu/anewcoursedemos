@@ -42,7 +42,9 @@ public sealed class AccountAuditTests
         await StatusAsync(client, HttpMethod.Post, "/api/account/change-password", access, new { currentPassword = Password, newPassword = NewPassword, newPasswordRepeat = NewPassword });
         await ForgotAsync(client, person);
         await ForgotAsync(client, unknown);
+        int invalidBefore = await QueryAsync(factory, c => c.AuditEntries.CountAsync(e => e.Action == AuditAction.PasswordResetLinkInvalid && e.IpAddress == "203.0.113.66"));
         await ResetAsync(client, "uydurma-anahtar-0123456789");
+        int invalidAfter = await QueryAsync(factory, c => c.AuditEntries.CountAsync(e => e.Action == AuditAction.PasswordResetLinkInvalid && e.IpAddress == "203.0.113.66"));
         await ResetAsync(client, TokenFrom(outbox.To(person).Single()), "Son-Sifre-2026");
 
         List<AuditEntry> mine = await QueryAsync(factory, c => c.AuditEntries.Where(e => e.ActorUserId == personId).ToListAsync());
@@ -52,6 +54,6 @@ public sealed class AccountAuditTests
         }
         mine.Where(e => e.Action != AuditAction.LoginSucceeded).ShouldAllBe(e => e.IpAddress == "203.0.113.66");
         (await QueryAsync(factory, c => c.AuditEntries.CountAsync(e => e.Action == AuditAction.PasswordResetRequested && e.AttemptedEmail == unknown && e.IpAddress == "203.0.113.66"))).ShouldBe(1);
-        (await QueryAsync(factory, c => c.AuditEntries.CountAsync(e => e.Action == AuditAction.PasswordResetLinkInvalid && e.IpAddress == "203.0.113.66" && e.OccurredAt > DateTimeOffset.UtcNow.AddMinutes(-5)))).ShouldBeGreaterThanOrEqualTo(1);
+        (invalidAfter - invalidBefore).ShouldBe(1, "geçersiz bağlantı denemesi tam bir audit kaydı");
     }
 }

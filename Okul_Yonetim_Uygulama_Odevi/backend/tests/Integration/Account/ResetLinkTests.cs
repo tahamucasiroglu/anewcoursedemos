@@ -101,6 +101,56 @@ public sealed class ResetLinkTests
         (await ResetAsync(client, beforeChange)).Status.ShouldBe(HttpStatusCode.NoContent, "en son bağlantı hâlâ geçerli");
     }
 
+    /// <summary>Review F-1: aynı bağlantıyla aynı anda iki yenileme — tam olarak biri başarılı, öbürü "geçersiz".</summary>
+    [Fact]
+    public async Task SameLinkUsedTwiceAtOnce_ExactlyOneSucceeds()
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("cift-kullanim");
+        await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+        await ForgotAsync(client, person);
+        string token = TokenFrom(outbox.To(person).Single());
+
+        var results = await Task.WhenAll(ResetAsync(client, token, "Birinci-Sifre-2026"), ResetAsync(client, token, "Ikinci-Sifre-2026"));
+
+        results.Count(r => r.Status == HttpStatusCode.NoContent).ShouldBe(1);
+        results.Single(r => r.Status != HttpStatusCode.NoContent).Raw.ShouldContain(Invalid);
+        string winner = results[0].Status == HttpStatusCode.NoContent ? "Birinci-Sifre-2026" : "Ikinci-Sifre-2026";
+        (await LoginAsync(client, person, winner)).GetProperty("accessToken").GetString().ShouldNotBeNullOrEmpty();
+    }
+
+    /// <summary>Review F-1: kurucu sıfırlamasıyla aynı anda kullanılan bağlantı ya önce çalışır ya da geçersiz olur; ikisi birden şifreyi değiştiremez.</summary>
+    [Fact]
+    public async Task LinkUsedWhileFounderResets_NeverBothWin()
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("yaris");
+        Guid personId = await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+        string founder = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        await ForgotAsync(client, person);
+        string token = TokenFrom(outbox.To(person).Single());
+
+        Task<(HttpStatusCode Status, JsonElement Body, string Raw)> founderReset = CallAsync(client, HttpMethod.Post, $"/api/admin/members/{personId}/reset-password", founder);
+        Task<(HttpStatusCode Status, string Raw)> linkReset = ResetAsync(client, token, "Bagla-Sifre-2026");
+        await Task.WhenAll(founderReset, linkReset);
+
+        (await founderReset).Status.ShouldBe(HttpStatusCode.OK);
+        string temporary = (await founderReset).Body.GetProperty("temporaryPassword").GetString()!;
+        using HttpResponseMessage withTemporary = await PostLoginAsync(client, person, temporary);
+        using HttpResponseMessage withLink = await PostLoginAsync(client, person, "Bagla-Sifre-2026");
+        // Kurucu sonra çalıştıysa onun şifresi geçerli; önce çalıştıysa bağlantı geçersizleşmiş olmalı. Her iki sırada da
+        // son geçerli şifre kurucunun geçici şifresidir; bağlantının şifresi hiçbir zaman sonradan kazanamaz.
+        withTemporary.StatusCode.ShouldBe(HttpStatusCode.OK);
+        withLink.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        _ = await linkReset;
+    }
+
     [Fact]
     public async Task ChangingPassword_InvalidatesOpenLinks()
     {

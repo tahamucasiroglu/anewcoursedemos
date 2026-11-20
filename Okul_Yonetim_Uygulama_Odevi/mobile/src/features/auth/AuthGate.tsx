@@ -18,6 +18,19 @@ export function AuthGate() {
   const styles = useAuthStyles();
   const [forgot, setForgot] = useState(false);
   const [account, setAccount] = useState(false);
+  const [previousKind, setPreviousKind] = useState(state.kind);
+
+  // Oturum durumundan çıkınca (çıkış, oturum düştü) Hesabım kapanır: sonraki girişte Hoş geldin açılır (review F-6).
+  if (previousKind !== state.kind) {
+    setPreviousKind(state.kind);
+    if (state.kind !== "signedIn") {
+      setAccount(false);
+    }
+
+    if (state.kind !== "signedOut") {
+      setForgot(false);
+    }
+  }
 
   switch (state.kind) {
     case "restoring":

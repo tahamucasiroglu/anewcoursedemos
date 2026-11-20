@@ -96,6 +96,25 @@ describe.each(["light", "dark"] as const)("Mobil Hesabım — %s tema", (mode) =
   });
 });
 
+it("Hesabım açıkken oturum düşerse yeniden girişte Hoş geldin açılır (review F-6)", async () => {
+  fakeApi({
+    "POST /api/auth/login": () => json(200, tokens),
+    "POST /api/auth/refresh": () => json(401, {}),
+    "GET /api/me": () => json(200, me),
+    "GET /api/account/profile": () => json(200, profile),
+    "PUT /api/account/profile": () => json(401, {}),
+  });
+  await render(<App />);
+  await signIn();
+  await fireEvent.press(await screen.findByText("Hesabım"));
+  await fireEvent.press(await screen.findByText("Kaydet"));
+
+  expect(await screen.findByText("Giriş yap")).toBeTruthy();
+  await signIn();
+  expect(await screen.findByText("Çıkış")).toBeTruthy();
+  expect(screen.queryByTestId("account")).toBeNull();
+});
+
 it("Girişte 'Şifremi unuttum': geçersiz e-postada istek gitmez; gönderince aynı bilgi mesajı; Girişe dön", async () => {
   const api = fakeApi({ "POST /api/auth/forgot-password": () => json(200, { message }) });
   await render(<App />);
