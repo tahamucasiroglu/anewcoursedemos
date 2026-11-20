@@ -55,7 +55,8 @@ it("anahtarsız adres istek göndermeden geçersiz sayılır", async () => {
 
 it("geçerli bağlantı: alan hataları istek göndermez; kaydediliyor kilitli; başarı + Girişe git; anahtar yalnızca gövdede gider", async () => {
   let release: (r: Response) => void = () => {};
-  const sent = stub(true, () => new Promise<Response>((resolve) => { release = resolve; }));
+  const pending = new Promise<Response>((resolve) => { release = resolve; });
+  const sent = stub(true, () => pending);
   window.location.hash = "#/sifre-yenile?anahtar=GIZLI%2BANAHTAR";
   render(<App />);
   const submit = await screen.findByRole("button", { name: "Şifreyi kaydet" });

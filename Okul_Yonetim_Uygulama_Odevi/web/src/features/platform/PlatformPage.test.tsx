@@ -74,14 +74,15 @@ it("liste alınamazsa hata duyurulur; tekrar dene yeniden ister", async () => {
 it("okul ekle: alan hataları istek göndermez; gönderilirken kilitli; 'Bu okul zaten var'; sonra geçici şifre bir kez", async () => {
   let posts = 0;
   let release: () => void = () => {};
+  const duplicate = new Promise<Response>((resolve) => {
+    release = () => resolve(json(400, { detail: "Bu okul zaten var" }));
+  });
   const api = open([
     ["GET", /^\/api\/platform\/schools$/, () => json(200, schools([schoolA]))],
     ["POST", /^\/api\/platform\/schools$/, () => {
       posts++;
       if (posts === 1) {
-        return new Promise<Response>((resolve) => {
-          release = () => resolve(json(400, { detail: "Bu okul zaten var" }));
-        });
+        return duplicate;
       }
 
       return json(200, { tenantId: schoolA.tenantId, existingAccount: false, temporaryPassword: "Ab3dEf7hJk9m" });

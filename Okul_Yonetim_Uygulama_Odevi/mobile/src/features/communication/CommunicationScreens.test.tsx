@@ -123,13 +123,13 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
 
   it("veli: mesajlar listesi (okunmamış etiketi) → konuşma → gönder, mesai dışı notu", async () => {
     let release: () => void = () => undefined;
+    const sent = new Promise<Response>((resolve) => {
+      release = () => resolve(json(200, { message: message("m2", "Can yarın gelmeyecek", true), outsideWorkingHours: true }));
+    });
     fakeApi({
       "GET /api/conversations": () => json(200, [conversation]),
       "GET /api/conversations/k1/messages": () => json(200, { conversation: { ...conversation, unreadCount: 0 }, canSend: true, messages: [message("m1", "Merhaba Ayla Hanım")], hasMore: false }),
-      "POST /api/conversations/k1/messages": () =>
-        new Promise<Response>((resolve) => {
-          release = () => resolve(json(200, { message: message("m2", "Can yarın gelmeyecek", true), outsideWorkingHours: true }));
-        }),
+      "POST /api/conversations/k1/messages": () => sent,
     }, { unreadMessages: 3 });
     await signIn();
     await fireEvent.press(screen.getByRole("button", { name: "Mesajlar (3)" }));
@@ -156,9 +156,10 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
 it("akış: yükleniyor → hata + tekrar dene → boş", async () => {
   let calls = 0;
   let fail: () => void = () => undefined;
+  const failed = new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); });
   fakeApi({
     "GET /api/announcements/feed": () =>
-      ++calls === 1 ? new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); }) : json(200, { items: [], page: 1, hasMore: false, unreadCount: 0 }),
+      ++calls === 1 ? failed : json(200, { items: [], page: 1, hasMore: false, unreadCount: 0 }),
   });
   await signIn();
   await fireEvent.press(screen.getByRole("button", { name: "Duyurular" }));

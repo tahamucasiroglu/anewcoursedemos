@@ -138,10 +138,11 @@ describe.each(["light", "dark"] as const)("Yoklama — %s tema", (mode) => {
   it("kaydediliyor: düğme kilitli → hata: işaretler korunur → tekrar Kaydet başarılı; velisi olmayan sayısı", async () => {
     let calls = 0;
     let fail: () => void = () => undefined;
+    const failed = new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); });
     fakeApi({
       classrooms: () => json(200, [classA]),
       today: () => json(200, sheet()),
-      save: () => (++calls === 1 ? new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); }) : json(200, result({ present: 0, absent: 1, late: 1, notifiedGuardians: 0, studentsWithoutGuardian: 1 }))),
+      save: () => (++calls === 1 ? failed : json(200, result({ present: 0, absent: 1, late: 1, notifiedGuardians: 0, studentsWithoutGuardian: 1 }))),
     });
     await signIn();
     await fireEvent.press(screen.getByRole("button", { name: "Yoklama al" }));

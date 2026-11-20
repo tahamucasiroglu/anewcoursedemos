@@ -112,7 +112,8 @@ describe.each(["light", "dark"] as const)("Çocuklarım — %s tema", (mode) => 
   it("yükleniyor → hata + tekrar dene → boş liste mesajı", async () => {
     let calls = 0;
     let fail: () => void = () => undefined;
-    fakeApi({ list: () => (++calls === 1 ? new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); }) : json(200, [])) });
+    const failed = new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); });
+    fakeApi({ list: () => (++calls === 1 ? failed : json(200, [])) });
     await openChildren();
 
     expect(await screen.findByText("Yükleniyor…")).toBeTruthy();

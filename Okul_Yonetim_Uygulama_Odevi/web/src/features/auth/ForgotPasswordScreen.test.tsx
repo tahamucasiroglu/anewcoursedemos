@@ -63,13 +63,14 @@ describe.each(["light", "dark"] as const)("Şifremi unuttum — %s tema", (mode)
 it("gönderilirken düğme kilitli; sunucuya ulaşılamazsa hata + tekrar dene", async () => {
   let calls = 0;
   let release: (r: Response) => void = () => {};
+  const pending = new Promise<Response>((resolve) => { release = resolve; });
   stub(() => {
     calls++;
     if (calls === 1) {
       return Promise.reject(new TypeError("Failed to fetch"));
     }
 
-    return new Promise<Response>((resolve) => { release = resolve; });
+    return pending;
   });
   window.location.hash = "#/sifremi-unuttum";
   render(<App />);

@@ -61,13 +61,14 @@ it("profil alan hataları istek göndermez; profil yüklenemezse hata + tekrar d
 it("şifremi değiştir: alan hataları; gönderilirken kilitli; 'Mevcut şifre hatalı' ve başarı duyurulur; şifre alanları autocomplete taşır", async () => {
   let attempt = 0;
   let release: (r: Response) => void = () => {};
+  const pending = new Promise<Response>((resolve) => { release = resolve; });
   const api = open([["POST", /change-password$/, () => {
     attempt++;
     if (attempt === 1) {
       return json(400, { detail: "Mevcut şifre hatalı" });
     }
 
-    return new Promise<Response>((resolve) => { release = resolve; });
+    return pending;
   }]]);
   window.location.hash = "#/hesabim";
   window.dispatchEvent(new HashChangeEvent("hashchange"));

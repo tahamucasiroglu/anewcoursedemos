@@ -104,7 +104,8 @@ describe.each(["light", "dark"] as const)("Sınıflarım — %s tema", (mode) =>
 it("yükleniyor → hata + tekrar dene → 'Size atanmış sınıf yok'", async () => {
   let calls = 0;
   let fail: () => void = () => undefined;
-  fakeApi(() => (++calls === 1 ? new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); }) : json(200, [])));
+  const failed = new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); });
+  fakeApi(() => (++calls === 1 ? failed : json(200, [])));
   await openClassrooms();
 
   expect(await screen.findByText("Yükleniyor…")).toBeTruthy();

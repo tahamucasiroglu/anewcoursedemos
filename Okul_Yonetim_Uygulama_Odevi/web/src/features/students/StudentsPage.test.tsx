@@ -34,9 +34,10 @@ describe.each(["light", "dark"] as const)("Öğrenciler — %s tema", (mode) => 
   it("yükleniyor → hata + tekrar dene → dolu liste; satırda numara, şube, sınıf, veli sayısı, Ayrıldı etiketi", async () => {
     let calls = 0;
     let fail: () => void = () => undefined;
+    const failed = new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); });
     const items = [studentRow(), studentRow({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb9", fullName: "Ali Er", schoolNumber: null, classroomId: null, classroomName: null, guardianCount: 0, isActive: false })];
     await openPage([["GET", /^\/api\/admin\/students$/, () =>
-      ++calls === 1 ? new Promise<Response>((resolve) => { fail = () => resolve(json(500, {})); }) : json(200, page(items))]]);
+      ++calls === 1 ? failed : json(200, page(items))]]);
 
     expect(await screen.findByText("Yükleniyor…")).toBeInTheDocument();
     fail();
@@ -145,9 +146,10 @@ it.each(["Ş12", "ı5"])("okul numarasında Türkçe harf (%s): yalnız ASCII ha
 
 it("ekleme yalnızca klavyeyle: gönderilirken düğme kilitli, kayıttan sonra kart açılır", async () => {
   let release: () => void = () => undefined;
+  const created = new Promise<Response>((resolve) => { release = () => resolve(json(200, { id: studentId })); });
   const api = await openPage([
     ["GET", /^\/api\/admin\/students$/, () => json(200, page([]))],
-    ["POST", /^\/api\/admin\/students$/, () => new Promise<Response>((resolve) => { release = () => resolve(json(200, { id: studentId })); })],
+    ["POST", /^\/api\/admin\/students$/, () => created],
     ["GET", /^\/api\/admin\/students\/[^/]+$/, () => json(200, studentDetail({ fullName: "Klavye Öğrenci" }))],
   ]);
   const user = userEvent.setup();
