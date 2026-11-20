@@ -80,8 +80,9 @@
    veritabanı okumalarını yapar (SMTP süresi istekte değil; ek kayıt yazma farkı küçüktür, IP sınırı yavaşlatır); aynı e-postaya 15 dk'da en
    fazla 3 bağlantı; IP başına sınır girişle aynı. Bağlantı 32 rastgele bayt, veritabanında yalnızca SHA-256 özeti,
    30 dk ve tek kullanımlık; yeni bağlantı ve her şifre değişikliği (kendisi, kurucu, bağlantı) açıktakileri geçersiz
-   kılar; bağlantıyla yenileme kişinin şifresini değiştiren diğer yollarla aynı sıraya girer (tek kullanım eşzamanlı
-   isteklerde de geçerli), bütün oturumları kapatır ve kilidi açar. SMTP şifresi yalnızca ortam ayarında
+   kılar; kişinin şifresini değiştiren üç yol (kendi değişikliği, kurucu sıfırlaması, bağlantı) aynı kişi sırasına
+   girer ve kararlarını sıra içinde taze veriyle verir (tek kullanım ve "kurtarma geri alınamaz" eşzamanlı isteklerde de
+   geçerli); bağlantıyla yenileme bütün oturumları kapatır ve kilidi açar. SMTP şifresi yalnızca ortam ayarında
    (`Email__Password`); şifre, bağlantı, e-posta adresi ve gövde loglanmaz (yalnızca kişi kimliği).
 
 ## KVKK
