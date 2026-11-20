@@ -60,6 +60,6 @@ public sealed class ConversationsController : ControllerBase
     public async Task<ActionResult<MessageSent>> Send(Guid id, SendMessageRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return this.Ok(await this.sender.Send(new SendMessageCommand(id, request.Body), cancellationToken).ConfigureAwait(false));
+        return this.Ok(await this.sender.Send(new SendMessageCommand(id, request.Body, request.AiDraftId), cancellationToken).ConfigureAwait(false));
     }
 }

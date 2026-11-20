@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
 using NArchitecture.Core.Localization.Abstraction;
 using NArchitecture.Core.Mediator;
+using OkulYonetim.Application.Features.Ai.Drafts;
 using OkulYonetim.Application.Features.Communication.Notifications;
 using OkulYonetim.Application.Features.Organization;
 using OkulYonetim.Application.Features.Students;
@@ -10,6 +11,7 @@ using OkulYonetim.Application.Features.Students.Queries.ListClassroomRoster;
 using OkulYonetim.Application.Features.Students.Queries.ListGuardianContacts;
 using OkulYonetim.Application.Features.Students.Queries.ListStudentBriefs;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Communication;
 
 namespace OkulYonetim.Application.Features.Communication.Messages;
@@ -25,13 +27,20 @@ namespace OkulYonetim.Application.Features.Communication.Messages;
 /// Öğretmenden veliye mesaj her zaman bildirim üretir. Bildirim kayıttan sonra bildirim kapısından çıkar. Mesaj metni audit'e
 /// ve loga yazılmaz; Information logunda yalnızca kimlikler.
 /// </para>
+/// <para>
+/// Spec 0012 (AI taslağıyla gönderim, BR-5): taslak kimliği verilirse taslak sırası (<c>ai-draft:&lt;taslak&gt;</c>) içinde Ai'ın
+/// onay kapısı çağrılır — taslak gönderenin, sesli not türünde ve bu konuşmada olmalı (yoksa 404), kullanılmışsa "Bu taslak
+/// zaten kullanıldı."; mesaj öğretmenin son metniyle yazılır ve taslak aynı kayıtta son metin + mesaj kimliğiyle onaylanır.
+/// Aynı taslakla eşzamanlı ikinci gönderim sırada bekler ve reddedilir.
+/// </para>
 /// </summary>
 public sealed class MessageHandlers :
     IRequestHandler<StartConversationCommand, ConversationRow>,
     IRequestHandler<ListConversationsQuery, IReadOnlyList<ConversationRow>>,
     IRequestHandler<GetConversationMessagesQuery, ConversationThread>,
     IRequestHandler<SendMessageCommand, MessageSent>,
-    IRequestHandler<ListMessageContactsQuery, MessageContacts>
+    IRequestHandler<ListMessageContactsQuery, MessageContacts>,
+    IRequestHandler<GetTeacherConversationContextQuery, TeacherConversationContext>
 {
     public const int PageSize = 50;
     public const int MaxListed = 100;
@@ -166,6 +175,30 @@ public sealed class MessageHandlers :
     public async Task<MessageSent> Handle(SendMessageCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.AiDraftId is not { } draftId)
+        {
+            return await this.SendAsync(request, null, cancellationToken).ConfigureAwait(false);
+        }
+
+        IExclusiveScope scope;
+        try
+        {
+            scope = await this.unitOfWork.BeginExclusiveAsync("ai-draft:" + draftId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        }
+        catch (ExclusiveLockTimeoutException)
+        {
+            throw new BusinessException(await this.localization.CommunicationTextAsync(CommunicationMessages.TooManyRequests).ConfigureAwait(false));
+        }
+
+        await using (scope.ConfigureAwait(false))
+        {
+            return await this.SendAsync(request, scope, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Gönderimin kendisi; AI taslağıyla gönderimde taslak sırası içinde çağrılır ve kayıt sonrası sıra commit edilir (bildirim commit'ten sonra).</summary>
+    private async Task<MessageSent> SendAsync(SendMessageCommand request, IExclusiveScope? draftScope, CancellationToken cancellationToken)
+    {
         CommunicationCaller caller = await this.guard.CallerAsync(cancellationToken).ConfigureAwait(false);
         Conversation conversation = await this.PartyConversationAsync(request.ConversationId, caller.UserId, cancellationToken).ConfigureAwait(false);
         if (!await this.guard.IsRelatedAsync(conversation.TeacherUserId, conversation.GuardianUserId, conversation.StudentId, cancellationToken).ConfigureAwait(false))
@@ -173,10 +206,19 @@ public sealed class MessageHandlers :
             throw new BusinessException(await this.localization.CommunicationTextAsync(CommunicationMessages.CannotSend).ConfigureAwait(false));
         }
 
+        if (request.AiDraftId is { } draftId)
+        {
+            await this.sender.Send(new GetPendingAiDraftQuery(draftId, AiDraftKind.VoiceMessage, conversation.Id), cancellationToken).ConfigureAwait(false);
+        }
+
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         ConversationMessage message = ConversationMessage.Write(conversation, caller.UserId, request.Body!, now);
         this.conversations.AddMessage(message);
         conversation.Record(caller.UserId, now);
+        if (request.AiDraftId is { } approvedDraftId)
+        {
+            await this.sender.Send(new MarkAiDraftApprovedCommand(approvedDraftId, message.Body, message.Id), cancellationToken).ConfigureAwait(false);
+        }
 
         bool fromGuardian = caller.UserId == conversation.GuardianUserId;
         Guid recipient = fromGuardian ? conversation.TeacherUserId : conversation.GuardianUserId;
@@ -188,12 +230,18 @@ public sealed class MessageHandlers :
         }
 
         await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        if (draftScope is not null)
+        {
+            await draftScope.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         this.logger.LogInformation(
-            "Mesaj gönderildi: konuşma {ConversationId}, mesaj {MessageId}, gönderen {UserId}, bildirim {Notify}",
+            "Mesaj gönderildi: konuşma {ConversationId}, mesaj {MessageId}, gönderen {UserId}, bildirim {Notify}, AI taslağı {AiDraftId}",
             conversation.Id,
             message.Id,
             caller.UserId,
-            !outsideWorkingHours);
+            !outsideWorkingHours,
+            request.AiDraftId);
         if (!outsideWorkingHours)
         {
             await this.notifier.DeliverAsync([new PushNotification(conversation.TenantId, recipient, PushNotificationKind.Message, message.Id)], [], cancellationToken).ConfigureAwait(false);
@@ -242,6 +290,17 @@ public sealed class MessageHandlers :
         }
 
         return new MessageContacts(asGuardian, asTeacher);
+    }
+
+    public async Task<TeacherConversationContext> Handle(GetTeacherConversationContextQuery request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        CommunicationCaller caller = await this.guard.CallerAsync(cancellationToken).ConfigureAwait(false);
+        Conversation conversation = await this.PartyConversationAsync(request.ConversationId, caller.UserId, cancellationToken).ConfigureAwait(false);
+        bool isTeacher = conversation.TeacherUserId == caller.UserId;
+        bool canSend = isTeacher
+            && await this.guard.IsRelatedAsync(conversation.TeacherUserId, conversation.GuardianUserId, conversation.StudentId, cancellationToken).ConfigureAwait(false);
+        return new TeacherConversationContext(conversation.Id, conversation.StudentId, isTeacher, canSend);
     }
 
     /// <summary>Kişinin taraf olduğu konuşma (izlenen); yoksa ya da taraf değilse 404.</summary>

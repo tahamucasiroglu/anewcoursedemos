@@ -16,4 +16,8 @@
     <!-- nArchitecture YAML metinleri: çıktı klasörüne Features/<Modül>/Resources/Locales/ olarak kopyalanır -->
     <None Update="Features\**\Resources\Locales\*.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- AI talimatları (spec 0012): derlemeye gömülü (WithCulture=false: ".tr." uydu derlemeye gitmesin); duman betiği (tools/ai/smoke.mjs) aynı dosyayı okur -->
+    <EmbeddedResource Include="Features\Ai\Prompts\voice-message.tr.txt" LogicalName="OkulYonetim.Ai.Prompts.voice-message.tr.txt" WithCulture="false" />
+  </ItemGroup>
 </Project>
