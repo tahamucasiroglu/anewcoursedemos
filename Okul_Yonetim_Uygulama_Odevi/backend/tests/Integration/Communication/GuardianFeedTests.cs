@@ -1,12 +1,14 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Time.Testing;
+using OkulYonetim.Domain.Communication;
 using OkulYonetim.Tests.Integration.Attendance;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
 using static OkulYonetim.Tests.Integration.Administration.AdminTestData;
 using static OkulYonetim.Tests.Integration.Attendance.AttendanceTestData;
 using static OkulYonetim.Tests.Integration.Communication.CommunicationTestData;
+using static OkulYonetim.Tests.Integration.Identity.IdentityTestData;
 using static OkulYonetim.Tests.Integration.Students.StudentsTestData;
 
 namespace OkulYonetim.Tests.Integration.Communication;
@@ -14,7 +16,8 @@ namespace OkulYonetim.Tests.Integration.Communication;
 /// <summary>
 /// Spec 0011 AC-3: veli seçili okulda yalnızca alıcısı olduğu duyuruları yeniden eskiye, sayfa başına 20 görür (farklı
 /// şubelerdeki çocuklarınınkiler dahil); başka velinin çocuğuna özel ve başka okulun duyurusu listede yok, doğrudan
-/// istendiğinde 404; okunmamışlar işaretli; boşken liste boş; sayfa 1–500 dışı 400 (review L-3). Sınıf/öğrenci kapsamında ilgili çocuğun adı satırdadır.
+/// istendiğinde 404; okunmamışlar işaretli; boşken liste boş; sayfa 1–500 dışı 400 (review L-3); duyuru ve okul bildirimi
+/// karışık akışta 2. ve 3. sayfa birebir (review L-4). Sınıf/öğrenci kapsamında ilgili çocuğun adı satırdadır.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class GuardianFeedTests
@@ -59,6 +62,42 @@ public sealed class GuardianFeedTests
         newest.GetProperty("authorName").GetString().ShouldNotBeNullOrEmpty();
         newest.GetProperty("childNames").EnumerateArray().Select(n => n.GetString()).ShouldBe(["Ali Yılmaz"]);
         first.GetProperty("items")[1].GetProperty("isRead").GetBoolean().ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Feed_20AnnouncementsAnd25SchoolNotices_Pages2And3Exact()
+    {
+        FakeTimeProvider time = new(Morning);
+        using OkulApiFactory factory = Factory(this.database, time: time);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        List<(Guid Id, DateTimeOffset At)> expected = [];
+        for (int i = 1; i <= 20; i++)
+        {
+            time.Advance(TimeSpan.FromSeconds(10));
+            expected.Add((await PublishedAsync(client, w.Class.Teacher, Plain("Classroom", w.Class.ClassroomId, title: $"Duyuru {i}")), time.GetUtcNow()));
+        }
+
+        // Okul bildirimleri duyuruların arasına düşen zamanlarla (farklı günler — veli + öğrenci + gün tekil).
+        GuardianNotice[] notices = [.. Enumerable.Range(1, 25).Select(i => GuardianNotice.Absent(
+            w.Class.School.TenantId, w.AliMother.UserId, w.Ali, new DateOnly(2026, 11, 19).AddDays(-i), Morning.AddSeconds((i * 8) + 3)))];
+        await WithContextAsync(factory, c =>
+        {
+            c.GuardianNotices.AddRange(notices);
+            return Task.CompletedTask;
+        });
+        expected.AddRange(notices.Select(n => (n.Id, n.UpdatedAt)));
+        Guid[] order = [.. expected.OrderByDescending(e => e.At).ThenByDescending(e => e.Id).Select(e => e.Id)];
+
+        JsonElement[] pages = [.. await Task.WhenAll(Enumerable.Range(1, 3).Select(async p => (await FeedAsync(client, w.AliMother.Token, p)).Body))];
+        Guid[] Ids(JsonElement page) => [.. page.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("id").GetGuid())];
+
+        Ids(pages[0]).ShouldBe(order[..20]);
+        Ids(pages[1]).ShouldBe(order[20..40]);
+        Ids(pages[2]).ShouldBe(order[40..]);
+        pages[1].GetProperty("items").EnumerateArray().Select(i => i.GetProperty("kind").GetString()).Distinct().ShouldBe(["Announcement", "SchoolNotice"], ignoreOrder: true);
+        pages.Select(p => p.GetProperty("hasMore").GetBoolean()).ShouldBe([true, true, false]);
+        pages[2].GetProperty("page").GetInt32().ShouldBe(3);
     }
 
     [Fact]
