@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { calendarKindKey, callApi, dateRangeText, type AuthSession, type SchoolCalendarView } from "@okul/api-client";
 import { t, type TextKey } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
@@ -15,6 +15,7 @@ interface Props {
  * Okul takvimi (spec 0008, mobil, her rol, salt okunur): güncel dönemin adı ve tarihleri (yaklaşan dönemse "Yaklaşan
  * dönem"), kayıtlar (tür metni, başlık, tek gün ya da tarih aralığı) tarih sırasıyla. Dönem yoksa "Henüz dönem
  * tanımlanmadı.", kayıt yoksa "Bu dönemde takvim kaydı yok."; yükleniyor ve hata + tekrar dene; "Geri" Hoş geldin'e döner.
+ * Kayıtlar kayan listede (ScrollView), "Geri" altta sabit (0010 review F-2).
  */
 export function CalendarScreen({ client, onBack }: Props) {
   const styles = useAuthStyles();
@@ -41,7 +42,7 @@ export function CalendarScreen({ client, onBack }: Props) {
 
   const term = state.kind === "ready" ? state.calendar.term : null;
   return (
-    <View style={styles.card} testID="calendar">
+    <View style={[styles.card, styles.scrollCard]} testID="calendar">
       <Text style={styles.title} accessibilityRole="header">
         {t("calendar.title")}
       </Text>
@@ -72,17 +73,19 @@ export function CalendarScreen({ client, onBack }: Props) {
           {state.calendar.entries.length === 0 ? (
             <Text style={styles.text}>{t("calendar.empty")}</Text>
           ) : (
-            state.calendar.entries.map((entry) => {
-              const kind = t(`calendar.kind.${calendarKindKey(entry.kind)}` as TextKey);
-              const when = dateRangeText(entry.startDate, entry.endDate);
-              return (
-                <View key={entry.id} accessible accessibilityLabel={`${kind}, ${entry.title}, ${when}`} testID="calendar-entry">
-                  <Text style={styles.muted}>{kind}</Text>
-                  <Text style={styles.text}>{entry.title}</Text>
-                  <Text style={styles.notice}>{when}</Text>
-                </View>
-              );
-            })
+            <ScrollView testID="calendar-list" style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
+              {state.calendar.entries.map((entry) => {
+                const kind = t(`calendar.kind.${calendarKindKey(entry.kind)}` as TextKey);
+                const when = dateRangeText(entry.startDate, entry.endDate);
+                return (
+                  <View key={entry.id} accessible accessibilityLabel={`${kind}, ${entry.title}, ${when}`} testID="calendar-entry">
+                    <Text style={styles.muted}>{kind}</Text>
+                    <Text style={styles.text}>{entry.title}</Text>
+                    <Text style={styles.notice}>{when}</Text>
+                  </View>
+                );
+              })}
+            </ScrollView>
           )}
         </>
       )}

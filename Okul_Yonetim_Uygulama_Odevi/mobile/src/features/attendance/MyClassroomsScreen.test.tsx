@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -88,6 +88,9 @@ describe.each(["light", "dark"] as const)("Sınıflarım — %s tema", (mode) =>
       "5-A, Merkez, Bugün alındı, yoklamayı aç",
       "6-A, Avcılar, Bugün alınmadı, yoklamayı aç",
     ]);
+    const list = screen.getByTestId("classrooms-list");
+    expect(list.type).toBe("RCTScrollView"); // 0010 review F-2: liste kayar
+    expect(within(list).getAllByTestId("classroom-row")).toHaveLength(2);
     await fireEvent.press(screen.getByRole("button", { name: "6-A, Avcılar, Bugün alınmadı, yoklamayı aç" }));
     expect(await screen.findByRole("header", { name: "6-A" })).toBeTruthy();
     expect(screen.getByRole("radio", { name: "Ayşe Yılmaz: Var" })).toBeTruthy();

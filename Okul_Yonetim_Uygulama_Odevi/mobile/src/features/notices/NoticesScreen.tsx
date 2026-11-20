@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { callApi, formatDay, noticeBadges, type AuthSession, type NoticeView } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
@@ -15,7 +15,7 @@ interface Props {
  * Velinin bildirimleri (spec 0010 gereksinim 8, yalnızca veli): yalnızca kendi çocuklarınınkiler, en yenisi üstte, en fazla
  * 50. Okunmamışlar "Yeni" etiketiyle ve kalın yazıyla belirgin; düzeltilen yoklama "Düzeltildi" etiketiyle. Liste gelince
  * hepsi okundu yapılır (Hoş geldin'deki sayı sıfırlanır). Durumlar: yükleniyor, boş ("Henüz bildirim yok"), dolu, hata +
- * tekrar dene.
+ * tekrar dene. Liste kayar (FlatList), "Geri" altta sabit (0010 review F-2).
  */
 export function NoticesScreen({ client, onBack }: Props) {
   const styles = useAuthStyles();
@@ -44,7 +44,7 @@ export function NoticesScreen({ client, onBack }: Props) {
   }, [client, reload]);
 
   return (
-    <View style={styles.card} testID="notices">
+    <View style={[styles.card, styles.scrollCard]} testID="notices">
       <Text style={styles.title} accessibilityRole="header">
         {t("notices.title")}
       </Text>
@@ -65,17 +65,25 @@ export function NoticesScreen({ client, onBack }: Props) {
         </>
       )}
       {state.kind === "ready" && state.notices.length === 0 && <Text style={styles.text}>{t("notices.empty")}</Text>}
-      {state.kind === "ready" &&
-        state.notices.map((notice) => {
-          const { isNew, corrected } = noticeBadges(notice);
-          const badges = [isNew ? t("notices.new") : null, corrected ? t("notices.corrected") : null].filter(Boolean).join(" · ");
-          return (
-            <View key={notice.id} style={styles.secondary} testID="notice-row" accessible accessibilityLabel={[badges, formatDay(notice.day), notice.text].filter(Boolean).join(", ")}>
-              <Text style={styles.muted}>{badges === "" ? formatDay(notice.day) : `${badges} · ${formatDay(notice.day)}`}</Text>
-              <Text style={isNew ? styles.label : styles.text}>{notice.text}</Text>
-            </View>
-          );
-        })}
+      {state.kind === "ready" && state.notices.length > 0 && (
+        <FlatList
+          testID="notices-list"
+          style={styles.scrollList}
+          contentContainerStyle={styles.scrollContent}
+          data={state.notices}
+          keyExtractor={(notice) => notice.id}
+          renderItem={({ item: notice }) => {
+            const { isNew, corrected } = noticeBadges(notice);
+            const badges = [isNew ? t("notices.new") : null, corrected ? t("notices.corrected") : null].filter(Boolean).join(" · ");
+            return (
+              <View style={styles.secondary} testID="notice-row" accessible accessibilityLabel={[badges, formatDay(notice.day), notice.text].filter(Boolean).join(", ")}>
+                <Text style={styles.muted}>{badges === "" ? formatDay(notice.day) : `${badges} · ${formatDay(notice.day)}`}</Text>
+                <Text style={isNew ? styles.label : styles.text}>{notice.text}</Text>
+              </View>
+            );
+          }}
+        />
+      )}
       <Pressable style={styles.secondary} onPress={onBack} accessibilityRole="button">
         <Text style={styles.secondaryText}>{t("notices.back")}</Text>
       </Pressable>

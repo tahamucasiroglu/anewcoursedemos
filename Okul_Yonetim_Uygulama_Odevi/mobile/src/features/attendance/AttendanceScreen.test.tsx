@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -111,6 +111,12 @@ describe.each(["light", "dark"] as const)("Yoklama — %s tema", (mode) => {
     await tap(screen.getByRole("button", { name: "Yoklama al" }));
     expect(await screen.findByRole("header", { name: "5-A" })).toBeTruthy();
     expect(screen.getAllByTestId("attendance-row")).toHaveLength(40);
+    // 0010 review F-2: satırlar kayan listede (FlatList → ScrollView), Kaydet listenin dışında, altta sabit. Jest yerleşimi
+    // sınamaz; gerçek kaydırma cihaz/emülatör görüntüsüyle doğrulanır (conventions T16).
+    const list = screen.getByTestId("attendance-list");
+    expect(list.type).toBe("RCTScrollView");
+    expect(within(list).getAllByTestId("attendance-row")).toHaveLength(40);
+    expect(within(list).queryByRole("button", { name: "Kaydet" })).toBeNull();
     expect(screen.getByRole("button", { name: "Kaydet" })).toBeTruthy();
     await tap(screen.getByRole("radio", { name: "Öğrenci 03: Yok" }));
     await tap(screen.getByRole("radio", { name: "Öğrenci 17: Yok" }));

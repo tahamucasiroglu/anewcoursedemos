@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -77,6 +77,10 @@ describe.each(["light", "dark"] as const)("Mobil okul takvimi — %s tema", (mod
     expect(await screen.findByRole("header", { name: "2026-2027 Güz" })).toBeTruthy();
     expect(screen.getByText("01.09.2026 – 22.01.2027")).toBeTruthy();
     const rows = screen.getAllByTestId("calendar-entry");
+    const list = screen.getByTestId("calendar-list");
+    expect(list.type).toBe("RCTScrollView"); // 0010 review F-2: kayıtlar kayar, "Geri" dışında
+    expect(within(list).getAllByTestId("calendar-entry")).toHaveLength(rows.length);
+    expect(within(list).queryByRole("button", { name: "Geri" })).toBeNull();
     expect(rows.map((r) => r.props.accessibilityLabel)).toEqual(["Tatil, Cumhuriyet Bayramı, 29.10.2026", "Sınav, Ara sınav haftası, 09.11.2026 – 13.11.2026"]);
     expect(screen.getByText("Tatil")).toBeTruthy();
 

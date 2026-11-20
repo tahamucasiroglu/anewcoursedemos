@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { countMarks, fillText, saveButtonText, type AuthSession } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
@@ -16,7 +16,9 @@ interface Props {
  * Bir sınıfın bugünkü yoklaması (spec 0010, öğretmen): öğrenciler Türkçe ad sırasıyla, herkes "Var" (ya da kayıtlı
  * durumlar ve "Kaydedildi, saat SS:DD"); gelmeyenlere "Yok", geç kalana "Geç" ve tek "Kaydet (3 yok, 1 geç)" — onay
  * iletişimi yok. Sonuç ve hatalar duyurulur. Durumlar: yükleniyor, erişim yok, okul günü değil, öğrenci yok (kaydet kapalı),
- * kaydediliyor (düğme kilitli), kaydedildi, hata (işaretler korunur).
+ * kaydediliyor (düğme kilitli), kaydedildi, hata (işaretler korunur). Öğrenciler kayan listede (FlatList); sonuç, hata ve
+ * Kaydet altta sabit (0010 review F-2). Liste bir sınıf kadardır; hepsi ilk çizimde hazır olur, ekran okuyucu ve dokunuş
+ * sayısı (AC-5) kaydırmaya bağlı kalmaz.
  */
 export function AttendanceScreen({ client, classroomId, backLabel, onBack }: Props) {
   const styles = useAuthStyles();
@@ -62,7 +64,7 @@ export function AttendanceScreen({ client, classroomId, backLabel, onBack }: Pro
         separator: t("attendance.saveSeparator"),
       });
   return (
-    <View style={styles.card} testID="attendance">
+    <View style={[styles.card, styles.scrollCard]} testID="attendance">
       <Text style={styles.title} accessibilityRole="header">
         {sheet.classroomName}
       </Text>
@@ -75,15 +77,25 @@ export function AttendanceScreen({ client, classroomId, backLabel, onBack }: Pro
             {sheet.isSaved && sheet.savedTime ? fillText(t("attendance.savedAt"), { time: sheet.savedTime }) : t("attendance.notSaved")}
           </Text>
           {empty && <Text style={styles.text}>{t("attendance.noStudents")}</Text>}
-          {sheet.students.map((student) => (
-            <AttendanceRow
-              key={student.studentId}
-              fullName={student.fullName}
-              status={marks[student.studentId] ?? "Present"}
-              disabled={saving}
-              onChange={(status) => mark(student.studentId, status)}
+          {!empty && (
+            <FlatList
+              testID="attendance-list"
+              style={styles.scrollList}
+              contentContainerStyle={styles.scrollContent}
+              data={sheet.students}
+              extraData={[marks, saving]}
+              keyExtractor={(student) => student.studentId}
+              initialNumToRender={sheet.students.length}
+              renderItem={({ item: student }) => (
+                <AttendanceRow
+                  fullName={student.fullName}
+                  status={marks[student.studentId] ?? "Present"}
+                  disabled={saving}
+                  onChange={(status) => mark(student.studentId, status)}
+                />
+              )}
             />
-          ))}
+          )}
           {result && <Text style={styles.text} accessibilityRole="alert" accessibilityLiveRegion="polite">{result}</Text>}
           {saveError && <Text style={styles.error} accessibilityRole="alert">{saveError}</Text>}
           <Pressable

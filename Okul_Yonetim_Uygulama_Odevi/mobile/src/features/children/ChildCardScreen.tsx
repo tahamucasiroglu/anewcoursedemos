@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { callApi, formatDay, type AuthSession, type ChildCard } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
@@ -16,7 +16,8 @@ interface Props {
  * Velinin gördüğü salt okunur öğrenci kartı (spec 0009 C-7): ad-soyad, doğum tarihi, okul numarası, şube, sınıf ("Sınıf
  * atanmamış"), Sağlık bölümü (sağlık notu ve alerji ayrı başlıklarla; anahtar yoksa "Sağlık bilgisi şu anda
  * gösterilemiyor.") ve teslim alabilecek kişiler ("Henüz kimse eklenmedi"). Bağ kaldırıldıysa ya da öğrenci ayrıldıysa
- * (404) "Bu öğrenci artık görüntülenemiyor." ve listeye dönüş. Diğer veliler ve kardeş kartları burada yoktur.
+ * (404) "Bu öğrenci artık görüntülenemiyor." ve listeye dönüş. Diğer veliler ve kardeş kartları burada yoktur. Kart içeriği
+ * kayar (ScrollView), listeye dönüş altta sabit (0010 review F-2).
  */
 export function ChildCardScreen({ client, childId, onBack }: Props) {
   const styles = useAuthStyles();
@@ -51,7 +52,7 @@ export function ChildCardScreen({ client, childId, onBack }: Props) {
   );
 
   return (
-    <View style={styles.card} testID="child-card">
+    <View style={[styles.card, styles.scrollCard]} testID="child-card">
       {state.kind === "loading" && <Text style={styles.notice}>{t("children.loading")}</Text>}
       {state.kind === "gone" && <Text style={styles.error} accessibilityRole="alert">{t("children.gone")}</Text>}
       {state.kind === "error" && (
@@ -70,7 +71,7 @@ export function ChildCardScreen({ client, childId, onBack }: Props) {
         </>
       )}
       {state.kind === "ready" && (
-        <>
+        <ScrollView testID="child-card-scroll" style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
           <Text style={styles.title} accessibilityRole="header">
             {state.child.fullName}
           </Text>
@@ -102,7 +103,7 @@ export function ChildCardScreen({ client, childId, onBack }: Props) {
               </View>
             ))
           )}
-        </>
+        </ScrollView>
       )}
       <Pressable style={styles.secondary} onPress={onBack} accessibilityRole="button">
         <Text style={styles.secondaryText}>{t("children.backToList")}</Text>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import type { AuthSession } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
@@ -42,7 +42,7 @@ export function MyClassroomsScreen({ client, onBack }: Props) {
   }
 
   return (
-    <View style={styles.card} testID="my-classrooms">
+    <View style={[styles.card, styles.scrollCard]} testID="my-classrooms">
       <Text style={styles.title} accessibilityRole="header">
         {t("attendance.title")}
       </Text>
@@ -56,23 +56,26 @@ export function MyClassroomsScreen({ client, onBack }: Props) {
         </>
       )}
       {state.kind === "ready" && state.rows.length === 0 && <Text style={styles.text}>{t("attendance.noClassrooms")}</Text>}
-      {state.kind === "ready" &&
-        state.rows.map((row) => {
-          const status = row.takenToday ? t("attendance.taken") : t("attendance.notTaken");
-          return (
-            <Pressable
-              key={row.id}
-              style={styles.secondary}
-              accessibilityRole="button"
-              accessibilityLabel={`${row.name}, ${row.branchName}, ${status}, ${t("attendance.open")}`}
-              testID="classroom-row"
-              onPress={() => setSelected(row.id)}
-            >
-              <Text style={styles.label}>{row.name}</Text>
-              <Text style={styles.notice}>{`${row.branchName} · ${status}`}</Text>
-            </Pressable>
-          );
-        })}
+      {state.kind === "ready" && state.rows.length > 0 && (
+        <ScrollView testID="classrooms-list" style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
+          {state.rows.map((row) => {
+            const status = row.takenToday ? t("attendance.taken") : t("attendance.notTaken");
+            return (
+              <Pressable
+                key={row.id}
+                style={styles.secondary}
+                accessibilityRole="button"
+                accessibilityLabel={`${row.name}, ${row.branchName}, ${status}, ${t("attendance.open")}`}
+                testID="classroom-row"
+                onPress={() => setSelected(row.id)}
+              >
+                <Text style={styles.label}>{row.name}</Text>
+                <Text style={styles.notice}>{`${row.branchName} · ${status}`}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
       <Pressable style={styles.secondary} onPress={onBack} accessibilityRole="button">
         <Text style={styles.secondaryText}>{t("attendance.back")}</Text>
       </Pressable>

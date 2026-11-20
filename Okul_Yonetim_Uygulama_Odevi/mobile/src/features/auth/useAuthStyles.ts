@@ -2,13 +2,20 @@ import { useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { useTheme } from "../../theme/useTheme";
 
-/** Giriş / okul seç / hoş geldin ekranlarının ortak stilleri; renkler yalnızca ortak temadan (spec 0002). */
+/**
+ * Giriş / okul seç / hoş geldin ekranlarının ortak stilleri; renkler yalnızca ortak temadan (spec 0002). Uzunluğu sınırsız
+ * liste gösteren ekranın kartı `scrollCard` ile ekrana sığacak kadar küçülür, listesi `scrollList` (FlatList/ScrollView)
+ * içinde kayar; başlık ve alttaki düğmeler sabit kalır (0010 review F-2, conventions T16).
+ */
 export function useAuthStyles() {
   const { colors } = useTheme();
   return useMemo(
     () =>
       StyleSheet.create({
         card: { marginTop: 16, padding: 16, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, gap: 10 },
+        scrollCard: { flexShrink: 1, minHeight: 0 },
+        scrollList: { flexGrow: 0, flexShrink: 1 },
+        scrollContent: { gap: 10 },
         title: { fontSize: 20, fontWeight: "600", color: colors.text },
         label: { fontSize: 15, fontWeight: "600", color: colors.text },
         input: { borderWidth: 1, borderColor: colors.border, borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12, fontSize: 16, color: colors.text, backgroundColor: colors.background },

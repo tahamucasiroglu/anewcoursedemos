@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -86,6 +86,10 @@ describe.each(["light", "dark"] as const)("Bildirimler — %s tema", (mode) => {
 
     expect(await screen.findByRole("header", { name: "Bildirimler" })).toBeTruthy();
     const rows = await screen.findAllByTestId("notice-row");
+    const list = screen.getByTestId("notices-list");
+    expect(list.type).toBe("RCTScrollView"); // 0010 review F-2: liste kayar, "Geri" dışında
+    expect(within(list).getAllByTestId("notice-row")).toHaveLength(rows.length);
+    expect(within(list).queryByRole("button", { name: "Hoş geldin'e dön" })).toBeNull();
     expect(rows.map((r) => r.props.accessibilityLabel)).toEqual([
       `Yeni, 20.11.2026, ${absent.text}`,
       `Düzeltildi, 20.11.2026, ${corrected.text}`,

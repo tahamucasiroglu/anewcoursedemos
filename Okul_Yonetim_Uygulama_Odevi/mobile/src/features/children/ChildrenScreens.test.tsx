@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -100,6 +100,9 @@ describe.each(["light", "dark"] as const)("Çocuklarım — %s tema", (mode) => 
 
     expect(await screen.findByRole("header", { name: "Çocuklarım" })).toBeTruthy();
     const rows = await screen.findAllByTestId("child-row");
+    const list = screen.getByTestId("children-list");
+    expect(list.type).toBe("RCTScrollView"); // 0010 review F-2: liste kayar, "Geri" dışında
+    expect(within(list).getAllByTestId("child-row")).toHaveLength(rows.length);
     expect(rows.map((r) => r.props.accessibilityLabel)).toEqual([
       "Zeynep Ak, Merkez, 3-A, kartını aç",
       "Can Ak, Avcılar, Sınıf atanmamış, kartını aç",
@@ -126,6 +129,10 @@ describe.each(["light", "dark"] as const)("Çocuklarım — %s tema", (mode) => 
     await fireEvent.press(await screen.findByRole("button", { name: "Zeynep Ak, Merkez, 3-A, kartını aç" }));
 
     expect(await screen.findByRole("header", { name: "Zeynep Ak" })).toBeTruthy();
+    const scroll = screen.getByTestId("child-card-scroll");
+    expect(scroll.type).toBe("RCTScrollView"); // 0010 review F-2: kart içeriği kayar, "Listeye dön" dışında
+    expect(within(scroll).getByLabelText("Doğum tarihi: 04.05.2018")).toBeTruthy();
+    expect(within(scroll).getAllByTestId("pickup-person").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Doğum tarihi: 04.05.2018")).toBeTruthy();
     expect(screen.getByLabelText("Sınıf: 3-A")).toBeTruthy();
     expect(screen.getByRole("header", { name: "Sağlık notu" })).toBeTruthy();
