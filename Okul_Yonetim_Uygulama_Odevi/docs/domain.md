@@ -30,6 +30,8 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Kullanıcı (`User`) | Bir giriş hesabı | Bir kullanıcının birden çok rolü olabilir |
 | Rol ataması (`RoleAssignment`) | Kullanıcı + rol + kapsam (kurum veya şube) | Kurucu kurum düzeyinde; diğer roller şube düzeyinde |
 | Okul üyeliği (`TenantMembership`) | Kişinin bir okuldaki durumu: etkin / pasif | Pasifleştirme okul başınadır; roller korunur, yeniden etkinleşince geri gelir. Kişi silinmez |
+| Yenileme bağlantısı (`PasswordResetToken`) | "Şifremi unuttum" e-postasındaki tek kullanımlık, 30 dakikalık bağlantı | Yalnızca özeti saklanır; şifre değişince geçersizleşir |
+| Hesabım | Kişinin kendi profil ve şifre ekranı (spec 0006) | Hesap kişiye aittir, bütün okullarında geçerli; e-posta değiştirilemez |
 | Geçici şifre | Kurucunun kişi eklerken ya da sıfırlarken aldığı, bir kez gösterilen şifre | Kurucu kişiye kendisi iletir (e-posta gönderimi SMTP bilgisi girilince, 0006) |
 | Veli (`Guardian`) | Öğrenciyle velilik bağı olan kişi | Tek hesapla tüm çocuklarını görür |
 | Öğrenci kartı (`Student`) | Öğrencinin ana kaydı | Sağlık notu, alerji, teslim alabilecek kişiler dahil |

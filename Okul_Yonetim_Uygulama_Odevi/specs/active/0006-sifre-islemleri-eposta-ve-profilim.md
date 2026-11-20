@@ -1,6 +1,6 @@
 # Spec 0006 — Şifre işlemleri, e-posta ve Profilim
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0006-plan.md`
 - Self-critique: done

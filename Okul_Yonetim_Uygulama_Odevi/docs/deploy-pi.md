@@ -50,3 +50,23 @@ Korunur: nginx, PostgreSQL ve Pi'deki diğer uygulamalar, veritabanları, portla
 - `bash tools/pi/status.sh` — servis, portlar, sürümler, veritabanı yetkileri, son loglar.
 - Pi'de: `sudo journalctl -u okul-api -n 50`, `sudo tail -n 50 /var/log/okul/okul-api-$(date +%Y%m%d).log`.
 - "Pi'ye ulaşılamıyor": Pi açık ve aynı ağda mı, `ssh tmpi` çalışıyor mu?
+
+## E-posta (SMTP) — spec 0006
+
+SMTP bilgileri girilmedikçe uygulama e-posta göndermez ("Şifremi unuttum" yine aynı mesajı verir; log'a "SMTP ayarlı
+değil" düşer). Bilgiler hazır olunca Pi'de `/etc/okul/okul-api.env` dosyasına (root, 600) şu satırlar eklenir ve
+servis yeniden başlatılır (`sudo systemctl restart okul-api`; Pi'nin kendisi yeniden başlatılmaz):
+
+```
+Email__Host=smtp.<saglayici>
+Email__Port=587
+Email__UseStartTls=true
+Email__UserName=<kullanici>
+Email__Password=<yalnızca bu dosyada>
+Email__FromAddress=okul@<alan-adi>
+Email__FromName=Okul Yönetim
+Email__WebBaseUrl=http://192.168.1.102:8080
+```
+
+Şifre repoya, sohbete ya da loglara yazılmaz. Yalnızca 587/STARTTLS desteklenir (465 gerekirse MailKit'e geçiş — plan
+0006 Risks 1).

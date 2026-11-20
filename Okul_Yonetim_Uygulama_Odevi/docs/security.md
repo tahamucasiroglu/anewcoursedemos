@@ -65,6 +65,13 @@
    yanıtı ve kilidi alır, hesap varlığı sızdırılmaz). Giriş/çıkış/kilit/okul seçimi audit'e yazılır.
 6. **Audit log:** öğrenci kartı görüntüleme/değiştirme, sağlık verisi okuma, tahsilat, rol ve rıza değişiklikleri — kim, ne, hangi kayıt, ne zaman, IP. Yalnızca eklenir; değiştirilemez/silinemez.
 7. Kiracı/şube dışı kayıt → 404 (varlık bilgisi sızdırılmaz).
+9. **Hesabım ve şifre işlemleri (spec 0006):** şifre değiştirmede mevcut şifre zorunlu; yanlış mevcut şifre girişle
+   aynı kilit sayacına eklenir (3 → 15 dk); başarıda kişinin diğer oturumları kapanır. "Şifremi unuttum" her durumda
+   aynı yanıtı verir (hesap varlığı sızmaz), e-posta arka planda gider (süre farkı yok); aynı e-postaya 15 dk'da en
+   fazla 3 bağlantı; IP başına sınır girişle aynı. Bağlantı 32 rastgele bayt, veritabanında yalnızca SHA-256 özeti,
+   30 dk ve tek kullanımlık; yeni bağlantı ve her şifre değişikliği (kendisi, kurucu, bağlantı) açıktakileri geçersiz
+   kılar; bağlantıyla yenileme bütün oturumları kapatır ve kilidi açar. SMTP şifresi yalnızca ortam ayarında
+   (`Email__Password`); şifre, bağlantı, e-posta adresi ve gövde loglanmaz (yalnızca kişi kimliği).
 8. **Yönetim (spec 0005):** yalnızca seçili okulun kurucusu/yöneticisi (`TenantFounder`, değilse 403). Geçici şifre
    12 karakter (harf+rakam, 0/O/1/l/I yok), kriptografik rastgele; yalnızca ekleme/sıfırlama yanıtında bir kez döner,
    log/audit'te yok, veritabanında yalnızca özet. Kurucu şifre sıfırlaması kişinin bütün oturumlarını kapatır; kişi

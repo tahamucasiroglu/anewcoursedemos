@@ -47,6 +47,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, haftalık gelişim özeti) | AiDraft |
 | Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA, token | User, RoleAssignment, TenantMembership |
 | Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
+| Account | Kişinin kendi hesabı (spec 0006): profil (ad, telefon), şifremi değiştir, şifremi unuttum (yenileme bağlantısı + e-posta). Okul seçimi gerektirmez; yalnızca oturumdaki kişi | PasswordResetToken |
 | Compliance | KVKK rıza kayıtları, audit log, saklama süresi ve anonimleştirme | ConsentRecord, AuditEntry |
 
 "AI ayrı bir modül değil, her modüle gömülü yetenek" (kapsam dokümanı): `Ai` bir ürün modülü değil, diğer
@@ -68,6 +69,10 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   veritabanından); rol/üyelik/şube değiştiren her komut okul başına veritabanı kilidiyle sıraya girer. Web'de yönetim
   sayfası bağımlılıksız hash yönlendirmesiyle `#/yonetim` adresindedir; mobilde yönetim yok. Kişi araması ve şube adı
   karşılaştırması Türkçe harf kuralıyla uygulamada yapılır (okul başına kayıt sayısı küçük).
+- E-posta (spec 0006): uygulama e-postayı `IEmailOutbox` kuyruğuna bırakıp hemen döner; arka plan gönderici
+  `IEmailSender` ile yollar (SMTP ayarlıysa sunucuya, yalnızca geliştirmede klasöre, değilse "SMTP ayarlı değil" logu).
+  Kuyruk bellektedir; uygulama yeniden başlarsa bekleyen e-posta kaybolur (kişi yeniden ister). Bağlantı adresleri
+  `IAppLinks` (web adresi ayardan); yenileme anahtarı adresin `#` sonrasında, sunucuya ve loglara gitmez.
 - Renkler (web, mobil): yalnızca `packages/theme` (`tokens.json`). Mobil doğrudan kullanır; web aynı değerleri
   `web/src/theme/theme.css` değişkenlerinde tutar (test birebir eşitliği doğrular). Tema seçimi yalnızca cihazda saklanır.
 - Port çağrıları zaman aşımı + yeniden deneme ile yapılır; başarısızlık "beklemede" durumuna düşer, isteği çökertmez.
