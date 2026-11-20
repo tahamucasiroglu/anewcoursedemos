@@ -34,6 +34,7 @@ public sealed class MemberAdminHandlers :
     private readonly IRoleAssignmentRepository roleAssignments;
     private readonly ITenantMembershipRepository memberships;
     private readonly IUserSessionRepository sessions;
+    private readonly IPasswordResetTokenRepository resetTokens;
     private readonly IMemberDirectory directory;
     private readonly IPasswordHasher passwordHasher;
     private readonly ITemporaryPasswordGenerator passwords;
@@ -50,6 +51,7 @@ public sealed class MemberAdminHandlers :
         IRoleAssignmentRepository roleAssignments,
         ITenantMembershipRepository memberships,
         IUserSessionRepository sessions,
+        IPasswordResetTokenRepository resetTokens,
         IMemberDirectory directory,
         IPasswordHasher passwordHasher,
         ITemporaryPasswordGenerator passwords,
@@ -65,6 +67,7 @@ public sealed class MemberAdminHandlers :
         this.roleAssignments = roleAssignments;
         this.memberships = memberships;
         this.sessions = sessions;
+        this.resetTokens = resetTokens;
         this.directory = directory;
         this.passwordHasher = passwordHasher;
         this.passwords = passwords;
@@ -234,6 +237,7 @@ public sealed class MemberAdminHandlers :
             string temporaryPassword = this.passwords.Generate();
             user.ChangePasswordHash(this.passwordHasher.Hash(temporaryPassword));
             await this.sessions.RevokeAllForUserAsync(user.Id, now, cancellationToken).ConfigureAwait(false);
+            await this.resetTokens.RevokeAllForUserAsync(user.Id, now, cancellationToken).ConfigureAwait(false);
             this.audit.Record(AuditAction.PasswordReset, tenantId, actorId, nameof(User), user.Id);
             await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await scope.CommitAsync(cancellationToken).ConfigureAwait(false);

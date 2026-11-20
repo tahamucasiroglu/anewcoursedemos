@@ -22,4 +22,10 @@ public enum AuditAction
     MemberActivated = 17,
     PasswordReset = 18,
     MemberAdded = 19,
+    ProfileUpdated = 20,
+    PasswordChanged = 21,
+    PasswordChangeFailed = 22,
+    PasswordResetRequested = 23,
+    PasswordResetCompleted = 24,
+    PasswordResetLinkInvalid = 25,
 }

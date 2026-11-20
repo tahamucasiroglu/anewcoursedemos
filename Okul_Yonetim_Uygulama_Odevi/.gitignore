@@ -23,6 +23,9 @@ extensions/vscode/*.vsix
 # Uygulama logları (ADR-0003) — repoya girmez
 logs/
 
+# Geliştirme e-postaları (spec 0006) — yenileme bağlantısı içerir, repoya girmez
+mail-outbox/
+
 # Derleme / paket çıktıları
 bin/
 obj/

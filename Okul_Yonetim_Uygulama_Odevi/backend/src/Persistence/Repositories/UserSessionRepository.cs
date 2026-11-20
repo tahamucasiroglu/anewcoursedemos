@@ -34,5 +34,15 @@ public sealed class UserSessionRepository : IUserSessionRepository
         }
     }
 
+    public async Task RevokeAllForUserExceptAsync(Guid userId, Guid exceptSessionId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        List<UserSession> open = await this.context.UserSessions.Where(s => s.UserId == userId && s.Id != exceptSessionId && s.RevokedAt == null)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (UserSession session in open)
+        {
+            session.Revoke(now);
+        }
+    }
+
     public void Add(UserSession session) => this.context.UserSessions.Add(session);
 }

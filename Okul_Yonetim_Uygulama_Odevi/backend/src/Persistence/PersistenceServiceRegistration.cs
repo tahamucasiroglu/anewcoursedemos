@@ -31,6 +31,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IMemberDirectory, MemberDirectory>();
         services.AddScoped<IUserSessionRepository, UserSessionRepository>();
         services.AddScoped<ILoginThrottleRepository, LoginThrottleRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<IAuditLog, EfAuditLog>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         return services;
