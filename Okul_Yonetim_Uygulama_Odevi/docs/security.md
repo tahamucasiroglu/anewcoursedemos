@@ -110,6 +110,14 @@
     değişikliği, veli bağlama/kaldırma ve teslim kişisi değişikliği audit'e yazılır; loglarda ve audit'te yalnızca
     kimlikler (öğrenci adı, sağlık metni, geçici şifre yok). KVKK veli rıza akışı bu spec'te yok — gerçek veriyle pilottan
     önce zorunlu (`docs/roadmap.md`).
+12. **Yoklama ve veli bildirimi (spec 0010):** öğretmen-sınıf ilişkisi her istekte veritabanından denetlenir — Öğretmen rolü
+    yoksa 403; sınıfa atanmamış, sınıfın şubesinde artık öğretmen değil ya da sınıf pasif/başka şubede/başka okulda ise 404;
+    pasifleştirilen kişinin oturumu doğrulanmaz (401). Sınıf öğretmeni ataması yalnızca kurucu (`TenantFounder` + okul sırası
+    içinde yeniden denetim) ve audit'li. Bildirim ve e-posta yalnızca öğrenci adı, gün, okul adı ve durumu içerir (sağlık,
+    sınıf arkadaşı, sınıf adı, öğretmen notu yok; velinin adı yalnızca e-posta alıcı alanında); e-posta adresi, gövde ve
+    öğrenci adı loglanmaz (kaydetme komutu `ILoggableRequest` değildir — T9; loglarda yalnızca sınıf, yoklama ve kişi
+    kimlikleri ve sayılar). Velinin bildirim listesi yalnızca kendi **bağı** olan çocuklarınındır. Yoklama kaydı ve düzeltmesi
+    audit'te: kim, yoklama, ayrıntıda sınıf + gün + değişen öğrenci sayısı, IP.
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

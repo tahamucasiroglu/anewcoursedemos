@@ -42,7 +42,9 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Teslim alabilecek kişi (`PickupPerson`) | Öğrenciyi okuldan alabilecek kişi: ad-soyad, yakınlık (serbest metin), telefon | Hesap değil, kartta bir liste; en fazla 10 kişi; veliler kendiliğinden girmez (spec 0009) |
 | Kardeş bağlantısı | Aynı veliye bağlı öğrenciler | Ayrı kayıt yok: veli bağından çıkar (bağ kalkınca kardeşlik de kalkar); farklı şubelerde olabilirler |
 | Nakil (`Transfer`) | Öğrencinin şube/sınıf değiştirmesi kaydı | Geçmiş korunur |
-| Yoklama (`Attendance`) | Ders/gün bazlı devam kaydı | Devamsızlıkta veliye otomatik bildirim |
+| Yoklama (`Attendance`) | Bir sınıfın bir günlük devam kaydı (`AttendanceSheet` + öğrenci başına Var / Yok / Geç; spec 0010) | Yalnızca bugün (Türkiye günü) alınır ve aynı gün düzeltilir; ertesi gün kilitlenir. Dönem dışı ve takvimde tatil olan gün okul günü değildir; hafta sonu engellenmez. Ders saati bazlı yoklama ders programıyla gelir |
+| Sınıf öğretmeni (`ClassroomTeacher`) | Kurucunun bir sınıfa atadığı, o sınıfın şubesinde Öğretmen rolü olan kişi (spec 0010) | Öğretmen yalnızca atandığı sınıfların yoklamasını alır; bir sınıfın birden çok öğretmeni olabilir. Rolü alınan ya da pasifleştirilen kişinin ataması bir sonraki istekte geçersizdir |
+| Veli bildirimi (`GuardianNotice`) | "Yok" kaydedilen öğrencinin okulda etkin her velisine giden uygulama içi bildirim (+ e-posta kuyruğu; spec 0010) | Veli + öğrenci + gün başına bir tane; "Yok" düzeltilince "düzeltildi" olur ve veliye düzeltme bildirimi gider. Yalnızca öğrenci adı, gün, okul adı ve durum içerir |
 | Duyuru (`Announcement`) | Kurum/şube/sınıf/öğrenci kapsamlı yayın; okundu bilgisi | — |
 | Mesaj (`Message`) | Öğretmen-veli birebir yazışma | Veliler arası grup sohbeti **yok** (kapsam dışı) |
 | Onay formu (`ConsentForm`) | Gezi izni, etkinlik katılımı gibi veli onayı | KVKK rızasından (`ConsentRecord`) farklı |

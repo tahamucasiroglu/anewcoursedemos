@@ -36,17 +36,17 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 
 | Module | Single responsibility | Owns |
 |---|---|---|
-| Organization | Kurum, şube, sınıf seviyesi, sınıf, dönem, akademik takvim (spec 0008), ders programı; güncel dönem ve okul günü hesabı (`SchoolCalendar`, Türkiye günü) | Tenant, Branch, GradeLevel, Classroom, Term, CalendarEntry, Timetable |
+| Organization | Kurum, şube, sınıf seviyesi, sınıf, dönem, akademik takvim (spec 0008), sınıf öğretmeni bağı (spec 0010), ders programı; güncel dönem ve okul günü hesabı (`SchoolCalendar`, Türkiye günü; tatil günü okul günü değildir) | Tenant, Branch, GradeLevel, Classroom, Term, CalendarEntry, ClassroomTeacher, Timetable |
 | Students | Öğrenci kartı, veli bağı (kardeşlik bağdan çıkar), sağlık notu/alerji (şifreli), teslim alabilecek kişiler, velinin "Çocuklarım" görünümü (spec 0009); sonra nakil, Excel/e-Okul içe aktarma | Student, StudentGuardian, PickupPerson, Transfer |
-| Attendance | Yoklama ve devamsızlık bildirimi tetikleme | Attendance |
-| Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** | Announcement, Message, ConsentForm |
+| Attendance | Günlük yoklama (spec 0010): öğretmenin "Sınıflarım"ı, bugünkü liste, Var/Yok/Geç kaydı ve düzeltmesi (yalnızca bugün, Türkiye günü); devamsızlık değişikliklerini Communication'a verir | AttendanceSheet, AttendanceEntry |
+| Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı**; spec 0010: veli devamsızlık bildirimi (uygulama içi + e-posta kuyruğu) ve velinin Bildirimler listesi | Announcement, Message, ConsentForm, GuardianNotice |
 | Academics | Ödev, teslim durumu, not | Assignment, Grade |
 | Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması | FeeSchedule, InstallmentPlan, Payment, Ledger, Receipt |
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, haftalık gelişim özeti) | AiDraft |
 | Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA (platform yöneticisi — spec 0007), token | User, RoleAssignment, TenantMembership, TwoFactorChallenge |
-| Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla; spec 0008: sınıf seviyesi, dönem, sınıf ve akademik takvim yönetimi. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
+| Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla; spec 0008: sınıf seviyesi, dönem, sınıf ve akademik takvim yönetimi; spec 0010: sınıf öğretmeni ataması. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
 | Account | Kişinin kendi hesabı (spec 0006): profil (ad, telefon), şifremi değiştir, şifremi unuttum (yenileme bağlantısı + e-posta). Okul seçimi gerektirmez; yalnızca oturumdaki kişi | PasswordResetToken |
 | Platform | Platform yöneticisinin paneli (spec 0007): bütün okulların özet listesi, okul aç (okul açma komutunun kurallarıyla), okulu pasifleştir/etkinleştir. Okulların içine erişmez; tek kurumlar-arası okuma izinli `PlatformDirectory`'de ve yalnızca özet alanlar | — (Tenant.IsActive) |
 | Compliance | KVKK rıza kayıtları, audit log, saklama süresi ve anonimleştirme | ConsentRecord, AuditEntry |
@@ -84,6 +84,19 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `MemberAccounts` hizmetidir; kişi yönetimi (0005) ve veli bağlama aynı çekirdeği okul + kişi sırası (`AdminGuard.LockAsync`)
   içinde, tek kayıtta kullanır. Sağlık notu ve alerji `IPersonalDataProtector` (AES-GCM, ayrı ortam anahtarı
   `PersonalData:EncryptionKey`) ile şifreli; düz metin yalnızca `StudentHealth` ile istek/yanıt arasında dolaşır.
+- Yoklama ve veli bildirimi (spec 0010): kurucu `api/admin/classrooms/{id}/teachers` ile sınıfa, sınıfın şubesinde etkin
+  Öğretmen olan kişileri atar (`ClassroomTeacher`, okul başına sıra + audit). Öğretmen uçları `api/attendance`
+  (`classrooms`, `classrooms/{id}/today` GET/PUT): her istekte veritabanından Öğretmen rolü (yoksa 403), sınıfa atama ve
+  sınıfın şubesinde öğretmenlik (yoksa 404) denetlenir — `AttendanceGuard`. "Bugün" sunucunun Türkiye günüdür
+  (`SchoolCalendar`); istemcinin günü yalnızca doğrulanır; dönem dışı ve takvimde tatil olan gün okul günü değildir. Kayıt
+  sınıf + gün başına sıradadır (`attendance:<sınıf>:<gün>`); yoklama ve veli bildirimleri aynı işlemde yazılır. Attendance
+  veliye doğrudan yazmaz: "yok" durumu değişen öğrencileri Communication'ın `NotifyAttendanceChangesCommand`'ına verir
+  (veliye giden tek çıkış; spec 0011 duyuru/mesajı bu modülde genişletir). Bildirim veli + öğrenci + gün tekildir
+  (`GuardianNotice`: `Absent` / `Corrected`); e-postalar commit'ten sonra `IEmailOutbox`'a bırakılır. Modüller arası okumalar
+  Mediator sorgularıyla: sınıf `GetClassroomByIdQuery`, okul günü `GetSchoolDayQuery`, sınıf listesi
+  `ListClassroomRosterQuery`, etkin veliler `ListGuardianContactsQuery`, velinin çocukları `ListMyChildrenQuery`. Veli uçları
+  `api/notices` (GET, POST `read`): bildirimler yalnızca kişinin **bağlı** çocuklarınınkiler (bütün şubeler); okunmamış sayısı
+  `/api/me`'de (`unreadNoticeCount`). Audit kaydı kısa bir `Detail` (yalnızca kimlik ve sayı) taşıyabilir.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).
