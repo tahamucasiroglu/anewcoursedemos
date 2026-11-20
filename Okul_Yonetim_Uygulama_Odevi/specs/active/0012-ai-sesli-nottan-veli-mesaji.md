@@ -1,6 +1,6 @@
 # Spec 0012 — AI: sesli nottan veli mesajı
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0012-plan.md`
 - Self-critique: done

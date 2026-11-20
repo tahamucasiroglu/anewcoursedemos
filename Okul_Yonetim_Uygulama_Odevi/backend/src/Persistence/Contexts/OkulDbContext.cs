@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Attendance;
 using OkulYonetim.Domain.Communication;
 using OkulYonetim.Domain.Compliance;
@@ -14,7 +15,7 @@ namespace OkulYonetim.Persistence.Contexts;
 /// filtresiyle uygulanır: kurum yalnızca oturumdaki kurumu, şube yalnızca o kurumun ve (kurucu değilse) kişinin atandığı
 /// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması, üyelik, sınıf seviyesi, dönem ve takvim kaydı
 /// (silinmemiş) yalnızca o kurumunkileri, sınıf ve öğrenci yalnızca görünür şubelerinkileri (spec 0008, 0009), veli bağı ve teslim kişisi yalnızca o kurumunkileri, sınıf öğretmeni ataması ve yoklama görünür şubelerinkileri, yoklama satırı
-/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
+/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011); AI taslağı o kurumunkileri (spec 0012). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
 /// göstermez. Filtre değerleri sorgu anında <see cref="ICurrentSession"/>'dan okunur. Filtreyi delen okumalar
 /// (<c>IgnoreQueryFilters</c>) yalnızca izinli listedeki depo metotlarındadır (T5).
 /// </summary>
@@ -84,6 +85,8 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<QuietHours> QuietHours => this.Set<QuietHours>();
 
+    public DbSet<AiDraft> AiDrafts => this.Set<AiDraft>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;
@@ -136,5 +139,8 @@ public sealed class OkulDbContext : DbContext
         modelBuilder.Entity<Conversation>().HasQueryFilter(c => c.TenantId == this.CurrentTenantId);
         modelBuilder.Entity<ConversationMessage>().HasQueryFilter(m => m.TenantId == this.CurrentTenantId);
         modelBuilder.Entity<QuietHours>().HasQueryFilter(q => q.TenantId == this.CurrentTenantId);
+
+        // Spec 0012: AI taslağı kurum filtreli; sahiplik (yalnızca oluşturan öğretmen) ve bağlam (aynı konuşma) Ai modülünde.
+        modelBuilder.Entity<AiDraft>().HasQueryFilter(d => d.TenantId == this.CurrentTenantId);
     }
 }
