@@ -52,7 +52,7 @@
    (birden çok sekme aynı anda yeniler); daha sonra gelirse çalınmış sayılır: oturum iptal, audit `RefreshTokenReused`.
    Bilinen sınırlar: (a) tolerans içinde kullanılan çalıntı eski anahtar en fazla bir erişim anahtarı süresi (15 dk)
    erişim sağlar, süre uzatılamaz; (b) mobilde yenileme yanıtı yolda kaybolursa sonraki yenileme oturumu kapatır ve
-   audit'e yanlış bir "çalıntı anahtar" kaydı düşer (B-19). Sıra beklemesi en fazla 5 sn; aşılırsa "Çok fazla istek". Web yenileme anahtarını **HttpOnly, SameSite=Strict çerezde**
+   audit'e yanlış bir "çalıntı anahtar" kaydı düşer (B-19). Sıra beklemesi anahtar başına en fazla 5 sn (yönetimde okul + kişi anahtarı: toplam ~10 sn); aşılırsa "Çok fazla istek". Web yenileme anahtarını **HttpOnly, SameSite=Strict çerezde**
    (`/api/auth` yolu) tutar, JavaScript görmez; mobil telefonun **güvenli deposunda** (`expo-secure-store`). Erişim
    anahtarı yalnızca bellekte. Şifre özeti ASP.NET Identity PBKDF2; kullanıcı yoksa da özet doğrulanır (zamanlama farkı
    yok). Uygulama kendi küçük oturum kodunu kullanır (`NArchitecture.Core.Security` kullanılmadı — plan 0004).
