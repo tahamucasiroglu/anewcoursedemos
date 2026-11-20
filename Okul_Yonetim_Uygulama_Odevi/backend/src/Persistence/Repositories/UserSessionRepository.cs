@@ -44,5 +44,11 @@ public sealed class UserSessionRepository : IUserSessionRepository
         }
     }
 
+    public async Task<bool> IsOpenAsync(Guid sessionId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        UserSession? session = await this.context.UserSessions.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken).ConfigureAwait(false);
+        return session is not null && session.IsActive(now);
+    }
+
     public void Add(UserSession session) => this.context.UserSessions.Add(session);
 }

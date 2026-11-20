@@ -9,5 +9,11 @@ public interface IUserRepository
 
     Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Kişinin e-postası (izlemesiz; sıra almadan önce anahtar için).</summary>
+    Task<string?> FindEmailAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Kişi, veritabanından taze (bu istekte daha önce izlendiyse yeniden yüklenir) — sıra içindeki kararlar için.</summary>
+    Task<User?> FindByIdFreshAsync(Guid id, CancellationToken cancellationToken);
+
     void Add(User user);
 }

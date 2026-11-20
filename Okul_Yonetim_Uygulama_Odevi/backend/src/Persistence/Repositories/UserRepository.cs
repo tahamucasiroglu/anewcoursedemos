@@ -21,5 +21,19 @@ public sealed class UserRepository : IUserRepository
     public Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken) =>
         this.context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
+    public Task<string?> FindEmailAsync(Guid id, CancellationToken cancellationToken) =>
+        this.context.Users.AsNoTracking().Where(u => u.Id == id).Select(u => u.Email).FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<User?> FindByIdFreshAsync(Guid id, CancellationToken cancellationToken)
+    {
+        User? user = await this.context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken).ConfigureAwait(false);
+        if (user is not null)
+        {
+            await this.context.Entry(user).ReloadAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return user;
+    }
+
     public void Add(User user) => this.context.Users.Add(user);
 }

@@ -98,13 +98,27 @@ public sealed class AccountHandlers :
     public async Task<bool> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        User user = await this.CurrentUserAsync(cancellationToken).ConfigureAwait(false);
+        Guid userId = this.session.UserId ?? throw new AuthorizationException(await this.localization.GetAsync(AccountMessages.NotSignedIn).ConfigureAwait(false));
         Guid sessionId = this.session.SessionId ?? throw new AuthorizationException(await this.localization.GetAsync(AccountMessages.NotSignedIn).ConfigureAwait(false));
+        string email = await this.users.FindEmailAsync(userId, cancellationToken).ConfigureAwait(false)
+            ?? throw new AuthorizationException(await this.localization.GetAsync(AccountMessages.NotSignedIn).ConfigureAwait(false));
         string? failure = null;
-        IExclusiveScope scope = await this.LockAsync(["login:" + user.Email], cancellationToken).ConfigureAwait(false);
+        User user;
+
+        // Kişinin şifresini değiştiren bütün yollarla aynı sıra (review round 2, Medium-1): giriş/şifre değiştirme
+        // ("login:") ve kurucu sıfırlaması / bağlantıyla yenileme ("member-admin:"). Sıra içinde kişi ve oturum taze okunur:
+        // beklerken şifre başka yolla değiştiyse eski şifre artık tutmaz; oturum kapandıysa işlem yapılmaz.
+        IExclusiveScope scope = await this.LockAsync(["login:" + email, "member-admin:" + userId.ToString("N")], cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             DateTimeOffset now = this.timeProvider.GetUtcNow();
+            user = await this.users.FindByIdFreshAsync(userId, cancellationToken).ConfigureAwait(false)
+                ?? throw new AuthorizationException(await this.localization.GetAsync(AccountMessages.NotSignedIn).ConfigureAwait(false));
+            if (!await this.sessions.IsOpenAsync(sessionId, now, cancellationToken).ConfigureAwait(false))
+            {
+                throw new AuthorizationException(await this.localization.GetAsync(AccountMessages.NotSignedIn).ConfigureAwait(false));
+            }
+
             LoginThrottle? throttle = await this.throttles.FindAsync(user.Email, cancellationToken).ConfigureAwait(false);
             if (throttle is not null && throttle.IsLocked(now))
             {

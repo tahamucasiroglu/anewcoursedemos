@@ -151,6 +151,48 @@ public sealed class ResetLinkTests
         _ = await linkReset;
     }
 
+    /// <summary>
+    /// Review round 2, Medium-1: eski şifreyi bilen birinin "şifremi değiştir" isteği, aynı anda yapılan bağlantıyla
+    /// yenilemeyi ya da kurucu sıfırlamasını geri alamaz — son geçerli şifre hiçbir zaman şifre değiştirmenin değeri olmaz.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ChangePasswordRacingRecovery_NeverOverridesRecovery(bool founderReset)
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("kurtarma");
+        Guid personId = await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+        string attacker = AccessToken(await LoginAsync(client, person));
+        string founder = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        await ForgotAsync(client, person);
+        string token = TokenFrom(outbox.To(person).Single());
+        const string AttackerPassword = "Saldirgan-Sifre-2026";
+
+        Task<HttpStatusCode> change = StatusAsync(client, HttpMethod.Post, "/api/account/change-password", attacker, new { currentPassword = Password, newPassword = AttackerPassword, newPasswordRepeat = AttackerPassword });
+        Task<(HttpStatusCode Status, JsonElement Body, string Raw)> recovery = founderReset
+            ? CallAsync(client, HttpMethod.Post, $"/api/admin/members/{personId}/reset-password", founder)
+            : ResetAsync(client, token, "Kurtarma-Sifre-2026").ContinueWith(t => (t.Result.Status, default(JsonElement), t.Result.Raw), TaskScheduler.Default);
+        await Task.WhenAll(change, recovery);
+
+        string recovered = founderReset ? (await recovery).Body.GetProperty("temporaryPassword").GetString()! : "Kurtarma-Sifre-2026";
+        if (!founderReset && (await recovery).Status != HttpStatusCode.NoContent)
+        {
+            // Şifre değiştirme önce tamamlandıysa açıktaki bağlantı kurala göre geçersizleşir (gereksinim 6); kurtarma geri
+            // alınmış sayılmaz, kişi yeni bağlantı ister. Geri alma, yalnızca kurtarma başarılı olup sonra ezilirse olur.
+            (await change).ShouldBe(HttpStatusCode.NoContent);
+            return;
+        }
+
+        using HttpResponseMessage withRecovered = await PostLoginAsync(client, person, recovered);
+        using HttpResponseMessage withAttacker = await PostLoginAsync(client, person, AttackerPassword);
+        withRecovered.StatusCode.ShouldBe(HttpStatusCode.OK, "kurtarmayla belirlenen şifre geçerli kalmalı");
+        withAttacker.StatusCode.ShouldBe(HttpStatusCode.Unauthorized, "eşzamanlı şifre değiştirme kurtarmayı geri alamaz");
+    }
+
     [Fact]
     public async Task ChangingPassword_InvalidatesOpenLinks()
     {

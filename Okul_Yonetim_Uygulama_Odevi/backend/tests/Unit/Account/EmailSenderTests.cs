@@ -94,6 +94,35 @@ public sealed class EmailSenderTests
         (await accepted).Dispose();
     }
 
+    /// <summary>Review round 2, Low-1: sunucu kimlik doğrulamayı reddederse (535) SMTP şifresi (ve base64 hâli) logda yok.</summary>
+    [Fact]
+    public async Task RejectedAuthentication_DoesNotLogSmtpPassword()
+    {
+        using FakeSmtpServer server = new(rejectAuth: true);
+        EmailOptions options = new() { Host = "127.0.0.1", Port = server.Port, UseStartTls = false, FromAddress = "okul@ornek.test", WebBaseUrl = "http://okul", UserName = "kullanici", Password = "GIZLI-SMTP-SIFRE" };
+        ListLogger<EmailSender> senderLog = new();
+        ListLogger<BackgroundEmailOutbox> outboxLog = new();
+        EmailSender sender = new(Options.Create(options), new Env("Production", Path.GetTempPath()), senderLog);
+        using BackgroundEmailOutbox outbox = new(sender, outboxLog);
+        await outbox.StartAsync(TestContext.Current.CancellationToken);
+
+        outbox.Enqueue(Message);
+        for (int i = 0; i < 200 && !outboxLog.Lines.Any(l => l.Contains("gönderilemedi", StringComparison.Ordinal)); i++)
+        {
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+
+        await outbox.StopAsync(TestContext.Current.CancellationToken);
+        string conversation = await server.ReceivedAsync();
+        conversation.ShouldContain("AUTH", Case.Insensitive, "gönderim kimlik doğrulama aşamasına ulaşmalı");
+        string text = string.Join('\n', outboxLog.Lines.Concat(senderLog.Lines));
+        text.ShouldContain("E-posta gönderilemedi");
+        foreach (string secret in new[] { "GIZLI-SMTP-SIFRE", Convert.ToBase64String(Encoding.UTF8.GetBytes("GIZLI-SMTP-SIFRE")), Convert.ToBase64String(Encoding.UTF8.GetBytes("\0kullanici\0GIZLI-SMTP-SIFRE")) })
+        {
+            text.ShouldNotContain(secret);
+        }
+    }
+
     [Fact]
     public async Task UnreachableServer_FailsWithinTimeout()
     {
@@ -267,9 +296,11 @@ public sealed class EmailSenderTests
     {
         private readonly TcpListener listener = new(IPAddress.Loopback, 0);
         private readonly Task<string> conversation;
+        private readonly bool rejectAuth;
 
-        public FakeSmtpServer()
+        public FakeSmtpServer(bool rejectAuth = false)
         {
+            this.rejectAuth = rejectAuth;
             this.listener.Start();
             this.Port = ((IPEndPoint)this.listener.LocalEndpoint).Port;
             this.conversation = this.RunAsync();
@@ -309,7 +340,19 @@ public sealed class EmailSenderTests
                 {
                     case "EHLO":
                         await writer.WriteLineAsync("250-sahte");
+                        if (this.rejectAuth)
+                        {
+                            await writer.WriteLineAsync("250-AUTH LOGIN PLAIN");
+                        }
+
                         await writer.WriteLineAsync("250 8BITMIME");
+                        break;
+                    case "AUTH" when this.rejectAuth:
+                        await writer.WriteLineAsync("535 kimlik reddedildi");
+                        break;
+                    case "MAIL" when this.rejectAuth:
+                        // Gerçek sunucu gibi: kimlik doğrulanmadan gönderim yok.
+                        await writer.WriteLineAsync("530 kimlik dogrulama gerekli");
                         break;
                     case "DATA":
                         inData = true;
