@@ -1,6 +1,6 @@
 # Spec 0008 — Kurum ve akademik yapı
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0008-plan.md`
 - Self-critique: done

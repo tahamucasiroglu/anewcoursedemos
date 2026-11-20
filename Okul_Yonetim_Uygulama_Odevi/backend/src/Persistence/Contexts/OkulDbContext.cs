@@ -9,7 +9,8 @@ namespace OkulYonetim.Persistence.Contexts;
 /// <summary>
 /// Uygulamanın tek veritabanı bağlamı (PostgreSQL, snake_case). Kurum ve şube izolasyonu (S1) burada, global sorgu
 /// filtresiyle uygulanır: kurum yalnızca oturumdaki kurumu, şube yalnızca o kurumun ve (kurucu değilse) kişinin atandığı
-/// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması ve üyelik yalnızca o kurumunkileri gösterir. Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
+/// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması, üyelik, sınıf seviyesi, dönem ve takvim kaydı
+/// (silinmemiş) yalnızca o kurumunkileri, sınıf yalnızca görünür şubelerinkileri (spec 0008) gösterir. Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
 /// göstermez. Filtre değerleri sorgu anında <see cref="ICurrentSession"/>'dan okunur. Filtreyi delen okumalar
 /// (<c>IgnoreQueryFilters</c>) yalnızca izinli listedeki depo metotlarındadır (T5).
 /// </summary>
@@ -43,6 +44,14 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<TwoFactorChallenge> TwoFactorChallenges => this.Set<TwoFactorChallenge>();
 
+    public DbSet<GradeLevel> GradeLevels => this.Set<GradeLevel>();
+
+    public DbSet<Term> Terms => this.Set<Term>();
+
+    public DbSet<Classroom> Classrooms => this.Set<Classroom>();
+
+    public DbSet<CalendarEntry> CalendarEntries => this.Set<CalendarEntry>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;
@@ -59,5 +68,13 @@ public sealed class OkulDbContext : DbContext
             b.TenantId == this.CurrentTenantId && (this.CurrentIsFounder || (b.IsActive && this.CurrentBranchIds.Contains(b.Id))));
         modelBuilder.Entity<RoleAssignment>().HasQueryFilter(r => r.TenantId == this.CurrentTenantId);
         modelBuilder.Entity<TenantMembership>().HasQueryFilter(m => m.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<GradeLevel>().HasQueryFilter(g => g.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<Term>().HasQueryFilter(t => t.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<CalendarEntry>().HasQueryFilter(e => e.TenantId == this.CurrentTenantId && e.DeletedAt == null);
+
+        // Sınıf, şubesinin görünürlüğünü miras alır (plan 0008 Risks 2): şube filtresi iç sorguya da uygulanır — kurucu
+        // okulun bütün şubelerini, diğer roller yalnızca atandıkları etkin şubeleri görür; kural tek yerde kalır.
+        modelBuilder.Entity<Classroom>().HasQueryFilter(c =>
+            c.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == c.BranchId));
     }
 }

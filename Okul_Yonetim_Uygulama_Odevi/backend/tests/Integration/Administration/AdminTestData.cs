@@ -54,11 +54,70 @@ public static class AdminTestData
         return body.GetProperty("id").GetGuid();
     }
 
+    /// <summary>Sınıf seviyesi ekler (spec 0008); kimliğini döndürür.</summary>
+    public static Task<Guid> CreateGradeLevelAsync(HttpClient client, string token, string name, int sortOrder) =>
+        PostForIdAsync(client, "/api/admin/grade-levels", token, new { name, sortOrder });
+
+    /// <summary>Dönem ekler (spec 0008; tarihler <c>yyyy-MM-dd</c>); kimliğini döndürür.</summary>
+    public static Task<Guid> CreateTermAsync(HttpClient client, string token, string name, string startDate, string endDate) =>
+        PostForIdAsync(client, "/api/admin/terms", token, new { name, startDate, endDate });
+
+    /// <summary>Sınıf açar (spec 0008); kimliğini döndürür.</summary>
+    public static Task<Guid> CreateClassroomAsync(HttpClient client, string token, Guid termId, Guid branchId, Guid gradeLevelId, string name) =>
+        PostForIdAsync(client, "/api/admin/classrooms", token, new { termId, branchId, gradeLevelId, name });
+
+    /// <summary>Dönemin takvimine kayıt ekler (spec 0008); kimliğini döndürür.</summary>
+    public static Task<Guid> CreateCalendarEntryAsync(HttpClient client, string token, Guid termId, string title, string kind, string startDate, string endDate) =>
+        PostForIdAsync(client, $"/api/admin/terms/{termId}/calendar-entries", token, new { title, kind, startDate, endDate });
+
     public static async Task<HttpStatusCode> StatusAsync(HttpClient client, HttpMethod method, string path, string token, object? body = null) =>
         (await CallAsync(client, method, path, token, body)).Status;
 
     public static string Detail(JsonElement problem) =>
         problem.ValueKind == JsonValueKind.Object && problem.TryGetProperty("detail", out JsonElement d) ? d.GetString() ?? string.Empty : string.Empty;
+
+    private static async Task<Guid> PostForIdAsync(HttpClient client, string path, string token, object body)
+    {
+        var (status, json, raw) = await CallAsync(client, HttpMethod.Post, path, token, body);
+        if (status != HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"{path} başarısız: {status} {raw}");
+        }
+
+        return json.GetProperty("id").GetGuid();
+    }
+
+    /// <summary>Hata gövdesindeki bütün metinler (doğrulama hatası listesi dahil) — kullanıcıya giden mesajı aramak için.</summary>
+    public static IReadOnlyList<string> Messages(JsonElement element)
+    {
+        List<string> found = [];
+        Collect(element, found);
+        return found;
+
+        static void Collect(JsonElement e, List<string> into)
+        {
+            switch (e.ValueKind)
+            {
+                case JsonValueKind.String:
+                    into.Add(e.GetString()!);
+                    break;
+                case JsonValueKind.Object:
+                    foreach (JsonProperty p in e.EnumerateObject())
+                    {
+                        Collect(p.Value, into);
+                    }
+
+                    break;
+                case JsonValueKind.Array:
+                    foreach (JsonElement item in e.EnumerateArray())
+                    {
+                        Collect(item, into);
+                    }
+
+                    break;
+            }
+        }
+    }
 
     public static Task<HttpResponseMessage> PostJsonAsync(HttpClient client, string path, object body) =>
         client.PostAsJsonAsync(new Uri(path, UriKind.Relative), body, TestContext.Current.CancellationToken);

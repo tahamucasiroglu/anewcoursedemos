@@ -32,6 +32,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<UserTenantDirectory>();
         services.AddScoped<Features.Administration.AdminGuard>();
         services.AddScoped<Features.Administration.AdminAudit>();
+        services.AddSingleton<Features.Organization.SchoolCalendar>();
         return services;
     }
 }
