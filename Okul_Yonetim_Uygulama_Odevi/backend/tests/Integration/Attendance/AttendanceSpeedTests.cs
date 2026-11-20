@@ -14,6 +14,7 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// "Yok" yapar: bildirim ve düzeltme yolu da ölçülür. Ağ gecikmesi hariç (test sunucusu bellekte).
 /// </summary>
 [Trait("Category", "Integration")]
+[Collection(SpeedMeasurementGroup.Name)]
 public sealed class AttendanceSpeedTests
 {
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(1);
