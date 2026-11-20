@@ -11,5 +11,6 @@
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Microsoft.Extensions.Identity.Core" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 </Project>
