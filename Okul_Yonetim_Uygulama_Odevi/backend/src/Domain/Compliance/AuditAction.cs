@@ -28,4 +28,12 @@ public enum AuditAction
     PasswordResetRequested = 23,
     PasswordResetCompleted = 24,
     PasswordResetLinkInvalid = 25,
+    PlatformAdminGranted = 26,
+    PlatformAdminRevoked = 27,
+    TwoFactorEnabled = 28,
+    TwoFactorSucceeded = 29,
+    TwoFactorFailed = 30,
+    TwoFactorReset = 31,
+    TenantDeactivated = 32,
+    TenantActivated = 33,
 }

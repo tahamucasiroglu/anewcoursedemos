@@ -61,6 +61,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
             tenant is null ? null : new TenantSummary(tenant.Id, tenant.Name),
             roles,
             branches,
-            all);
+            all,
+            this.currentSession.IsPlatformAdmin);
     }
 }

@@ -44,8 +44,11 @@ public sealed class UserSession
 
     public string? CreatedIp { get; private set; }
 
-    public static UserSession Open(Guid userId, Guid? tenantId, string refreshTokenHash, DateTimeOffset now, string? ip) =>
-        new(Guid.CreateVersion7(now), userId, tenantId, refreshTokenHash, now, ip);
+    /// <summary>Oturum iki adımlı doğrulamayla açıldı (spec 0007: platform yetkisi yalnızca böyle oturumda).</summary>
+    public bool TwoFactorVerified { get; private set; }
+
+    public static UserSession Open(Guid userId, Guid? tenantId, string refreshTokenHash, DateTimeOffset now, string? ip, bool twoFactorVerified = false) =>
+        new(Guid.CreateVersion7(now), userId, tenantId, refreshTokenHash, now, ip) { TwoFactorVerified = twoFactorVerified };
 
     public bool IsActive(DateTimeOffset now) => this.RevokedAt is null && now - this.LastUsedAt < IdleLifetime;
 

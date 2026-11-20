@@ -8,7 +8,7 @@ namespace OkulYonetim.Persistence.Repositories;
 /// <summary>
 /// Rol ataması deposu. İzinli liste (T5): iki okuma da filtre dışıdır ama yalnızca verilen kişinin atamalarını döndürür
 /// (giriş anında henüz kurum yok; oturum doğrulanırken filtre değerleri bu okumayla belirlenir). Pasif üyelikteki
-/// okulun atamaları dönmez (spec 0005: pasif kişi o okula giremez). Başka okul sayısı yalnızca sayı olarak döner.
+/// ve pasif okulun atamaları dönmez (spec 0005: pasif kişi o okula giremez; spec 0007: pasif okula kimse giremez). Başka okul sayısı yalnızca sayı olarak döner.
 /// </summary>
 public sealed class RoleAssignmentRepository : IRoleAssignmentRepository
 {
@@ -22,14 +22,16 @@ public sealed class RoleAssignmentRepository : IRoleAssignmentRepository
     public async Task<IReadOnlyList<RoleAssignment>> ListForUserAsync(Guid userId, CancellationToken cancellationToken) =>
         await this.context.RoleAssignments.IgnoreQueryFilters()
             .Where(r => r.UserId == userId && this.context.Memberships.IgnoreQueryFilters()
-                .Any(m => m.UserId == userId && m.TenantId == r.TenantId && m.IsActive))
+                .Any(m => m.UserId == userId && m.TenantId == r.TenantId && m.IsActive)
+                && this.context.Tenants.IgnoreQueryFilters().Any(t => t.Id == r.TenantId && t.IsActive))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
     public async Task<IReadOnlyList<RoleAssignment>> ListForUserInTenantAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken) =>
         await this.context.RoleAssignments.IgnoreQueryFilters()
             .Where(r => r.UserId == userId && r.TenantId == tenantId && this.context.Memberships.IgnoreQueryFilters()
-                .Any(m => m.UserId == userId && m.TenantId == tenantId && m.IsActive))
+                .Any(m => m.UserId == userId && m.TenantId == tenantId && m.IsActive)
+                && this.context.Tenants.IgnoreQueryFilters().Any(t => t.Id == tenantId && t.IsActive))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

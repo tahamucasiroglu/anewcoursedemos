@@ -19,6 +19,13 @@ public sealed class Tenant
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>Etkin mi (spec 0007): pasif okulda kimse giremez; veri silinmez.</summary>
+    public bool IsActive { get; private set; } = true;
+
+    public void Deactivate() => this.IsActive = false;
+
+    public void Activate() => this.IsActive = true;
+
     public static Tenant Create(string name, DateTimeOffset now) =>
         new(Guid.CreateVersion7(now), name.Trim(), now);
 }

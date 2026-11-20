@@ -22,6 +22,9 @@ public static class AuthSetup
     /// <summary>Seçili okulda kurucu/yönetici (spec 0005); kurucu bilgisi her istekte veritabanından okunur (rol alınınca bir sonraki istekte geçerli).</summary>
     public const string TenantFounderPolicy = "TenantFounder";
 
+    /// <summary>Platform yöneticisi ve iki adımlı doğrulamayla açılmış oturum (spec 0007); her istekte veritabanından.</summary>
+    public const string PlatformAdminPolicy = "PlatformAdmin";
+
     public static IServiceCollection AddOkulAuth(this IServiceCollection services, IConfiguration configuration)
     {
         JwtOptions options = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
@@ -59,7 +62,9 @@ public static class AuthSetup
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
             .AddPolicy(TenantSelectedPolicy, policy => policy.RequireAuthenticatedUser().RequireClaim(JwtTokenService.TenantClaim))
             .AddPolicy(TenantFounderPolicy, policy => policy.RequireAuthenticatedUser().RequireClaim(JwtTokenService.TenantClaim)
-                .RequireAssertion(context => context.Resource is HttpContext http && http.RequestServices.GetRequiredService<ICurrentSession>().IsFounder));
+                .RequireAssertion(context => context.Resource is HttpContext http && http.RequestServices.GetRequiredService<ICurrentSession>().IsFounder))
+            .AddPolicy(PlatformAdminPolicy, policy => policy.RequireAuthenticatedUser()
+                .RequireAssertion(context => context.Resource is HttpContext http && http.RequestServices.GetRequiredService<ICurrentSession>().IsPlatformAdmin));
         return services;
     }
 

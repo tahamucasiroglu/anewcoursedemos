@@ -9,6 +9,9 @@ public interface IUserRepository
 
     Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Platform yöneticisi mi (izlemesiz; her istekte oturum doğrulamasında).</summary>
+    Task<bool> IsPlatformAdminAsync(Guid id, CancellationToken cancellationToken);
+
     /// <summary>Kişinin e-postası (izlemesiz; sıra almadan önce anahtar için).</summary>
     Task<string?> FindEmailAsync(Guid id, CancellationToken cancellationToken);
 

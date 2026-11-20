@@ -20,6 +20,8 @@ public static class InfrastructureServiceRegistration
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddSingleton<ITemporaryPasswordGenerator, TemporaryPasswordGenerator>();
+        services.AddSingleton<ITotp, Totp>();
+        services.AddSingleton<ISecretProtector, AesGcmSecretProtector>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         services.AddSingleton<IAppLinks, AppLinks>();

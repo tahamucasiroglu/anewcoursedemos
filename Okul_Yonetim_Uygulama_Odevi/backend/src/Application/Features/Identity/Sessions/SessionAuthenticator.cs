@@ -14,17 +14,20 @@ public sealed class SessionAuthenticator
     private readonly IUserSessionRepository sessions;
     private readonly IRoleAssignmentRepository roleAssignments;
     private readonly CurrentSession currentSession;
+    private readonly IUserRepository users;
     private readonly TimeProvider timeProvider;
 
     public SessionAuthenticator(
         IUserSessionRepository sessions,
         IRoleAssignmentRepository roleAssignments,
         CurrentSession currentSession,
+        IUserRepository users,
         TimeProvider timeProvider)
     {
         this.sessions = sessions;
         this.roleAssignments = roleAssignments;
         this.currentSession = currentSession;
+        this.users = users;
         this.timeProvider = timeProvider;
     }
 
@@ -55,7 +58,9 @@ public sealed class SessionAuthenticator
             branchIds = [.. assignments.Where(a => a.BranchId is not null).Select(a => a.BranchId!.Value).Distinct()];
         }
 
-        this.currentSession.Authenticate(userId, sessionId, tenantId, isFounder, branchIds);
+        // Platform yetkisi her istekte veritabanından: yetki alınınca bir sonraki istekte düşer; yalnızca kodla açılmış oturumda.
+        bool isPlatformAdmin = session.TwoFactorVerified && await this.users.IsPlatformAdminAsync(userId, cancellationToken).ConfigureAwait(false);
+        this.currentSession.Authenticate(userId, sessionId, tenantId, isFounder, branchIds, isPlatformAdmin);
         return true;
     }
 }

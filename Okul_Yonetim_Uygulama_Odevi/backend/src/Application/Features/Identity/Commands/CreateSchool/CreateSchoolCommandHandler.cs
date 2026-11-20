@@ -91,14 +91,14 @@ public sealed class CreateSchoolCommandHandler : IRequestHandler<CreateSchoolCom
         this.roleAssignments.Add(founder);
         this.memberships.Add(TenantMembership.Create(user.Id, tenant.Id, now));
 
-        this.audit.Add(AuditEntry.Record(AuditAction.TenantCreated, now, tenant.Id, targetType: nameof(Tenant), targetId: tenant.Id, origin: request.Origin));
-        this.audit.Add(AuditEntry.Record(AuditAction.BranchCreated, now, tenant.Id, targetType: nameof(Branch), targetId: branch.Id, origin: request.Origin));
+        this.audit.Add(AuditEntry.Record(AuditAction.TenantCreated, now, tenant.Id, request.ActorUserId, targetType: nameof(Tenant), targetId: tenant.Id, ipAddress: request.IpAddress, origin: request.Origin));
+        this.audit.Add(AuditEntry.Record(AuditAction.BranchCreated, now, tenant.Id, request.ActorUserId, targetType: nameof(Branch), targetId: branch.Id, ipAddress: request.IpAddress, origin: request.Origin));
         if (userCreated)
         {
-            this.audit.Add(AuditEntry.Record(AuditAction.UserCreated, now, tenant.Id, targetType: nameof(User), targetId: user.Id, origin: request.Origin));
+            this.audit.Add(AuditEntry.Record(AuditAction.UserCreated, now, tenant.Id, request.ActorUserId, targetType: nameof(User), targetId: user.Id, ipAddress: request.IpAddress, origin: request.Origin));
         }
 
-        this.audit.Add(AuditEntry.Record(AuditAction.RoleAssigned, now, tenant.Id, targetType: nameof(RoleAssignment), targetId: founder.Id, origin: request.Origin));
+        this.audit.Add(AuditEntry.Record(AuditAction.RoleAssigned, now, tenant.Id, request.ActorUserId, targetType: nameof(RoleAssignment), targetId: founder.Id, ipAddress: request.IpAddress, origin: request.Origin));
         await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         this.logger.LogInformation("Okul açıldı: kurum {TenantId}, şube {BranchId}, kurucu {UserId} (yeni kişi: {UserCreated})", tenant.Id, branch.Id, user.Id, userCreated);

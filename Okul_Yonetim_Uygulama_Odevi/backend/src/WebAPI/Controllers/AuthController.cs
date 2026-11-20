@@ -8,6 +8,7 @@ using OkulYonetim.Application.Features.Identity.Commands.Login;
 using OkulYonetim.Application.Features.Identity.Commands.Logout;
 using OkulYonetim.Application.Features.Identity.Commands.RefreshSession;
 using OkulYonetim.Application.Features.Identity.Commands.SelectTenant;
+using OkulYonetim.Application.Features.Identity.Commands.TwoFactor;
 using OkulYonetim.WebAPI.Auth;
 using OkulYonetim.WebAPI.Controllers.Contracts;
 
@@ -73,6 +74,46 @@ public sealed class AuthController : ControllerBase
         await this.sender.Send(new LogoutCommand(), cancellationToken).ConfigureAwait(false);
         RefreshTokenCookie.Delete(this.Response);
         return this.NoContent();
+    }
+
+    /// <summary>İki adımlı doğrulama kurulumu (spec 0007): anahtar ve kare kod adresi, yalnızca kurulmamışsa.</summary>
+    [HttpPost("two-factor/setup")]
+    [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimit.PolicyName)]
+    [ProducesResponseType<TwoFactorSetupResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<TwoFactorSetupResult>> BeginTwoFactorSetup(TwoFactorChallengeRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return this.Ok(await this.sender.Send(new BeginTwoFactorSetupCommand(request.Challenge ?? string.Empty), cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>Kurulumu kodla tamamla; oturum açılır.</summary>
+    [HttpPost("two-factor/setup/confirm")]
+    [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimit.PolicyName)]
+    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AuthTokensResponse>> ConfirmTwoFactorSetup(TwoFactorCodeRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        AuthResult result = await this.sender.Send(new ConfirmTwoFactorSetupCommand(request.Challenge ?? string.Empty, request.Code ?? string.Empty), cancellationToken).ConfigureAwait(false);
+        return this.Deliver(result, request.RefreshTokenInBody);
+    }
+
+    /// <summary>Girişte 6 haneli kod; oturum açılır.</summary>
+    [HttpPost("two-factor/verify")]
+    [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimit.PolicyName)]
+    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AuthTokensResponse>> VerifyTwoFactor(TwoFactorCodeRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        AuthResult result = await this.sender.Send(new VerifyTwoFactorCommand(request.Challenge ?? string.Empty, request.Code ?? string.Empty), cancellationToken).ConfigureAwait(false);
+        return this.Deliver(result, request.RefreshTokenInBody);
     }
 
     /// <summary>Şifremi unuttum (spec 0006): her durumda aynı mesaj; e-posta arka planda gider.</summary>

@@ -4,7 +4,8 @@ namespace OkulYonetim.Application.Features.Identity.Queries.GetMe;
 
 /// <summary>
 /// "Ben kimim" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,
-/// Accounting), görebildiği şubeler ve rolü olan tüm okullar (okul değiştirme için).
+/// Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
+/// platform yöneticisi ve kodla açılmış oturum).
 /// </summary>
 public sealed record MeResponse(
     string FullName,
@@ -12,4 +13,5 @@ public sealed record MeResponse(
     TenantSummary? Tenant,
     IReadOnlyList<string> Roles,
     IReadOnlyList<BranchSummary> Branches,
-    IReadOnlyList<TenantSummary> Tenants);
+    IReadOnlyList<TenantSummary> Tenants,
+    bool IsPlatformAdmin = false);

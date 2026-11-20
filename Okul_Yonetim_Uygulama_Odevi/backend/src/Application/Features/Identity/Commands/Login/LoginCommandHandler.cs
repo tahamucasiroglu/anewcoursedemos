@@ -27,6 +27,8 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
     private readonly ITokenService tokens;
     private readonly IClientInfo client;
     private readonly UserTenantDirectory tenantDirectory;
+    private readonly ITwoFactorChallengeRepository challenges;
+    private readonly ISecretProtector secretProtector;
     private readonly ILocalizationService localization;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<LoginCommandHandler> logger;
@@ -41,6 +43,8 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
         ITokenService tokens,
         IClientInfo client,
         UserTenantDirectory tenantDirectory,
+        ITwoFactorChallengeRepository challenges,
+        ISecretProtector secretProtector,
         ILocalizationService localization,
         TimeProvider timeProvider,
         ILogger<LoginCommandHandler> logger)
@@ -54,6 +58,8 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
         this.tokens = tokens;
         this.client = client;
         this.tenantDirectory = tenantDirectory;
+        this.challenges = challenges;
+        this.secretProtector = secretProtector;
         this.localization = localization;
         this.timeProvider = timeProvider;
         this.logger = logger;
@@ -116,6 +122,11 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
         }
 
         throttle?.Reset();
+        if (user!.IsPlatformAdmin)
+        {
+            return await this.BeginTwoFactorAsync(user, now, cancellationToken).ConfigureAwait(false);
+        }
+
         IReadOnlyList<TenantSummary> tenants = await this.tenantDirectory.ListAsync(user!.Id, cancellationToken).ConfigureAwait(false);
         Guid? tenantId = tenants.Count == 1 ? tenants[0].Id : null;
         string refreshToken = this.tokens.CreateRefreshToken();
@@ -127,6 +138,26 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
         this.logger.LogInformation("Giriş başarılı: kişi {UserId}, oturum {SessionId}, kurum {TenantId}", user.Id, session.Id, tenantId);
         IssuedAccessToken access = this.tokens.IssueAccessToken(user.Id, session.Id, tenantId, now);
         return new AuthResult(access.Token, access.ExpiresAt, refreshToken, tenantId is null, tenants);
+    }
+
+    /// <summary>
+    /// Platform yöneticisi (spec 0007): şifre doğru, oturum henüz açılmaz; 5 dakikalık iki adımlı doğrulama beklemesi döner.
+    /// Şifreleme anahtarı ayarlanmamışsa giriş güvenli biçimde reddedilir (diğer kişilerin girişi etkilenmez).
+    /// </summary>
+    private async Task<AuthResult> BeginTwoFactorAsync(User user, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (!this.secretProtector.IsConfigured)
+        {
+            await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            this.logger.LogError("Platform yöneticisi girişi reddedildi: iki adımlı doğrulama yapılandırılmamış (TwoFactor:EncryptionKey yok)");
+            throw new AuthorizationException(await this.localization.GetAsync(IdentityMessages.TwoFactorNotConfigured).ConfigureAwait(false));
+        }
+
+        string token = this.tokens.CreateRefreshToken();
+        this.challenges.Add(TwoFactorChallenge.Create(user.Id, this.tokens.HashRefreshToken(token), now));
+        await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        this.logger.LogInformation("Giriş: kişi {UserId} için iki adımlı doğrulama bekleniyor", user.Id);
+        return new AuthResult(string.Empty, now, null, false, [], token, user.TwoFactorEnabledAt is null);
     }
 
     private async Task RejectAsync(string email, LoginThrottle? throttle, DateTimeOffset now, string? ip, CancellationToken cancellationToken)

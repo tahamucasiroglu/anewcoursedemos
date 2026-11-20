@@ -41,6 +41,8 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<PasswordResetToken> PasswordResetTokens => this.Set<PasswordResetToken>();
 
+    public DbSet<TwoFactorChallenge> TwoFactorChallenges => this.Set<TwoFactorChallenge>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;

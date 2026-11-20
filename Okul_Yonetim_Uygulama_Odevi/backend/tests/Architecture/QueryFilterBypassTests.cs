@@ -11,6 +11,7 @@ public sealed class QueryFilterBypassTests
 {
     private static readonly string[] AllowList =
     [
+        "src/Persistence/Repositories/PlatformDirectory.cs",
         "src/Persistence/Repositories/RoleAssignmentRepository.cs",
         "src/Persistence/Repositories/TenantRepository.cs",
     ];

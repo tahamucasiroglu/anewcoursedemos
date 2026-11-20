@@ -17,5 +17,8 @@ public interface ICurrentSession
 
     bool IsFounder { get; }
 
+    /// <summary>Platform yöneticisi ve bu oturum iki adımlı doğrulamayla açılmış (spec 0007).</summary>
+    bool IsPlatformAdmin { get; }
+
     IReadOnlyCollection<Guid> VisibleBranchIds { get; }
 }

@@ -22,6 +22,10 @@ public static class IdentityMessages
     public const string BranchNameRequired = "BranchNameRequired";
     public const string FullNameRequired = "FullNameRequired";
     public const string NameTooLong = "NameTooLong";
+    public const string TwoFactorNotConfigured = "TwoFactorNotConfigured";
+    public const string TwoFactorChallengeInvalid = "TwoFactorChallengeInvalid";
+    public const string TwoFactorCodeWrong = "TwoFactorCodeWrong";
+    public const string TwoFactorCodeRequired = "TwoFactorCodeRequired";
 
     private static readonly string[] Locales = ["tr"];
 

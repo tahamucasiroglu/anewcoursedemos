@@ -18,10 +18,13 @@ public sealed class CurrentSession : ICurrentSession
 
     public bool IsFounder { get; private set; }
 
+    public bool IsPlatformAdmin { get; private set; }
+
     public IReadOnlyCollection<Guid> VisibleBranchIds { get; private set; } = [];
 
-    internal void Authenticate(Guid userId, Guid sessionId, Guid? tenantId, bool isFounder, IReadOnlyCollection<Guid> branchIds)
+    internal void Authenticate(Guid userId, Guid sessionId, Guid? tenantId, bool isFounder, IReadOnlyCollection<Guid> branchIds, bool isPlatformAdmin = false)
     {
+        this.IsPlatformAdmin = isPlatformAdmin;
         this.IsAuthenticated = true;
         this.UserId = userId;
         this.SessionId = sessionId;

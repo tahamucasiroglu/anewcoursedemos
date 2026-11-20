@@ -21,6 +21,9 @@ public sealed class UserRepository : IUserRepository
     public Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken) =>
         this.context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
+    public Task<bool> IsPlatformAdminAsync(Guid id, CancellationToken cancellationToken) =>
+        this.context.Users.AsNoTracking().AnyAsync(u => u.Id == id && u.IsPlatformAdmin, cancellationToken);
+
     public Task<string?> FindEmailAsync(Guid id, CancellationToken cancellationToken) =>
         this.context.Users.AsNoTracking().Where(u => u.Id == id).Select(u => u.Email).FirstOrDefaultAsync(cancellationToken);
 

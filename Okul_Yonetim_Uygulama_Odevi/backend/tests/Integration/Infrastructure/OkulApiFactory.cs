@@ -15,20 +15,26 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
 {
     public const string TestSigningKey = "okul-test-imza-anahtari-en-az-32-bayt-0123456789";
 
+    /// <summary>Testlere özel iki adımlı doğrulama şifreleme anahtarı (32 bayt; spec 0007). Gerçek ortamda kullanılmaz.</summary>
+    public const string TestTwoFactorKey = "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=";
+
     private readonly string connectionString;
     private readonly bool addThrowingEndpoint;
     private readonly TimeProvider? timeProvider;
     private readonly int loginRateLimitPerMinute;
     private readonly Action<IServiceCollection>? configureServices;
+    private readonly string? twoFactorKey;
 
     public OkulApiFactory(
         string connectionString,
         bool addThrowingEndpoint = false,
         TimeProvider? timeProvider = null,
         int loginRateLimitPerMinute = 1000,
-        Action<IServiceCollection>? configureServices = null)
+        Action<IServiceCollection>? configureServices = null,
+        string? twoFactorKey = TestTwoFactorKey)
     {
         this.configureServices = configureServices;
+        this.twoFactorKey = twoFactorKey;
         this.connectionString = connectionString;
         this.addThrowingEndpoint = addThrowingEndpoint;
         this.timeProvider = timeProvider;
@@ -52,6 +58,11 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("FileLogging:Folder", this.LogFolder);
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
+        if (this.twoFactorKey is not null)
+        {
+            builder.UseSetting("TwoFactor:EncryptionKey", this.twoFactorKey);
+        }
+
         builder.UseSetting("Auth:LoginRateLimitPerMinute", this.loginRateLimitPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.ConfigureServices(services =>
         {
