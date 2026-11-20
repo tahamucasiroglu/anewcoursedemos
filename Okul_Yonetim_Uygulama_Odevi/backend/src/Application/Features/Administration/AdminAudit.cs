@@ -19,4 +19,7 @@ public sealed class AdminAudit
 
     public void Record(AuditAction action, Guid tenantId, Guid actorId, string targetType, Guid targetId) =>
         this.audit.Add(AuditEntry.Record(action, this.timeProvider.GetUtcNow(), tenantId, actorId, targetType: targetType, targetId: targetId, ipAddress: this.client.IpAddress));
+
+    public void Record(AuditAction action, Guid tenantId, Guid actorId, string targetType, Guid targetId, string detail) =>
+        this.audit.Add(AuditEntry.Record(action, this.timeProvider.GetUtcNow(), tenantId, actorId, targetType: targetType, targetId: targetId, ipAddress: this.client.IpAddress, detail: detail));
 }

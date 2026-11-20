@@ -1,5 +1,6 @@
 using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
 using NArchitecture.Core.Mediator;
+using OkulYonetim.Application.Features.Communication;
 using OkulYonetim.Application.Features.Identity.Sessions;
 using OkulYonetim.Application.Features.Organization;
 using OkulYonetim.Application.Features.Organization.Queries.GetBranches;
@@ -47,11 +48,13 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
         Tenant? tenant = await this.tenants.GetCurrentAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<string> roles = [];
         IReadOnlyList<BranchSummary> branches = [];
+        int unreadNotices = 0;
         if (tenant is not null)
         {
             IReadOnlyList<RoleAssignment> assignments = await this.roleAssignments.ListForUserInTenantAsync(user.Id, tenant.Id, cancellationToken).ConfigureAwait(false);
             roles = [.. assignments.Select(a => a.Role).Distinct().Order().Select(r => r.ToString())];
             branches = await this.sender.Send(new GetBranchesQuery(), cancellationToken).ConfigureAwait(false);
+            unreadNotices = await this.sender.Send(new CountMyUnreadNoticesQuery(), cancellationToken).ConfigureAwait(false);
         }
 
         IReadOnlyList<TenantSummary> all = await this.tenantDirectory.ListAsync(user.Id, cancellationToken).ConfigureAwait(false);
@@ -62,6 +65,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
             roles,
             branches,
             all,
-            this.currentSession.IsPlatformAdmin);
+            this.currentSession.IsPlatformAdmin,
+            unreadNotices);
     }
 }

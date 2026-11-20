@@ -730,6 +730,114 @@
         }
       }
     },
+    "/api/admin/classrooms/{id}/teachers": {
+      "get": {
+        "tags": [
+          "AdminClassroomTeachers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomTeachersView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AdminClassroomTeachers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassroomTeachersRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassroomTeachersRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassroomTeachersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomTeachersView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/grade-levels": {
       "get": {
         "tags": [
@@ -2197,6 +2305,166 @@
         }
       }
     },
+    "/api/attendance/classrooms": {
+      "get": {
+        "tags": [
+          "Attendance"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyClassroomRow"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attendance/classrooms/{id}/today": {
+      "get": {
+        "tags": [
+          "Attendance"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSheetView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Attendance"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAttendanceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAttendanceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAttendanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSaveResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [
@@ -2950,6 +3218,63 @@
         }
       }
     },
+    "/api/notices": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NoticeView"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notices/read": {
+      "post": {
+        "tags": [
+          "Notices"
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/schools": {
       "get": {
         "tags": [
@@ -3229,6 +3554,152 @@
           }
         },
         "description": "Ekleme sonucu: kişi kimliği; e-posta sistemde zaten kayıtlıysa `ExistingAccount` (şifre üretilmez, değişmez);\ndeğilse bir kez gösterilecek geçici şifre. Bu yanıt dışında geçici şifre hiçbir yerde yer almaz."
+      },
+      "AttendanceEntryInput": {
+        "required": [
+          "studentId",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Kaydedilen yoklamada bir öğrencinin durumu: `Present`, `Absent` ya da `Late`."
+      },
+      "AttendanceSaveResult": {
+        "required": [
+          "present",
+          "absent",
+          "late",
+          "notifiedGuardians",
+          "studentsWithoutGuardian",
+          "savedTime"
+        ],
+        "type": "object",
+        "properties": {
+          "present": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "absent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "late": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notifiedGuardians": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "studentsWithoutGuardian": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "savedTime": {
+            "type": "string"
+          }
+        },
+        "description": "Kaydetme sonucu (spec 0010 gereksinim 4): var/yok/geç sayıları, bu kayıtla bildirim giden veli sayısı, velisi kayıtlı\nolmayan devamsız öğrenci sayısı ve kayıt saati (Türkiye saatiyle `SS:DD`). Metni istemci kurar."
+      },
+      "AttendanceSheetView": {
+        "required": [
+          "classroomId",
+          "classroomName",
+          "branchName",
+          "day",
+          "isSchoolDay",
+          "isSaved",
+          "savedTime",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "classroomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "isSchoolDay": {
+            "type": "boolean"
+          },
+          "isSaved": {
+            "type": "boolean"
+          },
+          "savedTime": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceStudentRow"
+            }
+          }
+        },
+        "description": "Bugünkü yoklama ekranı (spec 0010 gereksinim 3, 5): sınıf, şube, gün (Türkiye günü), okul günü mü, kaydedildi mi ve\nkayıt saati (Türkiye saatiyle `SS:DD`), öğrenciler Türkçe ad sırasıyla. Okul günü değilse öğrenci listesi boştur."
+      },
+      "AttendanceStudentRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "description": "Yoklama listesindeki öğrenci ve durumu (`Present`, `Absent`, `Late`; kayıt yoksa `Present`)."
       },
       "AuthTokensResponse": {
         "required": [
@@ -3692,6 +4163,60 @@
         },
         "description": "Kişinin görebildiği sınıf (öğrenci ve yoklama ekranları için okuma ucu): dönem, şube, seviye ve ad."
       },
+      "ClassroomTeachersRequest": {
+        "required": [
+          "teacherUserIds"
+        ],
+        "type": "object",
+        "properties": {
+          "teacherUserIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "Sınıfın yeni öğretmen listesi (spec 0010): kişi kimlikleri; boş liste bütün atamaları kaldırır."
+      },
+      "ClassroomTeachersView": {
+        "required": [
+          "classroomId",
+          "classroomName",
+          "branchName",
+          "assigned",
+          "candidates"
+        ],
+        "type": "object",
+        "properties": {
+          "classroomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "assigned": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherOption"
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherOption"
+            }
+          }
+        },
+        "description": "Bir sınıfın öğretmenleri (spec 0010 gereksinim 1): atanmış kişiler ve sınıfın şubesinde etkin Öğretmen olan adaylar,\nikisi de Türkçe ad sırasıyla."
+      },
       "CreateSchoolRequest": {
         "required": [
           "schoolName",
@@ -4103,9 +4628,18 @@
           "isPlatformAdmin": {
             "type": "boolean",
             "default": false
+          },
+          "unreadNoticeCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         },
-        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum)."
+        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum) ve velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0)."
       },
       "MessageResponse": {
         "required": [
@@ -4118,6 +4652,31 @@
           }
         },
         "description": "Bilgi mesajı yanıtı (ör. \"Bu e-posta sistemde kayıtlıysa …\")."
+      },
+      "MyClassroomRow": {
+        "required": [
+          "id",
+          "name",
+          "branchName",
+          "takenToday"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "takenToday": {
+            "type": "boolean"
+          }
+        },
+        "description": "\"Sınıflarım\" satırı (spec 0010 gereksinim 2): sınıf, şube ve bugünkü yoklamanın alınıp alınmadığı."
       },
       "MyProfile": {
         "required": [
@@ -4141,6 +4700,50 @@
           }
         },
         "description": "Kişinin kendi profili (Hesabım): ad-soyad, e-posta (salt okunur), telefon."
+      },
+      "NoticeView": {
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "day",
+          "kind",
+          "text",
+          "isRead",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` —\n\"düzeltildi\" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir."
       },
       "PanelSchoolResult": {
         "required": [
@@ -4361,6 +4964,32 @@
           }
         },
         "description": "Formdan gelen rol seçimi: rol adı (Founder, Teacher, Guardian, Accounting) ve şubeleri (kurucuda boş)."
+      },
+      "SaveAttendanceRequest": {
+        "required": [
+          "day",
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "entries": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AttendanceEntryInput"
+            }
+          }
+        },
+        "description": "Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı) ve öğrenci durumları."
       },
       "SchoolCalendarView": {
         "required": [
@@ -4893,6 +5522,27 @@
         },
         "description": "Sistem durumu yanıtı. Yalnızca durum (\"healthy\" / \"unavailable\") ve Türkçe mesaj taşır;\nsürüm, sunucu, bağlantı veya hata ayrıntısı bilinçli olarak yoktur (spec 0001). Tek doğruluk kaynağı\n`Kind`'dır (JSON'a yazılmaz); `Status` metni yalnızca kurucuda ondan hesaplanır, bu yüzden ikisi\nayrışamaz. Dışarıdan yalnızca `From` ile oluşturulur."
       },
+      "TeacherOption": {
+        "required": [
+          "userId",
+          "fullName",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "description": "Sınıf öğretmeni ekranındaki kişi (spec 0010): kimlik, ad-soyad ve e-posta (aynı adlı öğretmenleri ayırmak için)."
+      },
       "TenantSummary": {
         "required": [
           "id",
@@ -5068,6 +5718,9 @@
       "name": "AdminClassrooms"
     },
     {
+      "name": "AdminClassroomTeachers"
+    },
+    {
       "name": "AdminGradeLevels"
     },
     {
@@ -5078,6 +5731,9 @@
     },
     {
       "name": "AdminTerms"
+    },
+    {
+      "name": "Attendance"
     },
     {
       "name": "Auth"
@@ -5093,6 +5749,9 @@
     },
     {
       "name": "MyChildren"
+    },
+    {
+      "name": "Notices"
     },
     {
       "name": "PlatformSchools"

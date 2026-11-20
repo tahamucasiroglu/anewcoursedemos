@@ -18,6 +18,9 @@ public interface IStudentRepository
     /// <summary>Seçili okulda aynı okul numarası (karşılaştırma biçimiyle) başka bir öğrencide mi; <paramref name="exceptId"/> hariç.</summary>
     Task<bool> SchoolNumberExistsAsync(string schoolNumberKey, Guid? exceptId, CancellationToken cancellationToken);
 
+    /// <summary>Sınıfa kayıtlı, "ayrıldı" olmayan (görünür) öğrenciler — yoklama listesi (spec 0010); sıralama uygulamada.</summary>
+    Task<IReadOnlyList<RosterStudent>> ListClassroomRosterAsync(Guid classroomId, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<PickupPerson>> ListPickupPersonsAsync(Guid studentId, CancellationToken cancellationToken);
 
     void Add(Student student);

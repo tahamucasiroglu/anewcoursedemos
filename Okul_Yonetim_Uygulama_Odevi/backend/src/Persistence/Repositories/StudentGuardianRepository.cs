@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OkulYonetim.Application.Features.Students;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Domain.Identity;
 using OkulYonetim.Domain.Students;
 using OkulYonetim.Persistence.Contexts;
 
@@ -61,6 +62,16 @@ public sealed class StudentGuardianRepository : IStudentGuardianRepository
                from c in classes.DefaultIfEmpty()
                where g.GuardianUserId == guardianUserId && s.IsActive
                select new ChildRow(s.Id, s.FullName, b.Name, c == null ? null : c.Name))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<GuardianContact>> ListActiveGuardianContactsAsync(IReadOnlyCollection<Guid> studentIds, CancellationToken cancellationToken) =>
+        await (from g in this.context.StudentGuardians.AsNoTracking()
+               join u in this.context.Users.AsNoTracking() on g.GuardianUserId equals u.Id
+               where studentIds.Contains(g.StudentId)
+                   && this.context.Memberships.Any(m => m.UserId == g.GuardianUserId && m.IsActive)
+                   && this.context.RoleAssignments.Any(r => r.UserId == g.GuardianUserId && r.Role == Role.Guardian)
+               orderby g.StudentId, g.CreatedAt, g.Id
+               select new GuardianContact(g.StudentId, u.Id, u.FullName, u.Email))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public Task<bool> IsLinkedAsync(Guid studentId, Guid guardianUserId, CancellationToken cancellationToken) =>

@@ -42,6 +42,12 @@ public sealed class StudentRepository : IStudentRepository
     public Task<bool> SchoolNumberExistsAsync(string schoolNumberKey, Guid? exceptId, CancellationToken cancellationToken) =>
         this.context.Students.AnyAsync(s => s.SchoolNumberKey == schoolNumberKey && s.Id != exceptId, cancellationToken);
 
+    public async Task<IReadOnlyList<RosterStudent>> ListClassroomRosterAsync(Guid classroomId, CancellationToken cancellationToken) =>
+        await this.context.Students.AsNoTracking()
+            .Where(s => s.ClassroomId == classroomId && s.IsActive)
+            .Select(s => new RosterStudent(s.Id, s.FullName))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public async Task<IReadOnlyList<PickupPerson>> ListPickupPersonsAsync(Guid studentId, CancellationToken cancellationToken) =>
         await this.context.PickupPersons.Where(p => p.StudentId == studentId).OrderBy(p => p.Position)
             .ToListAsync(cancellationToken).ConfigureAwait(false);

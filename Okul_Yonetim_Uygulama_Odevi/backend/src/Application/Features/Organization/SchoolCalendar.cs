@@ -7,7 +7,7 @@ namespace OkulYonetim.Application.Features.Organization;
 /// Okulun takvim günü ve güncel dönem seçimi (spec 0008 gereksinim 5). "Bugün" Türkiye saatiyle hesaplanır
 /// (<c>Europe/Istanbul</c>; saat dilimi bulunamazsa sabit UTC+3 — Türkiye 2016'dan beri yaz saati uygulamıyor — ve bir
 /// Warning logu). Güncel dönem bugünü kapsayan dönemdir (uç günler dahil); yoksa henüz başlamamış en yakın dönem
-/// ("yaklaşan"); o da yoksa yok. Yönetim listesi, okul takvimi ve sonraki spec'ler (yoklama) aynı kuralı kullanır.
+/// ("yaklaşan"); o da yoksa yok. Yönetim listesi, okul takvimi ve yoklama (spec 0010: "okul günü mü" — dönem içi ve tatil değil) aynı kuralı kullanır.
 /// </summary>
 public sealed class SchoolCalendar
 {
@@ -53,6 +53,21 @@ public sealed class SchoolCalendar
         return PickCurrent(all, today) ?? all.OrderByDescending(t => t.StartDate).FirstOrDefault();
     }
 
+    /// <summary>
+    /// Gün okul günü mü (spec 0010 C-6): dönemin içinde ve o güne denk gelen silinmemiş bir tatil kaydı yok. Hafta sonu
+    /// engellenmez (kurslar hafta sonu çalışır); sınav ve etkinlik günleri okul günüdür.
+    /// </summary>
+    public static bool IsSchoolDay(Term term, IEnumerable<CalendarEntry> entries, DateOnly day)
+    {
+        ArgumentNullException.ThrowIfNull(term);
+        ArgumentNullException.ThrowIfNull(entries);
+        return term.Contains(day) && !entries.Any(e => e.Kind == CalendarEntryKind.Holiday && e.DeletedAt is null && e.StartDate <= day && day <= e.EndDate);
+    }
+
     /// <summary>Okulun bugünü (Türkiye günü).</summary>
     public DateOnly Today() => TurkeyDay(this.timeProvider.GetUtcNow(), this.zone);
+
+    /// <summary>Verilen anın Türkiye saatiyle gösterimi (spec 0010: yoklamanın kayıt saati).</summary>
+    public DateTimeOffset TurkeyTime(DateTimeOffset instant) =>
+        this.zone is null ? instant.ToOffset(FixedTurkeyOffset) : TimeZoneInfo.ConvertTime(instant, this.zone);
 }

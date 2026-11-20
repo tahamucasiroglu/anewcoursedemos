@@ -21,6 +21,7 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
         builder.Property(a => a.TargetType).HasMaxLength(64);
         builder.Property(a => a.IpAddress).HasMaxLength(64);
         builder.Property(a => a.Origin).HasMaxLength(256);
+        builder.Property(a => a.Detail).HasMaxLength(256);
         builder.HasIndex(a => a.OccurredAt);
         builder.HasIndex(a => a.TenantId);
     }

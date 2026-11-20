@@ -34,6 +34,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<Features.Administration.AdminAudit>();
         services.AddScoped<Features.Administration.MemberAccounts>();
         services.AddScoped<Features.Students.StudentHealth>();
+        services.AddScoped<Features.Attendance.AttendanceGuard>();
         services.AddSingleton<Features.Organization.SchoolCalendar>();
         return services;
     }

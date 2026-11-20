@@ -1,0 +1,5 @@
+AbsentText: "{student} bugün ({date}) {school}'nda yoklamada gelmedi olarak işaretlendi. Bilginiz yoksa okulla iletişime geçin."
+CorrectedText: "{student} için bugünkü yoklama düzeltildi: okulda."
+AbsentSubject: "{school} — devamsızlık bildirimi"
+CorrectedSubject: "{school} — yoklama düzeltmesi"
+EmailFooter: "Bu e-posta Okul Yönetim uygulamasından otomatik gönderildi."

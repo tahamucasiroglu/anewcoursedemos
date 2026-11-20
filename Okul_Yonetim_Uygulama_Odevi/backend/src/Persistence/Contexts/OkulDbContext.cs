@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Domain.Attendance;
+using OkulYonetim.Domain.Communication;
 using OkulYonetim.Domain.Compliance;
 using OkulYonetim.Domain.Identity;
 using OkulYonetim.Domain.Organization;
@@ -11,7 +13,8 @@ namespace OkulYonetim.Persistence.Contexts;
 /// Uygulamanın tek veritabanı bağlamı (PostgreSQL, snake_case). Kurum ve şube izolasyonu (S1) burada, global sorgu
 /// filtresiyle uygulanır: kurum yalnızca oturumdaki kurumu, şube yalnızca o kurumun ve (kurucu değilse) kişinin atandığı
 /// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması, üyelik, sınıf seviyesi, dönem ve takvim kaydı
-/// (silinmemiş) yalnızca o kurumunkileri, sınıf ve öğrenci yalnızca görünür şubelerinkileri (spec 0008, 0009), veli bağı ve teslim kişisi yalnızca o kurumunkileri gösterir. Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
+/// (silinmemiş) yalnızca o kurumunkileri, sınıf ve öğrenci yalnızca görünür şubelerinkileri (spec 0008, 0009), veli bağı ve teslim kişisi yalnızca o kurumunkileri, sınıf öğretmeni ataması ve yoklama görünür şubelerinkileri, yoklama satırı
+/// ve veli bildirimi o kurumunkileri gösterir (spec 0010). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
 /// göstermez. Filtre değerleri sorgu anında <see cref="ICurrentSession"/>'dan okunur. Filtreyi delen okumalar
 /// (<c>IgnoreQueryFilters</c>) yalnızca izinli listedeki depo metotlarındadır (T5).
 /// </summary>
@@ -59,6 +62,14 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<PickupPerson> PickupPersons => this.Set<PickupPerson>();
 
+    public DbSet<ClassroomTeacher> ClassroomTeachers => this.Set<ClassroomTeacher>();
+
+    public DbSet<AttendanceSheet> AttendanceSheets => this.Set<AttendanceSheet>();
+
+    public DbSet<AttendanceEntry> AttendanceEntries => this.Set<AttendanceEntry>();
+
+    public DbSet<GuardianNotice> GuardianNotices => this.Set<GuardianNotice>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;
@@ -91,5 +102,14 @@ public sealed class OkulDbContext : DbContext
             s.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == s.BranchId));
         modelBuilder.Entity<StudentGuardian>().HasQueryFilter(g => g.TenantId == this.CurrentTenantId);
         modelBuilder.Entity<PickupPerson>().HasQueryFilter(p => p.TenantId == this.CurrentTenantId);
+
+        // Spec 0010: sınıf öğretmeni ataması ve yoklama, sınıf gibi şubesinin görünürlüğünü miras alır; yoklama satırı ve veli
+        // bildirimi kurum filtreli. Velinin "yalnızca kendi çocuğunun bildirimi" duvarı bağ üzerinden uygulanır (plan 0010 Risks 6).
+        modelBuilder.Entity<ClassroomTeacher>().HasQueryFilter(t =>
+            t.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == t.BranchId));
+        modelBuilder.Entity<AttendanceSheet>().HasQueryFilter(s =>
+            s.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == s.BranchId));
+        modelBuilder.Entity<AttendanceEntry>().HasQueryFilter(e => e.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<GuardianNotice>().HasQueryFilter(n => n.TenantId == this.CurrentTenantId);
     }
 }

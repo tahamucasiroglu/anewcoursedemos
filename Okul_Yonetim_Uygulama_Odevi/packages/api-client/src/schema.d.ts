@@ -707,6 +707,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/classrooms/{id}/teachers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClassroomTeachersView"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ClassroomTeachersRequest"];
+                    "text/json": components["schemas"]["ClassroomTeachersRequest"];
+                    "application/*+json": components["schemas"]["ClassroomTeachersRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClassroomTeachersView"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/grade-levels": {
         parameters: {
             query?: never;
@@ -2046,6 +2137,159 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/attendance/classrooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MyClassroomRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/classrooms/{id}/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AttendanceSheetView"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SaveAttendanceRequest"];
+                    "text/json": components["schemas"]["SaveAttendanceRequest"];
+                    "application/*+json": components["schemas"]["SaveAttendanceRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AttendanceSaveResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -2871,6 +3115,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NoticeView"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notices/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/schools": {
         parameters: {
             query?: never;
@@ -3136,6 +3468,52 @@ export interface components {
             existingAccount: boolean;
             temporaryPassword: null | string;
         };
+        /** @description Kaydedilen yoklamada bir öğrencinin durumu: `Present`, `Absent` ya da `Late`. */
+        AttendanceEntryInput: {
+            /** Format: uuid */
+            studentId: string;
+            status: null | string;
+        };
+        /**
+         * @description Kaydetme sonucu (spec 0010 gereksinim 4): var/yok/geç sayıları, bu kayıtla bildirim giden veli sayısı, velisi kayıtlı
+         *     olmayan devamsız öğrenci sayısı ve kayıt saati (Türkiye saatiyle `SS:DD`). Metni istemci kurar.
+         */
+        AttendanceSaveResult: {
+            /** Format: int32 */
+            present: number | string;
+            /** Format: int32 */
+            absent: number | string;
+            /** Format: int32 */
+            late: number | string;
+            /** Format: int32 */
+            notifiedGuardians: number | string;
+            /** Format: int32 */
+            studentsWithoutGuardian: number | string;
+            savedTime: string;
+        };
+        /**
+         * @description Bugünkü yoklama ekranı (spec 0010 gereksinim 3, 5): sınıf, şube, gün (Türkiye günü), okul günü mü, kaydedildi mi ve
+         *     kayıt saati (Türkiye saatiyle `SS:DD`), öğrenciler Türkçe ad sırasıyla. Okul günü değilse öğrenci listesi boştur.
+         */
+        AttendanceSheetView: {
+            /** Format: uuid */
+            classroomId: string;
+            classroomName: string;
+            branchName: string;
+            /** Format: date */
+            day: string;
+            isSchoolDay: boolean;
+            isSaved: boolean;
+            savedTime: null | string;
+            students: components["schemas"]["AttendanceStudentRow"][];
+        };
+        /** @description Yoklama listesindeki öğrenci ve durumu (`Present`, `Absent`, `Late`; kayıt yoksa `Present`). */
+        AttendanceStudentRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            status: string;
+        };
         /**
          * @description Giriş / yenileme / okul seçimi yanıtı: erişim anahtarı ve bitişi; yenileme anahtarı yalnızca mobil (gövde) isteğinde
          *     dolu, web'de boş (çerezde); okul seçimi gerekiyor mu; kişinin okulları. Platform yöneticisinde (spec 0007) oturum
@@ -3283,6 +3661,22 @@ export interface components {
             name: string;
             isActive: boolean;
         };
+        /** @description Sınıfın yeni öğretmen listesi (spec 0010): kişi kimlikleri; boş liste bütün atamaları kaldırır. */
+        ClassroomTeachersRequest: {
+            teacherUserIds: null | string[];
+        };
+        /**
+         * @description Bir sınıfın öğretmenleri (spec 0010 gereksinim 1): atanmış kişiler ve sınıfın şubesinde etkin Öğretmen olan adaylar,
+         *     ikisi de Türkçe ad sırasıyla.
+         */
+        ClassroomTeachersView: {
+            /** Format: uuid */
+            classroomId: string;
+            classroomName: string;
+            branchName: string;
+            assigned: components["schemas"]["TeacherOption"][];
+            candidates: components["schemas"]["TeacherOption"][];
+        };
         /** @description Panelden okul ekle: okul adı, ilk şube adı, kurucu ad-soyad ve e-posta. */
         CreateSchoolRequest: {
             schoolName: null | string;
@@ -3393,7 +3787,7 @@ export interface components {
         /**
          * @description "Ben kimim" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,
          *     Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
-         *     platform yöneticisi ve kodla açılmış oturum).
+         *     platform yöneticisi ve kodla açılmış oturum) ve velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0).
          */
         MeResponse: {
             fullName: string;
@@ -3404,16 +3798,47 @@ export interface components {
             tenants: components["schemas"]["TenantSummary"][];
             /** @default false */
             isPlatformAdmin: boolean;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            unreadNoticeCount: number | string;
         };
         /** @description Bilgi mesajı yanıtı (ör. "Bu e-posta sistemde kayıtlıysa …"). */
         MessageResponse: {
             message: string;
+        };
+        /** @description "Sınıflarım" satırı (spec 0010 gereksinim 2): sınıf, şube ve bugünkü yoklamanın alınıp alınmadığı. */
+        MyClassroomRow: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            branchName: string;
+            takenToday: boolean;
         };
         /** @description Kişinin kendi profili (Hesabım): ad-soyad, e-posta (salt okunur), telefon. */
         MyProfile: {
             fullName: string;
             email: string;
             phone: null | string;
+        };
+        /**
+         * @description Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` —
+         *     "düzeltildi" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir.
+         */
+        NoticeView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            studentId: string;
+            studentName: string;
+            /** Format: date */
+            day: string;
+            kind: string;
+            text: string;
+            isRead: boolean;
+            /** Format: date-time */
+            at: string;
         };
         /** @description Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok. */
         PanelSchoolResult: {
@@ -3472,6 +3897,12 @@ export interface components {
         RoleInput: {
             role: string;
             branchIds: string[];
+        };
+        /** @description Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı) ve öğrenci durumları. */
+        SaveAttendanceRequest: {
+            /** Format: date */
+            day: null | string;
+            entries: null | components["schemas"]["AttendanceEntryInput"][];
         };
         /**
          * @description Okul takvimi (spec 0008 gereksinim 8, herkes salt okunur): güncel ya da yaklaşan dönem (yoksa boş) ve o dönemin
@@ -3633,6 +4064,13 @@ export interface components {
         SystemHealthResponse: {
             status: string;
             message: string;
+        };
+        /** @description Sınıf öğretmeni ekranındaki kişi (spec 0010): kimlik, ad-soyad ve e-posta (aynı adlı öğretmenleri ayırmak için). */
+        TeacherOption: {
+            /** Format: uuid */
+            userId: string;
+            fullName: string;
+            email: string;
         };
         /** @description Okul seçimi ve hoş geldin ekranı için kurumun kimliği ve adı. */
         TenantSummary: {

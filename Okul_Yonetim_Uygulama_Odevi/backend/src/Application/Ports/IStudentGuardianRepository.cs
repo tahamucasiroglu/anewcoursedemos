@@ -23,6 +23,12 @@ public interface IStudentGuardianRepository
     /// <summary>Velinin bağlı ve "ayrıldı" olmayan çocukları (seçili okulda).</summary>
     Task<IReadOnlyList<ChildRow>> ListChildrenAsync(Guid guardianUserId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Öğrencilerin okulda etkin velileri (spec 0010 bildirimi): bağ + seçili okulda etkin üyelik + Veli rolü; kişinin adı ve
+    /// e-postasıyla.
+    /// </summary>
+    Task<IReadOnlyList<GuardianContact>> ListActiveGuardianContactsAsync(IReadOnlyCollection<Guid> studentIds, CancellationToken cancellationToken);
+
     Task<bool> IsLinkedAsync(Guid studentId, Guid guardianUserId, CancellationToken cancellationToken);
 
     void Add(StudentGuardian link);

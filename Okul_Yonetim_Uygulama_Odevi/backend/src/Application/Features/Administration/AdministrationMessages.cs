@@ -3,7 +3,7 @@ using NArchitecture.Core.Localization.Abstraction;
 namespace OkulYonetim.Application.Features.Administration;
 
 /// <summary>
-/// Yönetim (spec 0005, akademik yapı spec 0008) metinlerinin anahtarları ve okuyucusu (YAML: <c>Features/Administration/Resources/Locales/
+/// Yönetim (spec 0005, akademik yapı spec 0008, sınıf öğretmeni spec 0010) metinlerinin anahtarları ve okuyucusu (YAML: <c>Features/Administration/Resources/Locales/
 /// administration.tr.yaml</c>). Metin koda gömülmez; doğrulayıcılar eşzamanlı okuyucuyu kullanır.
 /// </summary>
 public static class AdministrationMessages
@@ -58,6 +58,10 @@ public static class AdministrationMessages
     public const string CalendarEndBeforeStart = "CalendarEndBeforeStart";
     public const string CalendarEntryOutsideTerm = "CalendarEntryOutsideTerm";
     public const string CalendarEntryNotFound = "CalendarEntryNotFound";
+    public const string TeacherListRequired = "TeacherListRequired";
+    public const string TeacherRepeated = "TeacherRepeated";
+    public const string TeachersTooMany = "TeachersTooMany";
+    public const string TeacherUnavailable = "TeacherUnavailable";
 
     private static readonly string[] Locales = ["tr"];
 

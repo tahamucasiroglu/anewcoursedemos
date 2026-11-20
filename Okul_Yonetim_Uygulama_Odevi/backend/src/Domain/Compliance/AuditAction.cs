@@ -59,4 +59,8 @@ public enum AuditAction
     GuardianUnlinked = 54,
     PickupPersonsChanged = 55,
     StudentHealthUpdated = 56,
+    ClassroomTeacherAssigned = 57,
+    ClassroomTeacherRemoved = 58,
+    AttendanceRecorded = 59,
+    AttendanceCorrected = 60,
 }

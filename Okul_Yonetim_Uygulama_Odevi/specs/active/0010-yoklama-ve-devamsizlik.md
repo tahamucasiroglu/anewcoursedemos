@@ -1,6 +1,6 @@
 # Spec 0010 — Yoklama ve devamsızlık
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0010-plan.md`
 - Self-critique: done
