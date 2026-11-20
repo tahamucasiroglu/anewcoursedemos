@@ -178,16 +178,17 @@ export function MemberCard({ client, userId, branches, onBack }: Props) {
       {message && <p className={message.error ? "form-error" : "notice"} role={message.error ? "alert" : "status"}>{message.text}</p>}
 
       <form className="auth-form" onSubmit={saveProfile} noValidate aria-label={t("members.profile")}>
+        {!member.canEditProfile && <p id="profile-reason" className="notice">{t("members.profileBlocked")}</p>}
         <label htmlFor="card-fullName">{t("members.fullName")}</label>
-        <input id="card-fullName" value={profile?.fullName ?? ""} onChange={(e) => setProfile({ fullName: e.target.value, phone: profile?.phone ?? "" })}
-          aria-invalid={profileError.fullName ? true : undefined} aria-describedby={profileError.fullName ? "card-fullName-error" : undefined} />
+        <input id="card-fullName" readOnly={!member.canEditProfile} value={profile?.fullName ?? ""} onChange={(e) => setProfile({ fullName: e.target.value, phone: profile?.phone ?? "" })}
+          aria-invalid={profileError.fullName ? true : undefined} aria-describedby={profileError.fullName ? "card-fullName-error" : member.canEditProfile ? undefined : "profile-reason"} />
         {profileError.fullName && <p id="card-fullName-error" className="field-error" role="alert">{fieldText(profileError.fullName)}</p>}
         <label htmlFor="card-phone">{t("members.phone")}</label>
-        <input id="card-phone" type="tel" value={profile?.phone ?? ""} onChange={(e) => setProfile({ fullName: profile?.fullName ?? "", phone: e.target.value })}
-          aria-invalid={profileError.phone ? true : undefined} aria-describedby={profileError.phone ? "card-phone-error" : undefined} />
+        <input id="card-phone" type="tel" readOnly={!member.canEditProfile} value={profile?.phone ?? ""} onChange={(e) => setProfile({ fullName: profile?.fullName ?? "", phone: e.target.value })}
+          aria-invalid={profileError.phone ? true : undefined} aria-describedby={profileError.phone ? "card-phone-error" : member.canEditProfile ? undefined : "profile-reason"} />
         {profileError.phone && <p id="card-phone-error" className="field-error" role="alert">{fieldText(profileError.phone)}</p>}
         <div className="actions">
-          <button type="submit" disabled={busy} aria-busy={busy}>{t("members.save")}</button>
+          <button type="submit" disabled={busy || !member.canEditProfile} aria-busy={busy} aria-describedby={member.canEditProfile ? undefined : "profile-reason"}>{t("members.save")}</button>
         </div>
       </form>
 
@@ -202,8 +203,11 @@ export function MemberCard({ client, userId, branches, onBack }: Props) {
             {t("members.deactivate")}
           </button>
         ) : (
-          <button type="button" className="secondary" disabled={busy} onClick={activate}>{t("members.activate")}</button>
+          <button type="button" className="secondary" disabled={busy || member.roles.length === 0} aria-describedby={member.roles.length === 0 ? "activate-reason" : undefined} onClick={activate}>
+            {t("members.activate")}
+          </button>
         )}
+        {!member.isActive && member.roles.length === 0 && <span id="activate-reason" className="notice">{t("members.activateNeedsRole")}</span>}
         {deactivateBlock && <span id="deactivate-reason" className="notice">{deactivateBlock}</span>}
         <button type="button" className="secondary" disabled={!member.canResetPassword || busy} aria-describedby={member.canResetPassword ? undefined : "reset-reason"} onClick={() => setConfirm("reset")}>
           {t("members.resetPassword")}

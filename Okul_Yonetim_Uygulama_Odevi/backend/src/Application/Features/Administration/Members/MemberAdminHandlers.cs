@@ -78,12 +78,13 @@ public sealed class MemberAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        IExclusiveScope scope = await this.guard.LockTenantAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        User? existing = await this.users.FindByEmailAsync(EmailAddress.Normalize(request.Email), cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, existing?.Id, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
-            IReadOnlyList<(Role Role, Guid? BranchId)> plan = await RolePlan.BuildAsync(request.Roles, this.branches, this.localization, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<(Role Role, Guid? BranchId)> plan = await RolePlan.BuildAsync(request.Roles, [], this.branches, this.localization, cancellationToken).ConfigureAwait(false);
             DateTimeOffset now = this.timeProvider.GetUtcNow();
-            User? user = await this.users.FindByEmailAsync(EmailAddress.Normalize(request.Email), cancellationToken).ConfigureAwait(false);
+            User? user = existing;
             string? temporaryPassword = null;
             if (user is not null)
             {
@@ -115,24 +116,35 @@ public sealed class MemberAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        User user = await this.FindMemberUserAsync(request.UserId, cancellationToken).ConfigureAwait(false);
-        PhoneNumber.TryNormalize(request.Phone, out string? phone);
-        user.UpdateProfile(request.FullName, phone);
-        this.audit.Record(AuditAction.MemberProfileUpdated, tenantId, actorId, nameof(User), user.Id);
-        await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await this.DetailAsync(user.Id, actorId, tenantId, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, request.UserId, cancellationToken).ConfigureAwait(false);
+        await using (scope.ConfigureAwait(false))
+        {
+            User user = await this.FindMemberUserAsync(request.UserId, cancellationToken).ConfigureAwait(false);
+
+            // Ad ve telefon kişinin bütün okullarında ortak: başka okulda da kayıtlıysa bir okulun yöneticisi değiştiremez
+            // (review M-2; spec 0005 gereksinim 6 — öbür okulun gördüğü bilgi etkilenmez).
+            await this.EnsureOnlyThisTenantAsync(user.Id, tenantId, AdministrationMessages.ProfileBlockedOtherTenant, cancellationToken).ConfigureAwait(false);
+            PhoneNumber.TryNormalize(request.Phone, out string? phone);
+            user.UpdateProfile(request.FullName, phone);
+            this.audit.Record(AuditAction.MemberProfileUpdated, tenantId, actorId, nameof(User), user.Id);
+            await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await this.DetailAsync(request.UserId, actorId, tenantId, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<MemberDetail> Handle(SetMemberRolesCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        IExclusiveScope scope = await this.guard.LockTenantAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, null, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             TenantMembership membership = await this.FindMembershipAsync(request.UserId, cancellationToken).ConfigureAwait(false);
-            IReadOnlyList<(Role Role, Guid? BranchId)> plan = await RolePlan.BuildAsync(request.Roles ?? [], this.branches, this.localization, cancellationToken).ConfigureAwait(false);
             IReadOnlyList<RoleAssignment> current = await this.roleAssignments.ListInCurrentTenantAsync(request.UserId, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<(Role Role, Guid? BranchId)> plan = await RolePlan.BuildAsync(
+                request.Roles ?? [], [.. current.Select(a => (a.Role, a.BranchId))], this.branches, this.localization, cancellationToken).ConfigureAwait(false);
             bool wasFounder = current.Any(a => a.Role == Role.Founder);
             bool staysFounder = plan.Any(p => p.Role == Role.Founder);
             if (wasFounder && !staysFounder)
@@ -164,7 +176,7 @@ public sealed class MemberAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        IExclusiveScope scope = await this.guard.LockTenantAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, null, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             TenantMembership membership = await this.FindMembershipAsync(request.UserId, cancellationToken).ConfigureAwait(false);
@@ -201,20 +213,21 @@ public sealed class MemberAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        User user = await this.FindMemberUserAsync(request.UserId, cancellationToken).ConfigureAwait(false);
-        if (await this.roleAssignments.CountOtherTenantsAsync(user.Id, tenantId, cancellationToken).ConfigureAwait(false) > 0)
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, request.UserId, cancellationToken).ConfigureAwait(false);
+        await using (scope.ConfigureAwait(false))
         {
-            throw new BusinessException(await this.localization.GetAsync(AdministrationMessages.ResetBlockedOtherTenant).ConfigureAwait(false));
+            User user = await this.FindMemberUserAsync(request.UserId, cancellationToken).ConfigureAwait(false);
+            await this.EnsureOnlyThisTenantAsync(user.Id, tenantId, AdministrationMessages.ResetBlockedOtherTenant, cancellationToken).ConfigureAwait(false);
+            DateTimeOffset now = this.timeProvider.GetUtcNow();
+            string temporaryPassword = this.passwords.Generate();
+            user.ChangePasswordHash(this.passwordHasher.Hash(temporaryPassword));
+            await this.sessions.RevokeAllForUserAsync(user.Id, now, cancellationToken).ConfigureAwait(false);
+            this.audit.Record(AuditAction.PasswordReset, tenantId, actorId, nameof(User), user.Id);
+            await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
+            this.logger.LogInformation("Şifre sıfırlandı: kişi {UserId}, kurum {TenantId}; açık oturumlar kapatıldı", user.Id, tenantId);
+            return new ResetMemberPasswordResult(temporaryPassword);
         }
-
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        string temporaryPassword = this.passwords.Generate();
-        user.ChangePasswordHash(this.passwordHasher.Hash(temporaryPassword));
-        await this.sessions.RevokeAllForUserAsync(user.Id, now, cancellationToken).ConfigureAwait(false);
-        this.audit.Record(AuditAction.PasswordReset, tenantId, actorId, nameof(User), user.Id);
-        await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        this.logger.LogInformation("Şifre sıfırlandı: kişi {UserId}, kurum {TenantId}; açık oturumlar kapatıldı", user.Id, tenantId);
-        return new ResetMemberPasswordResult(temporaryPassword);
     }
 
     public async Task<MemberPage> Handle(ListMembersQuery request, CancellationToken cancellationToken)
@@ -246,6 +259,14 @@ public sealed class MemberAdminHandlers :
         }
     }
 
+    private async Task EnsureOnlyThisTenantAsync(Guid userId, Guid tenantId, string messageKey, CancellationToken cancellationToken)
+    {
+        if (await this.roleAssignments.CountOtherTenantsAsync(userId, tenantId, cancellationToken).ConfigureAwait(false) > 0)
+        {
+            throw new BusinessException(await this.localization.GetAsync(messageKey).ConfigureAwait(false));
+        }
+    }
+
     private async Task EnsureAnotherActiveFounderAsync(TenantMembership membership, CancellationToken cancellationToken)
     {
         int activeFounders = await this.roleAssignments.CountActiveFoundersInCurrentTenantAsync(cancellationToken).ConfigureAwait(false);
@@ -272,6 +293,6 @@ public sealed class MemberAdminHandlers :
         MemberRow row = await this.directory.FindAsync(userId, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException(await this.localization.GetAsync(AdministrationMessages.MemberNotFound).ConfigureAwait(false));
         bool otherTenant = await this.roleAssignments.CountOtherTenantsAsync(userId, tenantId, cancellationToken).ConfigureAwait(false) > 0;
-        return new MemberDetail(row.UserId, row.FullName, row.Email, row.Phone, row.IsActive, row.Roles, userId == actorId, !otherTenant);
+        return new MemberDetail(row.UserId, row.FullName, row.Email, row.Phone, row.IsActive, row.Roles, userId == actorId, !otherTenant, !otherTenant);
     }
 }

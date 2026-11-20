@@ -1,6 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using OkulYonetim.Application.Ports;
+using OkulYonetim.Persistence.Contexts;
 using OkulYonetim.Domain.Compliance;
 using OkulYonetim.Domain.Identity;
 using OkulYonetim.Tests.Integration.Identity;
@@ -52,6 +55,40 @@ public sealed class ResetPasswordTests
         var (_, card, cardRaw) = await CallAsync(client, HttpMethod.Get, $"/api/admin/members/{personId}", founder);
         cardRaw.ShouldNotContain(temporary);
         card.GetProperty("isActive").GetBoolean().ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Review L-2: sıfırlama, kişinin başka okula eklenmesiyle sıraya girer. Kişinin sırası test tarafından tutulurken
+    /// kişi başka okula eklenir; sırası gelen sıfırlama bunu görür ve reddeder (şifre değişmez).
+    /// </summary>
+    [Fact]
+    public async Task Reset_WhilePersonIsBeingAddedToAnotherSchool_SeesItAndIsRejected()
+    {
+        using OkulApiFactory factory = new(this.database.ConnectionString);
+        using HttpClient client = factory.CreateClient();
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        SchoolSeed b = await CreateSchoolAsync(factory);
+        string person = UniqueEmail("ogretmen");
+        Guid personId = await AddMemberAsync(factory, person, a.TenantId, Role.Teacher, a.BranchId);
+        string hashBefore = await QueryAsync(factory, c => c.Users.Where(u => u.Id == personId).Select(u => u.PasswordHash).SingleAsync());
+        string founder = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+
+        using IServiceScope holder = factory.Services.CreateScope();
+        IUnitOfWork unitOfWork = holder.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        OkulDbContext context = holder.ServiceProvider.GetRequiredService<OkulDbContext>();
+        IExclusiveScope held = await unitOfWork.BeginExclusiveAsync("member-admin:" + personId.ToString("N"), ct);
+        Task<HttpStatusCode> waiting = StatusAsync(client, HttpMethod.Post, $"/api/admin/members/{personId}/reset-password", founder);
+        await Task.Delay(TimeSpan.FromSeconds(1), ct);
+        waiting.IsCompleted.ShouldBeFalse("sıfırlama kişinin sırasını beklemeli");
+        context.Memberships.Add(TenantMembership.Create(personId, b.TenantId, DateTimeOffset.UtcNow));
+        context.RoleAssignments.Add(RoleAssignment.ForBranch(personId, b.TenantId, Role.Guardian, b.BranchId, DateTimeOffset.UtcNow));
+        await context.SaveChangesAsync(ct);
+        await held.CommitAsync(ct);
+        await held.DisposeAsync();
+
+        (await waiting).ShouldBe(HttpStatusCode.BadRequest);
+        (await QueryAsync(factory, c => c.Users.Where(u => u.Id == personId).Select(u => u.PasswordHash).SingleAsync())).ShouldBe(hashBefore);
     }
 
     [Fact]

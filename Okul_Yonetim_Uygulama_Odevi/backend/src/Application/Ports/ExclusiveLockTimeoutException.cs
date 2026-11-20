@@ -1,7 +1,7 @@
 namespace OkulYonetim.Application.Ports;
 
 /// <summary>
-/// Sıraya sokulmuş işlem (<see cref="IUnitOfWork.BeginExclusiveAsync"/>) kendi sırasını üst sınır içinde alamadı: aynı
+/// Sıraya sokulmuş işlem (<see cref="IUnitOfWork.BeginExclusiveAsync(string, CancellationToken)"/>) kendi sırasını üst sınır içinde alamadı: aynı
 /// anahtara çok sayıda istek yığılmış. Bekleyen istek bağlantıyı süresiz tutmaz (spec 0004 review I-4).
 /// </summary>
 public sealed class ExclusiveLockTimeoutException : Exception

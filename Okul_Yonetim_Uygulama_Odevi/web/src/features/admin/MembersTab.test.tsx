@@ -109,3 +109,12 @@ it("liste yüklenemezse hata + tekrar dene", async () => {
   expect(await screen.findByText("Ali Öğretmen")).toBeInTheDocument();
   void memberDetail;
 });
+
+it("rol hatası rol alanına bağlı (review L-5)", async () => {
+  await openMembers([["GET", /^\/api\/admin\/members$/, () => json(200, page([]))]]);
+  await userEvent.click(await screen.findByRole("button", { name: "Kullanıcı ekle" }));
+
+  await userEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+
+  expect(screen.getByRole("group", { name: "Roller ve şubeler" })).toHaveAccessibleDescription("En az bir rol seçin");
+});

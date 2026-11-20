@@ -109,5 +109,7 @@
   "field.emailRequired": "E-posta zorunludur",
   "field.emailInvalid": "Geçerli bir e-posta girin",
   "field.roleRequired": "En az bir rol seçin",
-  "field.branchRequired": "Bu rol için en az bir şube seçin"
+  "field.branchRequired": "Bu rol için en az bir şube seçin",
+  "members.profileBlocked": "Bu kişi başka bir okulda da kayıtlı; adını ve telefonunu kendisi değiştirebilir.",
+  "members.activateNeedsRole": "Önce rol verin: rolü olmayan kişi okulu kullanamaz"
 }

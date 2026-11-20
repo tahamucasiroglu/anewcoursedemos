@@ -61,5 +61,13 @@ public sealed class AdminTenantIsolationTests
         cardRaw.ShouldNotContain(b.BranchId.ToString());
         cardRaw.ShouldNotContain(b.TenantId.ToString());
         (await QueryAsync(factory, c => c.Users.Where(u => u.Id == onlyBId).Select(u => u.FullName).SingleAsync())).ShouldBe("Test Kişi");
+
+        // Review M-2: iki okullu kişinin adı ve telefonu ortak; A'nın kurucusu değiştiremez (B'nin gördüğü bilgi değişmez).
+        card.GetProperty("canEditProfile").GetBoolean().ShouldBeFalse();
+        var (profile, profileProblem, _) = await CallAsync(client, HttpMethod.Put, $"/api/admin/members/{bothId}/profile", token, new { fullName = "A'nın Verdiği Ad", phone = "0532 000 00 00" });
+        profile.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(profileProblem).ShouldBe("Bu kişi başka bir okulda da kayıtlı; adını ve telefonunu kendisi değiştirebilir.");
+        (await QueryAsync(factory, c => c.Users.Where(u => u.Id == bothId).Select(u => new { u.FullName, u.Phone }).SingleAsync()))
+            .ShouldBe(new { FullName = "Test Kişi", Phone = (string?)null });
     }
 }

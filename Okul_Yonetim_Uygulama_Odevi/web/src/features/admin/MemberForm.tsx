@@ -69,8 +69,8 @@ export function MemberForm({ client, branches, onCancel, onAdded }: Props) {
       {field("fullName", t("members.fullName"))}
       {field("email", t("members.email"), "email")}
       {field("phone", t("members.phone"), "tel")}
-      <RolesEditor idPrefix="new" value={values.roles} branches={branches} onChange={(roles) => setValues({ ...values, roles })} />
-      {errors.roles && <p className="field-error" role="alert">{fieldText(errors.roles)}</p>}
+      <RolesEditor idPrefix="new" value={values.roles} branches={branches} onChange={(roles) => setValues({ ...values, roles })} errorId={errors.roles ? "member-roles-error" : undefined} />
+      {errors.roles && <p id="member-roles-error" className="field-error" role="alert">{fieldText(errors.roles)}</p>}
       {serverError && <p className="form-error" role="alert">{serverError}</p>}
       <div className="actions">
         <button type="submit" disabled={saving} aria-busy={saving}>{saving ? t("members.saving") : t("members.save")}</button>

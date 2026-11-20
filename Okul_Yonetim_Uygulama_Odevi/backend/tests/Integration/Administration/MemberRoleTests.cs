@@ -22,6 +22,33 @@ public sealed class MemberRoleTests
         this.database = database;
     }
 
+    /// <summary>Review M-1: şube pasifleşince kişinin o şubedeki ataması rol düzenlemesini kilitlemez; kaldırılabilir, yeniden eklenemez.</summary>
+    [Fact]
+    public async Task InactiveBranchAssignment_KeepsRolesEditable_CanBeRemoved_CannotBeReAdded()
+    {
+        using OkulApiFactory factory = new(this.database.ConnectionString);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string token = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        Guid moda = await CreateBranchAsync(client, token, "Moda");
+        string teacher = UniqueEmail("ogretmen");
+        Guid teacherId = await AddMemberAsync(factory, teacher, a.TenantId, Role.Teacher, a.BranchId);
+        await AddMemberAsync(factory, teacher, a.TenantId, Role.Teacher, moda);
+        (await StatusAsync(client, HttpMethod.Post, $"/api/admin/branches/{moda}/deactivate", token)).ShouldBe(HttpStatusCode.OK);
+
+        var (kept, card, raw) = await CallAsync(client, HttpMethod.Put, $"/api/admin/members/{teacherId}/roles", token,
+            new { roles = new object[] { Teacher(a.BranchId, moda), new { role = "Accounting", branchIds = new[] { a.BranchId } } } });
+        kept.ShouldBe(HttpStatusCode.OK, raw);
+        card.GetProperty("roles").GetArrayLength().ShouldBe(2);
+
+        (await StatusAsync(client, HttpMethod.Put, $"/api/admin/members/{teacherId}/roles", token, new { roles = new[] { Teacher(a.BranchId) } })).ShouldBe(HttpStatusCode.OK);
+        (await QueryAsync(factory, c => c.RoleAssignments.IgnoreQueryFilters().CountAsync(r => r.UserId == teacherId && r.BranchId == moda))).ShouldBe(0);
+
+        var (readd, problem, _) = await CallAsync(client, HttpMethod.Put, $"/api/admin/members/{teacherId}/roles", token, new { roles = new[] { Teacher(a.BranchId, moda) } });
+        readd.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(problem).ShouldBe("Seçilen şube bulunamadı ya da pasif");
+    }
+
     [Fact]
     public async Task RoleChanges_TakeEffectOnNextRequest_AndRemovingAllMakesInactive()
     {

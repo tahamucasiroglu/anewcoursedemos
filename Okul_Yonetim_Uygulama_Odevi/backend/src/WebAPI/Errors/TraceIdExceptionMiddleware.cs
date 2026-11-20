@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Middleware;
 using NArchitecture.Core.Localization.Abstraction;
+using OkulYonetim.Application.Ports;
 using NArchitectureLogger = NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction.ILogger;
 
 namespace OkulYonetim.WebAPI.Errors;
@@ -57,9 +58,27 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
             return Task.CompletedTask;
         }
 
+        if (error is ForbiddenException forbidden)
+        {
+            return WriteForbiddenAsync(response, forbidden.Message);
+        }
+
         return IsExpected(error)
             ? base.HandleExceptionAsync(response, (object)error)
             : WriteUnexpectedErrorAsync(response);
+    }
+
+    private static async Task WriteForbiddenAsync(HttpResponse response, string message)
+    {
+        ProblemDetails problem = new()
+        {
+            Status = StatusCodes.Status403Forbidden,
+            Title = message,
+            Detail = message,
+        };
+        problem.Extensions["traceId"] = response.HttpContext.TraceIdentifier;
+        response.StatusCode = StatusCodes.Status403Forbidden;
+        await response.WriteAsJsonAsync(problem, options: null, contentType: MediaTypeNames.Application.ProblemJson).ConfigureAwait(false);
     }
 
     private static async Task WriteUnexpectedErrorAsync(HttpResponse response)
@@ -81,5 +100,5 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
         exception is OperationCanceledException && context.RequestAborted.IsCancellationRequested;
 
     private static bool IsExpected(Exception exception) =>
-        exception is BusinessException or ValidationException or AuthorizationException or NotFoundException or ConflictException;
+        exception is BusinessException or ValidationException or AuthorizationException or ForbiddenException or NotFoundException or ConflictException;
 }

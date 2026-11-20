@@ -8,17 +8,21 @@ namespace OkulYonetim.Application.Features.Administration;
 
 /// <summary>
 /// Formdaki rol seçimini atama listesine çevirir ve doğrular (spec 0005 gereksinim 3): kurucu/yönetici okul düzeyinde
-/// (şubesiz), diğer roller en az bir etkin şubeyle. Şube seçili okulda değilse ya da pasifse reddedilir.
+/// (şubesiz), diğer roller en az bir etkin şubeyle. Şube seçili okulda değilse reddedilir; pasif şube yalnızca kişinin
+/// zaten var olan ataması olarak kalabilir (review M-1: şube pasifleşince kişinin rolleri düzenlenebilir kalır), yeni
+/// atamada seçilemez (AC-4).
 /// </summary>
 public static class RolePlan
 {
     public static async Task<IReadOnlyList<(Role Role, Guid? BranchId)>> BuildAsync(
         IReadOnlyList<RoleInput> inputs,
+        IReadOnlyCollection<(Role Role, Guid? BranchId)> existing,
         IBranchRepository branches,
         ILocalizationService localization,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(inputs);
+        ArgumentNullException.ThrowIfNull(existing);
         ArgumentNullException.ThrowIfNull(branches);
         List<(Role, Guid?)> plan = [];
         foreach (RoleInput input in inputs)
@@ -42,7 +46,7 @@ public static class RolePlan
             foreach (Guid branchId in input.BranchIds.Distinct())
             {
                 Branch? branch = await branches.FindVisibleAsync(branchId, cancellationToken).ConfigureAwait(false);
-                if (branch is null || !branch.IsActive)
+                if (branch is null || (!branch.IsActive && !existing.Contains((role, branchId))))
                 {
                     throw new BusinessException(await localization.GetAsync(AdministrationMessages.BranchUnavailable).ConfigureAwait(false));
                 }

@@ -1175,7 +1175,8 @@
           "isActive",
           "roles",
           "isSelf",
-          "canResetPassword"
+          "canResetPassword",
+          "canEditProfile"
         ],
         "type": "object",
         "properties": {
@@ -1209,9 +1210,12 @@
           },
           "canResetPassword": {
             "type": "boolean"
+          },
+          "canEditProfile": {
+            "type": "boolean"
           }
         },
-        "description": "Kişi kartı: liste satırı + istek sahibinin kendisi mi ve kurucu bu kişinin şifresini sıfırlayabilir mi (yalnızca\nkişinin tek okulu bu okulsa — spec 0005 gereksinim 10; hangi başka okul olduğu taşınmaz)."
+        "description": "Kişi kartı: liste satırı + istek sahibinin kendisi mi; kurucu bu kişinin şifresini sıfırlayabilir mi ve ad/telefonunu\ndüzenleyebilir mi (ikisi de yalnızca kişinin tek okulu bu okulsa — spec 0005 gereksinim 6 ve 10; hangi başka okul\nolduğu taşınmaz)."
       },
       "MemberPage": {
         "required": [

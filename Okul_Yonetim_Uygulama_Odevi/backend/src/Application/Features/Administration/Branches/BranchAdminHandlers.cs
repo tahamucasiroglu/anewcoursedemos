@@ -43,7 +43,7 @@ public sealed class BranchAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        IExclusiveScope scope = await this.guard.LockTenantAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, null, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             await this.EnsureNameFreeAsync(request.Name, null, cancellationToken).ConfigureAwait(false);
@@ -61,7 +61,7 @@ public sealed class BranchAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        IExclusiveScope scope = await this.guard.LockTenantAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, null, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             Branch branch = await this.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
@@ -83,7 +83,7 @@ public sealed class BranchAdminHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         (Guid tenantId, Guid actorId) = await this.guard.RequireFounderAsync().ConfigureAwait(false);
-        IExclusiveScope scope = await this.guard.LockTenantAsync(tenantId, cancellationToken).ConfigureAwait(false);
+        IExclusiveScope scope = await this.guard.LockAsync(tenantId, actorId, null, cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
             Branch branch = await this.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);

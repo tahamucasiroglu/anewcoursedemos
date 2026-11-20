@@ -1062,8 +1062,9 @@ export interface components {
             refreshTokenInBody: boolean;
         };
         /**
-         * @description Kişi kartı: liste satırı + istek sahibinin kendisi mi ve kurucu bu kişinin şifresini sıfırlayabilir mi (yalnızca
-         *     kişinin tek okulu bu okulsa — spec 0005 gereksinim 10; hangi başka okul olduğu taşınmaz).
+         * @description Kişi kartı: liste satırı + istek sahibinin kendisi mi; kurucu bu kişinin şifresini sıfırlayabilir mi ve ad/telefonunu
+         *     düzenleyebilir mi (ikisi de yalnızca kişinin tek okulu bu okulsa — spec 0005 gereksinim 6 ve 10; hangi başka okul
+         *     olduğu taşınmaz).
          */
         MemberDetail: {
             /** Format: uuid */
@@ -1075,6 +1076,7 @@ export interface components {
             roles: components["schemas"]["MemberRoleView"][];
             isSelf: boolean;
             canResetPassword: boolean;
+            canEditProfile: boolean;
         };
         /** @description Sayfalı kişi listesi: satırlar, toplam kişi sayısı, sayfa numarası ve sayfa büyüklüğü. */
         MemberPage: {

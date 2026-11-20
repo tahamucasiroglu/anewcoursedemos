@@ -35,8 +35,12 @@ public sealed class EfUnitOfWork : IUnitOfWork
 
     public void DiscardChanges() => this.context.ChangeTracker.Clear();
 
-    public async Task<IExclusiveScope> BeginExclusiveAsync(string key, CancellationToken cancellationToken)
+    public Task<IExclusiveScope> BeginExclusiveAsync(string key, CancellationToken cancellationToken) =>
+        this.BeginExclusiveAsync([key], cancellationToken);
+
+    public async Task<IExclusiveScope> BeginExclusiveAsync(IReadOnlyCollection<string> keys, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(keys);
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction =
             await this.context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -44,7 +48,11 @@ public sealed class EfUnitOfWork : IUnitOfWork
             // İşlem süresince tutulan PostgreSQL kilidi; işlem bitince (commit/rollback) kendiliğinden bırakılır. Sıra
             // beklemesi en fazla 5 sn (yalnız bu işlem için); aşılırsa istek reddedilir, bağlantı süresiz tutulmaz.
             await this.context.Database.ExecuteSqlRawAsync("SET LOCAL lock_timeout = '5s'", cancellationToken).ConfigureAwait(false);
-            await this.context.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken).ConfigureAwait(false);
+            foreach (string key in keys.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal))
+            {
+                await this.context.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken).ConfigureAwait(false);
+            }
+
             return new EfExclusiveScope(transaction);
         }
         catch (Npgsql.PostgresException exception) when (exception.SqlState == Npgsql.PostgresErrorCodes.LockNotAvailable)

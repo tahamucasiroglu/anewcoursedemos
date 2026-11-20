@@ -112,3 +112,62 @@ it("profil: ad boşsa alan hatası ve istek yok; roller kaydedilir (şubesiz rol
   expect(body).toEqual({ roles: [{ role: "Teacher", branchIds: [branchA.id] }] });
   void teacherId;
 });
+
+it("pasif şubedeki mevcut atama 'pasif' etiketiyle görünür ve kaldırılabilir (review M-1)", async () => {
+  const inactive = { ...branchB, isActive: false };
+  const api = adminFake([
+    ["GET", /^\/api\/admin\/branches$/, () => json(200, [branchA, inactive])],
+    ["GET", /^\/api\/admin\/members$/, () => json(200, page([memberRow({ roles: [{ role: "Teacher", branchIds: [branchA.id, branchB.id] }] })], 2))],
+    ["GET", /^\/api\/admin\/members\/[^/]+$/, () => json(200, memberDetail({ roles: [{ role: "Teacher", branchIds: [branchA.id, branchB.id] }] }))],
+    ["PUT", /roles$/, () => json(200, memberDetail())],
+  ]);
+  vi.stubGlobal("fetch", api.fetch);
+  window.location.hash = "#/yonetim";
+  render(<App />);
+  await userEvent.click(await screen.findByRole("tab", { name: "Kullanıcılar" }));
+  await userEvent.click(await screen.findByRole("button", { name: /— Aç$/ }));
+
+  const inactiveBox = await screen.findByLabelText(/Avcılar \(pasif\)/);
+  expect(inactiveBox).toBeChecked();
+  await userEvent.click(inactiveBox);
+  await userEvent.click(screen.getByRole("button", { name: "Rolleri kaydet" }));
+
+  await waitFor(() => expect(api.sent("PUT", /roles$/)).toHaveLength(1));
+  expect(await api.sent("PUT", /roles$/)[0].json()).toEqual({ roles: [{ role: "Teacher", branchIds: [branchA.id] }] });
+});
+
+it("başka okulda da kayıtlı kişide ad/telefon salt okunur, Kaydet pasif ve nedeni yazılı (review M-2)", async () => {
+  await openCard({ canEditProfile: false, canResetPassword: false });
+
+  const reason = "Bu kişi başka bir okulda da kayıtlı; adını ve telefonunu kendisi değiştirebilir.";
+  expect(screen.getByLabelText("Ad soyad")).toHaveAttribute("readonly");
+  expect(screen.getByLabelText("Ad soyad")).toHaveAccessibleDescription(reason);
+  expect(screen.getByLabelText("Telefon")).toHaveAttribute("readonly");
+  expect(screen.getByRole("button", { name: "Kaydet" })).toBeDisabled();
+});
+
+it("rolü olmayan pasif kişide Etkinleştir pasif ve 'Önce rol verin' yazılı (review L-6)", async () => {
+  await openCard({ isActive: false, roles: [] });
+
+  const button = screen.getByRole("button", { name: "Etkinleştir" });
+  expect(button).toBeDisabled();
+  expect(button).toHaveAccessibleDescription("Önce rol verin: rolü olmayan kişi okulu kullanamaz");
+});
+
+it("onay iletişimi: Tab içinde döner, Vazgeç ile kapanınca odak açan düğmeye döner (review L-4)", async () => {
+  await openCard({});
+  const opener = screen.getByRole("button", { name: "Şifreyi sıfırla" });
+
+  await userEvent.click(opener);
+  expect(screen.getByRole("button", { name: "Vazgeç" })).toHaveFocus();
+  await userEvent.tab();
+  expect(screen.getByRole("button", { name: "Onayla" })).toHaveFocus();
+  await userEvent.tab();
+  expect(screen.getByRole("button", { name: "Vazgeç" })).toHaveFocus();
+  await userEvent.tab({ shift: true });
+  expect(screen.getByRole("button", { name: "Onayla" })).toHaveFocus();
+  await userEvent.click(screen.getByRole("button", { name: "Vazgeç" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(opener).toHaveFocus();
+});

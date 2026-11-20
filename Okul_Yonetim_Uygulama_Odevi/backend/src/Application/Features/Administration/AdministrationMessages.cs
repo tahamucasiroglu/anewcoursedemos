@@ -30,6 +30,7 @@ public static class AdministrationMessages
     public const string CannotDeactivateSelf = "CannotDeactivateSelf";
     public const string LastFounder = "LastFounder";
     public const string ResetBlockedOtherTenant = "ResetBlockedOtherTenant";
+    public const string ProfileBlockedOtherTenant = "ProfileBlockedOtherTenant";
     public const string TooManyRequests = "TooManyRequests";
 
     private static readonly string[] Locales = ["tr"];

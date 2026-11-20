@@ -8,14 +8,16 @@ interface Props {
   branches: BranchAdminView[];
   onChange: (value: RoleInput[]) => void;
   lockedRole?: { role: RoleName; reason: string } | null;
+  errorId?: string;
 }
 
 /**
  * Rol ve şube seçimi (spec 0005): kurucu/yönetici okul düzeyinde (şube seçilmez); diğer roller için etkin şubeler
- * işaretlenir. Kilitli rol (ör. kendi yönetici rolünüz) kaldırılamaz, nedeni yanında yazar.
+ * işaretlenir. Pasif şube yalnızca kişinin zaten var olan ataması olarak "pasif" etiketiyle görünür ve kaldırılabilir
+ * (review M-1); yeni atamada seçilemez. Kilitli rol (ör. kendi yönetici rolünüz) kaldırılamaz, nedeni yanında yazar.
+ * Rol hatası alana bağlanır (review L-5).
  */
-export function RolesEditor({ idPrefix, value, branches, onChange, lockedRole }: Props) {
-  const active = branches.filter((b) => b.isActive);
+export function RolesEditor({ idPrefix, value, branches, onChange, lockedRole, errorId }: Props) {
   const find = (role: RoleName) => value.find((r) => r.role === role);
   const toggleRole = (role: RoleName, checked: boolean) =>
     onChange(checked ? [...value, { role, branchIds: [] }] : value.filter((r) => r.role !== role));
@@ -23,7 +25,7 @@ export function RolesEditor({ idPrefix, value, branches, onChange, lockedRole }:
     onChange(value.map((r) => (r.role !== role ? r : { ...r, branchIds: checked ? [...r.branchIds, branchId] : r.branchIds.filter((b) => b !== branchId) })));
 
   return (
-    <fieldset className="roles">
+    <fieldset className="roles" aria-describedby={errorId}>
       <legend>{t("members.roles")}</legend>
       {ROLE_NAMES.map((role) => {
         const selected = find(role);
@@ -49,7 +51,7 @@ export function RolesEditor({ idPrefix, value, branches, onChange, lockedRole }:
             )}
             {selected && role !== "Founder" && (
               <div className="branch-choices" role="group" aria-label={`${roleText(role)} — ${t("members.branch")}`}>
-                {active.map((branch) => {
+                {branches.filter((b) => b.isActive || selected.branchIds.includes(b.id)).map((branch) => {
                   const branchId = `${roleId}-${branch.id}`;
                   return (
                     <label key={branch.id} htmlFor={branchId}>
@@ -60,6 +62,7 @@ export function RolesEditor({ idPrefix, value, branches, onChange, lockedRole }:
                         onChange={(e) => toggleBranch(role, branch.id, e.target.checked)}
                       />{" "}
                       {branch.name}
+                      {!branch.isActive && <span className="badge"> ({t("branches.inactive")})</span>}
                     </label>
                   );
                 })}

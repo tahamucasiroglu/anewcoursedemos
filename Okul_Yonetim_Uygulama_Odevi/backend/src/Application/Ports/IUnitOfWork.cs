@@ -16,4 +16,10 @@ public interface IUnitOfWork
     /// en fazla 5 sn — sıra gelmezse <c>ExclusiveLockTimeoutException</c> (review I-4).
     /// </summary>
     Task<IExclusiveScope> BeginExclusiveAsync(string key, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Birden çok anahtarla tek işlem (spec 0005 review L-2: okul + kişi). Anahtarlar her zaman aynı sırayla (sıralı) alınır;
+    /// iki istek aynı anahtarları farklı sırada isteyip birbirini kilitleyemez.
+    /// </summary>
+    Task<IExclusiveScope> BeginExclusiveAsync(IReadOnlyCollection<string> keys, CancellationToken cancellationToken);
 }

@@ -23,7 +23,7 @@ export function memberRow(overrides: Record<string, unknown> = {}) {
 }
 
 export function memberDetail(overrides: Record<string, unknown> = {}) {
-  return { ...memberRow(), isSelf: false, canResetPassword: true, ...overrides };
+  return { ...memberRow(), isSelf: false, canResetPassword: true, canEditProfile: true, ...overrides };
 }
 
 export function page(items: unknown[], total = items.length, pageNo = 1) {

@@ -13,12 +13,14 @@ public sealed class AdminGuard
 {
     private readonly ICurrentSession session;
     private readonly IUnitOfWork unitOfWork;
+    private readonly IRoleAssignmentRepository roleAssignments;
     private readonly ILocalizationService localization;
 
-    public AdminGuard(ICurrentSession session, IUnitOfWork unitOfWork, ILocalizationService localization)
+    public AdminGuard(ICurrentSession session, IUnitOfWork unitOfWork, IRoleAssignmentRepository roleAssignments, ILocalizationService localization)
     {
         this.session = session;
         this.unitOfWork = unitOfWork;
+        this.roleAssignments = roleAssignments;
         this.localization = localization;
     }
 
@@ -27,21 +29,43 @@ public sealed class AdminGuard
     {
         if (!this.session.IsFounder || this.session.TenantId is not { } tenantId || this.session.UserId is not { } actorId)
         {
-            throw new AuthorizationException(await this.localization.GetAsync(AdministrationMessages.Forbidden).ConfigureAwait(false));
+            throw new ForbiddenException(await this.localization.GetAsync(AdministrationMessages.Forbidden).ConfigureAwait(false));
         }
 
         return (tenantId, actorId);
     }
 
-    public async Task<IExclusiveScope> LockTenantAsync(Guid tenantId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Okulu (ve verildiyse kişiyi) sıraya sokar, sonra istek sahibinin hâlâ bu okulda etkin kurucu/yönetici olduğunu sıra
+    /// içinde yeniden denetler (review L-1: yetkisi az önce alınan yönetici, beklemedeki isteğiyle işlem yapamaz). Kişi
+    /// anahtarı (review L-2) "başka okulda kayıtlı mı" kontrolünü, aynı kişiyi başka okula ekleme ile sıraya sokar.
+    /// </summary>
+    public async Task<IExclusiveScope> LockAsync(Guid tenantId, Guid actorId, Guid? memberId, CancellationToken cancellationToken)
     {
+        List<string> keys = ["tenant-admin:" + tenantId.ToString("N")];
+        if (memberId is { } member)
+        {
+            keys.Add("member-admin:" + member.ToString("N"));
+        }
+
+        IExclusiveScope scope;
         try
         {
-            return await this.unitOfWork.BeginExclusiveAsync("tenant-admin:" + tenantId.ToString("N"), cancellationToken).ConfigureAwait(false);
+            scope = await this.unitOfWork.BeginExclusiveAsync(keys, cancellationToken).ConfigureAwait(false);
         }
         catch (ExclusiveLockTimeoutException)
         {
             throw new BusinessException(await this.localization.GetAsync(AdministrationMessages.TooManyRequests).ConfigureAwait(false));
         }
+
+        IReadOnlyList<Domain.Identity.RoleAssignment> roles =
+            await this.roleAssignments.ListForUserInTenantAsync(actorId, tenantId, cancellationToken).ConfigureAwait(false);
+        if (!roles.Any(r => r.Role == Domain.Identity.Role.Founder))
+        {
+            await scope.DisposeAsync().ConfigureAwait(false);
+            throw new ForbiddenException(await this.localization.GetAsync(AdministrationMessages.Forbidden).ConfigureAwait(false));
+        }
+
+        return scope;
     }
 }
