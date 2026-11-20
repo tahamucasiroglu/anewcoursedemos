@@ -34,6 +34,39 @@ export type {
   RoleInput,
   RoleName,
 } from "./admin/adminForms";
+export {
+  CALENDAR_KINDS,
+  CALENDAR_TITLE_MAX,
+  CLASSROOM_NAME_MAX,
+  GRADE_LEVEL_NAME_MAX,
+  lengthInDays,
+  nextSortOrder,
+  TERM_MAX_DAYS,
+  TERM_NAME_MAX,
+  validateCalendarEntryForm,
+  validateClassroomForm,
+  validateGradeLevelForm,
+  validateTermForm,
+} from "./admin/academicForms";
+export type {
+  AcademicFieldError,
+  CalendarEntryFormErrors,
+  CalendarEntryFormValues,
+  CalendarEntryView,
+  CalendarKind,
+  ClassroomAdminList,
+  ClassroomAdminView,
+  ClassroomFormErrors,
+  ClassroomFormValues,
+  GradeLevelAdminView,
+  GradeLevelFormErrors,
+  GradeLevelFormValues,
+  TermAdminView,
+  TermFormErrors,
+  TermFormValues,
+} from "./admin/academicForms";
+export { calendarKindKey, dateRangeText, formatDay } from "./calendar/schoolCalendar";
+export type { CalendarKindKey, ClassroomSummary, SchoolCalendarView } from "./calendar/schoolCalendar";
 export { callApi } from "./apiOutcome";
 export type { ApiOutcome } from "./apiOutcome";
 export {

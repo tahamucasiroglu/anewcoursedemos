@@ -82,5 +82,18 @@
   "admin.loading": "Yükleniyor…",
   "admin.retry": "Tekrar dene",
   "auth.platformWebOnly": "Platform yöneticisi hesabıyla web'den giriş yapın; iki adımlı doğrulama ve platform paneli yalnızca web'de.",
-  "auth.backToLogin": "Girişe dön"
+  "auth.backToLogin": "Girişe dön",
+  "calendar.link": "Okul takvimi",
+  "calendar.title": "Okul takvimi",
+  "calendar.back": "Geri",
+  "calendar.loading": "Takvim yükleniyor…",
+  "calendar.loadError": "Takvim alınamadı.",
+  "calendar.retry": "Tekrar dene",
+  "calendar.noTerm": "Henüz dönem tanımlanmadı.",
+  "calendar.empty": "Bu dönemde takvim kaydı yok.",
+  "calendar.upcoming": "Yaklaşan dönem",
+  "calendar.kind.holiday": "Tatil",
+  "calendar.kind.exam": "Sınav",
+  "calendar.kind.event": "Etkinlik",
+  "calendar.kind.other": "Diğer"
 }

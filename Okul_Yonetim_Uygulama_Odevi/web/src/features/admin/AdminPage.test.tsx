@@ -36,6 +36,26 @@ describe.each(["light", "dark"] as const)("Yönetim sayfası — %s tema", (mode
     await userEvent.click(screen.getByRole("tab", { name: "Kullanıcılar" }));
     expect(await screen.findByText("Aramaya uyan kişi yok")).toBeInTheDocument();
   });
+
+  it("spec 0008: kurucu Sınıf seviyeleri, Dönemler ve takvim, Sınıflar sekmelerini görür ve geçer", async () => {
+    const api = adminFake([
+      ["GET", /^\/api\/admin\/branches$/, () => json(200, [branchA])],
+      ["GET", /^\/api\/admin\/grade-levels$/, () => json(200, [])],
+      ["GET", /^\/api\/admin\/terms$/, () => json(200, [])],
+    ]);
+    vi.stubGlobal("fetch", api.fetch);
+    window.location.hash = "#/yonetim";
+    render(<App />);
+
+    await userEvent.click(await screen.findByRole("tab", { name: "Sınıf seviyeleri" }));
+    expect(screen.getByRole("tab", { name: "Sınıf seviyeleri" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByText("Henüz sınıf seviyesi yok")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Dönemler ve takvim" }));
+    expect(await screen.findByText("Henüz dönem yok — önce bir dönem ekleyin")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Sınıflar" }));
+    expect(await screen.findByText("Önce bir dönem ekleyin")).toBeInTheDocument();
+    expect(screen.getByRole("tabpanel")).toHaveAttribute("aria-labelledby", "tab-classrooms");
+  });
 });
 
 it.each([["Teacher"], ["Guardian"], ["Accounting"]])("%s: Yönetim bağlantısı yok; yönetim adresinde 'erişiminiz yok', hiçbir yönetim isteği gitmez", async (role) => {

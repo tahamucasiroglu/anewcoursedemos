@@ -34,3 +34,14 @@ it("Çıkış sunucuda oturumu kapatır ve giriş ekranına döner", async () =>
   const logout = api.requests.find((r) => r.url.endsWith("/api/auth/logout"))!;
   expect(logout.headers.get("Authorization")).toBe("Bearer erisim-anahtari");
 });
+
+// Spec 0008 AC-10 (web): "Okul takvimi" bağlantısı okulda rolü olan her rolde.
+it.each([["Founder"], ["Teacher"], ["Guardian"], ["Accounting"]])("%s: Hoş geldin'de 'Okul takvimi' bağlantısı var", async (role) => {
+  vi.stubGlobal("fetch", fakeApi({
+    "POST /api/auth/refresh": () => json(200, tokens()),
+    "GET /api/me": () => json(200, me({ roles: [role] })),
+  }).fetch);
+  render(<App />);
+
+  expect(await screen.findByRole("link", { name: "Okul takvimi" })).toHaveAttribute("href", "#/takvim");
+});

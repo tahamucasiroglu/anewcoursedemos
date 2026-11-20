@@ -1,6 +1,7 @@
 import { t } from "../../i18n/t";
 import { AccountPage } from "../account/AccountPage";
 import { AdminPage } from "../admin/AdminPage";
+import { CalendarPage } from "../calendar/CalendarPage";
 import { PlatformPage } from "../platform/PlatformPage";
 import { resetTokenFromRoute } from "@okul/api-client";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
@@ -16,7 +17,8 @@ import { WelcomeScreen } from "./WelcomeScreen";
 /**
  * Oturum durumuna göre ekranı seçer: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004, web); "#/yonetim"
  * adresinde yönetim sayfası (spec 0005); "#/hesabim" Hesabım, "#/sifremi-unuttum" ve "#/sifre-yenile" şifre işlemleri
- * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007). Kısa geçiş
+ * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007); "#/takvim" okul
+ * takvimi (spec 0008, her rol). Kısa geçiş
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
@@ -59,6 +61,10 @@ export function AuthGate() {
     case "signedIn":
       if (path === "/hesabim") {
         return <AccountPage client={session.client} onProfileSaved={() => void reloadMe()} />;
+      }
+
+      if (path === "/takvim") {
+        return <CalendarPage client={session.client} />;
       }
 
       if (path === "/platform") {

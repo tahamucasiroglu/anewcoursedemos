@@ -10,6 +10,30 @@ export const branchB: FakeBranch = { id: "44444444-4444-4444-8444-444444444444",
 export const founderId = "55555555-5555-4555-8555-555555555555";
 export const teacherId = "66666666-6666-4666-8666-666666666666";
 
+// Akademik yapı (spec 0008) sahte kayıtları.
+export const levelPrep = { id: "77777777-7777-4777-8777-777777777771", name: "Hazırlık", sortOrder: 1, isActive: true };
+export const levelFifth = { id: "77777777-7777-4777-8777-777777777775", name: "5. sınıf", sortOrder: 5, isActive: true };
+export const termAutumn = { id: "88888888-8888-4888-8888-888888888881", name: "2026-2027 Güz", startDate: "2026-09-01", endDate: "2027-01-22", isCurrent: true, isUpcoming: false };
+export const termSpring = { id: "88888888-8888-4888-8888-888888888882", name: "2026-2027 Bahar", startDate: "2027-02-08", endDate: "2027-06-18", isCurrent: false, isUpcoming: false };
+export const holiday = { id: "99999999-9999-4999-8999-999999999991", termId: termAutumn.id, title: "Cumhuriyet Bayramı", kind: "Holiday", startDate: "2026-10-29", endDate: "2026-10-29" };
+export const examWeek = { id: "99999999-9999-4999-8999-999999999992", termId: termAutumn.id, title: "Ara sınav haftası", kind: "Exam", startDate: "2026-11-09", endDate: "2026-11-13" };
+
+export function classroom(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+    termId: termAutumn.id,
+    branchId: branchA.id,
+    branchName: branchA.name,
+    branchIsActive: true,
+    gradeLevelId: levelFifth.id,
+    gradeLevelName: levelFifth.name,
+    gradeLevelSortOrder: 5,
+    name: "5-A",
+    isActive: true,
+    ...overrides,
+  };
+}
+
 export function memberRow(overrides: Record<string, unknown> = {}) {
   return {
     userId: teacherId,

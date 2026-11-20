@@ -8,6 +8,7 @@ interface Props {
   onSwitchSchool: () => void;
   onLogout: () => void;
   onAccount?: () => void;
+  onCalendar?: () => void;
 }
 
 const ROLE_KEYS: Record<string, TextKey> = {
@@ -17,8 +18,11 @@ const ROLE_KEYS: Record<string, TextKey> = {
   Accounting: "role.Accounting",
 };
 
-/** Mobil hoş geldin ekranı (spec 0004): ad, okul, roller, şubeler (yoksa açık mesaj); okul değiştir ve çıkış. */
-export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount }: Props) {
+/**
+ * Mobil hoş geldin ekranı (spec 0004): ad, okul, roller, şubeler (yoksa açık mesaj); okul değiştir ve çıkış. Seçili okulu
+ * olan herkese "Okul takvimi" (spec 0008).
+ */
+export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar }: Props) {
   const styles = useAuthStyles();
   return (
     <View style={styles.card} testID="welcome">
@@ -40,6 +44,11 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount }: Props
         ))
       )}
       <View style={styles.actions}>
+        {onCalendar && me.tenant && (
+          <Pressable style={styles.secondary} onPress={onCalendar} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{t("calendar.link")}</Text>
+          </Pressable>
+        )}
         {onAccount && (
           <Pressable style={styles.secondary} onPress={onAccount} accessibilityRole="button">
             <Text style={styles.secondaryText}>{t("account.link")}</Text>

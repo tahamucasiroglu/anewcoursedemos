@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { t } from "../../i18n/t";
 import { AccountScreen } from "../account/AccountScreen";
+import { CalendarScreen } from "../calendar/CalendarScreen";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { LoginScreen } from "./LoginScreen";
 import { SchoolSelectScreen } from "./SchoolSelectScreen";
@@ -12,12 +13,14 @@ import { WelcomeScreen } from "./WelcomeScreen";
 /**
  * Mobil oturum ekranı seçici: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004); girişte "Şifremi unuttum",
  * hoş geldin'de "Hesabım" (spec 0006). Platform yöneticisi girişte "web'den giriş yapın" mesajı görür (spec 0007).
+ * Hoş geldin'de "Okul takvimi" (spec 0008, her rol).
  */
 export function AuthGate() {
   const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart } = useAuthController();
   const styles = useAuthStyles();
   const [forgot, setForgot] = useState(false);
   const [account, setAccount] = useState(false);
+  const [calendar, setCalendar] = useState(false);
   const [previousKind, setPreviousKind] = useState(state.kind);
 
   // Oturum durumundan çıkınca (çıkış, oturum düştü) Hesabım kapanır: sonraki girişte Hoş geldin açılır (review F-6).
@@ -25,6 +28,7 @@ export function AuthGate() {
     setPreviousKind(state.kind);
     if (state.kind !== "signedIn") {
       setAccount(false);
+      setCalendar(false);
     }
 
     if (state.kind !== "signedOut") {
@@ -56,10 +60,14 @@ export function AuthGate() {
     case "loadingMe":
       return <Text style={styles.notice}>{t("welcome.loading")}</Text>;
     case "signedIn":
+      if (calendar) {
+        return <CalendarScreen client={session.client} onBack={() => setCalendar(false)} />;
+      }
+
       return account ? (
         <AccountScreen client={session.client} onBack={() => setAccount(false)} onProfileSaved={() => void reloadMe()} />
       ) : (
-        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} />
+        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} />
       );
   }
 }
