@@ -116,6 +116,21 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `/api/me`'de (`unreadAnnouncementCount`, `unreadMessageCount`). Modüller arası okumalar: `ListStudentBriefsQuery` (kapsam
   öğrencileri), `ListGuardianContactsQuery`, `ListClassroomRosterQuery`, `ListMyChildrenQuery`, `GetBranchByIdQuery`,
   `GetClassroomByIdQuery`.
+- Yerel yapay zekâ (spec 0012): `Ai` ortak katmanı iki port kullanır — `IAiTextGenerator` (talimat + içerik → metin) ve
+  `ISpeechToText` (ses → döküm + süre). Uygulamaları `Infrastructure/Ai`: `OllamaTextGenerator` (`POST api/chat`, akışsız,
+  düşük sıcaklık, `keep_alive`) ve `WhisperServiceSpeechToText` (`POST transcribe`, ham ses) — bu bilgisayardaki Ollama
+  (`gemma3:4b`) ve `tools/ai/stt_server.py` (faster-whisper `medium`, yalnızca `127.0.0.1:8765`, elle `start-stt.ps1` ile
+  başlar; varsayılan CPU int8 — 6 GB kartı Ollama'ya bırakır). Adresler `Ai:*` ayarından; boş ya da yerel olmayan adres →
+  `Unavailable*` uygulaması (Pi varsayılanı: özellik "Yapay zekâ şu an kullanılamıyor", mesajlaşma çalışır). `AiWorkGate`
+  tek ekran kartı için aynı anda tek model çağrısı çalıştırır; sırada 30 sn'den uzun bekleyen "kullanılamıyor" alır.
+  Etkileşimli AI çağrısında **yeniden deneme yoktur** (aşağıdaki port kuralının istisnası — kullanıcı bekler): tek deneme,
+  ses 60 sn / metin 90 sn zaman aşımı, hata hemen "kullanılamıyor" + Warning log. Akış: mobil konuşma ekranı →
+  `POST api/ai/voice-message-drafts` (multipart, ≤ 2 MB, istek ~2,1 MB) → Communication'ın `GetTeacherConversationContextQuery`'si
+  (taraf/öğretmen/ilişki) → ses servisi → (≤ 60 sn, boş değil) → metin servisi (yalnızca sabit talimat
+  `Features/Ai/Prompts/voice-message.tr.txt` + döküm) → 1000'e kısaltılmış taslak `AiDraft` (bekliyor, kaynak = döküm).
+  Gönderim 0011'in `POST api/conversations/{id}/messages` ucundan `aiDraftId` ile: Communication, Ai'ın onay kapısını
+  (`GetPendingAiDraftQuery` → mesaj → `MarkAiDraftApprovedCommand`) taslak sırası (`ai-draft:<id>`) içinde, mesajla aynı
+  kayıtta çağırır; Ai Communication'a yazmaz (yasak bağımlılık 6). "Vazgeç": `DELETE api/ai/drafts/{id}` taslağı siler.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).
@@ -130,6 +145,7 @@ modüllerin ekranlarında kullandığı ortak katmandır.
 - Renkler (web, mobil): yalnızca `packages/theme` (`tokens.json`). Mobil doğrudan kullanır; web aynı değerleri
   `web/src/theme/theme.css` değişkenlerinde tutar (test birebir eşitliği doğrular). Tema seçimi yalnızca cihazda saklanır.
 - Port çağrıları zaman aşımı + yeniden deneme ile yapılır; başarısızlık "beklemede" durumuna düşer, isteği çökertmez.
+  İstisna (spec 0012): etkileşimli AI çağrıları tek denemedir; hata kullanıcıya hemen "kullanılamıyor" olarak döner.
 
 ## Logging (ADR-0003)
 - **Kapsamlı loglama** ilk spec'ten itibaren: Serilog (nArchitecture'ın log altyapısı), `ILogger<T>` ile.
@@ -156,6 +172,9 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   (port 8080, `/api` içeride API'ye iletilir), API systemd servisi (`okul` kullanıcısı, yalnızca `127.0.0.1:5080`),
   Pi'deki PostgreSQL 17, kısıtlı veritabanı kullanıcısı `okul_app`; dağıtım/geri alma `tools/pi/`.
 - Mobil uygulama, Pi'deki API'ye yerel ağ adresiyle bağlanır (adres ortam ayarından).
+- Yerel AI (spec 0012) yalnızca Windows geliştirme bilgisayarında (RTX 3060 6 GB) çalışır; Pi'de model yok. Pi'deki API
+  varsayılan olarak AI'sız ("kullanılamıyor"); isteğe bağlı demo ayarıyla aynı yerel ağdaki bilgisayarın Ollama ve ses
+  servisine yönlendirilir (`docs/deploy-pi.md`, `tools/ai/README.md`).
 
 ## Forbidden dependencies (make them testable)
 `tests/Architecture` (ArchUnitNET) ve derleme kuralları bunları zorlar; hepsi `scripts/check` içinde.

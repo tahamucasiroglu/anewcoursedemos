@@ -72,6 +72,22 @@ Email__WebBaseUrl=http://192.168.1.102:8080
 Şifre repoya, sohbete ya da loglara yazılmaz. Yalnızca 587/STARTTLS desteklenir (465 gerekirse MailKit'e geçiş — plan
 0006 Risks 1).
 
+## Yerel yapay zekâ (sesli not) — spec 0012
+
+Pi'de model çalışmaz. Varsayılan: `Ai__*` değişkenleri yok → sesli not "Yapay zekâ şu an kullanılamıyor. Mesajı elle
+yazabilirsiniz." der, mesajlaşma normal çalışır. **İsteğe bağlı demo (LAN) modu** — aynı yerel ağdaki Windows bilgisayar
+açıkken (ayrıntı ve güvenlik duvarı kuralı: `tools/ai/README.md`), `/etc/okul/okul-api.env` dosyasına (root, 600) şu
+satırlar eklenir ve servis yeniden başlatılır (`sudo systemctl restart okul-api`):
+
+```
+Ai__TextGenerator__BaseUrl=http://<bilgisayar-ip>:11434
+Ai__TextGenerator__Model=gemma3:4b
+Ai__SpeechToText__BaseUrl=http://<bilgisayar-ip>:8765
+```
+
+Yalnızca yerel adresler kabul edilir (`192.168.x`, `10.x`, `172.16–31.x`, `localhost`); başka adres yazılırsa özellik kapalı
+kalır. Demo bitince satırlar silinip servis yeniden başlatılır. Bu plan Pi'ye dokunmaz; adımlar ship'te kullanıcıdadır.
+
 ## Platform paneli ve iki adımlı doğrulama — spec 0007
 
 Bu spec'te Pi'ye dokunulmadı; yayınlarken (ship) kullanıcı şu sırayla çalıştırır:

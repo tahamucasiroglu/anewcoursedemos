@@ -24,6 +24,10 @@
 - Test adı: `<Metot>_<Durum>_<Beklenen>`.
 - **Test verisi:** integration koşusu her seferinde yeni `okul_test_<UTC zaman>_<guid>` veritabanı açar, migration'ları uygular, sonunda siler; başlangıçta yalnızca 1 saatten eski (yarıda kalmış) `okul_test_*` artıkları temizlenir — aynı anda çalışan başka bir koşunun veritabanına dokunulmaz. Geliştirme veritabanı (`okul_dev`) testlerde asla kullanılmaz. Bağlantı bilgisi user-secrets / ortam değişkeninden.
 - **Determinizm:** `FakeTimeProvider` (sabit saat, `Europe/Istanbul`), kültür `tr-TR`, sabit seed; dış servisler sahte port uygulamalarıyla; web/mobil testlerinde animasyonlar kapalı (reduced motion).
+- **Yerel AI (spec 0012):** `scripts/check` Ollama/Whisper istemez — AI portları testlerde sahtedir (`FakeSpeechToText`,
+  `FakeAiTextGenerator`), adaptörler sahte `HttpMessageHandler` ile sınanır. Gerçek modelleri deneyen `tools/ai/smoke.mjs`
+  bir test paketi değil, **isteğe bağlı gözlem aracıdır**: check'e girmez (CI'da ve Pi'de model yok), VERIFY'da bu
+  bilgisayarda elle çalıştırılır ve çıktısı kanıt olarak yazılır (AC-10/AC-11, Evidence policy 3).
 - **Resource hygiene:** `dotnet` adımları `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` ile; watch/dev server check'te yok (T6).
 
 ## What must be tested

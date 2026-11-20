@@ -57,7 +57,7 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Cari (`Ledger`) | Velinin borç/alacak hesabı | — |
 | Makbuz (`Receipt`) | Tahsilat belgesi | e-Fatura/e-Arşiv Faz 2 |
 | Randevu (`Appointment`) | Öğretmen müsaitliğinden veli talebi | — |
-| AI taslağı (`AiDraft`) | AI'ın ürettiği, **insan onayı bekleyen** çıktı | Kaynak veriyle birlikte saklanır |
+| AI taslağı (`AiDraft`) | AI'ın ürettiği, **insan onayı bekleyen** çıktı | Kaynak veriyle birlikte saklanır. Yaşam döngüsü (spec 0012): oluşturulur "bekliyor" (kaynak = sesli notun dökümü, taslak ≤ 1000 karakter) → öğretmen gönderince "onaylandı" (son metin, onaylayan, zaman, gönderilen mesaj) — bir kez; "Vazgeç" kaydı (döküm dahil) siler. Kullanılmamış taslaklar MVP'de silinmez (saklama: Compliance) |
 | KVKK rıza kaydı (`ConsentRecord`) | Aydınlatma metni sürümü + açık rıza + zaman | Fotoğraf rızası öğrenci bazlı |
 | Audit kaydı (`AuditEntry`) | Kim, neyi, hangi kayıtta, ne zaman, hangi IP | Değiştirilemez, silinemez |
 

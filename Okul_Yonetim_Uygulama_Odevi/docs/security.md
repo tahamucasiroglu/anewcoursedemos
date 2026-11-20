@@ -49,6 +49,18 @@
     ağ isteği yapmaz. İçerik Güvenlik Politikası (CSP) eklendiğinde bu betik `script-src` için özeti (hash) ile izinlenir;
     `unsafe-inline` açılmaz.
 5. AI'a yalnızca görev için gereken alanlar gönderilir (veri minimizasyonu); sağlayıcı sözleşmesinde "eğitimde kullanılmaz" şartı zorunlu.
+6. **Yerel yapay zekâ (spec 0012):** MVP'de dış (bulut) AI servisi yok; metin (Ollama `gemma3:4b`) ve ses→metin
+   (faster-whisper, `tools/ai/stt_server.py`) bu Windows bilgisayarda çalışır — "eğitimde kullanılmaz" şartı yerel çalıştığı
+   için kendiliğinden sağlanır. API model adreslerini yalnızca ayardan alır ve **yalnızca yerel adresleri** kabul eder
+   (`localhost`, `127.x`, `10.x`, `172.16–31.x`, `192.168.x`); başka adres yazılırsa özellik kapalı kalır. Varsayılan
+   (Pi/üretim) ayarlarda adresler boştur. Modele yalnızca sabit talimat ve sesli notun dökümü gider (öğrenci/veli adı, sağlık
+   bilgisi gitmez). **Ses saklanmaz:** API sesi bellekte tutar (form tamponu eşiği istek sınırının üstünde — geçici dosya yok),
+   ses servisi `BytesIO`'da işler; veritabanında ses kolonu yok. Döküm (kaynak) taslakla birlikte `ai_drafts`'ta saklanır;
+   döküm, taslak ve mesaj metni loglanmaz (yalnızca kimlik, süre, karakter sayısı, ölçülen süreler).
+   **Yerel ağ demosu (Pi):** yalnızca demo süresince Ollama (`OLLAMA_HOST=0.0.0.0`) ve ses servisi (`-ListenHost 0.0.0.0`)
+   ağa açılır; ikisi de kimlik doğrulamasızdır, bu yüzden Windows güvenlik duvarı kuralı 11434 ve 8765 portlarına **yalnızca
+   Pi'nin adresinden** (`192.168.1.102`) izin verir; trafik düz HTTP'dir ve okulun yerel ağından çıkmaz (B-13 ile aynı sınır).
+   Demo bitince servisler yeniden yalnızca `127.0.0.1`'e döner ve kural kaldırılır (`tools/ai/README.md`).
 
 ## AuthN / AuthZ
 1. **Varsayılan: reddet.** Her uç nokta kimlik doğrulama ister (genel yetki kuralı); anonim uçlar açıkça listelenir ve
@@ -128,6 +140,11 @@
     sahte bildirim göndericisinin satırları yalnızca tür ve kimlik içerir. Duyuru yayını, onay cevabı (verme/değiştirme) ve
     mesai saatleri değişikliği audit'te (kim, hangi kayıt, ayrıntıda yalnızca kapsam/sayı/cevap/saat, IP); tek tek mesajlar
     audit'e değil Information loguna (kimliklerle) yazılır.
+14. **AI sesli not (spec 0012, BR-5):** sesli not yalnızca konuşmanın öğretmen tarafınca ve ilişki sürerken kullanılır (veli
+    403; taraf olmayan — başka öğretmen, kurucu, muhasebe, başka okul — 404; ilişki bitmişse "Bu konuşmaya artık mesaj
+    gönderilemez."). AI yalnızca `AiDraft` üretir, veliye hiçbir şey göndermez (Ai → Communication yazma bağımlılığı yok —
+    mimari test). Mesaj yalnızca öğretmenin "Gönder"iyle 0011'in mesaj yolundan gider; taslak yalnızca oluşturan öğretmen
+    tarafından ve oluşturulduğu konuşmada, bir kez kullanılır (aynı taslakla eşzamanlı gönderim taslak sırasıyla tekilleşir).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.
