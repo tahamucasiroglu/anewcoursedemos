@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OkulYonetim.Application.Ports;
 
 namespace OkulYonetim.Infrastructure.Security;
@@ -7,20 +8,40 @@ namespace OkulYonetim.Infrastructure.Security;
 /// <summary>
 /// AES-GCM ile gizli değer şifreleme (spec 0007): anahtar <c>TwoFactor:EncryptionKey</c> (Base64, 32 bayt) ortam
 /// ayarından — repoda yok; Pi'de root'un okuyabildiği ayrı dosyada. Biçim: Base64(nonce 12 | şifreli | etiket 16).
-/// Anahtar yoksa <see cref="IsConfigured"/> false; platform yöneticisi girişi güvenle reddedilir.
+/// Anahtar yoksa ya da biçimi bozuksa (Base64 değil / 32 bayt değil) <see cref="IsConfigured"/> false ve hata logu; platform
+/// yöneticisi girişi güvenle reddedilir, diğer girişler etkilenmez (review round 1, L-1). Anahtar değeri loglanmaz.
 /// </summary>
 public sealed class AesGcmSecretProtector : ISecretProtector
 {
     private readonly byte[]? key;
 
-    public AesGcmSecretProtector(IConfiguration configuration)
+    public AesGcmSecretProtector(IConfiguration configuration, ILogger<AesGcmSecretProtector> logger)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(logger);
         string? encoded = configuration["TwoFactor:EncryptionKey"];
-        if (!string.IsNullOrWhiteSpace(encoded))
+        if (string.IsNullOrWhiteSpace(encoded))
         {
-            byte[] bytes = Convert.FromBase64String(encoded.Trim());
-            this.key = bytes.Length == 32 ? bytes : throw new InvalidOperationException("TwoFactor:EncryptionKey 32 bayt (Base64) olmalı.");
+            return;
+        }
+
+        byte[]? bytes = null;
+        try
+        {
+            bytes = Convert.FromBase64String(encoded.Trim());
+        }
+        catch (FormatException)
+        {
+            bytes = null;
+        }
+
+        if (bytes is { Length: 32 })
+        {
+            this.key = bytes;
+        }
+        else
+        {
+            logger.LogError("TwoFactor:EncryptionKey geçersiz (32 baytlık Base64 olmalı); iki adımlı doğrulama yapılandırılmamış sayılır");
         }
     }
 

@@ -41,8 +41,8 @@ export function CodeForm({ submitting, problem, onSubmit, onRestart }: CodeFormP
             maxLength={7}
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? "two-factor-code-error" : undefined}
+            aria-invalid={error || message ? true : undefined}
+            aria-describedby={[error ? "two-factor-code-error" : null, message ? "two-factor-server-error" : null].filter(Boolean).join(" ") || undefined}
           />
           {error && (
             <p id="two-factor-code-error" className="field-error" role="alert">
@@ -52,7 +52,7 @@ export function CodeForm({ submitting, problem, onSubmit, onRestart }: CodeFormP
         </>
       )}
       {message && (
-        <p className="form-error" role="alert">
+        <p id="two-factor-server-error" className="form-error" role="alert">
           {message}
         </p>
       )}

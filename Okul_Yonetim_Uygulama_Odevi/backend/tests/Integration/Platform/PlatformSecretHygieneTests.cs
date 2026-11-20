@@ -58,8 +58,10 @@ public sealed class PlatformSecretHygieneTests
         (await QueryAsync(factory, c => c.TwoFactorChallenges.AnyAsync(x => x.TokenHash == challenge))).ShouldBeFalse("bekleme anahtarı yalnızca özetiyle saklanır");
     }
 
-    [Fact]
-    public async Task MissingEncryptionKey_RejectsPlatformAdminSafely_OthersStillSignIn()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("bozuk-anahtar")]
+    public async Task MissingOrMalformedEncryptionKey_RejectsPlatformAdminSafely_OthersStillSignIn(string? key)
     {
         string adminEmail;
         using (OkulApiFactory configured = new(this.database.ConnectionString))
@@ -67,7 +69,7 @@ public sealed class PlatformSecretHygieneTests
             adminEmail = (await NewPlatformAdminAsync(configured)).FounderEmail;
         }
 
-        using OkulApiFactory factory = new(this.database.ConnectionString, twoFactorKey: null);
+        using OkulApiFactory factory = new(this.database.ConnectionString, twoFactorKey: key);
         using HttpClient client = factory.CreateClient();
         SchoolSeed plain = await CreateSchoolAsync(factory);
 
@@ -77,5 +79,9 @@ public sealed class PlatformSecretHygieneTests
         Regex.Unescape(raw).ShouldContain("İki adımlı doğrulama yapılandırılmamış");
         AccessToken(await LoginAsync(client, plain.FounderEmail)).ShouldNotBeNullOrEmpty();
         factory.ReadLog().ShouldContain("iki adımlı doğrulama yapılandırılmamış");
+        if (key is not null)
+        {
+            factory.ReadLog().ShouldNotContain(key);
+        }
     }
 }

@@ -121,11 +121,14 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
             await this.RejectAsync(email, throttle, now, ip, cancellationToken).ConfigureAwait(false);
         }
 
-        throttle?.Reset();
+        // Platform yöneticisinde (spec 0007) doğru şifre sayacı sıfırlamaz: sayaç yalnızca doğru kodla sıfırlanır; yoksa
+        // "şifre → 2 yanlış kod → şifre" döngüsüyle kod kilidi hiç devreye girmezdi (review round 1, H-1).
         if (user!.IsPlatformAdmin)
         {
             return await this.BeginTwoFactorAsync(user, now, cancellationToken).ConfigureAwait(false);
         }
+
+        throttle?.Reset();
 
         IReadOnlyList<TenantSummary> tenants = await this.tenantDirectory.ListAsync(user!.Id, cancellationToken).ConfigureAwait(false);
         Guid? tenantId = tenants.Count == 1 ? tenants[0].Id : null;

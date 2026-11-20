@@ -54,6 +54,8 @@ describe.each(["light", "dark"] as const)("Kod ekranı — %s tema", (mode) => {
     await userEvent.type(code, "456");
     await userEvent.click(screen.getByRole("button", { name: "Doğrula" }));
     expect(await screen.findByText("Kod hatalı")).toHaveAttribute("role", "alert");
+    expect(screen.getByLabelText("6 haneli kod")).toHaveAccessibleDescription("Kod hatalı");
+    expect(screen.getByLabelText("6 haneli kod")).toHaveAttribute("aria-invalid", "true");
     await userEvent.click(screen.getByRole("button", { name: "Doğrula" }));
 
     expect(await screen.findByRole("link", { name: "Platform paneli" })).toHaveAttribute("href", "#/platform");

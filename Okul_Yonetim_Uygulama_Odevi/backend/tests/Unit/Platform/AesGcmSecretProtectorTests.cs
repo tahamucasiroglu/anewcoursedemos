@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using OkulYonetim.Infrastructure.Security;
 using Shouldly;
 
@@ -9,7 +10,7 @@ namespace OkulYonetim.Tests.Unit.Platform;
 public sealed class AesGcmSecretProtectorTests
 {
     private static AesGcmSecretProtector With(string? key) =>
-        new(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["TwoFactor:EncryptionKey"] = key }).Build());
+        new(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["TwoFactor:EncryptionKey"] = key }).Build(), NullLogger<AesGcmSecretProtector>.Instance);
 
     private static string NewKey() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
 
@@ -40,10 +41,11 @@ public sealed class AesGcmSecretProtectorTests
     }
 
     [Fact]
-    public void MissingKey_IsNotConfigured_AndWrongLengthIsRefused()
+    public void MissingOrMalformedKey_IsNotConfigured()
     {
         With(null).IsConfigured.ShouldBeFalse();
         Should.Throw<InvalidOperationException>(() => With(null).Protect("x"));
-        Should.Throw<InvalidOperationException>(() => With(Convert.ToBase64String(new byte[16])));
+        With(Convert.ToBase64String(new byte[16])).IsConfigured.ShouldBeFalse();
+        With("base64-olmayan-deger!").IsConfigured.ShouldBeFalse();
     }
 }

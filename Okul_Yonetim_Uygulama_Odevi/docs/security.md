@@ -84,6 +84,16 @@
    girer ve kararlarını sıra içinde taze veriyle verir (tek kullanım ve "kurtarma geri alınamaz" eşzamanlı isteklerde de
    geçerli); bağlantıyla yenileme bütün oturumları kapatır ve kilidi açar. SMTP şifresi yalnızca ortam ayarında
    (`Email__Password`); şifre, bağlantı, e-posta adresi ve gövde loglanmaz (yalnızca kişi kimliği).
+10. **Platform yöneticisi (spec 0007):** yetki okul rollerinden ayrı, yalnızca komut satırından verilir/alınır
+    (`grant-platform-admin`, `revoke-platform-admin`; açık oturumlar kapanır, audit'e komut kaynağıyla). Girişte şifre
+    doğruysa oturum değil 5 dk'lık, tek kullanımlık bekleme (yalnızca SHA-256 özeti) döner; oturum doğrulayıcı uygulama
+    kodu (RFC 6238, HMAC-SHA1, 6 hane, 30 sn, ±1 dilim) doğrulanınca açılır ve "kodla açıldı" işareti taşır. Yanlış kod
+    şifre hatalarıyla aynı kilit sayacına eklenir (3 → 15 dk); aynı kod (dilim) ikinci kez kabul edilmez. Doğrulama
+    anahtarı veritabanında AES-GCM ile şifreli; şifreleme anahtarı yalnızca ortam ayarında (`TwoFactor__EncryptionKey`,
+    32 bayt; Pi'de `/etc/okul/okul-2fa.env`, root 600). Anahtar yoksa platform yöneticisi girişi reddedilir, diğer
+    girişler etkilenmez. Panel yetkisi her istekte veritabanından okunur (yetki alınınca bir sonraki istek reddedilir).
+    Panel okulların içine erişmez; yalnızca özet (ad, tarih, durum, sayılar, kurucu ad + e-posta). Doğrulama anahtarı, 6 haneli
+    kodlar, geçici şifre ve bekleme anahtarı log, hata yanıtı ve audit kaydında geçmez. Kurtarma: `reset-two-factor` komutu.
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.
@@ -101,13 +111,3 @@
 ## Review lens
 Security is a mandatory dimension of every independent review (see `prompts/review.md`), not a
 separate afterthought phase.
-10. **Platform yöneticisi (spec 0007):** yetki okul rollerinden ayrı, yalnızca komut satırından verilir/alınır
-    (`grant-platform-admin`, `revoke-platform-admin`; açık oturumlar kapanır, audit'e komut kaynağıyla). Girişte şifre
-    doğruysa oturum değil 5 dk'lık, tek kullanımlık bekleme (yalnızca SHA-256 özeti) döner; oturum doğrulayıcı uygulama
-    kodu (RFC 6238, HMAC-SHA1, 6 hane, 30 sn, ±1 dilim) doğrulanınca açılır ve "kodla açıldı" işareti taşır. Yanlış kod
-    şifre hatalarıyla aynı kilit sayacına eklenir (3 → 15 dk); aynı kod (dilim) ikinci kez kabul edilmez. Doğrulama
-    anahtarı veritabanında AES-GCM ile şifreli; şifreleme anahtarı yalnızca ortam ayarında (`TwoFactor__EncryptionKey`,
-    32 bayt; Pi'de `/etc/okul/okul-2fa.env`, root 600). Anahtar yoksa platform yöneticisi girişi reddedilir, diğer
-    girişler etkilenmez. Panel yetkisi her istekte veritabanından okunur (yetki alınınca bir sonraki istek reddedilir).
-    Panel okulların içine erişmez; yalnızca özet (ad, tarih, durum, sayılar, kurucu ad + e-posta). Anahtar, kod, geçici
-    şifre ve bekleme anahtarı loglanmaz. Kurtarma: `reset-two-factor` komutu.

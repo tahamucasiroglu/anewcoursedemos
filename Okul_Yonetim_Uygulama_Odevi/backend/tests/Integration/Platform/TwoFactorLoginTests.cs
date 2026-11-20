@@ -105,6 +105,28 @@ public sealed class TwoFactorLoginTests
         (await SignInWithCodeAsync(client, time, admin.FounderEmail, secret)).GetProperty("accessToken").GetString().ShouldNotBeNullOrEmpty();
     }
 
+    /// <summary>Review round 1, H-1: araya doğru şifreyle yeni giriş girmek kod sayacını sıfırlamaz.</summary>
+    [Fact]
+    public async Task CorrectPasswordBetweenWrongCodes_DoesNotResetLock()
+    {
+        FakeTimeProvider time = Clock();
+        using OkulApiFactory factory = new(this.database.ConnectionString, timeProvider: time);
+        using HttpClient client = factory.CreateClient();
+        (SchoolSeed admin, _, string secret) = await SignedInPlatformAdminAsync(factory, client, time);
+        time.Advance(TimeSpan.FromSeconds(30));
+        string wrong = Code(secret, time) == "000000" ? "111111" : "000000";
+
+        string first = await ChallengeAsync(client, admin.FounderEmail);
+        await PostAsync(client, "/api/auth/two-factor/verify", new { challenge = first, code = wrong });
+        await PostAsync(client, "/api/auth/two-factor/verify", new { challenge = first, code = wrong });
+        string second = await ChallengeAsync(client, admin.FounderEmail);
+        var third = await PostAsync(client, "/api/auth/two-factor/verify", new { challenge = second, code = wrong });
+        var right = await PostAsync(client, "/api/auth/two-factor/verify", new { challenge = second, code = Code(secret, time) });
+
+        Detail(third.Body).ShouldBe("Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin.");
+        right.Status.ShouldBe(HttpStatusCode.BadRequest, "kilitliyken doğru kod da reddedilir");
+    }
+
     [Fact]
     public async Task WrongPasswordsCount_TowardsSameLock()
     {
