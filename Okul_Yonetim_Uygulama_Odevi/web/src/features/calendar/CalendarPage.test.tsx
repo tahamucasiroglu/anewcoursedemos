@@ -56,9 +56,21 @@ it("yaklaşan dönemde 'Yaklaşan dönem' ibaresi; kayıt yoksa 'Bu dönemde tak
 it("yükleniyor → hata + tekrar dene → takvim", async () => {
   let calls = 0;
   window.location.hash = "#/takvim";
-  start([["GET", /^\/api\/calendar$/, () => (++calls === 1 ? json(500, {}) : json(200, { term: termAutumn, entries: [holiday] }))]], ["Accounting"]);
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  start([["GET", /^\/api\/calendar$/, async () => {
+    if (++calls === 1) {
+      await held;
+      return json(500, {});
+    }
+
+    return json(200, { term: termAutumn, entries: [holiday] });
+  }]], ["Accounting"]);
 
   expect(await screen.findByText("Takvim yükleniyor…")).toBeInTheDocument();
+  release();
   expect(await screen.findByRole("alert")).toHaveTextContent("Takvim alınamadı.");
   await userEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
   expect(await screen.findByText("Cumhuriyet Bayramı")).toBeInTheDocument();

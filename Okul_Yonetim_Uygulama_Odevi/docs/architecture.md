@@ -36,7 +36,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 
 | Module | Single responsibility | Owns |
 |---|---|---|
-| Organization | Kurum, şube, sınıf seviyesi, sınıf, dönem, akademik takvim, ders programı | Tenant, Branch, GradeLevel, Classroom, Term, Timetable |
+| Organization | Kurum, şube, sınıf seviyesi, sınıf, dönem, akademik takvim (spec 0008), ders programı; güncel dönem ve okul günü hesabı (`SchoolCalendar`, Türkiye günü) | Tenant, Branch, GradeLevel, Classroom, Term, CalendarEntry, Timetable |
 | Students | Öğrenci kartı, veli, kardeş bağı, nakil, Excel/e-Okul içe aktarma | Student, Guardian, Transfer |
 | Attendance | Yoklama ve devamsızlık bildirimi tetikleme | Attendance |
 | Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** | Announcement, Message, ConsentForm |
@@ -46,7 +46,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, haftalık gelişim özeti) | AiDraft |
 | Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA (platform yöneticisi — spec 0007), token | User, RoleAssignment, TenantMembership, TwoFactorChallenge |
-| Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
+| Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla; spec 0008: sınıf seviyesi, dönem, sınıf ve akademik takvim yönetimi. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
 | Account | Kişinin kendi hesabı (spec 0006): profil (ad, telefon), şifremi değiştir, şifremi unuttum (yenileme bağlantısı + e-posta). Okul seçimi gerektirmez; yalnızca oturumdaki kişi | PasswordResetToken |
 | Platform | Platform yöneticisinin paneli (spec 0007): bütün okulların özet listesi, okul aç (okul açma komutunun kurallarıyla), okulu pasifleştir/etkinleştir. Okulların içine erişmez; tek kurumlar-arası okuma izinli `PlatformDirectory`'de ve yalnızca özet alanlar | — (Tenant.IsActive) |
 | Compliance | KVKK rıza kayıtları, audit log, saklama süresi ve anonimleştirme | ConsentRecord, AuditEntry |
@@ -68,6 +68,13 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   filtreyi delen okuma (`IgnoreQueryFilters`) yalnızca izinli üç depoda: rol ataması, kurum ve platform paneli özeti
   (`PlatformDirectory`, spec 0007) — architecture testi denetler. Pasif okulun (spec 0007) atamaları girişte, okul
   seçiminde, oturum doğrulamasında ve yenilemede okunmaz.
+- Akademik yapı (spec 0008): seviye, dönem ve takvim kaydı kurum filtresinden geçer (takvimde silinen kayıt da elenir);
+  sınıf filtresi kendi şube kuralını yazmaz, şube filtresini iç sorguyla miras alır (`Branches.Any(b => b.Id == c.BranchId)`):
+  kurucu okulun bütün sınıflarını, diğer roller yalnızca atandıkları **etkin** şubelerin sınıflarını görür. Yönetim uçları
+  `api/admin/grade-levels`, `api/admin/terms` (+ `/{id}/calendar-entries`), `api/admin/calendar-entries`,
+  `api/admin/classrooms` (`TenantFounder`, okul başına sıra + audit); her rol için `api/calendar` (güncel/yaklaşan dönem ve
+  kayıtları) ve `api/classrooms` (görünür etkin sınıflar — öğrenci ve yoklama spec'lerinin okuma ucu). Güncel dönem
+  `SchoolCalendar`'da Türkiye gününe göre hesaplanır (`Europe/Istanbul`, bulunamazsa sabit UTC+3).
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).

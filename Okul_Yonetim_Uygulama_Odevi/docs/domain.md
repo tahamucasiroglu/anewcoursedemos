@@ -25,9 +25,11 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | İki adımlı doğrulama | Şifreden sonra doğrulayıcı uygulamadaki 6 haneli kod | Şimdilik yalnızca platform yöneticisinde (diğer roller B-17) |
 | Şube (`Branch`) | **Aynı kurumun farklı fiziksel lokasyonu** | Örnek: "A Okulları İstanbul Bahçelievler Şubesi". 7-A gibi sınıf şubesi **değildir** → o "Sınıf" |
 | Sınıf seviyesi (`GradeLevel`) | Kademe | 5. sınıf, hazırlık, 4 yaş grubu |
-| Sınıf (`Classroom`) | Bir şubede, bir seviyedeki öğrenci grubu | "Bahçelievler 5-A" ≠ "Avcılar 5-A" — sınıf her zaman bir şubeye bağlı |
-| Şube-sınıf eşleşmesi | Bir dönemde hangi şubede hangi seviyede hangi sınıfların açık olduğu | — |
-| Dönem (`Term`) | Eğitim yılı içindeki dönem | "2026-2027 Güz"; akademik takvim döneme bağlı |
+| Sınıf (`Classroom`) | Bir şubede, bir seviyedeki öğrenci grubu | "Bahçelievler 5-A" ≠ "Avcılar 5-A" — sınıf her zaman bir şubeye bağlı; her dönem için ayrı kayıt (dönem + şube + seviye + ad, spec 0008) |
+| Şube-sınıf eşleşmesi | Bir dönemde hangi şubede hangi seviyede hangi sınıfların açık olduğu | Ayrı kayıt değil: o dönemde o şubede açılmış sınıfların listesi (spec 0008 C-1) |
+| Dönem (`Term`) | Eğitim yılı içindeki dönem | "2026-2027 Güz"; okul geneli; akademik takvim döneme bağlı |
+| Güncel dönem | Bugünü (Türkiye saatiyle) kapsayan dönem; yoksa henüz başlamamış en yakın dönem ("Yaklaşan dönem") | Elle seçilmez; tarihten hesaplanır (spec 0008) |
+| Akademik takvim kaydı (`CalendarEntry`) | Döneme bağlı, okul geneli tatil / sınav / etkinlik günü ya da aralığı | Silinince hiçbir ekranda görünmez (yumuşak silme); yoklama "ders yok" gününü buradan okur |
 | Ders programı (`Timetable`) | Sınıf bazlı haftalık ders düzeni | Elle giriş + Excel içe aktarma |
 | Kullanıcı (`User`) | Bir giriş hesabı | Bir kullanıcının birden çok rolü olabilir |
 | Rol ataması (`RoleAssignment`) | Kullanıcı + rol + kapsam (kurum veya şube) | Kurucu kurum düzeyinde; diğer roller şube düzeyinde |
@@ -64,6 +66,8 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 - **BR-8:** Mesai dışı sessiz mod: öğretmenin tanımladığı saatler dışında veli mesajı iletilir ama öğretmene bildirim gitmez.
 - **BR-10 (spec 0005):** Şube silinmez, pasifleştirilir; okulun son etkin şubesi pasifleştirilemez; aynı okulda iki etkin şube aynı adı (büyük/küçük harf duyarsız) taşıyamaz. Pasif şube atamada seçilemez ve kurucu dışındakilere görünmez.
 - **BR-11 (spec 0005):** Bir okulda en az bir etkin kurucu/yönetici kalır; kurucu kendi yönetici rolünü alamaz ve kendini pasifleştiremez.
+- **BR-12 (spec 0008):** Aynı okulda iki dönemin günleri çakışamaz (bir dönemin bitiş günü öbürünün başlangıç günüyse çakışır); dönem en fazla 366 gün sürer; dönem silinmez ve pasifleştirilmez; tarih düzenlemesi takvim kayıtlarını dönemin dışında bırakamaz; takvim kaydının iki günü de dönemin içindedir.
+- **BR-13 (spec 0008):** Sınıf bir döneme, bir şubeye ve bir seviyeye bağlıdır; dönemi ve şubesi sonradan değişmez; aynı dönem ve şubede aynı adlı (harf farkı gözetmeden) iki etkin sınıf, aynı okulda aynı adlı iki etkin seviye olamaz; seviye ve sınıf silinmez, pasifleştirilir; pasif şube ve pasif seviye yeni sınıfta seçilemez. Kurucu olmayan kişi yalnızca atandığı etkin şubelerin sınıflarını görür.
 - **BR-9:** Bir öğrenci bir dönemde tek bir şubede ve tek bir sınıfta kayıtlıdır; şube değişikliği nakil kaydıdır, geçmiş korunur.
 
 ## Key domain invariants
