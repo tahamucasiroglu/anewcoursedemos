@@ -47,7 +47,7 @@ describe.each(["light", "dark"] as const)("%s tema", (mode) => {
     expect(rows[1]).not.toHaveClass("unread");
     await vi.waitFor(() => expect(api.requests.some((r) => r.method === "POST" && r.path === "/api/notices/read")).toBe(true));
     // 0010 review F-3: yalnızca gösterilenler ve listenin en yeni zamanı (olduğu gibi) gider.
-    expect(api.requests.find((r) => r.path === "/api/notices/read")?.body).toEqual({ noticeIds: ["n1", "n2"], upTo: "2026-11-20T09:05:00Z" });
+    expect(api.requests.find((r) => r.path === "/api/notices/read")?.body).toEqual({ upTo: "2026-11-20T09:05:00Z" });
 
     await userEvent.click(screen.getByRole("link", { name: "Hoş geldin'e dön" }));
     expect(await screen.findByRole("link", { name: "Bildirimler" })).toBeInTheDocument();

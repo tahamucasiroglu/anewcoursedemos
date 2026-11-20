@@ -107,12 +107,14 @@ public static class AttendanceTestData
     public static Task<(HttpStatusCode Status, JsonElement Body, string Raw)> NoticesAsync(HttpClient client, string token) =>
         CallAsync(client, HttpMethod.Get, "/api/notices", token);
 
-    /// <summary>Ekrandaki listeyi okundu yapar: gösterilen kimlikler ve listenin en yeni <c>at</c> değeri (0010 review F-3).</summary>
-    public static Task<HttpStatusCode> MarkReadAsync(HttpClient client, string token, JsonElement shown) =>
+    /// <summary>
+    /// Ekrandaki listeyi okundu yapar: listenin en yeni <c>at</c> değeri (0010 review F-3); <paramref name="upTo"/> verilirse o
+    /// gönderilir (ör. "+03:00" ya da başka velinin listesinin zamanı).
+    /// </summary>
+    public static Task<HttpStatusCode> MarkReadAsync(HttpClient client, string token, JsonElement shown, string? upTo = null) =>
         StatusAsync(client, HttpMethod.Post, "/api/notices/read", token, new
         {
-            noticeIds = shown.EnumerateArray().Select(n => n.GetProperty("id").GetGuid()).ToArray(),
-            upTo = shown.GetArrayLength() == 0 ? Morning.ToString("O", System.Globalization.CultureInfo.InvariantCulture) : shown[0].GetProperty("at").GetString(),
+            upTo = upTo ?? (shown.GetArrayLength() == 0 ? Morning.ToString("O", System.Globalization.CultureInfo.InvariantCulture) : shown[0].GetProperty("at").GetString()),
         });
 
     public static async Task<int> UnreadAsync(HttpClient client, string token) =>

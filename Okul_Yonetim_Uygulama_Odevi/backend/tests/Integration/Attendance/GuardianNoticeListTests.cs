@@ -15,8 +15,9 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// <summary>
 /// Spec 0010 AC-9 (BR-2): veli yalnızca kendi çocuklarının bildirimlerini — farklı şubedeki kardeş dahil — yeniden eskiye
 /// görür; liste en fazla 50; hoş geldin'deki okunmamış sayısı doğru, "okundu" sonrası sıfır; bildirimi olmayan velinin
-/// listesi boş; başka velinin bildirimi görünmez; veli olmayan 403. "Okundu" yalnızca ekranda gösterilenleri işaretler: liste
-/// ile istek arasında gelen ya da düzeltilen bildirim okunmamış kalır (0010 review F-3).
+/// listesi boş; başka velinin bildirimi görünmez; veli olmayan 403. "Okundu" listenin en yeni zamanına kadar değişen bütün
+/// okunmamışları işaretler — listede gösterilmeyen (50'den eski) bildirimler de; liste ile istek arasında gelen ya da düzeltilen
+/// bildirim okunmamış kalır (0010 review F-3, review 2).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class GuardianNoticeListTests
@@ -91,13 +92,15 @@ public sealed class GuardianNoticeListTests
         list[0].GetProperty("day").GetString().ShouldBe("2026-10-25", "en yeni (55. gün)");
         list[49].GetProperty("day").GetString().ShouldBe("2026-09-06");
         (await UnreadAsync(client, guardian)).ShouldBe(55, "sayı listeyle sınırlı değil");
+        (await MarkReadAsync(client, guardian, list)).ShouldBe(HttpStatusCode.NoContent);
+        (await UnreadAsync(client, guardian)).ShouldBe(0, "listede gösterilmeyen eski 5 bildirim de okundu (0010 review 2, bulgu 1)");
         (await StatusAsync(client, HttpMethod.Get, "/api/notices", c.Teacher)).ShouldBe(HttpStatusCode.Forbidden);
         (await MarkReadAsync(client, c.Founder, JsonDocument.Parse("[]").RootElement)).ShouldBe(HttpStatusCode.Forbidden);
         (await UnreadAsync(client, c.Teacher)).ShouldBe(0, "veli olmayana sayı 0");
     }
 
     [Fact]
-    public async Task MarkRead_OnlyShownNotices_NewAndCorrectedAfterListStayUnread()
+    public async Task MarkRead_NewAndCorrectedAfterList_StayUnread()
     {
         FakeTimeProvider time = new(Morning);
         using OkulApiFactory factory = Factory(this.database, new CapturingOutbox(), time);

@@ -17,10 +17,10 @@ public interface IGuardianNoticeRepository
     Task<int> CountUnreadAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Velinin, verilen öğrencilere ait, <paramref name="noticeIds"/> içindeki, okunmamış ve son değişikliği
-    /// <paramref name="upTo"/>'dan sonra olmayan bildirimleri (izlenen — okundu yapmak için; 0010 review F-3).
+    /// Velinin, verilen öğrencilere ait, okunmamış ve son değişikliği <paramref name="upTo"/>'dan (UTC) sonra olmayan bütün
+    /// bildirimleri (izlenen — okundu yapmak için; 0010 review F-3 ve review 2, bulgu 1).
     /// </summary>
-    Task<IReadOnlyList<GuardianNotice>> ListUnreadShownAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, IReadOnlyCollection<Guid> noticeIds, DateTimeOffset upTo, CancellationToken cancellationToken);
+    Task<IReadOnlyList<GuardianNotice>> ListUnreadUpToAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, DateTimeOffset upTo, CancellationToken cancellationToken);
 
     void Add(GuardianNotice notice);
 }

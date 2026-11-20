@@ -100,7 +100,7 @@ describe.each(["light", "dark"] as const)("Bildirimler — %s tema", (mode) => {
     ]);
     expect(requests).toContain("POST /api/notices/read");
     // 0010 review F-3: yalnızca gösterilenler ve listenin en yeni zamanı (olduğu gibi) gider.
-    expect(readBodies).toEqual([{ noticeIds: ["n1", "n2"], upTo: "2026-11-20T09:05:00Z" }]);
+    expect(readBodies).toEqual([{ upTo: "2026-11-20T09:05:00Z" }]);
 
     await fireEvent.press(screen.getByRole("button", { name: "Hoş geldin'e dön" }));
     expect(await screen.findByRole("button", { name: "Bildirimler" })).toBeTruthy();

@@ -37,7 +37,7 @@ public sealed class NoticesController : ControllerBase
     public async Task<IActionResult> MarkRead(MarkNoticesReadRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await this.sender.Send(new MarkMyNoticesReadCommand(request.NoticeIds, request.UpTo), cancellationToken).ConfigureAwait(false);
+        await this.sender.Send(new MarkMyNoticesReadCommand(request.UpTo), cancellationToken).ConfigureAwait(false);
         return this.NoContent();
     }
 }
