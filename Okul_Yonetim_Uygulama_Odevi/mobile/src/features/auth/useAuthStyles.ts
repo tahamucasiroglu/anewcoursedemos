@@ -23,6 +23,7 @@ export function useAuthStyles() {
         buttonText: { color: colors.onPrimary, fontSize: 16 },
         secondary: { alignSelf: "stretch", paddingVertical: 10, paddingHorizontal: 16, borderRadius: 6, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
         secondaryText: { color: colors.text, fontSize: 16 },
+        link: { color: colors.primary, fontSize: 16, textDecorationLine: "underline", paddingVertical: 8 },
       }),
     [colors],
   );

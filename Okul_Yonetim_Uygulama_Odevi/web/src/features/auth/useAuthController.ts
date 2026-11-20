@@ -73,5 +73,10 @@ export function useAuthController() {
     setState(signedOut());
   }, [session]);
 
-  return { state, session, login, retryResume, selectSchool, switchSchool, logout };
+  // Profil değişince Hoş geldin'deki ad güncellensin (spec 0006).
+  const reloadMe = useCallback(async () => {
+    setState(await loadMe(session));
+  }, [session]);
+
+  return { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe };
 }

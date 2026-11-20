@@ -5,6 +5,117 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/account/profile": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfile"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/change-password": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/branches": {
       "get": {
         "tags": [
@@ -866,6 +977,152 @@
         }
       }
     },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Şifremi unuttum (spec 0006): her durumda aynı mesaj; e-posta arka planda gider.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password/check": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Yenileme bağlantısı geçerli mi (sayfa açılırken).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetLinkRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetLinkRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetLinkStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Bağlantıyla yeni şifre (bütün oturumlar kapanır).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/branches": {
       "get": {
         "tags": [
@@ -1146,6 +1403,50 @@
         },
         "description": "Şubenin kimliği ve adı (hoş geldin ekranı ve şube listesi)."
       },
+      "ChangePasswordRequest": {
+        "required": [
+          "currentPassword",
+          "newPassword",
+          "newPasswordRepeat"
+        ],
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newPasswordRepeat": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Şifre değiştirme isteği."
+      },
+      "ForgotPasswordRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Şifremi unuttum isteği."
+      },
       "LoginRequest": {
         "required": [
           "email",
@@ -1400,6 +1701,41 @@
         },
         "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler ve rolü olan tüm okullar (okul değiştirme için)."
       },
+      "MessageResponse": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "description": "Bilgi mesajı yanıtı (ör. \"Bu e-posta sistemde kayıtlıysa …\")."
+      },
+      "MyProfile": {
+        "required": [
+          "fullName",
+          "email",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Kişinin kendi profili (Hesabım): ad-soyad, e-posta (salt okunur), telefon."
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -1450,6 +1786,33 @@
         },
         "description": "Oturum yenileme isteği: mobil anahtarı gövdede gönderir; boşsa (web) çerezdeki anahtar kullanılır."
       },
+      "ResetLinkRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Yenileme bağlantısı denetimi."
+      },
+      "ResetLinkStatusResponse": {
+        "required": [
+          "valid"
+        ],
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          }
+        },
+        "description": "Bağlantı geçerli mi."
+      },
       "ResetMemberPasswordResult": {
         "required": [
           "temporaryPassword"
@@ -1461,6 +1824,35 @@
           }
         },
         "description": "Sıfırlama sonucu: bir kez gösterilecek yeni geçici şifre."
+      },
+      "ResetPasswordRequest": {
+        "required": [
+          "token",
+          "newPassword",
+          "newPasswordRepeat"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newPasswordRepeat": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Bağlantıyla yeni şifre."
       },
       "RoleInput": {
         "required": [
@@ -1527,10 +1919,35 @@
           }
         },
         "description": "Okul seçimi ve hoş geldin ekranı için kurumun kimliği ve adı."
+      },
+      "UpdateProfileRequest": {
+        "required": [
+          "fullName",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Profil isteği: ad-soyad ve telefon (e-posta değişmez; gönderilse de yok sayılır)."
       }
     }
   },
   "tags": [
+    {
+      "name": "Account"
+    },
     {
       "name": "AdminBranches"
     },

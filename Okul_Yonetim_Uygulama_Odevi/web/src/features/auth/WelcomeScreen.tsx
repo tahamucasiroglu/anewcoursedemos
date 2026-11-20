@@ -36,6 +36,9 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
         </dd>
       </dl>
       <div className="actions">
+        <a className="button-link" href="#/hesabim">
+          {t("account.link")}
+        </a>
         {me.roles.includes("Founder") && (
           <a className="button-link" href="#/yonetim">
             {t("admin.link")}

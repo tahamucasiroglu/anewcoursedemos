@@ -7,6 +7,7 @@ interface Props {
   me: Me;
   onSwitchSchool: () => void;
   onLogout: () => void;
+  onAccount?: () => void;
 }
 
 const ROLE_KEYS: Record<string, TextKey> = {
@@ -17,7 +18,7 @@ const ROLE_KEYS: Record<string, TextKey> = {
 };
 
 /** Mobil hoş geldin ekranı (spec 0004): ad, okul, roller, şubeler (yoksa açık mesaj); okul değiştir ve çıkış. */
-export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
+export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount }: Props) {
   const styles = useAuthStyles();
   return (
     <View style={styles.card} testID="welcome">
@@ -39,6 +40,11 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
         ))
       )}
       <View style={styles.actions}>
+        {onAccount && (
+          <Pressable style={styles.secondary} onPress={onAccount} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{t("account.link")}</Text>
+          </Pressable>
+        )}
         {me.tenants.length > 1 && (
           <Pressable style={styles.secondary} onPress={onSwitchSchool} accessibilityRole="button">
             <Text style={styles.secondaryText}>{t("welcome.switchSchool")}</Text>

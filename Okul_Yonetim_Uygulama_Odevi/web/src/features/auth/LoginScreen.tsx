@@ -85,6 +85,9 @@ export function LoginScreen({ submitting, expired, problem, onSubmit, onRetryRes
           </button>
         )}
       </div>
+      <p>
+        <a href="#/sifremi-unuttum">{t("account.forgotLink")}</a>
+      </p>
     </form>
   );
 }

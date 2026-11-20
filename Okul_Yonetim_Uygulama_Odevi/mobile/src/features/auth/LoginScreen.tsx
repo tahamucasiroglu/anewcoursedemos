@@ -11,13 +11,14 @@ interface Props {
   problem: LoginProblem | null;
   onSubmit: (email: string, password: string) => void;
   onRetryResume: () => void;
+  onForgot?: () => void;
 }
 
 /**
  * Mobil giriş ekranı (spec 0004): web ile aynı kurallar ve metinler. Alan hataları istek gönderilmeden gösterilir;
  * hatalar ekran okuyucuya duyurulur (accessibilityRole="alert" + canlı bölge). Gönderilirken düğme kilitli.
  */
-export function LoginScreen({ submitting, expired, problem, onSubmit, onRetryResume }: Props) {
+export function LoginScreen({ submitting, expired, problem, onSubmit, onRetryResume, onForgot }: Props) {
   const styles = useAuthStyles();
   const { colors } = useTheme();
   const [email, setEmail] = useState("");
@@ -95,6 +96,11 @@ export function LoginScreen({ submitting, expired, problem, onSubmit, onRetryRes
           </Pressable>
         )}
       </View>
+      {onForgot && (
+        <Pressable onPress={onForgot} accessibilityRole="link">
+          <Text style={styles.link}>{t("account.forgotLink")}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
