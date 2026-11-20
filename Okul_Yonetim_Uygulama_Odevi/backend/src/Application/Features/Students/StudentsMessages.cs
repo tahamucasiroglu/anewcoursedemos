@@ -40,6 +40,7 @@ public static class StudentsMessages
     public const string PickupRelationshipRequired = "PickupRelationshipRequired";
     public const string PickupRelationshipTooLong = "PickupRelationshipTooLong";
     public const string PickupLimit = "PickupLimit";
+    public const string PickupPersonRequired = "PickupPersonRequired";
 
     private static readonly string[] Locales = ["tr"];
 

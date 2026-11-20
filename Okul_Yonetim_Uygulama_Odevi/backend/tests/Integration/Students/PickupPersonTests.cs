@@ -85,6 +85,22 @@ public sealed class PickupPersonTests
         (await CardAsync(client, founder, id)).GetProperty("pickupPersons").GetArrayLength().ShouldBe(10);
     }
 
+    [Fact]
+    public async Task PickupPersons_NullItem_Returns400FieldError_NothingChanges()
+    {
+        using OkulApiFactory factory = Factory(this.database);
+        using HttpClient client = factory.CreateClient();
+        (SchoolSeed a, string founder) = await SchoolAsync(factory, client);
+        Guid id = await CreateStudentAsync(client, founder, NewStudent(a.BranchId));
+        (await Put(client, founder, id, Person("Mevcut Kişi", "Amca", "05321234567"))).ShouldBe(HttpStatusCode.OK);
+
+        var (status, problem, _) = await CallAsync(client, HttpMethod.Put, $"/api/admin/students/{id}/pickup-persons", founder, new { persons = new object?[] { null } });
+
+        status.ShouldBe(HttpStatusCode.BadRequest);
+        Messages(problem).ShouldContain("Kişi bilgileri boş olamaz");
+        Names(await CardAsync(client, founder, id)).ShouldBe(["Mevcut Kişi|Amca|+905321234567"]);
+    }
+
     private static object Person(string fullName, string relationship, string phone) => new { fullName, relationship, phone };
 
     private static Task<HttpStatusCode> Put(HttpClient client, string token, Guid id, params object[] persons) =>

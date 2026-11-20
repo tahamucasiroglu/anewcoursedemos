@@ -5,13 +5,14 @@ using OkulYonetim.Domain.Students;
 
 namespace OkulYonetim.Application.Features.Students.Commands.SetPickupPersons;
 
-/// <summary>Teslim kişileri: en fazla 10; her kişide ad-soyad (≤ 100), yakınlık (≤ 50) ve geçerli telefon zorunlu.</summary>
+/// <summary>Teslim kişileri: en fazla 10; boş (null) kişi olamaz; her kişide ad-soyad (≤ 100), yakınlık (≤ 50) ve geçerli telefon zorunlu.</summary>
 public sealed class SetPickupPersonsCommandValidator : AbstractValidator<SetPickupPersonsCommand>
 {
     public SetPickupPersonsCommandValidator(ILocalizationService localization)
     {
         this.RuleFor(c => c.Persons).Must(p => p is null || p.Count <= PickupPerson.MaxPerStudent)
             .WithMessage(_ => localization.StudentText(StudentsMessages.PickupLimit));
+        this.RuleForEach(c => c.Persons).NotNull().WithMessage(_ => localization.StudentText(StudentsMessages.PickupPersonRequired));
         this.RuleForEach(c => c.Persons).ChildRules(person =>
         {
             person.RuleFor(p => p.FullName).Cascade(CascadeMode.Stop)
