@@ -146,3 +146,17 @@ it("Şifremi unuttum: sunucuya ulaşılamazsa hata ve tekrar dene", async () => 
   await fireEvent.press(screen.getByText("Tekrar dene"));
   expect(await screen.findByText(message)).toBeTruthy();
 });
+
+it("Platform yöneticisi mobilde: kod adımı yerine 'web'den giriş yapın' mesajı; Girişe dön", async () => {
+  const api = fakeApi({
+    "POST /api/auth/login": () => json(200, { ...tokens, accessToken: "", refreshToken: null, tenants: [], twoFactorChallenge: "bekleme", twoFactorSetupRequired: false }),
+  });
+  await render(<App />);
+  await signIn();
+
+  expect(await screen.findByText(/Platform yöneticisi hesabıyla web'den giriş yapın/)).toBeTruthy();
+  expect(await SecureStore.getItemAsync("okul.refreshToken")).toBeNull();
+  expect(api.sent("POST /api/auth/two-factor/verify")).toHaveLength(0);
+  await fireEvent.press(screen.getByText("Girişe dön"));
+  expect(await screen.findByText("Giriş yap")).toBeTruthy();
+});

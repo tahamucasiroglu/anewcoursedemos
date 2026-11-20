@@ -80,5 +80,7 @@
   "members.save": "Kaydet",
   "members.saving": "Kaydediliyor…",
   "admin.loading": "Yükleniyor…",
-  "admin.retry": "Tekrar dene"
+  "admin.retry": "Tekrar dene",
+  "auth.platformWebOnly": "Platform yöneticisi hesabıyla web'den giriş yapın; iki adımlı doğrulama ve platform paneli yalnızca web'de.",
+  "auth.backToLogin": "Girişe dön"
 }

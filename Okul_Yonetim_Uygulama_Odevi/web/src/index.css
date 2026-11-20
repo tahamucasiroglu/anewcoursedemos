@@ -347,3 +347,19 @@ select:focus-visible {
 a {
   color: var(--color-primary);
 }
+
+/* İki adımlı doğrulama kurulumu (spec 0007): kare kodun kendi beyaz zemini var (koyu temada da okunur); anahtar satırı kırılır. */
+.qr {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.secret-key code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+}

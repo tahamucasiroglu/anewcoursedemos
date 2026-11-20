@@ -45,9 +45,10 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, haftalık gelişim özeti) | AiDraft |
-| Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA, token | User, RoleAssignment, TenantMembership |
+| Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA (platform yöneticisi — spec 0007), token | User, RoleAssignment, TenantMembership, TwoFactorChallenge |
 | Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
 | Account | Kişinin kendi hesabı (spec 0006): profil (ad, telefon), şifremi değiştir, şifremi unuttum (yenileme bağlantısı + e-posta). Okul seçimi gerektirmez; yalnızca oturumdaki kişi | PasswordResetToken |
+| Platform | Platform yöneticisinin paneli (spec 0007): bütün okulların özet listesi, okul aç (okul açma komutunun kurallarıyla), okulu pasifleştir/etkinleştir. Okulların içine erişmez; tek kurumlar-arası okuma izinli `PlatformDirectory`'de ve yalnızca özet alanlar | — (Tenant.IsActive) |
 | Compliance | KVKK rıza kayıtları, audit log, saklama süresi ve anonimleştirme | ConsentRecord, AuditEntry |
 
 "AI ayrı bir modül değil, her modüle gömülü yetenek" (kapsam dokümanı): `Ai` bir ürün modülü değil, diğer
@@ -64,7 +65,12 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   tek yenileme, çıkış); web ve mobil aynı akış durumunu (`authFlow`) çizer, yalnızca yenileme anahtarının taşınması farklı
   (web: HttpOnly çerez, mobil: güvenli depo). Geliştirmede web `/api`'yi vite vekiliyle yerel API'ye iletir (Pi'deki
   gibi aynı adres). Kurum/şube duvarı Persistence'ta global query filter'dır ve oturumdan (`ICurrentSession`) beslenir;
-  filtreyi delen okuma (`IgnoreQueryFilters`) yalnızca izinli iki depoda (architecture testi denetler).
+  filtreyi delen okuma (`IgnoreQueryFilters`) yalnızca izinli üç depoda: rol ataması, kurum ve platform paneli özeti
+  (`PlatformDirectory`, spec 0007) — architecture testi denetler. Pasif okulun (spec 0007) atamaları girişte, okul
+  seçiminde, oturum doğrulamasında ve yenilemede okunmaz.
+- Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
+  veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
+  bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).
 - Yönetim (spec 0005): `api/admin/*` uçları `TenantFounder` politikasıyla korunur (kurucu bilgisi her istekte
   veritabanından); rol/üyelik/şube değiştiren her komut okul başına veritabanı kilidiyle sıraya girer. Web'de yönetim
   sayfası bağımlılıksız hash yönlendirmesiyle `#/yonetim` adresindedir; mobilde yönetim yok. Kişi araması ve şube adı

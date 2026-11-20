@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AuthSession, afterAuth, afterResume, initialAuthState, loadMe, signedOut, type AuthState } from "@okul/api-client";
+import { AuthSession, afterAuth, afterResume, afterTwoFactor, initialAuthState, loadMe, normalizeCode, signedOut, type AuthState } from "@okul/api-client";
 import { apiBaseUrl } from "../../config";
 
 /**
@@ -73,10 +73,26 @@ export function useAuthController() {
     setState(signedOut());
   }, [session]);
 
+  // İki adımlı kod (spec 0007): kurulumda ya da girişte; doğruysa oturum akışı sürer, değilse aynı adımda mesaj.
+  const submitCode = useCallback(
+    async (code: string) => {
+      if (state.kind !== "twoFactor") {
+        return;
+      }
+
+      const current = state;
+      setState({ ...current, submitting: true, problem: null });
+      await proceed(afterTwoFactor(current, await session.completeTwoFactor(current.challenge, normalizeCode(code), current.setupRequired)));
+    },
+    [state, session, proceed],
+  );
+
+  const restart = useCallback(() => setState(signedOut()), []);
+
   // Profil değişince Hoş geldin'deki ad güncellensin (spec 0006).
   const reloadMe = useCallback(async () => {
     setState(await loadMe(session));
   }, [session]);
 
-  return { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe };
+  return { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, submitCode, restart };
 }

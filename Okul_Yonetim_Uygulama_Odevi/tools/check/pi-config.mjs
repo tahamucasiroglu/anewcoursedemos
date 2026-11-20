@@ -32,7 +32,7 @@ for (const script of scripts) {
 //    secret, write_env_file içindeki $1) ve şifre dosyasını okuyan komutlar aranır; her komut (; && || ile ayrılan
 //    parça) ayrı denetlenir. Asıl güvence review + VERIFY'daki çıktı/log taramasıdır.
 const secretVar = /\$\{?(password|pw|pass|secret)\b/i;
-const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?(ENV|JWT)_FILE\b|okul-(api|jwt)\.env)/;
+const readsEnvFile = /\b(cat|head|tail|less|more|grep|awk|sed|cut|strings|base64|xxd|od)\b[^|;&]*(\$\{?(ENV|JWT|TWOFA)_FILE\b|okul-(api|jwt|2fa)\.env)/;
 
 // Tırnak içindeki ; & | karakterleri komut ayırıcı sayılmaz (SQL ve bağlantı cümlesinde geçer; review round 2, M-1).
 // Yerine boşluk konur: kelime karakteri ("_") olsaydı "$password;" → "$password_" olur, değişken tanınmazdı (round 3, L-1).
@@ -139,6 +139,24 @@ else {
   if (!/^\s*ensure_jwt_key$/m.test(setup.replace(jwt, ""))) fail("setup-remote.sh: ensure_jwt_key kurulumda çağrılmalı");
 }
 
+// İki adımlı doğrulama şifreleme anahtarı (spec 0007): imza anahtarıyla aynı kurallar; 32 bayt; yalnızca yoksa üretilir.
+const twofa = setup.match(/ensure_twofactor_key\(\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+if (!twofa) fail("setup-remote.sh: ensure_twofactor_key (iki adımlı doğrulama anahtarı) bulunamadı");
+else {
+  if (!/if \[ -s "\$TWOFA_FILE" \]; then[\s\S]*?return/.test(twofa)) fail("setup-remote.sh: iki adımlı doğrulama anahtarı varsa korunmalı (değişirse kurulu doğrulamalar çözülemez)");
+  if (!/openssl rand -base64 32\b/.test(twofa)) fail("setup-remote.sh: iki adımlı doğrulama anahtarı openssl rand ile 32 bayt üretilmeli");
+  if (!/chmod 600 "\$tmp"/.test(twofa)) fail("setup-remote.sh: iki adımlı doğrulama anahtarı 600 izinli geçici dosyayla yazılmalı");
+  const writes = twofa.split("\n").filter((line) => line.includes("TwoFactor__EncryptionKey=%s"));
+  if (/\b(say|echo)\b[^\n]*openssl/.test(twofa) || writes.length !== 1 || !writes[0].trimEnd().endsWith('> "$tmp"')) fail("setup-remote.sh: iki adımlı doğrulama anahtarı ekrana basılmamalı");
+  if (!/^\s*ensure_twofactor_key$/m.test(setup.replace(twofa, ""))) fail("setup-remote.sh: ensure_twofactor_key kurulumda çağrılmalı");
+}
+
+// Platform yöneticisi sarmalayıcısı (spec 0007): yalnızca üç komut; argümanlar printf %q ile; servis kullanıcısıyla.
+const platformAdmin = read(path.join(piDir, "platform-admin.sh"));
+if (!/grant-platform-admin\|revoke-platform-admin\|reset-two-factor\) ;;/.test(platformAdmin)) fail("platform-admin.sh: yalnızca üç platform komutuna izin verilmeli");
+if (!/printf ' %q'/.test(platformAdmin)) fail("platform-admin.sh: argümanlar printf %q ile taşınmalı");
+if (!/systemd-run --wait --pipe --quiet --uid=okul --gid=okul -p EnvironmentFile=\/etc\/okul\/okul-api\.env/.test(platformAdmin)) fail("platform-admin.sh: komut okul kullanıcısıyla ve servis env dosyasıyla çalışmalı");
+
 // Okul açma sarmalayıcısı (spec 0004): şifre argüman değil (komut gizli girişle sorar); argümanlar printf %q ile taşınır;
 // komut servis kullanıcısıyla ve servisin env dosyasıyla çalışır.
 const createSchool = read(path.join(piDir, "create-school.sh"));
@@ -172,6 +190,7 @@ expectLine(service, /^Restart=always$/m, "servis: Restart=always olmalı");
 expectLine(service, /^Environment=ASPNETCORE_URLS=http:\/\/127\.0\.0\.1:@API_PORT@$/m, "servis: API yalnızca 127.0.0.1'i dinlemeli");
 expectLine(service, /^EnvironmentFile=\/etc\/okul\/okul-api\.env$/m, "servis: bağlantı bilgisi /etc/okul/okul-api.env'den gelmeli");
 expectLine(service, /^EnvironmentFile=\/etc\/okul\/okul-jwt\.env$/m, "servis: oturum imza anahtarı /etc/okul/okul-jwt.env'den gelmeli (spec 0004)");
+expectLine(service, /^EnvironmentFile=-\/etc\/okul\/okul-2fa\.env$/m, "servis: iki adımlı doğrulama anahtarı /etc/okul/okul-2fa.env'den (isteğe bağlı) gelmeli (spec 0007)");
 expectLine(service, /^NoNewPrivileges=true$/m, "servis: NoNewPrivileges=true olmalı");
 expectLine(service, /^ProtectSystem=strict$/m, "servis: ProtectSystem=strict olmalı");
 expectLine(service, /^WantedBy=multi-user\.target$/m, "servis: açılışta başlamalı (WantedBy=multi-user.target)");

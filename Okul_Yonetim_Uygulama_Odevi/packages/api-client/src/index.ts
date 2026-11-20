@@ -3,6 +3,7 @@ export type { OkulApiClient } from "./client";
 export { fetchSystemHealth } from "./systemHealth";
 export type { SystemHealthResult } from "./systemHealth";
 export { AuthSession } from "./auth/session";
+export type { TwoFactorSetupInfo, TwoFactorSetupOutcome } from "./auth/session";
 export type {
   AuthOutcome,
   AuthSessionOptions,
@@ -15,8 +16,10 @@ export type {
 } from "./auth/session";
 export { validateLoginForm } from "./auth/loginForm";
 export type { LoginFieldError, LoginFormErrors } from "./auth/loginForm";
-export { afterAuth, afterResume, initialAuthState, loadMe, signedOut } from "./auth/authFlow";
-export type { AuthState, LoginProblem } from "./auth/authFlow";
+export { afterAuth, afterResume, afterTwoFactor, initialAuthState, loadMe, signedOut } from "./auth/authFlow";
+export type { AuthState, LoginProblem, TwoFactorProblem } from "./auth/authFlow";
+export { normalizeCode, validateCode, validateSchoolForm } from "./platform/platformForms";
+export type { PanelSchoolResult, PlatformFieldError, SchoolFormErrors, SchoolFormValues, SchoolPage, SchoolRow } from "./platform/platformForms";
 export { isValidPhone, ROLE_NAMES, validateBranchForm, validateMemberForm } from "./admin/adminForms";
 export type {
   AddMemberResult,

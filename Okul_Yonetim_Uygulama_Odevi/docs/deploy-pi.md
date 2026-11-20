@@ -12,7 +12,7 @@
 | Ağ geçidi | nginx `/api/…` isteklerini içeride API'ye iletir; dışarıya açık tek port 8080 |
 | Sürümler | `/opt/okul/{api,web}/releases/<UTC zaman>-<git sha>`; etkin olan `current`; birim başına son **2** sürüm |
 | Veritabanı | Pi'deki **PostgreSQL 17**; veritabanı `okul`, kullanıcı `okul_app` (yönetici değil, yalnızca `okul`'a bağlanır) |
-| Gizli bilgi | `/etc/okul/okul-api.env` — bağlantı bilgisi ve şifre; `/etc/okul/okul-jwt.env` — oturum imza anahtarı (spec 0004). İkisini de **yalnızca root okur (600)**; repoda/sohbette/logda yok |
+| Gizli bilgi | `/etc/okul/okul-api.env` — bağlantı bilgisi ve şifre; `/etc/okul/okul-jwt.env` — oturum imza anahtarı (spec 0004); `/etc/okul/okul-2fa.env` — iki adımlı doğrulama şifreleme anahtarı (spec 0007). Hepsini **yalnızca root okur (600)**; repoda/sohbette/logda yok |
 | Loglar | `/var/log/okul/okul-api-YYYYMMDD.log`, 30 gün |
 
 ## Komutlar
@@ -24,6 +24,7 @@
 | Önceki sürüme dön | `bash tools/pi/rollback.sh` (veya `web` / `api`) |
 | Durum (salt okuma) | `bash tools/pi/status.sh` |
 | Okul + kurucu hesabı aç (spec 0004) | `bash tools/pi/create-school.sh --okul "Çınar Koleji" --sube "Merkez" --ad "Ayşe Yılmaz" --eposta ayse@ornek.com` — şifre ekranda görünmeden iki kez sorulur (argüman değil); e-posta zaten varsa sorulmaz ve şifre değişmez; aynı okul tekrar verilirse "Zaten var" der |
+| Platform yöneticisi yetkisi ver / al; iki adımlı doğrulamayı sıfırla (spec 0007) | `bash tools/pi/platform-admin.sh grant-platform-admin --eposta kisi@ornek.com` · `revoke-platform-admin` · `reset-two-factor` — hesap önceden var olmalı; kişinin açık oturumları kapanır |
 | Kaldır (**yalnızca istendiğinde**) | `bash tools/pi/uninstall.sh` → `KALDIR` yazılır (etkileşimsiz: `--onay KALDIR`) |
 
 **Dağıtım ne yapar:** API'yi Pi için (.NET gömülü, `linux-arm64`) ve web'i derler → Pi'ye kopyalar → yeni sürüme geçer →
@@ -70,3 +71,17 @@ Email__WebBaseUrl=http://192.168.1.102:8080
 
 Şifre repoya, sohbete ya da loglara yazılmaz. Yalnızca 587/STARTTLS desteklenir (465 gerekirse MailKit'e geçiş — plan
 0006 Risks 1).
+
+## Platform paneli ve iki adımlı doğrulama — spec 0007
+
+Bu spec'te Pi'ye dokunulmadı; yayınlarken (ship) kullanıcı şu sırayla çalıştırır:
+
+1. `bash tools/pi/setup.sh database` — `/etc/okul/okul-2fa.env` yoksa üretir (root, 600; ekrana basılmaz; varsa dokunmaz —
+   değişirse kurulu doğrulamalar çözülemez). Servis dosyası için `bash tools/pi/setup.sh service` (servis yeniden
+   başlar; Pi'nin kendisi yeniden başlatılmaz).
+2. `bash tools/pi/deploy.sh` — yeni sürüm (veritabanı geçişi açılışta uygulanır; mevcut okullar etkin kalır).
+3. `bash tools/pi/platform-admin.sh grant-platform-admin --eposta <hesabınız>` — ardından web'den giriş; ilk girişte
+   kare kodu doğrulayıcı uygulamayla okutup kodu girin.
+
+Anahtar dosyası yoksa servis yine açılır; yalnızca platform yöneticisi girişi "iki adımlı doğrulama yapılandırılmamış"
+ile reddedilir. Telefon kaybında: `reset-two-factor` (sonraki girişte yeniden kurulum).

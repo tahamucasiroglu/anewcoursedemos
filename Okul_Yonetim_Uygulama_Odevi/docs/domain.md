@@ -20,7 +20,9 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 
 | Term | Meaning | Notes / not to be confused with |
 |---|---|---|
-| Kurum (`Tenant`) | Sistemi kullanan müşteri okul/kurs; sözleşme ve fatura muhatabı; verisi diğer kurumlardan tamamen izole | Örnek: "A Okulları". Tek şubeli okul = 1 kurum + 1 şube |
+| Kurum (`Tenant`) | Sistemi kullanan müşteri okul/kurs; sözleşme ve fatura muhatabı; verisi diğer kurumlardan tamamen izole | Örnek: "A Okulları". Tek şubeli okul = 1 kurum + 1 şube. Pasif okula (spec 0007) kimse giremez; veri silinmez |
+| Platform yöneticisi | Okulları açan/pasifleştiren proje sahibi (spec 0007); okul rollerinden ayrı yetki | Yalnızca komutla verilir; okulların içini görmez; iki adımlı doğrulama zorunlu |
+| İki adımlı doğrulama | Şifreden sonra doğrulayıcı uygulamadaki 6 haneli kod | Şimdilik yalnızca platform yöneticisinde (diğer roller B-17) |
 | Şube (`Branch`) | **Aynı kurumun farklı fiziksel lokasyonu** | Örnek: "A Okulları İstanbul Bahçelievler Şubesi". 7-A gibi sınıf şubesi **değildir** → o "Sınıf" |
 | Sınıf seviyesi (`GradeLevel`) | Kademe | 5. sınıf, hazırlık, 4 yaş grubu |
 | Sınıf (`Classroom`) | Bir şubede, bir seviyedeki öğrenci grubu | "Bahçelievler 5-A" ≠ "Avcılar 5-A" — sınıf her zaman bir şubeye bağlı |

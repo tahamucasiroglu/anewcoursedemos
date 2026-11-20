@@ -9,7 +9,8 @@ interface Props {
 
 /**
  * Hoş geldin ekranı (spec 0004): ad, seçili okul, o okuldaki roller ve görülebilen şubeler; şube yoksa açık mesaj.
- * "Okul değiştir" yalnızca birden çok okul varsa görünür; "Çıkış" oturumu kapatır.
+ * "Okul değiştir" yalnızca birden çok okul varsa görünür; "Çıkış" oturumu kapatır. "Platform paneli" yalnızca platform
+ * yöneticisinde (spec 0007).
  */
 export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
   return (
@@ -39,6 +40,11 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
         <a className="button-link" href="#/hesabim">
           {t("account.link")}
         </a>
+        {me.isPlatformAdmin && (
+          <a className="button-link" href="#/platform">
+            {t("platform.link")}
+          </a>
+        )}
         {me.roles.includes("Founder") && (
           <a className="button-link" href="#/yonetim">
             {t("admin.link")}

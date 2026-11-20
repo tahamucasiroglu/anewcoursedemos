@@ -3,6 +3,7 @@
 // Erişim anahtarı yalnızca bellekte durur. Bir istek 401 alırsa oturum bir kez yenilenir ve istek tekrarlanır;
 // yenileme sunucu tarafından reddedilirse oturum biter (onExpired) ve ekran giriş sayfasına döner. Sunucuya
 // ulaşılamıyorsa oturum bitmiş sayılmaz (kayıtlı anahtar silinmez); istek ağ hatasıyla sonuçlanır (review L-2).
+// Platform yöneticisinde (spec 0007) giriş oturum değil iki adımlı doğrulama beklemesi döner; oturum kodla açılır.
 import createClient from "openapi-fetch";
 import type { components, paths } from "../schema";
 
@@ -21,6 +22,7 @@ export type RefreshTokenDelivery = "cookie" | "body";
 
 export type AuthOutcome =
   | { kind: "ok"; tokens: AuthTokens }
+  | { kind: "twoFactor"; challenge: string; setupRequired: boolean }
   | { kind: "rejected"; status: number; message: string | null }
   | { kind: "unreachable" };
 
@@ -31,7 +33,14 @@ export interface AuthSessionOptions {
   onExpired?: () => void;
 }
 
-const AUTH_PATHS = ["/api/auth/login", "/api/auth/refresh"];
+const AUTH_PATHS = ["/api/auth/login", "/api/auth/refresh", "/api/auth/two-factor/setup", "/api/auth/two-factor/setup/confirm", "/api/auth/two-factor/verify"];
+
+export type TwoFactorSetupInfo = components["schemas"]["TwoFactorSetupResult"];
+
+export type TwoFactorSetupOutcome =
+  | { kind: "ok"; setup: TwoFactorSetupInfo }
+  | { kind: "rejected"; status: number; message: string | null }
+  | { kind: "unreachable" };
 
 export class AuthSession {
   readonly client;
@@ -53,6 +62,24 @@ export class AuthSession {
       this.client.POST("/api/auth/login", {
         body: { email, password, refreshTokenInBody: this.options.delivery === "body" },
       }),
+    );
+  }
+
+  /** İki adımlı doğrulama kurulumu (spec 0007): doğrulayıcı uygulamaya eklenecek anahtar ve kare kod adresi. */
+  async beginTwoFactorSetup(challenge: string): Promise<TwoFactorSetupOutcome> {
+    try {
+      const { data, error, response } = await this.client.POST("/api/auth/two-factor/setup", { body: { challenge } });
+      return data ? { kind: "ok", setup: data } : { kind: "rejected", status: response.status, message: problemMessage(error) };
+    } catch {
+      return { kind: "unreachable" };
+    }
+  }
+
+  /** 6 haneli kod: kurulumu tamamlar (setup) ya da girişi doğrular; doğruysa oturum açılır. */
+  async completeTwoFactor(challenge: string, code: string, setup: boolean): Promise<AuthOutcome> {
+    const body = { challenge, code, refreshTokenInBody: this.options.delivery === "body" };
+    return this.authenticate(() =>
+      setup ? this.client.POST("/api/auth/two-factor/setup/confirm", { body }) : this.client.POST("/api/auth/two-factor/verify", { body }),
     );
   }
 
@@ -88,6 +115,11 @@ export class AuthSession {
   private async authenticate(call: () => Promise<{ data?: AuthTokens; error?: unknown; response: Response }>): Promise<AuthOutcome> {
     try {
       const { data, error, response } = await call();
+      if (data?.twoFactorChallenge) {
+        // Platform yöneticisi (spec 0007): şifre doğru, oturum kod doğrulanınca açılır.
+        return { kind: "twoFactor", challenge: data.twoFactorChallenge, setupRequired: data.twoFactorSetupRequired };
+      }
+
       if (data) {
         await this.accept(data);
         return { kind: "ok", tokens: data };

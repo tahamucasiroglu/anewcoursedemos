@@ -59,7 +59,7 @@
 3. **2FA (TOTP):** Kurucu/Yönetici ve Muhasebe için **zorunlu**; Öğretmen ve Veli için isteğe bağlı. **MVP demosuna kadar
    ertelendi** (kullanıcı kararı 2026-11-19, spec 0004: "önce mvp olarak okullara gösterip fikir alalım"); gerçek okul
    verisiyle pilota açılmadan önce zorunlu (backlog B-17). Çok bilinen şifre listesi de aynı adıma ertelendi; MVP'de şifre
-   kuralı en az 8 karakter.
+   kuralı en az 8 karakter. İstisna: platform yöneticisi için iki adımlı doğrulama **zorunlu** ve yapıldı (spec 0007, madde 10).
 4. **Üç katmanlı yetki:** (a) rol (`ISecuredRequest`), (b) kurum + şube (oturumdan, global query filter), (c) ilişki: veli yalnızca kendi çocuğunu, öğretmen yalnızca kendi sınıflarını görür.
 5. Giriş denemesi hız sınırı (IP başına dakikada 20) + hesap kilitleme (3 hata → 15 dk; bilinmeyen e-posta da aynı
    yanıtı ve kilidi alır, hesap varlığı sızdırılmaz). Giriş/çıkış/kilit/okul seçimi audit'e yazılır.
@@ -101,3 +101,13 @@
 ## Review lens
 Security is a mandatory dimension of every independent review (see `prompts/review.md`), not a
 separate afterthought phase.
+10. **Platform yöneticisi (spec 0007):** yetki okul rollerinden ayrı, yalnızca komut satırından verilir/alınır
+    (`grant-platform-admin`, `revoke-platform-admin`; açık oturumlar kapanır, audit'e komut kaynağıyla). Girişte şifre
+    doğruysa oturum değil 5 dk'lık, tek kullanımlık bekleme (yalnızca SHA-256 özeti) döner; oturum doğrulayıcı uygulama
+    kodu (RFC 6238, HMAC-SHA1, 6 hane, 30 sn, ±1 dilim) doğrulanınca açılır ve "kodla açıldı" işareti taşır. Yanlış kod
+    şifre hatalarıyla aynı kilit sayacına eklenir (3 → 15 dk); aynı kod (dilim) ikinci kez kabul edilmez. Doğrulama
+    anahtarı veritabanında AES-GCM ile şifreli; şifreleme anahtarı yalnızca ortam ayarında (`TwoFactor__EncryptionKey`,
+    32 bayt; Pi'de `/etc/okul/okul-2fa.env`, root 600). Anahtar yoksa platform yöneticisi girişi reddedilir, diğer
+    girişler etkilenmez. Panel yetkisi her istekte veritabanından okunur (yetki alınınca bir sonraki istek reddedilir).
+    Panel okulların içine erişmez; yalnızca özet (ad, tarih, durum, sayılar, kurucu ad + e-posta). Anahtar, kod, geçici
+    şifre ve bekleme anahtarı loglanmaz. Kurtarma: `reset-two-factor` komutu.

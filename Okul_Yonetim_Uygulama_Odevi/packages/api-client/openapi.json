@@ -977,6 +977,176 @@
         }
       }
     },
+    "/api/auth/two-factor/setup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "İki adımlı doğrulama kurulumu (spec 0007): anahtar ve kare kod adresi, yalnızca kurulmamışsa.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorChallengeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorChallengeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorChallengeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/two-factor/setup/confirm": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Kurulumu kodla tamamla; oturum açılır.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokensResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/two-factor/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Girişte 6 haneli kod; oturum açılır.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokensResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/forgot-password": {
       "post": {
         "tags": [
@@ -1204,6 +1374,181 @@
         }
       }
     },
+    "/api/platform/schools": {
+      "get": {
+        "tags": [
+          "PlatformSchools"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolPage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "PlatformSchools"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PanelSchoolResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/schools/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "PlatformSchools"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolRow"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/schools/{id}/activate": {
+      "post": {
+        "tags": [
+          "PlatformSchools"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolRow"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system-health": {
       "get": {
         "tags": [
@@ -1321,9 +1666,19 @@
             "items": {
               "$ref": "#/components/schemas/TenantSummary"
             }
+          },
+          "twoFactorChallenge": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "twoFactorSetupRequired": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Giriş / yenileme / okul seçimi yanıtı: erişim anahtarı ve bitişi; yenileme anahtarı yalnızca mobil (gövde) isteğinde\ndolu, web'de boş (çerezde); okul seçimi gerekiyor mu; kişinin okulları."
+        "description": "Giriş / yenileme / okul seçimi yanıtı: erişim anahtarı ve bitişi; yenileme anahtarı yalnızca mobil (gövde) isteğinde\ndolu, web'de boş (çerezde); okul seçimi gerekiyor mu; kişinin okulları. Platform yöneticisinde (spec 0007) oturum\nyerine iki adımlı doğrulama beklemesi (`TwoFactorChallenge`; kurulum gerekiyorsa `TwoFactorSetupRequired`)."
       },
       "BranchAdminView": {
         "required": [
@@ -1431,6 +1786,42 @@
           }
         },
         "description": "Şifre değiştirme isteği."
+      },
+      "CreateSchoolRequest": {
+        "required": [
+          "schoolName",
+          "branchName",
+          "founderName",
+          "founderEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "founderName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "founderEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Panelden okul ekle: okul adı, ilk şube adı, kurucu ad-soyad ve e-posta."
       },
       "ForgotPasswordRequest": {
         "required": [
@@ -1697,9 +2088,13 @@
             "items": {
               "$ref": "#/components/schemas/TenantSummary"
             }
+          },
+          "isPlatformAdmin": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler ve rolü olan tüm okullar (okul değiştirme için)."
+        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum)."
       },
       "MessageResponse": {
         "required": [
@@ -1735,6 +2130,30 @@
           }
         },
         "description": "Kişinin kendi profili (Hesabım): ad-soyad, e-posta (salt okunur), telefon."
+      },
+      "PanelSchoolResult": {
+        "required": [
+          "tenantId",
+          "existingAccount",
+          "temporaryPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "existingAccount": {
+            "type": "boolean"
+          },
+          "temporaryPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok."
       },
       "ProblemDetails": {
         "type": "object",
@@ -1874,6 +2293,115 @@
         },
         "description": "Formdan gelen rol seçimi: rol adı (Founder, Teacher, Guardian, Accounting) ve şubeleri (kurucuda boş)."
       },
+      "SchoolFounder": {
+        "required": [
+          "fullName",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "description": "Okulun kurucusu (destek için): ad-soyad ve e-posta."
+      },
+      "SchoolPage": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolRow"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Okul listesinin bir sayfası."
+      },
+      "SchoolRow": {
+        "required": [
+          "tenantId",
+          "name",
+          "createdAt",
+          "isActive",
+          "activeBranchCount",
+          "activeMemberCount",
+          "founders"
+        ],
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "activeBranchCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "activeMemberCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "founders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolFounder"
+            }
+          }
+        },
+        "description": "Platform panelindeki okul özeti (spec 0007 gereksinim 5): okulun içindeki veri yok."
+      },
       "SelectTenantRequest": {
         "required": [
           "tenantId"
@@ -1920,6 +2448,63 @@
         },
         "description": "Okul seçimi ve hoş geldin ekranı için kurumun kimliği ve adı."
       },
+      "TwoFactorChallengeRequest": {
+        "required": [
+          "challenge"
+        ],
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "İki adımlı doğrulama kurulumu başlat: girişte verilen bekleme anahtarı."
+      },
+      "TwoFactorCodeRequest": {
+        "required": [
+          "challenge",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "refreshTokenInBody": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "İki adımlı doğrulama kodu: bekleme anahtarı, 6 haneli kod; mobilde yenileme anahtarı gövdede istenir."
+      },
+      "TwoFactorSetupResult": {
+        "required": [
+          "secret",
+          "otpAuthUri"
+        ],
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string"
+          },
+          "otpAuthUri": {
+            "type": "string"
+          }
+        },
+        "description": "Kurulum bilgisi: elle yazılabilir anahtar ve kare kodun adresi (yalnızca kurulum ekranında, bir kez)."
+      },
       "UpdateProfileRequest": {
         "required": [
           "fullName",
@@ -1962,6 +2547,9 @@
     },
     {
       "name": "Me"
+    },
+    {
+      "name": "PlatformSchools"
     },
     {
       "name": "SystemHealth"

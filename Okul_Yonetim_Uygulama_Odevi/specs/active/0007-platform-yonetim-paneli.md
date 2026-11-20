@@ -1,6 +1,6 @@
 # Spec 0007 — Platform yönetim paneli
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0007-plan.md`
 - Self-critique: done

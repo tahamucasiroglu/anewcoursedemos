@@ -18,6 +18,7 @@ DB_ROLE=okul_app
 ETC_DIR=/etc/okul
 ENV_FILE=/etc/okul/okul-api.env
 JWT_FILE=/etc/okul/okul-jwt.env
+TWOFA_FILE=/etc/okul/okul-2fa.env
 HBA_BEGIN='# okul-begin (spec 0003 — Okul Yönetim; uninstall-remote.sh siler)'
 HBA_END='# okul-end'
 # Şifre içeren SQL bu oturumda sunucu loguna yazılmasın (review round 1, L-2; round 2, L-1): komut logu, hata
@@ -89,6 +90,22 @@ ensure_jwt_key() {
   say "oturum imza anahtarı üretildi: $JWT_FILE ($(stat -c '%U:%G %a' "$JWT_FILE"))"
 }
 
+# İki adımlı doğrulama şifreleme anahtarı (spec 0007): platform yöneticisinin doğrulama anahtarı veritabanında bununla
+# şifrelenir. Yalnızca yoksa üretilir (değişirse kurulu doğrulamalar çözülemez); root 600; ekrana basılmaz.
+ensure_twofactor_key() {
+  if [ -s "$TWOFA_FILE" ]; then
+    say "iki adımlı doğrulama anahtarı zaten var (dokunulmadı)"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp "$ETC_DIR/.okul-2fa.env.XXXXXX")"
+  chmod 600 "$tmp"
+  printf 'TwoFactor__EncryptionKey=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" > "$tmp"
+  chown root:root "$tmp"
+  mv -f "$tmp" "$TWOFA_FILE"
+  say "iki adımlı doğrulama anahtarı üretildi: $TWOFA_FILE ($(stat -c '%U:%G %a' "$TWOFA_FILE"))"
+}
+
 ensure_hba_block() {
   local hba backup errors
   hba="$(pg -c 'show hba_file')"
@@ -147,6 +164,7 @@ step_database() {
   pg -c "GRANT CONNECT ON DATABASE $DB_NAME TO $DB_ROLE" >/dev/null
   ensure_hba_block
   ensure_jwt_key
+  ensure_twofactor_key
   say "şifre dosyası: $ENV_FILE ($(stat -c '%U:%G %a' "$ENV_FILE"))"
 }
 

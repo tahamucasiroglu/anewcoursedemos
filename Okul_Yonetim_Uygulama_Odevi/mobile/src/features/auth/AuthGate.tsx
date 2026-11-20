@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { t } from "../../i18n/t";
 import { AccountScreen } from "../account/AccountScreen";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
@@ -11,10 +11,10 @@ import { WelcomeScreen } from "./WelcomeScreen";
 
 /**
  * Mobil oturum ekranı seçici: kontrol ediliyor → giriş → okul seç → hoş geldin (spec 0004); girişte "Şifremi unuttum",
- * hoş geldin'de "Hesabım" (spec 0006).
+ * hoş geldin'de "Hesabım" (spec 0006). Platform yöneticisi girişte "web'den giriş yapın" mesajı görür (spec 0007).
  */
 export function AuthGate() {
-  const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe } = useAuthController();
+  const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart } = useAuthController();
   const styles = useAuthStyles();
   const [forgot, setForgot] = useState(false);
   const [account, setAccount] = useState(false);
@@ -40,6 +40,16 @@ export function AuthGate() {
         <ForgotPasswordScreen onBack={() => setForgot(false)} />
       ) : (
         <LoginScreen submitting={state.submitting} expired={state.expired} problem={state.problem} onSubmit={login} onRetryResume={retryResume} onForgot={() => setForgot(true)} />
+      );
+    case "twoFactor":
+      // Platform yöneticisi (spec 0007): kod adımı ve panel yalnızca web'de.
+      return (
+        <View style={styles.card} testID="platform-web-only">
+          <Text style={styles.text} accessibilityRole="alert">{t("auth.platformWebOnly")}</Text>
+          <Pressable style={styles.secondary} onPress={restart} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{t("auth.backToLogin")}</Text>
+          </Pressable>
+        </View>
       );
     case "selectingSchool":
       return <SchoolSelectScreen tenants={state.tenants} selecting={state.selecting} failed={state.failed} onSelect={selectSchool} />;

@@ -956,6 +956,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/two-factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** İki adımlı doğrulama kurulumu (spec 0007): anahtar ve kare kod adresi, yalnızca kurulmamışsa. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorChallengeRequest"];
+                    "text/json": components["schemas"]["TwoFactorChallengeRequest"];
+                    "application/*+json": components["schemas"]["TwoFactorChallengeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TwoFactorSetupResult"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/two-factor/setup/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Kurulumu kodla tamamla; oturum açılır. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeRequest"];
+                    "text/json": components["schemas"]["TwoFactorCodeRequest"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthTokensResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/two-factor/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Girişte 6 haneli kod; oturum açılır. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeRequest"];
+                    "text/json": components["schemas"]["TwoFactorCodeRequest"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthTokensResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/forgot-password": {
         parameters: {
             query?: never;
@@ -1225,6 +1396,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/schools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    search?: string;
+                    status?: string;
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SchoolPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateSchoolRequest"];
+                    "text/json": components["schemas"]["CreateSchoolRequest"];
+                    "application/*+json": components["schemas"]["CreateSchoolRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PanelSchoolResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/schools/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SchoolRow"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/schools/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SchoolRow"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system-health": {
         parameters: {
             query?: never;
@@ -1292,7 +1628,8 @@ export interface components {
         };
         /**
          * @description Giriş / yenileme / okul seçimi yanıtı: erişim anahtarı ve bitişi; yenileme anahtarı yalnızca mobil (gövde) isteğinde
-         *     dolu, web'de boş (çerezde); okul seçimi gerekiyor mu; kişinin okulları.
+         *     dolu, web'de boş (çerezde); okul seçimi gerekiyor mu; kişinin okulları. Platform yöneticisinde (spec 0007) oturum
+         *     yerine iki adımlı doğrulama beklemesi (`TwoFactorChallenge`; kurulum gerekiyorsa `TwoFactorSetupRequired`).
          */
         AuthTokensResponse: {
             accessToken: string;
@@ -1301,6 +1638,9 @@ export interface components {
             refreshToken: null | string;
             requiresTenantSelection: boolean;
             tenants: components["schemas"]["TenantSummary"][];
+            twoFactorChallenge?: null | string;
+            /** @default false */
+            twoFactorSetupRequired: boolean;
         };
         /** @description Yönetim ekranındaki şube: ad, adres, telefon ve durum (pasif şubeler de listelenir). */
         BranchAdminView: {
@@ -1328,6 +1668,13 @@ export interface components {
             currentPassword: null | string;
             newPassword: null | string;
             newPasswordRepeat: null | string;
+        };
+        /** @description Panelden okul ekle: okul adı, ilk şube adı, kurucu ad-soyad ve e-posta. */
+        CreateSchoolRequest: {
+            schoolName: null | string;
+            branchName: null | string;
+            founderName: null | string;
+            founderEmail: null | string;
         };
         /** @description Şifremi unuttum isteği. */
         ForgotPasswordRequest: {
@@ -1399,7 +1746,8 @@ export interface components {
         };
         /**
          * @description "Ben kimim" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,
-         *     Accounting), görebildiği şubeler ve rolü olan tüm okullar (okul değiştirme için).
+         *     Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
+         *     platform yöneticisi ve kodla açılmış oturum).
          */
         MeResponse: {
             fullName: string;
@@ -1408,6 +1756,8 @@ export interface components {
             roles: string[];
             branches: components["schemas"]["BranchSummary"][];
             tenants: components["schemas"]["TenantSummary"][];
+            /** @default false */
+            isPlatformAdmin: boolean;
         };
         /** @description Bilgi mesajı yanıtı (ör. "Bu e-posta sistemde kayıtlıysa …"). */
         MessageResponse: {
@@ -1418,6 +1768,13 @@ export interface components {
             fullName: string;
             email: string;
             phone: null | string;
+        };
+        /** @description Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok. */
+        PanelSchoolResult: {
+            /** Format: uuid */
+            tenantId: string;
+            existingAccount: boolean;
+            temporaryPassword: null | string;
         };
         ProblemDetails: {
             type?: null | string;
@@ -1454,6 +1811,35 @@ export interface components {
             role: string;
             branchIds: string[];
         };
+        /** @description Okulun kurucusu (destek için): ad-soyad ve e-posta. */
+        SchoolFounder: {
+            fullName: string;
+            email: string;
+        };
+        /** @description Okul listesinin bir sayfası. */
+        SchoolPage: {
+            items: components["schemas"]["SchoolRow"][];
+            /** Format: int32 */
+            total: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        /** @description Platform panelindeki okul özeti (spec 0007 gereksinim 5): okulun içindeki veri yok. */
+        SchoolRow: {
+            /** Format: uuid */
+            tenantId: string;
+            name: string;
+            /** Format: date-time */
+            createdAt: string;
+            isActive: boolean;
+            /** Format: int32 */
+            activeBranchCount: number | string;
+            /** Format: int32 */
+            activeMemberCount: number | string;
+            founders: components["schemas"]["SchoolFounder"][];
+        };
         /** @description Okul seçimi isteği: seçilecek okulun kimliği. */
         SelectTenantRequest: {
             /** Format: uuid */
@@ -1474,6 +1860,22 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+        };
+        /** @description İki adımlı doğrulama kurulumu başlat: girişte verilen bekleme anahtarı. */
+        TwoFactorChallengeRequest: {
+            challenge: null | string;
+        };
+        /** @description İki adımlı doğrulama kodu: bekleme anahtarı, 6 haneli kod; mobilde yenileme anahtarı gövdede istenir. */
+        TwoFactorCodeRequest: {
+            challenge: null | string;
+            code: null | string;
+            /** @default false */
+            refreshTokenInBody: boolean;
+        };
+        /** @description Kurulum bilgisi: elle yazılabilir anahtar ve kare kodun adresi (yalnızca kurulum ekranında, bir kez). */
+        TwoFactorSetupResult: {
+            secret: string;
+            otpAuthUri: string;
         };
         /** @description Profil isteği: ad-soyad ve telefon (e-posta değişmez; gönderilse de yok sayılır). */
         UpdateProfileRequest: {

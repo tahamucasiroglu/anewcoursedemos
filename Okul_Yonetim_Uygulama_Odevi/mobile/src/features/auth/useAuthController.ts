@@ -79,5 +79,7 @@ export function useAuthController() {
     setState(await loadMe(session));
   }, [session]);
 
-  return { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe };
+  const restart = useCallback(() => setState(signedOut()), []);
+
+  return { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart };
 }
