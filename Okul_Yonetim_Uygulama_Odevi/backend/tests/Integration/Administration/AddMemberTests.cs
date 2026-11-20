@@ -75,6 +75,25 @@ public sealed class AddMemberTests
         (await QueryAsync(factory, c => c.Memberships.IgnoreQueryFilters().CountAsync(m => m.TenantId == a.TenantId))).ShouldBe(1);
     }
 
+    /// <summary>Review round 2, L-A: aynı yeni kişi aynı anda iki kez eklenirse biri eklenir, öbürü anlaşılır 400 alır (500 değil).</summary>
+    [Fact]
+    public async Task SameNewPersonAddedTwiceAtOnce_OneSucceeds_OtherGets400()
+    {
+        using OkulApiFactory factory = new(this.database.ConnectionString);
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string token = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        string email = UniqueEmail("cift");
+
+        HttpStatusCode[] results = await Task.WhenAll(
+            StatusAsync(client, HttpMethod.Post, "/api/admin/members", token, NewMember(email, roles: Teacher(a.BranchId))),
+            StatusAsync(client, HttpMethod.Post, "/api/admin/members", token, NewMember(email, roles: Teacher(a.BranchId))));
+
+        results.ShouldBe([HttpStatusCode.OK, HttpStatusCode.BadRequest], ignoreOrder: true);
+        (await QueryAsync(factory, c => c.Users.CountAsync(u => u.Email == email))).ShouldBe(1);
+        factory.ReadLog().ShouldNotContain("Beklenmeyen hata");
+    }
+
     [Fact]
     public async Task RoleWithoutBranch_IsRejected()
     {

@@ -84,7 +84,19 @@ public sealed class MemberAdminHandlers :
         {
             IReadOnlyList<(Role Role, Guid? BranchId)> plan = await RolePlan.BuildAsync(request.Roles, [], this.branches, this.localization, cancellationToken).ConfigureAwait(false);
             DateTimeOffset now = this.timeProvider.GetUtcNow();
-            User? user = existing;
+
+            // Sıra içinde yeniden ara (review round 2, L-A): sıra beklerken aynı e-postayla kişi açılmış olabilir (aynı
+            // formun iki kez gönderilmesi). Bu okulda ise anlaşılır "zaten kayıtlı"; başka okulda açıldıysa kişinin sırası
+            // alınmadığı için "biraz sonra deneyin" — iki durumda da sunucu hatası (500) değil.
+            User? user = await this.users.FindByEmailAsync(EmailAddress.Normalize(request.Email), cancellationToken).ConfigureAwait(false);
+            if (existing is null && user is not null)
+            {
+                string key = await this.memberships.FindInCurrentTenantAsync(user.Id, cancellationToken).ConfigureAwait(false) is not null
+                    ? AdministrationMessages.MemberAlreadyInTenant
+                    : AdministrationMessages.TooManyRequests;
+                throw new BusinessException(await this.localization.GetAsync(key).ConfigureAwait(false));
+            }
+
             string? temporaryPassword = null;
             if (user is not null)
             {

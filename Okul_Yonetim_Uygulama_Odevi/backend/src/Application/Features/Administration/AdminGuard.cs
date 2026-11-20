@@ -58,9 +58,21 @@ public sealed class AdminGuard
             throw new BusinessException(await this.localization.GetAsync(AdministrationMessages.TooManyRequests).ConfigureAwait(false));
         }
 
-        IReadOnlyList<Domain.Identity.RoleAssignment> roles =
-            await this.roleAssignments.ListForUserInTenantAsync(actorId, tenantId, cancellationToken).ConfigureAwait(false);
-        if (!roles.Any(r => r.Role == Domain.Identity.Role.Founder))
+        bool stillFounder;
+        try
+        {
+            IReadOnlyList<Domain.Identity.RoleAssignment> roles =
+                await this.roleAssignments.ListForUserInTenantAsync(actorId, tenantId, cancellationToken).ConfigureAwait(false);
+            stillFounder = roles.Any(r => r.Role == Domain.Identity.Role.Founder);
+        }
+        catch
+        {
+            // Sorgu hata verirse (ör. istek iptali) sıra hemen bırakılır (review round 2, I-B).
+            await scope.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+
+        if (!stillFounder)
         {
             await scope.DisposeAsync().ConfigureAwait(false);
             throw new ForbiddenException(await this.localization.GetAsync(AdministrationMessages.Forbidden).ConfigureAwait(false));
