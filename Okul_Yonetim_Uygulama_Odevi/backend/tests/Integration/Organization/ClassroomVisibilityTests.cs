@@ -1,7 +1,11 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
+using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Identity;
+using OkulYonetim.Persistence.Contexts;
 using OkulYonetim.Tests.Integration.Identity;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -59,5 +63,53 @@ public sealed class ClassroomVisibilityTests
         (await StatusAsync(client, HttpMethod.Get, $"/api/classrooms/{avcilarClass}", founder)).ShouldBe(HttpStatusCode.OK);
     }
 
+    /// <summary>
+    /// VERIFY V-1 (plan 0008 Risks 2): sınıfın global sorgu filtresi tek başına — okuma işleyicilerindeki ikinci "görünür
+    /// şube" süzgeci olmadan. Sınıflar doğrudan bağlamdan okunur; oturum, kimlik doğrulayıcının dolduracağı gibi kişinin
+    /// atandığı bütün şubeleri (pasifleşen dahil) taşır. Öğretmen yalnızca atandığı etkin şubenin sınıfını görür; kurucu üçünü.
+    /// </summary>
+    [Fact]
+    public async Task ClassroomFilter_Alone_TeacherSeesOnlyAssignedActiveBranch_FounderSeesAll()
+    {
+        using OkulApiFactory factory = new(this.database.ConnectionString, timeProvider: new FakeTimeProvider(new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero)));
+        using HttpClient client = factory.CreateClient();
+        SchoolSeed a = await CreateSchoolAsync(factory);
+        string founder = await TokenForSchoolAsync(client, a.FounderEmail, a.TenantId);
+        Guid avcilar = await CreateBranchAsync(client, founder, "Avcılar");
+        Guid closing = await CreateBranchAsync(client, founder, "Kapanan Şube");
+        Guid level = await CreateGradeLevelAsync(client, founder, "5. sınıf", 5);
+        Guid term = await CreateTermAsync(client, founder, "Güz", "2026-09-01", "2027-01-22");
+        Guid merkezClass = await CreateClassroomAsync(client, founder, term, a.BranchId, level, "5-A");
+        Guid avcilarClass = await CreateClassroomAsync(client, founder, term, avcilar, level, "5-A");
+        Guid closingClass = await CreateClassroomAsync(client, founder, term, closing, level, "5-A");
+        (await StatusAsync(client, HttpMethod.Post, $"/api/admin/branches/{closing}/deactivate", founder)).ShouldBe(HttpStatusCode.OK);
+
+        Guid[] teacherSees = await ClassroomIdsAsync(factory, new FilterSession(a.TenantId, IsFounder: false, [a.BranchId, closing]));
+        teacherSees.ShouldBe([merkezClass], "atanmamış şube (Avcılar) ve atanmış ama pasif şube görünmez");
+
+        Guid[] founderSees = await ClassroomIdsAsync(factory, new FilterSession(a.TenantId, IsFounder: true, []));
+        founderSees.ShouldBe([avcilarClass, closingClass, merkezClass], ignoreOrder: true);
+    }
+
+    private static async Task<Guid[]> ClassroomIdsAsync(OkulApiFactory factory, ICurrentSession session)
+    {
+        using IServiceScope scope = factory.Services.CreateScope();
+        DbContextOptions<OkulDbContext> options = scope.ServiceProvider.GetRequiredService<DbContextOptions<OkulDbContext>>();
+        await using OkulDbContext context = new(options, session);
+        return await context.Classrooms.Select(c => c.Id).ToArrayAsync(TestContext.Current.CancellationToken);
+    }
+
     private static Guid[] Ids(JsonElement list) => [.. list.EnumerateArray().Select(c => c.GetProperty("id").GetGuid())];
+
+    /// <summary>Filtrenin okuduğu oturum değerleri; kimlik doğrulayıcının doldurduğu <c>CurrentSession</c> ile aynı alanlar.</summary>
+    private sealed record FilterSession(Guid? TenantId, bool IsFounder, IReadOnlyCollection<Guid> VisibleBranchIds) : ICurrentSession
+    {
+        public bool IsAuthenticated => true;
+
+        public Guid? UserId => null;
+
+        public Guid? SessionId => null;
+
+        public bool IsPlatformAdmin => false;
+    }
 }
