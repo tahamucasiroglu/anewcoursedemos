@@ -29,6 +29,8 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Ders programı (`Timetable`) | Sınıf bazlı haftalık ders düzeni | Elle giriş + Excel içe aktarma |
 | Kullanıcı (`User`) | Bir giriş hesabı | Bir kullanıcının birden çok rolü olabilir |
 | Rol ataması (`RoleAssignment`) | Kullanıcı + rol + kapsam (kurum veya şube) | Kurucu kurum düzeyinde; diğer roller şube düzeyinde |
+| Okul üyeliği (`TenantMembership`) | Kişinin bir okuldaki durumu: etkin / pasif | Pasifleştirme okul başınadır; roller korunur, yeniden etkinleşince geri gelir. Kişi silinmez |
+| Geçici şifre | Kurucunun kişi eklerken ya da sıfırlarken aldığı, bir kez gösterilen şifre | Kurucu kişiye kendisi iletir (e-posta gönderimi SMTP bilgisi girilince, 0006) |
 | Veli (`Guardian`) | Öğrenciyle velilik bağı olan kişi | Tek hesapla tüm çocuklarını görür |
 | Öğrenci kartı (`Student`) | Öğrencinin ana kaydı | Sağlık notu, alerji, teslim alabilecek kişiler dahil |
 | Kardeş bağlantısı | Aynı veliye bağlı öğrenciler | Farklı şubelerde olabilirler |
@@ -56,6 +58,8 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 - **BR-6:** Her AI çıktısında dayandığı kaynak veri görünür.
 - **BR-7:** Para tutarları TRY ve `decimal`; taksit bölmede kuruş farkı son taksite eklenir (taksitlerin toplamı = ana tutar).
 - **BR-8:** Mesai dışı sessiz mod: öğretmenin tanımladığı saatler dışında veli mesajı iletilir ama öğretmene bildirim gitmez.
+- **BR-10 (spec 0005):** Şube silinmez, pasifleştirilir; okulun son etkin şubesi pasifleştirilemez; aynı okulda iki etkin şube aynı adı (büyük/küçük harf duyarsız) taşıyamaz. Pasif şube atamada seçilemez ve kurucu dışındakilere görünmez.
+- **BR-11 (spec 0005):** Bir okulda en az bir etkin kurucu/yönetici kalır; kurucu kendi yönetici rolünü alamaz ve kendini pasifleştiremez.
 - **BR-9:** Bir öğrenci bir dönemde tek bir şubede ve tek bir sınıfta kayıtlıdır; şube değişikliği nakil kaydıdır, geçmiş korunur.
 
 ## Key domain invariants

@@ -65,6 +65,13 @@
    yanıtı ve kilidi alır, hesap varlığı sızdırılmaz). Giriş/çıkış/kilit/okul seçimi audit'e yazılır.
 6. **Audit log:** öğrenci kartı görüntüleme/değiştirme, sağlık verisi okuma, tahsilat, rol ve rıza değişiklikleri — kim, ne, hangi kayıt, ne zaman, IP. Yalnızca eklenir; değiştirilemez/silinemez.
 7. Kiracı/şube dışı kayıt → 404 (varlık bilgisi sızdırılmaz).
+8. **Yönetim (spec 0005):** yalnızca seçili okulun kurucusu/yöneticisi (`TenantFounder`, değilse 403). Geçici şifre
+   12 karakter (harf+rakam, 0/O/1/l/I yok), kriptografik rastgele; yalnızca ekleme/sıfırlama yanıtında bir kez döner,
+   log/audit'te yok, veritabanında yalnızca özet. Kurucu şifre sıfırlaması kişinin bütün oturumlarını kapatır; kişi
+   başka okulda da kayıtlıysa yapılamaz (bir okulun yöneticisi öbür okuldaki erişimi ele geçiremez). Kendi yönetici
+   rolünü alma / kendini pasifleştirme yok; okulda en az bir etkin yönetici kalır (eşzamanlı isteklerde de — okul
+   başına kilit). Pasif üyelik o okulda girişi, okul seçimini ve oturum yenilemeyi hemen keser. Her yönetim işlemi
+   audit'e yazılır (kim, ne, hangi kayıt, ne zaman, IP).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

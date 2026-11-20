@@ -45,7 +45,8 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, haftalık gelişim özeti) | AiDraft |
-| Identity | Kullanıcı, rol ataması, giriş, 2FA, token | User, RoleAssignment |
+| Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA, token | User, RoleAssignment, TenantMembership |
+| Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
 | Compliance | KVKK rıza kayıtları, audit log, saklama süresi ve anonimleştirme | ConsentRecord, AuditEntry |
 
 "AI ayrı bir modül değil, her modüle gömülü yetenek" (kapsam dokümanı): `Ai` bir ürün modülü değil, diğer
@@ -63,6 +64,10 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   (web: HttpOnly çerez, mobil: güvenli depo). Geliştirmede web `/api`'yi vite vekiliyle yerel API'ye iletir (Pi'deki
   gibi aynı adres). Kurum/şube duvarı Persistence'ta global query filter'dır ve oturumdan (`ICurrentSession`) beslenir;
   filtreyi delen okuma (`IgnoreQueryFilters`) yalnızca izinli iki depoda (architecture testi denetler).
+- Yönetim (spec 0005): `api/admin/*` uçları `TenantFounder` politikasıyla korunur (kurucu bilgisi her istekte
+  veritabanından); rol/üyelik/şube değiştiren her komut okul başına veritabanı kilidiyle sıraya girer. Web'de yönetim
+  sayfası bağımlılıksız hash yönlendirmesiyle `#/yonetim` adresindedir; mobilde yönetim yok. Kişi araması ve şube adı
+  karşılaştırması Türkçe harf kuralıyla uygulamada yapılır (okul başına kayıt sayısı küçük).
 - Renkler (web, mobil): yalnızca `packages/theme` (`tokens.json`). Mobil doğrudan kullanır; web aynı değerleri
   `web/src/theme/theme.css` değişkenlerinde tutar (test birebir eşitliği doğrular). Tema seçimi yalnızca cihazda saklanır.
 - Port çağrıları zaman aşımı + yeniden deneme ile yapılır; başarısızlık "beklemede" durumuna düşer, isteği çökertmez.
