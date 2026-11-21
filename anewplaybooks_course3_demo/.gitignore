@@ -19,3 +19,7 @@ Thumbs.db
 extensions/vscode/node_modules/
 extensions/vscode/out/
 extensions/vscode/*.vsix
+
+# Python
+__pycache__/
+.pytest_cache/
