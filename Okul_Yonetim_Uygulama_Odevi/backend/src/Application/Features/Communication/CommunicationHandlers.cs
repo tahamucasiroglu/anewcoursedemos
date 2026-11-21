@@ -25,9 +25,14 @@ namespace OkulYonetim.Application.Features.Communication;
 /// ve bildirimler yalnızca kişinin <b>bağlı</b> çocuklarınınkilerdir (Students'ın "Çocuklarım" sorgusu — bağ üzerinden, bütün
 /// şubeler; plan Risks 6). Loglarda yalnızca kimlik ve sayı; ad, e-posta ve metin yok.
 /// </para>
+/// <para>
+/// Spec 0013: kayda bağlı okul bildirimi (yeni ödev) — her öğrencinin okulda etkin her velisine öğrenci başına bir bildirim,
+/// hazır metniyle (öğrenci adı yok); e-posta gitmez. Listede metin olduğu gibi gösterilir.
+/// </para>
 /// </summary>
 public sealed class CommunicationHandlers :
     IRequestHandler<NotifyAttendanceChangesCommand, AttendanceNoticeResult>,
+    IRequestHandler<NotifyStudentGuardiansCommand, SchoolNoticeResult>,
     IRequestHandler<ListMyNoticesQuery, IReadOnlyList<NoticeView>>,
     IRequestHandler<MarkMyNoticesReadCommand, int>,
     IRequestHandler<CountMyUnreadNoticesQuery, int>
@@ -133,6 +138,37 @@ public sealed class CommunicationHandlers :
         return new AttendanceNoticeResult(emails, pushes, notified.Count, withoutGuardian);
     }
 
+    public async Task<SchoolNoticeResult> Handle(NotifyStudentGuardiansCommand request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        Guid tenantId = this.session.TenantId ?? throw new InvalidOperationException("Bildirim için seçili okul gerekli.");
+        if (request.StudentIds.Count == 0)
+        {
+            return new SchoolNoticeResult([], 0);
+        }
+
+        IReadOnlyList<GuardianContact> contacts = await this.sender.Send(new ListGuardianContactsQuery(request.StudentIds), cancellationToken).ConfigureAwait(false);
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        List<PushNotification> pushes = [];
+        HashSet<Guid> notified = [];
+        foreach (GuardianContact contact in contacts.DistinctBy(c => (c.UserId, c.StudentId)))
+        {
+            GuardianNotice notice = GuardianNotice.ForRecord(tenantId, contact.UserId, contact.StudentId, request.Day, request.Kind, request.SourceId, request.Text, now);
+            this.notices.Add(notice);
+            pushes.Add(new PushNotification(tenantId, contact.UserId, PushNotificationKind.SchoolNotice, notice.Id));
+            notified.Add(contact.UserId);
+        }
+
+        this.logger.LogInformation(
+            "Okul bildirimleri hazırlandı: okul {TenantId}, tür {Kind}, kaynak {SourceId}, bildirim {NoticeCount}, veli {GuardianCount}",
+            tenantId,
+            request.Kind,
+            request.SourceId,
+            pushes.Count,
+            notified.Count);
+        return new SchoolNoticeResult(pushes, notified.Count);
+    }
+
     public async Task<IReadOnlyList<NoticeView>> Handle(ListMyNoticesQuery request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -152,7 +188,7 @@ public sealed class CommunicationHandlers :
             names[n.StudentId],
             n.Day,
             n.Kind.ToString(),
-            GuardianNoticeEmail.Render(n.Kind == GuardianNoticeKind.Absent ? templates.AbsentText : templates.CorrectedText, names[n.StudentId], n.Day, school),
+            n.Text ?? GuardianNoticeEmail.Render(n.Kind == GuardianNoticeKind.Absent ? templates.AbsentText : templates.CorrectedText, names[n.StudentId], n.Day, school),
             n.ReadAt is not null,
             n.UpdatedAt))];
     }
