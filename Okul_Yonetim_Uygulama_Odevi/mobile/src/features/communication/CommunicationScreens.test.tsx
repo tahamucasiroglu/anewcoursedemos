@@ -1,9 +1,10 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react-native";
+import { fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0011 AC-13 (mobil, veli ve öğretmen): menüler yalnızca ilgili rolde ve okunmamış sayılarıyla; duyuru akışı (yükleniyor /
 // boş / dolu / hata + tekrar dene, "yeni" işareti, okul bildirimi, "Daha fazla"), ayrıntı ve onay düğmeleri (mevcut cevap ve
@@ -72,14 +73,9 @@ async function signIn() {
   await screen.findByTestId("welcome");
 }
 
-// Soğuk başlangıç ısınması (0013 VERIFY V-1): dosyadaki ilk çizim, react-native'in tembel yüklenen modüllerini (FlatList,
-// ScrollView, TextInput…) ve uygulama ekranlarını o an dönüştürüp yükler. Ölçüm: ilk test önbellek sıcakken ~0,3 sn, Jest
-// önbelleği soğukken ~2,1 sn, sonraki testler ~0,01–0,08 sn; tam kontrolün paralel yükünde bu bedel ilk testin 15 sn sınırını
-// aştı. Bedel burada, doğrulama içermeyen tek bir giriş → akış turunda ödenir; testler sıcak başlar ve varsayılan sürede kalır.
-// Kancanın süresi bu yüzden geniş: yalnızca yükleme süresini sınırlar, hiçbir doğrulamayı gevşetmez.
-beforeAll(async () => {
-  reset();
-  await AsyncStorage.clear();
+// Soğuk başlangıç ısınması (0013 VERIFY V-1; ortak yardımcı B-36, conventions T21): ilk çizimin bedeli doğrulama içermeyen
+// tek bir giriş → akış turunda ödenir; testler sıcak başlar ve varsayılan sürede kalır (ölçüm ve gerekçe: mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
   fakeApi(
     { "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }) },
     { unreadAnnouncements: 2 },
@@ -87,8 +83,7 @@ beforeAll(async () => {
   await signIn();
   await fireEvent.press(screen.getByRole("button", { name: "Duyurular, 2 okunmamış duyuru" }));
   await screen.findAllByTestId("feed-row");
-  await cleanup();
-}, 60_000);
+});
 
 beforeEach(async () => {
   reset();

@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0004 (mobil): giriş / okul seç / hoş geldin uygulamanın içinde, iki temada; ağ taklit edilir, güvenli depo bellek içi.
 type Handler = (request: Request) => Promise<Response> | Response;
@@ -53,6 +54,14 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({ "POST /api/auth/login": () => json(200, tokens()), "GET /api/me": () => json(200, me()) });
+  await render(<App />);
+  await login("ayse@ornek.test", "Gizli-Sifre-1");
+  await screen.findByText("Hoş geldiniz, Ayşe Kurucu");
 });
 
 describe.each(["light", "dark"] as const)("Mobil giriş — %s tema", (mode) => {

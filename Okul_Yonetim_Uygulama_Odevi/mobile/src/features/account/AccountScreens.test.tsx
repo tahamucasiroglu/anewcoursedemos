@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0006 AC-1, AC-3, AC-4, AC-5, AC-13 (mobil): Hesabım (profil, şifre değiştir) ve Şifremi unuttum; iki tema.
 type Handler = (request: Request) => Promise<Response> | Response;
@@ -49,6 +50,19 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({
+    "POST /api/auth/login": () => json(200, tokens),
+    "GET /api/me": () => json(200, me),
+    "GET /api/account/profile": () => json(200, profile),
+  });
+  await render(<App />);
+  await signIn();
+  await fireEvent.press(await screen.findByText("Hesabım"));
+  await screen.findByText("ali@ornek.test");
 });
 
 describe.each(["light", "dark"] as const)("Mobil Hesabım — %s tema", (mode) => {

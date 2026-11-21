@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0008 AC-13 (mobil): Hoş geldin'deki "Okul takvimi" düğmesi takvim ekranını açar; yükleniyor / boş (iki mesaj) /
 // dolu / hata + tekrar dene iki temada; tür metinle; düğmeler ve başlık erişilebilirlik rolüyle; "Geri" Hoş geldin'e döner.
@@ -58,6 +59,13 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi(() => json(200, { term, entries }));
+  await openCalendar();
+  await screen.findAllByTestId("calendar-entry");
 });
 
 describe.each(["light", "dark"] as const)("Mobil okul takvimi — %s tema", (mode) => {

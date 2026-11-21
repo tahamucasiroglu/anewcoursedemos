@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0010 AC-2 ve AC-13 (mobil, Sınıflarım): birden çok sınıfta liste (şube ve bugünkü durum, ekran okuyucu etiketi);
 // satıra dokununca yoklama açılır, "Sınıflarıma dön" listeyi yeniler; yükleniyor → hata + tekrar dene → "Size atanmış sınıf
@@ -68,6 +69,13 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi(() => json(200, [classA, classB]), () => json(200, sheetB));
+  await openClassrooms();
+  await screen.findAllByTestId("classroom-row");
 });
 
 describe.each(["light", "dark"] as const)("Sınıflarım — %s tema", (mode) => {

@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0014 AC-10 (mobil, veli): duyuru akışında haftalık gelişim özeti "Haftalık gelişim özeti — 16–22 Kasım" başlığı ve çocuk
 // adıyla görünür ve dokunulabilir; ayrıntıda özet, "Yapay zekâ desteğiyle hazırlandı, öğretmen onayladı." etiketi ve dayanak satırı
@@ -67,6 +68,17 @@ afterAll(() => {
   globalThis.fetch = originalFetch;
 });
 
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({
+    "GET /api/announcements/feed": () => json(200, { items: [summaryItem, schoolNotice], page: 1, hasMore: false, unreadCount: 0 }),
+    "GET /api/notices/w1": () => json(200, notice),
+  });
+  const rows = await openFeed();
+  await fireEvent.press(rows[0]);
+  await screen.findByTestId("weekly-summary-text");
+});
+
 describe.each(["light", "dark"] as const)("Haftalık gelişim özeti (veli) — %s tema", (mode) => {
   beforeEach(async () => {
     await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
@@ -100,7 +112,7 @@ describe.each(["light", "dark"] as const)("Haftalık gelişim özeti (veli) — 
     await fireEvent.press(screen.getByRole("button", { name: "Duyurulara dön" }));
     expect(await screen.findByTestId("feed")).toBeTruthy();
     expect(requests.filter((r) => r === "GET /api/announcements/feed")).toHaveLength(2);
-  }, 15_000);
+  });
 
   it("sunucu reddederse (404) hata duyurulur, tekrar dene ayrıntıyı yeniden ister", async () => {
     let calls = 0;

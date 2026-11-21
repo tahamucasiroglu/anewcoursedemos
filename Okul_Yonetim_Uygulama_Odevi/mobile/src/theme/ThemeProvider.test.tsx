@@ -3,6 +3,7 @@ import { THEME_STORAGE_KEY, themeColors, type ColorScheme } from "@okul/theme";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
 import App from "../../App";
+import { warmUpFirstRender } from "../test/warmUp";
 import tr from "../i18n/tr.json";
 
 // Spec 0002: mobil tema — cihaz modu (useColorScheme) ve durum çubuğu taklit edilir; ağ katmanı taklit edilir.
@@ -31,6 +32,12 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch;
+  await renderApp();
 });
 
 async function renderApp() {

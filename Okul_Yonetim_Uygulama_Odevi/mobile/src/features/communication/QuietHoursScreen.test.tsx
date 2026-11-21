@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0011 AC-9 ve AC-13 (mobil, öğretmen "Mesai saatlerim"): yalnızca öğretmende; kayıtlı saatler ve günler gelir; alan
 // hatalarında (adım dışı saat, başlangıç ≥ bitiş, gün yok) istek gitmez; kaydedince "Kaydedildi" ve gövde hafta sırasıyla;
@@ -69,6 +70,13 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({ enabled: true, start: "08:30", end: "16:45", days: ["Monday", "Friday"] });
+  await openQuietHours();
+  await screen.findByDisplayValue("08:30");
 });
 
 describe.each(["light", "dark"] as const)("Mesai saatlerim — %s tema", (mode) => {

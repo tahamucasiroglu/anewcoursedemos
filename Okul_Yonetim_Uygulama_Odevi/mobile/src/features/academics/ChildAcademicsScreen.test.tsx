@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0013 AC-8 (veli özeti) ve AC-13 (veli ekranları, iki tema): "Ödev ve notlar" yalnızca velide; çocuk seçimi (birden çok
 // çocuk, tek çocukta doğrudan, "Kayıtlı çocuğunuz yok"); özetin üç bölümü (bekleyen — en yakın üstte —, son 30 gün durumuyla —
@@ -91,6 +92,15 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({ list: () => json(200, [can, zeynep]), summary: () => json(200, summary()) });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Ödev ve notlar" }));
+  await fireEvent.press(await screen.findByRole("button", { name: "Zeynep Ak, Merkez, aç" }));
+  await screen.findAllByTestId("summary-assignment");
 });
 
 describe.each(["light", "dark"] as const)("Ödev ve notlar (veli) — %s tema", (mode) => {

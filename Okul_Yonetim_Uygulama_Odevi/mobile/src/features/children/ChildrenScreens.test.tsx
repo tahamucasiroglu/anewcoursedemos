@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0009 AC-13 (mobil) ve AC-1/AC-9 ekran tarafı: "Çocuklarım" yalnızca veli rolünde; liste yükleniyor / boş / dolu /
 // hata + tekrar dene (farklı şubelerdeki iki çocuk tek listede); salt okunur kart (sınıf atanmamış, teslim kişisi yok,
@@ -83,6 +84,13 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({ list: () => json(200, [zeynep, can]) });
+  await openChildren();
+  await screen.findAllByTestId("child-row");
 });
 
 describe.each(["light", "dark"] as const)("Çocuklarım — %s tema", (mode) => {

@@ -5,6 +5,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0012 AC-12 (mobil konuşma ekranı, iki tema): "Sesli not" yalnızca öğretmende ve ilişki sürerken; kaydediliyor
 // (sayaç, Durdur) → dönüştürülüyor (gönder kilitli) → taslak hazır ("AI taslağı — göndermeden önce kontrol edin", açılır
@@ -89,6 +90,15 @@ afterAll(() => {
   globalThis.fetch = originalFetch;
 });
 
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi(conversationRoutes(teacherConversation));
+  await openConversation();
+  await fireEvent.press(screen.getByRole("button", { name: "Sesli not" }));
+  await screen.findByTestId("voice-recording");
+  audio.reset();
+});
+
 describe.each(["light", "dark"] as const)("Sesli not — %s tema", (mode) => {
   beforeEach(async () => {
     await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
@@ -98,9 +108,8 @@ describe.each(["light", "dark"] as const)("Sesli not — %s tema", (mode) => {
     expect(StyleSheet.flatten(screen.getByTestId("screen").props.style).backgroundColor).toBe(themeColors[mode].background);
   });
 
-  // Uçtan uca akış (giriş → liste → konuşma → kayıt → dönüştürme → taslak → gönderim, ~30 adım) ve dosyanın ilk testi
-  // olarak uygulamanın ilk çizimini de taşır: tek başına 0,6–1,1 sn, tam koşu yükünde varsayılan 5 sn aşıldı. Süre sınırı
-  // bu teste özel 20 sn; doğrulamalar aynı.
+  // Uçtan uca akış (giriş → liste → konuşma → kayıt → dönüştürme → taslak → gönderim, ~30 adım). Uygulamanın ilk çiziminin
+  // soğuk başlangıç bedeli dosya başındaki ısınma turunda ödenir (B-36); test sıcak başlar, özel süre sınırı gerekmez.
   it("öğretmen: kayıt → dönüştürülüyor (gönder kilitli) → taslak paneli → düzenleyip gönderir (taslak kimliğiyle)", async () => {
     let release: (response: Response) => void = () => {};
     const upload = new Promise<Response>((resolve) => {
@@ -143,7 +152,7 @@ describe.each(["light", "dark"] as const)("Sesli not — %s tema", (mode) => {
     expect(sentBodies).toEqual([{ body: "Sayın Veli, Can bugün ödevini getirmedi. Yarın getirsin.", aiDraftId: "d1" }]);
     expect(screen.queryByTestId("ai-draft")).toBeNull();
     expect(screen.getByRole("button", { name: "Sesli not" })).toBeTruthy();
-  }, 20_000);
+  });
 
   it("Vazgeç: taslak silinir (DELETE), kutu boşalır, Sesli not geri gelir", async () => {
     const requests = fakeApi({

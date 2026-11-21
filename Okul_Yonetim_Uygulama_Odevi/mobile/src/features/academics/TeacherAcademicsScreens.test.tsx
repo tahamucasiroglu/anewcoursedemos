@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0013 AC-12 (5 dokunuş, onay yok) ve AC-13 (öğretmen ekranları, iki tema): "Ödev ve not" yalnızca öğretmende; sınıf seçimi
 // (yükleniyor, boş, hata + tekrar dene, birden çok sınıf); Ödevler | Notlar sekmeleri; listeler (boş, dolu, sayılar); ödev ve
@@ -130,6 +131,19 @@ afterAll(() => {
   globalThis.fetch = originalFetch;
 });
 
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({
+    classrooms: () => json(200, [classA]),
+    assignments: () => json(200, [homework]),
+    submissions: () => json(200, submissions({ students: Array.from({ length: 40 }, (_, i) => student(i + 1)) })),
+  });
+  await signIn();
+  await openAcademics();
+  await fireEvent.press(await screen.findByTestId("assignment-row"));
+  await screen.findAllByTestId("submission-row");
+});
+
 describe.each(["light", "dark"] as const)("Ödev ve not (öğretmen) — %s tema", (mode) => {
   beforeEach(async () => {
     await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
@@ -183,8 +197,9 @@ describe.each(["light", "dark"] as const)("Ödev ve not (öğretmen) — %s tema
         { studentId: "s40", status: "NotSubmitted" },
       ],
     });
-    // 40 satır × 3 seçim ilk çizimde hazır (dokunuş sayısı kaydırmaya bağlı kalmaz); soğuk başlangıçta 5 sn sınırını aşabildiği için süre geniş.
-  }, 20_000);
+    // 40 satır × 3 seçim ilk çizimde hazır (dokunuş sayısı kaydırmaya bağlı kalmaz); ilk çizimin soğuk başlangıç bedeli dosya
+    // başındaki ısınma turunda ödenir (B-36), özel süre sınırı gerekmez.
+  });
 
   it("teslim kaydı: kaydediliyor (düğme kilitli) → hata: işaretler korunur → tekrar Kaydet başarılı", async () => {
     let calls = 0;

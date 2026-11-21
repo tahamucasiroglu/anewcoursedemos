@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0010 AC-9 ve AC-13 (mobil, veli bildirimleri): "Bildirimler (2)" yalnızca velide; liste sunucunun sırasıyla (en
 // yenisi üstte), okunmamış "Yeni", düzeltilen "Düzeltildi" etiketiyle; liste gelince "okundu" isteği gider ve geri dönünce
@@ -75,6 +76,14 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi(() => json(200, [absent, corrected]), { unread: [2, 0] });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Bildirimler (2)" }));
+  await screen.findAllByTestId("notice-row");
 });
 
 describe.each(["light", "dark"] as const)("Bildirimler — %s tema", (mode) => {

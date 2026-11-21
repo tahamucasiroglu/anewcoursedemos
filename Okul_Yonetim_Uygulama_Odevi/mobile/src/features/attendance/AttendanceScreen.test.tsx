@@ -4,6 +4,7 @@ import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "../../../App";
+import { warmUpFirstRender } from "../../test/warmUp";
 
 // Spec 0010 AC-5 (5 dokunuş, onay yok) ve AC-13 (mobil): "Yoklama al" yalnızca öğretmende; tek sınıfta liste doğrudan
 // açılır; herkes "Var", düğmede sayılar; kaydediliyor (düğme kilitli) → sonuç; kaydedildi saati; okul günü değil; öğrenci
@@ -83,6 +84,17 @@ beforeEach(async () => {
 
 afterAll(() => {
   globalThis.fetch = originalFetch;
+});
+
+// İlk çizimin soğuk başlangıç bedeli testlerden önce, doğrulamasız bir turda ödenir (B-36, conventions T21; mobile/src/test/warmUp.ts).
+warmUpFirstRender(async () => {
+  fakeApi({
+    classrooms: () => json(200, [classA]),
+    today: () => json(200, sheet({ students: Array.from({ length: 40 }, (_, i) => student(i + 1)) })),
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Yoklama al" }));
+  await screen.findAllByTestId("attendance-row");
 });
 
 describe.each(["light", "dark"] as const)("Yoklama — %s tema", (mode) => {
