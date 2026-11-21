@@ -6,6 +6,8 @@ import {
   invalidScores,
   parseDayInput,
   parseScore,
+  scoreErrorStudents,
+  submissionsBody,
   submissionsButtonText,
   submissionsResultText,
   validateAssessmentForm,
@@ -27,7 +29,30 @@ describe("academicsForms", () => {
     }
 
     expect(invalidScores({ a: "90", b: "101", c: "", d: "x" })).toEqual(["b", "d"]);
-    expect(gradesBody({ a: "90", c: "" })).toEqual({ grades: [{ studentId: "a", score: 90 }, { studentId: "c", score: null }] });
+    expect(gradesBody({ a: "90", c: "" }, { a: "", c: "70" })).toEqual({ grades: [{ studentId: "a", score: 90 }, { studentId: "c", score: null }] });
+  });
+
+  // Review round 1, R1-3: eski ekrandan kayıt dokunulmamış öğrencinin puanını/teslimini silmesin — yalnızca ilk yüklemeden beri
+  // değişen satırlar gider (sunucu gönderilmeyene dokunmaz); hiçbir şey değişmediyse gövde yok (istek gitmez).
+  it("puan ve teslim gövdesi yalnızca değişen öğrencileri taşır; değişiklik yoksa null", () => {
+    const initialScores = { a: "85", b: "", c: "70" };
+    expect(gradesBody({ a: "85", b: "90", c: "70" }, initialScores)).toEqual({ grades: [{ studentId: "b", score: 90 }] });
+    expect(gradesBody({ a: " 85 ", b: "", c: "70" }, initialScores)).toBeNull();
+    expect(gradesBody({ a: "85", b: "", c: "" }, initialScores)).toEqual({ grades: [{ studentId: "c", score: null }] });
+
+    const initialMarks = { a: "Unmarked", b: "Submitted", c: "NotSubmitted" } as const;
+    expect(submissionsBody({ ...initialMarks, a: "Submitted" }, initialMarks)).toEqual({ entries: [{ studentId: "a", status: "Submitted" }] });
+    expect(submissionsBody({ ...initialMarks }, initialMarks)).toBeNull();
+  });
+
+  it("sunucunun puan alanı hatasından öğrenci kimliği (plan Risks 6)", () => {
+    expect(scoreErrorStudents([
+      { property: "Grades[s2].Score" },
+      { property: "Grades" },
+      { property: "grades[s3].score" },
+      { property: "Grades[s2].Score" },
+    ])).toEqual(["s2", "s3"]);
+    expect(scoreErrorStudents(undefined)).toEqual([]);
   });
 
   it("gün alanı GG.AA.YYYY; olmayan gün geçersiz; gün ekleme ay ve yıl geçer", () => {

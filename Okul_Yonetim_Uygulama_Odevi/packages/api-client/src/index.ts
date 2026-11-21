@@ -67,8 +67,8 @@ export type {
 } from "./admin/academicForms";
 export { calendarKindKey, dateRangeText, formatDay } from "./calendar/schoolCalendar";
 export type { CalendarKindKey, ClassroomSummary, SchoolCalendarView } from "./calendar/schoolCalendar";
-export { callApi } from "./apiOutcome";
-export type { ApiOutcome } from "./apiOutcome";
+export { callApi, problemFields, problemMessage } from "./apiOutcome";
+export type { ApiOutcome, ProblemField } from "./apiOutcome";
 export {
   PASSWORD_MIN_LENGTH,
   resetTokenFromRoute,
@@ -216,6 +216,7 @@ export {
   invalidScores,
   parseDayInput,
   parseScore,
+  scoreErrorStudents,
   SUBJECT_MAX,
   SUBMISSION_STATUSES,
   submissionsBody,

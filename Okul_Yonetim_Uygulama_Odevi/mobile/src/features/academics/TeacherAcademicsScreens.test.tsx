@@ -51,6 +51,16 @@ function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": status >= 400 ? "application/problem+json" : "application/json" } });
 }
 
+/**
+ * Sunucunun gerçek doğrulama yanıtı (T20, review round 1 R1-1; `AssessmentCreateTests` gerçek gövdeyi sınar): içerik türü
+ * application/json, nArchitecture alan listesi `Errors: [{ Property, Errors }]`, `detail`'de hata ara katmanının kopyaladığı ilk
+ * Türkçe alan mesajı.
+ */
+function validation(property: string, message: string): Response {
+  const body = { Errors: [{ Property: property, Errors: [message] }], type: "https://example.com/probs/validation", title: "Validation error(s)", status: 400, detail: message };
+  return new Response(JSON.stringify(body), { status: 400, headers: { "Content-Type": "application/json" } });
+}
+
 interface Handlers {
   roles?: string[];
   classrooms?: Handler;
@@ -165,9 +175,14 @@ describe.each(["light", "dark"] as const)("Ödev ve not (öğretmen) — %s tema
     expect(await screen.findByText("Kaydedildi — 37 teslim etti, 3 etmedi.")).toBeTruthy();
     expect(taps).toBe(5);
     const put = requests.find((r) => r.method === "PUT" && r.path.startsWith("/api/academics"));
-    const entries = (put?.body as { entries: { studentId: string; status: string }[] }).entries;
-    expect(entries).toHaveLength(40);
-    expect(entries.filter((e) => e.status === "NotSubmitted").map((e) => e.studentId)).toEqual(["s3", "s17", "s40"]);
+    // Yalnızca değişen üç öğrenci gider (R1-3): dokunulmayan 37 öğrencinin kaydı sunucuda olduğu gibi kalır.
+    expect(put?.body).toEqual({
+      entries: [
+        { studentId: "s3", status: "NotSubmitted" },
+        { studentId: "s17", status: "NotSubmitted" },
+        { studentId: "s40", status: "NotSubmitted" },
+      ],
+    });
     // 40 satır × 3 seçim ilk çizimde hazır (dokunuş sayısı kaydırmaya bağlı kalmaz); soğuk başlangıçta 5 sn sınırını aşabildiği için süre geniş.
   }, 20_000);
 
@@ -208,7 +223,7 @@ describe.each(["light", "dark"] as const)("Ödev ve not (öğretmen) — %s tema
     const requests = fakeApi({
       classrooms: () => json(200, [classA]),
       assignments: () => json(200, ++listed === 1 ? [] : [homework]),
-      createAssignment: () => (++created === 1 ? json(400, { detail: "Teslim tarihi bugün ile 90 gün sonrası arasında olmalı" }) : json(200, { id: "o1", studentCount: 30, notifiedGuardians: 28 })),
+      createAssignment: () => (++created === 1 ? validation("DueDate", "Teslim tarihi bugün ile 90 gün sonrası arasında olmalı") : json(200, { id: "o1", studentCount: 30, notifiedGuardians: 28 })),
     });
     await signIn();
     await openAcademics();
@@ -264,8 +279,81 @@ describe.each(["light", "dark"] as const)("Ödev ve not (öğretmen) — %s tema
     await fireEvent.changeText(screen.getByLabelText("Öğrenci 02 puanı"), "100");
     await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
     expect(await screen.findByText("Kaydedildi — 2 / 2 puan girildi.")).toBeTruthy();
-    expect(requests.find((r) => r.method === "PUT" && r.path.startsWith("/api/academics"))?.body).toEqual({ grades: [{ studentId: "s1", score: 85 }, { studentId: "s2", score: 100 }] });
+    // Yalnızca değişen öğrenci gider (R1-3): Öğrenci 01'in yüklenen 85'i gönderilmez.
+    expect(requests.find((r) => r.method === "PUT" && r.path.startsWith("/api/academics"))?.body).toEqual({ grades: [{ studentId: "s2", score: 100 }] });
   });
+});
+
+// Review round 1, R1-3: eski ekrandan kayıt, başka bir cihazdan girilmiş ve bu ekranda dokunulmamış öğrencinin puanını/teslimini
+// silmemeli — istemci yalnızca ilk yüklemeden (ya da son başarılı kayıttan) beri değişen satırları gönderir; değişiklik yoksa istek
+// gitmez, "Değişiklik yok" duyurulur.
+it("puan listesi: değişiklik yoksa istek gitmez; kayıttan sonra yalnızca yeni değişiklik gider", async () => {
+  const requests = fakeApi({
+    classrooms: () => json(200, [classA]),
+    assignments: () => json(200, []),
+    assessments: () => json(200, [exam]),
+    grades: () => json(200, gradesView()),
+    saveGrades: () => json(200, { gradedCount: 2, studentCount: 2, changed: 1 }),
+  });
+  const puts = () => requests.filter((r) => r.method === "PUT" && r.path.startsWith("/api/academics")).map((r) => r.body);
+  await signIn();
+  await openAcademics();
+  await fireEvent.press(await screen.findByRole("tab", { name: "Notlar" }));
+  await fireEvent.press(await screen.findByTestId("assessment-row"));
+  await screen.findByLabelText("Öğrenci 01 puanı");
+
+  await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
+  expect(await screen.findByText("Değişiklik yok; kaydedilecek bir şey bulunmuyor.")).toBeTruthy();
+  expect(puts()).toEqual([]);
+
+  await fireEvent.changeText(screen.getByLabelText("Öğrenci 02 puanı"), "70");
+  await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
+  expect(await screen.findByText("Kaydedildi — 2 / 2 puan girildi.")).toBeTruthy();
+  await fireEvent.changeText(screen.getByLabelText("Öğrenci 01 puanı"), "");
+  await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
+  expect(await screen.findByText("Kaydedildi — 2 / 2 puan girildi.")).toBeTruthy();
+  expect(puts()).toEqual([{ grades: [{ studentId: "s2", score: 70 }] }, { grades: [{ studentId: "s1", score: null }] }]);
+});
+
+it("teslim listesi: değişiklik yoksa istek gitmez", async () => {
+  const requests = fakeApi({
+    classrooms: () => json(200, [classA]),
+    assignments: () => json(200, [homework]),
+    submissions: () => json(200, submissions({ students: [student(1, "Submitted"), student(2)] })),
+    saveSubmissions: () => json(200, { submitted: 1, notSubmitted: 0, unmarked: 1, changed: 0 }),
+  });
+  await signIn();
+  await openAcademics();
+  await fireEvent.press(await screen.findByTestId("assignment-row"));
+  await fireEvent.press(await screen.findByRole("radio", { name: "Öğrenci 02: Teslim etti" }));
+  await fireEvent.press(screen.getByRole("radio", { name: "Öğrenci 02: İşaretlenmedi" }));
+  await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
+
+  expect(await screen.findByText("Değişiklik yok; kaydedilecek bir şey bulunmuyor.")).toBeTruthy();
+  expect(requests.some((r) => r.method === "PUT" && r.path.startsWith("/api/academics"))).toBe(false);
+});
+
+// Review round 1, R1-1 + plan Risks 6: sunucunun puan hatası (alan yolu `Grades[<öğrenci>].Score`) Türkçe duyurulur ve o öğrencinin
+// alanı işaretlenir; puanlar korunur.
+it("puan listesi: sunucunun puan hatası öğrencinin alanında ve Türkçe mesajla gösterilir", async () => {
+  fakeApi({
+    classrooms: () => json(200, [classA]),
+    assignments: () => json(200, []),
+    assessments: () => json(200, [exam]),
+    grades: () => json(200, gradesView()),
+    saveGrades: () => validation("Grades[s2].Score", "Puan 0 ile 100 arasında tam sayı olmalı"),
+  });
+  await signIn();
+  await openAcademics();
+  await fireEvent.press(await screen.findByRole("tab", { name: "Notlar" }));
+  await fireEvent.press(await screen.findByTestId("assessment-row"));
+  await fireEvent.changeText(await screen.findByLabelText("Öğrenci 02 puanı"), "90");
+  await fireEvent.press(screen.getByRole("button", { name: "Kaydet" }));
+
+  expect(await screen.findAllByText("Puan 0 ile 100 arasında tam sayı olmalı")).toHaveLength(2);
+  expect(screen.getByLabelText("Öğrenci 02 puanı").props.accessibilityHint).toBe("Puan 0 ile 100 arasında tam sayı olmalı");
+  expect(screen.getByLabelText("Öğrenci 01 puanı").props.accessibilityHint).toBeUndefined();
+  expect(screen.getByLabelText("Öğrenci 02 puanı").props.value).toBe("90");
 });
 
 it("yeni değerlendirme: tür seçimi bildirilir, gelecek tarih alan hatası (istek yok), dönem dışı hata sunucudan duyurulur", async () => {
@@ -274,7 +362,7 @@ it("yeni değerlendirme: tür seçimi bildirilir, gelecek tarih alan hatası (is
     classrooms: () => json(200, [classA]),
     assignments: () => json(200, []),
     assessments: () => json(200, []),
-    createAssessment: () => (++created === 1 ? json(400, { detail: "Tarih sınıfın dönemi içinde olmalı" }) : json(200, { id: "d1", studentCount: 3 })),
+    createAssessment: () => (++created === 1 ? validation("Date", "Tarih sınıfın dönemi içinde olmalı") : json(200, { id: "d1", studentCount: 3 })),
   });
   await signIn();
   await openAcademics();

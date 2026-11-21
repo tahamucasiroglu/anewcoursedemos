@@ -155,14 +155,35 @@ export function initialScores(students: readonly GradeStudentRow[]): Record<stri
   return Object.fromEntries(students.map((s) => [s.studentId, s.score === null || s.score === undefined ? "" : String(s.score)]));
 }
 
-/** Puan kaydının gövdesi; geçersiz puan gönderilmeden önce ekranda yakalanır. */
-export function gradesBody(scores: Record<string, string>) {
-  return {
-    grades: Object.entries(scores).map(([studentId, text]) => {
+/**
+ * Puan kaydının gövdesi: yalnızca ilk yüklemeden (ya da son başarılı kayıttan) beri değişen öğrenciler gider — sunucu
+ * gönderilmeyen öğrenciye dokunmaz (plan A-5), eski ekrandan kayıt başkasının girdiği puanı silmez (review round 1, R1-3).
+ * Hiçbir şey değişmediyse <c>null</c> (istek gönderilmez). Geçersiz puan gönderilmeden önce ekranda yakalanır.
+ */
+export function gradesBody(scores: Record<string, string>, initial: Record<string, string>) {
+  const grades = Object.entries(scores)
+    .filter(([studentId, text]) => text.trim() !== (initial[studentId] ?? "").trim())
+    .map(([studentId, text]) => {
       const parsed = parseScore(text);
       return { studentId, score: parsed.ok ? parsed.value : text };
-    }),
-  };
+    });
+  return grades.length > 0 ? { grades } : null;
+}
+
+/**
+ * Sunucunun puan alanı hatalarındaki öğrenci kimlikleri (`Grades[<öğrenci>].Score`, plan Risks 6) — ekran o öğrencinin alanını
+ * işaretler.
+ */
+export function scoreErrorStudents(fields: readonly { property: string }[] | undefined): string[] {
+  const ids: string[] = [];
+  for (const { property } of fields ?? []) {
+    const match = /^grades\[([^\]]+)\]\.score$/i.exec(property);
+    if (match && !ids.includes(match[1])) {
+      ids.push(match[1]);
+    }
+  }
+
+  return ids;
 }
 
 function asStatus(value: string): SubmissionStatus {
@@ -188,8 +209,15 @@ export function countSubmissions(marks: SubmissionMarks): SubmissionCounts {
   return counts;
 }
 
-export function submissionsBody(marks: SubmissionMarks) {
-  return { entries: Object.entries(marks).map(([studentId, status]) => ({ studentId, status })) };
+/**
+ * Teslim kaydının gövdesi: yalnızca ilk yüklemeden (ya da son başarılı kayıttan) beri durumu değişen öğrenciler (R1-3; sunucu
+ * gönderilmeyene dokunmaz). Hiçbir şey değişmediyse <c>null</c> (istek gönderilmez).
+ */
+export function submissionsBody(marks: SubmissionMarks, initial: SubmissionMarks) {
+  const entries = Object.entries(marks)
+    .filter(([studentId, status]) => status !== initial[studentId])
+    .map(([studentId, status]) => ({ studentId, status }));
+  return entries.length > 0 ? { entries } : null;
 }
 
 /** "Kaydet" ya da "Kaydet (3 etmedi)". */

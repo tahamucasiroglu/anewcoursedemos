@@ -311,6 +311,7 @@
   "academics.saving": "Kaydediliyor…",
   "academics.cancel": "Vazgeç",
   "academics.saveError": "Kaydedilemedi. Lütfen tekrar deneyin.",
+  "academics.nothingChanged": "Değişiklik yok; kaydedilecek bir şey bulunmuyor.",
   "academics.error.subject.required": "Ders adı zorunludur",
   "academics.error.subject.tooLong": "Ders adı en fazla 60 karakter olabilir",
   "academics.error.title.required": "Başlık zorunludur",

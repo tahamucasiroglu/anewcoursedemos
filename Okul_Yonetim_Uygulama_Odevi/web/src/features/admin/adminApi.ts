@@ -1,5 +1,8 @@
+import { problemMessage } from "@okul/api-client";
+
 // Yönetim çağrılarının ortak sonucu: başarı (veri), sunucu hatası (Türkçe mesaj, ör. "Bu adla bir şube zaten var") ya da
-// sunucuya ulaşılamıyor. Ekranlar yalnızca bu üç durumu çizer.
+// sunucuya ulaşılamıyor. Ekranlar yalnızca bu üç durumu çizer. Mesaj ortak istemcinin okuyucusuyla (T20: doğrulama hatasında
+// Türkçe alan mesajı, nArchitecture'ın İngilizce `detail`'i değil).
 export type ApiOutcome<T> = { ok: true; data: T } | { ok: false; unreachable: true } | { ok: false; unreachable: false; status: number; message: string | null };
 
 export async function call<T>(request: Promise<{ data?: T; error?: unknown; response: Response }>): Promise<ApiOutcome<T>> {
@@ -13,21 +16,4 @@ export async function call<T>(request: Promise<{ data?: T; error?: unknown; resp
   } catch {
     return { ok: false, unreachable: true };
   }
-}
-
-function problemMessage(error: unknown): string | null {
-  if (error && typeof error === "object") {
-    if ("detail" in error && typeof error.detail === "string" && error.detail !== "") {
-      return error.detail;
-    }
-
-    if ("errors" in error && error.errors && typeof error.errors === "object") {
-      const first = Object.values(error.errors as Record<string, unknown>).flat()[0];
-      if (typeof first === "string") {
-        return first;
-      }
-    }
-  }
-
-  return null;
 }

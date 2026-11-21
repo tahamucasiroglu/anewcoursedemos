@@ -7,6 +7,7 @@ import {
   initialScores,
   initialSubmissionMarks,
   invalidScores,
+  scoreErrorStudents,
   submissionsBody,
   submissionsResultText,
   type ApiOutcome,
@@ -27,15 +28,35 @@ export type ListState<T> = { kind: "loading" } | { kind: "error"; message: strin
 export type SubmissionsState =
   | { kind: "loading" }
   | { kind: "error"; message: string; forbidden: boolean }
-  | { kind: "ready"; view: AssignmentSubmissionsView; marks: SubmissionMarks; saving: boolean; result: string | null; saveError: string | null };
+  | { kind: "ready"; view: AssignmentSubmissionsView; marks: SubmissionMarks; initial: SubmissionMarks; saving: boolean; result: string | null; saveError: string | null };
 export type GradesState =
   | { kind: "loading" }
   | { kind: "error"; message: string; forbidden: boolean }
-  | { kind: "ready"; view: AssessmentGradesView; scores: Record<string, string>; invalid: string[]; saving: boolean; result: string | null; saveError: string | null };
+  | {
+      kind: "ready";
+      view: AssessmentGradesView;
+      scores: Record<string, string>;
+      initial: Record<string, string>;
+      invalid: string[];
+      saving: boolean;
+      result: string | null;
+      saveError: string | null;
+    };
 export type ChildAcademicsState = { kind: "loading" } | { kind: "gone" } | { kind: "error"; message: string } | { kind: "ready"; view: ChildAcademicsView };
 
 function failure(outcome: Failure, fallback: string): string {
   return outcome.unreachable ? t("academics.unreachable") : outcome.message ?? fallback;
+}
+
+/** Yüklenen liste: ekrandaki işaretler ve "ilk hali" (kayıtta yalnızca ondan beri değişenler gider — R1-3). */
+function readySubmissions(view: AssignmentSubmissionsView): SubmissionsState {
+  const marks = initialSubmissionMarks(view.students);
+  return { kind: "ready", view, marks, initial: marks, saving: false, result: null, saveError: null };
+}
+
+function readyGrades(view: AssessmentGradesView): GradesState {
+  const scores = initialScores(view.students);
+  return { kind: "ready", view, scores, initial: scores, invalid: [], saving: false, result: null, saveError: null };
 }
 
 function isForbidden(outcome: Failure): boolean {
@@ -102,7 +123,7 @@ export function useSubmissions(client: Client, assignmentId: string) {
 
       setState(
         outcome.ok
-          ? { kind: "ready", view: outcome.data, marks: initialSubmissionMarks(outcome.data.students), saving: false, result: null, saveError: null }
+          ? readySubmissions(outcome.data)
           : { kind: "error", message: isForbidden(outcome) ? t("academics.forbidden") : failure(outcome, t("academics.loadError")), forbidden: isForbidden(outcome) },
       );
     });
@@ -125,15 +146,21 @@ export function useSubmissions(client: Client, assignmentId: string) {
     }
 
     const { marks } = state;
+    const body = submissionsBody(marks, state.initial);
+    if (!body) {
+      setState({ ...state, saveError: null, result: t("academics.nothingChanged") });
+      return;
+    }
+
     setState({ ...state, saving: true, saveError: null, result: null });
-    const outcome = await callApi(client.PUT("/api/academics/assignments/{id}/submissions", { params: { path: { id: assignmentId } }, body: submissionsBody(marks) }));
+    const outcome = await callApi(client.PUT("/api/academics/assignments/{id}/submissions", { params: { path: { id: assignmentId } }, body }));
     setState((s) => {
       if (s.kind !== "ready") {
         return s;
       }
 
       return outcome.ok
-        ? { ...s, saving: false, result: submissionsResultText(outcome.data, t("academics.submissionsResult")) }
+        ? { ...s, saving: false, initial: marks, result: submissionsResultText(outcome.data, t("academics.submissionsResult")) }
         : { ...s, saving: false, saveError: failure(outcome, t("academics.saveError")) };
     });
   };
@@ -158,7 +185,7 @@ export function useGrades(client: Client, assessmentId: string) {
 
       setState(
         outcome.ok
-          ? { kind: "ready", view: outcome.data, scores: initialScores(outcome.data.students), invalid: [], saving: false, result: null, saveError: null }
+          ? readyGrades(outcome.data)
           : { kind: "error", message: isForbidden(outcome) ? t("academics.forbidden") : failure(outcome, t("academics.loadError")), forbidden: isForbidden(outcome) },
       );
     });
@@ -189,16 +216,26 @@ export function useGrades(client: Client, assessmentId: string) {
     }
 
     const { scores } = state;
+    const body = gradesBody(scores, state.initial);
+    if (!body) {
+      setState({ ...state, invalid: [], saveError: null, result: t("academics.nothingChanged") });
+      return;
+    }
+
     setState({ ...state, saving: true, saveError: null, result: null });
-    const outcome = await callApi(client.PUT("/api/academics/assessments/{id}/grades", { params: { path: { id: assessmentId } }, body: gradesBody(scores) }));
+    const outcome = await callApi(client.PUT("/api/academics/assessments/{id}/grades", { params: { path: { id: assessmentId } }, body }));
     setState((s) => {
       if (s.kind !== "ready") {
         return s;
       }
 
-      return outcome.ok
-        ? { ...s, saving: false, result: gradesResultText(outcome.data, t("academics.gradesResult")) }
-        : { ...s, saving: false, saveError: failure(outcome, t("academics.saveError")) };
+      if (outcome.ok) {
+        return { ...s, saving: false, initial: scores, result: gradesResultText(outcome.data, t("academics.gradesResult")) };
+      }
+
+      // Sunucunun puan hatası öğrenci kimliğini alan yolunda taşır (plan Risks 6): o öğrencinin alanı işaretlenir.
+      const wrong = outcome.unreachable ? [] : scoreErrorStudents(outcome.fields);
+      return { ...s, saving: false, invalid: wrong, saveError: failure(outcome, t("academics.saveError")) };
     });
   };
 
