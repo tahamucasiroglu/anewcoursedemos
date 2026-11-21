@@ -161,7 +161,7 @@
     okul 404 — reddedilen istekte model çağrılmaz, taslak/bildirim yazılmaz. Öğrenci bazlı okuma sorguları (yoklama, ödev/not) erişim denetlemez; dayanak
     yalnızca guard'dan geçen öğrenci için toplanır (plan 0014 Risks 9). **Modele giden alanlar:** sabit talimat + öğrencinin adı (son kelime — soyadı —
     atılır) + o haftanın yoklama sayıları ve günleri + ödev (ders, başlık, teslim günü, durum) ve not (ders, tür, başlık, gün, puan) satırları + öğretmenin
-    notu; soyad, sağlık notu, alerji, veli bilgisi, başka öğrenci ve kimlikler gitmez; model yalnızca yerel adreste (0012 kuralı). AI hiçbir şeyi
+    notu; soyad, sağlık notu, alerji, veli bilgisi, başka öğrenci ve kimlikler gitmez; model yalnızca yerel adreste (0012 kuralı). Sınırlama (0014 review R1-4): öğrencide ayrı ad alanı yok, "ad" = ad-soyadın son kelimesi dışındaki kelimeler — çift soyadlı öğrencide (ör. "Ali Yılmaz Kaya") soyadlardan biri yerel modele gider (backlog B-37). AI hiçbir şeyi
     veliye göndermez: gönderim öğretmenin "Onayla ve gönder"iyle Communication'dan (BR-5). Özet, öğretmen notu, dayanak ve öğrenci adı **loglanmaz**
     ve audit'e yazılmaz (komutlar `ILoggableRequest` değildir — T9; loglarda kimlik, karakter sayısı, süre); dayanak taslakla `ai_drafts`'ta, özet
     metni velinin bildiriminde düz saklanır. Gönderim audit'te (`WeeklySummarySent`: kim, taslak, ayrıntıda öğrenci + hafta + veli sayısı, IP). Veli
