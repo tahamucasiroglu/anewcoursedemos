@@ -39,10 +39,13 @@ Ollama ve ses servisi açıkken:
 ```powershell
 node tools/ai/smoke.mjs                          # sabit, kurgusal döküm → taslak (uygulamanın talimat dosyasıyla)
 node tools/ai/smoke.mjs --audio C:\yol\not.m4a   # + sesi yazıya döker, dökümden taslak üretir, toplam süreyi yazar
+node tools/ai/smoke.mjs --summary                # yalnızca haftalık gelişim özeti (spec 0014; ses servisi gerekmez)
 ```
 
-Servislerden biri kapalıysa hangisi olduğunu yazar ve 1 ile çıkar. Talimat: `backend/src/Application/Features/Ai/Prompts/voice-message.tr.txt`
-(API aynı dosyayı derlemeye gömer). Öğrenci verisi kullanılmaz.
+Servislerden biri kapalıysa hangisi olduğunu yazar ve 1 ile çıkar. Talimatlar: `backend/src/Application/Features/Ai/Prompts/voice-message.tr.txt`
+ve `weekly-summary.tr.txt` (API aynı dosyaları derlemeye gömer). Her koşunun sonunda sabit, kurgusal bir haftalık dayanaktan (yoklama,
+ödev, not, öğretmen notu — uygulamanın modele verdiği biçimde) en fazla 800 karakterlik özet üretilir; boş yanıt başarısızlıktır.
+Öğrenci verisi kullanılmaz.
 
 ## Yerel ağ demosu (Pi → bu bilgisayar)
 
