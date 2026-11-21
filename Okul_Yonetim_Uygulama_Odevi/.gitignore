@@ -39,3 +39,4 @@ coverage/
 # Yerel yapay zekâ ortamı (MVP: ses→metin ve metin modeli) — kurulum ve modeller repoya girmez
 tools/ai/.venv/
 tools/ai/models/
+tools/ai/__pycache__/
