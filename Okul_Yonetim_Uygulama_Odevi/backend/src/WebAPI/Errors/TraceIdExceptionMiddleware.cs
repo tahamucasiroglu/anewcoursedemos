@@ -68,9 +68,14 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
         // nArchitecture'ın kendi HandleExceptionAsync'i tek (singleton) HttpExceptionHandler'ın Response özelliğini değiştirir:
         // aynı anda iki iş hatasında yanıtlar karışır (biri iki gövde, öteki boş). Her çağrıya ayrı işleyici; dynamic,
         // temel sınıftaki gibi hata türüne göre aşırı yüklemeyi (BusinessException, ValidationException…) seçtirir.
-        return IsExpected(error)
-            ? (Task)new HttpExceptionHandler { Response = response }.HandleException((dynamic)error)
-            : WriteUnexpectedErrorAsync(response);
+        if (!IsExpected(error))
+        {
+            return WriteUnexpectedErrorAsync(response);
+        }
+
+        // İşleyici gövdeyi düz metin olarak yazar; içerik türünü temel sınıf ayarlıyordu (application/json) — aynısı.
+        response.ContentType = MediaTypeNames.Application.Json;
+        return (Task)new HttpExceptionHandler { Response = response }.HandleException((dynamic)error);
     }
 
     private static async Task WriteForbiddenAsync(HttpResponse response, string message)
