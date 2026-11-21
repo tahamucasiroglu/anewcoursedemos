@@ -17,9 +17,7 @@
   verilen talep metni de Türkçe yazılır.
 
 ## Language & framework versions
-- Python 3, doğrulanan sürüm 3.15.2. Flask 3.1.x (3.1.3). Test için pytest, ilk spec'te eklenecek.
-- Sürümler `requirements.txt` oluşturulduğunda orada sabitlenir (`docs/architecture.md`,
-  Technical debt).
+- Python 3, doğrulanan sürüm 3.15.2. Flask 3.1.3, pytest 9.2.0: `requirements.txt`'te sabitli.
 
 ## Naming
 - Python `snake_case` fonksiyon ve değişkenler. Kayıtlar sözlük olarak tutulur
@@ -54,6 +52,6 @@
 - `/new` içinde gün hesabı ve eşik route'ta tekrar ediliyor. Gün veya eşik değişikliği iki yere birden dokunur (BR-7) — from bootstrap 2026-11-21
 
 ## Enforced by tooling
-- `scripts/check`: `syntax [fast]` (Python sözdizimi) ve `import [fast]` (modül Flask ile
-  yüklenebiliyor mu, seed çalışıyor mu). Test adımı ilk spec'te etkinleşecek.
+- `scripts/check`: `syntax [fast]` (Python sözdizimi), `import [fast]` (modül Flask ile
+  yüklenebiliyor mu, seed çalışıyor mu) ve `test [fast]` (pytest, `tests/` altındaki tüm testler).
 - Linter veya formatter yok, bootstrap'ta da dayatılmadı. Eklemek ayrı bir talep olur.

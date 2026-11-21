@@ -8,9 +8,8 @@
 - The whole suite runs inside `scripts/check` — one command, everywhere.
 
 ## Frameworks & layout
-- **Şu an test yok** (bootstrap 2026-11-21). Bootstrap test uydurmadı. İlk spec'in planı
-  **characterization testlerini** kurar, `requirements.txt` ile pytest'i ekler ve
-  `scripts/check.conf` içindeki planlanmış `test` adımını etkinleştirir.
+- **Karakterizasyon testleri** spec 0001 ile kuruldu (`tests/`). `scripts/check.conf`'taki
+  `test [fast]` adımı `tests/` altındaki tüm testleri koşar. Kurulum: `pip install -r requirements.txt`.
 - Araç: **pytest** ve Flask `app.test_client()` (aynı süreçte, sunucu başlatılmaz).
 - Yer ve adlar: `tests/test_<konu>.py`, `tests/conftest.py` (ortak fixture'lar). Test adı
   davranışı söyler.

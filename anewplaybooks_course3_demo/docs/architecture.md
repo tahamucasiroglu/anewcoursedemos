@@ -38,8 +38,6 @@ port 5000, `debug=True`.
 - `LeaveService.status_badge` HTML üretiyor.
 
 ## Technical debt (known, not scheduled)
-- Bağımlılık dosyası yok (`requirements.txt`). İlk spec'in (characterization) planında
-  eklenecek, pytest ile birlikte.
 - Durumlar enum değil, metin (BR-5).
 - Yutulan hatalar: `create_request` ve `/new` içindeki `except Exception` blokları.
 - Ölü kod: `recalculate_year_end` (BR-8).
