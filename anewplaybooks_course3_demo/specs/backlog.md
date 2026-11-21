@@ -13,3 +13,7 @@ step 7). Nothing lands here without that decision; noise is rejected in the tria
   — Recommendation: <the reviewer's action> — Deferred by: <name>, <YYYY-MM-DD>, <why>
   A decision deferred at bootstrap (its REPORT) uses Source: bootstrap <YYYY-MM-DD>.
 -->
+
+- **B-1** — Stored XSS: `PAGE` içindeki `{{ body|safe }}` ve string birleştirme yüzünden personel adı ve izin nedeni HTML'e kaçışsız yazılıyor (`app.py`, `docs/security.md` R-S1) — Source: bootstrap 2026-11-21 — Severity: High — Recommendation: kullanıcı girdisini `markupsafe.escape` ile yazan ayrı bir CHANGE talebi (karakterizasyon testleri korunarak) — Deferred by: tahamucasiroglu, 2026-11-21, ders demosu kapsamı dışında; ayrı iş olarak ele alınacak
+- **B-2** — `app.run(debug=True)`: Werkzeug debugger hata anında uzaktan kod çalıştırmaya açık (`app.py` son satır, `docs/security.md` R-S2) — Source: bootstrap 2026-11-21 — Severity: High — Recommendation: debug'ı ortam değişkenine bağlayan küçük bir CHANGE; varsayılan kapalı — Deferred by: tahamucasiroglu, 2026-11-21, yalnız iç ağ/yerel kullanım; ayrı iş
+- **B-3** — Personel numarası doğrulaması yok: `/new`'deki genel `except Exception` olmayan veya sayı olmayan personel numarasını hâlâ sessizce yutup yönlendiriyor (`app.py`, `/new`); tarih ve personel no birlikte geçersizse artık tarih mesajı dönüyor — Source: spec 0004, plan Risk 3 ve review round 1 R1-2 (`app.py:199-213`) — Severity: Low — Recommendation: CHANGE şeridi, BR-10 kalıbıyla görünür hata (400 + mesaj) — Deferred by: tahamucasiroglu, 2026-11-21, spec 0004 kapsamı dışında bırakıldı
