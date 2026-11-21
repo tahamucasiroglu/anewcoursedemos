@@ -83,4 +83,8 @@ public enum AuditAction
     InstallmentPlanCancelled = 78,
     PaymentRecorded = 79,
     PaymentCancelled = 80,
+    AppointmentRequested = 81,
+    AppointmentApproved = 82,
+    AppointmentRejected = 83,
+    AppointmentCancelled = 84,
 }

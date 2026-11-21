@@ -29,6 +29,9 @@ public sealed class SchoolCalendar
         }
     }
 
+    /// <summary>Türkiye saat dilimi; bulunamadıysa <c>null</c> (sabit UTC+3 — spec 0016 dilim hesabı <c>AvailabilityPlanner</c>'a verir).</summary>
+    public TimeZoneInfo? Zone => this.zone;
+
     /// <summary>Verilen andaki Türkiye günü.</summary>
     public static DateOnly TurkeyDay(DateTimeOffset instant, TimeZoneInfo? zone)
     {

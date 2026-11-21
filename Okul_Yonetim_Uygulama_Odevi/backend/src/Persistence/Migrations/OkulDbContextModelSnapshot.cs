@@ -344,6 +344,140 @@ namespace OkulYonetim.Persistence.Migrations
                     b.ToTable("ai_drafts", (string)null);
                 });
 
+            modelBuilder.Entity("OkulYonetim.Domain.Appointments.Appointment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<Guid>("GuardianUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("guardian_user_id");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<DateTimeOffset?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<Guid>("SlotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("slot_id");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TeacherUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("teacher_user_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("topic");
+
+                    b.HasKey("Id")
+                        .HasName("pk_appointments");
+
+                    b.HasIndex("GuardianUserId")
+                        .HasDatabaseName("ix_appointments_guardian_user_id");
+
+                    b.HasIndex("SlotId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_appointments_slot_id")
+                        .HasFilter("status IN (1, 2)");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_appointments_tenant_id");
+
+                    b.HasIndex("StudentId", "TeacherUserId")
+                        .HasDatabaseName("ix_appointments_student_id_teacher_user_id");
+
+                    b.HasIndex("TeacherUserId", "StartsAt")
+                        .HasDatabaseName("ix_appointments_teacher_user_id_starts_at");
+
+                    b.ToTable("appointments", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_appointments_range", "ends_at > starts_at");
+
+                            t.HasCheckConstraint("ck_appointments_status", "status BETWEEN 1 AND 5");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Appointments.AvailabilitySlot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("removed_at");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<Guid>("TeacherUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("teacher_user_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_availability_slots");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_availability_slots_tenant_id");
+
+                    b.HasIndex("TeacherUserId", "StartsAt")
+                        .HasDatabaseName("ix_availability_slots_teacher_user_id_starts_at");
+
+                    b.ToTable("availability_slots", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_availability_slots_range", "ends_at > starts_at");
+                        });
+                });
+
             modelBuilder.Entity("OkulYonetim.Domain.Attendance.AttendanceEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2329,6 +2463,61 @@ namespace OkulYonetim.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_ai_drafts_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Appointments.Appointment", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("GuardianUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_appointments_users_guardian_user_id");
+
+                    b.HasOne("OkulYonetim.Domain.Appointments.AvailabilitySlot", null)
+                        .WithMany()
+                        .HasForeignKey("SlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_appointments_availability_slots_slot_id");
+
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_appointments_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("TeacherUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_appointments_users_teacher_user_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_appointments_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Appointments.AvailabilitySlot", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("TeacherUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_availability_slots_users_teacher_user_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_availability_slots_tenants_tenant_id");
                 });
 
             modelBuilder.Entity("OkulYonetim.Domain.Attendance.AttendanceEntry", b =>

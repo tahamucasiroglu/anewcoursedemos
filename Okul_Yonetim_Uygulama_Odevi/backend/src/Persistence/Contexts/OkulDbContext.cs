@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Academics;
 using OkulYonetim.Domain.Ai;
+using OkulYonetim.Domain.Appointments;
 using OkulYonetim.Domain.Attendance;
 using OkulYonetim.Domain.Billing;
 using OkulYonetim.Domain.Communication;
@@ -17,7 +18,7 @@ namespace OkulYonetim.Persistence.Contexts;
 /// filtresiyle uygulanır: kurum yalnızca oturumdaki kurumu, şube yalnızca o kurumun ve (kurucu değilse) kişinin atandığı
 /// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması, üyelik, sınıf seviyesi, dönem ve takvim kaydı
 /// (silinmemiş) yalnızca o kurumunkileri, sınıf ve öğrenci yalnızca görünür şubelerinkileri (spec 0008, 0009), veli bağı ve teslim kişisi yalnızca o kurumunkileri, sınıf öğretmeni ataması ve yoklama görünür şubelerinkileri, yoklama satırı
-/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011); AI taslağı o kurumunkileri (spec 0012); ödev ve değerlendirme görünür şubelerinkileri, teslim ve puan satırı o kurumunkileri (spec 0013); tarife, indirim, makbuz sayacı ve hatırlatma o kurumunkileri, plan ve tahsilat görünür şubelerinkileri, taksit ve dağılım görünür plan/tahsilatınkileri (spec 0015). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
+/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011); AI taslağı o kurumunkileri (spec 0012); ödev ve değerlendirme görünür şubelerinkileri, teslim ve puan satırı o kurumunkileri (spec 0013); tarife, indirim, makbuz sayacı ve hatırlatma o kurumunkileri, plan ve tahsilat görünür şubelerinkileri, taksit ve dağılım görünür plan/tahsilatınkileri (spec 0015); görüşme dilimi (kaldırılmamış) ve randevu o kurumunkileri (spec 0016). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
 /// göstermez. Filtre değerleri sorgu anında <see cref="ICurrentSession"/>'dan okunur. Filtreyi delen okumalar
 /// (<c>IgnoreQueryFilters</c>) yalnızca izinli listedeki depo metotlarındadır (T5).
 /// </summary>
@@ -113,6 +114,10 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<PaymentReminder> PaymentReminders => this.Set<PaymentReminder>();
 
+    public DbSet<AvailabilitySlot> AvailabilitySlots => this.Set<AvailabilitySlot>();
+
+    public DbSet<Appointment> Appointments => this.Set<Appointment>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;
@@ -195,6 +200,12 @@ public sealed class OkulDbContext : DbContext
             a.TenantId == this.CurrentTenantId && this.Payments.Any(p => p.Id == a.PaymentId));
         modelBuilder.Entity<ReceiptCounter>().HasQueryFilter(c => c.TenantId == this.CurrentTenantId);
         modelBuilder.Entity<PaymentReminder>().HasQueryFilter(r => r.TenantId == this.CurrentTenantId);
+
+        // Spec 0016: görüşme dilimi (kaldırılmamış) ve randevu yalnızca kurum filtreli. Şube/ilişki duvarı AppointmentsGuard'dadır
+        // (velinin çocukları farklı şubelerde olabilir, BR-2 — 0011 Risks 3 kalıbı): öğretmen yalnızca kendi dilimini/randevusunu,
+        // veli yalnızca bağlı çocuklarının ve kendi talep ettiği randevuyu görür. Filtre delme yok.
+        modelBuilder.Entity<AvailabilitySlot>().HasQueryFilter(s => s.TenantId == this.CurrentTenantId && s.RemovedAt == null);
+        modelBuilder.Entity<Appointment>().HasQueryFilter(a => a.TenantId == this.CurrentTenantId);
     }
 
     /// <summary>Para alanları (T4): <c>decimal</c> her yerde <c>numeric(18,2)</c>.</summary>

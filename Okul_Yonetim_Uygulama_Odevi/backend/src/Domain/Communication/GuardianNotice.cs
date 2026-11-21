@@ -15,11 +15,17 @@ namespace OkulYonetim.Domain.Communication;
 /// Pazartesi'si, metin öğretmenin onayladığı özet + "Yapay zekâ desteğiyle hazırlandı, öğretmen onayladı." + dayanak satırı (en fazla
 /// <see cref="SummaryTextMax"/>; diğer kayda bağlı bildirimler <see cref="TextMax"/>).
 /// </para>
+/// <para>
+/// Spec 0016: randevu bildirimi (<see cref="GuardianNoticeKind.Appointment"/>) — kaynak onaylanan/reddedilen randevu ya da öğretmenin
+/// iptaliyle kapanan dilim; metin öğretmen adı, gün, saat ve varsa neden (en fazla <see cref="AppointmentTextMax"/>: ad 200 + neden 300
+/// + kalıp); görüşme konusu yok.
+/// </para>
 /// </summary>
 public sealed class GuardianNotice
 {
     public const int TextMax = 400;
     public const int SummaryTextMax = 2000;
+    public const int AppointmentTextMax = 600;
 
     private GuardianNotice(Guid id, Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, GuardianNoticeKind kind, DateTimeOffset createdAt, DateTimeOffset updatedAt)
     {
@@ -61,7 +67,12 @@ public sealed class GuardianNotice
     /// <summary>Kayda bağlı okul bildirimi (spec 0013: yeni ödev; spec 0014: haftalık özet); metin hazırdır.</summary>
     public static GuardianNotice ForRecord(Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, GuardianNoticeKind kind, Guid sourceId, string text, DateTimeOffset now)
     {
-        int max = kind == GuardianNoticeKind.WeeklySummary ? SummaryTextMax : TextMax;
+        int max = kind switch
+        {
+            GuardianNoticeKind.WeeklySummary => SummaryTextMax,
+            GuardianNoticeKind.Appointment => AppointmentTextMax,
+            _ => TextMax,
+        };
         if (kind is GuardianNoticeKind.Absent or GuardianNoticeKind.Corrected || string.IsNullOrWhiteSpace(text) || text.Length > max)
         {
             throw new ArgumentOutOfRangeException(nameof(kind), "Kayda bağlı bildirim türü ve metni geçersiz.");
