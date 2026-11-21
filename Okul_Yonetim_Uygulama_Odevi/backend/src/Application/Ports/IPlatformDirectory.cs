@@ -13,4 +13,7 @@ public interface IPlatformDirectory
     Task<SchoolRow?> FindAsync(Guid tenantId, CancellationToken cancellationToken);
 
     Task<Domain.Organization.Tenant?> FindTenantAsync(Guid tenantId, CancellationToken cancellationToken);
+
+    /// <summary>Etkin okulların yalnızca kimlikleri (spec 0015 hatırlatma işçisi: okul başına sistem oturumu açmak için; başka alan dönmez).</summary>
+    Task<IReadOnlyList<Guid>> ListActiveTenantIdsAsync(CancellationToken cancellationToken);
 }

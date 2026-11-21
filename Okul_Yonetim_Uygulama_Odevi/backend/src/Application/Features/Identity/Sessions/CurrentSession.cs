@@ -32,4 +32,20 @@ public sealed class CurrentSession : ICurrentSession
         this.IsFounder = isFounder;
         this.VisibleBranchIds = branchIds;
     }
+
+    /// <summary>
+    /// Arka plan işinin okul oturumu (spec 0015 hatırlatma işçisi; plan 0015 Risks 2): kişi yok, kimlik doğrulanmış sayılmaz, okul
+    /// seçili ve bütün şubeler görünür (kurucu gibi). Yalnızca <c>OverdueReminderRunner</c> çağırır (architecture testi denetler);
+    /// her okul ayrı DI kapsamında çalışır, filtreler yine okul sınırını uygular — filtre delme yok.
+    /// </summary>
+    internal void AuthenticateSystem(Guid tenantId)
+    {
+        this.IsAuthenticated = false;
+        this.UserId = null;
+        this.SessionId = null;
+        this.TenantId = tenantId;
+        this.IsFounder = true;
+        this.IsPlatformAdmin = false;
+        this.VisibleBranchIds = [];
+    }
 }

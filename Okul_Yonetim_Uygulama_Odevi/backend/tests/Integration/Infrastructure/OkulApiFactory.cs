@@ -10,6 +10,7 @@ namespace OkulYonetim.Tests.Integration.Infrastructure;
 /// Testler için API: verilen veritabanı bağlantısı, testlere özel log klasörü, CORS ayarı ve test imza anahtarıyla
 /// kurulur. İsteğe bağlı: "/__test/throw" kasıtlı hata ucu (spec 0001 AC-13), sahte saat (spec 0004 kilit/oturum süreleri),
 /// giriş hız sınırı, sağlık bilgisi anahtarı (verilmezse anahtarsız — spec 0009 AC-10), servis değiştirme (ör. eşzamanlılık testinde bekleten şifre doğrulayıcı) ve istemci IP'si (her isteğe yerel vekil adresi verilir; X-Forwarded-For başlığı gerçek IP'yi taşır).
+/// Spec 0015: gecikme hatırlatması işçisi testlerde kapalıdır — testler okul çalışmasını (<c>OverdueReminderRunner</c>) doğrudan çağırır.
 /// </summary>
 public sealed class OkulApiFactory : WebApplicationFactory<Program>
 {
@@ -64,6 +65,7 @@ public sealed class OkulApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("FileLogging:Folder", this.LogFolder);
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
+        builder.UseSetting("Billing:RemindersEnabled", "false");
         if (this.twoFactorKey is not null)
         {
             builder.UseSetting("TwoFactor:EncryptionKey", this.twoFactorKey);

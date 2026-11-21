@@ -10,7 +10,7 @@ namespace OkulYonetim.Persistence.Repositories;
 /// <summary>
 /// Platform paneli okuması (spec 0007) — izinli liste (T5): okul filtresini bilerek deler, çünkü platform yöneticisi bütün
 /// okulların özetini görür. Yalnızca özet alanlar seçilir (okul adı, tarih, durum, sayılar, kurucu ad + e-posta); kişi
-/// listesi, telefon, şube ayrıntısı dönmez. Çağıran taraf platform yetkisini denetler.
+/// listesi, telefon, şube ayrıntısı dönmez. Çağıran taraf platform yetkisini denetler. Spec 0015: hatırlatma işçisi için etkin okulların yalnızca kimlikleri.
 /// </summary>
 public sealed class PlatformDirectory : IPlatformDirectory
 {
@@ -20,6 +20,11 @@ public sealed class PlatformDirectory : IPlatformDirectory
     {
         this.context = context;
     }
+
+    public async Task<IReadOnlyList<Guid>> ListActiveTenantIdsAsync(CancellationToken cancellationToken) =>
+        await this.context.Tenants.IgnoreQueryFilters().AsNoTracking()
+            .Where(t => t.IsActive).OrderBy(t => t.Id).Select(t => t.Id)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public async Task<SchoolPage> ListAsync(SchoolListFilter filter, CancellationToken cancellationToken)
     {

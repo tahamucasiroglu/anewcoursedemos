@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OkulYonetim.Application.Ports;
 using OkulYonetim.Infrastructure.Ai;
+using OkulYonetim.Infrastructure.Billing;
 using OkulYonetim.Infrastructure.Email;
 using OkulYonetim.Infrastructure.Logging;
 using OkulYonetim.Infrastructure.Notifications;
@@ -12,7 +13,7 @@ namespace OkulYonetim.Infrastructure;
 
 /// <summary>
 /// Infrastructure katmanının servis kaydı: nArchitecture log arayüzünün Serilog adaptörü, şifre özeti ve oturum
-/// anahtarı servisi ("Jwt" ayarları), gizli değer ve kişisel veri şifreleyicileri (ayrı AES-GCM anahtarları — spec 0007, 0009), e-posta ("Email" ayarları; kuyruk + arka plan gönderici — spec 0006), bildirim göndericisi (spec 0011: gerçek push yok, yalnızca kimlikleri loglayan sahte gönderici), yerel yapay zekâ (spec 0012: "Ai" ayarları; adres boş ya da yerel değilse "kullanılamıyor" uygulaması, aksi halde Ollama ve ses servisi adaptörleri — tek iş sırasıyla). Dış servis port uygulamaları (ödeme, SMS, AI…) ilgili özelliklerle buraya eklenir.
+/// anahtarı servisi ("Jwt" ayarları), gizli değer ve kişisel veri şifreleyicileri (ayrı AES-GCM anahtarları — spec 0007, 0009), e-posta ("Email" ayarları; kuyruk + arka plan gönderici — spec 0006), bildirim göndericisi (spec 0011: gerçek push yok, yalnızca kimlikleri loglayan sahte gönderici), yerel yapay zekâ (spec 0012: "Ai" ayarları; adres boş ya da yerel değilse "kullanılamıyor" uygulaması, aksi halde Ollama ve ses servisi adaptörleri — tek iş sırasıyla), gecikme hatırlatması işçisi (spec 0015; <c>Billing:RemindersEnabled</c>, varsayılan açık). Dış servis port uygulamaları (ödeme, SMS, AI…) ilgili özelliklerle buraya eklenir.
 /// </summary>
 public static class InfrastructureServiceRegistration
 {
@@ -33,6 +34,11 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<BackgroundEmailOutbox>();
         services.AddSingleton<IEmailOutbox>(provider => provider.GetRequiredService<BackgroundEmailOutbox>());
         services.AddHostedService(provider => provider.GetRequiredService<BackgroundEmailOutbox>());
+        if (configuration.GetValue("Billing:RemindersEnabled", true))
+        {
+            services.AddHostedService<OverdueReminderWorker>();
+        }
+
         AddLocalAi(services, configuration);
         return services;
     }
