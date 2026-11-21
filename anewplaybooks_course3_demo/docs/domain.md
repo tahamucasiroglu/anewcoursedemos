@@ -16,7 +16,8 @@ bakiyeleri (hak / kullanılan / kalan) (`/`). 2015'ten beri iç geliştirme, tes
 | Personel (employee) | İzin hakkı olan çalışan: `id`, `name`, `department`, `hire_date` | Kodda `Db.employees` |
 | Birim (department) | Personelin bağlı olduğu bölüm (IT, Muhasebe, IK, Satis) | Bakiye hesabını etkilemez |
 | İzin talebi (request) | Bir personelin `start`–`end` aralığı için izin isteği, `reason` ve `status` ile | Kodda `Db.requests` |
-| Durum (status) | `Beklemede` / `Onaylandi` / `Reddedildi`: Türkçe ASCII metin, enum yok | BR-5 |
+| Durum (status) | `Beklemede` / `Onaylandi` / `Reddedildi` / `Iptal Edildi`: Türkçe ASCII metin, enum yok | BR-5, BR-9 |
+| İptal (cancel) | Bekleyen bir talebin geri çekilmesi; talep silinmez, durumu `Iptal Edildi` olur | BR-9; ret (`Reddedildi`) ile karıştırılmaz |
 | Kıdem (seniority) | İşe girişten bu yana geçen yıl, BR-2'deki biçimde hesaplanır | Gerçek tam yıl değildir |
 | Hak (entitlement) | Kıdeme göre yıllık izin günü (BR-1) | Devir (carry) yürürlükte değil (BR-8) |
 | Kullanılan (used) | Onaylanmış taleplerin gün toplamı (BR-4) | Bekleyenler dahil değil |
@@ -35,7 +36,7 @@ bakiyeleri (hak / kullanılan / kalan) (`/`). 2015'ten beri iç geliştirme, tes
 - **BR-4 Bakiye:** kullanılan = yalnız `Onaylandi` taleplerin günleri. Kalan = hak − kullanılan.
   `Beklemede` talepler düşülmez ("2018'de konuşuldu, karar yok", bkz. açık soru Q-2).
 - **BR-5 Durumlar:** yeni talep `Beklemede` olarak doğar. Metinler `Beklemede`, `Onaylandi`,
-  `Reddedildi`. **Preserved.** Enum'a geçiş teknik borç olarak duruyor (`docs/architecture.md`).
+  `Reddedildi` ve spec 0002 ile eklenen `Iptal Edildi` (BR-9). **Preserved.** Enum'a geçiş teknik borç olarak duruyor (`docs/architecture.md`).
   Arayüzde talepleri onaylayan veya reddeden bir akış yok, durumlar yalnız seed verisinde değişik.
 - **BR-6 Geçmiş tarih:** başlangıcı geçmişte olan talep kabul edilir ("IK bazen geriye dönük
   giriyor").
@@ -45,6 +46,13 @@ bakiyeleri (hak / kullanılan / kalan) (`/`). 2015'ten beri iç geliştirme, tes
   **Açık soru Q-1.** Bootstrap karar vermez, davranış olduğu gibi korunur.
 - **BR-8 Yıl sonu devri:** `recalculate_year_end` (devir, en fazla 5 gün) yorum satırında ve
   çalışmıyor. **Devir kuralı yürürlükte değil.** Silinip silinmeyeceği ayrı bir karar konusu.
+- **BR-9 İptal (spec 0002):** yalnız `Beklemede` talep iptal edilir (talepler listesindeki "Iptal"
+  düğmesi, form gönderimiyle). Talep silinmez, durumu `Iptal Edildi` olur. İptal edilen talep
+  dashboard'daki üç kutunun hiçbirinde sayılmaz ve bakiyeyi değiştirmez (BR-4: bekleyenler zaten
+  düşülmüyordu). Bekleyen olmayan, var olmayan veya geçersiz numaralı bir talebin iptali hiçbir
+  şeyi değiştirmez ve `Yalniz bekleyen talepler iptal edilebilir.` mesajını gösterir. Eşik
+  çelişkisi (Q-1) için spec 0002'nin açık kararı: hangisinin doğru olduğu bilinmiyor, iki davranış
+  da korunuyor.
 
 ## Open questions
 - **Q-1:** Bakiye eşiği `<` mı `<=` mi (BR-7)? Hangisinin doğru olduğunu bilen yok. Bu konuya

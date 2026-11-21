@@ -18,8 +18,8 @@ port 5000, `debug=True`.
 | Module | Single responsibility | Owns |
 |---|---|---|
 | `Db` + `seed()` | Bellekteki veri deposu, açılışta sabit seed | Personel listesi, talep listesi, `next_id` |
-| `LeaveService` (`svc`) | İş kuralları (`docs/domain.md` BR-1…BR-8) | Hak, kıdem, gün ve bakiye hesabı, talep oluşturma |
-| Flask route'ları + `PAGE` | HTTP uçları ve HTML üretimi: `/`, `/requests`, `/new` | Sayfa düzeni, form işleme |
+| `LeaveService` (`svc`) | İş kuralları (`docs/domain.md` BR-1…BR-9) | Hak, kıdem, gün ve bakiye hesabı, talep oluşturma, iptal |
+| Flask route'ları + `PAGE` | HTTP uçları ve HTML üretimi: `/`, `/requests`, `/new`, `POST /requests/<no>/cancel` | Sayfa düzeni, form işleme |
 
 ## Communication rules
 - Yön: **route → `LeaveService` → `Db`**. Route'lar okuma için `Db`'yi doğrudan da kullanıyor
