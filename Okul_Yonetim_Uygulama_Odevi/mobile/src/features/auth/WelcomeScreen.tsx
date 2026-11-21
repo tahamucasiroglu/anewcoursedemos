@@ -17,6 +17,7 @@ interface Props {
   onQuietHours?: () => void;
   onAcademics?: () => void;
   onChildAcademics?: () => void;
+  onPayments?: () => void;
 }
 
 const ROLE_KEYS: Record<string, TextKey> = {
@@ -30,9 +31,9 @@ const ROLE_KEYS: Record<string, TextKey> = {
  * Mobil hoş geldin ekranı (spec 0004): ad, okul, roller, şubeler (yoksa açık mesaj); okul değiştir ve çıkış. Seçili okulu
  * olan herkese "Okul takvimi" (spec 0008); yalnızca veli rolü olana "Çocuklarım" (spec 0009) ve okunmamış sayılı "Bildirimler (n)", yalnızca öğretmene
  * "Yoklama al" (spec 0010). Spec 0011: velide okunmamış sayılı "Duyurular (n)", veli ve öğretmende "Mesajlar (n)", öğretmende
- * "Mesai saatlerim". Spec 0013: öğretmende "Ödev ve not", velide "Ödev ve notlar".
+ * "Mesai saatlerim". Spec 0013: öğretmende "Ödev ve not", velide "Ödev ve notlar". Spec 0015: yalnızca velide "Ödemeler".
  */
-export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar, onChildren, onAttendance, onNotices, onFeed, onMessages, onQuietHours, onAcademics, onChildAcademics }: Props) {
+export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalendar, onChildren, onAttendance, onNotices, onFeed, onMessages, onQuietHours, onAcademics, onChildAcademics, onPayments }: Props) {
   const isTeacher = me.roles.includes("Teacher");
   const isGuardian = me.roles.includes("Guardian");
   const styles = useAuthStyles();
@@ -69,6 +70,11 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout, onAccount, onCalen
         {onChildAcademics && isGuardian && (
           <Pressable style={styles.secondary} onPress={onChildAcademics} accessibilityRole="button">
             <Text style={styles.secondaryText}>{t("childAcademics.link")}</Text>
+          </Pressable>
+        )}
+        {onPayments && isGuardian && (
+          <Pressable style={styles.secondary} onPress={onPayments} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{t("payments.link")}</Text>
           </Pressable>
         )}
         {onNotices && me.roles.includes("Guardian") && (
