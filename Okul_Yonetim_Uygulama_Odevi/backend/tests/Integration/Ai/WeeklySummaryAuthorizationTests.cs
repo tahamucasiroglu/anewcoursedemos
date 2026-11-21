@@ -1,4 +1,5 @@
 using System.Net;
+using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Identity;
 using OkulYonetim.Tests.Integration.Communication;
 using OkulYonetim.Tests.Integration.Identity;
@@ -16,7 +17,8 @@ namespace OkulYonetim.Tests.Integration.Ai;
 /// Spec 0014 AC-9 (S1, S3; plan 0014 Risks 9 — öğrenci bazlı okuma sorguları erişim denetlemez, guard denetler): sınıfa atanmamış
 /// öğretmen ve başka sınıfın öğrencisi 404 (liste, panel, üretim, gönderim, vazgeç); öğretmen rolü olmayan kurucu, veli ve muhasebe
 /// 403; başka okulun öğretmeni 404; girişsiz 401; başka sınıfın taslağı onaylanamaz ve silinemez (404); hiçbir reddedilen istekte
-/// taslak ya da bildirim oluşmaz ve model çağrılmaz.
+/// taslak ya da bildirim oluşmaz ve model çağrılmaz. Review R1-1: haftalık özet taslağı 0012'nin Vazgeç ucundan
+/// (<c>DELETE api/ai/drafts/{id}</c>) oluşturanınca da silinemez — sınıftan çıkarılmış olsa bile (404, taslak durur).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class WeeklySummaryAuthorizationTests
@@ -140,5 +142,26 @@ public sealed class WeeklySummaryAuthorizationTests
         (await SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Atamadan çıkarılan öğretmen.")).Status.ShouldBe(HttpStatusCode.NotFound);
         (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
         (await SendSummaryAsync(client, second, w.Ali, "Sınıfın öğretmeni gönderir.")).Status.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task WeeklySummaryDraft_VoiceDraftDiscardEndpoint_404_DraftRemains()
+    {
+        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator());
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        (Guid secondId, _, _) = await TeacherAsync(factory, client, w.Class.School.TenantId, w.Class.School.BranchId);
+        await AttendAsync(client, w);
+        Guid draftId = (await GeneratedAsync(client, w.Class.Teacher, w.Ali)).GetProperty("draftId").GetGuid();
+
+        (await AiTestData.DiscardAsync(client, w.Class.Teacher, draftId)).Status.ShouldBe(HttpStatusCode.NotFound, "özet taslağı yalnızca kendi ucundan (guard + sıra) silinir");
+        await AssignAsync(client, w.Class.Founder, w.Class.ClassroomId, secondId);
+        var (status, problem, raw) = await AiTestData.DiscardAsync(client, w.Class.Teacher, draftId);
+        status.ShouldBe(HttpStatusCode.NotFound, raw);
+        Detail(problem).ShouldBe("Taslak bulunamadı", "bulunamayanla aynı mesaj");
+
+        AiDraft draft = (await SummaryDraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem();
+        draft.Id.ShouldBe(draftId);
+        draft.IsPending.ShouldBeTrue();
     }
 }

@@ -11,7 +11,8 @@ namespace OkulYonetim.Application.Features.Ai.Drafts;
 /// AI taslağının yaşam döngüsü (spec 0012 C-4): bekleyen taslağı onay için bulma (sahip + tür + bağlam; kullanılmışsa iş
 /// hatası), onaylandı işaretleme (kaydı çağıran yapar) ve "Vazgeç" (silme — taslaklı gönderimle aynı taslak sırası
 /// <c>ai-draft:&lt;id&gt;</c> içinde: eşzamanlı gönder/vazgeç'te ya mesaj + onaylı taslak kalır ya da ikisi de yok; sıra
-/// dolarsa "Taslak şu an işleniyor…"). Taslak kurum filtreli okunur; başka kişinin,
+/// dolarsa "Taslak şu an işleniyor…"); Vazgeç yalnızca sesli not türünün taslağını siler (haftalık özet kendi ucundan — spec 0014
+/// review R1-1). Taslak kurum filtreli okunur; başka kişinin,
 /// başka okulun ya da başka bağlamın taslağı "bulunamadı" (404 — "var ama sizin değil" sızdırılmaz). Loglarda yalnızca kimlikler.
 /// </summary>
 public sealed class AiDraftHandlers :
@@ -93,8 +94,10 @@ public sealed class AiDraftHandlers :
         await using (scope.ConfigureAwait(false))
         {
             AiDraft draft = await this.OwnAsync(request.Id, cancellationToken).ConfigureAwait(false);
-            if (!draft.IsPending)
+            if (draft.Kind != AiDraftKind.VoiceMessage || !draft.IsPending)
             {
+                // Haftalık özet bu uçtan silinmez (spec 0014 review R1-1): kendi ucu guard (öğretmen hâlâ sınıfta) ve öğrenci-hafta
+                // sırası içinde siler; başka türün taslağı "bulunamadı" (404, var olduğu sızdırılmaz).
                 throw await this.NotFoundAsync().ConfigureAwait(false);
             }
 
