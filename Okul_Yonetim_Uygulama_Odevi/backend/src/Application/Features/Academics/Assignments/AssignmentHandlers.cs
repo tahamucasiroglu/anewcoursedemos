@@ -81,10 +81,11 @@ public sealed class AssignmentHandlers :
             this.assignments.AddSubmission(AssignmentSubmission.Start(assignment, student.Id, now));
         }
 
-        string text = (await this.localization.AcademicsTextAsync(AcademicsMessages.NewAssignmentNotice).ConfigureAwait(false))
-            .Replace("{subject}", assignment.Subject, StringComparison.Ordinal)
-            .Replace("{title}", assignment.Title, StringComparison.Ordinal)
-            .Replace("{due}", assignment.DueDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        string text = AssignmentNoticeText.Render(
+            await this.localization.AcademicsTextAsync(AcademicsMessages.NewAssignmentNotice).ConfigureAwait(false),
+            assignment.Subject,
+            assignment.Title,
+            assignment.DueDate);
         SchoolNoticeResult notices = await this.sender.Send(
             new NotifyStudentGuardiansCommand([.. roster.Select(s => s.Id)], GuardianNoticeKind.Assignment, assignment.Id, today, text),
             cancellationToken).ConfigureAwait(false);
