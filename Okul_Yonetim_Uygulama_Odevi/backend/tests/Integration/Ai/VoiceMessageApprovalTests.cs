@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OkulYonetim.Application.Features.Ai.Drafts;
 using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Ai;
 using OkulYonetim.Persistence.Repositories;
@@ -19,7 +20,8 @@ namespace OkulYonetim.Tests.Integration.Ai;
 /// yalnızca öğretmen gönderince, öğretmenin düzenlenmiş metniyle oluşur ve veliye bildirim gider; taslak son metin ve mesaj
 /// kimliğiyle "onaylandı" olur; aynı taslakla ikinci gönderim (art arda ya da aynı anda) "Bu taslak zaten kullanıldı." ile
 /// reddedilir, ikinci mesaj oluşmaz. "Vazgeç" taslağı (döküm dahil) siler; silinmiş taslakla gönderim "bulunamadı". Aynı taslakla eşzamanlı gönder ve vazgeç
-/// (review L-2): ya mesaj + onaylı taslak kalır ya da ikisi de yok — mesajı olup taslağı silinmiş durum oluşmaz.
+/// (review L-2): ya mesaj + onaylı taslak kalır ya da ikisi de yok — mesajı olup taslağı silinmiş durum oluşmaz. Taslak sırası
+/// kilit süresinden uzun tutulursa vazgeç "Taslak şu an işleniyor, biraz sonra deneyin." der, taslak kalır (review round 2).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class VoiceMessageApprovalTests
@@ -139,6 +141,29 @@ public sealed class VoiceMessageApprovalTests
         (await MessageCountAsync(factory, conversation)).ShouldBe(0);
         (await DiscardAsync(client, w.Class.Teacher, draftId)).Status.ShouldBe(HttpStatusCode.NotFound);
         (await SendAsync(client, w.Class.Teacher, conversation, "Elle yazılmış mesaj")).Status.ShouldBe(HttpStatusCode.OK, "elle gönderim etkilenmez");
+    }
+
+    [Fact]
+    public async Task Discard_DraftQueueHeldPastLockTimeout_BusyMessageAndDraftStays()
+    {
+        using OkulApiFactory factory = Factory(this.database, new FakeSpeechToText(), new FakeAiTextGenerator());
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid conversation = await StartedAsync(client, w.Class.Teacher, w.Ali, w.AliMother.UserId);
+        Guid draftId = await DraftedAsync(client, w.Class.Teacher, conversation);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+
+        using IServiceScope holder = factory.Services.CreateScope();
+        IExclusiveScope held = await holder.ServiceProvider.GetRequiredService<IUnitOfWork>().BeginExclusiveAsync(AiDraftLock.Key(draftId), ct);
+        await using (held)
+        {
+            var (status, problem, raw) = await DiscardAsync(client, w.Class.Teacher, draftId);
+
+            status.ShouldBe(HttpStatusCode.BadRequest, raw);
+            Detail(problem).ShouldBe("Taslak şu an işleniyor, biraz sonra deneyin.");
+        }
+
+        (await DraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem("sıra dolunca taslak silinmez").Status.ShouldBe(AiDraftStatus.Pending);
     }
 
     [Fact]
