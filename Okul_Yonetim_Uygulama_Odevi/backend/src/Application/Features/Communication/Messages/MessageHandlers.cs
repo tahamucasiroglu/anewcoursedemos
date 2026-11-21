@@ -183,7 +183,7 @@ public sealed class MessageHandlers :
         IExclusiveScope scope;
         try
         {
-            scope = await this.unitOfWork.BeginExclusiveAsync("ai-draft:" + draftId.ToString("N"), cancellationToken).ConfigureAwait(false);
+            scope = await this.unitOfWork.BeginExclusiveAsync(AiDraftLock.Key(draftId), cancellationToken).ConfigureAwait(false);
         }
         catch (ExclusiveLockTimeoutException)
         {

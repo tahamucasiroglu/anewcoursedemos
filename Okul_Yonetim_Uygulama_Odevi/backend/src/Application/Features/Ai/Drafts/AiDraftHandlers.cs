@@ -82,7 +82,7 @@ public sealed class AiDraftHandlers :
         IExclusiveScope scope;
         try
         {
-            scope = await this.unitOfWork.BeginExclusiveAsync(DraftLockKey(request.Id), cancellationToken).ConfigureAwait(false);
+            scope = await this.unitOfWork.BeginExclusiveAsync(AiDraftLock.Key(request.Id), cancellationToken).ConfigureAwait(false);
         }
         catch (ExclusiveLockTimeoutException)
         {
@@ -105,9 +105,6 @@ public sealed class AiDraftHandlers :
             return true;
         }
     }
-
-    /// <summary>Taslak sırasının anahtarı — taslaklı gönderim (Communication, <c>MessageHandlers</c>) aynı anahtarı alır.</summary>
-    private static string DraftLockKey(Guid draftId) => "ai-draft:" + draftId.ToString("N");
 
     /// <summary>Oturumdaki kişinin oluşturduğu taslak (izlenen); yoksa ya da başkasınınsa 404.</summary>
     private async Task<AiDraft> OwnAsync(Guid id, CancellationToken cancellationToken)
