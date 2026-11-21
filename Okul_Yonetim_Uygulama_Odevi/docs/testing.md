@@ -28,6 +28,10 @@
   `FakeAiTextGenerator`), adaptörler sahte `HttpMessageHandler` ile sınanır. Gerçek modelleri deneyen `tools/ai/smoke.mjs`
   bir test paketi değil, **isteğe bağlı gözlem aracıdır**: check'e girmez (CI'da ve Pi'de model yok), VERIFY'da bu
   bilgisayarda elle çalıştırılır ve çıktısı kanıt olarak yazılır (AC-10/AC-11, Evidence policy 3).
+- **Hız ölçümleri (spec 0010, 0013, 0017):** hız ölçen entegrasyon testleri `SpeedMeasurementGroup` koleksiyonunda, paralel testler
+  bittikten sonra tek başına koşar; ısınma ölçümü hariç 5 ölçümün ortancası eşikle karşılaştırılır, süreler test çıktısına ve eşik
+  iletisine yazılır (`-showLiveOutput` ile görünür). Gerçekçi veri hacmi (ör. 0017: 1.000 öğrenci, 40 sınıf, 2.000 taksit, 200 duyuru,
+  10.000 tahsilat) API yerine doğrudan veritabanına yazılır — yalnızca kurulum hızlansın diye; ölçülen istekler API'den geçer.
 - **Resource hygiene:** `dotnet` adımları `--disable-build-servers`, `-nodeReuse:false`, `DOTNET_CLI_USE_MSBUILD_SERVER=0` ile; watch/dev server check'te yok (T6).
 
 ## What must be tested

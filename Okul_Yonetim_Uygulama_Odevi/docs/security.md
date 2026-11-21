@@ -199,6 +199,18 @@
     gerçek push gelince metin cihaza gider, backlog B-6). Commit sonrası bildirim adımları hata verirse randevu kayıtlı kalır, istek başarılı döner;
     hata yalnızca türü ve kimliklerle Warning olarak loglanır (hata mesajı da yazılmaz; review tur 1 R1-2).
 
+19. **Yönetici paneli ve dışa aktarma (spec 0017, S1/S2/S4/S6):** panel, raporlar ve dışa aktarma yalnızca seçili okulun kurucusu
+    (`TenantFounder` + `DashboardGuard`, her istekte veritabanından; öğretmen, veli, muhasebe 403; girişsiz 401); şube süzgeci oturumun
+    gördüğü etkin şubelerden değilse 404. Dashboard depo kullanmaz; okul + şube filtresi okunan modüllerin depolarında oturumdan uygulanır
+    (yeni filtre delme yok). Panel ve dosyalarda kişisel veri olarak yalnızca öğrenci ad-soyadı ve okul numarası (+ personelin adı: duyuruyu
+    yayınlayan, tahsilatı kaydeden); TC, telefon, e-posta, sağlık notu, alerji, tahsilat notu ve iptal gerekçesi yok. **CSV/formül
+    enjeksiyonu:** `Features/Dashboard/Export/CsvWriter` — `=`, `+`, `-`, `@`, sekme, satır başı ya da satır sonu ile başlayan **metin**
+    hücresinin başına `'` eklenir, `;`/`"`/satır kırığı içeren metin tırnaklanır; tutar, sayı ve gün hücreleri kaçışlanmaz (sayı kalır).
+    En fazla 10.000 veri satırı; aşan sonuç "Sonuç çok büyük…" ile reddedilir. Her başarılı dışa aktarma audit'e yazılır
+    (`ReportExported`: kim, ne zaman, IP; ayrıntıda rapor türü, aralık, şube/sınıf kimliği, eşik, "yalnızca gecikenler" ve satır sayısı — ad
+    yok); reddedilen yazılmaz. Dosya bellekte kurulur, sunucuda saklanmaz, paylaşım bağlantısı yok; içerik ve adlar loglanmaz (Information
+    satırı yalnızca rapor türü, satır sayısı, kişi ve okul kimliği); dışa aktarma komutu `ILoggableRequest` değildir (T9).
+
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.
 2. Fotoğraf paylaşımı öğrenci bazlı rıza olmadan yapılamaz.

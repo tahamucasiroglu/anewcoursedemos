@@ -43,7 +43,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Academics | Ödev, teslim durumu, yazılı/sözlü not (spec 0013): öğretmenin ödev verme, teslim işaretleme, değerlendirme açma ve puan girişi; velinin çocuk özeti; öğrenci bazlı okuma sorgusu (spec 0014 haftalık özetin kaynağı) | Assignment, AssignmentSubmission, Assessment, Grade |
 | Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması (spec 0015: elle tahsilat, en eski vadeden dağıtım, okul başına sıralı makbuz no, öğrenci başına cari, otomatik hatırlatma işçisi) | FeeSchedule, DiscountDefinition, InstallmentPlan, Installment, Payment, PaymentAllocation, ReceiptCounter, PaymentReminder |
 | Appointments | Öğretmen müsaitliği (tarihli aralık → görüşme dilimleri), veli randevu talebi, onay/ret/iptal, öğretmenin "Takvimim"i ve velinin "Randevularım"ı (spec 0016); bildirimler Communication kapısından | AvailabilitySlot, Appointment |
-| Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
+| Dashboard | Yönetici günlük özeti (devamsızlık, geciken ödemeler, okunmayan duyurular), temel raporlar (devamsızlık, tahsilat, borç/gecikme) ve CSV dışa aktarma (spec 0017; yalnızca okur, depo kullanmaz) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, spec 0014 haftalık gelişim özeti — dayanak toplama, taslak, onay kapısı; gönderim Communication'da) | AiDraft |
 | Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA (platform yöneticisi — spec 0007), token | User, RoleAssignment, TenantMembership, TwoFactorChallenge |
 | Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla; spec 0008: sınıf seviyesi, dönem, sınıf ve akademik takvim yönetimi; spec 0010: sınıf öğretmeni ataması. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
@@ -206,6 +206,21 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `PushNotification.Text`'te (tür + gün + saat; metin yalnızca `Appointment` türünde kurulabilir). Commit sonrası iki adım (`AppointmentNotifications.
   DeliverToGuardiansAsync`, `ToTeacherAsync`) hatayı yakalar (iptal hariç): Warning + "bildirim gitmedi", istek düşmez. Bekleyen talep sayısı `/api/me`'de (`pendingAppointmentCount`, Appointments'ın
   `CountMyPendingAppointmentsQuery`'si). Mobilde öğretmende "Randevular (n bekleyen)" → Takvimim, velide "Randevular" → Randevularım; web ekranı yok.
+- Yönetici paneli (spec 0017): uçlar `api/dashboard` — `summary/attendance|overdue|announcements` (kart başına ayrı uç: bir kartın hatası
+  ötekileri bozmaz), `reports/attendance|payments|balances` (50'lik sayfa, toplamlar bütün sonuç üzerinden) ve aynı süzgeçle
+  `reports/<rapor>/export` (CSV dosyası). Yalnızca seçili okulun kurucusu: `TenantFounder` politikası + `DashboardGuard` (kurucu bilgisi her
+  istekte veritabanından; şube süzgeci oturumun gördüğü etkin şubelerden değilse 404). **Dashboard hiçbir depoya bağımlı değildir**
+  (architecture testi `DashboardModuleRulesTests`); diğer modüllerin yeni, uçsuz ve erişim denetlemeyen okuma sorgularını çağırır — çağıranı
+  yalnızca guard'dan geçmiş işleyiciler: Organization `ListTodayClassroomsQuery` (bugünü kapsayan dönem + tatil kuralı, etkin şubelerin
+  etkin sınıfları, atanmış öğretmen adları) ve `ListClassroomBranchesQuery`; Attendance `GetAttendanceDaySummaryQuery` (öğrencisiz sınıf
+  sayılmaz) ve `ListAttendanceTotalsQuery` (öğrenci + gün başına "Yok"/"Geç"; şube/sınıf süzgeci yoklamanın alındığı sınıfa); Billing
+  `ListStudentBalancesQuery` (0015 cari hesabı — `BillingLedger`, gecikme yalnızca `Installment.OverdueOn`) ve `ListPaymentsInRangeQuery`;
+  Communication `ListUnreadAnnouncementsQuery` (0011 sonuç sayımı; şube süzgecinde kapsamın şubesi çözülür, okul geneli her süzgeçte);
+  Students `StudentLabel`'a okul no eklendi. "Bugün" `SchoolCalendar` Türkiye günü; "son 7 gün" `SchoolCalendar.StartOfDay(bugün − 6)`'dan.
+  **Excel kararı (plan 0017 Risks 1):** gerçek .xlsx yerine yeni paketsiz CSV — UTF-8 BOM, `;`, CRLF, tutar `1234,50`, gün `GG.AA.YYYY`;
+  saf `CsvWriter` (formül kaçışı yalnızca metin hücresinde), en fazla 10.000 veri satırı, dosya bellekte kurulur ve sunucuda saklanmaz.
+  Web'de `#/panel` (günlük özet) ve `#/panel/raporlar`; dosya `client.GET(..., { parseAs: "blob" })` + geçici `a[download]` ile iner;
+  okunmayan duyuru başlığı `#/iletisim/duyuru/<id>` ayrıntısına gider. Mobilde yönetici paneli yok.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).
