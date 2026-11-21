@@ -3,6 +3,10 @@ import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, 
 import { uploadVoiceNote, VOICE_NOTE_MAX_SECONDS, type AuthSession, type VoiceMessageDraft } from "@okul/api-client";
 import { t } from "../../i18n/t";
 
+/** Sunucu sınırı (60 sn) katı: kayıt birkaç yüz ms önce durur ki kodlayıcı payıyla birlikte sınırı aşmasın. */
+const VOICE_NOTE_STOP_MILLIS = VOICE_NOTE_MAX_SECONDS * 1000 - 500;
+const TICK_MILLIS = 250;
+
 export type VoiceNoteState =
   | { kind: "idle" }
   | { kind: "recording"; seconds: number }
@@ -11,8 +15,8 @@ export type VoiceNoteState =
 
 /**
  * Sesli not kaydı ve dönüştürme (spec 0012 C-3, AC-12): mikrofon izni istenir (yoksa "Mikrofon izni verilmedi."), kayıt
- * başlar ve geçen saniye sayılır; "Durdur"da ya da 60. saniyede kendiliğinden durur, ses sunucuya yüklenir ("Dönüştürülüyor…")
- * ve gelen taslak <c>onDraft</c>'a verilir. Sunucunun Türkçe hatası (kullanılamıyor, anlaşılamadı, 60 sn) olduğu gibi
+ * başlar ve sayaç kaydın kendi süresini gösterir; "Durdur"da ya da kayıt 59,5 sn'ye varınca kendiliğinden durur, ses
+ * sunucuya yüklenir ("Dönüştürülüyor…") ve gelen taslak <c>onDraft</c>'a verilir. Sunucunun Türkçe hatası (kullanılamıyor, anlaşılamadı, 60 sn) olduğu gibi
  * gösterilir. Ses dosyası yalnızca cihazın kayıt önbelleğindedir; uygulama başka yere yazmaz.
  */
 export function useVoiceNote(client: AuthSession["client"], conversationId: string, onDraft: (draft: VoiceMessageDraft) => void) {
@@ -77,15 +81,15 @@ export function useVoiceNote(client: AuthSession["client"], conversationId: stri
       return;
     }
 
-    let seconds = 0;
-    setState({ kind: "recording", seconds });
+    setState({ kind: "recording", seconds: 0 });
     timer.current = setInterval(() => {
-      seconds += 1;
-      setState({ kind: "recording", seconds: Math.min(seconds, VOICE_NOTE_MAX_SECONDS) });
-      if (seconds >= VOICE_NOTE_MAX_SECONDS) {
+      // Sayaç da otomatik durma da kaydın kendi süresinden: tik saymak gerçek kayıt süresini geçer (sunucu > 60 sn'yi reddeder).
+      const millis = recorder.getStatus().durationMillis;
+      setState({ kind: "recording", seconds: Math.min(Math.floor(millis / 1000), VOICE_NOTE_MAX_SECONDS) });
+      if (millis >= VOICE_NOTE_STOP_MILLIS) {
         void stop();
       }
-    }, 1000);
+    }, TICK_MILLIS);
   }, [recorder, stop]);
 
   return { state, start, stop };
