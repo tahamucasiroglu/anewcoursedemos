@@ -51,24 +51,25 @@ public sealed class AttendanceRepository : IAttendanceRepository
 
     public async Task<IReadOnlyList<(Guid StudentId, DateOnly Day, AttendanceStatus Status)>> ListStatusDaysAsync(DateOnly fromDay, DateOnly toDay, Guid? branchId, Guid? classroomId, CancellationToken cancellationToken)
     {
+        // 0010 kuralı (ListStudentDaysAsync): öğrenci-gün başına son güncellenen yoklama esas. Yalnızca en az bir "Var" olmayan kaydı
+        // olan öğrenci-günler okunur (kazanan "Var" ise zaten sayılmaz); şube/sınıf süzgeci kazanan kaydın sınıfına uygulanır (plan 0017 A-4).
         IQueryable<AttendanceSheet> sheets = this.context.AttendanceSheets.AsNoTracking().Where(s => s.Day >= fromDay && s.Day <= toDay);
-        if (branchId is { } branch)
-        {
-            sheets = sheets.Where(s => s.BranchId == branch);
-        }
-
-        if (classroomId is { } classroom)
-        {
-            sheets = sheets.Where(s => s.ClassroomId == classroom);
-        }
-
-        return [.. (await (from entry in this.context.AttendanceEntries.AsNoTracking()
-                           join sheet in sheets on entry.SheetId equals sheet.Id
-                           where entry.Status != AttendanceStatus.Present
-                           select new { entry.StudentId, sheet.Day, entry.Status })
-                .Distinct()
-                .ToListAsync(cancellationToken).ConfigureAwait(false))
-            .Select(x => (x.StudentId, x.Day, x.Status))];
+        var marked = from other in this.context.AttendanceEntries.AsNoTracking()
+                     join otherSheet in sheets on other.SheetId equals otherSheet.Id
+                     where other.Status != AttendanceStatus.Present
+                     select new { other.StudentId, otherSheet.Day };
+        var rows = await (from entry in this.context.AttendanceEntries.AsNoTracking()
+                          join sheet in sheets on entry.SheetId equals sheet.Id
+                          where marked.Any(m => m.StudentId == entry.StudentId && m.Day == sheet.Day)
+                          select new { entry.StudentId, sheet.Day, SheetId = sheet.Id, sheet.UpdatedAt, sheet.BranchId, sheet.ClassroomId, entry.Status })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        return [.. rows
+            .GroupBy(r => (r.StudentId, r.Day))
+            .Select(g => g.OrderByDescending(r => r.UpdatedAt).ThenByDescending(r => r.SheetId).First())
+            .Where(r => r.Status != AttendanceStatus.Present
+                && (branchId is null || r.BranchId == branchId)
+                && (classroomId is null || r.ClassroomId == classroomId))
+            .Select(r => (r.StudentId, r.Day, r.Status))];
     }
 
     public void AddSheet(AttendanceSheet sheet) => this.context.AttendanceSheets.Add(sheet);

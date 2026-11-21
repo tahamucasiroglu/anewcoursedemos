@@ -80,9 +80,64 @@ public sealed class AttendanceReportTests
         none.GetProperty("items").GetArrayLength().ShouldBe(0);
     }
 
-    private static async Task DayAsync(FakeTimeProvider clock, HttpClient client, AttendanceClass c, int day, Guid classroomId, params (Guid StudentId, string Status)[] marks)
+    /// <summary>
+    /// Plan 0017 A-4 + review tur 1 R1-1/R1-2: sınıf değiştiren öğrencide süzgeç yoklamanın alındığı sınıfa uygulanır, satırda bugünkü sınıf
+    /// görünür; aynı gün iki sınıfta kayıt varsa öğrenci-gün başına son güncellenen yoklama esastır (0010 kuralı) — en fazla bir gün, o "Var"
+    /// ise hiç. Ali 16–17'de 5-A'da yok, sonra 5-B'ye geçer; Ayşe 18'de 5-A'da "Yok", 5-B'ye geçip aynı gün sonra "Geç"; Berk 19'da 5-B'de
+    /// "Yok", 5-A'ya geçip aynı gün sonra "Var".
+    /// </summary>
+    [Fact]
+    public async Task ClassroomChange_FilterUsesRecordedClassroom_SameDayLatestRecordWins()
     {
-        clock.SetUtcNow(new DateTimeOffset(2026, 11, day, 9, 0, 0, TimeSpan.Zero));
+        FakeTimeProvider clock = Clock(new DateTimeOffset(2026, 11, 16, 9, 0, 0, TimeSpan.Zero));
+        using OkulApiFactory factory = DashboardFactory(this.database, clock);
+        using HttpClient client = factory.CreateClient();
+        BillingWorld w = await DashboardWorldAsync(factory, client);
+        AttendanceClass c = w.School.Class;
+        Guid classA = c.ClassroomId;
+        Guid classB = w.School.OtherClassroomId;
+        await AssignAsync(client, c.Founder, classB, c.TeacherId, w.School.OtherTeacherId);
+
+        await DayAsync(clock, client, c, 16, classA, (w.Ali, "Absent"));
+        await DayAsync(clock, client, c, 17, classA, (w.Ali, "Absent"));
+        await Academics.AcademicsTestData.MoveAsync(client, await BillingTestData.FounderTokenAsync(client, w), w.Ali, "Ali Yılmaz", c.School.BranchId, classB);
+        await DayAsync(clock, client, c, 18, classA, (w.School.Ayse, "Absent"));
+        await Academics.AcademicsTestData.MoveAsync(client, await BillingTestData.FounderTokenAsync(client, w), w.School.Ayse, "Ayşe Kaya", c.School.BranchId, classB);
+        await DayAsync(clock, client, c, 18, classB, 10, (w.School.Ayse, "Late"));
+        await DayAsync(clock, client, c, 19, classB, (w.School.Berk, "Absent"));
+        await Academics.AcademicsTestData.MoveAsync(client, await BillingTestData.FounderTokenAsync(client, w), w.School.Berk, "Berk Demir", c.School.BranchId, classA);
+        await DayAsync(clock, client, c, 19, classA, 10, (w.School.Berk, "Present"));
+        string founder = await BillingTestData.FounderTokenAsync(client, w);
+        const string Range = "startDate=2026-11-16&endDate=2026-11-20";
+
+        var (status, all, raw) = await AttendanceReportAsync(client, founder, Range);
+        status.ShouldBe(HttpStatusCode.OK, raw);
+        JsonElement items = all.GetProperty("items");
+        Names(items).ShouldBe(["Ali Yılmaz", "Ayşe Kaya"], "Berk'in 19 Kasım'ı sonra güncellenen \"Var\" kaydıyla sayılmaz");
+        items[0].GetProperty("absentDays").GetInt32().ShouldBe(2);
+        items[0].GetProperty("classroomName").GetString().ShouldBe("5-B", "satırda öğrencinin bugünkü sınıfı");
+        items[1].GetProperty("absentDays").GetInt32().ShouldBe(0, "Ayşe'nin 18 Kasım'ında son kayıt \"Geç\"");
+        items[1].GetProperty("lateDays").GetInt32().ShouldBe(1);
+        all.GetProperty("totals").GetProperty("absentDays").GetInt32().ShouldBe(2);
+        all.GetProperty("totals").GetProperty("lateDays").GetInt32().ShouldBe(1);
+
+        JsonElement inA = (await AttendanceReportAsync(client, founder, $"{Range}&classroomId={classA}")).Body.GetProperty("items");
+        Names(inA).ShouldBe(["Ali Yılmaz"], "5-A süzgeci 5-A'da alınan ve son kayıt olan günleri sayar");
+        inA[0].GetProperty("absentDays").GetInt32().ShouldBe(2);
+        inA[0].GetProperty("classroomName").GetString().ShouldBe("5-B");
+
+        JsonElement inB = (await AttendanceReportAsync(client, founder, $"{Range}&classroomId={classB}")).Body.GetProperty("items");
+        Names(inB).ShouldBe(["Ayşe Kaya"], "Ali'nin 5-A'daki günleri 5-B süzgecinde sayılmaz; Berk'in 5-B kaydı sonra güncellenen \"Var\"la geçersiz");
+        inB[0].GetProperty("absentDays").GetInt32().ShouldBe(0);
+        inB[0].GetProperty("lateDays").GetInt32().ShouldBe(1);
+    }
+
+    private static Task DayAsync(FakeTimeProvider clock, HttpClient client, AttendanceClass c, int day, Guid classroomId, params (Guid StudentId, string Status)[] marks) =>
+        DayAsync(clock, client, c, day, classroomId, 9, marks);
+
+    private static async Task DayAsync(FakeTimeProvider clock, HttpClient client, AttendanceClass c, int day, Guid classroomId, int hourUtc, params (Guid StudentId, string Status)[] marks)
+    {
+        clock.SetUtcNow(new DateTimeOffset(2026, 11, day, hourUtc, 0, 0, TimeSpan.Zero));
         string teacher = await TokenForSchoolAsync(client, c.TeacherEmail, c.School.TenantId);
         var (status, _, raw) = await SaveAsync(client, teacher, classroomId, marks, day: $"2026-11-{day:00}");
         status.ShouldBe(HttpStatusCode.OK, raw);

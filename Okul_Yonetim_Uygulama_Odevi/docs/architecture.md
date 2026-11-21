@@ -213,7 +213,7 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   (architecture testi `DashboardModuleRulesTests`); diğer modüllerin yeni, uçsuz ve erişim denetlemeyen okuma sorgularını çağırır — çağıranı
   yalnızca guard'dan geçmiş işleyiciler: Organization `ListTodayClassroomsQuery` (bugünü kapsayan dönem + tatil kuralı, etkin şubelerin
   etkin sınıfları, atanmış öğretmen adları) ve `ListClassroomBranchesQuery`; Attendance `GetAttendanceDaySummaryQuery` (öğrencisiz sınıf
-  sayılmaz) ve `ListAttendanceTotalsQuery` (öğrenci + gün başına "Yok"/"Geç"; şube/sınıf süzgeci yoklamanın alındığı sınıfa); Billing
+  sayılmaz) ve `ListAttendanceTotalsQuery` (öğrenci-gün başına son güncellenen yoklama esas — 0010 kuralı; şube/sınıf süzgeci o yoklamanın alındığı sınıfa); Billing
   `ListStudentBalancesQuery` (0015 cari hesabı — `BillingLedger`, gecikme yalnızca `Installment.OverdueOn`) ve `ListPaymentsInRangeQuery`;
   Communication `ListUnreadAnnouncementsQuery` (0011 sonuç sayımı; şube süzgecinde kapsamın şubesi çözülür, okul geneli her süzgeçte);
   Students `StudentLabel`'a okul no eklendi. "Bugün" `SchoolCalendar` Türkiye günü; "son 7 gün" `SchoolCalendar.StartOfDay(bugün − 6)`'dan.

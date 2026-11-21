@@ -25,8 +25,10 @@ public interface IAttendanceRepository
     Task<IReadOnlyList<(Guid ClassroomId, Guid StudentId, AttendanceStatus Status)>> ListDayExceptionsAsync(IReadOnlyCollection<Guid> classroomIds, DateOnly day, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Günü aralıkta (uçlar dahil) olan yoklamalardaki "Yok" ve "Geç" satırları, öğrenci + gün + durum başına bir kez (spec 0017 devamsızlık
-    /// raporu); şube ve sınıf yoklamanın alındığı şube ve sınıftır. Yoklama kurum + şube filtresinden geçer; izlemesiz projeksiyon.
+    /// Günü aralıkta (uçlar dahil) olan yoklamalardan öğrenci-gün başına en fazla bir "Yok" ya da "Geç" (spec 0017 devamsızlık raporu): aynı gün
+    /// birden çok sınıfta kayıt varsa son güncellenen yoklama esastır (0010 kuralı, <see cref="ListStudentDaysAsync"/>) — o "Var" ise gün
+    /// sayılmaz. Şube ve sınıf süzgeci bu kazanan yoklamanın alındığı şube ve sınıfa uygulanır (plan 0017 A-4). Yoklama kurum + şube
+    /// filtresinden geçer; izlemesiz projeksiyon.
     /// </summary>
     Task<IReadOnlyList<(Guid StudentId, DateOnly Day, AttendanceStatus Status)>> ListStatusDaysAsync(DateOnly fromDay, DateOnly toDay, Guid? branchId, Guid? classroomId, CancellationToken cancellationToken);
 
