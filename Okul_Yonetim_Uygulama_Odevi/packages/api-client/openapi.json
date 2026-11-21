@@ -5,6 +5,524 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/academics/classrooms/{classroomId}/assignments": {
+      "get": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "classroomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssignmentRow"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "classroomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/academics/assignments/{id}/submissions": {
+      "get": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentSubmissionsView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionsSaveResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/academics/classrooms/{classroomId}/assessments": {
+      "get": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "classroomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssessmentRow"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "classroomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/academics/assessments/{id}/grades": {
+      "get": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentGradesView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Academics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradesSaveResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/account/profile": {
       "get": {
         "tags": [
@@ -3891,6 +4409,56 @@
         }
       }
     },
+    "/api/my/children/{studentId}/academics": {
+      "get": {
+        "tags": [
+          "MyChildAcademics"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildAcademicsView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/my/children": {
       "get": {
         "tags": [
@@ -4557,6 +5125,319 @@
         },
         "description": "Sonuçlar: alıcı ve okuyan veli sayısı (\"X / Y veli okudu\"), okumayan veliler (ad + çocuk adları) ve onay formunda öğrenci bazında onay/ret/cevapsız."
       },
+      "AssessmentCreated": {
+        "required": [
+          "id",
+          "studentCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Açılan değerlendirme (spec 0013 gereksinim 5): kimlik ve kapsadığı öğrenci sayısı."
+      },
+      "AssessmentGradesView": {
+        "required": [
+          "assessmentId",
+          "subject",
+          "kind",
+          "title",
+          "date",
+          "createdByName",
+          "canEdit",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "assessmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeStudentRow"
+            }
+          }
+        },
+        "description": "Puan listesi (spec 0013 gereksinim 6): değerlendirmenin ders, tür, başlık ve günü, açan öğretmen, isteyen değiştirebilir mi\n(`CanEdit` — yalnızca açan) ve sınıfta süren öğrencileri Türkçe ad sırasıyla puanlarıyla (boş = girilmedi)."
+      },
+      "AssessmentRequest": {
+        "required": [
+          "subject",
+          "kind",
+          "title",
+          "date"
+        ],
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Yeni değerlendirme (spec 0013): ders adı, tür (`Written`/`Oral`), başlık ve gün (`yyyy-MM-dd`)."
+      },
+      "AssessmentRow": {
+        "required": [
+          "id",
+          "subject",
+          "kind",
+          "title",
+          "date",
+          "createdByName",
+          "gradedCount",
+          "studentCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "gradedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Öğretmenin değerlendirme listesindeki satır (spec 0013 gereksinim 6): ders, tür (`Written`/`Oral`), başlık, gün, açan öğretmen ve \"x / y puan girildi\" sayıları (yalnızca sınıfta süren öğrenciler)."
+      },
+      "AssignmentCreated": {
+        "required": [
+          "id",
+          "studentCount",
+          "notifiedGuardians"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notifiedGuardians": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Verilen ödev (spec 0013 gereksinim 1–2): kimlik, ödevin öğrenci sayısı ve bildirim giden veli sayısı."
+      },
+      "AssignmentRequest": {
+        "required": [
+          "subject",
+          "title",
+          "description",
+          "dueDate"
+        ],
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Yeni ödev (spec 0013): ders adı, başlık, isteğe bağlı açıklama ve teslim günü (`yyyy-MM-dd`)."
+      },
+      "AssignmentRow": {
+        "required": [
+          "id",
+          "subject",
+          "title",
+          "dueDate",
+          "createdByName",
+          "submittedCount",
+          "studentCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "submittedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Öğretmenin ödev listesindeki satır (spec 0013 gereksinim 3): ders, başlık, teslim günü, veren öğretmen ve \"x / y teslim etti\" sayıları (yalnızca sınıfta süren öğrenciler)."
+      },
+      "AssignmentSubmissionsView": {
+        "required": [
+          "assignmentId",
+          "subject",
+          "title",
+          "dueDate",
+          "createdByName",
+          "canEdit",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionStudentRow"
+            }
+          }
+        },
+        "description": "Teslim listesi (spec 0013 gereksinim 4): ödevin ders, başlık ve teslim günü, veren öğretmen, isteyen değiştirebilir mi\n(`CanEdit` — yalnızca veren) ve sınıfta süren öğrencileri Türkçe ad sırasıyla durumlarıyla."
+      },
       "AttendanceEntryInput": {
         "required": [
           "studentId",
@@ -4943,6 +5824,49 @@
           }
         },
         "description": "Şifre değiştirme isteği."
+      },
+      "ChildAcademicsView": {
+        "required": [
+          "studentId",
+          "fullName",
+          "today",
+          "pending",
+          "recent",
+          "grades"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "pending": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAssignmentRecord"
+            }
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAssignmentRecord"
+            }
+          },
+          "grades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentGradeRecord"
+            }
+          }
+        },
+        "description": "Velinin çocuk özeti (spec 0013 C-7): bugün (Türkiye günü), bekleyen ödevler (teslim günü bugün ya da sonra; en yakın üstte),\nson ödevler (teslim günü son 30 günde geçmiş; yeniden eskiye, durumlarıyla) ve etkin dönemdeki notlar (yeniden eskiye)."
       },
       "ChildCard": {
         "required": [
@@ -5670,10 +6594,115 @@
         },
         "description": "Sınıf seviyesi ekleme/düzenleme isteği: ad ve sıra numarası (1–99)."
       },
+      "GradeScoreRequest": {
+        "required": [
+          "studentId",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          }
+        },
+        "description": "Bir öğrencinin puanı (spec 0013 AC-6): JSON sayısı, metin ya da `null` (girilmedi). Değer olduğu gibi (ham metniyle)\nuygulamaya geçer ve orada doğrulanır — ondalık (`85.5`) ya da sayı olmayan değer (`\"abc\"`) çerçevenin İngilizce\nbağlama hatasına değil, öğrenciyi belirten Türkçe alan hatasına düşer."
+      },
+      "GradesRequest": {
+        "required": [
+          "grades"
+        ],
+        "type": "object",
+        "properties": {
+          "grades": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/GradeScoreRequest"
+            }
+          }
+        },
+        "description": "Puan listesi kaydı (spec 0013): öğrenci başına puan."
+      },
+      "GradesSaveResult": {
+        "required": [
+          "gradedCount",
+          "studentCount",
+          "changed"
+        ],
+        "type": "object",
+        "properties": {
+          "gradedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "changed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Puan kaydının sonucu (spec 0013 gereksinim 6): sınıfta süren öğrenciler arasında puanı girilmiş ve toplam öğrenci sayısı ve bu kayıtta değişen puan sayısı."
+      },
+      "GradeStudentRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Puan listesindeki öğrenci: kimlik, ad-soyad ve puan (boş = girilmedi)."
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
       },
+      "JsonElement": { },
       "LinkGuardianRequest": {
         "required": [
           "fullName",
@@ -6195,7 +7224,7 @@
             "format": "date-time"
           }
         },
-        "description": "Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` —\n\"düzeltildi\" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir."
+        "description": "Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` / spec 0013 `Assignment` —\n\"düzeltildi\" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir."
       },
       "PanelSchoolResult": {
         "required": [
@@ -6902,6 +7931,36 @@
         },
         "description": "Konuşma başlatma (spec 0011): öğrenci ve karşı taraf (veli için öğretmen, öğretmen için veli)."
       },
+      "StudentAssignmentRecord": {
+        "required": [
+          "assignmentId",
+          "subject",
+          "title",
+          "dueDate",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "description": "Öğrencinin bir ödevi (spec 0013 gereksinim 8): ders, başlık, teslim günü ve öğrencinin durumu (`Unmarked`, `Submitted`, `NotSubmitted`)."
+      },
       "StudentContacts": {
         "required": [
           "studentId",
@@ -7007,6 +8066,46 @@
           }
         },
         "description": "Kurucunun öğrenci kartı (spec 0009): bilgiler, sağlık bölümü, veliler, kardeşler (aynı veliye bağlı öğrenciler) ve\nteslim alabilecek kişiler. Her okunuşu audit'e geçer (kart görüntüleme; sağlık okunduysa ayrıca sağlık okuma)."
+      },
+      "StudentGradeRecord": {
+        "required": [
+          "assessmentId",
+          "subject",
+          "kind",
+          "title",
+          "date",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "assessmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Öğrencinin bir notu (spec 0013 gereksinim 8): ders, tür (`Written`/`Oral`), başlık, gün ve puan (boş = girilmedi)."
       },
       "StudentGuardianView": {
         "required": [
@@ -7261,6 +8360,109 @@
         },
         "description": "Öğrenci değişikliklerinin yanıtı: yalnızca öğrenci kimliği. Kart (sağlık bilgisiyle) ayrıca okunur — böylece her sağlık\nokuması kart okumasından geçer ve audit'e yazılır."
       },
+      "SubmissionInput": {
+        "required": [
+          "studentId",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Kaydedilen teslim listesinde bir öğrencinin durumu: `Unmarked`, `Submitted` ya da `NotSubmitted`."
+      },
+      "SubmissionsRequest": {
+        "required": [
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SubmissionInput"
+            }
+          }
+        },
+        "description": "Teslim listesi kaydı (spec 0013): öğrenci başına durum (`Unmarked`, `Submitted`, `NotSubmitted`)."
+      },
+      "SubmissionsSaveResult": {
+        "required": [
+          "submitted",
+          "notSubmitted",
+          "unmarked",
+          "changed"
+        ],
+        "type": "object",
+        "properties": {
+          "submitted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notSubmitted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unmarked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "changed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Teslim kaydının sonucu (spec 0013 gereksinim 4): sınıfta süren öğrenciler arasında teslim eden, etmeyen ve işaretlenmemiş sayısı ve bu kayıtta değişen öğrenci sayısı."
+      },
+      "SubmissionStudentRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "description": "Teslim listesindeki öğrenci: kimlik, ad-soyad ve durum (`Unmarked`, `Submitted`, `NotSubmitted`)."
+      },
       "SystemHealthResponse": {
         "required": [
           "status",
@@ -7510,6 +8712,9 @@
   },
   "tags": [
     {
+      "name": "Academics"
+    },
+    {
       "name": "Account"
     },
     {
@@ -7559,6 +8764,9 @@
     },
     {
       "name": "Me"
+    },
+    {
+      "name": "MyChildAcademics"
     },
     {
       "name": "MyChildren"

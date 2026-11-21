@@ -10,6 +10,7 @@ interface Props {
   client: AuthSession["client"];
   childId: string;
   onBack: () => void;
+  onAcademics?: () => void;
 }
 
 /**
@@ -17,9 +18,9 @@ interface Props {
  * atanmamış"), Sağlık bölümü (sağlık notu ve alerji ayrı başlıklarla; anahtar yoksa "Sağlık bilgisi şu anda
  * gösterilemiyor.") ve teslim alabilecek kişiler ("Henüz kimse eklenmedi"). Bağ kaldırıldıysa ya da öğrenci ayrıldıysa
  * (404) "Bu öğrenci artık görüntülenemiyor." ve listeye dönüş. Diğer veliler ve kardeş kartları burada yoktur. Kart içeriği
- * kayar (ScrollView), listeye dönüş altta sabit (0010 review F-2).
+ * kayar (ScrollView), listeye dönüş altta sabit (0010 review F-2). Spec 0013: kart açıkken "Ödev ve notlar" o çocuğun özetini açar.
  */
-export function ChildCardScreen({ client, childId, onBack }: Props) {
+export function ChildCardScreen({ client, childId, onBack, onAcademics }: Props) {
   const styles = useAuthStyles();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [reload, setReload] = useState(0);
@@ -104,6 +105,11 @@ export function ChildCardScreen({ client, childId, onBack }: Props) {
             ))
           )}
         </ScrollView>
+      )}
+      {state.kind === "ready" && onAcademics && (
+        <Pressable style={styles.secondary} onPress={onAcademics} accessibilityRole="button">
+          <Text style={styles.secondaryText}>{t("childAcademics.link")}</Text>
+        </Pressable>
       )}
       <Pressable style={styles.secondary} onPress={onBack} accessibilityRole="button">
         <Text style={styles.secondaryText}>{t("children.backToList")}</Text>

@@ -4,6 +4,442 @@
  */
 
 export interface paths {
+    "/api/academics/classrooms/{classroomId}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classroomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssignmentRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classroomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssignmentRequest"];
+                    "text/json": components["schemas"]["AssignmentRequest"];
+                    "application/*+json": components["schemas"]["AssignmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssignmentCreated"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/academics/assignments/{id}/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssignmentSubmissionsView"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubmissionsRequest"];
+                    "text/json": components["schemas"]["SubmissionsRequest"];
+                    "application/*+json": components["schemas"]["SubmissionsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SubmissionsSaveResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/academics/classrooms/{classroomId}/assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classroomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssessmentRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    classroomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssessmentRequest"];
+                    "text/json": components["schemas"]["AssessmentRequest"];
+                    "application/*+json": components["schemas"]["AssessmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssessmentCreated"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/academics/assessments/{id}/grades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssessmentGradesView"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GradesRequest"];
+                    "text/json": components["schemas"]["GradesRequest"];
+                    "application/*+json": components["schemas"]["GradesRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GradesSaveResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/account/profile": {
         parameters: {
             query?: never;
@@ -3778,6 +4214,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/my/children/{studentId}/academics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChildAcademicsView"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/my/children": {
         parameters: {
             query?: never;
@@ -4366,6 +4857,98 @@ export interface components {
             unread: components["schemas"]["UnreadGuardianRow"][];
             consent: null | components["schemas"]["ConsentSummary"];
         };
+        /** @description Açılan değerlendirme (spec 0013 gereksinim 5): kimlik ve kapsadığı öğrenci sayısı. */
+        AssessmentCreated: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            studentCount: number | string;
+        };
+        /**
+         * @description Puan listesi (spec 0013 gereksinim 6): değerlendirmenin ders, tür, başlık ve günü, açan öğretmen, isteyen değiştirebilir mi
+         *     (`CanEdit` — yalnızca açan) ve sınıfta süren öğrencileri Türkçe ad sırasıyla puanlarıyla (boş = girilmedi).
+         */
+        AssessmentGradesView: {
+            /** Format: uuid */
+            assessmentId: string;
+            subject: string;
+            kind: string;
+            title: string;
+            /** Format: date */
+            date: string;
+            createdByName: string;
+            canEdit: boolean;
+            students: components["schemas"]["GradeStudentRow"][];
+        };
+        /** @description Yeni değerlendirme (spec 0013): ders adı, tür (`Written`/`Oral`), başlık ve gün (`yyyy-MM-dd`). */
+        AssessmentRequest: {
+            subject: null | string;
+            kind: null | string;
+            title: null | string;
+            /** Format: date */
+            date: null | string;
+        };
+        /** @description Öğretmenin değerlendirme listesindeki satır (spec 0013 gereksinim 6): ders, tür (`Written`/`Oral`), başlık, gün, açan öğretmen ve "x / y puan girildi" sayıları (yalnızca sınıfta süren öğrenciler). */
+        AssessmentRow: {
+            /** Format: uuid */
+            id: string;
+            subject: string;
+            kind: string;
+            title: string;
+            /** Format: date */
+            date: string;
+            createdByName: string;
+            /** Format: int32 */
+            gradedCount: number | string;
+            /** Format: int32 */
+            studentCount: number | string;
+        };
+        /** @description Verilen ödev (spec 0013 gereksinim 1–2): kimlik, ödevin öğrenci sayısı ve bildirim giden veli sayısı. */
+        AssignmentCreated: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            studentCount: number | string;
+            /** Format: int32 */
+            notifiedGuardians: number | string;
+        };
+        /** @description Yeni ödev (spec 0013): ders adı, başlık, isteğe bağlı açıklama ve teslim günü (`yyyy-MM-dd`). */
+        AssignmentRequest: {
+            subject: null | string;
+            title: null | string;
+            description: null | string;
+            /** Format: date */
+            dueDate: null | string;
+        };
+        /** @description Öğretmenin ödev listesindeki satır (spec 0013 gereksinim 3): ders, başlık, teslim günü, veren öğretmen ve "x / y teslim etti" sayıları (yalnızca sınıfta süren öğrenciler). */
+        AssignmentRow: {
+            /** Format: uuid */
+            id: string;
+            subject: string;
+            title: string;
+            /** Format: date */
+            dueDate: string;
+            createdByName: string;
+            /** Format: int32 */
+            submittedCount: number | string;
+            /** Format: int32 */
+            studentCount: number | string;
+        };
+        /**
+         * @description Teslim listesi (spec 0013 gereksinim 4): ödevin ders, başlık ve teslim günü, veren öğretmen, isteyen değiştirebilir mi
+         *     (`CanEdit` — yalnızca veren) ve sınıfta süren öğrencileri Türkçe ad sırasıyla durumlarıyla.
+         */
+        AssignmentSubmissionsView: {
+            /** Format: uuid */
+            assignmentId: string;
+            subject: string;
+            title: string;
+            /** Format: date */
+            dueDate: string;
+            createdByName: string;
+            canEdit: boolean;
+            students: components["schemas"]["SubmissionStudentRow"][];
+        };
         /** @description Kaydedilen yoklamada bir öğrencinin durumu: `Present`, `Absent` ya da `Late`. */
         AttendanceEntryInput: {
             /** Format: uuid */
@@ -4485,6 +5068,20 @@ export interface components {
             currentPassword: null | string;
             newPassword: null | string;
             newPasswordRepeat: null | string;
+        };
+        /**
+         * @description Velinin çocuk özeti (spec 0013 C-7): bugün (Türkiye günü), bekleyen ödevler (teslim günü bugün ya da sonra; en yakın üstte),
+         *     son ödevler (teslim günü son 30 günde geçmiş; yeniden eskiye, durumlarıyla) ve etkin dönemdeki notlar (yeniden eskiye).
+         */
+        ChildAcademicsView: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            /** Format: date */
+            today: string;
+            pending: components["schemas"]["StudentAssignmentRecord"][];
+            recent: components["schemas"]["StudentAssignmentRecord"][];
+            grades: components["schemas"]["StudentGradeRecord"][];
         };
         /**
          * @description Velinin gördüğü salt okunur öğrenci kartı (spec 0009 C-7): ad-soyad, doğum tarihi, okul numarası, şube, sınıf, sağlık
@@ -4698,8 +5295,40 @@ export interface components {
             /** Format: int32 */
             sortOrder: null | number | string;
         };
+        /**
+         * @description Bir öğrencinin puanı (spec 0013 AC-6): JSON sayısı, metin ya da `null` (girilmedi). Değer olduğu gibi (ham metniyle)
+         *     uygulamaya geçer ve orada doğrulanır — ondalık (`85.5`) ya da sayı olmayan değer (`"abc"`) çerçevenin İngilizce
+         *     bağlama hatasına değil, öğrenciyi belirten Türkçe alan hatasına düşer.
+         */
+        GradeScoreRequest: {
+            /** Format: uuid */
+            studentId: string;
+            score: null | components["schemas"]["JsonElement"];
+        };
+        /** @description Puan listesi kaydı (spec 0013): öğrenci başına puan. */
+        GradesRequest: {
+            grades: null | components["schemas"]["GradeScoreRequest"][];
+        };
+        /** @description Puan kaydının sonucu (spec 0013 gereksinim 6): sınıfta süren öğrenciler arasında puanı girilmiş ve toplam öğrenci sayısı ve bu kayıtta değişen puan sayısı. */
+        GradesSaveResult: {
+            /** Format: int32 */
+            gradedCount: number | string;
+            /** Format: int32 */
+            studentCount: number | string;
+            /** Format: int32 */
+            changed: number | string;
+        };
+        /** @description Puan listesindeki öğrenci: kimlik, ad-soyad ve puan (boş = girilmedi). */
+        GradeStudentRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            /** Format: int32 */
+            score: null | number | string;
+        };
         /** Format: binary */
         IFormFile: string;
+        JsonElement: unknown;
         /** @description Veli ekleme isteği: ad-soyad, e-posta, isteğe bağlı telefon ve yakınlık (`Mother` / `Father` / `Other`). */
         LinkGuardianRequest: {
             fullName: string;
@@ -4859,7 +5488,7 @@ export interface components {
             phone: null | string;
         };
         /**
-         * @description Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` —
+         * @description Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` / spec 0013 `Assignment` —
          *     "düzeltildi" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir.
          */
         NoticeView: {
@@ -5071,6 +5700,16 @@ export interface components {
             /** Format: uuid */
             counterpartUserId: null | string;
         };
+        /** @description Öğrencinin bir ödevi (spec 0013 gereksinim 8): ders, başlık, teslim günü ve öğrencinin durumu (`Unmarked`, `Submitted`, `NotSubmitted`). */
+        StudentAssignmentRecord: {
+            /** Format: uuid */
+            assignmentId: string;
+            subject: string;
+            title: string;
+            /** Format: date */
+            dueDate: string;
+            status: string;
+        };
         /** @description Öğrenci ve yazılabilecek (okulda etkin) velileri. */
         StudentContacts: {
             /** Format: uuid */
@@ -5100,6 +5739,18 @@ export interface components {
             guardians: components["schemas"]["StudentGuardianView"][];
             siblings: components["schemas"]["SiblingRow"][];
             pickupPersons: components["schemas"]["PickupPersonView"][];
+        };
+        /** @description Öğrencinin bir notu (spec 0013 gereksinim 8): ders, tür (`Written`/`Oral`), başlık, gün ve puan (boş = girilmedi). */
+        StudentGradeRecord: {
+            /** Format: uuid */
+            assessmentId: string;
+            subject: string;
+            kind: string;
+            title: string;
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            score: null | number | string;
         };
         /** @description Kurucunun kartındaki veli satırı: kişi kimliği, ad-soyad, e-posta, telefon ve yakınlık (Mother/Father/Other). */
         StudentGuardianView: {
@@ -5177,6 +5828,34 @@ export interface components {
         StudentSaved: {
             /** Format: uuid */
             id: string;
+        };
+        /** @description Kaydedilen teslim listesinde bir öğrencinin durumu: `Unmarked`, `Submitted` ya da `NotSubmitted`. */
+        SubmissionInput: {
+            /** Format: uuid */
+            studentId: string;
+            status: null | string;
+        };
+        /** @description Teslim listesi kaydı (spec 0013): öğrenci başına durum (`Unmarked`, `Submitted`, `NotSubmitted`). */
+        SubmissionsRequest: {
+            entries: null | components["schemas"]["SubmissionInput"][];
+        };
+        /** @description Teslim kaydının sonucu (spec 0013 gereksinim 4): sınıfta süren öğrenciler arasında teslim eden, etmeyen ve işaretlenmemiş sayısı ve bu kayıtta değişen öğrenci sayısı. */
+        SubmissionsSaveResult: {
+            /** Format: int32 */
+            submitted: number | string;
+            /** Format: int32 */
+            notSubmitted: number | string;
+            /** Format: int32 */
+            unmarked: number | string;
+            /** Format: int32 */
+            changed: number | string;
+        };
+        /** @description Teslim listesindeki öğrenci: kimlik, ad-soyad ve durum (`Unmarked`, `Submitted`, `NotSubmitted`). */
+        SubmissionStudentRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            status: string;
         };
         /**
          * @description Sistem durumu yanıtı. Yalnızca durum ("healthy" / "unavailable") ve Türkçe mesaj taşır;
