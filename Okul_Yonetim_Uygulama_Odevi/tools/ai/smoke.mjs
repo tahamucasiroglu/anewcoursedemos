@@ -90,7 +90,7 @@ async function main() {
     const audio = await readFile(audioPath);
     const type = audioTypes[extname(audioPath).toLowerCase()] ?? "application/octet-stream";
     const heard = await timed(async () => {
-      const response = await fetch(`${stt}/transcribe`, { method: "POST", headers: { "Content-Type": type }, body: audio, signal: AbortSignal.timeout(60_000) });
+      const response = await fetch(`${stt}/transcribe`, { method: "POST", headers: { "Content-Type": type }, body: audio, signal: AbortSignal.timeout(120_000) }); // API ile aynı: Ai:SpeechToText:TimeoutSeconds = 120
       if (!response.ok) {
         throw new Error(`Ses servisi HTTP ${response.status}`);
       }
