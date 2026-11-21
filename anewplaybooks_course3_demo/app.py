@@ -105,6 +105,15 @@ class LeaveService:
             # loglanacak
             return True
 
+    def cancel_request(self, req_id):
+        # Spec 0002 / BR-9: yalniz Beklemede talep iptal edilir; talep silinmez, durumu degisir.
+        # Bakiye etkilenmez: bekleyenler zaten dusulmuyordu (BR-4).
+        for r in Db.requests:
+            if r["id"] == req_id and r["status"] == "Beklemede":
+                r["status"] = "Iptal Edildi"
+                return True
+        return False
+
     def status_badge(self, status):
         # renkler: UI isi ama burada pratik oluyor
         color = "#999"
