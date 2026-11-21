@@ -70,6 +70,14 @@ public sealed class SchoolCalendar
     /// <summary>Okulun bugünü (Türkiye günü).</summary>
     public DateOnly Today() => TurkeyDay(this.timeProvider.GetUtcNow(), this.zone);
 
+    /// <summary>Türkiye gününün başladığı an (00:00 Türkiye saati), UTC olarak (spec 0017: "son 7 gün, bugün dahil" sınırı; T3).</summary>
+    public DateTimeOffset StartOfDay(DateOnly day)
+    {
+        DateTime local = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
+        TimeSpan offset = this.zone is null ? FixedTurkeyOffset : this.zone.GetUtcOffset(local);
+        return new DateTimeOffset(local, offset).ToUniversalTime();
+    }
+
     /// <summary>Verilen anın Türkiye saatiyle gösterimi (spec 0010: yoklamanın kayıt saati).</summary>
     public DateTimeOffset TurkeyTime(DateTimeOffset instant) =>
         this.zone is null ? instant.ToOffset(FixedTurkeyOffset) : TimeZoneInfo.ConvertTime(instant, this.zone);

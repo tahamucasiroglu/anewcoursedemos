@@ -12,6 +12,9 @@ public interface IClassroomRepository
 
     Task<Classroom?> FindAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Verilen kimliklerden görünür olan sınıflar (spec 0017: sınıf kapsamlı duyurunun şubesi); izlemesiz.</summary>
+    Task<IReadOnlyList<Classroom>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     /// <summary>Aynı dönem ve şubede aynı adlı (Türkçe harf kuralıyla, harf farkı gözetmeden) etkin sınıf; <paramref name="exceptId"/> hariç.</summary>
     Task<bool> ActiveNameExistsAsync(Guid termId, Guid branchId, string name, Guid? exceptId, CancellationToken cancellationToken);
 

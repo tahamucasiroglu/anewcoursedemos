@@ -33,6 +33,12 @@ public sealed class GatedAttendanceRepository : IAttendanceRepository
     public Task<IReadOnlyList<(DateOnly Day, AttendanceStatus Status)>> ListStudentDaysAsync(Guid studentId, DateOnly fromDay, DateOnly toDay, CancellationToken cancellationToken) =>
         this.inner.ListStudentDaysAsync(studentId, fromDay, toDay, cancellationToken);
 
+    public Task<IReadOnlyList<(Guid ClassroomId, Guid StudentId, AttendanceStatus Status)>> ListDayExceptionsAsync(IReadOnlyCollection<Guid> classroomIds, DateOnly day, CancellationToken cancellationToken) =>
+        this.inner.ListDayExceptionsAsync(classroomIds, day, cancellationToken);
+
+    public Task<IReadOnlyList<(Guid StudentId, DateOnly Day, AttendanceStatus Status)>> ListStatusDaysAsync(DateOnly fromDay, DateOnly toDay, Guid? branchId, Guid? classroomId, CancellationToken cancellationToken) =>
+        this.inner.ListStatusDaysAsync(fromDay, toDay, branchId, classroomId, cancellationToken);
+
     public void AddSheet(AttendanceSheet sheet) => this.inner.AddSheet(sheet);
 
     public void AddEntry(AttendanceEntry entry) => this.inner.AddEntry(entry);

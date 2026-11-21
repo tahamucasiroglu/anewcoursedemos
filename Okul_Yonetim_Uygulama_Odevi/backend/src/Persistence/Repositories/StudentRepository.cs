@@ -76,7 +76,7 @@ public sealed class StudentRepository : IStudentRepository
                join c in this.context.Classrooms on s.ClassroomId equals c.Id into classes
                from c in classes.DefaultIfEmpty()
                where ids.Contains(s.Id)
-               select new StudentLabel(s.Id, s.FullName, s.BranchId, b.Name, c == null ? null : c.Name, s.IsActive))
+               select new StudentLabel(s.Id, s.FullName, s.BranchId, b.Name, c == null ? null : c.Name, s.IsActive, s.SchoolNumber))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public async Task<IReadOnlyList<PickupPerson>> ListPickupPersonsAsync(Guid studentId, CancellationToken cancellationToken) =>

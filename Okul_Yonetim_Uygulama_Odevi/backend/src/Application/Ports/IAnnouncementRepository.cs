@@ -33,6 +33,12 @@ public interface IAnnouncementRepository
 
     Task<int> CountUnreadAsync(Guid guardianUserId, CancellationToken cancellationToken);
 
+    /// <summary>Yayın anı <paramref name="since"/> ya da sonrası olan duyurular, kapsam ve alıcı/okuyan sayılarıyla (0011 sonuç sayımı; spec 0017 kartı).</summary>
+    Task<IReadOnlyList<AnnouncementReadRow>> ListPublishedSinceAsync(DateTimeOffset since, CancellationToken cancellationToken);
+
+    /// <summary>Verilen duyurulardan en az birini okumamış farklı alıcı veli sayısı (spec 0017 kartı).</summary>
+    Task<int> CountUnreadGuardiansAsync(IReadOnlyCollection<Guid> announcementIds, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<RecipientRow>> ListRecipientsAsync(Guid announcementId, CancellationToken cancellationToken);
 
     /// <summary>Alıcı velilerin, duyurunun kapsadığı ve bugün de bağlı oldukları çocukları (ad).</summary>

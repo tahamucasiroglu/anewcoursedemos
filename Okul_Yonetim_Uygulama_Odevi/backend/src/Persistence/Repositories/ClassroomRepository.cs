@@ -21,6 +21,9 @@ public sealed class ClassroomRepository : IClassroomRepository
     public Task<Classroom?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         this.context.Classrooms.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Classroom>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await this.context.Classrooms.AsNoTracking().Where(c => ids.Contains(c.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public async Task<bool> ActiveNameExistsAsync(Guid termId, Guid branchId, string name, Guid? exceptId, CancellationToken cancellationToken)
     {
         List<string> names = await this.context.Classrooms

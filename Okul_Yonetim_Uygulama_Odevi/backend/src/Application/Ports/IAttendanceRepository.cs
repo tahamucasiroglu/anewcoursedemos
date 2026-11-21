@@ -21,6 +21,15 @@ public interface IAttendanceRepository
     /// </summary>
     Task<IReadOnlyList<(DateOnly Day, AttendanceStatus Status)>> ListStudentDaysAsync(Guid studentId, DateOnly fromDay, DateOnly toDay, CancellationToken cancellationToken);
 
+    /// <summary>Verilen sınıfların o günkü yoklamalarında "Var" olmayan satırlar (spec 0017 devamsızlık kartı): sınıf, öğrenci, durum.</summary>
+    Task<IReadOnlyList<(Guid ClassroomId, Guid StudentId, AttendanceStatus Status)>> ListDayExceptionsAsync(IReadOnlyCollection<Guid> classroomIds, DateOnly day, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Günü aralıkta (uçlar dahil) olan yoklamalardaki "Yok" ve "Geç" satırları, öğrenci + gün + durum başına bir kez (spec 0017 devamsızlık
+    /// raporu); şube ve sınıf yoklamanın alındığı şube ve sınıftır. Yoklama kurum + şube filtresinden geçer; izlemesiz projeksiyon.
+    /// </summary>
+    Task<IReadOnlyList<(Guid StudentId, DateOnly Day, AttendanceStatus Status)>> ListStatusDaysAsync(DateOnly fromDay, DateOnly toDay, Guid? branchId, Guid? classroomId, CancellationToken cancellationToken);
+
     void AddSheet(AttendanceSheet sheet);
 
     void AddEntry(AttendanceEntry entry);

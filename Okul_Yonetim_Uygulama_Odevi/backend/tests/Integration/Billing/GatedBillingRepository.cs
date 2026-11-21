@@ -68,6 +68,9 @@ public sealed class GatedBillingRepository : IBillingRepository
 
     public Task<IReadOnlyList<PaymentEntry>> ListPaymentsAsync(IReadOnlyCollection<Guid> planIds, CancellationToken cancellationToken) => this.inner.ListPaymentsAsync(planIds, cancellationToken);
 
+    public Task<IReadOnlyList<PaymentEntry>> ListPaymentsInRangeAsync(DateOnly fromDay, DateOnly toDay, IReadOnlyCollection<Guid>? branchIds, CancellationToken cancellationToken) =>
+        this.inner.ListPaymentsInRangeAsync(fromDay, toDay, branchIds, cancellationToken);
+
     public Task<string> UserNameAsync(Guid userId, CancellationToken cancellationToken) => this.inner.UserNameAsync(userId, cancellationToken);
 
     public Task<IReadOnlyList<PaymentAllocation>> ListAllocationsAsync(IReadOnlyCollection<Guid> paymentIds, CancellationToken cancellationToken) => this.inner.ListAllocationsAsync(paymentIds, cancellationToken);

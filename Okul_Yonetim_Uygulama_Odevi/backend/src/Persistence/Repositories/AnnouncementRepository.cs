@@ -85,6 +85,34 @@ public sealed class AnnouncementRepository : IAnnouncementRepository
     public Task<int> CountUnreadAsync(Guid guardianUserId, CancellationToken cancellationToken) =>
         this.context.AnnouncementRecipients.CountAsync(r => r.GuardianUserId == guardianUserId && r.ReadAt == null, cancellationToken);
 
+    public async Task<IReadOnlyList<AnnouncementReadRow>> ListPublishedSinceAsync(DateTimeOffset since, CancellationToken cancellationToken)
+    {
+        DateTimeOffset start = since.ToUniversalTime();
+        var rows = await (from a in this.context.Announcements.AsNoTracking()
+                          join u in this.context.Users.AsNoTracking() on a.AuthorUserId equals u.Id
+                          where a.PublishedAt >= start
+                          select new
+                          {
+                              a.Id,
+                              a.Title,
+                              a.Scope,
+                              a.ScopeId,
+                              u.FullName,
+                              a.PublishedAt,
+                              Recipients = this.context.AnnouncementRecipients.Count(r => r.AnnouncementId == a.Id),
+                              Read = this.context.AnnouncementRecipients.Count(r => r.AnnouncementId == a.Id && r.ReadAt != null),
+                          })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        return [.. rows.Select(r => new AnnouncementReadRow(r.Id, r.Title, r.Scope, r.ScopeId, r.FullName, r.PublishedAt, r.Recipients, r.Read))];
+    }
+
+    public Task<int> CountUnreadGuardiansAsync(IReadOnlyCollection<Guid> announcementIds, CancellationToken cancellationToken) =>
+        this.context.AnnouncementRecipients.AsNoTracking()
+            .Where(r => announcementIds.Contains(r.AnnouncementId) && r.ReadAt == null)
+            .Select(r => r.GuardianUserId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+
     public async Task<IReadOnlyList<RecipientRow>> ListRecipientsAsync(Guid announcementId, CancellationToken cancellationToken) =>
         await (from r in this.context.AnnouncementRecipients.AsNoTracking()
                join u in this.context.Users.AsNoTracking() on r.GuardianUserId equals u.Id

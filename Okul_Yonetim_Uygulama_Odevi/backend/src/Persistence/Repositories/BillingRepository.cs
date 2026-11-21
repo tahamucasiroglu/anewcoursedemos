@@ -85,6 +85,21 @@ public sealed class BillingRepository : IBillingRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false))
             .Select(x => new PaymentEntry(x.Payment, x.Name ?? string.Empty))];
 
+    public async Task<IReadOnlyList<PaymentEntry>> ListPaymentsInRangeAsync(DateOnly fromDay, DateOnly toDay, IReadOnlyCollection<Guid>? branchIds, CancellationToken cancellationToken)
+    {
+        IQueryable<Payment> query = this.context.Payments.AsNoTracking().Where(p => p.Date >= fromDay && p.Date <= toDay);
+        if (branchIds is not null)
+        {
+            query = query.Where(p => branchIds.Contains(p.BranchId));
+        }
+
+        return [.. (await query
+                .OrderBy(p => p.Date).ThenBy(p => p.ReceiptNo)
+                .Select(p => new { Payment = p, Name = this.context.Users.Where(u => u.Id == p.RecordedBy).Select(u => u.FullName).FirstOrDefault() })
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .Select(x => new PaymentEntry(x.Payment, x.Name ?? string.Empty))];
+    }
+
     public async Task<string> UserNameAsync(Guid userId, CancellationToken cancellationToken) =>
         await this.context.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.FullName).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false) ?? string.Empty;
 

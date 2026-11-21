@@ -50,6 +50,14 @@ public sealed class ClassroomTeacherRepository : IClassroomTeacherRepository
     public Task<bool> IsAssignedAsync(Guid classroomId, Guid teacherUserId, CancellationToken cancellationToken) =>
         this.context.ClassroomTeachers.AnyAsync(t => t.ClassroomId == classroomId && t.TeacherUserId == teacherUserId, cancellationToken);
 
+    public async Task<IReadOnlyList<(Guid ClassroomId, string FullName)>> ListAssignedNamesAsync(IReadOnlyCollection<Guid> classroomIds, CancellationToken cancellationToken) =>
+        [.. (await (from t in this.context.ClassroomTeachers.AsNoTracking()
+                    join u in this.context.Users.AsNoTracking() on t.TeacherUserId equals u.Id
+                    where classroomIds.Contains(t.ClassroomId)
+                    select new { t.ClassroomId, u.FullName })
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .Select(x => (x.ClassroomId, x.FullName))];
+
     public void Add(ClassroomTeacher assignment) => this.context.ClassroomTeachers.Add(assignment);
 
     public void Remove(ClassroomTeacher assignment) => this.context.ClassroomTeachers.Remove(assignment);

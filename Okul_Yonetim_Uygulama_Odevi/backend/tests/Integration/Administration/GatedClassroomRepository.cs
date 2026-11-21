@@ -22,6 +22,8 @@ public sealed class GatedClassroomRepository : IClassroomRepository
 
     public Task<Classroom?> FindAsync(Guid id, CancellationToken cancellationToken) => this.inner.FindAsync(id, cancellationToken);
 
+    public Task<IReadOnlyList<Classroom>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) => this.inner.ListByIdsAsync(ids, cancellationToken);
+
     public async Task<bool> ActiveNameExistsAsync(Guid termId, Guid branchId, string name, Guid? exceptId, CancellationToken cancellationToken)
     {
         await this.gate.PassAsync().ConfigureAwait(false);

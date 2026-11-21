@@ -41,6 +41,36 @@ public sealed class AttendanceRepository : IAttendanceRepository
         return [.. rows.GroupBy(r => r.Day).Select(g => g.OrderByDescending(r => r.UpdatedAt).First()).Select(r => (r.Day, r.Status))];
     }
 
+    public async Task<IReadOnlyList<(Guid ClassroomId, Guid StudentId, AttendanceStatus Status)>> ListDayExceptionsAsync(IReadOnlyCollection<Guid> classroomIds, DateOnly day, CancellationToken cancellationToken) =>
+        [.. (await (from entry in this.context.AttendanceEntries.AsNoTracking()
+                    join sheet in this.context.AttendanceSheets.AsNoTracking() on entry.SheetId equals sheet.Id
+                    where sheet.Day == day && classroomIds.Contains(sheet.ClassroomId) && entry.Status != AttendanceStatus.Present
+                    select new { sheet.ClassroomId, entry.StudentId, entry.Status })
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .Select(x => (x.ClassroomId, x.StudentId, x.Status))];
+
+    public async Task<IReadOnlyList<(Guid StudentId, DateOnly Day, AttendanceStatus Status)>> ListStatusDaysAsync(DateOnly fromDay, DateOnly toDay, Guid? branchId, Guid? classroomId, CancellationToken cancellationToken)
+    {
+        IQueryable<AttendanceSheet> sheets = this.context.AttendanceSheets.AsNoTracking().Where(s => s.Day >= fromDay && s.Day <= toDay);
+        if (branchId is { } branch)
+        {
+            sheets = sheets.Where(s => s.BranchId == branch);
+        }
+
+        if (classroomId is { } classroom)
+        {
+            sheets = sheets.Where(s => s.ClassroomId == classroom);
+        }
+
+        return [.. (await (from entry in this.context.AttendanceEntries.AsNoTracking()
+                           join sheet in sheets on entry.SheetId equals sheet.Id
+                           where entry.Status != AttendanceStatus.Present
+                           select new { entry.StudentId, sheet.Day, entry.Status })
+                .Distinct()
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .Select(x => (x.StudentId, x.Day, x.Status))];
+    }
+
     public void AddSheet(AttendanceSheet sheet) => this.context.AttendanceSheets.Add(sheet);
 
     public void AddEntry(AttendanceEntry entry) => this.context.AttendanceEntries.Add(entry);

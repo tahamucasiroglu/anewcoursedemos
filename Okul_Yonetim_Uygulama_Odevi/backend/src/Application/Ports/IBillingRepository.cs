@@ -41,6 +41,9 @@ public interface IBillingRepository
     /// <summary>Planların tahsilatları (iptal dahil), kaydeden kişinin adıyla.</summary>
     Task<IReadOnlyList<PaymentEntry>> ListPaymentsAsync(IReadOnlyCollection<Guid> planIds, CancellationToken cancellationToken);
 
+    /// <summary>Tahsilat günü aralıkta (uçlar dahil) olan tahsilatlar (iptal dahil), kaydeden adıyla; şube listesiyle süzülür (spec 0017 tahsilat raporu).</summary>
+    Task<IReadOnlyList<PaymentEntry>> ListPaymentsInRangeAsync(DateOnly fromDay, DateOnly toDay, IReadOnlyCollection<Guid>? branchIds, CancellationToken cancellationToken);
+
     Task<string> UserNameAsync(Guid userId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<PaymentAllocation>> ListAllocationsAsync(IReadOnlyCollection<Guid> paymentIds, CancellationToken cancellationToken);

@@ -23,6 +23,9 @@ public interface IClassroomTeacherRepository
 
     Task<bool> IsAssignedAsync(Guid classroomId, Guid teacherUserId, CancellationToken cancellationToken);
 
+    /// <summary>Verilen sınıflara atanmış kişilerin adları (spec 0017 yönetici paneli: "yoklaması alınmayan sınıfın öğretmeni"); izlemesiz.</summary>
+    Task<IReadOnlyList<(Guid ClassroomId, string FullName)>> ListAssignedNamesAsync(IReadOnlyCollection<Guid> classroomIds, CancellationToken cancellationToken);
+
     void Add(ClassroomTeacher assignment);
 
     void Remove(ClassroomTeacher assignment);
