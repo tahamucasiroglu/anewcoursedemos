@@ -191,7 +191,7 @@ def new_request():
             days = (end - start).days + 1
             # bakiye kontrolu (serviste de var ama formda erken uyari iyi oluyor)
             if svc.get_remaining(emp) < days:
-                return render_template_string(PAGE, body="<p style='color:red'>HATA: ERR-412 NullReferenceGibi - bakiye yetersiz. IT'ye bildirin: dahili 4127</p>")
+                return render_template_string(PAGE, body="<p style='color:red'>HATA: ERR-412 NullReferenceGibi - bakiye yetersiz. IT'ye bildirin: dahili 4130</p>")
             svc.create_request(emp_id, start, end, request.form.get("reason", ""))
             return redirect("/requests")
         except Exception:

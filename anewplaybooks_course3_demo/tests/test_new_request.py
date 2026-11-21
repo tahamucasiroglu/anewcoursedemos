@@ -1,7 +1,7 @@
 # Spec 0001 — yeni talep karakterizasyonu (AC-5…AC-9). Tuhafliklar OLDUGU GIBI sabitlenir.
 import app
 
-ERR_412 = "HATA: ERR-412 NullReferenceGibi - bakiye yetersiz. IT'ye bildirin: dahili 4127"
+ERR_412 = "HATA: ERR-412 NullReferenceGibi - bakiye yetersiz. IT'ye bildirin: dahili 4130"  # spec 0003
 
 
 def _gonder(client, personel, baslangic, bitis, neden="test"):
@@ -24,10 +24,13 @@ def test_gecerli_talep_beklemede_dogar(client):
 
 
 def test_form_esigi_err412_dahili_4127(client):
-    """AC-6 / BR-7 form tarafi: kalan < gun -> ERR-412 sayfasi (yonlendirme yok), kayit yok."""
+    """AC-6 / BR-7 form tarafi: kalan < gun -> ERR-412 sayfasi (yonlendirme yok), kayit yok.
+    Supersedes 0001/AC-6 — spec 0003: dahili numara 4130; adindaki 4127 tarihsel."""
     yanit = _gonder(client, 5, "2026-12-01", "2026-12-01")  # Elif Sahin, kalan 0, 1 gun
     assert yanit.status_code == 200
-    assert ERR_412 in yanit.get_data(as_text=True)
+    html = yanit.get_data(as_text=True)
+    assert ERR_412 in html
+    assert "4127" not in html
     assert len(app.Db.requests) == 8
 
 
