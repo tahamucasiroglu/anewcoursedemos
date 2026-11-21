@@ -7,7 +7,8 @@ namespace OkulYonetim.Tests.Unit.Billing;
 /// Spec 0015 AC-4 kuralları (birim): 10.000,00 + %15 → indirim 1.500,00, net 8.500,00, taksitler 2.833,33 / 2.833,33 / 2.833,34;
 /// 1.000,00 / 7 taksitte kuruş farkı son taksitte; toplam her zaman neti tutar (1–12 taksit, tuhaf tutarlar); %100 indirimde net 0;
 /// yüzde kuruşa yarım yukarı; 31 Ocak ilk vadede Şubat ayın son günü, Mart yine 31; taksit sayısı 0/13 ve ilk vade sınırları;
-/// tarife/indirim sınır değerleri (10.000.000,00 kabul, 10.000.000,01 / 0 / 3 ondalık red; %1–%100).
+/// tarife/indirim sınır değerleri (10.000.000,00 kabul, 10.000.000,01 / 0 / 3 ondalık red; %1–%100); taksiti 0,01 TL'nin altına
+/// düşecek bölme (net &lt; taksit sayısı × 0,01) reddedilir (0015 review R1-1).
 /// </summary>
 public sealed class InstallmentSplitterTests
 {
@@ -59,9 +60,12 @@ public sealed class InstallmentSplitterTests
         {
             if (net < count * 0.01m)
             {
+                InstallmentSplitter.CanSplit(net, count).ShouldBeFalse();
+                Should.Throw<ArgumentOutOfRangeException>(() => InstallmentSplitter.Split(net, count, new DateOnly(2027, 1, 1)));
                 continue;
             }
 
+            InstallmentSplitter.CanSplit(net, count).ShouldBeTrue();
             IReadOnlyList<InstallmentLine> lines = InstallmentSplitter.Split(net, count, new DateOnly(2027, 1, 1));
             lines.Count.ShouldBe(count);
             lines.Sum(l => l.Amount).ShouldBe(net);

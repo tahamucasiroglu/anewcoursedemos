@@ -12,7 +12,9 @@ namespace OkulYonetim.Tests.Integration.Billing;
 /// 2.833,34 (önizleme ve kayıt aynı; önizleme hiçbir şey yazmaz); 1.000,00 / 7 taksit kuruş farkı son taksitte, toplam = net; %100 indirim
 /// "Net tutar 0 TL; tam burslu öğrenci için plan açılmaz." ile reddedilir; 31 Ocak ilk vadede Şubat vadesi ayın son günü; taksit sayısı
 /// 0/13, dünkü ya da 366 gün sonraki ilk vade (365 kabul), ayrılmış öğrenci ve aynı tarifeden ikinci geçerli plan reddedilir — hiçbir
-/// şey kaydedilmez; farklı tarifeden ikinci plan açılır; muhasebe kendi şubesinde plan açar.
+/// şey kaydedilmez; farklı tarifeden ikinci plan açılır; muhasebe kendi şubesinde plan açar. Taksiti 0,01 TL'nin altına düşüren plan
+/// (0,10 TL / 12 taksit) önizlemede de açmada da Türkçe iş kuralıyla 400 alır, hiçbir şey kaydedilmez; 0,10 TL / 10 taksit sınırda açılır
+/// (0015 review R1-1).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class InstallmentPlanTests
@@ -112,5 +114,29 @@ public sealed class InstallmentPlanTests
         left.ShouldBe(HttpStatusCode.BadRequest);
         Detail(leftProblem).ShouldBe("Ayrılmış öğrenci için plan açılamaz.");
         (await PlanCountAsync(factory, w.School.Berk)).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task NetBelowOneKurusPerInstallment_PreviewAndCreateRejectedInTurkish_NothingSaved()
+    {
+        using OkulApiFactory factory = BillingFactory(this.database);
+        using HttpClient client = factory.CreateClient();
+        BillingWorld w = await BillingWorldAsync(factory, client);
+        Guid tiny = Id(await CreateTariffAsync(client, w.Founder, "Kırtasiye", 0.10m));
+        const string message = "Taksit tutarı 0,01 TL'den az olamaz; taksit sayısını azaltın.";
+
+        var (previewStatus, previewProblem, previewRaw) = await PreviewAsync(client, w.Founder, PlanBody(w.Ali, tiny, installmentCount: 12));
+        previewStatus.ShouldBe(HttpStatusCode.BadRequest, previewRaw);
+        Detail(previewProblem).ShouldBe(message, previewRaw);
+
+        var (status, problem, raw) = await CreatePlanAsync(client, w.Accountant, PlanBody(w.Ali, tiny, installmentCount: 11));
+        status.ShouldBe(HttpStatusCode.BadRequest, raw);
+        Detail(problem).ShouldBe(message, raw);
+        (await PlanCountAsync(factory, w.Ali)).ShouldBe(0);
+
+        JsonElement ten = (await PreviewAsync(client, w.Founder, PlanBody(w.Ali, tiny, installmentCount: 10))).Body;
+        Amounts(ten.GetProperty("installments"), "amount").ShouldAllBe(a => a == 0.01m);
+        (await CreatePlanAsync(client, w.Founder, PlanBody(w.Ali, tiny, installmentCount: 10))).Status.ShouldBe(HttpStatusCode.OK, "0,10 TL / 10 taksit sınırda kabul");
+        (await PlanCountAsync(factory, w.Ali)).ShouldBe(1);
     }
 }

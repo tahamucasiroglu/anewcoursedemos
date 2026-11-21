@@ -37,6 +37,7 @@ public static class BillingMessages
     public const string FeeScheduleInactive = "FeeScheduleInactive";
     public const string DiscountInactive = "DiscountInactive";
     public const string NetZero = "NetZero";
+    public const string InstallmentTooSmall = "InstallmentTooSmall";
     public const string PlanExists = "PlanExists";
     public const string PlanHasPayments = "PlanHasPayments";
     public const string PlanAlreadyCancelled = "PlanAlreadyCancelled";

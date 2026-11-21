@@ -13,7 +13,7 @@ namespace OkulYonetim.Application.Features.Billing.Plans;
 /// <summary>
 /// Taksit planı: önizleme, açma, iptal (spec 0015 gereksinim 3–4). Yetki <see cref="BillingGuard"/>: kurucu ya da öğrencinin şubesinde
 /// Muhasebe (değilse 403), öğrenci/plan görünmüyor ya da başka şubede 404. Öğrenci etkin olmalı; tarife ve (verildiyse) indirim bu
-/// okulda olmalı (değilse 404) ve etkin olmalı. Net sıfırsa "Net tutar 0 TL; …". Açma öğrenci sırasında (<c>billing-student:&lt;öğrenci&gt;</c>):
+/// okulda olmalı (değilse 404) ve etkin olmalı. Net sıfırsa "Net tutar 0 TL; …", taksit 0,01 TL'nin altına düşüyorsa "Taksit tutarı 0,01 TL'den az olamaz; …". Açma öğrenci sırasında (<c>billing-student:&lt;öğrenci&gt;</c>):
 /// aynı tarifeden geçerli ikinci plan aynı anda gelen iki istekle de açılamaz (veritabanındaki filtreli tekil dizin ikinci katman).
 /// İptal plan sırasında (<c>billing-plan:&lt;plan&gt;</c>, tahsilatla aynı anahtar): geçerli tahsilat varsa reddedilir. Audit ayrıntısında
 /// yalnızca kimlik ve taksit sayısı; tutar yok.
@@ -48,7 +48,7 @@ public sealed class PlanHandlers :
     {
         ArgumentNullException.ThrowIfNull(request);
         BillingStaff staff = await this.guard.RequireStaffAsync(cancellationToken).ConfigureAwait(false);
-        (StudentLabel student, FeeSchedule fee, DiscountDefinition? discount) = await this.PrepareAsync(staff, request.StudentId, request.FeeScheduleId, request.DiscountId, cancellationToken).ConfigureAwait(false);
+        (StudentLabel student, FeeSchedule fee, DiscountDefinition? discount) = await this.PrepareAsync(staff, request.StudentId, request.FeeScheduleId, request.DiscountId, request.InstallmentCount!.Value, cancellationToken).ConfigureAwait(false);
         (InstallmentPlan plan, IReadOnlyList<Installment> installments) = InstallmentPlan.Open(
             staff.TenantId, student.BranchId, student.Id, fee, discount, request.InstallmentCount!.Value, request.FirstDueDate!.Value, this.calendar.Today(), this.timeProvider.GetUtcNow(), staff.UserId);
         return new PlanPreview(
@@ -69,7 +69,7 @@ public sealed class PlanHandlers :
         IExclusiveScope scope = await this.guard.LockAsync(["billing-student:" + request.StudentId.ToString("N")], cancellationToken).ConfigureAwait(false);
         await using (scope.ConfigureAwait(false))
         {
-            (StudentLabel student, FeeSchedule fee, DiscountDefinition? discount) = await this.PrepareAsync(staff, request.StudentId, request.FeeScheduleId, request.DiscountId, cancellationToken).ConfigureAwait(false);
+            (StudentLabel student, FeeSchedule fee, DiscountDefinition? discount) = await this.PrepareAsync(staff, request.StudentId, request.FeeScheduleId, request.DiscountId, request.InstallmentCount!.Value, cancellationToken).ConfigureAwait(false);
             if (await this.billing.HasActivePlanAsync(student.Id, fee.Id, cancellationToken).ConfigureAwait(false))
             {
                 throw await this.guard.RuleAsync(BillingMessages.PlanExists).ConfigureAwait(false);
@@ -135,8 +135,8 @@ public sealed class PlanHandlers :
         }
     }
 
-    /// <summary>Öğrenci (görünür, şubesinde, etkin), tarife ve indirim (bu okulda, etkin) ve sıfırdan büyük net.</summary>
-    private async Task<(StudentLabel Student, FeeSchedule Fee, DiscountDefinition? Discount)> PrepareAsync(BillingStaff staff, Guid studentId, Guid feeScheduleId, Guid? discountId, CancellationToken cancellationToken)
+    /// <summary>Öğrenci (görünür, şubesinde, etkin), tarife ve indirim (bu okulda, etkin), sıfırdan büyük net ve en az 0,01 TL'lik taksit.</summary>
+    private async Task<(StudentLabel Student, FeeSchedule Fee, DiscountDefinition? Discount)> PrepareAsync(BillingStaff staff, Guid studentId, Guid feeScheduleId, Guid? discountId, int installmentCount, CancellationToken cancellationToken)
     {
         StudentLabel student = await this.guard.RequireStudentAsync(staff, studentId, cancellationToken).ConfigureAwait(false);
         if (!student.IsActive)
@@ -162,9 +162,15 @@ public sealed class PlanHandlers :
             }
         }
 
-        if (InstallmentPlan.NetOf(fee.Amount, discount?.Percent).Net <= 0m)
+        decimal net = InstallmentPlan.NetOf(fee.Amount, discount?.Percent).Net;
+        if (net <= 0m)
         {
             throw await this.guard.RuleAsync(BillingMessages.NetZero).ConfigureAwait(false);
+        }
+
+        if (!InstallmentSplitter.CanSplit(net, installmentCount))
+        {
+            throw await this.guard.RuleAsync(BillingMessages.InstallmentTooSmall).ConfigureAwait(false);
         }
 
         return (student, fee, discount);
