@@ -456,6 +456,7 @@
   "appointments.detail.rejected": "Talep reddedildi.",
   "appointments.detail.cancelled": "Randevu iptal edildi.",
   "appointments.detail.error": "İşlem yapılamadı.",
+  "appointments.detail.gone": "Bu talep artık geçerli değil.",
   "appointments.confirm": "Randevu iptal edilsin mi?",
   "appointments.confirmYes": "Evet, iptal et",
   "appointments.confirmNo": "Vazgeç",

@@ -35,6 +35,17 @@ function business(message: string): Response {
   return new Response(JSON.stringify({ type: "https://example.com/probs/business", title: "Rule violation", status: 400, detail: message }), { status: 400, headers: { "Content-Type": "application/json" } });
 }
 
+/**
+ * Sunucunun gerçek iş hatası gövdesi (T20 biçimi): Türkçe `detail` + büyük harfli `Errors` dizisi — `TraceIdExceptionMiddleware`
+ * ilk alan mesajını `detail`'e kopyalar, dizi aynen kalır.
+ */
+function realBusiness(message: string): Response {
+  return new Response(
+    JSON.stringify({ type: "https://example.com/probs/business", title: "Rule violation", status: 400, detail: message, Errors: [{ Property: "Appointment", Errors: [message] }] }),
+    { status: 400, headers: { "Content-Type": "application/problem+json" } },
+  );
+}
+
 interface Handlers {
   roles?: string[];
   schedule?: Handler;
@@ -246,6 +257,38 @@ describe.each(["light", "dark"] as const)("Randevular (öğretmen) — %s tema",
     await fireEvent.press(screen.getByRole("button", { name: "Evet, iptal et" }));
     expect(await screen.findByText("Başlamış randevu iptal edilemez.")).toBeTruthy();
     expect(requests.find((r) => r.path.endsWith("/cancel"))).toMatchObject({ path: "/api/appointments/a1/cancel", body: { reason: null } });
+  });
+
+  it.each([
+    {
+      when: "veli başka cihazda iptal etti: dilim boşaldı → 'Bu talep artık geçerli değil.', düğmeler kalkar",
+      after: { pendingCount: 0, pending: [], slots: [approved, free, { ...free, slotId: "s3", startsAt: pending.startsAt, endsAt: pending.endsAt }] },
+      shows: "Bu talep artık geçerli değil.",
+      cancel: false,
+    },
+    {
+      when: "başka cihazda onaylandı → 'Durum: onaylı', Onayla/Reddet kalkar, İptal et görünür",
+      after: { pendingCount: 0, pending: [], slots: [approved, free, { ...pending, state: "Approved" }] },
+      shows: "Durum: onaylı",
+      cancel: true,
+    },
+  ])("talep yanıtı hatasında ('Bu talep zaten yanıtlandı.') talep yeniden okunur — $when (VERIFY V-1)", async ({ after, shows, cancel }) => {
+    let calls = 0;
+    const requests = fakeApi({ schedule: () => json(200, ++calls === 1 ? filled : after), respond: () => realBusiness("Bu talep zaten yanıtlandı.") });
+    await signIn();
+    await openSchedule();
+    await fireEvent.press((await screen.findAllByTestId("pending-request"))[0]);
+    expect(await screen.findByText("Durum: onay bekliyor")).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole("button", { name: "Onayla" }));
+    expect(await screen.findByText(shows)).toBeTruthy();
+    expect(screen.getByText("Bu talep zaten yanıtlandı.")).toBeTruthy();
+    expect(screen.queryByText("Durum: onay bekliyor")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Onayla" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reddet" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "İptal et" }) !== null).toBe(cancel);
+    expect(screen.getByTestId("appointment-detail")).toBeTruthy();
+    expect(requests.filter((r) => r.path === "/api/appointments/schedule")).toHaveLength(2);
   });
 
   it("öğretmen olmayana 'Randevular (n bekleyen)' görünmez", async () => {
