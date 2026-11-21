@@ -44,6 +44,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<Features.Communication.CommunicationGuard>();
         services.AddScoped<Features.Appointments.AppointmentsGuard>();
         services.AddScoped<Features.Appointments.AppointmentNotifications>();
+        services.AddScoped<Features.Dashboard.DashboardGuard>();
+        services.AddScoped<Features.Dashboard.Reports.DashboardReports>();
         services.AddScoped<Features.Communication.Notifications.GuardianNotifier>();
         services.AddSingleton<Features.Organization.SchoolCalendar>();
         return services;

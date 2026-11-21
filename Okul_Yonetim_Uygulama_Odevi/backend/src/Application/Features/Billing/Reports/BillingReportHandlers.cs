@@ -61,7 +61,7 @@ public sealed class BillingReportHandlers :
                     label.BranchName,
                     label.ClassroomName,
                     label.IsActive,
-                    [.. g.Select(p => p.FeeName)],
+                    [.. g.Select(p => p.FeeName).Order(TurkishOrder)],
                     BillingLedger.ActiveTotals(g, installments, today),
                     oldest);
             })
