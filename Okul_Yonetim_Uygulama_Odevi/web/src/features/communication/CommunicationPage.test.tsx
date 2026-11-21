@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { THEME_STORAGE_KEY } from "@okul/theme";
 import App from "../../App";
 import type { Route } from "../admin/adminFake";
-import { communicationFake, json, row } from "./communicationFake";
+import { communicationFake, json, results, row } from "./communicationFake";
 
 // Spec 0011 AC-12 (web, "#/iletisim"): "İletişim" bağlantısı yalnızca kurucu ve öğretmende; duyuru listesi yükleniyor / boş /
 // dolu / hata + tekrar dene; ayrıntıda "X / Y veli okudu", okumayanlar ve onay sonuçları; veli ve muhasebe "Bu sayfaya
@@ -84,6 +84,22 @@ it.each([["Guardian"], ["Accounting"]])("%s: bağlantı yok, '#/iletisim' erişi
   window.location.hash = "#/iletisim";
   expect(await screen.findByText("Bu sayfaya erişiminiz yok.")).toBeInTheDocument();
   expect(api.requests.some((r) => r.path.startsWith("/api/announcements"))).toBe(false);
+});
+
+// 0011 VERIFY V-5: ayrıntı alınamazsa hata + "Tekrar dene" ayrıntıyı ve sonuçları yeniden ister.
+it("ayrıntı: hata → Tekrar dene → ayrıntı ve sonuçlar", async () => {
+  let calls = 0;
+  start([["GET", /^\/api\/announcements\/[^/]+\/results$/, () => (++calls === 1 ? json(500, { detail: "Beklenmeyen hata" }) : json(200, results()))]]);
+  window.location.hash = "#/iletisim";
+  await userEvent.click(await screen.findByRole("button", { name: "Veli toplantısı" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Beklenmeyen hata");
+  expect(screen.queryByRole("heading", { name: "Müze gezisi" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
+  expect(await screen.findByRole("heading", { name: "Müze gezisi" })).toBeInTheDocument();
+  expect(screen.getByText("15 onay, 2 ret, 5 cevapsız")).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(calls).toBe(2);
 });
 
 it("öğretmende 'İletişim' bağlantısı var", async () => {

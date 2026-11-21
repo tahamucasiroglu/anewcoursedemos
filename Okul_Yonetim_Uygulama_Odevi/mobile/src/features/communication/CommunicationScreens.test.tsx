@@ -432,3 +432,53 @@ it("konuşma: 'Daha eski' hatası not olarak görünür; gelen eski sayfa arada 
     "Siz: Yeni mesaj",
   ]);
 });
+
+// 0011 VERIFY V-5: hata + "Tekrar dene" düğmesi Mesajlar listesinde, konuşmada ve duyuru ayrıntısında isteği yeniler.
+it("mesajlar listesi: alınamazsa hata + 'Tekrar dene' yeniden yükler", async () => {
+  let calls = 0;
+  fakeApi({ "GET /api/conversations": () => (++calls === 1 ? json(500, {}) : json(200, [conversation])) });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Mesajlar" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Mesajlar alınamadı.");
+  expect(screen.queryByTestId("conversation-row")).toBeNull();
+  await fireEvent.press(screen.getByRole("button", { name: "Tekrar dene" }));
+  expect(await screen.findByTestId("conversation-row")).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(calls).toBe(2);
+});
+
+it("konuşma: mesajlar alınamazsa hata + 'Tekrar dene' yeniden yükler", async () => {
+  let calls = 0;
+  fakeApi({
+    "GET /api/conversations": () => json(200, [conversation]),
+    "GET /api/conversations/k1/messages": () =>
+      ++calls === 1 ? json(500, {}) : json(200, { conversation, canSend: true, messages: [message("m1", "Merhaba Ayla Hanım")], hasMore: false }),
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Mesajlar" }));
+  await fireEvent.press(await screen.findByTestId("conversation-row"));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Mesajlar alınamadı.");
+  await fireEvent.press(screen.getByRole("button", { name: "Tekrar dene" }));
+  expect(await screen.findByText("Merhaba Ayla Hanım")).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(calls).toBe(2);
+});
+
+it("duyuru ayrıntısı: açılamazsa hata + 'Tekrar dene' yeniden yükler", async () => {
+  let calls = 0;
+  fakeApi({
+    "GET /api/announcements/feed": () => json(200, { items: [announcement], page: 1, hasMore: false, unreadCount: 1 }),
+    "GET /api/announcements/a1": () => (++calls === 1 ? json(500, {}) : json(200, detail(true))),
+  });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Duyurular" }));
+  await fireEvent.press(await screen.findByTestId("feed-row"));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Duyuru açılamadı.");
+  await fireEvent.press(screen.getByRole("button", { name: "Tekrar dene" }));
+  expect(await screen.findByText("Pazartesi müze gezisi var.")).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(calls).toBe(2);
+});
