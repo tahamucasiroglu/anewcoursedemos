@@ -115,3 +115,11 @@ Anahtar dosyası yoksa servis yine açılır; öğrenci kartı çalışır, yaln
 gösterilemiyor." gösterir ve dolu sağlık bilgisi kaydedilemez. **Anahtar kaybolursa kayıtlı sağlık bilgisi okunamaz:**
 `/etc/okul/okul-data.env` dosyasını veritabanı yedeğinden ayrı, güvenli bir yerde saklayın (B-14 ile birlikte). Anahtar
 değiştirilmemeli; değişirse eski kayıtlar "gösterilemiyor" olur.
+
+## Tahsilat ve gecikme hatırlatması — spec 0015
+
+Bu spec'te Pi'ye dokunulmadı; yayınlarken (ship) kullanıcı `bash tools/pi/deploy.sh` çalıştırır — `Billing` geçişi açılışta
+uygulanır (yalnızca yeni tablolar; yeni anahtar ya da gizli değer yok). Gecikme hatırlatması arka plan işçisi servisle birlikte
+çalışır (açılıştan 1 dakika sonra, sonra 15 dakikada bir; Türkiye saatiyle 10:00'dan önce bildirim göndermez). Kapatmak için
+servis ortamına `Billing__RemindersEnabled=false` eklenip servis yeniden başlatılır (varsayılan açık). Kart bilgisi ve IBAN
+tutulmaz; e-Fatura/e-Arşiv yoktur.

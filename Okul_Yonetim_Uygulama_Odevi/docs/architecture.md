@@ -41,7 +41,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Attendance | Günlük yoklama (spec 0010): öğretmenin "Sınıflarım"ı, bugünkü liste, Var/Yok/Geç kaydı ve düzeltmesi (yalnızca bugün, Türkiye günü); devamsızlık değişikliklerini Communication'a verir | AttendanceSheet, AttendanceEntry |
 | Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** (bildirim kapısı); spec 0010: veli devamsızlık bildirimi (uygulama içi + e-posta kuyruğu) ve velinin Bildirimler listesi; spec 0011: duyuru + okundu + onay formu, öğretmen–veli konuşması, mesai saatleri | Announcement, AnnouncementRecipient, AnnouncementStudent, ConsentResponse, Conversation, ConversationMessage, QuietHours, GuardianNotice |
 | Academics | Ödev, teslim durumu, yazılı/sözlü not (spec 0013): öğretmenin ödev verme, teslim işaretleme, değerlendirme açma ve puan girişi; velinin çocuk özeti; öğrenci bazlı okuma sorgusu (spec 0014 haftalık özetin kaynağı) | Assignment, AssignmentSubmission, Assessment, Grade |
-| Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması | FeeSchedule, InstallmentPlan, Payment, Ledger, Receipt |
+| Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması (spec 0015: elle tahsilat, en eski vadeden dağıtım, okul başına sıralı makbuz no, öğrenci başına cari, otomatik hatırlatma işçisi) | FeeSchedule, DiscountDefinition, InstallmentPlan, Installment, Payment, PaymentAllocation, ReceiptCounter, PaymentReminder |
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, spec 0014 haftalık gelişim özeti — dayanak toplama, taslak, onay kapısı; gönderim Communication'da) | AiDraft |
@@ -164,6 +164,33 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `WeeklySummary`, başlık türden ve haftadan ("Haftalık gelişim özeti — 16–22 Kasım"); ayrıntı `GET api/notices/{id}` (yalnızca kendi
   bağlı çocuğunun bildirimi, açılış okundu yapar). Web'de `#/haftalik-ozet`; bağlantı `/api/me` → `teachesClassroom` (Organization
   `ListMyTeachingClassroomsQuery`) doğruysa.
+- Tahsilat ve ön muhasebe (spec 0015): personel uçları `api/billing` (`tariffs`, `discounts` GET/POST/PUT + `{id}/activate|deactivate`;
+  `students` GET cari listesi — şube, "yalnızca gecikenler", ad araması, 25'lik sayfa, alt toplamlar —, `students/{id}` GET öğrenci carisi;
+  `plans/preview` POST, `plans` POST, `plans/{id}/cancel` POST; `payments` POST, `payments/{id}/cancel` POST, `payments/{id}/receipt` GET),
+  veli uçları `api/my/payments` (GET) ve `api/my/payments/{studentId}` (GET; bağ yoksa 404). Yetki her istekte `BillingGuard`'da, rol ve
+  şube veritabanından: kurucu ya da en az bir şubede Muhasebe (değilse 403; öğretmen, veli); tarife/indirim yazma yalnızca kurucu (403);
+  muhasebe yalnızca **Muhasebe rolü olduğu** şubelerin öğrencisini/planını/tahsilatını görür (`BillingStaff.CanSee` — oturumun görünür
+  şubeleri bütün rollerin şubeleri olduğu için yetmez, ör. başka şubede öğretmen olan muhasebe), başka okul ya da şube 404. Filtreler:
+  tarife, indirim, makbuz sayacı, hatırlatma kurum filtreli; plan ve tahsilat şube görünürlüğünü miras alır; taksit planından, dağılım
+  tahsilatından miras alır — filtre delme yok. Para `decimal`/`numeric(18,2)` (DbContext convention, T4) ve her tabloda `CHECK`
+  (tutar > 0, 0 ≤ ödenen ≤ tutar, net = tarife − indirim, yüzde 1–100, taksit 1–12, hatırlatma sırası 1–3). Tutar istekte ham metin
+  olarak alınır (`JsonValueText`; "abc", `1.005` Türkçe alan hatası) ve istemciler tutarı metin gönderir ("1234.50" — kayan nokta yok).
+  Sıralar: katalog `billing-catalog:<okul>` (etkin ad tekilliği), plan açma `billing-student:<öğrenci>` (aynı tarifeden ikinci geçerli
+  plan; filtreli tekil dizin ikinci katman), tahsilat `billing-plan:<plan>` + `billing-receipt:<okul>` (kalan borç ve sayaç sıra içinde
+  taze okunur; okul + makbuz no tekil dizini ikinci katman), plan/tahsilat iptali `billing-plan:<plan>`. Dağıtım saf `PaymentAllocator`'da
+  (vadesi en eski ödenmemiş taksitten); gecikme tanımı yalnızca `Installment.StateOn` (Türkiye günü; vade gününün ertesi günü 00:00'dan
+  itibaren) — yönetici paneli (0017) `BillingLedger` yardımcısını kullanır. Öğrenci etiketi (ad, şube, sınıf, ayrılmış mı) Students'ın
+  yeni `ListStudentLabelsQuery`'sinden; velinin çocukları `ListMyChildrenQuery`'den; okul adı (makbuz) `ITenantRepository.GetCurrentAsync`.
+  **Hatırlatma işçisi** (`Infrastructure/Billing/OverdueReminderWorker`, `BackgroundService`, açılıştan 1 dk sonra, sonra 15 dk'da bir;
+  `Billing:RemindersEnabled`, varsayılan açık, testlerde kapalı): etkin okul kimliklerini izinli `IPlatformDirectory.ListActiveTenantIdsAsync`'ten
+  alır, her okul için yeni DI kapsamında `OverdueReminderRunner`'ı çağırır; o kapsamın oturumu `CurrentSession.AuthenticateSystem` ile okul
+  için **sistem oturumu** olur (kişi yok, okul seçili, bütün şubeler — filtreler okulla sınırlı kalır; yöntem `internal`, yalnızca bu
+  çalıştırıcıda — architecture testi `SystemSessionUsageTests`). `SendOverdueRemindersCommand` okul sırasında (`billing-reminders:<okul>`)
+  Türkiye saatiyle 10:00'dan sonra vadesi geçmiş ve kalanı olan taksitler için `ReminderSchedule.Due` (1./8./15. gün, en fazla 3, kaçırılan
+  günler birikmez) → önce tekil `PaymentReminder` (taksit + sıra), aynı işlemde Communication'ın `NotifyStudentGuardiansCommand`'ı
+  (`GuardianNotice` türü `PaymentReminder`, velinin akışında "Okul bildirimi"), commit sonrası `DeliverNotificationsCommand`; bir okulun
+  hatası yalnızca okul kimliğiyle Error loglanır, diğerleri sürer. Web'de `#/tahsilat` (+ `#/tahsilat/ogrenci/<id>`) ve `#/makbuz/<id>`
+  (yazdırılabilir; `@media print` menü/düğmeleri basmaz); mobilde velide "Ödemeler".
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).

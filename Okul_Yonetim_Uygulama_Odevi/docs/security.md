@@ -166,6 +166,20 @@
     ve audit'e yazılmaz (komutlar `ILoggableRequest` değildir — T9; loglarda kimlik, karakter sayısı, süre); dayanak taslakla `ai_drafts`'ta, özet
     metni velinin bildiriminde düz saklanır. Gönderim audit'te (`WeeklySummarySent`: kim, taslak, ayrıntıda öğrenci + hafta + veli sayısı, IP). Veli
     özeti yalnızca kendi bağlı çocuğu için açar (`GET api/notices/{id}` — değilse 404, veli rolü yoksa 403).
+17. **Tahsilat ve ön muhasebe (spec 0015, S4/S1/S2/S5/S6):** varsayılan reddet; rol ve şube her istekte veritabanından (`BillingGuard`): kurucu ya da
+    Muhasebe rolü yoksa 403 (öğretmen, veli personel uçlarında); tarife/indirim yazma yalnızca kurucu (muhasebe okur — plan formu); muhasebe yalnızca
+    **Muhasebe rolü olduğu** şubelerin öğrencisini, planını, tahsilatını, makbuzunu ve carisini görür (o şubede başka rolü olsa da diğer şubeler 404);
+    başka okul 404; veli yalnızca kendi bağlı çocuklarının ödeme durumunu salt okunur görür (`api/my/payments`; başka çocuk 404; not, iptal gerekçesi ve
+    kaydeden kişi veliye dönmez). **Kart bilgisi ve IBAN sistemde hiç tutulmaz** (C-1, C-9: yalnızca elle tahsilat; havale/EFT yalnızca yöntem adı) —
+    alan şifrelemesi gerektiren yeni veri yok. Para: `decimal`/`numeric(18,2)`, istekte ham metin + sunucu doğrulaması (Türkçe), veritabanında `CHECK`;
+    kalan borç ve makbuz sayacı sıra (`BeginExclusiveAsync`) içinde taze okunur — çift gönderim ya da eşzamanlı iki tahsilat kalanı aşamaz, aynı makbuz
+    no iki kez verilmez (okul + no tekil dizini ikinci katman). Tarife ve indirim ekleme/düzenleme/pasifleştirme/etkinleştirme, plan açma/iptal,
+    tahsilat kaydı/iptali audit'te (`FeeSchedule*`, `Discount*`, `InstallmentPlanCreated/Cancelled`, `PaymentRecorded/Cancelled`: kim, hangi kayıt, ne
+    zaman, IP; ayrıntıda yalnızca öğrenci/plan kimliği, taksit sayısı ve makbuz no — tutar, ad, not, gerekçe yok); reddedilen işlem audit'e yazılmaz.
+    Para/not/gerekçe taşıyan komutlar `ILoggableRequest` değildir (T9); loglarda yalnızca kimlikler. Hatırlatma metni (öğrenci adı + vade + kalan) yalnızca
+    o öğrencinin etkin velilerinin uygulama içi akışında; gönderim Information log'unda kimliklerle. Arka plan hatırlatması okul başına **sistem
+    oturumuyla** çalışır (kişisiz, okulla sınırlı filtre — `CurrentSession.AuthenticateSystem` yalnızca `OverdueReminderRunner`'da, architecture testi);
+    yeni `IgnoreQueryFilters` yok, etkin okul kimlikleri izinli `PlatformDirectory`'den (yalnızca kimlik).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.
