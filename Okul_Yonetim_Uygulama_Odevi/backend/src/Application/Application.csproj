@@ -19,5 +19,6 @@
   <ItemGroup>
     <!-- AI talimatları (spec 0012): derlemeye gömülü (WithCulture=false: ".tr." uydu derlemeye gitmesin); duman betiği (tools/ai/smoke.mjs) aynı dosyayı okur -->
     <EmbeddedResource Include="Features\Ai\Prompts\voice-message.tr.txt" LogicalName="OkulYonetim.Ai.Prompts.voice-message.tr.txt" WithCulture="false" />
+    <EmbeddedResource Include="Features\Ai\Prompts\weekly-summary.tr.txt" LogicalName="OkulYonetim.Ai.Prompts.weekly-summary.tr.txt" WithCulture="false" />
   </ItemGroup>
 </Project>

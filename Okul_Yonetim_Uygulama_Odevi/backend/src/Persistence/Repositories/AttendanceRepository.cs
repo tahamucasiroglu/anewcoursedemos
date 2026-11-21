@@ -30,6 +30,17 @@ public sealed class AttendanceRepository : IAttendanceRepository
             .Select(s => s.ClassroomId)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<(DateOnly Day, AttendanceStatus Status)>> ListStudentDaysAsync(Guid studentId, DateOnly fromDay, DateOnly toDay, CancellationToken cancellationToken)
+    {
+        var rows = await (
+            from entry in this.context.AttendanceEntries.AsNoTracking()
+            join sheet in this.context.AttendanceSheets.AsNoTracking() on entry.SheetId equals sheet.Id
+            where entry.StudentId == studentId && sheet.Day >= fromDay && sheet.Day <= toDay
+            select new { sheet.Day, sheet.UpdatedAt, entry.Status })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        return [.. rows.GroupBy(r => r.Day).Select(g => g.OrderByDescending(r => r.UpdatedAt).First()).Select(r => (r.Day, r.Status))];
+    }
+
     public void AddSheet(AttendanceSheet sheet) => this.context.AttendanceSheets.Add(sheet);
 
     public void AddEntry(AttendanceEntry entry) => this.context.AttendanceEntries.Add(entry);

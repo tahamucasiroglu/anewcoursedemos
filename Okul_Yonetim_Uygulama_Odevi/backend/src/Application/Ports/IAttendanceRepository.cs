@@ -15,6 +15,12 @@ public interface IAttendanceRepository
     /// <summary>Verilen sınıflardan o gün yoklaması alınmış olanlar.</summary>
     Task<IReadOnlyList<Guid>> ListTakenClassroomIdsAsync(IReadOnlyCollection<Guid> classroomIds, DateOnly day, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Öğrencinin günü aralıkta (uçlar dahil) olan yoklama günleri ve durumu (spec 0014): gün başına bir satır — aynı gün iki sınıfta
+    /// kayıt varsa en son güncellenen. Yoklama kurum + şube filtresinden geçer; izlemesiz projeksiyon.
+    /// </summary>
+    Task<IReadOnlyList<(DateOnly Day, AttendanceStatus Status)>> ListStudentDaysAsync(Guid studentId, DateOnly fromDay, DateOnly toDay, CancellationToken cancellationToken);
+
     void AddSheet(AttendanceSheet sheet);
 
     void AddEntry(AttendanceEntry entry);

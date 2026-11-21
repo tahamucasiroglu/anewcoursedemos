@@ -5,7 +5,8 @@ namespace OkulYonetim.Application.Features.Ai;
 /// <summary>
 /// Ai katmanının (spec 0012) kullanıcı metinlerinin anahtarları ve okuyucusu (YAML:
 /// <c>Features/Ai/Resources/Locales/ai.tr.yaml</c>): ses alanı hataları, sesli not süresi, anlaşılmayan ses, "kullanılamıyor",
-/// yetki, kapanmış konuşma, bulunamayan, kullanılmış ya da o an işlenen taslak.
+/// yetki, kapanmış konuşma, bulunamayan, kullanılmış ya da o an işlenen taslak. Spec 0014: haftalık özetin yetki, hafta, öğretmen
+/// notu, "veri yok", "zaten gönderildi", "kullanılamıyor — daha sonra tekrar deneyin" metinleri ve dayanak satırının parçaları.
 /// </summary>
 public static class AiMessages
 {
@@ -22,6 +23,22 @@ public static class AiMessages
     public const string DraftNotFound = "DraftNotFound";
     public const string DraftUsed = "DraftUsed";
     public const string DraftBusy = "DraftBusy";
+    public const string SummaryTeacherOnly = "SummaryTeacherOnly";
+    public const string SummaryClassroomNotFound = "SummaryClassroomNotFound";
+    public const string SummaryStudentNotFound = "SummaryStudentNotFound";
+    public const string SummaryWeekInvalid = "SummaryWeekInvalid";
+    public const string SummaryNoteTooLong = "SummaryNoteTooLong";
+    public const string SummaryNoData = "SummaryNoData";
+    public const string SummaryAlreadySent = "SummaryAlreadySent";
+    public const string SummaryUnavailable = "SummaryUnavailable";
+    public const string SummaryBusy = "SummaryBusy";
+    public const string BasisPrefix = "BasisPrefix";
+    public const string BasisAttendance = "BasisAttendance";
+    public const string BasisLate = "BasisLate";
+    public const string BasisNoAttendance = "BasisNoAttendance";
+    public const string BasisAssignments = "BasisAssignments";
+    public const string BasisGrades = "BasisGrades";
+    public const string BasisTeacherNote = "BasisTeacherNote";
 
     private static readonly string[] Locales = ["tr"];
 
