@@ -1,5 +1,6 @@
 using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
 using NArchitecture.Core.Mediator;
+using OkulYonetim.Application.Features.Appointments.Availability;
 using OkulYonetim.Application.Features.Communication;
 using OkulYonetim.Application.Features.Identity.Sessions;
 using OkulYonetim.Application.Features.Organization;
@@ -56,6 +57,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
         int unreadNotices = 0;
         CommunicationUnread unread = new(0, 0);
         bool teaches = false;
+        int pendingAppointments = 0;
         if (tenant is not null)
         {
             IReadOnlyList<RoleAssignment> assignments = await this.roleAssignments.ListForUserInTenantAsync(user.Id, tenant.Id, cancellationToken).ConfigureAwait(false);
@@ -68,6 +70,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
                 // Haftalık özetin sınıf listesiyle aynı kural (spec 0014): dönemi geçen haftadan önce bitmemiş, atandığı etkin sınıf.
                 DateOnly since = SchoolWeek.Containing(this.calendar.Today()).Before().Start;
                 teaches = (await this.sender.Send(new ListMyTeachingClassroomsQuery(since), cancellationToken).ConfigureAwait(false)).Count > 0;
+                pendingAppointments = await this.sender.Send(new CountMyPendingAppointmentsQuery(), cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -83,6 +86,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
             unreadNotices,
             unread.Announcements,
             unread.Messages,
-            teaches);
+            teaches,
+            pendingAppointments);
     }
 }

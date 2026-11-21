@@ -42,6 +42,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<Features.Ai.WeeklySummaries.WeeklySummaryGuard>();
         services.AddScoped<Features.Ai.WeeklySummaries.WeeklySummarySourceCollector>();
         services.AddScoped<Features.Communication.CommunicationGuard>();
+        services.AddScoped<Features.Appointments.AppointmentsGuard>();
+        services.AddScoped<Features.Appointments.AppointmentNotifications>();
         services.AddScoped<Features.Communication.Notifications.GuardianNotifier>();
         services.AddSingleton<Features.Organization.SchoolCalendar>();
         return services;

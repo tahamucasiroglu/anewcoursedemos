@@ -7,7 +7,7 @@ namespace OkulYonetim.Application.Features.Identity.Queries.GetMe;
 /// Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
 /// platform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış
 /// duyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011); spec 0014: öğretmen olarak atandığı etkin bir sınıf var mı
-/// ("Haftalık özet" bağlantısı yalnızca o zaman görünür).
+/// ("Haftalık özet" bağlantısı yalnızca o zaman görünür); spec 0016: öğretmenin yanıt bekleyen randevu talebi sayısı (öğretmen değilse 0).
 /// </summary>
 public sealed record MeResponse(
     string FullName,
@@ -20,4 +20,5 @@ public sealed record MeResponse(
     int UnreadNoticeCount = 0,
     int UnreadAnnouncementCount = 0,
     int UnreadMessageCount = 0,
-    bool TeachesClassroom = false);
+    bool TeachesClassroom = false,
+    int PendingAppointmentCount = 0);
