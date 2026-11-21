@@ -1,6 +1,6 @@
 # Spec 0002 — Bekleyen talep iptali
 
-- Status: In progress
+- Status: Shipped
 - Mode: lite
 - Plan: `specs/plans/0002-plan.md`
 - Self-critique: done
@@ -67,39 +67,58 @@ Netleştirme kararları (2026-11-21, tahamucasiroglu):
   geri alma (iptali geri çevirme).
 
 ## Acceptance criteria
-- [ ] AC-1 — Talepler listesinde "Iptal" düğmesi yalnız `Beklemede` satırlarda görünür: seed'de
+- [x] AC-1 — Talepler listesinde "Iptal" düğmesi yalnız `Beklemede` satırlarda görünür: seed'de
   talep no 2, 3, 4 ve 5'te vardır; 1, 6, 7 ve 8'de yoktur.
-- [ ] AC-2 — Bekleyen bir talebin iptali (örn. talep no 2, Mehmet Demir): talebin durumu
+- [x] AC-2 — Bekleyen bir talebin iptali (örn. talep no 2, Mehmet Demir): talebin durumu
   `Iptal Edildi` olur, diğer alanları değişmez, talepler sayfasına dönülür ve talep listede
   `Iptal Edildi` durumuyla, "Iptal" düğmesi olmadan görünür. Talep sayısı 8 kalır.
-- [ ] AC-3 — Bir talep iptal edildikten sonra dashboard: **Bekleyen 3 · Onaylanan 1 ·
+- [x] AC-3 — Bir talep iptal edildikten sonra dashboard: **Bekleyen 3 · Onaylanan 1 ·
   Reddedilen 3**. İptal edilen talep hiçbir kutuda sayılmaz.
-- [ ] AC-4 — Ayşe Yılmaz'ın bekleyen talebi (no 5, 3 gün) iptal edildiğinde bakiyesi
+- [x] AC-4 — Ayşe Yılmaz'ın bekleyen talebi (no 5, 3 gün) iptal edildiğinde bakiyesi
   **26 / 12 / 14** kalır. Diğer personelin satırları da değişmez (BR-4).
-- [ ] AC-5 — Bekleyen olmayan bir talebin iptal isteği (`Onaylandi` no 1, `Reddedildi` no 6 ve
+- [x] AC-5 — Bekleyen olmayan bir talebin iptal isteği (`Onaylandi` no 1, `Reddedildi` no 6 ve
   iptal edilmiş bir talebin ikinci kez iptali) talebi değiştirmez. Yönlendirme olmaz, sayfa düzeni
   içinde doğrudan `Yalniz bekleyen talepler iptal edilebilir.` mesajı döner.
-- [ ] AC-6 — Var olmayan (örn. 999) veya sayı olmayan (örn. `abc`) bir talep numarası için iptal
+- [x] AC-6 — Var olmayan (örn. 999) veya sayı olmayan (örn. `abc`) bir talep numarası için iptal
   isteği hiçbir talebi değiştirmez. Yönlendirme olmaz, aynı mesaj doğrudan döner.
-- [ ] AC-7 — Preserved: seed verisinde (iptal yapılmadan) dashboard 4/1/3, Ayşe 26/12/14,
+- [x] AC-7 — Preserved: seed verisinde (iptal yapılmadan) dashboard 4/1/3, Ayşe 26/12/14,
   hafta sonu sayımı, form ve servis eşikleri, geçersiz tarih ve geçmiş tarih davranışı. Spec
   0001'in testleri **hiç değiştirilmeden** yeşil kalır.
-- [ ] AC-8 — "Iptal" bir `<button>` (form submit) öğesidir ve görünür metni `Iptal`'dir. Formu
+- [x] AC-8 — "Iptal" bir `<button>` (form submit) öğesidir ve görünür metni `Iptal`'dir. Formu
   yalnız talep numarasını taşır, kullanıcı metni (ad, neden) düğmeye veya forma yazılmaz. İptal
   yalnız form gönderimiyle yapılır: bir adresi açmak (GET) hiçbir talebi iptal etmez.
 
+## Evidence (VERIFY, 2026-11-21 — bağımsız QA subagent'ı)
+Full: `CHECK GREEN (full, 3 steps, 3 s)` @1db3341 (HEAD'de koşuldu, 24 test). Residue: plan
+`## Build evidence` @967b055. Hassas alan: her kriter repo dışında geçici kopyada kasıtlı bozmayla
+kırmızıya düşürüldü, hiçbir bozma commit edilmedi.
+
+| Acceptance criterion | Evidence | Status |
+|---|---|---|
+| AC-1 | `tests/test_cancel_request.py::test_iptal_dugmesi_yalniz_bekleyen_satirlarda` + S-1 — bozma: düğme koşulu kaldırıldı → red | PASS |
+| AC-2 | `tests/test_cancel_request.py::test_bekleyen_talep_iptal_edilir` + S-2 — bozma: durum metni `Iptal` → red | PASS |
+| AC-3 | `tests/test_cancel_request.py::test_iptal_sonrasi_dashboard_3_1_3` — bozma: Bekleyen filtresi iptali saydı → red | PASS |
+| AC-4 | `tests/test_cancel_request.py::test_iptal_bakiyeyi_degistirmez` — bozma: `get_used_days` iptali saydı → red (26/15/11) | PASS |
+| AC-5 | `tests/test_cancel_request.py::test_bekleyen_olmayan_talep_iptal_edilemez` + S-3 — bozma: durum kontrolü kaldırıldı → red | PASS |
+| AC-6 | `tests/test_cancel_request.py::test_olmayan_veya_gecersiz_numara` — bozma: `ValueError` dalı yönlendirdi → red | PASS |
+| AC-7 | spec 0001'in 15 testi değişmeden yeşil; test dosyalarının diff'i `6d4ed3f..1db3341` boş — bozma: `calc_days` `+1` kaldırıldı → 0001'in 4 testi red | PASS |
+| AC-8 | `tests/test_cancel_request.py::test_iptal_dugmesi_form_yalniz_numara` · `tests/test_cancel_request.py::test_get_ile_iptal_olmaz` + S-1 — bozma: uca GET eklendi → red; forma neden alanı eklendi → red | PASS |
+
+Ekran görüntüleri: S-1 liste, S-2 başarı, S-3 hata — agent-captured (headless Edge, repo dışı),
+judged by tahamucasiroglu at SHIP, 2026-11-21. Görüntüler repoda saklanmaz (Evidence policy).
+
 ## Definition of Done
-- [ ] Every acceptance criterion mapped to proof (test or reproducible observation)
-- [ ] `scripts/check` green
-- [ ] Independent review done; real findings fixed, noise rejected with written rationale, deferred ones in `specs/backlog.md`
-- [ ] Docs / ADRs updated if behavior or architecture changed
-- [ ] Spec moved to `specs/done/` (it becomes immutable there)
+- [x] Every acceptance criterion mapped to proof (test or reproducible observation)
+- [x] `scripts/check` green
+- [x] Independent review done; real findings fixed, noise rejected with written rationale, deferred ones in `specs/backlog.md`
+- [x] Docs / ADRs updated if behavior or architecture changed
+- [x] Spec moved to `specs/done/` (it becomes immutable there)
 
 ## Scorecard (fill at ship — honest numbers make the process improvable)
 | Metric | Value |
 |---|---|
-| Spec revisions | |
-| Fix rounds | |
-| Review findings: real / noise / deferred | |
-| Regressions introduced | |
-| Bugs escaped to production | |
+| Spec revisions | 0 |
+| Fix rounds | 1 (yalnız doküman: A-1) |
+| Review findings: real / noise / deferred | 1 / 0 / 0 |
+| Regressions introduced | 0 |
+| Bugs escaped to production | 0 |
