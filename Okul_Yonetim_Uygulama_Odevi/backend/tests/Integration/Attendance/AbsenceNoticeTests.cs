@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Persistence.Repositories;
 using OkulYonetim.Tests.Integration.Account;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -14,8 +17,8 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// <summary>
 /// Spec 0010 AC-7: "Yok" kaydedilen öğrencinin okulda etkin her velisine bir uygulama içi bildirim ve bir e-posta (kuyruğa)
 /// gider, metin gereksinim 6'daki gibidir; "Var" ve "Geç" bildirim üretmez; pasifleştirilmiş veliye ve başka öğrencinin
-/// velisine ve Veli rolü alınmış (okulda etkin) kişiye gitmez (0010 VERIFY V-3);
-/// SMTP ayarlı değilken (gerçek kuyruk, gönderici "SMTP ayarlı değil") kayıt yine başarılıdır.
+/// velisine ve Veli rolü alınmış (okulda etkin) kişiye gitmez (0010 VERIFY V-3); kayıt işlemi commit edilemezse e-posta kuyruğa
+/// girmez, bildirim kalıcı olmaz (V-4, plan Risks 4); SMTP ayarlı değilken (gerçek kuyruk, gönderici "SMTP ayarlı değil") kayıt yine başarılıdır.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class AbsenceNoticeTests
@@ -87,6 +90,30 @@ public sealed class AbsenceNoticeTests
         outbox.To(motherEmail).ShouldHaveSingleItem();
         outbox.To(fatherEmail).ShouldBeEmpty();
         (await NoticeCountAsync(factory, ali)).ShouldBe(1, "babaya uygulama içi bildirim de yok");
+    }
+
+    [Fact]
+    public async Task Absent_SaveTransactionFails_NoEmailQueued_NothingPersisted()
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox, configure: services =>
+        {
+            services.RemoveAll<IUnitOfWork>();
+            services.AddScoped<EfUnitOfWork>();
+            services.AddScoped<IUnitOfWork>(sp => new FailingCommitUnitOfWork(sp.GetRequiredService<EfUnitOfWork>()));
+        });
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        (string mother, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+
+        var (status, _, _) = await SaveAsync(client, c.Teacher, c.ClassroomId, [(ali, "Absent")]);
+
+        status.ShouldBe(HttpStatusCode.InternalServerError, "yoklama işlemi commit edilemedi");
+        outbox.Messages.ShouldBeEmpty("geri alınan yoklama e-posta göndermez (0010 VERIFY V-4, plan Risks 4)");
+        (await NoticeCountAsync(factory, ali)).ShouldBe(0, "bildirim satırı kalıcı olmadı");
+        (await SheetCountAsync(factory, c.ClassroomId)).ShouldBe(0, "yoklama kalıcı olmadı");
+        (await NoticesAsync(client, mother)).Body.GetArrayLength().ShouldBe(0);
     }
 
     [Fact]
