@@ -90,13 +90,12 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
     expect(StyleSheet.flatten(screen.getByTestId("screen").props.style).backgroundColor).toBe(themeColors[mode].background);
   });
 
-  it("veli: 'Duyurular (2)' → akış (yeni işareti, okul bildirimi, kayan liste) → ayrıntı ve onay", async () => {
+  // Dosyanın ilk testi uygulamanın ilk çizimini (modül yükleme, ilk render) taşır: tek başına ~1 sn, tam kontrol yükünde
+  // varsayılan 5 sn aşıldı (0011 VERIFY V-1). Akış ve ayrıntı/onay iki teste bölündü; bu teste özel süre sınırı 15 sn,
+  // doğrulamalar aynı.
+  it("veli: 'Duyurular (2)' → akış (yeni işareti, okul bildirimi, kayan liste)", async () => {
     fakeApi(
-      {
-        "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }),
-        "GET /api/announcements/a1": () => json(200, detail(true)),
-        "POST /api/announcements/a1/consent": () => json(200, detail(true, "Approved").children[0]),
-      },
+      { "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }) },
       { unreadAnnouncements: 2, unreadMessages: 3 },
     );
     await signIn();
@@ -114,8 +113,21 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
     expect(rows[0].props.accessibilityLabel).toBe("okunmadı, Onay formu, Müze gezisi, Elif Öğretmen · Can Ak · 20.11.2026");
     expect(screen.getByLabelText("okunmadı")).toHaveTextContent("Yeni");
     expect(rows[1].props.accessibilityLabel).toContain("Okul bildirimi");
+  }, 15_000);
 
-    await fireEvent.press(rows[0]);
+  it("veli: akıştan ayrıntı → onay (cevap ve kim verdi)", async () => {
+    fakeApi(
+      {
+        "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }),
+        "GET /api/announcements/a1": () => json(200, detail(true)),
+        "POST /api/announcements/a1/consent": () => json(200, detail(true, "Approved").children[0]),
+      },
+      { unreadAnnouncements: 2 },
+    );
+    await signIn();
+    await fireEvent.press(screen.getByRole("button", { name: "Duyurular, 2 okunmamış duyuru" }));
+    await fireEvent.press((await screen.findAllByTestId("feed-row"))[0]);
+
     expect(await screen.findByText("Pazartesi müze gezisi var.")).toBeTruthy();
     expect(screen.getByText("Henüz cevap verilmedi")).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Can Ak için onaylıyorum" }));
