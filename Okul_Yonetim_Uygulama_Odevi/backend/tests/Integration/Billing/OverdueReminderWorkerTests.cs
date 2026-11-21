@@ -20,7 +20,7 @@ namespace OkulYonetim.Tests.Integration.Billing;
 /// <summary>
 /// Spec 0015 AC-10 / plan Risks 2 (arka plan işçisinin okul turu — 0015 review R1-2): <see cref="OverdueReminderWorker.RunOnceAsync"/>
 /// doğrudan çağrılır; işçi bütün etkin okulları dolaştığı için test kendi boş veritabanında üç okulla koşar (paylaşılan test veritabanındaki
-/// başka testlerin okullarına hatırlatma göndermesin). Önce oluşturulan (sırada önde) B okulunun çalışması hata verir (yalnızca o okul için
+/// başka testlerin okullarına hatırlatma göndermesin). Etkin okul listesinde (<c>ListActiveTenantIdsAsync</c>; pasif okulu vermez) önde olan B okulunun çalışması hata verir (yalnızca o okul için
 /// hata atan bağımlılık) → okul kimliğiyle tek Error log'u, A yine işlenir (Ali'nin iki velisine birer hatırlatma); pasif C okulunun vadesi
 /// geçmiş taksidi olsa da hiçbir şey olmaz. Her etkin okul kendi DI kapsamında ve kendi okuluyla sınırlı sistem oturumunda çalışır; A'nın
 /// bildirimleri yalnızca A'nın velilerine gider. Çalıştırıcı (<see cref="OverdueReminderRunner"/>) yalnızca okulu henüz seçilmemiş taze
@@ -80,14 +80,24 @@ public sealed class OverdueReminderWorkerTests
             });
             using HttpClient client = factory.CreateClient();
 
-            BillingWorld b = await BillingWorldAsync(factory, client);
-            await PlanAsync(client, b.Founder, PlanBody(b.Ali, b.FeeId, installmentCount: 1, firstDueDate: Today));
-            BillingWorld a = await BillingWorldAsync(factory, client);
-            await PlanAsync(client, a.Founder, PlanBody(a.Ali, a.FeeId, installmentCount: 1, firstDueDate: Today));
+            BillingWorld first = await BillingWorldAsync(factory, client);
+            await PlanAsync(client, first.Founder, PlanBody(first.Ali, first.FeeId, installmentCount: 1, firstDueDate: Today));
+            BillingWorld second = await BillingWorldAsync(factory, client);
+            await PlanAsync(client, second.Founder, PlanBody(second.Ali, second.FeeId, installmentCount: 1, firstDueDate: Today));
             BillingWorld c = await BillingWorldAsync(factory, client);
             await PlanAsync(client, c.Founder, PlanBody(c.Ali, c.FeeId, installmentCount: 1, firstDueDate: Today));
             await QueryAsync(factory, db => db.Tenants.IgnoreQueryFilters().Where(t => t.Id == c.TenantId).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false)));
 
+            // Okul kimlikleri sahte saatle aynı anda üretildiği için işçinin sırası açılış sırası değildir: hata verecek okul (B),
+            // işçinin kullandığı listede önde olan seçilir — böylece hata, sonraki okul (A) işlenmeden önce gelir.
+            IReadOnlyList<Guid> order;
+            using (IServiceScope listScope = factory.Services.CreateScope())
+            {
+                order = await listScope.ServiceProvider.GetRequiredService<IPlatformDirectory>().ListActiveTenantIdsAsync(TestContext.Current.CancellationToken);
+            }
+
+            order.ShouldBe([first.TenantId, second.TenantId], ignoreOrder: true, "yalnızca etkin okullar");
+            (BillingWorld b, BillingWorld a) = order[0] == first.TenantId ? (first, second) : (second, first);
             failingTenant = b.TenantId;
             resolutions.Clear();
             time.SetUtcNow(new DateTimeOffset(2026, 11, 21, 8, 0, 0, TimeSpan.Zero));
@@ -99,7 +109,7 @@ public sealed class OverdueReminderWorkerTests
             int sent = await worker.RunOnceAsync(TestContext.Current.CancellationToken);
 
             sent.ShouldBe(1, "yalnızca A'nın taksidi");
-            resolutions.Select(r => r.TenantId).ShouldBe([b.TenantId, a.TenantId], "B sırada önde (önce açıldı), hata vermesine rağmen A işlendi; pasif C hiç açılmadı");
+            resolutions.Select(r => r.TenantId).ShouldBe([b.TenantId, a.TenantId], "B sırada önde, hata vermesine rağmen A işlendi; pasif C hiç açılmadı");
             resolutions.ShouldAllBe(r => !r.Authenticated, "sistem oturumu: kişi yok");
             resolutions.Select(r => r.Scope).Distinct().Count().ShouldBe(2, "her okul kendi DI kapsamında");
             pushes.Sent.Select(p => p.RecipientUserId).ShouldBe([a.School.AliMother.UserId, a.School.AliFather.UserId], ignoreOrder: true);
