@@ -38,6 +38,12 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
+def too_long_duration(seconds):
+    """Dökülmeyen (sınırı aşan) sesin yanıttaki süresi (2 ondalık). Karar yuvarlamadan önceki ölçümle verilir; düz yuvarlama
+    60,000–60,005 sn arasını "60.0" yapar ve API onu sınır içinde sayıp "anlaşılamadı" derdi — yanıt en az sınır + 0,01."""
+    return max(round(seconds, 2), round(MAX_SECONDS + 0.01, 2))
+
+
 def log(message):
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
     print(f"{stamp} {message}", file=sys.stderr, flush=True)
@@ -139,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
         if duration > MAX_SECONDS:
             elapsed = int((time.monotonic() - started) * 1000)
             log(f"dökülmedi (uzun): {length} bayt, {duration:.1f} sn ses, {elapsed} ms")
-            self.send_json(200, {"text": "", "duration": round(duration, 2), "language": "tr", "elapsedMs": elapsed, "skipped": "too-long"})
+            self.send_json(200, {"text": "", "duration": too_long_duration(duration), "language": "tr", "elapsedMs": elapsed, "skipped": "too-long"})
             return
         try:
             with WORK:
