@@ -153,13 +153,32 @@ def dashboard():
 
 @app.route("/requests")
 def list_requests():
-    body = "<h3>Izin Talepleri</h3><table><tr><th>Personel</th><th>Baslangic</th><th>Bitis</th><th>Gun</th><th>Neden</th><th>Durum</th></tr>"
+    body = "<h3>Izin Talepleri</h3><table><tr><th>Personel</th><th>Baslangic</th><th>Bitis</th><th>Gun</th><th>Neden</th><th>Durum</th><th>Islem</th></tr>"
     for r in Db.requests:
         emp = [e for e in Db.employees if e["id"] == r["employee_id"]][0]
-        body += "<tr><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>" % (
-            emp["name"], r["start"], r["end"], svc.calc_days(r["start"], r["end"]), r["reason"], svc.status_badge(r["status"]))
+        body += "<tr><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
+            emp["name"], r["start"], r["end"], svc.calc_days(r["start"], r["end"]), r["reason"], svc.status_badge(r["status"]),
+            cancel_button(r))
     body += "</table>"
     return render_template_string(PAGE, body=body)
+
+def cancel_button(r):
+    # Spec 0002: yalniz Beklemede satirda; form yalniz talep numarasini tasir (kullanici metni yok).
+    if r["status"] != "Beklemede":
+        return ""
+    return ('<form method="post" action="/requests/%d/cancel" style="margin:0">'
+            '<button type="submit">Iptal</button></form>') % r["id"]
+
+@app.route("/requests/<req_id>/cancel", methods=["POST"])
+def cancel_request(req_id):
+    # Spec 0002: hata yutulmaz — gecersiz numara ya da bekleyen olmayan talep icin mesaj + 400.
+    try:
+        rid = int(req_id)
+    except ValueError:
+        rid = None
+    if rid is None or not svc.cancel_request(rid):
+        return render_template_string(PAGE, body="<p style='color:red'>Yalniz bekleyen talepler iptal edilebilir.</p>"), 400
+    return redirect("/requests")
 
 @app.route("/new", methods=["GET", "POST"])
 def new_request():
