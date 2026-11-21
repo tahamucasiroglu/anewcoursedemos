@@ -54,12 +54,12 @@ bakiyeleri (hak / kullanılan / kalan) (`/`). 2015'ten beri iç geliştirme, tes
   şeyi değiştirmez ve `Yalniz bekleyen talepler iptal edilebilir.` mesajını gösterir. Eşik
   çelişkisi (Q-1) için spec 0002'nin açık kararı: hangisinin doğru olduğu bilinmiyor, iki davranış
   da korunuyor.
-
 - **BR-10 Tarih doğrulaması (spec 0004):** yeni talepte başlangıç ve bitiş `YYYY-AA-GG` biçiminde
   geçerli, takvimde var olan tarihler olmalı ve bitiş başlangıçtan önce olamaz (başlangıç = bitiş
   geçerli, 1 gün). Doğrulama bakiye kontrolünden önce yapılır. Geçersizse talep kaydedilmez ve
   sayfa düzeni içinde `HATA: Tarihler gecersiz. …` mesajı (HTTP 400) gösterilir. Eski sessiz
   yönlendirme (spec 0001 AC-8) spec 0004 ile değişti.
+
 ## Open questions
 - **Q-1:** Bakiye eşiği `<` mı `<=` mi (BR-7)? Hangisinin doğru olduğunu bilen yok. Bu konuya
   dokunan spec, kararı açıkça yazar. O zamana kadar iki davranış da korunur.
