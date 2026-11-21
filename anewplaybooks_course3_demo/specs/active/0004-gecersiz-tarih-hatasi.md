@@ -31,8 +31,10 @@ hatalar için yerinde, tarih artık doğrulanıyor). Öz-eleştiri boşlukları 
   değerlendirilir.
 - [ ] CB-2 — Bitiş başlangıçtan önceyse (örn. 2026-12-10 → 2026-12-05): talep kaydedilmez, CB-1
   ile aynı mesaj ve davranış (bugün −4 günle kaydediliyor). Tarih doğrulaması bakiye kontrolünden
-  önce yapılır: geçersiz tarihte ERR-412 değil, tarih mesajı döner (örn. kalanı 0 olan Elif Sahin,
-  bitiş < başlangıç).
+  önce yapılır: geçersiz tarihte ERR-412 değil, tarih mesajı döner. Örnek: kalanı negatif olan
+  personel (Elif Sahin'in reddedilen talebi onaylı sayılınca kalan −3), bitiş başlangıçtan bir gün
+  önce (gün = 0, bakiye kontrolü tetiklenebilir). Revizyon: review round 1 R1-1 — eski örnek (kalan
+  0, gün −4) bakiye kontrolünü hiç tetiklemediği için sırayı ayırt etmiyordu.
 - [ ] CB-3 — Kalıcı repro testi: düzeltmeden önce kırmızı olduğu gösterilir, düzeltmeden sonra
   yeşildir ve suite'te kalır.
 

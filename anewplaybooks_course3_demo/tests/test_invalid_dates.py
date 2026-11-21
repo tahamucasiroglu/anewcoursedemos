@@ -45,8 +45,14 @@ def test_repro_bitis_baslangictan_once(client):
 
 
 def test_tarih_dogrulamasi_bakiye_kontrolunden_once(client):
-    """CB-2: kalani 0 olan Elif, bitis < baslangic -> ERR-412 degil, tarih mesaji."""
-    yanit = _gonder(client, {"employee_id": "5", "start": "2026-12-10", "end": "2026-12-05"})
+    """CB-2 sira: dogrulama bakiye kontrolunden once. Bakiye kontrolunun bu girdide GERCEKTEN
+    tetiklenebilmesi icin Elif'in kalani negatife cekilir (reddedilen 3 gunluk talebi onayli
+    sayilir -> kalan -3). Ters tarih 12-10 -> 12-09: gun = 0, -3 < 0 -> sira bozulursa ERR-412
+    doner; dogru sirada tarih mesaji doner (review round 1, R1-1)."""
+    app.Db.requests[5]["status"] = "Onaylandi"  # talep no 6, Elif Sahin, 3 gun
+    elif_ = [e for e in app.Db.employees if e["id"] == 5][0]
+    assert app.svc.get_remaining(elif_) == -3
+    yanit = _gonder(client, {"employee_id": "5", "start": "2026-12-10", "end": "2026-12-09"})
     _beklenen_tarih_hatasi(yanit)
     assert "ERR-412" not in yanit.get_data(as_text=True)
 
