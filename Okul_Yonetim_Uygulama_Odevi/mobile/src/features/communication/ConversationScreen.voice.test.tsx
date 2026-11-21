@@ -1,5 +1,5 @@
 import * as ExpoAudio from "expo-audio";
-import { fireEvent, render, screen, within } from "@testing-library/react-native";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -98,6 +98,9 @@ describe.each(["light", "dark"] as const)("Sesli not — %s tema", (mode) => {
     expect(StyleSheet.flatten(screen.getByTestId("screen").props.style).backgroundColor).toBe(themeColors[mode].background);
   });
 
+  // Uçtan uca akış (giriş → liste → konuşma → kayıt → dönüştürme → taslak → gönderim, ~30 adım) ve dosyanın ilk testi
+  // olarak uygulamanın ilk çizimini de taşır: tek başına 0,6–1,1 sn, tam koşu yükünde varsayılan 5 sn aşıldı. Süre sınırı
+  // bu teste özel 20 sn; doğrulamalar aynı.
   it("öğretmen: kayıt → dönüştürülüyor (gönder kilitli) → taslak paneli → düzenleyip gönderir (taslak kimliğiyle)", async () => {
     let release: (response: Response) => void = () => {};
     const upload = new Promise<Response>((resolve) => {
@@ -119,7 +122,8 @@ describe.each(["light", "dark"] as const)("Sesli not — %s tema", (mode) => {
     await fireEvent.press(screen.getByRole("button", { name: "Durdur" }));
     expect(await screen.findByText("Dönüştürülüyor…")).toBeTruthy();
     expect(sendButton().props.accessibilityState).toMatchObject({ disabled: true });
-    expect(requests).toContain("POST /api/ai/voice-message-drafts");
+    // "Dönüştürülüyor…" yükleme isteğinden önce çizilir (T17): isteğin gittiği ayrıca beklenir.
+    await waitFor(() => expect(requests).toContain("POST /api/ai/voice-message-drafts"));
     expect(audio.stopped).toBe(1);
 
     release(json(200, draft));
@@ -139,7 +143,7 @@ describe.each(["light", "dark"] as const)("Sesli not — %s tema", (mode) => {
     expect(sentBodies).toEqual([{ body: "Sayın Veli, Can bugün ödevini getirmedi. Yarın getirsin.", aiDraftId: "d1" }]);
     expect(screen.queryByTestId("ai-draft")).toBeNull();
     expect(screen.getByRole("button", { name: "Sesli not" })).toBeTruthy();
-  });
+  }, 20_000);
 
   it("Vazgeç: taslak silinir (DELETE), kutu boşalır, Sesli not geri gelir", async () => {
     const requests = fakeApi({
