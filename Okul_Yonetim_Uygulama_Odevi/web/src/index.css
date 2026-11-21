@@ -586,6 +586,17 @@ a {
   overflow-x: auto;
 }
 
+/* Tahsilat ekranları geniş tablolu: 40rem'lik sayfa 1280 px'te "Makbuz / İptal et" ve "Bakiye" sütunlarını kaydırmaya itiyordu
+   (spec 0015 VERIFY V-2). Bu ekranlarda sayfa genişler; dar ekranda yine %100 (max-width) — 320 px'te sayfa yatay kaymaz. */
+.page:has(.billing) {
+  max-width: 72rem;
+}
+
+/* İptal edilmiş tahsilatın gerekçesi uzun olabilir: rozet satırı uzatmak yerine hücre içinde alta kayar. */
+.data-table .badge {
+  white-space: normal;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;

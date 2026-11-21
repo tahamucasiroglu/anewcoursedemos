@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import indexCss from "../../index.css?raw";
 import userEvent from "@testing-library/user-event";
 import App from "../../App";
 import { adminFake, json, type Route } from "../admin/adminFake";
@@ -190,4 +191,22 @@ it("planı iptal et onay ister; sunucu reddederse mesaj duyurulur", async () => 
   await userEvent.click(await screen.findByRole("button", { name: "Planı iptal et" }));
   await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Onayla" }));
   expect(await screen.findByText("Bu planda tahsilat var; önce tahsilatları iptal edin.")).toHaveAttribute("role", "alert");
+});
+
+// Spec 0015 VERIFY V-2: 1280 px'te "Makbuz / İptal et" ve "Bakiye" sütunları kaydırmasız görünmeli. jsdom yerleşim ölçemez; burada
+// yapı + kural doğrulanır (tahsilat ekranında sayfa kabı geniş kuralla eşleşir, kural 40rem'den geniştir, dar ekranda %100'ü aşmaz).
+// Görsel kanıt: Promtlar/Sources/0015/v2-1280-*.png, v2-320-*.png.
+it("öğrenci carisi sayfası geniş sayfa kuralıyla eşleşir; tablolar kendi kaydırma kabında", async () => {
+  open([["GET", accountPath, () => json(200, account())]]);
+  await screen.findByRole("heading", { name: "Ali Yılmaz — cari" });
+  expect(document.querySelector(".page")?.matches(".page:has(.billing)")).toBe(true);
+  const rule = /\.page:has\(\.billing\)\s*\{\s*max-width:\s*(\d+)rem;\s*\}/.exec(indexCss);
+  expect(rule, "index.css'te .page:has(.billing) kuralı olmalı").not.toBeNull();
+  expect(Number(rule?.[1])).toBeGreaterThanOrEqual(64);
+  const tables = screen.getAllByRole("table");
+  for (const table of tables) {
+    expect(table.parentElement).toHaveClass("table-scroll");
+  }
+  expect(within(tables[1]).getByRole("columnheader", { name: "İşlem" })).toBeInTheDocument();
+  expect(within(tables[2]).getByRole("columnheader", { name: "Bakiye" })).toBeInTheDocument();
 });
