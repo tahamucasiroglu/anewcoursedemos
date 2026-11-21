@@ -1,5 +1,9 @@
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Communication;
+using OkulYonetim.Persistence.Repositories;
 using OkulYonetim.Tests.Integration.Communication;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -12,7 +16,8 @@ namespace OkulYonetim.Tests.Integration.Ai;
 
 /// <summary>
 /// Spec 0014 AC-7: aynı öğrenci-hafta için ikinci gönderim "Bu hafta için özet zaten gönderildi." ile reddedilir; aynı anda gelen iki
-/// gönderimden (iki öğretmen) sonra her veliye tek özet gitmiş olur ve reddedilenin hata gövdesi kendi mesajını taşır (T19); gönderilmiş
+/// gönderimden (iki öğretmen; yarış kapıyla belirlenimci) sonra her veliye tek özet gitmiş olur ve reddedilenin hata gövdesi kendi
+/// mesajını taşır (T19); gönderilmiş
 /// haftada "Özet oluştur" da aynı mesajla reddedilir ve model çağrılmaz; "Vazgeç" bekleyen taslağı siler (gönderilmiş ya da olmayan
 /// taslakta 404).
 /// </summary>
@@ -57,7 +62,16 @@ public sealed class WeeklySummaryConcurrencyTests
     [Fact]
     public async Task ConcurrentSends_TwoTeachers_EachGuardianOneSummary()
     {
-        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator());
+        // Belirlenimci yarış (0012 DraftHoldGate kalıbı): birinci gönderim bildirimleri yazıp taslağı onaylamak üzere okuduktan
+        // sonra bekletilir; bu sırada ikinci öğretmenin gönderimi başlar. Öğrenci-hafta sırası varsa ikincisi sırada bekler ve
+        // onaylanmış taslağı görür; yoksa iki gönderim de bildirim yazmaya çalışır.
+        DraftHoldGate gate = new();
+        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator(), configure: services =>
+        {
+            services.RemoveAll<IAiDraftRepository>();
+            services.AddScoped<AiDraftRepository>();
+            services.AddScoped<IAiDraftRepository>(sp => new GatedAiDraftRepository(sp.GetRequiredService<AiDraftRepository>(), gate));
+        });
         using HttpClient client = factory.CreateClient();
         CommunicationWorld w = await WorldAsync(factory, client);
         (Guid secondId, _, string second) = await TeacherAsync(factory, client, w.Class.School.TenantId, w.Class.School.BranchId);
@@ -65,18 +79,24 @@ public sealed class WeeklySummaryConcurrencyTests
         await AttendAsync(client, w);
         await GeneratedAsync(client, w.Class.Teacher, w.Ali);
 
-        var results = await Task.WhenAll(
-            SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Birinci öğretmenin metni."),
-            SendSummaryAsync(client, second, w.Ali, "İkinci öğretmenin metni."));
+        gate.Enabled = true;
+        var first = SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Birinci öğretmenin metni.");
+        await gate.Held.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+        var secondSend = SendSummaryAsync(client, second, w.Ali, "İkinci öğretmenin metni.");
+        await Task.WhenAny(secondSend, Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken));
+        gate.Release();
+        var results = new[] { await first, await secondSend };
 
-        results.Count(r => r.Status == HttpStatusCode.OK).ShouldBe(1, string.Join(" | ", results.Select(r => r.Raw)));
-        var rejected = results.Single(r => r.Status != HttpStatusCode.OK);
-        rejected.Status.ShouldBe(HttpStatusCode.BadRequest, rejected.Raw);
-        Detail(rejected.Body).ShouldBe(AlreadySent);
+        results[0].Status.ShouldBe(HttpStatusCode.OK, results[0].Raw);
+        results[1].Status.ShouldBe(HttpStatusCode.BadRequest, results[1].Raw);
+        Detail(results[1].Body).ShouldBe(AlreadySent, "reddedilenin gövdesi kendi mesajını taşır (T19)");
         List<GuardianNotice> notices = await SummaryNoticesAsync(factory, w.Class.School.TenantId);
         notices.GroupBy(n => n.GuardianUserId).ShouldAllBe(g => g.Count() == 1);
         notices.Select(n => n.GuardianUserId).ShouldBe([w.AliMother.UserId, w.AliFather.UserId], ignoreOrder: true);
-        (await SummaryDraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem().IsPending.ShouldBeFalse();
+        notices.ShouldAllBe(n => n.Text!.StartsWith("Birinci öğretmenin metni.", StringComparison.Ordinal));
+        var draft = (await SummaryDraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem();
+        draft.FinalText.ShouldBe("Birinci öğretmenin metni.");
+        draft.ApprovedByUserId.ShouldBe(w.Class.TeacherId);
     }
 
     [Fact]
