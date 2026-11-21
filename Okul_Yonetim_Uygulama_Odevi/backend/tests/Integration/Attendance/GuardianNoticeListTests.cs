@@ -197,4 +197,33 @@ public sealed class GuardianNoticeListTests
         motherNotice.ShouldNotBe(fatherNotice);
         (await UnreadAsync(client, mother)).ShouldBe(1);
     }
+
+    [Fact]
+    public async Task List_UnlinkedAndLeftChildren_OldNoticesHidden()
+    {
+        FakeTimeProvider time = new(Morning);
+        using OkulApiFactory factory = Factory(this.database, new CapturingOutbox(), time);
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        Guid ayse = await StudentAsync(client, c, "Ayşe Yılmaz");
+        Guid can = await StudentAsync(client, c, "Can Yılmaz");
+        (string guardian, Guid guardianId, string email, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+        await LinkAsync(client, c.Founder, ayse, Guardian(email));
+        await LinkAsync(client, c.Founder, can, Guardian(email));
+        Guid[] all = [ali, ayse, can];
+        await SavedAsync(client, c.Teacher, c.ClassroomId, Marks(all, (ali, "Absent"), (ayse, "Absent"), (can, "Absent")));
+        (await UnreadAsync(client, guardian)).ShouldBe(3);
+
+        (await StatusAsync(client, HttpMethod.Delete, $"/api/admin/students/{ali}/guardians/{guardianId}", c.Founder)).ShouldBe(HttpStatusCode.OK);
+        (await StatusAsync(client, HttpMethod.Post, $"/api/admin/students/{ayse}/deactivate", c.Founder)).ShouldBe(HttpStatusCode.OK);
+
+        var (status, list, raw) = await NoticesAsync(client, guardian);
+        status.ShouldBe(HttpStatusCode.OK);
+        list.EnumerateArray().Select(n => n.GetProperty("studentId").GetGuid()).ShouldBe([can], "bağı kaldırılan (Ali) ve ayrılan (Ayşe) çocuğun eski bildirimi görünmez (0010 VERIFY V-2)");
+        raw.ShouldNotContain("Ali Yılmaz");
+        raw.ShouldNotContain("Ayşe Yılmaz");
+        (await UnreadAsync(client, guardian)).ShouldBe(1, "sayıda da yalnız bağlı ve ayrılmamış çocuk");
+        (await NoticeCountAsync(factory, ali)).ShouldBe(1, "bildirim silinmez, yalnız gösterilmez");
+    }
 }
