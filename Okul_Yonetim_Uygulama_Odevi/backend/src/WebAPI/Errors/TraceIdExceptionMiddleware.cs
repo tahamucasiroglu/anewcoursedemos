@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
+using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Handlers;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Middleware;
 using NArchitecture.Core.Localization.Abstraction;
 using OkulYonetim.Application.Ports;
@@ -11,7 +12,8 @@ namespace OkulYonetim.WebAPI.Errors;
 /// <summary>
 /// nArchitecture hata middleware'inin bu projeye uyarlanmış hali: her hata izleme numarasıyla bir kez loglanır
 /// (beklenmeyen hata Error, iş hataları Warning). İş hatalarının yanıtı nArchitecture'daki gibidir; beklenmeyen
-/// hatada yanıt yalnızca genel Türkçe mesaj ve izleme numarası taşır (ayrıntı sızdırılmaz). İstemci isteği iptal ettiyse
+/// hatada yanıt yalnızca genel Türkçe mesaj ve izleme numarası taşır (ayrıntı sızdırılmaz). İş hatası yanıtı her istek için
+/// ayrı <c>HttpExceptionHandler</c> ile yazılır (temel sınıfın paylaşılan işleyicisi eşzamanlı hatalarda yanıtları karıştırır). İstemci isteği iptal ettiyse
 /// (sayfa kapandı) bu hata sayılmaz: Information olarak loglanır, yanıt yazılmaz.
 /// </summary>
 public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
@@ -63,8 +65,11 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
             return WriteForbiddenAsync(response, forbidden.Message);
         }
 
+        // nArchitecture'ın kendi HandleExceptionAsync'i tek (singleton) HttpExceptionHandler'ın Response özelliğini değiştirir:
+        // aynı anda iki iş hatasında yanıtlar karışır (biri iki gövde, öteki boş). Her çağrıya ayrı işleyici; dynamic,
+        // temel sınıftaki gibi hata türüne göre aşırı yüklemeyi (BusinessException, ValidationException…) seçtirir.
         return IsExpected(error)
-            ? base.HandleExceptionAsync(response, (object)error)
+            ? (Task)new HttpExceptionHandler { Response = response }.HandleException((dynamic)error)
             : WriteUnexpectedErrorAsync(response);
     }
 
