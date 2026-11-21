@@ -1,42 +1,52 @@
 # Git
 
-> **Template — adjust at bootstrap.** Defaults below are safe; loosen consciously, not accidentally.
+> Bootstrap'ta ayarlandı (2026-11-21). Bu klasör, üst klasördeki ortak reponun
+> (`anewcoursedemos`) bir alt klasörü. Aynı çalışma ağacında başka oturumlar başka klasörlere
+> commit atıyor. Remote'a push yok, PR ve CI yok.
 
 ## Branching
-- `feature/<spec-no>-<short-name>` — **no branch without a spec.** Also for CHANGE-lane mini-specs.
-- Refactors: `refactor/<spec-no>-<short-name>` (mini-spec with Changed behavior = none).
-- Fixes: `fix/<report-id>-<short-name>` (bug fixes carry a report, not a spec number);
-  incidents: `incident/<date>-<short-name>`; trivial changes: `trivial/<short-name>` (see below).
-- Bootstrap: `chore/bootstrap` — the bootstrap output (`workflows/bootstrap.md`), merged like
-  any branch.
+- **Branch açılmaz. Commit'ler `main`'e gider**, bootstrap çıktısı dahil (`chore/bootstrap` yok).
+  Bu, ANEW'in "direct commits to the default branch" yasağının **bilinçli olarak gevşetilmesi**.
+  Gerekçe:
+  - (1) Ortak çalışma ağacında branch değiştirmek diğer oturumların dosyalarını da etkiler.
+  - (2) PR ve CI olmadığı için branch'in sağladığı güvenceler (inceleme, CI) zaten yok.
+  - (3) Kapılar dosyalarla korunuyor: spec onayı, plan onayı, salt-okunur review, verify tablosu.
+- İş birimi branch adıyla değil, commit mesajındaki plan referansıyla izlenir.
 
 ## Commits
-- Conventional Commits, with a plan reference: `feat(catalog): paging endpoint [plan 0001/3]`.
-  Review fixes name their fix round instead of the step:
-  `fix(catalog): empty page size [plan 0001/fix-2]` — the reviewer counts rounds from these
-  (R-06 after round 3).
-- Agent commits follow the same standard: the agent writes the message, the human approves it
-  through the gate before the commit, not one by one — an approved plan covers its
-  `[plan NNNN/n]` and `[plan NNNN/fix-k]` commits, the ship approval the ship commit. Every
-  message stays visible in the branch and the PR. Lite and strict alike.
-- Only `./scripts/check`'s own exit code gates a commit or a push. Never pipe its output into
-  another command in the chain that decides it: in `./scripts/check | grep … && git commit` the
-  chain takes grep's exit code, so a red check commits. Keep the output aside and gate on check
-  alone: `./scripts/check > check.log 2>&1 && git commit …` (then show `check.log`).
-- Commit named paths only: `git commit -- <paths>`, never `git add -A`, `git add .` or
-  `commit -a`. Another session or tool may have written or staged files in the same tree.
+- Commit'ler **üst repo kökünden** (`C:\Dosyalar\Projects\engin_demirog\anewcoursedemos`)
+  atılır ve yalnız bu klasörün yollarını içerir:
+  `git add -- anewplaybooks_course3_demo/<yol>` ve `git commit -- anewplaybooks_course3_demo/<yol>`.
+  `git add -A`, `git add .` ve `commit -a` **asla** kullanılmaz: başka oturumların dosyaları
+  stage'e karışır.
+- Conventional Commits, Türkçe açıklama, scope `course3`, plan referansıyla:
+  `feat(course3): bekleyen talep iptali [plan 0001/3]`. Review düzeltmeleri fix turunu yazar:
+  `fix(course3): eşik mesajı [plan 0001/fix-1]` (reviewer turları bunlardan sayar, R-06 tur 3'ten
+  sonra).
+- Agent commit'leri de aynı standarda uyar: mesajı agent yazar, insan commit'ten önce kapıda
+  onaylar, commit commit değil. Onaylanan plan kendi `[plan NNNN/n]` ve `[plan NNNN/fix-k]`
+  commit'lerini, ship onayı da ship commit'ini kapsar.
+- Commit kararını yalnız `./scripts/check`'in kendi çıkış kodu verir. Çıktısı, kararı veren
+  zincirde başka bir komuta pipe edilmez. Çıktı kenara alınır, karar yalnız check'e bağlanır:
+  `./scripts/check > check.log 2>&1 && git commit …` (sonra `check.log` gösterilir. Log repo
+  dışında durur ya da silinir, asla commit edilmez).
+- Script dosyaları executable bit'iyle eklenir: `git add --chmod=+x anewplaybooks_course3_demo/scripts/<ad>`.
 
 ## Forbidden
-- Direct commits to the default branch.
-- Force push, history rewriting on shared branches. Undo = `git revert` (see recovery R-11).
+- **Push** (bu repoda push sahibinin kararıdır, agent push atmaz).
+- Force push, geçmişi yeniden yazma (amend dahil, paylaşılan `main` üzerinde). Geri alma
+  `git revert` ile (recovery R-11).
+- Branch değiştirmek veya ortak çalışma ağacının durumunu değiştiren komutlar (checkout, stash,
+  reset) insan onayı olmadan kullanılmaz.
 
 ## Trivial changes
-<!-- Set at bootstrap. Applies only to requests the change-request triage rubric
+<!-- Applies only to requests the change-request triage rubric
      (workflows/change-request.md) classifies as TRIVIAL: no acceptance criterion changes, no shared code. -->
-- Policy: **(1) PR + one reviewer, no spec** — default; alternatives: (2) direct commit allowed on a
-  `trivial/<short-name>` branch · (3) everything goes through a mini-spec (`specs/TEMPLATE-mini.md`;
-  no ANALYZE here: run the self-critique pass of `prompts/spec.md`, then `Self-critique: done`).
-- Always: one narrow commit, `scripts/check` green. A second file or a new test means re-triage.
+- Policy: **(1) PR + one reviewer, no spec**, bu ortama uyarlanmış hali. PR olmadığı için
+  "bir reviewer" **salt-okunur reviewer subagent'ıdır**: diff'i inceler, ardından
+  `./scripts/check` yeşilse `main`'e tek dar commit atılır.
+- Her zaman: tek dar commit ve yeşil `scripts/check`. İkinci bir dosya veya yeni bir test gerekirse yeniden triyaj yapılır.
 
 ## Pull requests
-- PR template checklist completed; `scripts/check` green in CI; squash-merge.
+- Yok (remote'a push ve PR yok). PR'ın yerini dosyadaki kapılar ve SHIP kapısındaki gösterim
+  alır (`docs/testing.md`, Evidence policy 3).

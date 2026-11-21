@@ -8,11 +8,32 @@
 - The whole suite runs inside `scripts/check` — one command, everywhere.
 
 ## Frameworks & layout
-<!-- Test framework(s), where tests live, naming pattern. -->
+- **Şu an test yok** (bootstrap 2026-11-21). Bootstrap test uydurmadı. İlk spec'in planı
+  **characterization testlerini** kurar, `requirements.txt` ile pytest'i ekler ve
+  `scripts/check.conf` içindeki planlanmış `test` adımını etkinleştirir.
+- Araç: **pytest** ve Flask `app.test_client()` (aynı süreçte, sunucu başlatılmaz).
+- Yer ve adlar: `tests/test_<konu>.py`, `tests/conftest.py` (ortak fixture'lar). Test adı
+  davranışı söyler.
+- Katmanlar: (1) **birim:** `LeaveService` metotları doğrudan çağrılır. (2) **HTTP:** route'lar
+  `test_client` ile çağrılır, HTML'deki değerler doğrulanır. UI kriterlerini bu katman kanıtlar.
+  **E2E veya tarayıcı testi yok:** tek sayfalık sunucu-render HTML için gerekmez.
+- **Determinizm:**
+  - Saat referans tarih **2026-11-21**'e sabitlenir: `monkeypatch.setattr(app, "datetime", <now() sabit dönen alt sınıf>)`. Ek kütüphane gerekmez.
+  - Her testten önce `app.seed()` çağrılır (autouse fixture), böylece `Db` state'i testler
+    arasında sızmaz.
+  - Uygulamada animasyon, rastgelelik veya üçüncü taraf servis yok.
+- Hızlar: suite saniyeler sürer, `test [fast]` olarak iki profilde de koşar. Ayrım gerekirse
+  bir pytest marker'ı ile yapılır (rule 4: selector, list değil).
 
 ## What must be tested
-<!-- e.g. every business rule (BR-n), every boundary/forbidden dependency; the e2e journeys and
-     budget, if the project has e2e at all (Test layers). -->
+- **Characterization (ilk iş):** referans tarihte dashboard **Bekleyen 4 · Onaylanan 1 ·
+  Reddedilen 3**. Ayşe Yılmaz **Hak 26 · Kullanılan 12 · Kalan 14**, hafta sonları dahil haliyle.
+  Kodun "olması gereken" davranışı değil, gözlenen davranışı kayda alınır.
+- `docs/domain.md`'deki her iş kuralı (BR-1…BR-7) dokunulduğunda testle kanıtlanır. Bunlara
+  çelişkili eşik (BR-7) ve hafta sonu sayımı (BR-3) dahildir.
+- Davranış değiştiren her spec, Preserved kriterlerini de testle kanıtlar. Characterization
+  testleri yalnız spec o davranış için "Changed" diyorsa değişir.
+- E2E bütçesi: **0** (e2e yok).
 
 ## Test layers
 1. **The cheapest test that proves the criterion.** Unit first, then component or integration

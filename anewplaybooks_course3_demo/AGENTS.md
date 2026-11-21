@@ -1,15 +1,13 @@
 # AGENTS.md — Project Rules
 
-> **STATUS: NOT CONFIGURED.** This workspace has not been adapted to a project yet.
-> The only correct first action is the bootstrap workflow (`workflows/bootstrap.md`).
-> Until bootstrap completes and rewrites this file, do not write application code.
+**LeaveManager**: legacy Python/Flask izin takip sistemi (tek dosya `app.py`, bellekte veri, 2015'ten beri testsiz). Hedef: mevcut davranışı bozmadan özellik eklemek; mevcut davranış sözleşmedir (`docs/domain.md`). Commit'ler üst repo kökünden, yalnız bu klasörün yollarıyla, `main`'e; push yok (`docs/git.md`).
 
 ## Operating mode
 
-**Mode: unset** — bootstrap sets `lite` or `strict` (`workflows/README.md`); every workflow honors its gates.
+**Mode: lite** — bootstrap sets `lite` or `strict` (`workflows/README.md`); every workflow honors its gates.
 **Start work** with `/new-feature` in lite (it chains the segments and asks at each gate) or with
 `/analyze` in strict (one segment per role). Segment commands always stop (`workflows/segments.md`).
-**Language: unset** — bootstrap sets `chat=<xx> · docs=<xx>`; protocol fields stay English (`docs/conventions.md`).
+**Language: chat=tr · docs=tr** — bootstrap sets `chat=<xx> · docs=<xx>`; protocol fields stay English (`docs/conventions.md`).
 
 ## Invariant rules (these survive bootstrap — never delete or weaken them)
 
