@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
 using OkulYonetim.Tests.Integration.Communication;
@@ -12,7 +11,8 @@ namespace OkulYonetim.Tests.Integration.Ai;
 
 /// <summary>
 /// Spec 0012 AC-8 (gizlilik, S2): taslak tablosunda ses kolonu (ikili veri) yoktur ve kayıtta sesin baytları geçmez;
-/// sesli not isteği ASP.NET'in geçici klasörüne ses dosyası yazmaz (<c>ASPNETCORE_*.tmp</c> açılmaz — form tamponu bellekte);
+/// sesli not isteği süresince sistem geçici klasöründe (alt klasörler dahil) sesin baytlarını taşıyan, ses uzantılı ya da
+/// ASP.NET form tamponu (<c>ASPNETCORE_*</c>) olan hiçbir dosya oluşmaz (<see cref="TempDirectoryAudioWatch"/>; VERIFY V-1);
 /// log satırlarında döküm, taslak ve gönderilen mesaj metni geçmez — yalnızca kimlikler, süre ve karakter sayıları.
 /// </summary>
 [Trait("Category", "Integration")]
@@ -50,21 +50,20 @@ public sealed class AiPrivacyTests
         CommunicationWorld w = await WorldAsync(factory, client);
         Guid conversation = await StartedAsync(client, w.Class.Teacher, w.Ali, w.AliMother.UserId);
 
-        ConcurrentQueue<string> created = new();
-        using (FileSystemWatcher watcher = new(Path.GetTempPath(), "ASPNETCORE_*"))
+        IReadOnlyList<string> leaked;
+        using (TempDirectoryAudioWatch watch = TempDirectoryAudioWatch.Start())
         {
-            watcher.Created += (_, e) => created.Enqueue(e.Name ?? string.Empty);
-            watcher.EnableRaisingEvents = true;
-            var (status, body, raw) = await VoiceNoteAsync(client, w.Class.Teacher, conversation, Audio(1024 * 1024));
+            var (status, body, raw) = await VoiceNoteAsync(client, w.Class.Teacher, conversation, watch.Audio(1024 * 1024));
             status.ShouldBe(HttpStatusCode.OK, raw);
             await Task.Delay(300, TestContext.Current.CancellationToken);
             speech.LastLength.ShouldBe(1024 * 1024);
 
             Guid draftId = body.GetProperty("draftId").GetGuid();
             (await SendDraftAsync(client, w.Class.Teacher, conversation, "Gizlimesaj Sayın Veli, Ali yarın ödevini getirsin.", draftId)).Status.ShouldBe(HttpStatusCode.OK);
+            leaked = watch.Stop();
         }
 
-        created.ShouldBeEmpty("ses geçici dosyaya yazılmaz");
+        leaked.ShouldBeEmpty("ses geçici klasöre (alt klasörler dahil) yazılmaz");
         string log = factory.ReadLog();
         foreach (string secret in new[] { "Gizlidöküm", "Gizlitaslak", "Gizlimesaj", "Ali Yılmaz", "Veli Kişi" })
         {
