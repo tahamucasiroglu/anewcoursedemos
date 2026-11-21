@@ -22,7 +22,9 @@ namespace OkulYonetim.Tests.Integration.Appointments;
 /// Spec 0016 AC-9: onay, ret (neden varsa ekli) ve öğretmen iptali bildirim kapısından randevunun çocuğunun velilerine (anne ve baba) okul
 /// bildirimi olarak gereksinim 7 metniyle geçer; yeni talep ve veli iptali öğretmene mesai içinde (Türkiye saati, seçili gün, başlangıç dahil –
 /// bitiş hariç) ya da sessiz mod tanımsızken bildirim üretir, mesai dışında üretmez ama bekleyen sayısı artar; bildirimde konu metni yoktur;
-/// gönderici hata verirse işlem kaydedilir; işlem commit edilemezse hiçbir bildirim çıkmaz (bildirim yalnızca commit sonrası).
+/// gönderici hata verirse işlem kaydedilir; işlem commit edilemezse hiçbir bildirim çıkmaz (bildirim yalnızca commit sonrası). Review tur 1
+/// R1-2: commit sonrası öğretmen bildirimi mesai saatini okurken hata alırsa (talep ve veli iptali) istek yine 200 döner, kayıt kalıcıdır,
+/// Warning yalnızca hata türü ve kimliklerle yazılır (ad, konu, hata mesajı yok).
 /// Saat: 2026-11-20 Cuma 12:00 Türkiye; görüşme 26.11.2026 14:00.
 /// </summary>
 [Trait("Category", "Integration")]
@@ -199,6 +201,48 @@ public sealed class AppointmentNotificationTests
         push.Sent.ShouldBeEmpty();
         (await AppointmentNoticesAsync(factory, w.Ali)).ShouldBeEmpty();
         (await AppointmentRowsAsync(factory, w.Class.School.TenantId)).Single().Status.ShouldBe(AppointmentStatus.Pending);
+    }
+
+    [Fact]
+    public async Task QuietHoursReadFailsAfterCommit_RequestAndGuardianCancelSucceed_WarningWithIdsOnly()
+    {
+        CapturingPushNotifier push = new();
+        StrongBox<bool> fail = new(false);
+        ThrowingQuietHoursRepository? failing = null;
+        using OkulApiFactory factory = AppointmentsFactory(this.database, push, configure: services =>
+        {
+            services.RemoveAll<IQuietHoursRepository>();
+            services.AddScoped<QuietHoursRepository>();
+            services.AddScoped<IQuietHoursRepository>(sp => failing = new ThrowingQuietHoursRepository(sp.GetRequiredService<QuietHoursRepository>(), fail));
+        });
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        await OpenedAsync(client, w.Class.Teacher, start: "14:00", end: "15:00", durationMinutes: 30);
+        string teacher = (await TeachersAsync(client, w.AliMother.Token, w.Ali)).Body[0].GetProperty("fullName").GetString()!;
+        Guid slot = (await FreeSlotIdsAsync(client, w.AliMother.Token, w.Class.TeacherId, w.Ali))[0];
+
+        Volatile.Write(ref fail.Value, true);
+        var (requestStatus, requestBody, requestRaw) = await RequestAsync(client, w.AliMother.Token, slot, w.Ali, Topic);
+        requestStatus.ShouldBe(HttpStatusCode.OK, requestRaw);
+        Guid id = requestBody.GetProperty("appointmentId").GetGuid();
+        requestBody.GetProperty("state").GetString().ShouldBe("Pending");
+        (await AppointmentRowsAsync(factory, w.Class.School.TenantId)).Single().Status.ShouldBe(AppointmentStatus.Pending);
+
+        (await CancelAsync(client, w.AliMother.Token, id)).Status.ShouldBe(HttpStatusCode.OK);
+        Volatile.Write(ref fail.Value, false);
+
+        failing.ShouldNotBeNull().Failures.ShouldBeGreaterThan(0);
+        (await AppointmentRowsAsync(factory, w.Class.School.TenantId)).Single().Status.ShouldBe(AppointmentStatus.CancelledByGuardian);
+        push.To(w.Class.TeacherId).ShouldBeEmpty("mesai saati okunamadı → bildirim gitmedi (notified=false)");
+        string log = factory.ReadLog();
+        string[] warnings = [.. log.Split('\n').Where(l => l.Contains("Öğretmene randevu bildirimi verilemedi", StringComparison.Ordinal))];
+        warnings.Length.ShouldBe(2, "talep ve veli iptali");
+        warnings.ShouldAllBe(l => l.Contains("[WRN]", StringComparison.Ordinal) && l.Contains(nameof(InvalidOperationException), StringComparison.Ordinal)
+            && l.Contains(id.ToString(), StringComparison.Ordinal) && l.Contains(w.Class.TeacherId.ToString(), StringComparison.Ordinal));
+        warnings.ShouldAllBe(l => !l.Contains(teacher, StringComparison.Ordinal) && !l.Contains(Topic, StringComparison.Ordinal));
+        log.ShouldNotContain(ThrowingQuietHoursRepository.Message);
+        log.ShouldContain("Randevu talep edildi");
+        log.ShouldContain("Randevu iptal edildi");
     }
 
     private static async Task<(Guid Id, Guid Slot, string Teacher)> SetupAsync(HttpClient client, CommunicationWorld w)

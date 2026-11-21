@@ -40,7 +40,6 @@ public sealed class RequestHandlers :
     private readonly IAvailabilitySlotRepository slots;
     private readonly IAppointmentRepository appointments;
     private readonly AppointmentNotifications notifications;
-    private readonly ISender sender;
     private readonly AdminAudit audit;
     private readonly IUnitOfWork unitOfWork;
     private readonly TimeProvider timeProvider;
@@ -51,7 +50,6 @@ public sealed class RequestHandlers :
         IAvailabilitySlotRepository slots,
         IAppointmentRepository appointments,
         AppointmentNotifications notifications,
-        ISender sender,
         AdminAudit audit,
         IUnitOfWork unitOfWork,
         TimeProvider timeProvider,
@@ -61,7 +59,6 @@ public sealed class RequestHandlers :
         this.slots = slots;
         this.appointments = appointments;
         this.notifications = notifications;
-        this.sender = sender;
         this.audit = audit;
         this.unitOfWork = unitOfWork;
         this.timeProvider = timeProvider;
@@ -203,8 +200,9 @@ public sealed class RequestHandlers :
             await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        // Kayıt kalıcı olduktan sonra Communication'ın bildirim kapısına: veliye giden her şey tek çıkıştan geçer (spec 0011).
-        await this.sender.Send(new DeliverNotificationsCommand(notices.Pushes, []), cancellationToken).ConfigureAwait(false);
+        // Kayıt kalıcı olduktan sonra Communication'ın bildirim kapısına: veliye giden her şey tek çıkıştan geçer (spec 0011); hata
+        // isteği düşürmez (review tur 1 R1-2).
+        await this.notifications.DeliverToGuardiansAsync(notices, appointment, cancellationToken).ConfigureAwait(false);
         this.logger.LogInformation(
             "Randevu talebi yanıtlandı: randevu {AppointmentId}, öğretmen {TeacherId}, durum {Status}, bildirim giden veli {Notified}",
             appointment.Id,
@@ -292,7 +290,7 @@ public sealed class RequestHandlers :
         bool teacherNotified = false;
         if (asTeacher)
         {
-            await this.sender.Send(new DeliverNotificationsCommand(notices.Pushes, []), cancellationToken).ConfigureAwait(false);
+            await this.notifications.DeliverToGuardiansAsync(notices, appointment, cancellationToken).ConfigureAwait(false);
         }
         else
         {
