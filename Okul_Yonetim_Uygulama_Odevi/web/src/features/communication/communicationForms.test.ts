@@ -1,4 +1,4 @@
-import { announcementBody, isDeadlineInRange, isQuarterHour, toggleDay, turkeyToday, validateAnnouncementForm, validateMessage, validateQuietHours } from "@okul/api-client";
+import { announcementBody, formatTurkeyDateTime, isDeadlineInRange, isQuarterHour, toggleDay, turkeyToday, validateAnnouncementForm, validateMessage, validateQuietHours } from "@okul/api-client";
 
 // Spec 0011 AC-1, AC-5, AC-8, AC-9 (istemci kuralları, @okul/api-client/communication/communicationForms): sunucudaki
 // sınırlarla aynı; hatalı alan varsa istek gönderilmez.
@@ -36,6 +36,13 @@ describe("duyuru formu", () => {
   it("Türkiye günü UTC+3: UTC 20:59 aynı gün, 21:00 ertesi gün", () => {
     expect(turkeyToday(new Date("2026-11-20T20:59:00Z"))).toBe("2026-11-20");
     expect(turkeyToday(new Date("2026-11-20T21:00:00Z"))).toBe("2026-11-21");
+  });
+
+  it("onay cevabının zamanı Türkiye saatiyle gün.ay.yıl ss:dd; gece yarısını geçen saat ertesi güne düşer (0011 VERIFY V-6)", () => {
+    expect(formatTurkeyDateTime("2026-11-21T11:05:00Z")).toBe("21.11.2026 14:05");
+    expect(formatTurkeyDateTime("2026-11-20T21:30:00Z")).toBe("21.11.2026 00:30");
+    expect(formatTurkeyDateTime("2026-11-21T14:05:00+03:00")).toBe("21.11.2026 14:05");
+    expect(formatTurkeyDateTime("tarih değil")).toBe("tarih değil");
   });
 });
 

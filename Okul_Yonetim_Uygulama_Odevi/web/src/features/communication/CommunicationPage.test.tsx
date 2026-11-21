@@ -39,7 +39,7 @@ describe.each(["light", "dark"] as const)("%s tema", (mode) => {
     expect(screen.getByText("Veli Kaya (Ayşe Kaya)")).toBeInTheDocument();
     expect(screen.getByText("15 onay, 2 ret, 5 cevapsız")).toBeInTheDocument();
     expect(screen.getByText("Son tarih: 27.11.2026")).toBeInTheDocument();
-    expect(screen.getByText(/Ali Yılmaz: Onaylıyorum — Veli Yılmaz/)).toBeInTheDocument();
+    expect(screen.getByText("Ali Yılmaz: Onaylıyorum — Veli Yılmaz · 20.11.2026 13:00", { normalizer: (text) => text })).toBeInTheDocument();
     expect(screen.getByText("Ayşe Kaya: Cevapsız")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Duyurulara dön" }));

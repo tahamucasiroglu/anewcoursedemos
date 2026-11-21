@@ -186,6 +186,7 @@
   "detail.answer.Declined": "Onaylanmadı",
   "detail.answer.none": "Henüz cevap verilmedi",
   "detail.answeredBy": "{answer} — {name}",
+  "detail.answeredByAt": "{answer} — {name} · {at}",
   "detail.saved": "Cevabınız kaydedildi.",
   "detail.saveError": "Cevap kaydedilemedi.",
   "messages.link": "Mesajlar",

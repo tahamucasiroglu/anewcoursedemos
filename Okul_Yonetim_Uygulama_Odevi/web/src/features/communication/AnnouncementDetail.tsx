@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { consentCounts, formatDay, turkeyToday, type AnnouncementDetail as Detail, type AnnouncementResults, type AuthSession } from "@okul/api-client";
+import { consentCounts, formatDay, formatTurkeyDateTime, turkeyToday, type AnnouncementDetail as Detail, type AnnouncementResults, type AuthSession } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { call } from "../admin/adminApi";
 import { failureText } from "../admin/adminText";
@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Duyuru ayrıntısı ve sonuçları (spec 0011 gereksinim 3, 4): başlık, metin, kapsam, yayınlayan; "X / Y veli okudu" ve
- * okumayan veliler (ad + çocuk adları); onay formunda soru, son gün, onay / ret / cevapsız sayıları ve öğrenci listesi.
+ * okumayan veliler (ad + çocuk adları); onay formunda soru, son gün, onay / ret / cevapsız sayıları ve öğrenci listesi (cevabı kim, ne zaman verdi — Türkiye saati).
  */
 export function AnnouncementDetail({ client, id, onBack }: Props) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -90,6 +90,7 @@ export function AnnouncementDetail({ client, id, onBack }: Props) {
                   <li key={s.studentId}>
                     {s.studentName}: {answerText(s.answer)}
                     {s.answeredByName && ` — ${s.answeredByName}`}
+                    {s.answeredByName && s.answeredAt && ` · ${formatTurkeyDateTime(s.answeredAt)}`}
                   </li>
                 ))}
               </ul>

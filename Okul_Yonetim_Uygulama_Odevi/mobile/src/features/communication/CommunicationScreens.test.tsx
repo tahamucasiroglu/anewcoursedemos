@@ -115,7 +115,7 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
     expect(rows[1].props.accessibilityLabel).toContain("Okul bildirimi");
   }, 15_000);
 
-  it("veli: akıştan ayrıntı → onay (cevap ve kim verdi)", async () => {
+  it("veli: akıştan ayrıntı → onay (cevap, kim ve ne zaman verdi)", async () => {
     fakeApi(
       {
         "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }),
@@ -132,7 +132,7 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
     expect(screen.getByText("Henüz cevap verilmedi")).toBeTruthy();
     await fireEvent.press(screen.getByRole("button", { name: "Can Ak için onaylıyorum" }));
     expect(await screen.findByText("Cevabınız kaydedildi.")).toBeTruthy();
-    expect(screen.getByText("Onaylandı — Baba Ak")).toBeTruthy();
+    expect(screen.getByText("Onaylandı — Baba Ak · 20.11.2026 12:10")).toBeTruthy(); // kim ve ne zaman, Türkiye saati (V-6)
     expect(bodies).toEqual([{ path: "/api/announcements/a1/consent", body: { studentId: "c1", answer: "Approved" } }]);
   });
 
@@ -213,7 +213,7 @@ it("onay süresi dolmuş: düğmeler kapalı, 'Süre doldu'; sunucu reddi duyuru
   await fireEvent.press(await screen.findByTestId("feed-row"));
 
   expect(await screen.findByText("Süre doldu")).toBeTruthy();
-  expect(screen.getByText("Onaylanmadı — Baba Ak")).toBeTruthy();
+  expect(screen.getByText("Onaylanmadı — Baba Ak · 20.11.2026 12:10")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Can Ak için onaylıyorum" }).props.accessibilityState).toMatchObject({ disabled: true });
   expect(screen.getByRole("button", { name: "Can Ak için onaylamıyorum" }).props.accessibilityState).toMatchObject({ disabled: true, selected: true });
 });

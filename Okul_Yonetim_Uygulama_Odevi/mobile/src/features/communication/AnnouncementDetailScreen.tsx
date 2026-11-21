@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { callApi, fillText, formatDay, turkeyToday, type AnnouncementDetail, type AuthSession, type ConsentChildView } from "@okul/api-client";
+import { callApi, fillText, formatDay, formatTurkeyDateTime, turkeyToday, type AnnouncementDetail, type AuthSession, type ConsentChildView } from "@okul/api-client";
 import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
 import { useCommunicationStyles } from "./useCommunicationStyles";
@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * Duyuru ayrıntısı, veli (spec 0011 gereksinim 3, 4; AC-13): açılınca sunucu okundu yazar. Onay formunda soru, son tarih ve
- * kapsamdaki her çocuk için mevcut cevap (kim verdi) ile "Onaylıyorum" / "Onaylamıyorum"; son gün geçtiyse düğmeler kapalı
+ * kapsamdaki her çocuk için mevcut cevap (kim, ne zaman — Türkiye saati) ile "Onaylıyorum" / "Onaylamıyorum"; son gün geçtiyse düğmeler kapalı
  * ve "Süre doldu". Gönderirken düğmeler kilitli; sunucu hatası (ör. "Onay süresi doldu.") duyurulur. İçerik kayar
  * (ScrollView), "Duyurulara dön" altta sabit.
  */
@@ -72,7 +72,13 @@ export function AnnouncementDetailScreen({ client, announcementId, onBack }: Pro
     }
 
     const text = t(child.answer === "Approved" ? "detail.answer.Approved" : "detail.answer.Declined");
-    return child.answeredByName ? fillText(t("detail.answeredBy"), { answer: text, name: child.answeredByName }) : text;
+    if (!child.answeredByName) {
+      return text;
+    }
+
+    return child.answeredAt
+      ? fillText(t("detail.answeredByAt"), { answer: text, name: child.answeredByName, at: formatTurkeyDateTime(child.answeredAt) })
+      : fillText(t("detail.answeredBy"), { answer: text, name: child.answeredByName });
   };
 
   return (

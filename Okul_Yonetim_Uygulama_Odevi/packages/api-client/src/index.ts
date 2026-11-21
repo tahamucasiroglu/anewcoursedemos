@@ -156,6 +156,7 @@ export {
   CONSENT_QUESTION_MAX,
   consentCounts,
   countedText,
+  formatTurkeyDateTime,
   isDeadlineInRange,
   isQuarterHour,
   MESSAGE_MAX,

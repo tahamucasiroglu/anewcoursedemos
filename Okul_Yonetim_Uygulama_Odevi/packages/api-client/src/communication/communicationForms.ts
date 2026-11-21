@@ -76,6 +76,17 @@ export function turkeyToday(now: Date = new Date()): string {
   return new Date(now.getTime() + TURKEY_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/** Anın Türkiye saatiyle gün ve saati: "2026-11-21T11:05:00Z" → "21.11.2026 14:05" (onay cevabının zamanı, sabit UTC+3). */
+export function formatTurkeyDateTime(at: string): string {
+  const ms = Date.parse(at);
+  if (Number.isNaN(ms)) {
+    return at;
+  }
+
+  const local = new Date(ms + TURKEY_OFFSET_MS).toISOString();
+  return `${local.slice(8, 10)}.${local.slice(5, 7)}.${local.slice(0, 4)} ${local.slice(11, 16)}`;
+}
+
 function addDays(day: string, days: number): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 }
