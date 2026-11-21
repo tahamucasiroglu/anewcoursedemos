@@ -3102,6 +3102,537 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TeacherSchedule"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["OpenAvailabilityRequest"];
+                    "text/json": components["schemas"]["OpenAvailabilityRequest"];
+                    "application/*+json": components["schemas"]["OpenAvailabilityRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AvailabilityOpened"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/slots/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RespondAppointmentRequest"];
+                    "text/json": components["schemas"]["RespondAppointmentRequest"];
+                    "application/*+json": components["schemas"]["RespondAppointmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AppointmentChanged"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/teachers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    studentId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BookableTeacher"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/teachers/{teacherId}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    studentId?: string;
+                };
+                header?: never;
+                path: {
+                    teacherId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OpenSlot"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AppointmentRequest"];
+                    "text/json": components["schemas"]["AppointmentRequest"];
+                    "application/*+json": components["schemas"]["AppointmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AppointmentChanged"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MyAppointments"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CancelAppointmentRequest"];
+                    "text/json": components["schemas"]["CancelAppointmentRequest"];
+                    "application/*+json": components["schemas"]["CancelAppointmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AppointmentChanged"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/attendance/classrooms": {
         parameters: {
             query?: never;
@@ -6449,6 +6980,20 @@ export interface components {
             unread: components["schemas"]["UnreadGuardianRow"][];
             consent: null | components["schemas"]["ConsentSummary"];
         };
+        /** @description Talep, yanıt ya da iptalin sonucu (spec 0016): randevu ve yeni durumu (`Pending`, `Approved`, `Rejected`, `CancelledByGuardian`, `CancelledByTeacher`). */
+        AppointmentChanged: {
+            /** Format: uuid */
+            appointmentId: string;
+            state: string;
+        };
+        /** @description Randevu talebi (spec 0016): seçilen boş dilim, çocuk ve konu (zorunlu, en fazla 300). */
+        AppointmentRequest: {
+            /** Format: uuid */
+            slotId: null | string;
+            /** Format: uuid */
+            studentId: null | string;
+            topic: null | string;
+        };
         /** @description Açılan değerlendirme (spec 0013 gereksinim 5): kimlik ve kapsadığı öğrenci sayısı. */
         AssessmentCreated: {
             /** Format: uuid */
@@ -6609,10 +7154,21 @@ export interface components {
             /** @default false */
             twoFactorSetupRequired: boolean;
         };
+        /** @description Müsaitlik açmanın sonucu (spec 0016): açılan görüşme saati sayısı ("6 görüşme saati açıldı"). */
+        AvailabilityOpened: {
+            /** Format: int32 */
+            slotCount: number | string;
+        };
         /** @description Tahsilat yazma işleminin sonucu (spec 0015): işlem gören kaydın kimliği (plan açma/iptal, tahsilat iptali). */
         BillingSaved: {
             /** Format: uuid */
             id: string;
+        };
+        /** @description Velinin randevu alabileceği öğretmen (spec 0016 C-2): çocuğun sınıfının öğretmeni — kimlik ve ad-soyad. */
+        BookableTeacher: {
+            /** Format: uuid */
+            userId: string;
+            fullName: string;
         };
         /** @description Yönetim ekranındaki şube: ad, adres, telefon ve durum (pasif şubeler de listelenir). */
         BranchAdminView: {
@@ -6659,6 +7215,10 @@ export interface components {
             startDate: string;
             /** Format: date */
             endDate: string;
+        };
+        /** @description Randevu iptali (spec 0016): isteğe bağlı neden (en fazla 300; öğretmen iptalinde veliye gider). */
+        CancelAppointmentRequest: {
+            reason: null | string;
         };
         /** @description Tahsilat iptali (spec 0015): gerekçe (zorunlu, en fazla 200 karakter). */
         CancelPaymentRequest: {
@@ -7138,7 +7698,7 @@ export interface components {
          *     Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
          *     platform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış
          *     duyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011); spec 0014: öğretmen olarak atandığı etkin bir sınıf var mı
-         *     ("Haftalık özet" bağlantısı yalnızca o zaman görünür).
+         *     ("Haftalık özet" bağlantısı yalnızca o zaman görünür); spec 0016: öğretmenin yanıt bekleyen randevu talebi sayısı (öğretmen değilse 0).
          */
         MeResponse: {
             fullName: string;
@@ -7166,6 +7726,11 @@ export interface components {
             unreadMessageCount: number | string;
             /** @default false */
             teachesClassroom: boolean;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            pendingAppointmentCount: number | string;
         };
         /** @description Yeni mesaj seçenekleri: veli tarafı (çocuk → öğretmenler) ve öğretmen tarafı (sınıf → öğrenci → veliler); rolü olmayan taraf boş. */
         MessageContacts: {
@@ -7189,6 +7754,35 @@ export interface components {
             body: string;
             /** Format: date-time */
             sentAt: string;
+        };
+        /**
+         * @description Velinin randevu satırı (spec 0016 gereksinim 8): öğretmen, çocuk, başlangıç/bitiş (UTC), durum (`Pending` / `Approved` /
+         *     `Rejected` / `CancelledByGuardian` / `CancelledByTeacher` / `Expired`), ret/iptal nedeni, talebi bu veli mi yaptı,
+         *     talep edenin adı ve iptal düğmesi (yalnızca talep eden velide, açık randevuda). Konu metni bu listede yoktur.
+         */
+        MyAppointmentRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            teacherUserId: string;
+            teacherName: string;
+            /** Format: uuid */
+            studentId: string;
+            studentName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            state: string;
+            reason: null | string;
+            requestedByMe: boolean;
+            requestedByName: string;
+            canCancel: boolean;
+        };
+        /** @description "Randevularım" (spec 0016 gereksinim 8): yaklaşan randevular (en yakın üstte) ve son 30 günün geçmiş randevuları (en yeni üstte). */
+        MyAppointments: {
+            upcoming: components["schemas"]["MyAppointmentRow"][];
+            past: components["schemas"]["MyAppointmentRow"][];
         };
         /** @description "Sınıflarım" satırı (spec 0010 gereksinim 2): sınıf, şube ve bugünkü yoklamanın alınıp alınmadığı. */
         MyClassroomRow: {
@@ -7230,6 +7824,24 @@ export interface components {
             /** Format: date-time */
             at: string;
             title?: null | string;
+        };
+        /** @description Müsaitlik açma (spec 0016): gün (`yyyy-MM-dd`, Türkiye günü), başlangıç ve bitiş ("SS:DD", Türkiye saati, 15 dk adım) ve görüşme süresi (15/20/30 dakika). */
+        OpenAvailabilityRequest: {
+            /** Format: date */
+            day: null | string;
+            start: null | string;
+            end: null | string;
+            /** Format: int32 */
+            durationMinutes: null | number | string;
+        };
+        /** @description Velinin seçebileceği boş görüşme saati (spec 0016 gereksinim 3): dilim, başlangıç ve bitiş (UTC). */
+        OpenSlot: {
+            /** Format: uuid */
+            slotId: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
         };
         /** @description Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok. */
         PanelSchoolResult: {
@@ -7430,6 +8042,11 @@ export interface components {
             newPassword: null | string;
             newPasswordRepeat: null | string;
         };
+        /** @description Talep yanıtı (spec 0016): `Approve` ya da `Reject` ve isteğe bağlı ret nedeni (en fazla 300). */
+        RespondAppointmentRequest: {
+            decision: null | string;
+            reason: null | string;
+        };
         /** @description Formdan gelen rol seçimi: rol adı (Founder, Teacher, Guardian, Accounting) ve şubeleri (kurucuda boş). */
         RoleInput: {
             role: string;
@@ -7445,6 +8062,25 @@ export interface components {
             entries: null | components["schemas"]["AttendanceEntryInput"][];
             /** Format: int32 */
             version: null | number | string;
+        };
+        /**
+         * @description Öğretmenin takvimindeki dilim (spec 0016 gereksinim 2): dilim, başlangıç/bitiş (UTC), durum (`Free` boş, `Pending` onay
+         *     bekliyor, `Approved` onaylı, `Expired` süresi doldu), başlamış mı ve randevu varsa kimliği, veli adı, çocuk adı ve konu.
+         */
+        ScheduleItem: {
+            /** Format: uuid */
+            slotId: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            state: string;
+            hasStarted: boolean;
+            /** Format: uuid */
+            appointmentId: null | string;
+            guardianName: null | string;
+            studentName: null | string;
+            topic: null | string;
         };
         /**
          * @description Okul takvimi (spec 0008 gereksinim 8, herkes salt okunur): güncel ya da yaklaşan dönem (yoksa boş) ve o dönemin
@@ -7775,6 +8411,16 @@ export interface components {
             userId: string;
             fullName: string;
             email: string;
+        };
+        /**
+         * @description "Takvimim" (spec 0016 gereksinim 2): yanıt bekleyen talep sayısı, üstte gösterilen yanıt bekleyen talepler (en yakın önce) ve
+         *     bugünden (Türkiye günü) itibaren bütün dilimler gün ve saat sırasıyla.
+         */
+        TeacherSchedule: {
+            /** Format: int32 */
+            pendingCount: number | string;
+            pending: components["schemas"]["ScheduleItem"][];
+            slots: components["schemas"]["ScheduleItem"][];
         };
         /** @description Okul seçimi ve hoş geldin ekranı için kurumun kimliği ve adı. */
         TenantSummary: {

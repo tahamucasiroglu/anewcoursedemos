@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { t } from "../../i18n/t";
 import { AccountScreen } from "../account/AccountScreen";
+import { MyAppointmentsScreen } from "../appointments/MyAppointmentsScreen";
+import { TeacherScheduleScreen } from "../appointments/TeacherScheduleScreen";
 import { ChildAcademicsScreen } from "../academics/ChildAcademicsScreen";
 import { TeacherAcademicsScreen } from "../academics/TeacherAcademicsScreen";
 import { CalendarScreen } from "../calendar/CalendarScreen";
@@ -27,7 +29,8 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * "Bildirimler (n)"; bildirimlerden dönünce okunmamış sayısı için kişi bilgisi yenilenir (spec 0010). Velide "Duyurular (n)",
  * veli ve öğretmende "Mesajlar (n)", öğretmende "Mesai saatlerim" (spec 0011); dönünce sayılar için kişi bilgisi yenilenir.
  * Spec 0013: öğretmende "Ödev ve not", velide "Ödev ve notlar" (ayrıca çocuk kartından o çocuğun özeti; dönüş karta). Spec 0015: velide
- * "Ödemeler" (salt okunur).
+ * "Ödemeler" (salt okunur). Spec 0016: öğretmende "Randevular (n bekleyen)" → Takvimim, velide "Randevular" → Randevularım; dönünce
+ * bekleyen sayısı için kişi bilgisi yenilenir.
  */
 export function AuthGate() {
   const { state, session, login, retryResume, selectSchool, switchSchool, logout, reloadMe, restart } = useAuthController();
@@ -42,6 +45,7 @@ export function AuthGate() {
   const [academics, setAcademics] = useState(false);
   const [childAcademics, setChildAcademics] = useState<{ childId?: string } | null>(null);
   const [payments, setPayments] = useState(false);
+  const [appointments, setAppointments] = useState<"teacher" | "guardian" | null>(null);
   const [previousKind, setPreviousKind] = useState(state.kind);
 
   // Oturum durumundan çıkınca (çıkış, oturum düştü) Hesabım kapanır: sonraki girişte Hoş geldin açılır (review F-6).
@@ -57,6 +61,7 @@ export function AuthGate() {
       setAcademics(false);
       setChildAcademics(null);
       setPayments(false);
+      setAppointments(null);
     }
 
     if (state.kind !== "signedOut") {
@@ -98,6 +103,18 @@ export function AuthGate() {
 
       if (payments) {
         return <PaymentsScreen client={session.client} onBack={() => setPayments(false)} />;
+      }
+
+      if (appointments) {
+        const back = () => {
+          setAppointments(null);
+          void reloadMe();
+        };
+        return appointments === "teacher" ? (
+          <TeacherScheduleScreen client={session.client} onBack={back} />
+        ) : (
+          <MyAppointmentsScreen client={session.client} onBack={back} />
+        );
       }
 
       if (attendance) {
@@ -146,7 +163,7 @@ export function AuthGate() {
       return account ? (
         <AccountScreen client={session.client} onBack={() => setAccount(false)} onProfileSaved={() => void reloadMe()} />
       ) : (
-        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} onAttendance={() => setAttendance(true)} onNotices={() => setNotices(true)} onFeed={() => setCommunication("feed")} onMessages={() => setCommunication("messages")} onQuietHours={() => setCommunication("quietHours")} onAcademics={() => setAcademics(true)} onChildAcademics={() => setChildAcademics({})} onPayments={() => setPayments(true)} />
+        <WelcomeScreen me={state.me} onSwitchSchool={switchSchool} onLogout={logout} onAccount={() => setAccount(true)} onCalendar={() => setCalendar(true)} onChildren={() => setChildren({ childId: null })} onAttendance={() => setAttendance(true)} onNotices={() => setNotices(true)} onFeed={() => setCommunication("feed")} onMessages={() => setCommunication("messages")} onQuietHours={() => setCommunication("quietHours")} onAcademics={() => setAcademics(true)} onChildAcademics={() => setChildAcademics({})} onPayments={() => setPayments(true)} onTeacherAppointments={() => setAppointments("teacher")} onGuardianAppointments={() => setAppointments("guardian")} />
       );
   }
 }

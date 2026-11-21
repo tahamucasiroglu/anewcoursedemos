@@ -3334,6 +3334,521 @@
         }
       }
     },
+    "/api/appointments/schedule": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherSchedule"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/availability": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenAvailabilityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenAvailabilityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenAvailabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityOpened"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/slots/{id}": {
+      "delete": {
+        "tags": [
+          "Appointments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/respond": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondAppointmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondAppointmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondAppointmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/teachers": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookableTeacher"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/teachers/{teacherId}/slots": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "parameters": [
+          {
+            "name": "teacherId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpenSlot"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/mine": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyAppointments"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAppointmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAppointmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAppointmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentChanged"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/attendance/classrooms": {
       "get": {
         "tags": [
@@ -6779,6 +7294,54 @@
         },
         "description": "Sonuçlar: alıcı ve okuyan veli sayısı (\"X / Y veli okudu\"), okumayan veliler (ad + çocuk adları) ve onay formunda öğrenci bazında onay/ret/cevapsız."
       },
+      "AppointmentChanged": {
+        "required": [
+          "appointmentId",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "appointmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "description": "Talep, yanıt ya da iptalin sonucu (spec 0016): randevu ve yeni durumu (`Pending`, `Approved`, `Rejected`, `CancelledByGuardian`, `CancelledByTeacher`)."
+      },
+      "AppointmentRequest": {
+        "required": [
+          "slotId",
+          "studentId",
+          "topic"
+        ],
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "topic": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Randevu talebi (spec 0016): seçilen boş dilim, çocuk ve konu (zorunlu, en fazla 300)."
+      },
       "AssessmentCreated": {
         "required": [
           "id",
@@ -7301,6 +7864,23 @@
         },
         "description": "Giriş / yenileme / okul seçimi yanıtı: erişim anahtarı ve bitişi; yenileme anahtarı yalnızca mobil (gövde) isteğinde\ndolu, web'de boş (çerezde); okul seçimi gerekiyor mu; kişinin okulları. Platform yöneticisinde (spec 0007) oturum\nyerine iki adımlı doğrulama beklemesi (`TwoFactorChallenge`; kurulum gerekiyorsa `TwoFactorSetupRequired`)."
       },
+      "AvailabilityOpened": {
+        "required": [
+          "slotCount"
+        ],
+        "type": "object",
+        "properties": {
+          "slotCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Müsaitlik açmanın sonucu (spec 0016): açılan görüşme saati sayısı (\"6 görüşme saati açıldı\")."
+      },
       "BillingSaved": {
         "required": [
           "id"
@@ -7313,6 +7893,23 @@
           }
         },
         "description": "Tahsilat yazma işleminin sonucu (spec 0015): işlem gören kaydın kimliği (plan açma/iptal, tahsilat iptali)."
+      },
+      "BookableTeacher": {
+        "required": [
+          "userId",
+          "fullName"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "description": "Velinin randevu alabileceği öğretmen (spec 0016 C-2): çocuğun sınıfının öğretmeni — kimlik ve ad-soyad."
       },
       "BranchAdminView": {
         "required": [
@@ -7462,6 +8059,21 @@
           }
         },
         "description": "Akademik takvim kaydı görünümü (yönetim ve okul takvimi): başlık, tür (`Holiday`, `Exam`, `Event`),\nbaşlangıç ve bitiş günü (aynıysa tek günlük kayıt)."
+      },
+      "CancelAppointmentRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Randevu iptali (spec 0016): isteğe bağlı neden (en fazla 300; öğretmen iptalinde veliye gider)."
       },
       "CancelPaymentRequest": {
         "required": [
@@ -9166,9 +9778,18 @@
           "teachesClassroom": {
             "type": "boolean",
             "default": false
+          },
+          "pendingAppointmentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         },
-        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış\nduyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011); spec 0014: öğretmen olarak atandığı etkin bir sınıf var mı\n(\"Haftalık özet\" bağlantısı yalnızca o zaman görünür)."
+        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış\nduyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011); spec 0014: öğretmen olarak atandığı etkin bir sınıf var mı\n(\"Haftalık özet\" bağlantısı yalnızca o zaman görünür); spec 0016: öğretmenin yanıt bekleyen randevu talebi sayısı (öğretmen değilse 0)."
       },
       "MessageContacts": {
         "required": [
@@ -9245,6 +9866,92 @@
           }
         },
         "description": "Konuşmadaki mesaj: benim mi, metin ve zaman."
+      },
+      "MyAppointmentRow": {
+        "required": [
+          "id",
+          "teacherUserId",
+          "teacherName",
+          "studentId",
+          "studentName",
+          "startsAt",
+          "endsAt",
+          "state",
+          "reason",
+          "requestedByMe",
+          "requestedByName",
+          "canCancel"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teacherUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requestedByMe": {
+            "type": "boolean"
+          },
+          "requestedByName": {
+            "type": "string"
+          },
+          "canCancel": {
+            "type": "boolean"
+          }
+        },
+        "description": "Velinin randevu satırı (spec 0016 gereksinim 8): öğretmen, çocuk, başlangıç/bitiş (UTC), durum (`Pending` / `Approved` /\n`Rejected` / `CancelledByGuardian` / `CancelledByTeacher` / `Expired`), ret/iptal nedeni, talebi bu veli mi yaptı,\ntalep edenin adı ve iptal düğmesi (yalnızca talep eden velide, açık randevuda). Konu metni bu listede yoktur."
+      },
+      "MyAppointments": {
+        "required": [
+          "upcoming",
+          "past"
+        ],
+        "type": "object",
+        "properties": {
+          "upcoming": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyAppointmentRow"
+            }
+          },
+          "past": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyAppointmentRow"
+            }
+          }
+        },
+        "description": "\"Randevularım\" (spec 0016 gereksinim 8): yaklaşan randevular (en yakın üstte) ve son 30 günün geçmiş randevuları (en yeni üstte)."
       },
       "MyClassroomRow": {
         "required": [
@@ -9367,6 +10074,69 @@
           }
         },
         "description": "Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` / spec 0013 `Assignment` —\n\"düzeltildi\" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir.\nSpec 0014: tür `WeeklySummary` — başlık (\"Haftalık gelişim özeti — 16–22 Kasım\", günden — haftanın Pazartesi'si — kurulur;\ndiğer türlerde boş) ve metin = onaylanan özet + etiket + dayanak satırı."
+      },
+      "OpenAvailabilityRequest": {
+        "required": [
+          "day",
+          "start",
+          "end",
+          "durationMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "start": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "end": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "durationMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Müsaitlik açma (spec 0016): gün (`yyyy-MM-dd`, Türkiye günü), başlangıç ve bitiş (\"SS:DD\", Türkiye saati, 15 dk adım) ve görüşme süresi (15/20/30 dakika)."
+      },
+      "OpenSlot": {
+        "required": [
+          "slotId",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Velinin seçebileceği boş görüşme saati (spec 0016 gereksinim 3): dilim, başlangıç ve bitiş (UTC)."
       },
       "PanelSchoolResult": {
         "required": [
@@ -10114,6 +10884,28 @@
         },
         "description": "Bağlantıyla yeni şifre."
       },
+      "RespondAppointmentRequest": {
+        "required": [
+          "decision",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Talep yanıtı (spec 0016): `Approve` ya da `Reject` ve isteğe bağlı ret nedeni (en fazla 300)."
+      },
       "RoleInput": {
         "required": [
           "role",
@@ -10169,6 +10961,66 @@
           }
         },
         "description": "Bugünkü yoklama (spec 0010): gün (`yyyy-MM-dd`, sunucunun Türkiye günüyle aynı olmalı), öğrenci durumları ve ekranın\naçıldığı yoklama sürümü (listedeki `version`; henüz kaydedilmemişse 0)."
+      },
+      "ScheduleItem": {
+        "required": [
+          "slotId",
+          "startsAt",
+          "endsAt",
+          "state",
+          "hasStarted",
+          "appointmentId",
+          "guardianName",
+          "studentName",
+          "topic"
+        ],
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string"
+          },
+          "hasStarted": {
+            "type": "boolean"
+          },
+          "appointmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "guardianName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "studentName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "topic": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Öğretmenin takvimindeki dilim (spec 0016 gereksinim 2): dilim, başlangıç/bitiş (UTC), durum (`Free` boş, `Pending` onay\nbekliyor, `Approved` onaylı, `Expired` süresi doldu), başlamış mı ve randevu varsa kimliği, veli adı, çocuk adı ve konu."
       },
       "SchoolCalendarView": {
         "required": [
@@ -11300,6 +12152,37 @@
         },
         "description": "Sınıf öğretmeni ekranındaki kişi (spec 0010): kimlik, ad-soyad ve e-posta (aynı adlı öğretmenleri ayırmak için)."
       },
+      "TeacherSchedule": {
+        "required": [
+          "pendingCount",
+          "pending",
+          "slots"
+        ],
+        "type": "object",
+        "properties": {
+          "pendingCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pending": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleItem"
+            }
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleItem"
+            }
+          }
+        },
+        "description": "\"Takvimim\" (spec 0016 gereksinim 2): yanıt bekleyen talep sayısı, üstte gösterilen yanıt bekleyen talepler (en yakın önce) ve\nbugünden (Türkiye günü) itibaren bütün dilimler gün ve saat sırasıyla."
+      },
       "TenantSummary": {
         "required": [
           "id",
@@ -11783,6 +12666,9 @@
     },
     {
       "name": "Announcements"
+    },
+    {
+      "name": "Appointments"
     },
     {
       "name": "Attendance"
