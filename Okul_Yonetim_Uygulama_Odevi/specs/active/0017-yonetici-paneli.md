@@ -1,6 +1,6 @@
 # Spec 0017 — Yönetici paneli: günlük özet, temel raporlar ve Excel'e aktarma
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0017-plan.md`
 - Self-critique: done
