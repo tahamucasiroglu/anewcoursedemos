@@ -95,6 +95,32 @@ public sealed class NotificationGateTests
         Titles((await FeedAsync(client, w.AliMother.Token)).Body).ShouldBe(["Veli toplantısı"]);
     }
 
+    // VERIFY V-3 (plan Risks 4): bildirim kayıt kalıcı olduktan sonra çıkar — gönderici, bildirim anında kaynağı başka bir
+    // bağlantıdan sorar; kayıttan ya da commit'ten önce çıkan bildirimde satır henüz görünmez.
+    [Fact]
+    public async Task Delivery_AfterCommit_SourceVisibleToAnotherConnection()
+    {
+        CommittedSourceProbeNotifier probe = new();
+        using OkulApiFactory factory = Factory(this.database, probe);
+        probe.Services = factory.Services;
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+
+        Guid plain = await PublishedAsync(client, w.Class.Teacher, Plain("Classroom", w.Class.ClassroomId));
+        Guid form = await PublishedAsync(client, w.Class.Founder, Form("Student", w.Ali, "2026-11-27"));
+        Guid id = await StartedAsync(client, w.Class.Teacher, w.Ali, w.AliMother.UserId);
+        (await SendAsync(client, w.Class.Teacher, id, "Ali bugün çok iyiydi")).Status.ShouldBe(HttpStatusCode.OK);
+        await SavedAsync(client, w.Class.Teacher, w.Class.ClassroomId, [(w.Ali, "Absent"), (w.Ayse, "Present")]);
+
+        var deliveries = probe.Deliveries.ToArray();
+        deliveries.Count(d => d.Notification.SourceId == plain).ShouldBe(3);
+        deliveries.Count(d => d.Notification.SourceId == form).ShouldBe(2);
+        deliveries.Count(d => d.Notification.Kind == PushNotificationKind.Message).ShouldBe(1);
+        deliveries.Count(d => d.Notification.Kind == PushNotificationKind.SchoolNotice).ShouldBe(2);
+        deliveries.Length.ShouldBe(8);
+        deliveries.Where(d => !d.Committed).Select(d => $"{d.Notification.Kind} {d.Notification.SourceId}").ShouldBeEmpty("bildirim anında kaynak kalıcı olmalı");
+    }
+
     [Fact]
     public async Task SenderFails_AnnouncementAndMessageStillSaved_WarningLogged()
     {
