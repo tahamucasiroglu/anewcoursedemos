@@ -5,6 +5,7 @@ import { t } from "../../i18n/t";
 import { useAuthStyles } from "../auth/useAuthStyles";
 import { AnnouncementDetailScreen } from "./AnnouncementDetailScreen";
 import { useCommunicationStyles } from "./useCommunicationStyles";
+import { WeeklySummaryNoticeScreen } from "./WeeklySummaryNoticeScreen";
 
 type State =
   | { kind: "loading" }
@@ -21,7 +22,8 @@ interface Props {
 /**
  * Velinin duyuru akışı (spec 0011 gereksinim 2, 7; AC-13): alıcısı olduğu duyurular ve çocuklarının okul bildirimleri,
  * yeniden eskiye, 20'lik sayfalar ("Daha fazla"). Okunmamış satırda "Yeni" işareti (erişilebilirlik etiketi "okunmadı");
- * okul bildiriminin yayınlayanı "Okul bildirimi". Duyuruya dokununca ayrıntı açılır (sunucu okundu yazar); dönünce akış
+ * okul bildiriminin yayınlayanı "Okul bildirimi". Duyuruya ve haftalık gelişim özetine (spec 0014, tür `WeeklySummary` — başlık
+ * "Haftalık gelişim özeti — 16–22 Kasım", çocuk adıyla) dokununca ayrıntı açılır (sunucu okundu yazar); dönünce akış
  * yenilenir. Açılınca ve aşağı çekince yenilenir; "Daha fazla" satırları `tür:kimlik` ile tekrarsız ekler, hata verirse not
  * gösterir. Durumlar: yükleniyor, boş ("Henüz duyuru yok"), dolu, hata + tekrar dene.
  * Liste kayar (FlatList), "Geri" altta sabit (conventions T16).
@@ -35,6 +37,7 @@ export function FeedScreen({ client, onBack }: Props) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openSummaryId, setOpenSummaryId] = useState<string | null>(null);
 
   const failure = useCallback(
     (outcome: { unreachable: boolean; message?: string | null }) =>
@@ -61,6 +64,20 @@ export function FeedScreen({ client, onBack }: Props) {
       active = false;
     };
   }, [client, reload, failure]);
+
+  if (openSummaryId) {
+    return (
+      <WeeklySummaryNoticeScreen
+        key={openSummaryId}
+        client={client}
+        noticeId={openSummaryId}
+        onBack={() => {
+          setOpenSummaryId(null);
+          setReload((n) => n + 1);
+        }}
+      />
+    );
+  }
 
   if (openId) {
     return (
@@ -118,8 +135,14 @@ export function FeedScreen({ client, onBack }: Props) {
         <Text style={styles.notice}>{item.requiresConsent ? `${t("feed.consent")} · ${meta}` : meta}</Text>
       </>
     );
-    return item.kind === "Announcement" ? (
-      <Pressable style={own.row} testID="feed-row" accessibilityRole="button" accessibilityLabel={label} onPress={() => setOpenId(item.id)}>
+    return item.kind === "Announcement" || item.kind === "WeeklySummary" ? (
+      <Pressable
+        style={own.row}
+        testID="feed-row"
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        onPress={() => (item.kind === "WeeklySummary" ? setOpenSummaryId(item.id) : setOpenId(item.id))}
+      >
         {content}
       </Pressable>
     ) : (

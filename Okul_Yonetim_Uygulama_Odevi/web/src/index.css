@@ -488,3 +488,83 @@ a {
 .announcement-body {
   white-space: pre-wrap;
 }
+
+/* Haftalık gelişim özeti (spec 0014): sınıf/hafta seçimi dar ekranda sarar; panelde not ve özet alanları tam genişlik, dikey
+   büyür; gönderilmiş metin satır sonlarını korur; 320 px'te yatay kayma yok. */
+.weekly-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.weekly-filters label,
+.weekly-week label {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 44px;
+}
+
+.weekly-week {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.weekly-filters select,
+.weekly-panel textarea {
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  max-width: 100%;
+}
+
+.weekly-panel {
+  overflow-wrap: anywhere;
+}
+
+.weekly-panel form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.weekly-panel label {
+  font-weight: 600;
+}
+
+.weekly-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.weekly-panel textarea:focus-visible,
+.weekly-filters select:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.weekly-panel textarea[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.weekly-ai-label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.weekly-final {
+  white-space: pre-wrap;
+}

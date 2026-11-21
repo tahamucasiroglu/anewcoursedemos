@@ -350,5 +350,8 @@
   "childAcademics.gone": "Bu öğrenci artık görüntülenemiyor.",
   "childAcademics.back": "Geri",
   "childAcademics.backToChildren": "Çocuklara dön",
-  "childAcademics.loadError": "Özet yüklenemedi."
+  "childAcademics.loadError": "Özet yüklenemedi.",
+  "weekly.title": "Haftalık gelişim özeti",
+  "weekly.loading": "Özet yükleniyor…",
+  "weekly.loadError": "Özet alınamadı."
 }

@@ -250,3 +250,23 @@ export type {
   SubmissionStatus,
   SubmissionStudentRow,
 } from "./academics/academicsForms";
+export {
+  canGenerate,
+  SUMMARY_TEXT_MAX,
+  summaryStatusKey,
+  TEACHER_NOTE_MAX,
+  validateSummaryText,
+  validateTeacherNote,
+  WEEK_CHOICES,
+} from "./weeklySummary/weeklySummaryForms";
+export type {
+  SummaryFieldError,
+  SummaryStatusKey,
+  WeekChoice,
+  WeeklySummaryClassroom,
+  WeeklySummaryList,
+  WeeklySummaryPanel,
+  WeeklySummarySent,
+  WeeklySummarySource,
+  WeeklySummaryStudentRow,
+} from "./weeklySummary/weeklySummaryForms";

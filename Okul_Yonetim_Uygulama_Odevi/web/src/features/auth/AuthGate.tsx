@@ -7,6 +7,7 @@ import { CommunicationPage } from "../communication/CommunicationPage";
 import { NoticesPage } from "../notices/NoticesPage";
 import { PlatformPage } from "../platform/PlatformPage";
 import { StudentsPage } from "../students/StudentsPage";
+import { WeeklySummaryPage } from "../weekly-summary/WeeklySummaryPage";
 import { resetTokenFromRoute } from "@okul/api-client";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { ResetPasswordScreen } from "./ResetPasswordScreen";
@@ -24,7 +25,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007); "#/takvim" okul
  * takvimi (spec 0008, her rol); "#/ogrenciler" öğrenci yönetimi (spec 0009, yalnızca kurucu); "#/yoklama" yoklama (öğretmen) ve
  * "#/bildirimler" veli bildirimleri (spec 0010; okununca kişi bilgisi — okunmamış sayısı — yenilenir); "#/iletisim" duyurular
- * (spec 0011, kurucu ve öğretmen). Kısa geçiş
+ * (spec 0011, kurucu ve öğretmen); "#/haftalik-ozet" haftalık gelişim özeti (spec 0014, sınıf öğretmeni). Kısa geçiş
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
@@ -83,6 +84,10 @@ export function AuthGate() {
 
       if (path === "/iletisim") {
         return <CommunicationPage me={state.me} client={session.client} />;
+      }
+
+      if (path === "/haftalik-ozet") {
+        return <WeeklySummaryPage me={state.me} client={session.client} />;
       }
 
       if (path === "/ogrenciler") {

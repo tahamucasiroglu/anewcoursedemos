@@ -4573,6 +4573,56 @@
         }
       }
     },
+    "/api/notices/{id}": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notices/read": {
       "post": {
         "tags": [
@@ -4930,6 +4980,406 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/weekly-summaries/classrooms": {
+      "get": {
+        "tags": [
+          "WeeklySummaries"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeeklySummaryClassroom"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/weekly-summaries": {
+      "get": {
+        "tags": [
+          "WeeklySummaries"
+        ],
+        "parameters": [
+          {
+            "name": "classroomId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "week",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummaryList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/weekly-summaries/students/{studentId}": {
+      "get": {
+        "tags": [
+          "WeeklySummaries"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "week",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummaryPanel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/weekly-summaries/students/{studentId}/draft": {
+      "post": {
+        "tags": [
+          "WeeklySummaries"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "week",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateWeeklySummaryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateWeeklySummaryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateWeeklySummaryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummaryPanel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "WeeklySummaries"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "week",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/weekly-summaries/students/{studentId}/send": {
+      "post": {
+        "tags": [
+          "WeeklySummaries"
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "week",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendWeeklySummaryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendWeeklySummaryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendWeeklySummaryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummarySent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -6488,7 +6938,7 @@
             "type": "boolean"
           }
         },
-        "description": "Akıştaki satır: tür (`Announcement` ya da `SchoolNotice` — diğer modüllerin \"Okul bildirimi\"), başlık (okul bildiriminde bildirim metni), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu."
+        "description": "Akıştaki satır: tür (`Announcement`, `SchoolNotice` — diğer modüllerin \"Okul bildirimi\" — ya da spec 0014 `WeeklySummary` — haftalık gelişim özeti, ayrıntısı `api/notices/{id}`), başlık (okul bildiriminde bildirim metni, haftalık özette \"Haftalık gelişim özeti — 16–22 Kasım\"), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu."
       },
       "FeedPage": {
         "required": [
@@ -6541,6 +6991,21 @@
           }
         },
         "description": "Şifremi unuttum isteği."
+      },
+      "GenerateWeeklySummaryRequest": {
+        "required": [
+          "teacherNote"
+        ],
+        "type": "object",
+        "properties": {
+          "teacherNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "\"Özet oluştur\" (spec 0014): öğretmenin isteğe bağlı kısa notu (en fazla 500 karakter)."
       },
       "GradeLevelAdminView": {
         "required": [
@@ -7054,9 +7519,13 @@
             ],
             "format": "int32",
             "default": 0
+          },
+          "teachesClassroom": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış\nduyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011)."
+        "description": "\"Ben kimim\" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,\nAccounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:\nplatform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış\nduyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011); spec 0014: öğretmen olarak atandığı etkin bir sınıf var mı\n(\"Haftalık özet\" bağlantısı yalnızca o zaman görünür)."
       },
       "MessageContacts": {
         "required": [
@@ -7222,9 +7691,15 @@
           "at": {
             "type": "string",
             "format": "date-time"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` / spec 0013 `Assignment` —\n\"düzeltildi\" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir."
+        "description": "Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` / spec 0013 `Assignment` —\n\"düzeltildi\" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir.\nSpec 0014: tür `WeeklySummary` — başlık (\"Haftalık gelişim özeti — 16–22 Kasım\", günden — haftanın Pazartesi'si — kurulur;\ndiğer türlerde boş) ve metin = onaylanan özet + etiket + dayanak satırı."
       },
       "PanelSchoolResult": {
         "required": [
@@ -7815,6 +8290,21 @@
         },
         "description": "Mesaj (spec 0011): metin (boş olamaz, en fazla 2000 karakter); spec 0012: sesli nottan gelen AI taslağının kimliği (varsa — gönderim taslağın onayıdır)."
       },
+      "SendWeeklySummaryRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "\"Onayla ve gönder\" (spec 0014): öğretmenin onayladığı (düzenlenmiş) özet metni — boş olamaz, en fazla 1500 karakter."
+      },
       "SiblingRow": {
         "required": [
           "id",
@@ -8360,6 +8850,66 @@
         },
         "description": "Öğrenci değişikliklerinin yanıtı: yalnızca öğrenci kimliği. Kart (sağlık bilgisiyle) ayrıca okunur — böylece her sağlık\nokuması kart okumasından geçer ve audit'e yazılır."
       },
+      "StudentWeekAttendance": {
+        "required": [
+          "daysTaken",
+          "present",
+          "absent",
+          "late",
+          "absentDays",
+          "lateDays"
+        ],
+        "type": "object",
+        "properties": {
+          "daysTaken": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "present": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "absent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "late": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "absentDays": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "lateDays": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        },
+        "description": "Öğrencinin bir aralıktaki yoklama özeti (spec 0014 dayanağı): yoklama alınan gün sayısı, Var / Yok / Geç sayıları ve yok ile\ngeç günleri (artan sırada). Aynı gün iki sınıfta yoklama varsa (gün içinde sınıf değişikliği) o günün son kaydı sayılır."
+      },
       "SubmissionInput": {
         "required": [
           "studentId",
@@ -8707,6 +9257,235 @@
           }
         },
         "description": "Sesli not taslağı yanıtı (spec 0012 AC-1): taslak kimliği (göndermede verilir), kaynak döküm (BR-6), taslak metin (en fazla 1000) ve ses süresi."
+      },
+      "WeeklySummaryClassroom": {
+        "required": [
+          "id",
+          "name",
+          "branchName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          }
+        },
+        "description": "Haftalık özette öğretmenin sınıfı (spec 0014 gereksinim 1): kimlik, ad ve şube."
+      },
+      "WeeklySummaryList": {
+        "required": [
+          "classroomId",
+          "classroomName",
+          "weekStart",
+          "weekEnd",
+          "weekLabel",
+          "students"
+        ],
+        "type": "object",
+        "properties": {
+          "classroomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "weekEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "weekLabel": {
+            "type": "string"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeeklySummaryStudentRow"
+            }
+          }
+        },
+        "description": "Seçilen sınıf ve haftanın öğrenci listesi (spec 0014 gereksinim 1): sınıf, hafta (Pazartesi, Pazar, \"16–22 Kasım\") ve Türkçe ad sırasıyla öğrenciler."
+      },
+      "WeeklySummaryPanel": {
+        "required": [
+          "studentId",
+          "fullName",
+          "weekStart",
+          "weekEnd",
+          "weekLabel",
+          "status",
+          "basis",
+          "basisLine",
+          "hasData",
+          "draftId",
+          "draftText",
+          "finalText",
+          "sentAt"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "weekEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "weekLabel": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "basis": {
+            "$ref": "#/components/schemas/WeeklySummarySource"
+          },
+          "basisLine": {
+            "type": "string"
+          },
+          "hasData": {
+            "type": "boolean"
+          },
+          "draftId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "draftText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "finalText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sentAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Öğrenci-hafta paneli (spec 0014 gereksinim 2, 3, 5): öğrenci, hafta, durum (`None`/`Draft`/`Sent`), dayanak (taslak\nvarsa taslakla saklanan — BR-6, yoksa şimdi toplanan; öğretmen notu dahil), kısa dayanak satırı, dayanak boş değil mi, bekleyen\ntaslağın kimliği ve metni, gönderilmişse son metin ve gönderim zamanı."
+      },
+      "WeeklySummarySent": {
+        "required": [
+          "draftId",
+          "notifiedGuardians",
+          "sentAt"
+        ],
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notifiedGuardians": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Özet gönderiminin sonucu (spec 0014): onaylanan taslak, bildirim giden veli sayısı ve gönderim zamanı."
+      },
+      "WeeklySummarySource": {
+        "required": [
+          "firstName",
+          "weekStart",
+          "attendance",
+          "assignments",
+          "grades",
+          "teacherNote"
+        ],
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "attendance": {
+            "$ref": "#/components/schemas/StudentWeekAttendance"
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAssignmentRecord"
+            }
+          },
+          "grades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentGradeRecord"
+            }
+          },
+          "teacherNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isEmpty": {
+            "type": "boolean"
+          }
+        },
+        "description": "Haftalık gelişim özetinin dayanağı (spec 0014 gereksinim 2–4, BR-6): öğrencinin <b>yalnızca adı</b> (soyadı değil —\nstring WeeklySummarySource.FirstNameOf(string fullName)), haftanın Pazartesi'si, o haftanın yoklama özeti (Attendance), teslim günü o haftada olan ödevler ve\ngünü o haftada olan notlar (Academics; yoksa boş) ve öğretmenin isteğe bağlı notu. Sağlık, alerji, veli ve başka öğrenci verisi\nbu tipte yoktur — modele giden içerik (string WeeklySummarySource.ToPromptText()) yalnızca buradan kurulur (veri minimizasyonu, AC-5).\nTaslakla birlikte JSON olarak saklanır (string WeeklySummarySource.ToJson()/WeeklySummarySource WeeklySummarySource.FromJson(string json)); veliye ve öğretmene kısa dayanak satırı\nstring WeeklySummarySource.ToBasisLine(WeeklySummaryBasisTexts texts) (\"Dayanak: 4 gün geldi, 1 gün gelmedi; 2 ödev; 1 not; öğretmen notu\"). bool WeeklySummarySource.IsEmpty:\nyoklama, ödev, not ve öğretmen notu yok — özet üretilmez (AC-4). Modele giden etiketler (Öğrenci:, Yoklama:…) kullanıcıya\ngösterilmez; talimatla birlikte modelin girdisidir."
+      },
+      "WeeklySummaryStudentRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "description": "Sınıf listesinde öğrenci ve o haftaki özet durumu (spec 0014 gereksinim 1): `None` (\"Özet yok\"), `Draft` (\"Taslak hazır\"), `Sent` (\"Gönderildi\")."
       }
     }
   },
@@ -8785,6 +9564,9 @@
     },
     {
       "name": "SystemHealth"
+    },
+    {
+      "name": "WeeklySummaries"
     }
   ]
 }

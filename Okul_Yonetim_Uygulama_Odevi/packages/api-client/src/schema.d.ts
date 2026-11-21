@@ -4412,6 +4412,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NoticeView"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notices/read": {
         parameters: {
             query?: never;
@@ -4796,6 +4851,375 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weekly-summaries/classrooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WeeklySummaryClassroom"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weekly-summaries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    classroomId?: string;
+                    week?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WeeklySummaryList"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weekly-summaries/students/{studentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    week?: string;
+                };
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WeeklySummaryPanel"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weekly-summaries/students/{studentId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    week?: string;
+                };
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GenerateWeeklySummaryRequest"];
+                    "text/json": components["schemas"]["GenerateWeeklySummaryRequest"];
+                    "application/*+json": components["schemas"]["GenerateWeeklySummaryRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WeeklySummaryPanel"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: {
+                    week?: string;
+                };
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weekly-summaries/students/{studentId}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    week?: string;
+                };
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SendWeeklySummaryRequest"];
+                    "text/json": components["schemas"]["SendWeeklySummaryRequest"];
+                    "application/*+json": components["schemas"]["SendWeeklySummaryRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WeeklySummarySent"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -5254,7 +5678,7 @@ export interface components {
             founderName: null | string;
             founderEmail: null | string;
         };
-        /** @description Akıştaki satır: tür (`Announcement` ya da `SchoolNotice` — diğer modüllerin "Okul bildirimi"), başlık (okul bildiriminde bildirim metni), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu. */
+        /** @description Akıştaki satır: tür (`Announcement`, `SchoolNotice` — diğer modüllerin "Okul bildirimi" — ya da spec 0014 `WeeklySummary` — haftalık gelişim özeti, ayrıntısı `api/notices/{id}`), başlık (okul bildiriminde bildirim metni, haftalık özette "Haftalık gelişim özeti — 16–22 Kasım"), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu. */
         FeedItem: {
             kind: string;
             /** Format: uuid */
@@ -5279,6 +5703,10 @@ export interface components {
         /** @description Şifremi unuttum isteği. */
         ForgotPasswordRequest: {
             email: null | string;
+        };
+        /** @description "Özet oluştur" (spec 0014): öğretmenin isteğe bağlı kısa notu (en fazla 500 karakter). */
+        GenerateWeeklySummaryRequest: {
+            teacherNote: null | string;
         };
         /** @description Yönetim ekranındaki sınıf seviyesi: ad, sıra numarası ve durum (pasifler de listelenir). */
         GradeLevelAdminView: {
@@ -5423,7 +5851,8 @@ export interface components {
          * @description "Ben kimim" yanıtı: ad-soyad, e-posta, seçili okul (seçilmediyse boş), o okuldaki roller (Founder, Teacher, Guardian,
          *     Accounting), görebildiği şubeler, rolü olan tüm okullar (okul değiştirme için) ve platform paneline erişim (spec 0007:
          *     platform yöneticisi ve kodla açılmış oturum), velinin okunmamış bildirim sayısı (spec 0010; veli değilse 0) ve okunmamış
-         *     duyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011).
+         *     duyuru (veli) ile mesaj (öğretmen/veli) sayıları (spec 0011); spec 0014: öğretmen olarak atandığı etkin bir sınıf var mı
+         *     ("Haftalık özet" bağlantısı yalnızca o zaman görünür).
          */
         MeResponse: {
             fullName: string;
@@ -5449,6 +5878,8 @@ export interface components {
              * @default 0
              */
             unreadMessageCount: number | string;
+            /** @default false */
+            teachesClassroom: boolean;
         };
         /** @description Yeni mesaj seçenekleri: veli tarafı (çocuk → öğretmenler) ve öğretmen tarafı (sınıf → öğrenci → veliler); rolü olmayan taraf boş. */
         MessageContacts: {
@@ -5490,6 +5921,8 @@ export interface components {
         /**
          * @description Velinin bildirim listesindeki satır (spec 0010 gereksinim 8): öğrenci, gün, tür (`Absent` / `Corrected` / spec 0013 `Assignment` —
          *     "düzeltildi" etiketi), metin, okundu mu ve son değişiklik zamanı. Yalnızca öğrenci adı, gün, okul adı ve durum içerir.
+         *     Spec 0014: tür `WeeklySummary` — başlık ("Haftalık gelişim özeti — 16–22 Kasım", günden — haftanın Pazartesi'si — kurulur;
+         *     diğer türlerde boş) ve metin = onaylanan özet + etiket + dayanak satırı.
          */
         NoticeView: {
             /** Format: uuid */
@@ -5504,6 +5937,7 @@ export interface components {
             isRead: boolean;
             /** Format: date-time */
             at: string;
+            title?: null | string;
         };
         /** @description Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok. */
         PanelSchoolResult: {
@@ -5667,6 +6101,10 @@ export interface components {
             /** Format: uuid */
             aiDraftId?: null | string;
         };
+        /** @description "Onayla ve gönder" (spec 0014): öğretmenin onayladığı (düzenlenmiş) özet metni — boş olamaz, en fazla 1500 karakter. */
+        SendWeeklySummaryRequest: {
+            text: null | string;
+        };
         /** @description Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum. */
         SiblingRow: {
             /** Format: uuid */
@@ -5829,6 +6267,22 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
+        /**
+         * @description Öğrencinin bir aralıktaki yoklama özeti (spec 0014 dayanağı): yoklama alınan gün sayısı, Var / Yok / Geç sayıları ve yok ile
+         *     geç günleri (artan sırada). Aynı gün iki sınıfta yoklama varsa (gün içinde sınıf değişikliği) o günün son kaydı sayılır.
+         */
+        StudentWeekAttendance: {
+            /** Format: int32 */
+            daysTaken: number | string;
+            /** Format: int32 */
+            present: number | string;
+            /** Format: int32 */
+            absent: number | string;
+            /** Format: int32 */
+            late: number | string;
+            absentDays: string[];
+            lateDays: string[];
+        };
         /** @description Kaydedilen teslim listesinde bir öğrencinin durumu: `Unmarked`, `Submitted` ya da `NotSubmitted`. */
         SubmissionInput: {
             /** Format: uuid */
@@ -5937,6 +6391,86 @@ export interface components {
             draft: string;
             /** Format: double */
             durationSeconds: number | string;
+        };
+        /** @description Haftalık özette öğretmenin sınıfı (spec 0014 gereksinim 1): kimlik, ad ve şube. */
+        WeeklySummaryClassroom: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            branchName: string;
+        };
+        /** @description Seçilen sınıf ve haftanın öğrenci listesi (spec 0014 gereksinim 1): sınıf, hafta (Pazartesi, Pazar, "16–22 Kasım") ve Türkçe ad sırasıyla öğrenciler. */
+        WeeklySummaryList: {
+            /** Format: uuid */
+            classroomId: string;
+            classroomName: string;
+            /** Format: date */
+            weekStart: string;
+            /** Format: date */
+            weekEnd: string;
+            weekLabel: string;
+            students: components["schemas"]["WeeklySummaryStudentRow"][];
+        };
+        /**
+         * @description Öğrenci-hafta paneli (spec 0014 gereksinim 2, 3, 5): öğrenci, hafta, durum (`None`/`Draft`/`Sent`), dayanak (taslak
+         *     varsa taslakla saklanan — BR-6, yoksa şimdi toplanan; öğretmen notu dahil), kısa dayanak satırı, dayanak boş değil mi, bekleyen
+         *     taslağın kimliği ve metni, gönderilmişse son metin ve gönderim zamanı.
+         */
+        WeeklySummaryPanel: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            /** Format: date */
+            weekStart: string;
+            /** Format: date */
+            weekEnd: string;
+            weekLabel: string;
+            status: string;
+            basis: components["schemas"]["WeeklySummarySource"];
+            basisLine: string;
+            hasData: boolean;
+            /** Format: uuid */
+            draftId: null | string;
+            draftText: null | string;
+            finalText: null | string;
+            /** Format: date-time */
+            sentAt: null | string;
+        };
+        /** @description Özet gönderiminin sonucu (spec 0014): onaylanan taslak, bildirim giden veli sayısı ve gönderim zamanı. */
+        WeeklySummarySent: {
+            /** Format: uuid */
+            draftId: string;
+            /** Format: int32 */
+            notifiedGuardians: number | string;
+            /** Format: date-time */
+            sentAt: string;
+        };
+        /**
+         * @description Haftalık gelişim özetinin dayanağı (spec 0014 gereksinim 2–4, BR-6): öğrencinin <b>yalnızca adı</b> (soyadı değil —
+         *     string WeeklySummarySource.FirstNameOf(string fullName)), haftanın Pazartesi'si, o haftanın yoklama özeti (Attendance), teslim günü o haftada olan ödevler ve
+         *     günü o haftada olan notlar (Academics; yoksa boş) ve öğretmenin isteğe bağlı notu. Sağlık, alerji, veli ve başka öğrenci verisi
+         *     bu tipte yoktur — modele giden içerik (string WeeklySummarySource.ToPromptText()) yalnızca buradan kurulur (veri minimizasyonu, AC-5).
+         *     Taslakla birlikte JSON olarak saklanır (string WeeklySummarySource.ToJson()/WeeklySummarySource WeeklySummarySource.FromJson(string json)); veliye ve öğretmene kısa dayanak satırı
+         *     string WeeklySummarySource.ToBasisLine(WeeklySummaryBasisTexts texts) ("Dayanak: 4 gün geldi, 1 gün gelmedi; 2 ödev; 1 not; öğretmen notu"). bool WeeklySummarySource.IsEmpty:
+         *     yoklama, ödev, not ve öğretmen notu yok — özet üretilmez (AC-4). Modele giden etiketler (Öğrenci:, Yoklama:…) kullanıcıya
+         *     gösterilmez; talimatla birlikte modelin girdisidir.
+         */
+        WeeklySummarySource: {
+            firstName: string;
+            /** Format: date */
+            weekStart: string;
+            attendance: components["schemas"]["StudentWeekAttendance"];
+            assignments: components["schemas"]["StudentAssignmentRecord"][];
+            grades: components["schemas"]["StudentGradeRecord"][];
+            teacherNote: null | string;
+            isEmpty?: boolean;
+        };
+        /** @description Sınıf listesinde öğrenci ve o haftaki özet durumu (spec 0014 gereksinim 1): `None` ("Özet yok"), `Draft` ("Taslak hazır"), `Sent` ("Gönderildi"). */
+        WeeklySummaryStudentRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            status: string;
         };
     };
     responses: never;
