@@ -182,6 +182,19 @@
     yeni izinli dosya yok; `PlatformDirectory`'ye yalnızca etkin okul kimliklerini döndüren bir filtre delme eklendi — T5 gerekçesi
     (işçinin oturumu yok; okul başına kapsamı açmak için yalnızca kimlik gerekir, başka alan dönmez). `OverdueReminderRunner`'a yalnızca
     işçi ve DI kaydı bağımlı olabilir ve çalıştırıcı yalnızca okulu seçilmemiş taze kapsamda açılır (architecture testi + `TenantId is null`).
+18. **Randevu (spec 0016, S1/S2/S3/S5/S6):** rol ve ilişki her istekte veritabanından (`AppointmentsGuard`): müsaitlik, takvim ve yanıt Öğretmen rolü,
+    talep ve "Randevularım" Veli rolü ister (yoksa 403, Türkçe gövde); veli yalnızca **çocuğunun sınıfının öğretmenlerinin** dilimlerini görür ve talep eder
+    (0010 sınıf öğretmeni bağı — mesajlaşmayla aynı kural: sınıf etkin, öğretmen atanmış ve sınıfın şubesinde etkin Öğretmen; veli bağlı ve okulda etkin),
+    başka öğretmen, bağlı olmadığı çocuk, başka okul 404; öğretmen yalnızca kendi dilimini ve randevusunu görür/değiştirir (başkasınınki 404). Veli bağlı
+    çocuklarının ve kendi talep ettiği randevuları görür; çocuğun öteki velisi görür ama iptal edemez (403); ilişki bitince yeni talep reddedilir, var olan
+    randevu iki tarafta görünür ve iptal edilebilir (plan 0016 A-6). Dilim ve randevu yalnızca kurum filtreli (dilimde kaldırılmamış); şube/ilişki
+    duvarı guard'da, filtre delme yok — iki okulda öğretmen olan kişinin takvimi okul başınadır. Bütün değişiklikler öğretmen sırasında
+    (`appointments:teacher:<id>`) taze okumayla karar verir; dilimde tek açık randevuyu kısmi tekil dizin ikinci katman olarak korur (ihlal "Bu saat
+    artık dolu."). **Konu, ret/iptal nedeni ve kişi adları loglanmaz ve audit'e yazılmaz**: komutlar `ILoggableRequest` değildir (T9), loglarda yalnızca
+    kimlikler; talep, onay, ret ve iptal audit'te (`AppointmentRequested/Approved/Rejected/Cancelled`: kim, hangi randevu, ne zaman, IP; ayrıntıda
+    yalnızca dilim/öğrenci/öğretmen kimliği ve durum), müsaitlik açma/kaldırma Information log'unda (kimlik + sayı). Veliye bildirim metni öğretmen adı,
+    gün, saat ve varsa neden taşır (konu yok) ve yalnızca o çocuğun okulda etkin velilerine gider; öğretmene giden bildirim metni yalnızca tür, gün ve
+    saattir (`PushNotification.Text`; sahte gönderici metni loglamaz) ve mesai saatleri dışında gönderilmez (0011 kapısı, `NotifyTeacherCommand`).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

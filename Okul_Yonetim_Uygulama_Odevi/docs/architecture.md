@@ -42,7 +42,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** (bildirim kapısı); spec 0010: veli devamsızlık bildirimi (uygulama içi + e-posta kuyruğu) ve velinin Bildirimler listesi; spec 0011: duyuru + okundu + onay formu, öğretmen–veli konuşması, mesai saatleri | Announcement, AnnouncementRecipient, AnnouncementStudent, ConsentResponse, Conversation, ConversationMessage, QuietHours, GuardianNotice |
 | Academics | Ödev, teslim durumu, yazılı/sözlü not (spec 0013): öğretmenin ödev verme, teslim işaretleme, değerlendirme açma ve puan girişi; velinin çocuk özeti; öğrenci bazlı okuma sorgusu (spec 0014 haftalık özetin kaynağı) | Assignment, AssignmentSubmission, Assessment, Grade |
 | Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması (spec 0015: elle tahsilat, en eski vadeden dağıtım, okul başına sıralı makbuz no, öğrenci başına cari, otomatik hatırlatma işçisi) | FeeSchedule, DiscountDefinition, InstallmentPlan, Installment, Payment, PaymentAllocation, ReceiptCounter, PaymentReminder |
-| Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
+| Appointments | Öğretmen müsaitliği (tarihli aralık → görüşme dilimleri), veli randevu talebi, onay/ret/iptal, öğretmenin "Takvimim"i ve velinin "Randevularım"ı (spec 0016); bildirimler Communication kapısından | AvailabilitySlot, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
 | Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, spec 0014 haftalık gelişim özeti — dayanak toplama, taslak, onay kapısı; gönderim Communication'da) | AiDraft |
 | Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA (platform yöneticisi — spec 0007), token | User, RoleAssignment, TenantMembership, TwoFactorChallenge |
@@ -191,6 +191,20 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   (`GuardianNotice` türü `PaymentReminder`, velinin akışında "Okul bildirimi"), commit sonrası `DeliverNotificationsCommand`; bir okulun
   hatası yalnızca okul kimliğiyle Error loglanır, diğerleri sürer. Web'de `#/tahsilat` (+ `#/tahsilat/ogrenci/<id>`) ve `#/makbuz/<id>`
   (yazdırılabilir; `@media print` menü/düğmeleri basmaz); mobilde velide "Ödemeler".
+- Randevu (spec 0016): öğretmen uçları `api/appointments` (`schedule` GET — bugünden (Türkiye günü 00:00) itibaren dilimler ve onay bekleyenler,
+  `availability` POST, `slots/{id}` DELETE, `{id}/respond` POST), veli uçları (`teachers?studentId=` GET, `teachers/{id}/slots?studentId=` GET, POST talep,
+  `mine` GET — bağlı çocukların ve kendi talep ettiği randevular, yaklaşan + son 30 gün), ortak `{id}/cancel` POST. Yetki her istekte `AppointmentsGuard`'da
+  (rol yoksa 403, ilişki yoksa 404; çocuğun öteki velisinin talebini iptal 403): veli–öğrenci "Çocuklarım" sorgusundan, öğretmen–sınıf `CommunicationGuard`
+  ile aynı kaynaklardan (`ListStudentBriefsQuery`, `GetClassroomByIdQuery`, `IClassroomTeacherRepository`, `ListGuardianContactsQuery`). Dilim ve randevu
+  yalnızca kurum filtreli (dilimde ayrıca kaldırılmamış); filtre delme yok. Türkiye saatinden UTC'ye çeviri yalnızca `AvailabilityPlanner`'da
+  (`SchoolCalendar.Zone`, bulunamazsa sabit UTC+3); "Süresi doldu" saklanmaz, okumada hesaplanır (zamanlanmış iş yok). Randevu dilimin başlangıç/bitişini
+  kopyalar. Bütün değişiklikler öğretmen başına tek sırada (`appointments:teacher:<id>`; tek anahtar — kilit sırası sorunu yok): çakışma, "dilim boş mu",
+  "çocuk + öğretmen için açık randevu var mı", "hâlâ onay bekliyor mu" sıra içinde taze okunur; kısmi tekil dizin `appointments(slot_id) WHERE status IN (1, 2)`
+  ikinci katman (ihlal "Bu saat artık dolu."). Bildirimler: veliye (onay, ret, öğretmen iptali) işlem içinde Communication'ın `NotifyStudentGuardiansCommand`'ı
+  (`GuardianNotice` türü `Appointment`, kaynak randevu ya da öğretmen iptalinde kapanan dilim), commit sonrası `DeliverNotificationsCommand`; öğretmene
+  (yeni talep, veli iptali) commit sonrası Communication'ın yeni `NotifyTeacherCommand`'ı — mesai saatleri (`QuietHours`) kapıda uygulanır, metin
+  `PushNotification.Text`'te (tür + gün + saat). Bekleyen talep sayısı `/api/me`'de (`pendingAppointmentCount`, Appointments'ın
+  `CountMyPendingAppointmentsQuery`'si). Mobilde öğretmende "Randevular (n bekleyen)" → Takvimim, velide "Randevular" → Randevularım; web ekranı yok.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).
