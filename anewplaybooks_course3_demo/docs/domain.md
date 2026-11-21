@@ -5,7 +5,8 @@
 
 ## Product
 **LeaveManager**: personel izin takip sistemi. Sistemde şunlar yapılır: izin talebi oluşturma
-(`/new`), talepleri listeleme (`/requests`), dashboard'da talep durum sayıları ve personel
+(`/new`), talepleri listeleme (`/requests`), bekleyen talebi iptal etme (`POST /requests/<no>/cancel`,
+BR-9), dashboard'da talep durum sayıları ve personel
 bakiyeleri (hak / kullanılan / kalan) (`/`). 2015'ten beri iç geliştirme, testsiz bir legacy kod.
 **Amaç:** mevcut davranışı bozmadan yeni özellik eklemek. Mevcut davranış sözleşmedir.
 

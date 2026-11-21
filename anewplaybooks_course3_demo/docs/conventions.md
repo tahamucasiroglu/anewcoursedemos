@@ -39,7 +39,7 @@
 ## Data rules
 - Tarihler `datetime.date`. Formdan gelen tarih `%Y-%m-%d` biçiminde çözülür.
 - Gün sayıları `int`, takvim günü, hafta sonları dahil (BR-3).
-- Durumlar yalnız `Beklemede` / `Onaylandi` / `Reddedildi` (BR-5), birebir aynı yazılır.
+- Durumlar yalnız `Beklemede` / `Onaylandi` / `Reddedildi` / `Iptal Edildi` (BR-5, BR-9), birebir aynı yazılır.
 - "Bugün" sistem saatinden (`datetime.now()`, yerel saat) okunuyor. Yeni kod da aynı kaynağı
   kullanır ki testlerde tek noktadan sabitlenebilsin.
 
