@@ -51,7 +51,12 @@ public sealed class StudentAccountTests
         JsonElement[] movements = [.. account.GetProperty("movements").EnumerateArray()];
         movements.Select(m => m.GetProperty("date").GetString()).ShouldBe(["2026-11-10", Today, Today, Today]);
         movements.Select(m => m.GetProperty("kind").GetString()).ShouldBe(["Payment", "Plan", "Plan", "Payment"]);
-        movements.Select(m => m.GetProperty("balance").GetDecimal()).ShouldBe([-500m, 2_500m, 3_700m, 3_500m]);
+        movements[1..3].Select(m => m.GetProperty("debit").GetDecimal()).ShouldBe([3_000m, 1_200m], ignoreOrder: true, "aynı anda açılan iki planın kendi arasındaki sırası tanımsız");
+        movements[0].GetProperty("balance").GetDecimal().ShouldBe(-500m);
+        movements[1].GetProperty("balance").GetDecimal().ShouldBe(-500m + movements[1].GetProperty("debit").GetDecimal());
+        movements[2].GetProperty("balance").GetDecimal().ShouldBe(3_700m);
+        movements[3].GetProperty("balance").GetDecimal().ShouldBe(3_500m);
+        movements[3].GetProperty("credit").GetDecimal().ShouldBe(200m);
     }
 
     [Fact]
