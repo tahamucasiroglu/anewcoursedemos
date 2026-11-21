@@ -51,7 +51,7 @@ public static class InfrastructureServiceRegistration
         }
         else
         {
-            services.AddHttpClient<IAiTextGenerator, OllamaTextGenerator>(client => Point(client, ai.TextGenerator));
+            services.AddHttpClient<IAiTextGenerator, OllamaTextGenerator>(client => Point(client, ai.TextGenerator)).ConfigurePrimaryHttpMessageHandler(NoRedirects);
         }
 
         if (Unavailable(ai.SpeechToText) is { } speechReason)
@@ -60,7 +60,7 @@ public static class InfrastructureServiceRegistration
         }
         else
         {
-            services.AddHttpClient<ISpeechToText, WhisperServiceSpeechToText>(client => Point(client, ai.SpeechToText));
+            services.AddHttpClient<ISpeechToText, WhisperServiceSpeechToText>(client => Point(client, ai.SpeechToText)).ConfigurePrimaryHttpMessageHandler(NoRedirects);
         }
     }
 
@@ -69,6 +69,12 @@ public static class InfrastructureServiceRegistration
         string.IsNullOrWhiteSpace(endpoint.BaseUrl) ? "not-configured"
         : !AiOptions.IsLocalAddress(endpoint.BaseUrl) ? "not-local"
         : null;
+
+    /// <summary>
+    /// AI istemcileri yönlendirme izlemez (review I-1): yerel servisin döndürdüğü bir yönlendirme öğrenci verisini (döküm, ses)
+    /// yerel olmayan bir adrese taşıyabilirdi; 3xx "kullanılamıyor" olur.
+    /// </summary>
+    private static SocketsHttpHandler NoRedirects() => new() { AllowAutoRedirect = false };
 
     private static void Point(HttpClient client, AiEndpointOptions endpoint)
     {
