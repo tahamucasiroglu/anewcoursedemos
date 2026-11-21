@@ -1,8 +1,13 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
+using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Communication;
+using OkulYonetim.Persistence.Repositories;
+using OkulYonetim.Tests.Integration.Attendance;
 using OkulYonetim.Tests.Integration.Communication;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -19,7 +24,8 @@ namespace OkulYonetim.Tests.Integration.Ai;
 /// bildirim kapısı veli başına bir kez, pasif veliye gitmez; taslak son metin ve onaylayanla (sınıfın başka atanmış öğretmeni de
 /// olabilir) "onaylandı" olur; etkin velisi olmayan öğrencide "Bu öğrencinin kayıtlı velisi yok." ve hiçbir şey değişmez. Review R1-2:
 /// gönderim öğretmenin gördüğü taslağa bağlıdır — başka öğretmen yeniden oluşturduysa ya da hafta döndüyse "Taslak değişti; paneli
-/// yenileyin." ve hiçbir şey gitmez; taslaksız istek alan hatası (DraftId).
+/// yenileyin." ve hiçbir şey gitmez; taslaksız istek alan hatası (DraftId). 0014 VERIFY V-1: bildirim yalnızca işlem commit edildikten
+/// sonra teslim edilir — commit düşerse veliye push gitmez, hiçbir şey kalıcı olmaz.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class WeeklySummarySendTests
@@ -103,6 +109,41 @@ public sealed class WeeklySummarySendTests
         (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
         notifier.Sent.Count.ShouldBe(pushesBefore);
         (await AuditAsync(factory, w.Class.School.TenantId, Domain.Compliance.AuditAction.WeeklySummarySent)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Send_CommitFails_NoPushDelivered_NothingPersisted()
+    {
+        CapturingPushNotifier notifier = new();
+        bool commitFails = false;
+        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator(), notifier, configure: services =>
+        {
+            services.RemoveAll<IUnitOfWork>();
+            services.AddScoped<EfUnitOfWork>();
+            services.AddScoped<IUnitOfWork>(sp => new FailingCommitUnitOfWork(
+                sp.GetRequiredService<EfUnitOfWork>(),
+                key => Volatile.Read(ref commitFails) && key.StartsWith("weekly-summary:", StringComparison.Ordinal)));
+        });
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        await AttendAsync(client, w);
+        await GeneratedAsync(client, w.Class.Teacher, w.Ali);
+        int pushesBefore = notifier.Sent.Count;
+        Volatile.Write(ref commitFails, true);
+
+        var (status, _, raw) = await SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Ali bu hafta her gün geldi.");
+
+        status.ShouldBe(HttpStatusCode.InternalServerError, raw);
+        notifier.Sent.Skip(pushesBefore).ShouldBeEmpty("geri alınan gönderim veliye push göndermez — teslim commit'ten sonra (0014 VERIFY V-1)");
+        (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty("bildirim satırı kalıcı olmadı");
+        (await SummaryDraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem().IsPending.ShouldBeTrue("onay kalıcı olmadı");
+        (await AuditAsync(factory, w.Class.School.TenantId, Domain.Compliance.AuditAction.WeeklySummarySent)).ShouldBeEmpty();
+        (await FeedAsync(client, w.AliMother.Token)).Body.GetProperty("items").EnumerateArray()
+            .ShouldNotContain(i => i.GetProperty("kind").GetString() == "WeeklySummary");
+
+        Volatile.Write(ref commitFails, false);
+        (await SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Ali bu hafta her gün geldi.")).Status.ShouldBe(HttpStatusCode.OK, "işlem geri alındı; taslak yeniden gönderilebilir");
+        notifier.Sent.Skip(pushesBefore).Select(p => p.RecipientUserId).ShouldBe([w.AliMother.UserId, w.AliFather.UserId], ignoreOrder: true);
     }
 
     [Fact]
