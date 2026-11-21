@@ -60,7 +60,9 @@
    **Yerel ağ demosu (Pi):** yalnızca demo süresince Ollama (`OLLAMA_HOST=0.0.0.0`) ve ses servisi (`-ListenHost 0.0.0.0`)
    ağa açılır; ikisi de kimlik doğrulamasızdır, bu yüzden Windows güvenlik duvarı kuralı 11434 ve 8765 portlarına **yalnızca
    Pi'nin adresinden** (`192.168.1.102`) izin verir; trafik düz HTTP'dir ve okulun yerel ağından çıkmaz (B-13 ile aynı sınır).
-   Demo bitince servisler yeniden yalnızca `127.0.0.1`'e döner ve kural kaldırılır (`tools/ai/README.md`).
+   Windows'un `ollama.exe`/`python.exe` için daha önce oluşturduğu program izin kuralları tüm adreslere açıktır ve dar kuralı
+   boşa çıkarır: demo öncesi bulunup (`Get-NetFirewallApplicationFilter` → `Get-NetFirewallRule`) kapatılır ve Pi dışındaki
+   bir cihazdan 11434 ile 8765'in **kapalı** olduğu denenir (`Test-NetConnection`); açıksa demo başlamaz. Demo bitince servisler yeniden yalnızca `127.0.0.1`'e döner ve kural kaldırılır (`tools/ai/README.md`).
 
 ## AuthN / AuthZ
 1. **Varsayılan: reddet.** Her uç nokta kimlik doğrulama ister (genel yetki kuralı); anonim uçlar açıkça listelenir ve

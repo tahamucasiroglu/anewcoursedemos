@@ -53,7 +53,24 @@ Servisler **kimlik doğrulamasızdır** — yalnızca demo süresince ve yalnız
 2. Ses servisini ağa açın: `start-stt.ps1 -ListenHost 0.0.0.0`.
 3. Windows güvenlik duvarı (yönetici PowerShell) — yalnızca Pi (`192.168.1.102`):
    `New-NetFirewallRule -DisplayName "Okul AI demo" -Direction Inbound -Protocol TCP -LocalPort 11434,8765 -RemoteAddress 192.168.1.102 -Action Allow`
-4. Pi'de `/etc/okul/okul-api.env`'e `Ai__*` satırları (`docs/deploy-pi.md`) → `sudo systemctl restart okul-api`.
+4. **Var olan program izinlerini kapatın.** Windows, `ollama.exe` ya da `python.exe` ilk kez ağı dinlediğinde "erişime izin
+   ver" sorar; o an verilen izin **programa** bağlı, **tüm adreslere** açık bir kuraldır ve yukarıdaki dar kuralı boşa çıkarır
+   (izin kuralları birleşir — biri açıksa port açıktır). Bulun ve demo boyunca kapatın (yönetici PowerShell):
+   ```powershell
+   $programs = Get-NetFirewallApplicationFilter | Where-Object { $_.Program -match '\\(ollama|ollama app|python|pythonw)\.exe$' }
+   $rules = $programs | Get-NetFirewallRule | Where-Object { $_.Direction -eq 'Inbound' -and $_.Action -eq 'Allow' -and $_.Enabled -eq 'True' }
+   $rules | Format-Table DisplayName, Profile, @{n='Program';e={($_ | Get-NetFirewallApplicationFilter).Program}}
+   $rules | Disable-NetFirewallRule      # demo bitince: $rules | Enable-NetFirewallRule (yalnızca eskiden açıksa)
+   ```
+   Ayrıca portu içeren başka bir izin kuralı kalmadığına bakın:
+   `Get-NetFirewallPortFilter | Where-Object { $_.LocalPort -in '11434','8765' } | Get-NetFirewallRule | Where-Object { $_.Enabled -eq 'True' -and $_.Action -eq 'Allow' } | Select DisplayName`
+   → yalnızca "Okul AI demo" görünmeli.
+5. **Pi dışından deneyin.** Aynı ağdaki Pi dışı bir cihazdan (ör. ikinci bir bilgisayar)
+   `Test-NetConnection <bu-bilgisayarın-ip> -Port 11434` ve `-Port 8765` → `TcpTestSucceeded : False` olmalı (Linux/macOS:
+   `nc -vz -w 3 <ip> 11434`). Pi'den aynı deneme `True` döner (`curl -s http://<ip>:8765/health`). Biri Pi dışından açıksa
+   demo başlamaz: 4. adıma dönün.
+6. Pi'de `/etc/okul/okul-api.env`'e `Ai__*` satırları (`docs/deploy-pi.md`) → `sudo systemctl restart okul-api`.
 
-Demo bitince: kuralı silin (`Remove-NetFirewallRule -DisplayName "Okul AI demo"`), `OLLAMA_HOST`'u kaldırın, ses servisini
-varsayılanla (`127.0.0.1`) başlatın, Pi'deki `Ai__*` satırlarını silin. Trafik düz HTTP'dir; yerel ağ dışına açılmaz.
+Demo bitince: kuralı silin (`Remove-NetFirewallRule -DisplayName "Okul AI demo"`), 4. adımda kapattığınız kuralları yalnızca
+gerekiyorsa geri açın, `OLLAMA_HOST`'u kaldırın, ses servisini varsayılanla (`127.0.0.1`) başlatın, Pi'deki `Ai__*`
+satırlarını silin. Trafik düz HTTP'dir; yerel ağ dışına açılmaz.
