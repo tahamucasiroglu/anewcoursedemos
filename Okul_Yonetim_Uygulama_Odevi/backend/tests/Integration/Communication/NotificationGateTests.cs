@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Tests.Integration.Identity;
 using OkulYonetim.Tests.Integration.Infrastructure;
+using OkulYonetim.Tests.Integration.Students;
 using Shouldly;
 using static OkulYonetim.Tests.Integration.Attendance.AttendanceTestData;
 using static OkulYonetim.Tests.Integration.Communication.CommunicationTestData;
@@ -67,6 +70,29 @@ public sealed class NotificationGateTests
         notices.ShouldContain(p => p.SourceId == item.GetProperty("id").GetGuid());
         (await FeedAsync(client, w.AyseMother.Token)).Body.GetProperty("items").GetArrayLength().ShouldBe(0);
         (await FeedAsync(client, w.BerkMother.Token)).Body.GetProperty("items").GetArrayLength().ShouldBe(0);
+    }
+
+    // VERIFY V-4: iki çocuğu aynı kapsamda olan veli tek alıcı olur ve tek bildirim alır (öbür veliler de birer kez).
+    [Fact]
+    public async Task Publish_GuardianWithTwoChildrenInScope_OneRecipientOneNotification()
+    {
+        CapturingPushNotifier push = new();
+        using OkulApiFactory factory = Factory(this.database, push);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid can = await StudentAsync(client, w.Class, "Can Yılmaz");
+        await StudentsTestData.LinkAsync(client, w.Class.Founder, can, StudentsTestData.Guardian(w.AliMother.Email));
+
+        var (status, published, raw) = await PublishAsync(client, w.Class.Teacher, Plain("Classroom", w.Class.ClassroomId));
+        status.ShouldBe(HttpStatusCode.OK, raw);
+        Guid id = published.GetProperty("id").GetGuid();
+        published.GetProperty("recipientCount").GetInt32().ShouldBe(3);
+
+        push.Sent.Where(p => p.SourceId == id).Select(p => p.RecipientUserId)
+            .ShouldBe([w.AliMother.UserId, w.AliFather.UserId, w.AyseMother.UserId], ignoreOrder: true);
+        (await IdentityTestData.QueryAsync(factory, c => c.AnnouncementRecipients.IgnoreQueryFilters().CountAsync(r => r.AnnouncementId == id && r.GuardianUserId == w.AliMother.UserId))).ShouldBe(1);
+        (await IdentityTestData.QueryAsync(factory, c => c.AnnouncementStudents.IgnoreQueryFilters().CountAsync(s => s.AnnouncementId == id))).ShouldBe(3, "Ali, Ayşe, Can");
+        Titles((await FeedAsync(client, w.AliMother.Token)).Body).ShouldBe(["Veli toplantısı"]);
     }
 
     [Fact]
