@@ -522,6 +522,7 @@
   "billing.tabs.tariffs": "Tarifeler",
   "billing.tabs.discounts": "İndirimler",
   "billing.students.empty": "Henüz ödeme planı olan öğrenci yok",
+  "billing.students.noMatch": "Süzgece uyan öğrenci yok",
   "billing.students.search": "Ad ara",
   "billing.students.branch": "Şube",
   "billing.students.allBranches": "Bütün şubeler",

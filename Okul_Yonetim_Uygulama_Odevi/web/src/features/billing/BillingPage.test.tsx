@@ -6,7 +6,8 @@ import { accountRow, accountsPage, branchId, fee, totals } from "./billingFake";
 
 // Spec 0015 AC-1 (web: "Tahsilat" bağlantısı yalnızca kurucu ve muhasebede; başkası "Bu sayfaya erişiminiz yok.") ve AC-13 (cari listesi
 // durumları, süzgeç, sayfa, toplamlar; tarife/indirim sekmeleri yalnızca kurucuda; tarife formu alan hataları istek göndermeden,
-// gönderilirken kilitli, sunucu hatası duyurulur; pasifleştirme onaylı; tutar "1.234,50" biçiminde).
+// gönderilirken kilitli, sunucu hatası duyurulur; pasifleştirme onaylı; tutar "1.234,50" biçiminde); süzgeç etkinken boş sonuç "Süzgece uyan
+// öğrenci yok" (0015 review R1-3).
 afterEach(() => {
   vi.unstubAllGlobals();
   window.location.hash = "";
@@ -56,6 +57,21 @@ it("cari listesi: yükleniyor → hata + tekrar dene → dolu; tutarlar 1.234,50
 it("boş listede 'Henüz ödeme planı olan öğrenci yok'", async () => {
   open([["GET", /^\/api\/billing\/students$/, () => json(200, accountsPage([], { totalCount: 0 }))]]);
   expect(await screen.findByText("Henüz ödeme planı olan öğrenci yok")).toBeInTheDocument();
+});
+
+it.each([
+  ["ad araması", async () => userEvent.type(screen.getByLabelText("Ad ara"), "zeynep")],
+  ["şube", async () => userEvent.selectOptions(screen.getByLabelText("Şube"), branchId)],
+  ["yalnızca gecikenler", async () => userEvent.click(screen.getByLabelText("Yalnızca gecikenler"))],
+])("süzgeç (%s) etkinken boş sonuçta 'Süzgece uyan öğrenci yok'", async (_name, choose) => {
+  let calls = 0;
+  open([["GET", /^\/api\/billing\/students$/, () => json(200, ++calls === 1 ? accountsPage([accountRow()]) : accountsPage([], { totalCount: 0 }))]]);
+  await screen.findByRole("table");
+  await choose();
+  await userEvent.click(screen.getByRole("button", { name: "Süz" }));
+
+  expect(await screen.findByText("Süzgece uyan öğrenci yok")).toBeInTheDocument();
+  expect(screen.queryByText("Henüz ödeme planı olan öğrenci yok")).not.toBeInTheDocument();
 });
 
 it("süzgeç: ad, şube ve yalnızca gecikenler sorguya gider; 25'ten fazlasında sayfa düğmeleri", async () => {

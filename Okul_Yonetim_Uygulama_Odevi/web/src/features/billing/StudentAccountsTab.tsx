@@ -12,7 +12,7 @@ interface Filter { search: string; branchId: string; overdueOnly: boolean; page:
 /**
  * Cari listesi (spec 0015 gereksinim 8): planı olan öğrenciler, şube/sınıf, net, ödenen, kalan, geciken; ad araması, şube ve "yalnızca
  * gecikenler" süzgeci, 25'lik sayfa, altta süzülmüş bütün satırların toplamı. Durumlar: yükleniyor / boş ("Henüz ödeme planı olan
- * öğrenci yok") / dolu / hata + "Tekrar dene". Tablo başlık hücreli; dar ekranda tablo kendi içinde kayar.
+ * öğrenci yok"; süzgeç etkinse "Süzgece uyan öğrenci yok" — 0015 review R1-3) / dolu / hata + "Tekrar dene". Tablo başlık hücreli; dar ekranda tablo kendi içinde kayar.
  */
 export function StudentAccountsTab({ client }: { client: Client }) {
   const [filter, setFilter] = useState<Filter>({ search: "", branchId: "", overdueOnly: false, page: 1 });
@@ -50,6 +50,7 @@ export function StudentAccountsTab({ client }: { client: Client }) {
   };
 
   const branches = list.kind === "ready" ? list.page.branches : [];
+  const filtered = filter.search.trim() !== "" || filter.branchId !== "" || filter.overdueOnly;
   return (
     <div className="admin-section">
       <form className="filters" onSubmit={apply} aria-label={t("billing.students.apply")}>
@@ -80,7 +81,7 @@ export function StudentAccountsTab({ client }: { client: Client }) {
           </div>
         </div>
       )}
-      {list.kind === "ready" && Number(list.page.totalCount) === 0 && <p>{t("billing.students.empty")}</p>}
+      {list.kind === "ready" && Number(list.page.totalCount) === 0 && <p>{t(filtered ? "billing.students.noMatch" : "billing.students.empty")}</p>}
       {list.kind === "ready" && Number(list.page.totalCount) > 0 && <AccountsTable page={list.page} onPage={goTo} />}
     </div>
   );
