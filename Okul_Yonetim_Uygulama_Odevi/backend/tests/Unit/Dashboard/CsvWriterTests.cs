@@ -53,6 +53,24 @@ public sealed class CsvWriterTests
     public void Field_TextWithSeparatorOrQuote_IsQuotedAndQuotesDoubled(string value, string expected) =>
         CsvWriter.Field(CsvCell.Of(value)).ShouldBe(expected);
 
+    /// <summary>
+    /// Review tur 1 R1-3: liste ayırıcısı virgül olan ortamda (İngilizce bölge ayarı, "Veri → Metinden") tırnaksız virgül hücreyi böler ve
+    /// ikinci parça formül olarak okunur; virgüllü metin tırnaklanır — her iki ayırıcıyla da tek hücre kalır; formülle başlayan metin ayrıca
+    /// <c>'</c> önekini alır.
+    /// </summary>
+    [Theory]
+    [InlineData("X,=cmd|'/C calc'!A0", "\"X,=cmd|'/C calc'!A0\"")]
+    [InlineData("=cmd|'/C calc'!A0,X", "\"'=cmd|'/C calc'!A0,X\"")]
+    [InlineData("2026-2027 Eğitim Ücreti, Servis", "\"2026-2027 Eğitim Ücreti, Servis\"")]
+    public void Field_TextWithComma_IsQuotedSoCommaSeparatedReaderKeepsOneCell(string value, string expected)
+    {
+        string field = CsvWriter.Field(CsvCell.Of(value));
+
+        field.ShouldBe(expected);
+        field[0].ShouldBe('"');
+        field[^1].ShouldBe('"');
+    }
+
     [Fact]
     public void Field_NumbersAndAmounts_AreNotEscaped()
     {
