@@ -1,6 +1,6 @@
 # Spec 0015 — Tahsilat ve ön muhasebe: ücret, taksit, indirim/burs, tahsilat, makbuz, cari, gecikme hatırlatması
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0015-plan.md`
 - Self-critique: done
