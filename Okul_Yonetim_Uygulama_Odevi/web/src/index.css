@@ -465,6 +465,16 @@ a {
   font-weight: 600;
 }
 
+/* Haftalık gelişim özeti (spec 0014, review R1-3): başlık + satır sonları korunan metin (özet, etiket, dayanak satırı). */
+.notice-list .notice-title {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+}
+
+.notice-list .notice-text-multiline {
+  white-space: pre-wrap;
+}
+
 /* İletişim (spec 0011): duyuru başlığı bağlantı görünümlü düğme; onay kutusu satır içi; uzun metin dar ekranda sarar. */
 .card button.link-button {
   padding: 0;

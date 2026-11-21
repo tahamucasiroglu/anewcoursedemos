@@ -8,6 +8,7 @@ import App from "../../../App";
 // Spec 0010 AC-9 ve AC-13 (mobil, veli bildirimleri): "Bildirimler (2)" yalnızca velide; liste sunucunun sırasıyla (en
 // yenisi üstte), okunmamış "Yeni", düzeltilen "Düzeltildi" etiketiyle; liste gelince "okundu" isteği gider ve geri dönünce
 // sayı sıfırlanır; boş liste "Henüz bildirim yok"; hata + tekrar dene — iki temada.
+// Spec 0014 review R1-3: haftalık gelişim özeti başlıklı (header) ve metin satır sonlarıyla; diğer bildirimlerde başlık yok.
 type Handler = (request: Request) => Promise<Response> | Response;
 
 const originalFetch = globalThis.fetch;
@@ -16,6 +17,8 @@ const reset = (SecureStore as unknown as { __reset: () => void }).__reset;
 const tokens = { accessToken: "erisim", accessTokenExpiresAt: "2026-11-20T10:15:00Z", refreshToken: "yenileme-1", requiresTenantSelection: false, tenants: [tenantA] };
 const guardianMe = { fullName: "Ayla Ak", email: "ayla@ornek.test", tenant: tenantA, roles: ["Guardian"], branches: [{ id: "b1", name: "Merkez" }], tenants: [tenantA], isPlatformAdmin: false };
 const absent = { id: "n1", studentId: "c2", studentName: "Can Ak", day: "2026-11-20", kind: "Absent", text: "Can Ak bugün (20.11.2026) A Koleji'nda yoklamada gelmedi olarak işaretlendi. Bilginiz yoksa okulla iletişime geçin.", isRead: false, at: "2026-11-20T09:05:00Z" };
+const summaryText = "Ali bu hafta derslere istekle katıldı.\n\nYapay zekâ desteğiyle hazırlandı, öğretmen onayladı.\nDayanak: 4 gün geldi, 1 gün gelmedi";
+const summary = { id: "n3", studentId: "c2", studentName: "Can Ak", day: "2026-11-16", kind: "WeeklySummary", title: "Haftalık gelişim özeti — 16–22 Kasım", text: summaryText, isRead: false, at: "2026-11-20T10:00:00Z" };
 const corrected = { id: "n2", studentId: "c1", studentName: "Zeynep Ak", day: "2026-11-20", kind: "Corrected", text: "Zeynep Ak için bugünkü yoklama düzeltildi: okulda.", isRead: true, at: "2026-11-20T09:00:00Z" };
 
 function json(status: number, body: unknown): Response {
@@ -105,6 +108,18 @@ describe.each(["light", "dark"] as const)("Bildirimler — %s tema", (mode) => {
     await fireEvent.press(screen.getByRole("button", { name: "Hoş geldin'e dön" }));
     expect(await screen.findByRole("button", { name: "Bildirimler" })).toBeTruthy();
   });
+});
+
+it("haftalık gelişim özeti başlıklı, metin satır sonlarıyla; diğer bildirimlerde başlık yok (review R1-3)", async () => {
+  fakeApi(() => json(200, [summary, absent]), { unread: [2, 0] });
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Bildirimler (2)" }));
+
+  const rows = await screen.findAllByTestId("notice-row");
+  expect(within(rows[0]).getByRole("header", { name: "Haftalık gelişim özeti — 16–22 Kasım" })).toBeTruthy();
+  expect(within(rows[0]).getByText(summaryText).props.children).toBe(summaryText);
+  expect(rows[0].props.accessibilityLabel).toBe(`Yeni, 16.11.2026, Haftalık gelişim özeti — 16–22 Kasım, ${summaryText}`);
+  expect(within(rows[1]).queryByTestId("notice-title")).toBeNull();
 });
 
 it("bildirim yoksa 'Henüz bildirim yok', okundu isteği gitmez", async () => {

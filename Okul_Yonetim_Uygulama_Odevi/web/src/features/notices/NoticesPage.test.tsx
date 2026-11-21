@@ -1,13 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { THEME_STORAGE_KEY } from "@okul/theme";
 import App from "../../App";
+import indexCss from "../../index.css?raw";
 import { attendanceFake, json } from "../attendance/attendanceFake";
 import type { Route } from "../admin/adminFake";
 
 // Spec 0010 AC-9, AC-13 (web, "#/bildirimler"): "Bildirimler (2)" yalnızca velide; liste sunucunun sırasıyla (en yenisi
 // üstte), okunmamış "Yeni" ve kalın, düzeltilen "Düzeltildi"; liste gelince "okundu" isteği ve Hoş geldin sayısı yenilenir;
-// boş "Henüz bildirim yok"; hata + tekrar dene; veli olmayan erişemez; iki tema.
+// boş "Henüz bildirim yok"; hata + tekrar dene; veli olmayan erişemez; iki tema. Spec 0014 review R1-3: haftalık gelişim özeti
+// başlığıyla ve satır sonları korunarak (pre-wrap) görünür; diğer bildirimlerde başlık yok.
 afterEach(() => {
   vi.unstubAllGlobals();
   window.location.hash = "";
@@ -15,6 +17,8 @@ afterEach(() => {
 });
 
 const absent = { id: "n1", studentId: "c2", studentName: "Can Ak", day: "2026-11-20", kind: "Absent", text: "Can Ak bugün (20.11.2026) A Koleji'nda yoklamada gelmedi olarak işaretlendi. Bilginiz yoksa okulla iletişime geçin.", isRead: false, at: "2026-11-20T09:05:00Z" };
+const summaryText = "Ali bu hafta derslere istekle katıldı.\n\nYapay zekâ desteğiyle hazırlandı, öğretmen onayladı.\nDayanak: 4 gün geldi, 1 gün gelmedi";
+const summary = { id: "n3", studentId: "c2", studentName: "Can Ak", day: "2026-11-16", kind: "WeeklySummary", title: "Haftalık gelişim özeti — 16–22 Kasım", text: summaryText, isRead: false, at: "2026-11-20T10:00:00Z" };
 const corrected = { id: "n2", studentId: "c1", studentName: "Zeynep Ak", day: "2026-11-19", kind: "Corrected", text: "Zeynep Ak için bugünkü yoklama düzeltildi: okulda.", isRead: true, at: "2026-11-19T09:00:00Z" };
 
 function start(routes: Route[], roles = ["Guardian"], unread: number[] = [0]) {
@@ -52,6 +56,28 @@ describe.each(["light", "dark"] as const)("%s tema", (mode) => {
     await userEvent.click(screen.getByRole("link", { name: "Hoş geldin'e dön" }));
     expect(await screen.findByRole("link", { name: "Bildirimler" })).toBeInTheDocument();
   });
+});
+
+it("haftalık gelişim özeti başlıklı, satır sonları korunur; diğer bildirimlerde başlık yok (review R1-3)", async () => {
+  window.location.hash = "#/bildirimler";
+  start([
+    ["GET", /^\/api\/notices$/, () => json(200, [summary, absent])],
+    ["POST", /^\/api\/notices\/read$/, () => new Response(null, { status: 204 })],
+  ]);
+
+  const rows = await screen.findAllByRole("listitem");
+  expect(within(rows[0]).getByRole("heading", { level: 3, name: "Haftalık gelişim özeti — 16–22 Kasım" })).toBeInTheDocument();
+  const text = within(rows[0]).getByText((_, element) => element?.tagName === "P" && element.textContent === summaryText);
+  expect(text).toHaveClass("notice-text-multiline");
+  const style = document.createElement("style");
+  style.textContent = indexCss;
+  document.head.append(style);
+  expect(getComputedStyle(text).whiteSpace).toBe("pre-wrap");
+  expect(getComputedStyle(within(rows[1]).getByText(absent.text)).whiteSpace).not.toBe("pre-wrap");
+  style.remove();
+  expect(text.textContent).toContain("\n\nYapay zekâ desteğiyle hazırlandı, öğretmen onayladı.\nDayanak:");
+  expect(within(rows[1]).queryByRole("heading")).toBeNull();
+  expect(within(rows[1]).getByText(absent.text)).not.toHaveClass("notice-text-multiline");
 });
 
 it("bildirim yoksa 'Henüz bildirim yok', okundu isteği gitmez", async () => {

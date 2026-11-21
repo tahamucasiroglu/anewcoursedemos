@@ -13,7 +13,8 @@ interface Props {
 
 /**
  * Velinin bildirimleri (spec 0010 gereksinim 8, yalnızca veli): yalnızca kendi çocuklarınınkiler, en yenisi üstte, en fazla
- * 50. Okunmamışlar "Yeni" etiketiyle ve kalın yazıyla belirgin; düzeltilen yoklama "Düzeltildi" etiketiyle. Liste gelince
+ * 50. Okunmamışlar "Yeni" etiketiyle ve kalın yazıyla belirgin; düzeltilen yoklama "Düzeltildi" etiketiyle; haftalık gelişim özeti
+ * (spec 0014, review R1-3) başlık olarak ve metni satır sonlarıyla (özet, etiket, dayanak satırı ayrı satırlarda). Liste gelince
  * gösterilenler okundu yapılır (Hoş geldin'deki sayı sıfırlanır; arada gelen okunmamış kalır — review F-3). Durumlar: yükleniyor, boş ("Henüz bildirim yok"), dolu, hata +
  * tekrar dene. Liste kayar (FlatList), "Geri" altta sabit (0010 review F-2).
  */
@@ -76,9 +77,11 @@ export function NoticesScreen({ client, onBack }: Props) {
           renderItem={({ item: notice }) => {
             const { isNew, corrected } = noticeBadges(notice);
             const badges = [isNew ? t("notices.new") : null, corrected ? t("notices.corrected") : null].filter(Boolean).join(" · ");
+            const title = notice.kind === "WeeklySummary" ? notice.title ?? t("weekly.title") : null;
             return (
-              <View style={styles.secondary} testID="notice-row" accessible accessibilityLabel={[badges, formatDay(notice.day), notice.text].filter(Boolean).join(", ")}>
+              <View style={styles.secondary} testID="notice-row" accessible accessibilityLabel={[badges, formatDay(notice.day), title, notice.text].filter(Boolean).join(", ")}>
                 <Text style={styles.muted}>{badges === "" ? formatDay(notice.day) : `${badges} · ${formatDay(notice.day)}`}</Text>
+                {title && <Text style={styles.label} accessibilityRole="header" testID="notice-title">{title}</Text>}
                 <Text style={isNew ? styles.label : styles.text}>{notice.text}</Text>
               </View>
             );

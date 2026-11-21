@@ -13,7 +13,8 @@ interface Props {
 /**
  * Velinin bildirimleri (spec 0010, "#/bildirimler", yalnızca veli; değilse "Bu sayfaya erişiminiz yok."): yalnızca kendi
  * çocuklarınınkiler, en yenisi üstte, en fazla 50; okunmamışlar "Yeni" etiketi ve kalın yazıyla, düzeltilen yoklama
- * "Düzeltildi" etiketiyle. Liste gelince gösterilenler okundu yapılır (arada gelen okunmamış kalır — review F-3) ve Hoş geldin'deki sayı yenilenir (<c>onRead</c>). Durumlar:
+ * "Düzeltildi" etiketiyle; haftalık gelişim özeti (spec 0014, review R1-3) başlığıyla ve satır sonları korunarak (özet, etiket,
+ * dayanak satırı ayrı satırlarda). Liste gelince gösterilenler okundu yapılır (arada gelen okunmamış kalır — review F-3) ve Hoş geldin'deki sayı yenilenir (<c>onRead</c>). Durumlar:
  * yükleniyor, boş ("Henüz bildirim yok"), dolu, hata + tekrar dene.
  */
 export function NoticesPage({ me, client, onRead }: Props) {
@@ -74,12 +75,14 @@ export function NoticesPage({ me, client, onRead }: Props) {
         <ul className="calendar-list notice-list">
           {state.notices.map((notice) => {
             const { isNew, corrected } = noticeBadges(notice);
+            const summary = notice.kind === "WeeklySummary";
             return (
               <li key={notice.id} className={isNew ? "unread" : undefined}>
                 {isNew && <span className="badge">{t("notices.new")} · </span>}
                 {corrected && <span className="badge">{t("notices.corrected")} · </span>}
                 <span className="badge">{formatDay(notice.day)}</span>
-                <p>{notice.text}</p>
+                {summary && <h3 className="notice-title">{notice.title ?? t("weekly.title")}</h3>}
+                <p className={summary ? "notice-text-multiline" : undefined}>{notice.text}</p>
               </li>
             );
           })}
