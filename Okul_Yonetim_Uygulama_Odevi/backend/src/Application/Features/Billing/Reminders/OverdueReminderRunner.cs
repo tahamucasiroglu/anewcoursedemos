@@ -7,7 +7,9 @@ namespace OkulYonetim.Application.Features.Billing.Reminders;
 /// Bir okulun hatırlatma çalışması (spec 0015 gereksinim 9; plan 0015 Risks 2): arka plan işçisi her okul için yeni bir DI
 /// kapsamı açar ve bunu çağırır. Kapsamın oturumu (<see cref="CurrentSession"/>) okul için sistem oturumu yapılır (kişi yok, okul seçili,
 /// bütün şubeler) ve <see cref="SendOverdueRemindersCommand"/> gönderilir — kurum filtresi bu okulla sınırlı kalır, yeni
-/// <c>IgnoreQueryFilters</c> yok. Oturumu zaten dolu bir kapsamda (bir HTTP isteğinde) kullanılamaz.
+/// <c>IgnoreQueryFilters</c> yok. Yalnızca taze bir kapsamda açılır: oturumu kimlik doğrulanmış ya da okulu zaten seçili kapsamda
+/// (bir HTTP isteği, aynı kapsamda ikinci çalışma) reddedilir (0015 review R1-4). Kimin bağımlı olabileceği architecture testiyle
+/// sınırlı: yalnızca <c>OverdueReminderWorker</c> ve DI kaydı (<c>SystemSessionUsageTests</c>).
 /// </summary>
 public sealed class OverdueReminderRunner
 {
@@ -22,7 +24,7 @@ public sealed class OverdueReminderRunner
 
     public Task<int> RunAsync(Guid tenantId, CancellationToken cancellationToken)
     {
-        if (this.session.IsAuthenticated || (this.session.TenantId is { } current && current != tenantId))
+        if (this.session.IsAuthenticated || this.session.TenantId is not null)
         {
             throw new InvalidOperationException("Sistem oturumu yalnızca boş bir arka plan kapsamında açılır.");
         }
