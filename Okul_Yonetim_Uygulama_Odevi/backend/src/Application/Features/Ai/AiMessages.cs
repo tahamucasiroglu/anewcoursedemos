@@ -5,7 +5,7 @@ namespace OkulYonetim.Application.Features.Ai;
 /// <summary>
 /// Ai katmanının (spec 0012) kullanıcı metinlerinin anahtarları ve okuyucusu (YAML:
 /// <c>Features/Ai/Resources/Locales/ai.tr.yaml</c>): ses alanı hataları, sesli not süresi, anlaşılmayan ses, "kullanılamıyor",
-/// yetki, kapanmış konuşma, bulunamayan ya da kullanılmış taslak.
+/// yetki, kapanmış konuşma, bulunamayan, kullanılmış ya da o an işlenen taslak.
 /// </summary>
 public static class AiMessages
 {
@@ -21,6 +21,7 @@ public static class AiMessages
     public const string ConversationClosed = "ConversationClosed";
     public const string DraftNotFound = "DraftNotFound";
     public const string DraftUsed = "DraftUsed";
+    public const string DraftBusy = "DraftBusy";
 
     private static readonly string[] Locales = ["tr"];
 

@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Ai;
+using OkulYonetim.Persistence.Repositories;
 using OkulYonetim.Tests.Integration.Communication;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
@@ -15,7 +18,8 @@ namespace OkulYonetim.Tests.Integration.Ai;
 /// Spec 0012 AC-2 (BR-5) ve AC-3: taslak oluşunca konuşmada yeni mesaj yoktur ve bildirim kapısı hiç çağrılmamıştır; mesaj
 /// yalnızca öğretmen gönderince, öğretmenin düzenlenmiş metniyle oluşur ve veliye bildirim gider; taslak son metin ve mesaj
 /// kimliğiyle "onaylandı" olur; aynı taslakla ikinci gönderim (art arda ya da aynı anda) "Bu taslak zaten kullanıldı." ile
-/// reddedilir, ikinci mesaj oluşmaz. "Vazgeç" taslağı (döküm dahil) siler; silinmiş taslakla gönderim "bulunamadı".
+/// reddedilir, ikinci mesaj oluşmaz. "Vazgeç" taslağı (döküm dahil) siler; silinmiş taslakla gönderim "bulunamadı". Aynı taslakla eşzamanlı gönder ve vazgeç
+/// (review L-2): ya mesaj + onaylı taslak kalır ya da ikisi de yok — mesajı olup taslağı silinmiş durum oluşmaz.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class VoiceMessageApprovalTests
@@ -135,5 +139,48 @@ public sealed class VoiceMessageApprovalTests
         (await MessageCountAsync(factory, conversation)).ShouldBe(0);
         (await DiscardAsync(client, w.Class.Teacher, draftId)).Status.ShouldBe(HttpStatusCode.NotFound);
         (await SendAsync(client, w.Class.Teacher, conversation, "Elle yazılmış mesaj")).Status.ShouldBe(HttpStatusCode.OK, "elle gönderim etkilenmez");
+    }
+
+    [Fact]
+    public async Task ConcurrentSendAndDiscard_SameDraft_MessageWithApprovedDraftOrNeither()
+    {
+        DraftHoldGate gate = new();
+        using OkulApiFactory factory = Factory(this.database, new FakeSpeechToText(), new FakeAiTextGenerator(), configure: services =>
+        {
+            services.RemoveAll<IAiDraftRepository>();
+            services.AddScoped<AiDraftRepository>();
+            services.AddScoped<IAiDraftRepository>(sp => new GatedAiDraftRepository(sp.GetRequiredService<AiDraftRepository>(), gate));
+        });
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid conversation = await StartedAsync(client, w.Class.Teacher, w.Ali, w.AliMother.UserId);
+        Guid draftId = await DraftedAsync(client, w.Class.Teacher, conversation);
+
+        gate.Enabled = true;
+        var discard = DiscardAsync(client, w.Class.Teacher, draftId);
+        await gate.Held.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+        var send = SendDraftAsync(client, w.Class.Teacher, conversation, "gönderilen metin", draftId);
+        await Task.WhenAny(send, Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken));
+        gate.Release();
+        var (discardStatus, _, discardRaw) = await discard;
+        var (sendStatus, sent, sendRaw) = await send;
+
+        int messages = await MessageCountAsync(factory, conversation);
+        List<AiDraft> drafts = await DraftsAsync(factory, w.Class.School.TenantId);
+        if (messages == 1)
+        {
+            sendStatus.ShouldBe(HttpStatusCode.OK, sendRaw);
+            discardStatus.ShouldBe(HttpStatusCode.NotFound, discardRaw);
+            AiDraft draft = drafts.ShouldHaveSingleItem("mesaj gittiyse onaylı taslak kalır");
+            draft.Status.ShouldBe(AiDraftStatus.Approved);
+            draft.ResultId.ShouldBe(sent.GetProperty("message").GetProperty("id").GetGuid());
+        }
+        else
+        {
+            messages.ShouldBe(0);
+            drafts.ShouldBeEmpty("vazgeçildiyse taslak yok");
+            discardStatus.ShouldBe(HttpStatusCode.NoContent, discardRaw);
+            sendStatus.ShouldNotBe(HttpStatusCode.OK, sendRaw);
+        }
     }
 }

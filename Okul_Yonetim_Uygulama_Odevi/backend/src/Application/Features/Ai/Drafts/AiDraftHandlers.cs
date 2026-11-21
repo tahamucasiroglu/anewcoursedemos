@@ -9,7 +9,9 @@ namespace OkulYonetim.Application.Features.Ai.Drafts;
 
 /// <summary>
 /// AI taslağının yaşam döngüsü (spec 0012 C-4): bekleyen taslağı onay için bulma (sahip + tür + bağlam; kullanılmışsa iş
-/// hatası), onaylandı işaretleme (kaydı çağıran yapar) ve "Vazgeç" (silme). Taslak kurum filtreli okunur; başka kişinin,
+/// hatası), onaylandı işaretleme (kaydı çağıran yapar) ve "Vazgeç" (silme — taslaklı gönderimle aynı taslak sırası
+/// <c>ai-draft:&lt;id&gt;</c> içinde: eşzamanlı gönder/vazgeç'te ya mesaj + onaylı taslak kalır ya da ikisi de yok; sıra
+/// dolarsa "Taslak şu an işleniyor…"). Taslak kurum filtreli okunur; başka kişinin,
 /// başka okulun ya da başka bağlamın taslağı "bulunamadı" (404 — "var ama sizin değil" sızdırılmaz). Loglarda yalnızca kimlikler.
 /// </summary>
 public sealed class AiDraftHandlers :
@@ -77,17 +79,35 @@ public sealed class AiDraftHandlers :
     public async Task<bool> Handle(DiscardAiDraftCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        AiDraft draft = await this.OwnAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (!draft.IsPending)
+        IExclusiveScope scope;
+        try
         {
-            throw await this.NotFoundAsync().ConfigureAwait(false);
+            scope = await this.unitOfWork.BeginExclusiveAsync(DraftLockKey(request.Id), cancellationToken).ConfigureAwait(false);
+        }
+        catch (ExclusiveLockTimeoutException)
+        {
+            this.logger.LogWarning("AI taslağı sırası dolu (vazgeç): taslak {DraftId}", request.Id);
+            throw new BusinessException(await this.localization.AiTextAsync(AiMessages.DraftBusy).ConfigureAwait(false));
         }
 
-        this.drafts.Remove(draft);
-        await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        this.logger.LogInformation("AI taslağından vazgeçildi (silindi): taslak {DraftId}, kişi {UserId}", draft.Id, draft.CreatedByUserId);
-        return true;
+        await using (scope.ConfigureAwait(false))
+        {
+            AiDraft draft = await this.OwnAsync(request.Id, cancellationToken).ConfigureAwait(false);
+            if (!draft.IsPending)
+            {
+                throw await this.NotFoundAsync().ConfigureAwait(false);
+            }
+
+            this.drafts.Remove(draft);
+            await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await scope.CommitAsync(cancellationToken).ConfigureAwait(false);
+            this.logger.LogInformation("AI taslağından vazgeçildi (silindi): taslak {DraftId}, kişi {UserId}", draft.Id, draft.CreatedByUserId);
+            return true;
+        }
     }
+
+    /// <summary>Taslak sırasının anahtarı — taslaklı gönderim (Communication, <c>MessageHandlers</c>) aynı anahtarı alır.</summary>
+    private static string DraftLockKey(Guid draftId) => "ai-draft:" + draftId.ToString("N");
 
     /// <summary>Oturumdaki kişinin oluşturduğu taslak (izlenen); yoksa ya da başkasınınsa 404.</summary>
     private async Task<AiDraft> OwnAsync(Guid id, CancellationToken cancellationToken)
