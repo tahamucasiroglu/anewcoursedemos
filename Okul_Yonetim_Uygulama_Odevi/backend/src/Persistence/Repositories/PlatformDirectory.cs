@@ -10,7 +10,10 @@ namespace OkulYonetim.Persistence.Repositories;
 /// <summary>
 /// Platform paneli okuması (spec 0007) — izinli liste (T5): okul filtresini bilerek deler, çünkü platform yöneticisi bütün
 /// okulların özetini görür. Yalnızca özet alanlar seçilir (okul adı, tarih, durum, sayılar, kurucu ad + e-posta); kişi
-/// listesi, telefon, şube ayrıntısı dönmez. Çağıran taraf platform yetkisini denetler. Spec 0015: hatırlatma işçisi için etkin okulların yalnızca kimlikleri.
+/// listesi, telefon, şube ayrıntısı dönmez. Panel okumalarında çağıran taraf platform yetkisini denetler. İkinci çağıran (spec 0015):
+/// gecikme hatırlatması işçisi (<c>OverdueReminderWorker</c>) — kişisiz, oturumsuz arka plan kapsamında
+/// <see cref="ListActiveTenantIdsAsync"/> ile etkin okulların yalnızca kimliklerini alır (bu da okul filtresini delen bir okumadır — T5
+/// gerekçesi: okul başına sistem oturumunu açmak için kimlik gerekir); her okul sonra kendi kapsamında, okulla sınırlı sistem oturumuyla işlenir.
 /// </summary>
 public sealed class PlatformDirectory : IPlatformDirectory
 {

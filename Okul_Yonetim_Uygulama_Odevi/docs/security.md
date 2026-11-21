@@ -179,7 +179,9 @@
     Para/not/gerekçe taşıyan komutlar `ILoggableRequest` değildir (T9); loglarda yalnızca kimlikler. Hatırlatma metni (öğrenci adı + vade + kalan) yalnızca
     o öğrencinin etkin velilerinin uygulama içi akışında; gönderim Information log'unda kimliklerle. Arka plan hatırlatması okul başına **sistem
     oturumuyla** çalışır (kişisiz, okulla sınırlı filtre — `CurrentSession.AuthenticateSystem` yalnızca `OverdueReminderRunner`'da, architecture testi);
-    yeni `IgnoreQueryFilters` yok, etkin okul kimlikleri izinli `PlatformDirectory`'den (yalnızca kimlik).
+    yeni izinli dosya yok; `PlatformDirectory`'ye yalnızca etkin okul kimliklerini döndüren bir filtre delme eklendi — T5 gerekçesi
+    (işçinin oturumu yok; okul başına kapsamı açmak için yalnızca kimlik gerekir, başka alan dönmez). `OverdueReminderRunner`'a yalnızca
+    işçi ve DI kaydı bağımlı olabilir ve çalıştırıcı yalnızca okulu seçilmemiş taze kapsamda açılır (architecture testi + `TenantId is null`).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.
