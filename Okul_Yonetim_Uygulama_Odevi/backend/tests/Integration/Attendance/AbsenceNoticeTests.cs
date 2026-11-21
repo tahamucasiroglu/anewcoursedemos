@@ -14,7 +14,8 @@ namespace OkulYonetim.Tests.Integration.Attendance;
 /// <summary>
 /// Spec 0010 AC-7: "Yok" kaydedilen öğrencinin okulda etkin her velisine bir uygulama içi bildirim ve bir e-posta (kuyruğa)
 /// gider, metin gereksinim 6'daki gibidir; "Var" ve "Geç" bildirim üretmez; pasifleştirilmiş veliye ve başka öğrencinin
-/// velisine gitmez; SMTP ayarlı değilken (gerçek kuyruk, gönderici "SMTP ayarlı değil") kayıt yine başarılıdır.
+/// velisine ve Veli rolü alınmış (okulda etkin) kişiye gitmez (0010 VERIFY V-3);
+/// SMTP ayarlı değilken (gerçek kuyruk, gönderici "SMTP ayarlı değil") kayıt yine başarılıdır.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class AbsenceNoticeTests
@@ -64,6 +65,28 @@ public sealed class AbsenceNoticeTests
         (await NoticesAsync(client, ayseGuardian)).Body.GetArrayLength().ShouldBe(0);
         (await NoticesAsync(client, berkGuardian)).Body.GetArrayLength().ShouldBe(0);
         (await NoticeCountAsync(factory, ali)).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Absent_GuardianWhoseGuardianRoleWasRemoved_GetsNoNotice()
+    {
+        CapturingOutbox outbox = new();
+        using OkulApiFactory factory = Factory(this.database, outbox);
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        (_, _, string motherEmail, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+        (_, Guid fatherId, string fatherEmail, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali, "Father");
+        var (roleStatus, member, raw) = await CallAsync(client, HttpMethod.Put, $"/api/admin/members/{fatherId}/roles", c.Founder, new { roles = new[] { Teacher(c.School.BranchId) } });
+        roleStatus.ShouldBe(HttpStatusCode.OK, raw);
+        member.GetProperty("isActive").GetBoolean().ShouldBeTrue("baba okulda etkin (öğretmen), yalnız Veli rolü alındı");
+
+        JsonElement result = await SavedAsync(client, c.Teacher, c.ClassroomId, [(ali, "Absent")]);
+
+        result.GetProperty("notifiedGuardians").GetInt32().ShouldBe(1, "Veli rolü alınan baba hariç (0010 VERIFY V-3)");
+        outbox.To(motherEmail).ShouldHaveSingleItem();
+        outbox.To(fatherEmail).ShouldBeEmpty();
+        (await NoticeCountAsync(factory, ali)).ShouldBe(1, "babaya uygulama içi bildirim de yok");
     }
 
     [Fact]
