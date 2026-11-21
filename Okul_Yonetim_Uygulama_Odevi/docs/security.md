@@ -156,6 +156,17 @@
     kaydı audit'te (kim, hedef kayıt, ayrıntıda yalnızca sınıf + öğrenci/değişen sayısı, IP). Yeni ödev bildirimi yalnızca ders,
     başlık ve teslim tarihini taşır (açıklama ve öğrenci adı yok); bildirim log'unda yalnızca tür ve kimlik.
 
+16. **AI haftalık gelişim özeti (spec 0014, S1/S2/S5/S6):** yalnızca öğrencinin bugünkü sınıfına atanmış öğretmen (`WeeklySummaryGuard`, her istekte
+    veritabanından — `TeacherClassroomAccess`): Öğretmen rolü yoksa 403 (kurucu, veli, muhasebe); atanmamış öğretmen, başka sınıfın öğrencisi ve başka
+    okul 404 — reddedilen istekte model çağrılmaz, taslak/bildirim yazılmaz. Öğrenci bazlı okuma sorguları (yoklama, ödev/not) erişim denetlemez; dayanak
+    yalnızca guard'dan geçen öğrenci için toplanır (plan 0014 Risks 9). **Modele giden alanlar:** sabit talimat + öğrencinin adı (son kelime — soyadı —
+    atılır) + o haftanın yoklama sayıları ve günleri + ödev (ders, başlık, teslim günü, durum) ve not (ders, tür, başlık, gün, puan) satırları + öğretmenin
+    notu; soyad, sağlık notu, alerji, veli bilgisi, başka öğrenci ve kimlikler gitmez; model yalnızca yerel adreste (0012 kuralı). AI hiçbir şeyi
+    veliye göndermez: gönderim öğretmenin "Onayla ve gönder"iyle Communication'dan (BR-5). Özet, öğretmen notu, dayanak ve öğrenci adı **loglanmaz**
+    ve audit'e yazılmaz (komutlar `ILoggableRequest` değildir — T9; loglarda kimlik, karakter sayısı, süre); dayanak taslakla `ai_drafts`'ta, özet
+    metni velinin bildiriminde düz saklanır. Gönderim audit'te (`WeeklySummarySent`: kim, taslak, ayrıntıda öğrenci + hafta + veli sayısı, IP). Veli
+    özeti yalnızca kendi bağlı çocuğu için açar (`GET api/notices/{id}` — değilse 404, veli rolü yoksa 403).
+
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.
 2. Fotoğraf paylaşımı öğrenci bazlı rıza olmadan yapılamaz.

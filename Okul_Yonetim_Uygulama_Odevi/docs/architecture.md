@@ -44,7 +44,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması | FeeSchedule, InstallmentPlan, Payment, Ledger, Receipt |
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
-| Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, haftalık gelişim özeti) | AiDraft |
+| Ai | Ortak AI yeteneği: taslak üretimi, kaynak gösterme, sağlayıcı portu (sesli not → mesaj taslağı, spec 0014 haftalık gelişim özeti — dayanak toplama, taslak, onay kapısı; gönderim Communication'da) | AiDraft |
 | Identity | Kullanıcı, rol ataması, okul üyeliği (etkin/pasif), giriş, 2FA (platform yöneticisi — spec 0007), token | User, RoleAssignment, TenantMembership, TwoFactorChallenge |
 | Administration | Kurucunun yönetim işlemleri (spec 0005): şube ekle/düzenle/pasifleştir, kişi ekle, rol ve şube ver/al, pasifleştir, şifre sıfırla; spec 0008: sınıf seviyesi, dönem, sınıf ve akademik takvim yönetimi; spec 0010: sınıf öğretmeni ataması. Organization ve Identity varlıklarını kendi komutlarıyla değiştirir; her işlem okul başına sıralı ve audit'li | — |
 | Account | Kişinin kendi hesabı (spec 0006): profil (ad, telefon), şifremi değiştir, şifremi unuttum (yenileme bağlantısı + e-posta). Okul seçimi gerektirmez; yalnızca oturumdaki kişi | PasswordResetToken |
@@ -146,6 +146,24 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   (veli bağı "Çocuklarım" sorgusundan; yoksa 404). **Öğrenci bazlı okuma** `GetStudentAcademicRecordQuery(öğrenci, başlangıç, bitiş)`
   → ödevler (ders, başlık, teslim, durum) ve notlar (ders, tür, başlık, gün, puan): uç noktası yoktur, **çağıranın erişimini
   denetlemez** (yalnızca kurum + şube filtresi) — erişim denetimi çağırandadır (veli özeti: bağ; spec 0014: kendi kuralı).
+- Haftalık gelişim özeti (spec 0014): öğretmen uçları `api/weekly-summaries` (`classrooms` GET, `?classroomId=&week=` GET, `students/{id}`
+  GET panel, `students/{id}/draft` POST üretim / DELETE vazgeç, `students/{id}/send` POST gönderim; `week=current|previous`). Hafta Türkiye
+  günüyle Pazartesi–Pazar (`Domain/Ai/SchoolWeek`, bugün `SchoolCalendar.Today`). Yetki her istekte `WeeklySummaryGuard`'da, öğretmen–sınıf
+  kuralı yine `TeacherClassroomAccess`: Öğretmen rolü yoksa 403; öğrenci görünmüyor / ayrılmış / sınıfsız ya da öğretmen öğrencinin bugünkü
+  sınıfına atanmamış 404. **Akış:** Ai dayanağı `WeeklySummarySourceCollector` ile toplar — Attendance `GetStudentWeekAttendanceQuery`
+  (yeni, öğrenci bazlı, uçsuz) + Academics `GetStudentAcademicRecordQuery` + Students `ListStudentBriefsQuery` (yalnızca ad); iki öğrenci bazlı
+  sorgu da erişim denetlemez ve okul + şube görünürlüğü olan oturum ister (oturumsuz çağrı boş sonuç alır — plan 0014 Risks 9), bu yüzden
+  toplayıcıyı yalnızca guard'dan geçmiş işleyiciler çağırır. Dayanak boşsa (yoklama, ödev/not, öğretmen notu yok) model çağrılmaz; değilse
+  `IAiTextGenerator`'a yalnızca `Features/Ai/Prompts/weekly-summary.tr.txt` + dayanak metni gider (ad, soyad değil) → 800'e kısaltılmış taslak
+  `AiDraft` (tür `WeeklySummary`, `period_start` = haftanın Pazartesi'si, kaynak = dayanak JSON'u; okul + tür + öğrenci + hafta tekil dizin),
+  öğrenci-hafta sırası (`weekly-summary:<öğrenci>:<hafta>`) içinde eklenir ya da bekleyen taslak yeniden oluşturulur. Gönderim
+  **Communication**'ın `SendWeeklySummaryCommand`'ı: aynı sıra içinde Ai'ın `GetWeeklySummaryForSendQuery`'si (guard + bekleyen taslak) →
+  `NotifyStudentGuardiansCommand` (kayda bağlı okul bildirimi `GuardianNotice` türü `WeeklySummary`, metin = onaylı özet + etiket + dayanak
+  satırı, ≤ 2000) → Ai'ın `ApproveWeeklySummaryDraftCommand`'ı (onaylayan = oturumdaki öğretmen; sınıfın atanmış her öğretmeni onaylayabilir)
+  → audit `WeeklySummarySent` → commit → `DeliverNotificationsCommand`. Ai veliye yazmaz (yasak bağımlılık 6). Velinin akışında satır türü
+  `WeeklySummary`, başlık türden ve haftadan ("Haftalık gelişim özeti — 16–22 Kasım"); ayrıntı `GET api/notices/{id}` (yalnızca kendi
+  bağlı çocuğunun bildirimi, açılış okundu yapar). Web'de `#/haftalik-ozet`; bağlantı `/api/me` → `teachesClassroom` (Organization
+  `ListMyTeachingClassroomsQuery`) doğruysa.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).
