@@ -87,4 +87,5 @@ public enum AuditAction
     AppointmentApproved = 82,
     AppointmentRejected = 83,
     AppointmentCancelled = 84,
+    ReportExported = 85,
 }
