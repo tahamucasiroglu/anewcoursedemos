@@ -48,10 +48,13 @@ def test_servis_esigi_kalan_esit_gun_sessizce_kaydedilmez(client):
 
 
 def test_gecersiz_tarih_sessizce_yonlendirir(client):
-    """AC-8 (yutulan hata): cozulemeyen tarih -> hata yok, listeye yonlendirme, kayit yok."""
+    """AC-8: cozulemeyen tarih -> kayit yok.
+    Supersedes 0001/AC-8 — spec 0004: artik sessiz degil; 400 + tarih mesaji, yonlendirme yok.
+    Adindaki 'sessizce' tarihsel."""
     yanit = _gonder(client, 3, "abc", "2026-12-13")
-    assert yanit.status_code == 302
-    assert yanit.headers["Location"].endswith("/requests")
+    assert yanit.status_code == 400
+    assert "Location" not in yanit.headers
+    assert "HATA: Tarihler gecersiz." in yanit.get_data(as_text=True)
     assert len(app.Db.requests) == 8
 
 

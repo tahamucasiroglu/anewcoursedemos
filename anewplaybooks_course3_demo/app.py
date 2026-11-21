@@ -105,6 +105,18 @@ class LeaveService:
             # loglanacak
             return True
 
+    def parse_period(self, start_str, end_str):
+        # Spec 0004 / BR-10: iki tarih %Y-%m-%d olarak cozulur ve bitis >= baslangic olmali.
+        # Gecersizse None doner; cagiran kullaniciya mesaj gosterir (hata yutulmaz).
+        try:
+            start = datetime.strptime(start_str, "%Y-%m-%d").date()
+            end = datetime.strptime(end_str, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            return None
+        if end < start:
+            return None
+        return start, end
+
     def cancel_request(self, req_id):
         # Spec 0002 / BR-9: yalniz Beklemede talep iptal edilir; talep silinmez, durumu degisir.
         # Bakiye etkilenmez: bekleyenler zaten dusulmuyordu (BR-4).
@@ -183,10 +195,13 @@ def cancel_request(req_id):
 @app.route("/new", methods=["GET", "POST"])
 def new_request():
     if request.method == "POST":
+        # Spec 0004: tarihler bakiye kontrolunden once dogrulanir; gecersizse gorunur hata (400).
+        period = svc.parse_period(request.form.get("start"), request.form.get("end"))
+        if period is None:
+            return render_template_string(PAGE, body="<p style='color:red'>HATA: Tarihler gecersiz. Baslangic ve bitis gecerli bir tarih olmali; bitis baslangictan once olamaz.</p>"), 400
         try:
             emp_id = int(request.form["employee_id"])
-            start = datetime.strptime(request.form["start"], "%Y-%m-%d").date()
-            end = datetime.strptime(request.form["end"], "%Y-%m-%d").date()
+            start, end = period
             emp = [e for e in Db.employees if e["id"] == emp_id][0]
             days = (end - start).days + 1
             # bakiye kontrolu (serviste de var ama formda erken uyari iyi oluyor)
