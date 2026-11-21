@@ -6,7 +6,7 @@ import { VoiceNoteButton } from "./VoiceNoteButton";
 
 // Spec 0012 AC-12 (düğme): erişilebilirlik etiketleri; kayıt sayacı kaydın kendi süresini gösterir ve kayıt 59,5 sn'ye
 // varınca (sunucunun katı 60 sn sınırından önce) kendiliğinden durup ses yüklenir — tik sayısına değil kaydın süresine bakılır; mikrofon izni yoksa "Mikrofon izni verilmedi." ve kayıt/yükleme yok; kayıt başlatılamazsa hata;
-// kayıt ve dönüştürme sürerken "meşgul" bildirilir (gönder kilidi).
+// kayıt ve dönüştürme sürerken "meşgul" bildirilir (gönder kilidi); yükleme formunda konuşma ve m4a dosyası vardır.
 type AudioMock = {
   reset: () => void;
   recorded: number;
@@ -112,6 +112,25 @@ it("geç gelen tiklerde de kaydın kendi süresi 59,5 sn'yi geçince kayıt duru
   expect(audio.stopped).toBe(1);
   await screen.findByRole("button", { name: "Sesli not" });
   expect(uploads).toBe(1);
+});
+
+it("yükleme formu: conversationId ve kaydın dosyası (sesli-not.m4a, audio/m4a)", async () => {
+  // Review round 1 (L-4). React Native FormData dosyayı { uri, name, type } nesnesiyle alır; alanlar append'ten okunur.
+  const append = jest.spyOn(FormData.prototype, "append");
+  try {
+    await renderButton();
+    await fireEvent.press(await screen.findByRole("button", { name: "Sesli not" }));
+    await fireEvent.press(await screen.findByRole("button", { name: "Durdur" }));
+    await screen.findByRole("button", { name: "Sesli not" });
+
+    expect(uploads).toBe(1);
+    expect(append.mock.calls).toEqual([
+      ["conversationId", "k1"],
+      ["audio", { uri: "file:///kayitlar/sesli-not.m4a", name: "sesli-not.m4a", type: "audio/m4a" }],
+    ]);
+  } finally {
+    append.mockRestore();
+  }
 });
 
 it("mikrofon izni yoksa 'Mikrofon izni verilmedi.'; kayıt ve yükleme yok", async () => {
