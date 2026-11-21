@@ -24,6 +24,9 @@ public interface IStudentRepository
     /// <summary>Görünür, ayrılmamış öğrencilerin kısa bilgisi; verilen şube/sınıf/kimliklerle süzülür (spec 0011).</summary>
     Task<IReadOnlyList<StudentBrief>> ListBriefsAsync(Guid? branchId, Guid? classroomId, IReadOnlyCollection<Guid>? ids, CancellationToken cancellationToken);
 
+    /// <summary>Öğrenci etiketleri (spec 0015): ayrılmışlar dahil, filtreli; şube ve sınıf adıyla.</summary>
+    Task<IReadOnlyList<StudentLabel>> ListLabelsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<PickupPerson>> ListPickupPersonsAsync(Guid studentId, CancellationToken cancellationToken);
 
     void Add(Student student);

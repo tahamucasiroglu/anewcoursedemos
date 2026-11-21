@@ -441,6 +441,464 @@ namespace OkulYonetim.Persistence.Migrations
                     b.ToTable("attendance_sheets", (string)null);
                 });
 
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.DiscountDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Percent")
+                        .HasColumnType("integer")
+                        .HasColumnName("percent");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_discount_definitions");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_discount_definitions_tenant_id");
+
+                    b.ToTable("discount_definitions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_discount_definitions_percent", "percent >= 1 AND percent <= 100");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.FeeSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_fee_schedules");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_fee_schedules_tenant_id");
+
+                    b.ToTable("fee_schedules", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_fee_schedules_amount", "amount > 0 AND amount <= 10000000.00");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.Installment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("paid_amount");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_id");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_installments");
+
+                    b.HasIndex("PlanId", "Sequence")
+                        .IsUnique()
+                        .HasDatabaseName("ix_installments_plan_id_sequence");
+
+                    b.HasIndex("TenantId", "DueDate")
+                        .HasDatabaseName("ix_installments_tenant_id_due_date");
+
+                    b.ToTable("installments", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_installments_amounts", "amount > 0 AND paid_amount >= 0 AND paid_amount <= amount");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.InstallmentPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid?>("CancelledBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("discount_amount");
+
+                    b.Property<Guid?>("DiscountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("discount_id");
+
+                    b.Property<string>("DiscountName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("discount_name");
+
+                    b.Property<int?>("DiscountPercent")
+                        .HasColumnType("integer")
+                        .HasColumnName("discount_percent");
+
+                    b.Property<decimal>("FeeAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("fee_amount");
+
+                    b.Property<string>("FeeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("fee_name");
+
+                    b.Property<Guid>("FeeScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fee_schedule_id");
+
+                    b.Property<DateOnly>("FirstDueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("first_due_date");
+
+                    b.Property<int>("InstallmentCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("installment_count");
+
+                    b.Property<decimal>("NetAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("net_amount");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_installment_plans");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("ix_installment_plans_branch_id");
+
+                    b.HasIndex("DiscountId")
+                        .HasDatabaseName("ix_installment_plans_discount_id");
+
+                    b.HasIndex("FeeScheduleId")
+                        .HasDatabaseName("ix_installment_plans_fee_schedule_id");
+
+                    b.HasIndex("StudentId", "FeeScheduleId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_installment_plans_student_id_fee_schedule_id")
+                        .HasFilter("status = 'Active'");
+
+                    b.HasIndex("TenantId", "BranchId")
+                        .HasDatabaseName("ix_installment_plans_tenant_id_branch_id");
+
+                    b.ToTable("installment_plans", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_installment_plans_count", "installment_count >= 1 AND installment_count <= 12");
+
+                            t.HasCheckConstraint("ck_installment_plans_net", "net_amount > 0 AND discount_amount >= 0 AND net_amount = fee_amount - discount_amount");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("cancel_reason");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid?>("CancelledBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("method");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("note");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_id");
+
+                    b.Property<long>("ReceiptNo")
+                        .HasColumnType("bigint")
+                        .HasColumnName("receipt_no");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recorded_at");
+
+                    b.Property<Guid>("RecordedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recorded_by");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_payments");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("ix_payments_branch_id");
+
+                    b.HasIndex("PlanId")
+                        .HasDatabaseName("ix_payments_plan_id");
+
+                    b.HasIndex("RecordedBy")
+                        .HasDatabaseName("ix_payments_recorded_by");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_payments_student_id");
+
+                    b.HasIndex("TenantId", "ReceiptNo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_tenant_id_receipt_no");
+
+                    b.ToTable("payments", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_payments_amount", "amount > 0 AND receipt_no >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.PaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("InstallmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("installment_id");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_payment_allocations");
+
+                    b.HasIndex("InstallmentId")
+                        .HasDatabaseName("ix_payment_allocations_installment_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_payment_allocations_tenant_id");
+
+                    b.HasIndex("PaymentId", "InstallmentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payment_allocations_payment_id_installment_id");
+
+                    b.ToTable("payment_allocations", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_payment_allocations_amount", "amount > 0");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.PaymentReminder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("InstallmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("installment_id");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_payment_reminders");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_payment_reminders_tenant_id");
+
+                    b.HasIndex("InstallmentId", "Sequence")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payment_reminders_installment_id_sequence");
+
+                    b.ToTable("payment_reminders", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_payment_reminders_sequence", "sequence >= 1 AND sequence <= 3");
+                        });
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.ReceiptCounter", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<long>("LastNumber")
+                        .HasColumnType("bigint")
+                        .HasColumnName("last_number");
+
+                    b.HasKey("TenantId")
+                        .HasName("pk_receipt_counters");
+
+                    b.ToTable("receipt_counters", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_receipt_counters_last", "last_number >= 0");
+                        });
+                });
+
             modelBuilder.Entity("OkulYonetim.Domain.Communication.Announcement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1926,6 +2384,169 @@ namespace OkulYonetim.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_attendance_sheets_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.DiscountDefinition", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_discount_definitions_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.FeeSchedule", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_fee_schedules_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.Installment", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Billing.InstallmentPlan", null)
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_installments_installment_plans_plan_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_installments_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.InstallmentPlan", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_installment_plans_branches_branch_id");
+
+                    b.HasOne("OkulYonetim.Domain.Billing.DiscountDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("DiscountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_installment_plans_discount_definitions_discount_id");
+
+                    b.HasOne("OkulYonetim.Domain.Billing.FeeSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("FeeScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_installment_plans_fee_schedules_fee_schedule_id");
+
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_installment_plans_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_installment_plans_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.Payment", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payments_branches_branch_id");
+
+                    b.HasOne("OkulYonetim.Domain.Billing.InstallmentPlan", null)
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payments_installment_plans_plan_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("RecordedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payments_users_recorded_by");
+
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payments_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payments_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.PaymentAllocation", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Billing.Installment", null)
+                        .WithMany()
+                        .HasForeignKey("InstallmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payment_allocations_installments_installment_id");
+
+                    b.HasOne("OkulYonetim.Domain.Billing.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payment_allocations_payments_payment_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payment_allocations_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.PaymentReminder", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Billing.Installment", null)
+                        .WithMany()
+                        .HasForeignKey("InstallmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payment_reminders_installments_installment_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_payment_reminders_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Billing.ReceiptCounter", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_receipt_counters_tenants_tenant_id");
                 });
 
             modelBuilder.Entity("OkulYonetim.Domain.Communication.Announcement", b =>

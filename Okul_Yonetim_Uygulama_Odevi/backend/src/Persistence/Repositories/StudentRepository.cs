@@ -70,6 +70,15 @@ public sealed class StudentRepository : IStudentRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<StudentLabel>> ListLabelsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await (from s in this.context.Students.AsNoTracking()
+               join b in this.context.Branches on s.BranchId equals b.Id
+               join c in this.context.Classrooms on s.ClassroomId equals c.Id into classes
+               from c in classes.DefaultIfEmpty()
+               where ids.Contains(s.Id)
+               select new StudentLabel(s.Id, s.FullName, s.BranchId, b.Name, c == null ? null : c.Name, s.IsActive))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public async Task<IReadOnlyList<PickupPerson>> ListPickupPersonsAsync(Guid studentId, CancellationToken cancellationToken) =>
         await this.context.PickupPersons.Where(p => p.StudentId == studentId).OrderBy(p => p.Position)
             .ToListAsync(cancellationToken).ConfigureAwait(false);

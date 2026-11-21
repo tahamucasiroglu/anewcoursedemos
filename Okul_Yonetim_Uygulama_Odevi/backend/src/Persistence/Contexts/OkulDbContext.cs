@@ -3,6 +3,7 @@ using OkulYonetim.Application.Ports;
 using OkulYonetim.Domain.Academics;
 using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Attendance;
+using OkulYonetim.Domain.Billing;
 using OkulYonetim.Domain.Communication;
 using OkulYonetim.Domain.Compliance;
 using OkulYonetim.Domain.Identity;
@@ -16,7 +17,7 @@ namespace OkulYonetim.Persistence.Contexts;
 /// filtresiyle uygulanır: kurum yalnızca oturumdaki kurumu, şube yalnızca o kurumun ve (kurucu değilse) kişinin atandığı
 /// şubeleri (kurucu olmayana yalnızca etkin olanları — spec 0005), rol ataması, üyelik, sınıf seviyesi, dönem ve takvim kaydı
 /// (silinmemiş) yalnızca o kurumunkileri, sınıf ve öğrenci yalnızca görünür şubelerinkileri (spec 0008, 0009), veli bağı ve teslim kişisi yalnızca o kurumunkileri, sınıf öğretmeni ataması ve yoklama görünür şubelerinkileri, yoklama satırı
-/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011); AI taslağı o kurumunkileri (spec 0012); ödev ve değerlendirme görünür şubelerinkileri, teslim ve puan satırı o kurumunkileri (spec 0013). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
+/// ve veli bildirimi o kurumunkileri gösterir (spec 0010); duyuru, onay, konuşma, mesaj ve mesai saatleri o kurumunkileri (spec 0011); AI taslağı o kurumunkileri (spec 0012); ödev ve değerlendirme görünür şubelerinkileri, teslim ve puan satırı o kurumunkileri (spec 0013); tarife, indirim, makbuz sayacı ve hatırlatma o kurumunkileri, plan ve tahsilat görünür şubelerinkileri, taksit ve dağılım görünür plan/tahsilatınkileri (spec 0015). Oturum doğrulanmadıysa kurum boştur ve filtreler hiçbir kayıt
 /// göstermez. Filtre değerleri sorgu anında <see cref="ICurrentSession"/>'dan okunur. Filtreyi delen okumalar
 /// (<c>IgnoreQueryFilters</c>) yalnızca izinli listedeki depo metotlarındadır (T5).
 /// </summary>
@@ -96,6 +97,22 @@ public sealed class OkulDbContext : DbContext
 
     public DbSet<Grade> Grades => this.Set<Grade>();
 
+    public DbSet<FeeSchedule> FeeSchedules => this.Set<FeeSchedule>();
+
+    public DbSet<DiscountDefinition> DiscountDefinitions => this.Set<DiscountDefinition>();
+
+    public DbSet<InstallmentPlan> InstallmentPlans => this.Set<InstallmentPlan>();
+
+    public DbSet<Installment> Installments => this.Set<Installment>();
+
+    public DbSet<Payment> Payments => this.Set<Payment>();
+
+    public DbSet<PaymentAllocation> PaymentAllocations => this.Set<PaymentAllocation>();
+
+    public DbSet<ReceiptCounter> ReceiptCounters => this.Set<ReceiptCounter>();
+
+    public DbSet<PaymentReminder> PaymentReminders => this.Set<PaymentReminder>();
+
     private Guid? CurrentTenantId => this.session?.TenantId;
 
     private bool CurrentIsFounder => this.session?.IsFounder ?? false;
@@ -161,5 +178,29 @@ public sealed class OkulDbContext : DbContext
         modelBuilder.Entity<Assessment>().HasQueryFilter(a =>
             a.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == a.BranchId));
         modelBuilder.Entity<Grade>().HasQueryFilter(g => g.TenantId == this.CurrentTenantId);
+
+        // Spec 0015: tarife, indirim, makbuz sayacı ve hatırlatma kurum filtreli; plan ve tahsilat şubesinin (öğrencinin şubesi)
+        // görünürlüğünü miras alır; taksit planından, dağılım tahsilatından miras alır. Muhasebenin "yalnızca Muhasebe rolü olduğu
+        // şube" duvarı BillingGuard'da (oturumun görünür şubeleri bütün rollerin şubeleridir), velinin "yalnızca kendi çocuğu" duvarı
+        // bağ üzerinden ("Çocuklarım" sorgusu). Filtre delme yok; arka plan hatırlatması okul başına sistem oturumuyla çalışır.
+        modelBuilder.Entity<FeeSchedule>().HasQueryFilter(f => f.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<DiscountDefinition>().HasQueryFilter(d => d.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<InstallmentPlan>().HasQueryFilter(p =>
+            p.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == p.BranchId));
+        modelBuilder.Entity<Installment>().HasQueryFilter(i =>
+            i.TenantId == this.CurrentTenantId && this.InstallmentPlans.Any(p => p.Id == i.PlanId));
+        modelBuilder.Entity<Payment>().HasQueryFilter(p =>
+            p.TenantId == this.CurrentTenantId && this.Branches.Any(b => b.Id == p.BranchId));
+        modelBuilder.Entity<PaymentAllocation>().HasQueryFilter(a =>
+            a.TenantId == this.CurrentTenantId && this.Payments.Any(p => p.Id == a.PaymentId));
+        modelBuilder.Entity<ReceiptCounter>().HasQueryFilter(c => c.TenantId == this.CurrentTenantId);
+        modelBuilder.Entity<PaymentReminder>().HasQueryFilter(r => r.TenantId == this.CurrentTenantId);
+    }
+
+    /// <summary>Para alanları (T4): <c>decimal</c> her yerde <c>numeric(18,2)</c>.</summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(configurationBuilder);
+        configurationBuilder.Properties<decimal>().HavePrecision(18, 2);
     }
 }

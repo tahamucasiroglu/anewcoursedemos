@@ -3,6 +3,7 @@ using NArchitecture.Core.Mediator;
 using OkulYonetim.Application.Features.Students.Queries.ListClassroomRoster;
 using OkulYonetim.Application.Features.Students.Queries.ListGuardianContacts;
 using OkulYonetim.Application.Features.Students.Queries.ListStudentBriefs;
+using OkulYonetim.Application.Features.Students.Queries.ListStudentLabels;
 using OkulYonetim.Application.Ports;
 
 namespace OkulYonetim.Application.Features.Students;
@@ -10,12 +11,13 @@ namespace OkulYonetim.Application.Features.Students;
 /// <summary>
 /// Diğer modüllerin öğrenci okumaları (spec 0010): yoklama listesi (Türkçe ad sırası, aynı adda kimlik sırası) ve bildirim
 /// için okulda etkin veliler; spec 0011: duyuru kapsamı ve mesaj ilişkisi için öğrencilerin kısa bilgisi (şube, sınıf). Uç yoktur;
-/// yetki denetimi çağıran modüldedir.
+/// yetki denetimi çağıran modüldedir. Spec 0015: tahsilat ekranları ve hatırlatma için öğrenci etiketi (ayrılmışlar dahil).
 /// </summary>
 public sealed class StudentLookupHandlers :
     IRequestHandler<ListClassroomRosterQuery, IReadOnlyList<RosterStudent>>,
     IRequestHandler<ListGuardianContactsQuery, IReadOnlyList<GuardianContact>>,
-    IRequestHandler<ListStudentBriefsQuery, IReadOnlyList<StudentBrief>>
+    IRequestHandler<ListStudentBriefsQuery, IReadOnlyList<StudentBrief>>,
+    IRequestHandler<ListStudentLabelsQuery, IReadOnlyList<StudentLabel>>
 {
     private static readonly StringComparer TurkishOrder = StringComparer.Create(CultureInfo.GetCultureInfo("tr-TR"), ignoreCase: true);
 
@@ -49,5 +51,13 @@ public sealed class StudentLookupHandlers :
         return request.Ids is { Count: 0 }
             ? []
             : await this.students.ListBriefsAsync(request.BranchId, request.ClassroomId, request.Ids, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<StudentLabel>> Handle(ListStudentLabelsQuery request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request.Ids.Count == 0
+            ? []
+            : await this.students.ListLabelsAsync(request.Ids, cancellationToken).ConfigureAwait(false);
     }
 }

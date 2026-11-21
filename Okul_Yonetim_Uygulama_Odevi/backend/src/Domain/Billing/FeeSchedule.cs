@@ -10,17 +10,17 @@ public sealed class FeeSchedule
 {
     public const int NameMax = 100;
 
-    private FeeSchedule(Guid id, Guid tenantId, string name, decimal amount, DateTimeOffset now, Guid actorId)
+    private FeeSchedule(Guid id, Guid tenantId, string name, decimal amount, DateTimeOffset createdAt, Guid createdBy)
     {
         this.Id = id;
         this.TenantId = tenantId;
         this.Name = name;
         this.Amount = amount;
         this.IsActive = true;
-        this.CreatedAt = now;
-        this.CreatedBy = actorId;
-        this.UpdatedAt = now;
-        this.UpdatedBy = actorId;
+        this.CreatedAt = createdAt;
+        this.CreatedBy = createdBy;
+        this.UpdatedAt = createdAt;
+        this.UpdatedBy = createdBy;
     }
 
     public Guid Id { get; private set; }
