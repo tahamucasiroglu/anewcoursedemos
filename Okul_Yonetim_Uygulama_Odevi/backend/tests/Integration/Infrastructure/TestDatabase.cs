@@ -9,6 +9,8 @@ namespace OkulYonetim.Tests.Integration.Infrastructure;
 /// (1 saatten eski) okul_test_* veritabanlarını siler, kendine ait okul_test_&lt;zaman&gt;_&lt;guid&gt; veritabanını açar; bitince siler.
 /// Eşzamanlı başka bir koşunun yeni veritabanına dokunmaz. Sunucu bağlantısı repoda değil,
 /// user-secrets veya ortam değişkenindeki "ConnectionStrings:TestServer" ayarından gelir. Geliştirme veritabanına dokunmaz.
+/// Bağlantı havuzu açık (uygulamanın kendi ayarı gibi; 0010 VERIFY V-7: havuzsuz her sorgu yeni fiziksel bağlantı açıyor,
+/// hız ölçümü test ortamını ölçüyordu); bir veritabanı silinmeden önce havuzlar boşaltılır.
 /// </summary>
 public sealed class TestDatabase : IAsyncLifetime
 {
@@ -35,10 +37,7 @@ public sealed class TestDatabase : IAsyncLifetime
         await CreateAsync(this.Name).ConfigureAwait(false);
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await ExecuteOnServerAsync($"DROP DATABASE IF EXISTS \"{this.Name}\" WITH (FORCE)").ConfigureAwait(false);
-    }
+    public async ValueTask DisposeAsync() => await DropAsync(this.Name).ConfigureAwait(false);
 
     public static async Task<bool> ExistsAsync(string name)
     {
@@ -49,8 +48,15 @@ public sealed class TestDatabase : IAsyncLifetime
         return await command.ExecuteScalarAsync().ConfigureAwait(false) is not null;
     }
 
-    public static async Task DropAsync(string name) =>
+    /// <summary>
+    /// Veritabanını siler. Önce havuzlar boşaltılır: havuzda bekleyen boşta bağlantılar silmeyi engellemesin ve silinen
+    /// veritabanına ait (FORCE ile kesilmiş) bağlantılar havuzda kalıp sonradan kullanılmasın.
+    /// </summary>
+    public static async Task DropAsync(string name)
+    {
+        NpgsqlConnection.ClearAllPools();
         await ExecuteOnServerAsync($"DROP DATABASE IF EXISTS \"{name}\" WITH (FORCE)").ConfigureAwait(false);
+    }
 
     public static async Task CreateAsync(string name) =>
         await ExecuteOnServerAsync($"CREATE DATABASE \"{name}\"").ConfigureAwait(false);
@@ -71,7 +77,7 @@ public sealed class TestDatabase : IAsyncLifetime
 
         foreach (string name in leftovers.Where(n => n != except && IsStale(n, DateTime.UtcNow)))
         {
-            await ExecuteOnServerAsync($"DROP DATABASE IF EXISTS \"{name}\" WITH (FORCE)").ConfigureAwait(false);
+            await DropAsync(name).ConfigureAwait(false);
         }
     }
 
@@ -112,6 +118,6 @@ public sealed class TestDatabase : IAsyncLifetime
                 "Test veritabanı sunucusu ayarı yok: 'dotnet user-secrets set ConnectionStrings:TestServer \"Host=localhost;Port=5432;Username=...;Password=...\"' (tests/Integration) veya ConnectionStrings__TestServer ortam değişkeni.");
         }
 
-        return new NpgsqlConnectionStringBuilder(value) { Database = "postgres", Pooling = false }.ConnectionString;
+        return new NpgsqlConnectionStringBuilder(value) { Database = "postgres", Pooling = true }.ConnectionString;
     }
 }
