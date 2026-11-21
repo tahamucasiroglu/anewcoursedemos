@@ -5,9 +5,16 @@ namespace OkulYonetim.Domain.Communication;
 /// gün tekildir — aynı gün ikinci "yok" bildirimi oluşmaz (C-5). "Yok" düzeltilince aynı satır <see cref="GuardianNoticeKind.Corrected"/>
 /// olur ("düzeltildi" etiketi, düzeltme metni) ve yeniden okunmamış sayılır; yeniden "Yok" olursa tekrar devamsızlık
 /// bildirimi olur. Metin saklanmaz: ekranda tür, öğrenci adı, gün ve okul adından kurulur (gizlilik, gereksinim 10).
+/// <para>
+/// Spec 0013: diğer modüllerin kayda bağlı okul bildirimi (<see cref="GuardianNoticeKind.Assignment"/> — yeni ödev) kaynak kaydın
+/// kimliğini (<see cref="SourceId"/>) ve hazır metnini (<see cref="Text"/>: ders, başlık, teslim günü — öğrenci adı yok) taşır;
+/// veli + öğrenci + kaynak tekildir. Yoklama bildiriminde ikisi de boştur ve veli + öğrenci + gün tekilliği yalnızca onlar içindir.
+/// </para>
 /// </summary>
 public sealed class GuardianNotice
 {
+    public const int TextMax = 400;
+
     private GuardianNotice(Guid id, Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, GuardianNoticeKind kind, DateTimeOffset createdAt, DateTimeOffset updatedAt)
     {
         this.Id = id;
@@ -38,8 +45,23 @@ public sealed class GuardianNotice
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    public Guid? SourceId { get; private set; }
+
+    public string? Text { get; private set; }
+
     public static GuardianNotice Absent(Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, DateTimeOffset now) =>
         new(Guid.CreateVersion7(now), tenantId, guardianUserId, studentId, day, GuardianNoticeKind.Absent, now, now);
+
+    /// <summary>Kayda bağlı okul bildirimi (spec 0013: yeni ödev); metin hazırdır ve öğrenci adı taşımaz.</summary>
+    public static GuardianNotice ForRecord(Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, GuardianNoticeKind kind, Guid sourceId, string text, DateTimeOffset now)
+    {
+        if (kind is GuardianNoticeKind.Absent or GuardianNoticeKind.Corrected || string.IsNullOrWhiteSpace(text) || text.Length > TextMax)
+        {
+            throw new ArgumentOutOfRangeException(nameof(kind), "Kayda bağlı bildirim türü ve metni geçersiz.");
+        }
+
+        return new(Guid.CreateVersion7(now), tenantId, guardianUserId, studentId, day, kind, now, now) { SourceId = sourceId, Text = text };
+    }
 
     /// <summary>Türü değiştirir ve bildirimi yeniden okunmamış yapar (düzeltme ya da yeniden devamsızlık).</summary>
     public void Change(GuardianNoticeKind kind, DateTimeOffset now)

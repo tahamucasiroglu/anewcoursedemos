@@ -66,4 +66,8 @@ public enum AuditAction
     AnnouncementPublished = 61,
     ConsentAnswered = 62,
     QuietHoursChanged = 63,
+    AssignmentCreated = 64,
+    SubmissionsRecorded = 65,
+    AssessmentCreated = 66,
+    GradesRecorded = 67,
 }

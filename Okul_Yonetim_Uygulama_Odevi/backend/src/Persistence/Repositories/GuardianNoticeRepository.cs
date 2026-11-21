@@ -19,7 +19,7 @@ public sealed class GuardianNoticeRepository : IGuardianNoticeRepository
     }
 
     public async Task<IReadOnlyList<GuardianNotice>> ListForStudentsOnDayAsync(IReadOnlyCollection<Guid> studentIds, DateOnly day, CancellationToken cancellationToken) =>
-        await this.context.GuardianNotices.Where(n => n.Day == day && studentIds.Contains(n.StudentId))
+        await this.context.GuardianNotices.Where(n => n.Day == day && n.SourceId == null && studentIds.Contains(n.StudentId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public async Task<IReadOnlyList<GuardianNotice>> ListForGuardianAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, int max, CancellationToken cancellationToken) =>

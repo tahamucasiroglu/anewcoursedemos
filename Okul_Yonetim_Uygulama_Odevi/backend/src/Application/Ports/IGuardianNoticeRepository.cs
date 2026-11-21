@@ -8,7 +8,7 @@ namespace OkulYonetim.Application.Ports;
 /// </summary>
 public interface IGuardianNoticeRepository
 {
-    /// <summary>Verilen öğrencilerin o günkü bildirimleri (bütün veliler) — tekrar bildirim engeli ve düzeltme için.</summary>
+    /// <summary>Verilen öğrencilerin o günkü yoklama bildirimleri (bütün veliler; kayda bağlı okul bildirimleri hariç — spec 0013) — tekrar bildirim engeli ve düzeltme için.</summary>
     Task<IReadOnlyList<GuardianNotice>> ListForStudentsOnDayAsync(IReadOnlyCollection<Guid> studentIds, DateOnly day, CancellationToken cancellationToken);
 
     /// <summary>Velinin, verilen öğrencilere ait bildirimleri: yeniden eskiye, en fazla <paramref name="max"/>.</summary>

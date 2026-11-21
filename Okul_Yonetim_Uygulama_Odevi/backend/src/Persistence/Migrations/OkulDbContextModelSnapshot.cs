@@ -22,6 +22,240 @@ namespace OkulYonetim.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.Assessment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("ClassroomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("classroom_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("subject");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assessments");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("ix_assessments_branch_id");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_assessments_created_by_user_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_assessments_tenant_id");
+
+                    b.HasIndex("ClassroomId", "Date")
+                        .HasDatabaseName("ix_assessments_classroom_id_date");
+
+                    b.ToTable("assessments", (string)null);
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.Assignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("ClassroomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("classroom_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("subject");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assignments");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("ix_assignments_branch_id");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_assignments_created_by_user_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_assignments_tenant_id");
+
+                    b.HasIndex("ClassroomId", "DueDate")
+                        .HasDatabaseName("ix_assignments_classroom_id_due_date");
+
+                    b.ToTable("assignments", (string)null);
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.AssignmentSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignment_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assignment_submissions");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_assignment_submissions_student_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_assignment_submissions_tenant_id");
+
+                    b.HasIndex("UpdatedByUserId")
+                        .HasDatabaseName("ix_assignment_submissions_updated_by_user_id");
+
+                    b.HasIndex("AssignmentId", "StudentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_assignment_submissions_assignment_id_student_id");
+
+                    b.ToTable("assignment_submissions", (string)null);
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.Grade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssessmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assessment_id");
+
+                    b.Property<int?>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_grades");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_grades_student_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_grades_tenant_id");
+
+                    b.HasIndex("UpdatedByUserId")
+                        .HasDatabaseName("ix_grades_updated_by_user_id");
+
+                    b.HasIndex("AssessmentId", "StudentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_grades_assessment_id_student_id");
+
+                    b.ToTable("grades", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_grades_score_range", "score IS NULL OR (score >= 0 AND score <= 100)");
+                        });
+                });
+
             modelBuilder.Entity("OkulYonetim.Domain.Ai.AiDraft", b =>
                 {
                     b.Property<Guid>("Id")
@@ -519,6 +753,10 @@ namespace OkulYonetim.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_at");
 
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
                     b.Property<Guid>("StudentId")
                         .HasColumnType("uuid")
                         .HasColumnName("student_id");
@@ -526,6 +764,11 @@ namespace OkulYonetim.Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -539,7 +782,13 @@ namespace OkulYonetim.Persistence.Migrations
 
                     b.HasIndex("GuardianUserId", "StudentId", "Day")
                         .IsUnique()
-                        .HasDatabaseName("ix_guardian_notices_guardian_user_id_student_id_day");
+                        .HasDatabaseName("ix_guardian_notices_guardian_user_id_student_id_day")
+                        .HasFilter("source_id IS NULL");
+
+                    b.HasIndex("GuardianUserId", "StudentId", "SourceId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_guardian_notices_guardian_user_id_student_id_source_id")
+                        .HasFilter("source_id IS NOT NULL");
 
                     b.HasIndex("TenantId", "GuardianUserId", "UpdatedAt")
                         .HasDatabaseName("ix_guardian_notices_tenant_id_guardian_user_id_updated_at");
@@ -1465,6 +1714,130 @@ namespace OkulYonetim.Persistence.Migrations
                         .HasDatabaseName("ix_student_guardians_tenant_id_guardian_user_id");
 
                     b.ToTable("student_guardians", (string)null);
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.Assessment", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assessments_branches_branch_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Classroom", null)
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assessments_classrooms_classroom_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assessments_users_created_by_user_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assessments_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.Assignment", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Organization.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignments_branches_branch_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Classroom", null)
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignments_classrooms_classroom_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignments_users_created_by_user_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignments_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.AssignmentSubmission", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Academics.Assignment", null)
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_submissions_assignments_assignment_id");
+
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_submissions_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_submissions_tenants_tenant_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignment_submissions_users_updated_by_user_id");
+                });
+
+            modelBuilder.Entity("OkulYonetim.Domain.Academics.Grade", b =>
+                {
+                    b.HasOne("OkulYonetim.Domain.Academics.Assessment", null)
+                        .WithMany()
+                        .HasForeignKey("AssessmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grades_assessments_assessment_id");
+
+                    b.HasOne("OkulYonetim.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grades_students_student_id");
+
+                    b.HasOne("OkulYonetim.Domain.Organization.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grades_tenants_tenant_id");
+
+                    b.HasOne("OkulYonetim.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grades_users_updated_by_user_id");
                 });
 
             modelBuilder.Entity("OkulYonetim.Domain.Ai.AiDraft", b =>
