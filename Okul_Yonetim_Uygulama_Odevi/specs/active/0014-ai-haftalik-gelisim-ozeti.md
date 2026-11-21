@@ -1,6 +1,6 @@
 # Spec 0014 — AI: haftalık gelişim özeti
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0014-plan.md`
 - Self-critique: done
