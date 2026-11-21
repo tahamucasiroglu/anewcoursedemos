@@ -95,6 +95,7 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 - Veliye giden hiçbir AI çıktısı insan onayı olmadan gönderilmez (BR-5).
 - Çocuklara dair veriler model eğitiminde kullanılmaz.
 - Taksitlerin toplamı her zaman ana tutara eşittir (BR-7).
+- Her taksit en az 0,01 TL'dir; net tutar < taksit sayısı × 0,01 TL ise plan reddedilir ("Taksit tutarı 0,01 TL'den az olamaz; taksit sayısını azaltın." — spec 0015, review tur 1).
 - Audit kayıtları değiştirilemez ve silinemez.
 
 ## Sensitive areas
