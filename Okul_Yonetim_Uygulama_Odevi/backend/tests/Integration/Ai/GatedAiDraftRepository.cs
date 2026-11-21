@@ -25,6 +25,12 @@ public sealed class GatedAiDraftRepository : IAiDraftRepository
         return draft;
     }
 
+    public Task<AiDraft?> FindWeeklySummaryAsync(Guid studentId, DateOnly weekStart, CancellationToken cancellationToken) =>
+        this.inner.FindWeeklySummaryAsync(studentId, weekStart, cancellationToken);
+
+    public Task<IReadOnlyList<(Guid StudentId, AiDraftStatus Status)>> ListWeeklySummaryStatusesAsync(IReadOnlyCollection<Guid> studentIds, DateOnly weekStart, CancellationToken cancellationToken) =>
+        this.inner.ListWeeklySummaryStatusesAsync(studentIds, weekStart, cancellationToken);
+
     public void Add(AiDraft draft) => this.inner.Add(draft);
 
     public void Remove(AiDraft draft) => this.inner.Remove(draft);

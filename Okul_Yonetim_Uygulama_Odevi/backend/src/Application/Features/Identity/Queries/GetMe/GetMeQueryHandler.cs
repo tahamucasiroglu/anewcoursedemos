@@ -4,7 +4,9 @@ using OkulYonetim.Application.Features.Communication;
 using OkulYonetim.Application.Features.Identity.Sessions;
 using OkulYonetim.Application.Features.Organization;
 using OkulYonetim.Application.Features.Organization.Queries.GetBranches;
+using OkulYonetim.Application.Features.Organization.Queries.ListMyTeachingClassrooms;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Identity;
 using OkulYonetim.Domain.Organization;
 
@@ -21,6 +23,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
     private readonly ITenantRepository tenants;
     private readonly IRoleAssignmentRepository roleAssignments;
     private readonly UserTenantDirectory tenantDirectory;
+    private readonly SchoolCalendar calendar;
     private readonly ISender sender;
 
     public GetMeQueryHandler(
@@ -29,6 +32,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
         ITenantRepository tenants,
         IRoleAssignmentRepository roleAssignments,
         UserTenantDirectory tenantDirectory,
+        SchoolCalendar calendar,
         ISender sender)
     {
         this.currentSession = currentSession;
@@ -36,6 +40,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
         this.tenants = tenants;
         this.roleAssignments = roleAssignments;
         this.tenantDirectory = tenantDirectory;
+        this.calendar = calendar;
         this.sender = sender;
     }
 
@@ -50,6 +55,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
         IReadOnlyList<BranchSummary> branches = [];
         int unreadNotices = 0;
         CommunicationUnread unread = new(0, 0);
+        bool teaches = false;
         if (tenant is not null)
         {
             IReadOnlyList<RoleAssignment> assignments = await this.roleAssignments.ListForUserInTenantAsync(user.Id, tenant.Id, cancellationToken).ConfigureAwait(false);
@@ -57,6 +63,12 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
             branches = await this.sender.Send(new GetBranchesQuery(), cancellationToken).ConfigureAwait(false);
             unreadNotices = await this.sender.Send(new CountMyUnreadNoticesQuery(), cancellationToken).ConfigureAwait(false);
             unread = await this.sender.Send(new CountMyCommunicationUnreadQuery(), cancellationToken).ConfigureAwait(false);
+            if (assignments.Any(a => a.Role == Role.Teacher))
+            {
+                // Haftalık özetin sınıf listesiyle aynı kural (spec 0014): dönemi geçen haftadan önce bitmemiş, atandığı etkin sınıf.
+                DateOnly since = SchoolWeek.Containing(this.calendar.Today()).Before().Start;
+                teaches = (await this.sender.Send(new ListMyTeachingClassroomsQuery(since), cancellationToken).ConfigureAwait(false)).Count > 0;
+            }
         }
 
         IReadOnlyList<TenantSummary> all = await this.tenantDirectory.ListAsync(user.Id, cancellationToken).ConfigureAwait(false);
@@ -70,6 +82,7 @@ public sealed class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeResponse>
             this.currentSession.IsPlatformAdmin,
             unreadNotices,
             unread.Announcements,
-            unread.Messages);
+            unread.Messages,
+            teaches);
     }
 }

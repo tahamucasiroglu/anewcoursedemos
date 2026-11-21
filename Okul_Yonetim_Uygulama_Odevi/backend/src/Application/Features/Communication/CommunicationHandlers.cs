@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
 using NArchitecture.Core.Localization.Abstraction;
 using NArchitecture.Core.Mediator;
 using OkulYonetim.Application.Features.Communication.Announcements;
@@ -6,6 +7,7 @@ using OkulYonetim.Application.Features.Students;
 using OkulYonetim.Application.Features.Students.Queries.ListGuardianContacts;
 using OkulYonetim.Application.Features.Students.Queries.ListMyChildren;
 using OkulYonetim.Application.Ports;
+using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Communication;
 using OkulYonetim.Domain.Identity;
 
@@ -29,11 +31,17 @@ namespace OkulYonetim.Application.Features.Communication;
 /// Spec 0013: kayda bağlı okul bildirimi (yeni ödev) — her öğrencinin okulda etkin her velisine öğrenci başına bir bildirim,
 /// hazır metniyle (öğrenci adı yok); e-posta gitmez. Listede metin olduğu gibi gösterilir.
 /// </para>
+/// <para>
+/// Spec 0014: haftalık gelişim özeti de kayda bağlı okul bildirimidir (kaynak onaylanan taslak); listede başlığı türden ve haftadan
+/// kurulur ("Haftalık gelişim özeti — 16–22 Kasım"). Velinin tek bildirim ayrıntısı (<see cref="GetMyNoticeQuery"/>) aynı bağ
+/// kuralıyla okunur ve açılış okundu yapar.
+/// </para>
 /// </summary>
 public sealed class CommunicationHandlers :
     IRequestHandler<NotifyAttendanceChangesCommand, AttendanceNoticeResult>,
     IRequestHandler<NotifyStudentGuardiansCommand, SchoolNoticeResult>,
     IRequestHandler<ListMyNoticesQuery, IReadOnlyList<NoticeView>>,
+    IRequestHandler<GetMyNoticeQuery, NoticeView>,
     IRequestHandler<MarkMyNoticesReadCommand, int>,
     IRequestHandler<CountMyUnreadNoticesQuery, int>
 {
@@ -182,15 +190,26 @@ public sealed class CommunicationHandlers :
 
         string school = (await this.tenants.GetCurrentAsync(cancellationToken).ConfigureAwait(false))?.Name ?? string.Empty;
         Templates templates = await this.TemplatesAsync().ConfigureAwait(false);
-        return [.. list.Select(n => new NoticeView(
-            n.Id,
-            n.StudentId,
-            names[n.StudentId],
-            n.Day,
-            n.Kind.ToString(),
-            n.Text ?? GuardianNoticeEmail.Render(n.Kind == GuardianNoticeKind.Absent ? templates.AbsentText : templates.CorrectedText, names[n.StudentId], n.Day, school),
-            n.ReadAt is not null,
-            n.UpdatedAt))];
+        return [.. list.Select(n => View(n, names[n.StudentId], school, templates))];
+    }
+
+    public async Task<NoticeView> Handle(GetMyNoticeQuery request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        (Guid userId, IReadOnlyList<ChildRow> children) = await this.MyChildrenAsync(cancellationToken).ConfigureAwait(false);
+        Dictionary<Guid, string> names = children.ToDictionary(c => c.Id, c => c.FullName);
+        GuardianNotice notice = (names.Count == 0 ? null : await this.notices.FindForGuardianAsync(request.Id, userId, names.Keys, cancellationToken).ConfigureAwait(false))
+            ?? throw new NotFoundException(
+                await this.localization.CommunicationTextAsync(CommunicationMessages.NoticeNotFound).ConfigureAwait(false));
+        if (notice.ReadAt is null)
+        {
+            notice.MarkRead(this.timeProvider.GetUtcNow());
+            await this.unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            this.logger.LogInformation("Bildirim okundu (ayrıntı): bildirim {NoticeId}, kişi {UserId}", notice.Id, userId);
+        }
+
+        string school = (await this.tenants.GetCurrentAsync(cancellationToken).ConfigureAwait(false))?.Name ?? string.Empty;
+        return View(notice, names[notice.StudentId], school, await this.TemplatesAsync().ConfigureAwait(false));
     }
 
     public async Task<int> Handle(MarkMyNoticesReadCommand request, CancellationToken cancellationToken)
@@ -235,13 +254,28 @@ public sealed class CommunicationHandlers :
         return (this.session.UserId!.Value, children);
     }
 
+    /// <summary>Bildirim satırı: kayda bağlı bildirimde hazır metin, yoklamada şablondan; haftalık özette başlık haftadan.</summary>
+    private static NoticeView View(GuardianNotice n, string studentName, string school, Templates templates) => new(
+        n.Id,
+        n.StudentId,
+        studentName,
+        n.Day,
+        n.Kind.ToString(),
+        n.Text ?? GuardianNoticeEmail.Render(n.Kind == GuardianNoticeKind.Absent ? templates.AbsentText : templates.CorrectedText, studentName, n.Day, school),
+        n.ReadAt is not null,
+        n.UpdatedAt,
+        n.Kind == GuardianNoticeKind.WeeklySummary
+            ? templates.WeeklySummaryTitle.Replace("{week}", SchoolWeek.Containing(n.Day).Label(), StringComparison.Ordinal)
+            : null);
+
     private async Task<Templates> TemplatesAsync() => new(
         await this.localization.CommunicationTextAsync(CommunicationMessages.AbsentText).ConfigureAwait(false),
         await this.localization.CommunicationTextAsync(CommunicationMessages.CorrectedText).ConfigureAwait(false),
         await this.localization.CommunicationTextAsync(CommunicationMessages.AbsentSubject).ConfigureAwait(false),
         await this.localization.CommunicationTextAsync(CommunicationMessages.CorrectedSubject).ConfigureAwait(false),
-        await this.localization.CommunicationTextAsync(CommunicationMessages.EmailFooter).ConfigureAwait(false));
+        await this.localization.CommunicationTextAsync(CommunicationMessages.EmailFooter).ConfigureAwait(false),
+        await this.localization.CommunicationTextAsync(CommunicationMessages.WeeklySummaryTitle).ConfigureAwait(false));
 
     /// <summary>Bildirim ve e-posta şablonları (YAML).</summary>
-    private sealed record Templates(string AbsentText, string CorrectedText, string AbsentSubject, string CorrectedSubject, string Footer);
+    private sealed record Templates(string AbsentText, string CorrectedText, string AbsentSubject, string CorrectedSubject, string Footer, string WeeklySummaryTitle);
 }

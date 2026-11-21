@@ -5,7 +5,8 @@ namespace OkulYonetim.Application.Features.Communication;
 /// <summary>
 /// Veliye giden iletişim (spec 0010: devamsızlık bildirimi; spec 0011: duyuru, onay formu, mesaj, mesai saatleri) metinlerinin anahtarları ve okuyucusu (YAML:
 /// <c>Features/Communication/Resources/Locales/communication.tr.yaml</c>). Bildirim ve e-posta şablonları
-/// <c>{student}</c>, <c>{date}</c>, <c>{school}</c> yer tutucularını taşır (<see cref="GuardianNoticeEmail"/>).
+/// <c>{student}</c>, <c>{date}</c>, <c>{school}</c> yer tutucularını taşır (<see cref="GuardianNoticeEmail"/>). Spec 0014: haftalık
+/// özet bildiriminin başlığı (<c>{week}</c>), etiketi, "velisi yok" ve metin alanı hataları, bildirim ayrıntısında "bulunamadı".
 /// </summary>
 public static class CommunicationMessages
 {
@@ -49,6 +50,14 @@ public static class CommunicationMessages
     public const string DaysInvalid = "DaysInvalid";
     public const string TooManyRequests = "TooManyRequests";
     public const string PageRange = "PageRange";
+    public const string WeeklySummaryTitle = "WeeklySummaryTitle";
+    public const string WeeklySummaryLabel = "WeeklySummaryLabel";
+    public const string WeeklySummaryNoGuardian = "WeeklySummaryNoGuardian";
+    public const string WeeklySummaryTextRequired = "WeeklySummaryTextRequired";
+    public const string WeeklySummaryTextTooLong = "WeeklySummaryTextTooLong";
+    public const string NoticeNotFound = "NoticeNotFound";
+    public const string WeeklySummaryWeekInvalid = "WeeklySummaryWeekInvalid";
+    public const string WeeklySummaryBusy = "WeeklySummaryBusy";
 
     private static readonly string[] Locales = ["tr"];
 

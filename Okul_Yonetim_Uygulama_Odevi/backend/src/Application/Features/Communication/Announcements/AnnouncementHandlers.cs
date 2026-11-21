@@ -184,7 +184,7 @@ public sealed class AnnouncementHandlers :
         List<FeedItem> merged =
         [
             .. rows.Select(a => new FeedItem("Announcement", a.Id, a.Title, a.AuthorName, [], a.PublishedAt, a.IsRead, a.RequiresConsent)),
-            .. notices.Select(n => new FeedItem("SchoolNotice", n.Id, n.Text, null, [n.StudentName], n.At, n.IsRead, false)),
+            .. notices.Select(n => new FeedItem(n.Title is null ? "SchoolNotice" : "WeeklySummary", n.Id, n.Title ?? n.Text, null, [n.StudentName], n.At, n.IsRead, false)),
         ];
         List<FeedItem> items = [.. merged.OrderByDescending(i => i.At).ThenByDescending(i => i.Id).Skip((page - 1) * PageSize).Take(PageSize)];
 

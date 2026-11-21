@@ -22,5 +22,8 @@ public interface IGuardianNoticeRepository
     /// </summary>
     Task<IReadOnlyList<GuardianNotice>> ListUnreadUpToAsync(Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, DateTimeOffset upTo, CancellationToken cancellationToken);
 
+    /// <summary>Velinin, verilen öğrencilerinden birine ait tek bildirimi (izlenen — ayrıntıda okundu yapmak için; spec 0014); yoksa null.</summary>
+    Task<GuardianNotice?> FindForGuardianAsync(Guid id, Guid guardianUserId, IReadOnlyCollection<Guid> studentIds, CancellationToken cancellationToken);
+
     void Add(GuardianNotice notice);
 }

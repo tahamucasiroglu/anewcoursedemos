@@ -37,6 +37,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<Features.Organization.TeacherClassroomAccess>();
         services.AddScoped<Features.Attendance.AttendanceGuard>();
         services.AddScoped<Features.Academics.AcademicsGuard>();
+        services.AddScoped<Features.Ai.WeeklySummaries.WeeklySummaryGuard>();
+        services.AddScoped<Features.Ai.WeeklySummaries.WeeklySummarySourceCollector>();
         services.AddScoped<Features.Communication.CommunicationGuard>();
         services.AddScoped<Features.Communication.Notifications.GuardianNotifier>();
         services.AddSingleton<Features.Organization.SchoolCalendar>();
