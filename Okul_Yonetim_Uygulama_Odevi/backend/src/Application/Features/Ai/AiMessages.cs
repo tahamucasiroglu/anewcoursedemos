@@ -6,7 +6,7 @@ namespace OkulYonetim.Application.Features.Ai;
 /// Ai katmanının (spec 0012) kullanıcı metinlerinin anahtarları ve okuyucusu (YAML:
 /// <c>Features/Ai/Resources/Locales/ai.tr.yaml</c>): ses alanı hataları, sesli not süresi, anlaşılmayan ses, "kullanılamıyor",
 /// yetki, kapanmış konuşma, bulunamayan, kullanılmış ya da o an işlenen taslak. Spec 0014: haftalık özetin yetki, hafta, öğretmen
-/// notu, "veri yok", "zaten gönderildi", "kullanılamıyor — daha sonra tekrar deneyin" metinleri ve dayanak satırının parçaları.
+/// notu, "veri yok", "zaten gönderildi", "kullanılamıyor — daha sonra tekrar deneyin", "taslak değişti" (review R1-2) metinleri ve dayanak satırının parçaları.
 /// </summary>
 public static class AiMessages
 {
@@ -32,6 +32,7 @@ public static class AiMessages
     public const string SummaryAlreadySent = "SummaryAlreadySent";
     public const string SummaryUnavailable = "SummaryUnavailable";
     public const string SummaryBusy = "SummaryBusy";
+    public const string SummaryDraftChanged = "SummaryDraftChanged";
     public const string BasisPrefix = "BasisPrefix";
     public const string BasisAttendance = "BasisAttendance";
     public const string BasisLate = "BasisLate";

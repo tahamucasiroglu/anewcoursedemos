@@ -58,6 +58,7 @@ public static class CommunicationMessages
     public const string NoticeNotFound = "NoticeNotFound";
     public const string WeeklySummaryWeekInvalid = "WeeklySummaryWeekInvalid";
     public const string WeeklySummaryBusy = "WeeklySummaryBusy";
+    public const string WeeklySummaryDraftRequired = "WeeklySummaryDraftRequired";
 
     private static readonly string[] Locales = ["tr"];
 

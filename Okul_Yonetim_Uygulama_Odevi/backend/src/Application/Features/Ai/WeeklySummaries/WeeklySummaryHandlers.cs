@@ -207,11 +207,27 @@ public sealed class WeeklySummaryHandlers :
         ArgumentNullException.ThrowIfNull(request);
         WeeklySummaryStudent student = await this.guard.RequireStudentAsync(request.StudentId, cancellationToken).ConfigureAwait(false);
         SchoolWeek week = SchoolWeek.StartingOn(request.WeekStart);
-        AiDraft draft = await this.drafts.FindWeeklySummaryAsync(student.StudentId, week.Start, cancellationToken).ConfigureAwait(false)
-            ?? throw await this.guard.NotFoundAsync(AiMessages.DraftNotFound).ConfigureAwait(false);
+        AiDraft? draft = await this.drafts.FindWeeklySummaryAsync(student.StudentId, week.Start, cancellationToken).ConfigureAwait(false);
+        if (draft is null)
+        {
+            // Öğretmenin gördüğü taslak bu öğrencinin başka haftasına aitse hafta dönmüştür (review R1-2): "değişti"; değilse 404.
+            bool otherWeek = await this.drafts.FindAsync(request.DraftId, cancellationToken).ConfigureAwait(false) is { Kind: AiDraftKind.WeeklySummary } seen
+                && seen.StudentId == student.StudentId;
+            throw otherWeek
+                ? await this.DraftChangedAsync(student, week, request.DraftId).ConfigureAwait(false)
+                : await this.guard.NotFoundAsync(AiMessages.DraftNotFound).ConfigureAwait(false);
+        }
+
         if (!draft.IsPending)
         {
             throw await this.AlreadySentAsync(student, week).ConfigureAwait(false);
+        }
+
+        // Yeniden oluşturma aynı kaydı günceller ve oluşturulma zamanını yeniler. Zaman veritabanında mikro saniyeye iner, üretim yanıtı
+        // ise bellekteki (tik) değeri taşır — bu yüzden 1 ms'den küçük fark aynı taslak sayılır (iki üretim arasında model çağrısı var).
+        if (draft.Id != request.DraftId || (draft.CreatedAt - request.DraftGeneratedAt).Duration() >= TimeSpan.FromMilliseconds(1))
+        {
+            throw await this.DraftChangedAsync(student, week, request.DraftId).ConfigureAwait(false);
         }
 
         string basisLine = WeeklySummarySource.FromJson(draft.SourceText).ToBasisLine(await this.BasisTextsAsync().ConfigureAwait(false));
@@ -264,6 +280,7 @@ public sealed class WeeklySummaryHandlers :
             basis.ToBasisLine(await this.BasisTextsAsync().ConfigureAwait(false)),
             !basis.IsEmpty,
             draft is { IsPending: true } ? draft.Id : null,
+            draft is { IsPending: true } ? draft.CreatedAt : null,
             draft?.DraftText,
             draft?.FinalText,
             draft?.ApprovedAt);
@@ -309,6 +326,12 @@ public sealed class WeeklySummaryHandlers :
     {
         this.logger.LogWarning("Haftalık özet zaten gönderildi: öğrenci {StudentId}, hafta {WeekStart}, öğretmen {UserId}", student.StudentId, week.Start, student.TeacherUserId);
         return new BusinessException(await this.localization.AiTextAsync(AiMessages.SummaryAlreadySent).ConfigureAwait(false));
+    }
+
+    private async Task<BusinessException> DraftChangedAsync(WeeklySummaryStudent student, SchoolWeek week, Guid seenDraftId)
+    {
+        this.logger.LogWarning("Haftalık özet gönderilmedi (taslak değişti): öğrenci {StudentId}, hafta {WeekStart}, görülen taslak {DraftId}, öğretmen {UserId}", student.StudentId, week.Start, seenDraftId, student.TeacherUserId);
+        return new BusinessException(await this.localization.AiTextAsync(AiMessages.SummaryDraftChanged).ConfigureAwait(false));
     }
 
     private async Task<WeeklySummaryBasisTexts> BasisTextsAsync() => new(

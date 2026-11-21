@@ -19,7 +19,8 @@ namespace OkulYonetim.Application.Features.Communication.WeeklySummaries;
 /// Communication'dır; Ai yalnızca taslak üretir ve onay kapısını sunar (mimari yasak 6). Sıra: öğrenci-hafta sırası
 /// (<see cref="WeeklySummaryLock"/>; dolu kalırsa "Bu özet şu an işleniyor…") → Ai'ın <see cref="GetWeeklySummaryForSendQuery"/>'si
 /// (öğretmen öğrencinin sınıfına atanmış — değilse 403/404; bekleyen taslak yoksa 404; gönderilmişse "Bu hafta için özet zaten
-/// gönderildi.") → <see cref="NotifyStudentGuardiansCommand"/> (öğrencinin okulda etkin her velisine bir okul bildirimi; metin = onaylanan
+/// gönderildi."; bekleyen taslak öğretmenin panelde gördüğü değilse — hafta döndü ya da yeniden oluşturuldu — "Taslak değişti; paneli
+/// yenileyin.", review R1-2) → <see cref="NotifyStudentGuardiansCommand"/> (öğrencinin okulda etkin her velisine bir okul bildirimi; metin = onaylanan
 /// özet + "Yapay zekâ desteğiyle hazırlandı, öğretmen onayladı." + dayanak satırı; etkin veli yoksa "Bu öğrencinin kayıtlı velisi yok." ve
 /// hiçbir şey yazılmaz) → Ai'ın <see cref="ApproveWeeklySummaryDraftCommand"/>'ı (son metin, onaylayan) → audit (kim, öğrenci, hafta, veli
 /// sayısı, IP) — hepsi tek işlemde; bildirimler commit'ten sonra bildirim kapısından (<see cref="DeliverNotificationsCommand"/>). Eşzamanlı
@@ -73,7 +74,7 @@ public sealed class SendWeeklySummaryCommandHandler : IRequestHandler<SendWeekly
         SchoolNoticeResult notices;
         await using (scope.ConfigureAwait(false))
         {
-            target = await this.sender.Send(new GetWeeklySummaryForSendQuery(request.StudentId, week.Start), cancellationToken).ConfigureAwait(false);
+            target = await this.sender.Send(new GetWeeklySummaryForSendQuery(request.StudentId, week.Start, request.DraftId!.Value, request.DraftGeneratedAt!.Value), cancellationToken).ConfigureAwait(false);
             string label = await this.localization.CommunicationTextAsync(CommunicationMessages.WeeklySummaryLabel).ConfigureAwait(false);
             string text = finalText + "\n\n" + label + "\n" + target.BasisLine;
             notices = await this.sender.Send(

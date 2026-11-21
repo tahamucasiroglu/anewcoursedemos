@@ -30,6 +30,7 @@ public static class WeeklySummaryTestData
     public const string NoData = "Bu hafta için özetlenecek veri yok.";
     public const string AlreadySent = "Bu hafta için özet zaten gönderildi.";
     public const string NoGuardian = "Bu öğrencinin kayıtlı velisi yok.";
+    public const string DraftChanged = "Taslak değişti; paneli yenileyin.";
 
     public static OkulApiFactory Factory(TestDatabase database, IAiTextGenerator? text, CapturingPushNotifier? notifier = null, FakeTimeProvider? time = null, Action<IServiceCollection>? configure = null) =>
         new(database.ConnectionString, timeProvider: time ?? new FakeTimeProvider(Morning), configureServices: services =>
@@ -72,8 +73,20 @@ public static class WeeklySummaryTestData
         return body;
     }
 
-    public static Task<(HttpStatusCode Status, JsonElement Body, string Raw)> SendSummaryAsync(HttpClient client, string token, Guid studentId, string? text, string? week = null) =>
-        CallAsync(client, HttpMethod.Post, $"/api/weekly-summaries/students/{studentId}/send" + WeekQuery(week), token, new { text });
+    // "Onayla ve gönder". Taslak verilmezse web paneli gibi önce paneli açar ve oradaki bekleyen taslağı (kimlik + oluşturulma zamanı)
+    // gönderir (review R1-2); panel açılmazsa ya da bekleyen taslak yoksa var olmayan bir taslak gönderilir (sunucu kendi hatasını verir).
+    public static async Task<(HttpStatusCode Status, JsonElement Body, string Raw)> SendSummaryAsync(HttpClient client, string token, Guid studentId, string? text, string? week = null, Guid? draftId = null, DateTimeOffset? draftGeneratedAt = null)
+    {
+        if (draftId is null)
+        {
+            var (panelStatus, panel, _) = await PanelAsync(client, token, studentId, week);
+            bool pending = panelStatus == HttpStatusCode.OK && panel.GetProperty("draftId").ValueKind == JsonValueKind.String;
+            draftId = pending ? panel.GetProperty("draftId").GetGuid() : Guid.NewGuid();
+            draftGeneratedAt = pending ? panel.GetProperty("draftGeneratedAt").GetDateTimeOffset() : DateTimeOffset.UnixEpoch;
+        }
+
+        return await CallAsync(client, HttpMethod.Post, $"/api/weekly-summaries/students/{studentId}/send" + WeekQuery(week), token, new { text, draftId, draftGeneratedAt });
+    }
 
     public static Task<(HttpStatusCode Status, JsonElement Body, string Raw)> DiscardSummaryAsync(HttpClient client, string token, Guid studentId, string? week = null) =>
         CallAsync(client, HttpMethod.Delete, $"/api/weekly-summaries/students/{studentId}/draft" + WeekQuery(week), token);

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.Time.Testing;
 using OkulYonetim.Domain.Ai;
 using OkulYonetim.Domain.Communication;
 using OkulYonetim.Tests.Integration.Communication;
@@ -16,7 +17,9 @@ namespace OkulYonetim.Tests.Integration.Ai;
 /// Spec 0014 AC-6 (BR-5, BR-6): onaylanan (düzenlenmiş) metin, öğrencinin okulda etkin her velisine "Haftalık gelişim özeti — 16–22
 /// Kasım" başlıklı, "Yapay zekâ desteğiyle hazırlandı, öğretmen onayladı." etiketli ve dayanak satırlı birer okul bildirimi olarak gider —
 /// bildirim kapısı veli başına bir kez, pasif veliye gitmez; taslak son metin ve onaylayanla (sınıfın başka atanmış öğretmeni de
-/// olabilir) "onaylandı" olur; etkin velisi olmayan öğrencide "Bu öğrencinin kayıtlı velisi yok." ve hiçbir şey değişmez.
+/// olabilir) "onaylandı" olur; etkin velisi olmayan öğrencide "Bu öğrencinin kayıtlı velisi yok." ve hiçbir şey değişmez. Review R1-2:
+/// gönderim öğretmenin gördüğü taslağa bağlıdır — başka öğretmen yeniden oluşturduysa ya da hafta döndüyse "Taslak değişti; paneli
+/// yenileyin." ve hiçbir şey gitmez; taslaksız istek alan hatası (DraftId).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class WeeklySummarySendTests
@@ -100,5 +103,76 @@ public sealed class WeeklySummarySendTests
         (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
         notifier.Sent.Count.ShouldBe(pushesBefore);
         (await AuditAsync(factory, w.Class.School.TenantId, Domain.Compliance.AuditAction.WeeklySummarySent)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Send_DraftRegeneratedByOtherTeacher_DraftChanged_NothingSent()
+    {
+        FakeTimeProvider time = new(Morning);
+        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator(), time: time);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        (Guid secondId, _, string second) = await TeacherAsync(factory, client, w.Class.School.TenantId, w.Class.School.BranchId);
+        await AssignAsync(client, w.Class.Founder, w.Class.ClassroomId, w.Class.TeacherId, secondId);
+        await AttendAsync(client, w);
+        JsonElement seen = await GeneratedAsync(client, w.Class.Teacher, w.Ali);
+        Guid seenId = seen.GetProperty("draftId").GetGuid();
+        DateTimeOffset seenAt = seen.GetProperty("draftGeneratedAt").GetDateTimeOffset();
+        time.Advance(TimeSpan.FromMinutes(1));
+        await GeneratedAsync(client, second, w.Ali, "İkinci öğretmenin notu.");
+
+        var (status, problem, raw) = await SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Birinci öğretmenin gördüğü taslak.", draftId: seenId, draftGeneratedAt: seenAt);
+
+        status.ShouldBe(HttpStatusCode.BadRequest, raw);
+        Detail(problem).ShouldBe(DraftChanged);
+        (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
+        AiDraft draft = (await SummaryDraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem();
+        draft.Id.ShouldBe(seenId, "yeniden oluşturma aynı kaydı günceller — kimlik tek başına yetmez");
+        draft.IsPending.ShouldBeTrue();
+        (await SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Panel yenilendikten sonra.")).Status.ShouldBe(HttpStatusCode.OK, "yenilenen paneldeki taslakla gönderilir");
+    }
+
+    [Fact]
+    public async Task Send_WeekRolledOverAfterPanel_DraftChanged_PreviousWeekStillSendable()
+    {
+        FakeTimeProvider time = new(Morning);
+        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator(), time: time);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        await AttendAsync(client, w);
+        JsonElement seen = await GeneratedAsync(client, w.Class.Teacher, w.Ali);
+        Guid seenId = seen.GetProperty("draftId").GetGuid();
+        DateTimeOffset seenAt = seen.GetProperty("draftGeneratedAt").GetDateTimeOffset();
+
+        // Cuma 12:00 → Pazartesi 00:00 (Türkiye; Pazar 21:00 UTC): "bu hafta" artık 23–29 Kasım.
+        time.SetUtcNow(new DateTimeOffset(2026, 11, 22, 21, 0, 0, TimeSpan.Zero));
+        string teacher = await TokenForSchoolAsync(client, w.Class.TeacherEmail, w.Class.School.TenantId);
+        var (status, problem, raw) = await SendSummaryAsync(client, teacher, w.Ali, "Geçen haftanın özeti.", draftId: seenId, draftGeneratedAt: seenAt);
+
+        status.ShouldBe(HttpStatusCode.BadRequest, raw);
+        Detail(problem).ShouldBe(DraftChanged);
+        (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
+        (await SummaryDraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem().IsPending.ShouldBeTrue();
+        var (previous, _, previousRaw) = await SendSummaryAsync(client, teacher, w.Ali, "Geçen haftanın özeti.", "previous", seenId, seenAt);
+        previous.ShouldBe(HttpStatusCode.OK, previousRaw);
+        (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldAllBe(n => n.Day == new DateOnly(2026, 11, 16));
+    }
+
+    [Fact]
+    public async Task Send_WithoutDraft_400FieldDraftId()
+    {
+        using OkulApiFactory factory = Factory(this.database, new FakeAiTextGenerator());
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        await AttendAsync(client, w);
+        await GeneratedAsync(client, w.Class.Teacher, w.Ali);
+
+        var (status, problem, raw) = await SendSummaryAsync(client, w.Class.Teacher, w.Ali, "Taslaksız istek.", draftId: Guid.Empty, draftGeneratedAt: null);
+
+        status.ShouldBe(HttpStatusCode.BadRequest, raw);
+        JsonElement field = problem.GetProperty("Errors").EnumerateArray().ShouldHaveSingleItem();
+        field.GetProperty("Property").GetString().ShouldBe("DraftId");
+        field.GetProperty("Errors")[0].GetString().ShouldBe("Gönderilecek taslak belirtilmelidir");
+        (await SummaryNoticesAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
     }
 }

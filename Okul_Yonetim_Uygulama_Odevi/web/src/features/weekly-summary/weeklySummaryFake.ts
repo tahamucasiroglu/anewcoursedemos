@@ -47,6 +47,7 @@ export function panel(overrides: Record<string, unknown> = {}) {
     basisLine: "Dayanak: 4 gün geldi (1 gün geç), 1 gün gelmedi; 1 ödev; 1 not",
     hasData: true,
     draftId: null,
+    draftGeneratedAt: null,
     draftText: null,
     finalText: null,
     sentAt: null,
@@ -55,7 +56,7 @@ export function panel(overrides: Record<string, unknown> = {}) {
 }
 
 export function drafted(overrides: Record<string, unknown> = {}) {
-  return panel({ status: "Draft", draftId: "d1", draftText: "Ali bu hafta dört gün okuldaydı.", ...overrides });
+  return panel({ status: "Draft", draftId: "d1", draftGeneratedAt: "2026-11-20T09:01:00.123456Z", draftText: "Ali bu hafta dört gün okuldaydı.", ...overrides });
 }
 
 /** Gerçek doğrulama hatası gövdesi (conventions T20): Türkçe mesaj `detail`'de ve `Errors` dizisinde. */

@@ -9,7 +9,8 @@ import { basis, classA, drafted, json, panel, studentList, teacherMe, validation
 // satırı); dayanak boşsa "Bu hafta için özetlenecek veri yok." ve oluştur not yazılınca açılır; "Oluşturuluyor…" duyurulur ve
 // düğmeler kilitli; "AI taslağı — göndermeden önce kontrol edin" etiketli düzenlenebilir taslak; alan hataları (not 501, metin boş /
 // 1501) alanla ilişkili, duyurulur ve istek gitmez (500 ve 1500 gider); sunucu hataları duyurulur; "Onayla ve gönder" → "Gönderildi"
-// (salt okunur); "Vazgeç" taslağı siler; iki tema.
+// (salt okunur) — gönderim paneldeki taslağın kimliğini ve oluşturulma zamanını taşır, taslak değiştiyse "Taslak değişti; paneli
+// yenileyin." duyurulur (review R1-2); "Vazgeç" taslağı siler; iki tema.
 afterEach(() => {
   vi.unstubAllGlobals();
   window.location.hash = "";
@@ -147,7 +148,7 @@ describe.each(["light", "dark"] as const)("%s tema", (mode) => {
     expect(screen.getByText(finalText)).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Özet oluştur" })).not.toBeInTheDocument();
-    expect(api.requests.find((r) => r.path.endsWith("/send"))?.body).toEqual({ text: finalText });
+    expect(api.requests.find((r) => r.path.endsWith("/send"))?.body).toEqual({ text: finalText, draftId: "d1", draftGeneratedAt: "2026-11-20T09:01:00.123456Z" });
   });
 
   it("sunucu hataları duyurulur: zaten gönderildi, velisi yok, gerçek doğrulama gövdesi", async () => {
@@ -166,6 +167,22 @@ describe.each(["light", "dark"] as const)("%s tema", (mode) => {
       await userEvent.click(await screen.findByRole("button", { name: "Onayla ve gönder" }));
       expect(await screen.findByText(message)).toHaveAttribute("role", "alert");
     }
+  });
+
+  it("gönderim gördüğü taslağa bağlı: taslak değiştiyse sunucunun mesajı duyurulur, 'Gönderildi' olmaz", async () => {
+    const api = start([
+      ["GET", student, () => json(200, drafted())],
+      ["POST", send, () => json(400, { title: "Kural", status: 400, detail: "Taslak değişti; paneli yenileyin." })],
+    ]);
+    await openAli();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Onayla ve gönder" }));
+    expect(await screen.findByText("Taslak değişti; paneli yenileyin.")).toHaveAttribute("role", "alert");
+    expect(screen.queryByRole("heading", { name: "Gönderildi" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /Özet metni/ })).toHaveValue("Ali bu hafta dört gün okuldaydı.");
+    expect(api.requests.filter((r) => r.path.endsWith("/send")).map((r) => r.body)).toEqual([
+      { text: "Ali bu hafta dört gün okuldaydı.", draftId: "d1", draftGeneratedAt: "2026-11-20T09:01:00.123456Z" },
+    ]);
   });
 
   it("Vazgeç taslağı siler, panel 'Özet yok'a döner", async () => {

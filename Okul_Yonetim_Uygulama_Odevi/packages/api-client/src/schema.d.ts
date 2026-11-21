@@ -6101,9 +6101,16 @@ export interface components {
             /** Format: uuid */
             aiDraftId?: null | string;
         };
-        /** @description "Onayla ve gönder" (spec 0014): öğretmenin onayladığı (düzenlenmiş) özet metni — boş olamaz, en fazla 1500 karakter. */
+        /**
+         * @description "Onayla ve gönder" (spec 0014): öğretmenin onayladığı (düzenlenmiş) özet metni — boş olamaz, en fazla 1500 karakter — ve öğretmenin
+         *     panelde gördüğü taslak (kimlik + oluşturulma zamanı; review R1-2): gönderim o taslağa bağlıdır, değişmişse "Taslak değişti; paneli yenileyin.".
+         */
         SendWeeklySummaryRequest: {
             text: null | string;
+            /** Format: uuid */
+            draftId: null | string;
+            /** Format: date-time */
+            draftGeneratedAt: null | string;
         };
         /** @description Kardeş satırı (aynı veliye bağlı başka öğrenci, spec 0009 C-4): ad-soyad, şube, sınıf ve durum. */
         SiblingRow: {
@@ -6414,7 +6421,7 @@ export interface components {
         /**
          * @description Öğrenci-hafta paneli (spec 0014 gereksinim 2, 3, 5): öğrenci, hafta, durum (`None`/`Draft`/`Sent`), dayanak (taslak
          *     varsa taslakla saklanan — BR-6, yoksa şimdi toplanan; öğretmen notu dahil), kısa dayanak satırı, dayanak boş değil mi, bekleyen
-         *     taslağın kimliği ve metni, gönderilmişse son metin ve gönderim zamanı.
+         *     taslağın kimliği, oluşturulma zamanı (gönderim bu ikisine bağlanır — review R1-2) ve metni, gönderilmişse son metin ve gönderim zamanı.
          */
         WeeklySummaryPanel: {
             /** Format: uuid */
@@ -6431,6 +6438,8 @@ export interface components {
             hasData: boolean;
             /** Format: uuid */
             draftId: null | string;
+            /** Format: date-time */
+            draftGeneratedAt: null | string;
             draftText: null | string;
             finalText: null | string;
             /** Format: date-time */

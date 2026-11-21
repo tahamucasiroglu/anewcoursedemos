@@ -68,7 +68,7 @@ public sealed class WeeklySummariesController : ControllerBase
     public async Task<ActionResult<WeeklySummarySent>> Send(Guid studentId, [FromQuery] string? week, SendWeeklySummaryRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return this.Ok(await this.sender.Send(new SendWeeklySummaryCommand(studentId, week, request.Text), cancellationToken).ConfigureAwait(false));
+        return this.Ok(await this.sender.Send(new SendWeeklySummaryCommand(studentId, week, request.Text, request.DraftId, request.DraftGeneratedAt), cancellationToken).ConfigureAwait(false));
     }
 
     [HttpDelete("students/{studentId:guid}/draft")]

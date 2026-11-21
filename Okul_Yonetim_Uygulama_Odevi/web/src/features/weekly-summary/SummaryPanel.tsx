@@ -34,7 +34,9 @@ interface Props {
  * "AI taslağı — göndermeden önce kontrol edin" etiketli düzenlenebilir metin (boş olamaz, en fazla 1500) → "Onayla ve gönder" ya da
  * "Vazgeç"; gönderilmişse salt okunur son metin. Dayanak boşsa "Bu hafta için özetlenecek veri yok." ve oluştur ancak not yazılınca
  * açılır. Alan hataları alanla ilişkili ve duyurulur, istek gitmez; sunucu hataları (kullanılamıyor, zaten gönderildi, velisi yok)
- * duyurulur. Panel öğrenci + haftaya bağlı anahtarla kurulur (T15); taslak gelince metin alanı taslakla yeniden doldurulur.
+ * duyurulur. Gönderim paneldeki taslağa bağlıdır (kimlik + oluşturulma zamanı, review R1-2): taslak bu arada değiştiyse sunucunun
+ * "Taslak değişti; paneli yenileyin." mesajı duyurulur. Panel öğrenci + haftaya bağlı anahtarla kurulur (T15); taslak gelince metin
+ * alanı taslakla yeniden doldurulur.
  */
 export function SummaryPanel({ client, studentId, week }: Props) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -110,7 +112,7 @@ export function SummaryPanel({ client, studentId, week }: Props) {
     }
 
     setBusy("sending");
-    const outcome = await callApi(client.POST("/api/weekly-summaries/students/{studentId}/send", { params: { path: { studentId }, query: { week } }, body: { text } }));
+    const outcome = await callApi(client.POST("/api/weekly-summaries/students/{studentId}/send", { params: { path: { studentId }, query: { week } }, body: { text, draftId: panel.draftId, draftGeneratedAt: panel.draftGeneratedAt } }));
     setBusy(null);
     if (outcome.ok) {
       setResult(fillText(t("weekly.sentResult"), { n: outcome.data.notifiedGuardians }));
