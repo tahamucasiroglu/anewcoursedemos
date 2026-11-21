@@ -195,6 +195,9 @@
     yalnızca dilim/öğrenci/öğretmen kimliği ve durum), müsaitlik açma/kaldırma Information log'unda (kimlik + sayı). Veliye bildirim metni öğretmen adı,
     gün, saat ve varsa neden taşır (konu yok) ve yalnızca o çocuğun okulda etkin velilerine gider; öğretmene giden bildirim metni yalnızca tür, gün ve
     saattir (`PushNotification.Text`; sahte gönderici metni loglamaz) ve mesai saatleri dışında gönderilmez (0011 kapısı, `NotifyTeacherCommand`).
+    Metinli bildirim yalnızca `PushNotificationKind.Appointment` türünde kurulabilir (başka türde metin `ArgumentException`; review tur 1 R1-4 —
+    gerçek push gelince metin cihaza gider, backlog B-6). Commit sonrası bildirim adımları hata verirse randevu kayıtlı kalır, istek başarılı döner;
+    hata yalnızca türü ve kimliklerle Warning olarak loglanır (hata mesajı da yazılmaz; review tur 1 R1-2).
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

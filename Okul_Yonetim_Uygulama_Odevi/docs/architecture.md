@@ -203,7 +203,8 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   ikinci katman (ihlal "Bu saat artık dolu."). Bildirimler: veliye (onay, ret, öğretmen iptali) işlem içinde Communication'ın `NotifyStudentGuardiansCommand`'ı
   (`GuardianNotice` türü `Appointment`, kaynak randevu ya da öğretmen iptalinde kapanan dilim), commit sonrası `DeliverNotificationsCommand`; öğretmene
   (yeni talep, veli iptali) commit sonrası Communication'ın yeni `NotifyTeacherCommand`'ı — mesai saatleri (`QuietHours`) kapıda uygulanır, metin
-  `PushNotification.Text`'te (tür + gün + saat). Bekleyen talep sayısı `/api/me`'de (`pendingAppointmentCount`, Appointments'ın
+  `PushNotification.Text`'te (tür + gün + saat; metin yalnızca `Appointment` türünde kurulabilir). Commit sonrası iki adım (`AppointmentNotifications.
+  DeliverToGuardiansAsync`, `ToTeacherAsync`) hatayı yakalar (iptal hariç): Warning + "bildirim gitmedi", istek düşmez. Bekleyen talep sayısı `/api/me`'de (`pendingAppointmentCount`, Appointments'ın
   `CountMyPendingAppointmentsQuery`'si). Mobilde öğretmende "Randevular (n bekleyen)" → Takvimim, velide "Randevular" → Randevularım; web ekranı yok.
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
