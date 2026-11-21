@@ -30,7 +30,10 @@
 
 ## Error handling
 - **Mevcut** yutulan `except Exception` blokları (`create_request`, `/new`) olduğu gibi kalır.
-  Bilinen borçtur ve ayrı bir talep (`/fix-bug`) olmadan değişmez.
+  Bilinen borçtur ve ayrı bir talep olmadan değişmez. Spec 0004'ten beri `/new` tarihleri genel
+  `try`'dan önce doğruluyor (BR-10); genel `except` yalnız kalan hatalar (olmayan veya sayı olmayan
+  personel numarası) için yerinde. Karakterizasyonla sabitlenmiş bir davranışı değiştirmek bug fix
+  değil, CHANGE şerididir (`Supersedes`).
 - **Yeni kodda** hata yutulmaz: `except: pass`, `except Exception: return True` veya sessiz
   redirect yazılmaz. Kullanıcı hatası (geçersiz girdi, yetersiz bakiye) anlamlı bir mesajla
   gösterilir. Beklenmeyen hata yükselir.
