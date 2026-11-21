@@ -10,10 +10,16 @@ namespace OkulYonetim.Domain.Communication;
 /// kimliğini (<see cref="SourceId"/>) ve hazır metnini (<see cref="Text"/>: ders, başlık, teslim günü — öğrenci adı yok) taşır;
 /// veli + öğrenci + kaynak tekildir. Yoklama bildiriminde ikisi de boştur ve veli + öğrenci + gün tekilliği yalnızca onlar içindir.
 /// </para>
+/// <para>
+/// Spec 0014: haftalık gelişim özeti (<see cref="GuardianNoticeKind.WeeklySummary"/>) — kaynak onaylanan AI taslağı, gün haftanın
+/// Pazartesi'si, metin öğretmenin onayladığı özet + "Yapay zekâ desteğiyle hazırlandı, öğretmen onayladı." + dayanak satırı (en fazla
+/// <see cref="SummaryTextMax"/>; diğer kayda bağlı bildirimler <see cref="TextMax"/>).
+/// </para>
 /// </summary>
 public sealed class GuardianNotice
 {
     public const int TextMax = 400;
+    public const int SummaryTextMax = 2000;
 
     private GuardianNotice(Guid id, Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, GuardianNoticeKind kind, DateTimeOffset createdAt, DateTimeOffset updatedAt)
     {
@@ -52,10 +58,11 @@ public sealed class GuardianNotice
     public static GuardianNotice Absent(Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, DateTimeOffset now) =>
         new(Guid.CreateVersion7(now), tenantId, guardianUserId, studentId, day, GuardianNoticeKind.Absent, now, now);
 
-    /// <summary>Kayda bağlı okul bildirimi (spec 0013: yeni ödev); metin hazırdır ve öğrenci adı taşımaz.</summary>
+    /// <summary>Kayda bağlı okul bildirimi (spec 0013: yeni ödev; spec 0014: haftalık özet); metin hazırdır.</summary>
     public static GuardianNotice ForRecord(Guid tenantId, Guid guardianUserId, Guid studentId, DateOnly day, GuardianNoticeKind kind, Guid sourceId, string text, DateTimeOffset now)
     {
-        if (kind is GuardianNoticeKind.Absent or GuardianNoticeKind.Corrected || string.IsNullOrWhiteSpace(text) || text.Length > TextMax)
+        int max = kind == GuardianNoticeKind.WeeklySummary ? SummaryTextMax : TextMax;
+        if (kind is GuardianNoticeKind.Absent or GuardianNoticeKind.Corrected || string.IsNullOrWhiteSpace(text) || text.Length > max)
         {
             throw new ArgumentOutOfRangeException(nameof(kind), "Kayda bağlı bildirim türü ve metni geçersiz.");
         }

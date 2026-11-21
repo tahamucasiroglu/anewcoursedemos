@@ -11,7 +11,8 @@ namespace OkulYonetim.Persistence.EntityConfigurations;
 /// Veli bildirimi tablosu (guardian_notices, spec 0010): kuruma, veliye (kişi) ve öğrenciye bağlı; tür metin olarak.
 /// Veli + öğrenci + gün tekil — aynı gün ikinci "yok" bildirimi oluşamaz (C-5, AC-11); spec 0013'ten beri bu tekillik yalnızca
 /// yoklama bildirimleri (kaynak kaydı boş) içindir, kayda bağlı okul bildiriminde (yeni ödev) veli + öğrenci + kaynak tekildir.
-/// Veli + güncelleme dizini listeyi (yeniden eskiye) hızlandırır.
+/// Veli + güncelleme dizini listeyi (yeniden eskiye) hızlandırır. Metin kolonu spec 0014'ten beri en fazla
+/// <see cref="GuardianNotice.SummaryTextMax"/> (haftalık özet: özet + etiket + dayanak satırı); ödev bildirimi yine 400'le sınırlı (varlıkta).
 /// </summary>
 public sealed class GuardianNoticeConfiguration : IEntityTypeConfiguration<GuardianNotice>
 {
@@ -26,7 +27,7 @@ public sealed class GuardianNoticeConfiguration : IEntityTypeConfiguration<Guard
         builder.HasOne<Tenant>().WithMany().HasForeignKey(n => n.TenantId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<User>().WithMany().HasForeignKey(n => n.GuardianUserId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<Student>().WithMany().HasForeignKey(n => n.StudentId).OnDelete(DeleteBehavior.Restrict);
-        builder.Property(n => n.Text).HasMaxLength(GuardianNotice.TextMax);
+        builder.Property(n => n.Text).HasMaxLength(GuardianNotice.SummaryTextMax);
         builder.HasIndex(n => new { n.GuardianUserId, n.StudentId, n.Day }).IsUnique().HasFilter("source_id IS NULL");
         builder.HasIndex(n => new { n.GuardianUserId, n.StudentId, n.SourceId }).IsUnique().HasFilter("source_id IS NOT NULL");
         builder.HasIndex(n => new { n.TenantId, n.GuardianUserId, n.UpdatedAt });

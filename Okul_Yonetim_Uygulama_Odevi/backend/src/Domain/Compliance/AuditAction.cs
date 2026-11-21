@@ -70,4 +70,5 @@ public enum AuditAction
     SubmissionsRecorded = 65,
     AssessmentCreated = 66,
     GradesRecorded = 67,
+    WeeklySummarySent = 68,
 }

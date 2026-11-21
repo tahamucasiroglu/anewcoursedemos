@@ -297,6 +297,10 @@ namespace OkulYonetim.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("kind");
 
+                    b.Property<DateOnly?>("PeriodStart")
+                        .HasColumnType("date")
+                        .HasColumnName("period_start");
+
                     b.Property<Guid?>("ResultId")
                         .HasColumnType("uuid")
                         .HasColumnName("result_id");
@@ -331,6 +335,11 @@ namespace OkulYonetim.Persistence.Migrations
 
                     b.HasIndex("TenantId", "CreatedByUserId", "CreatedAt")
                         .HasDatabaseName("ix_ai_drafts_tenant_id_created_by_user_id_created_at");
+
+                    b.HasIndex("TenantId", "Kind", "StudentId", "PeriodStart")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ai_drafts_tenant_id_kind_student_id_period_start")
+                        .HasFilter("period_start IS NOT NULL");
 
                     b.ToTable("ai_drafts", (string)null);
                 });
@@ -766,8 +775,8 @@ namespace OkulYonetim.Persistence.Migrations
                         .HasColumnName("tenant_id");
 
                     b.Property<string>("Text")
-                        .HasMaxLength(400)
-                        .HasColumnType("character varying(400)")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")

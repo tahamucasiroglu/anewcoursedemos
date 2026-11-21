@@ -7,6 +7,8 @@ namespace OkulYonetim.Tests.Unit.Ai;
 /// Spec 0012 AC-1 ve AC-2 kuralları (birim): sesli not taslağı "bekliyor" durumunda, kaynak döküm ve konuşmayla oluşur;
 /// model taslağı 1000 karakteri aşarsa 1000'e kısaltılır (1000 olduğu gibi kalır); onay son metin, onaylayan ve mesaj
 /// kimliğini yazar ve yalnızca bir kez yapılır — ikinci onay hata verir, ilk onayın bilgileri değişmez.
+/// Spec 0014 AC-3 (birim): haftalık özet taslağı "bekliyor", dönem Pazartesi, kaynak dayanak; 800 karakteri aşan model metni 800'e
+/// kısaltılır; yeniden oluşturma aynı kaydı günceller (tek bekleyen taslak), onaylanmış özette hata verir; onaylayan oluşturandan farklı olabilir.
 /// </summary>
 public sealed class AiDraftTests
 {
@@ -77,5 +79,73 @@ public sealed class AiDraftTests
 
         draft.FinalText.ShouldBe("ilk");
         draft.ResultId.ShouldBe(first);
+    }
+
+    [Fact]
+    public void WeeklySummary_New_PendingWithPeriodAndSource()
+    {
+        Guid teacher = Guid.NewGuid();
+        Guid student = Guid.NewGuid();
+
+        AiDraft draft = AiDraft.WeeklySummary(Guid.NewGuid(), teacher, student, new DateOnly(2026, 11, 16), "{\"dayanak\":1}", "  Ali bu hafta 4 gün okuldaydı.  ", Now);
+
+        draft.Kind.ShouldBe(AiDraftKind.WeeklySummary);
+        draft.IsPending.ShouldBeTrue();
+        draft.PeriodStart.ShouldBe(new DateOnly(2026, 11, 16));
+        draft.ContextId.ShouldBeNull();
+        draft.StudentId.ShouldBe(student);
+        draft.CreatedByUserId.ShouldBe(teacher);
+        draft.SourceText.ShouldBe("{\"dayanak\":1}");
+        draft.DraftText.ShouldBe("Ali bu hafta 4 gün okuldaydı.");
+        Should.Throw<ArgumentOutOfRangeException>(() => AiDraft.WeeklySummary(Guid.NewGuid(), teacher, student, new DateOnly(2026, 11, 17), "{}", "x", Now));
+    }
+
+    [Theory]
+    [InlineData(799, 799)]
+    [InlineData(800, 800)]
+    [InlineData(801, 800)]
+    [InlineData(3000, 800)]
+    public void WeeklySummary_LongModelText_ShortenedTo800(int length, int expected)
+    {
+        AiDraft draft = AiDraft.WeeklySummary(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), new DateOnly(2026, 11, 16), "{}", new string('a', length), Now);
+
+        draft.DraftText.Length.ShouldBe(expected);
+        draft.Regenerate(Guid.NewGuid(), "{}", new string('b', length), Now);
+        draft.DraftText.Length.ShouldBe(expected);
+    }
+
+    [Fact]
+    public void Regenerate_Pending_SameRecordNewSourceTextAndCreator()
+    {
+        AiDraft draft = AiDraft.WeeklySummary(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), new DateOnly(2026, 11, 16), "eski dayanak", "eski taslak", Now);
+        Guid id = draft.Id;
+        Guid second = Guid.NewGuid();
+
+        draft.Regenerate(second, "yeni dayanak", "yeni taslak", Now.AddMinutes(5));
+
+        draft.Id.ShouldBe(id);
+        draft.IsPending.ShouldBeTrue();
+        draft.SourceText.ShouldBe("yeni dayanak");
+        draft.DraftText.ShouldBe("yeni taslak");
+        draft.CreatedByUserId.ShouldBe(second);
+        draft.CreatedAt.ShouldBe(Now.AddMinutes(5));
+        draft.PeriodStart.ShouldBe(new DateOnly(2026, 11, 16));
+    }
+
+    [Fact]
+    public void Regenerate_ApprovedOrVoiceMessage_Throws()
+    {
+        AiDraft summary = AiDraft.WeeklySummary(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), new DateOnly(2026, 11, 16), "dayanak", "taslak", Now);
+        Guid approver = Guid.NewGuid();
+        summary.Approve("son metin", approver, null, Now.AddMinutes(1));
+
+        Should.Throw<InvalidOperationException>(() => summary.Regenerate(Guid.NewGuid(), "x", "y", Now.AddMinutes(2)));
+        summary.FinalText.ShouldBe("son metin");
+        summary.DraftText.ShouldBe("taslak");
+        summary.ApprovedByUserId.ShouldBe(approver, "onaylayan oluşturandan farklı olabilir");
+        summary.ResultId.ShouldBeNull();
+
+        AiDraft voice = AiDraft.VoiceMessage(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "döküm", "taslak", Now);
+        Should.Throw<InvalidOperationException>(() => voice.Regenerate(Guid.NewGuid(), "x", "y", Now));
     }
 }
