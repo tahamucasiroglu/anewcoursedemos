@@ -6,6 +6,7 @@ import { BillingPage } from "../billing/BillingPage";
 import { ReceiptPage } from "../billing/ReceiptPage";
 import { CalendarPage } from "../calendar/CalendarPage";
 import { CommunicationPage } from "../communication/CommunicationPage";
+import { DashboardPage } from "../dashboard/DashboardPage";
 import { NoticesPage } from "../notices/NoticesPage";
 import { PlatformPage } from "../platform/PlatformPage";
 import { StudentsPage } from "../students/StudentsPage";
@@ -27,7 +28,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007); "#/takvim" okul
  * takvimi (spec 0008, her rol); "#/ogrenciler" öğrenci yönetimi (spec 0009, yalnızca kurucu); "#/yoklama" yoklama (öğretmen) ve
  * "#/bildirimler" veli bildirimleri (spec 0010; okununca kişi bilgisi — okunmamış sayısı — yenilenir); "#/iletisim" duyurular
- * (spec 0011, kurucu ve öğretmen); "#/haftalik-ozet" haftalık gelişim özeti (spec 0014, sınıf öğretmeni); "#/tahsilat" tahsilat ve öğrenci carisi, "#/makbuz/&lt;id&gt;" yazdırılabilir makbuz (spec 0015, kurucu ve muhasebe). Kısa geçiş
+ * (spec 0011, kurucu ve öğretmen); "#/haftalik-ozet" haftalık gelişim özeti (spec 0014, sınıf öğretmeni); "#/tahsilat" tahsilat ve öğrenci carisi, "#/makbuz/&lt;id&gt;" yazdırılabilir makbuz (spec 0015, kurucu ve muhasebe); "#/panel" ve "#/panel/raporlar" yönetici paneli, "#/iletisim/duyuru/&lt;id&gt;" duyuru ayrıntısı (spec 0017, kurucu). Kısa geçiş
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
@@ -84,8 +85,12 @@ export function AuthGate() {
         return <NoticesPage me={state.me} client={session.client} onRead={() => void reloadMe()} />;
       }
 
-      if (path === "/iletisim") {
-        return <CommunicationPage me={state.me} client={session.client} />;
+      if (path === "/iletisim" || path.startsWith("/iletisim/duyuru/")) {
+        return <CommunicationPage key={path} me={state.me} client={session.client} announcementId={path.startsWith("/iletisim/duyuru/") ? path.slice("/iletisim/duyuru/".length) : undefined} />;
+      }
+
+      if (path === "/panel" || path === "/panel/raporlar") {
+        return <DashboardPage me={state.me} client={session.client} route={route} />;
       }
 
       if (path === "/haftalik-ozet") {

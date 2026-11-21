@@ -5986,6 +5986,669 @@
         }
       }
     },
+    "/api/dashboard/summary/attendance": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceCard"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/summary/overdue": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverdueCard"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/summary/announcements": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadAnnouncementsCard"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/reports/attendance": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classroomId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "minAbsent",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceReportPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/reports/payments": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentsReportPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/reports/balances": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "overdueOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalancesReportPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/reports/attendance/export": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classroomId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "minAbsent",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              },
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/reports/payments/export": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              },
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/reports/balances/export": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "overdueOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              },
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me": {
       "get": {
         "tags": [
@@ -7065,6 +7728,31 @@
   },
   "components": {
     "schemas": {
+      "AbsentStudentRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "branchName",
+          "classroomName"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": "string"
+          }
+        },
+        "description": "Bugün \"Yok\" kaydedilen öğrenci (spec 0017 devamsızlık kartı): ad-soyad, yoklamanın alındığı şube ve sınıf (sağlık, veli, iletişim yok)."
+      },
       "AccountTotals": {
         "required": [
           "net",
@@ -7655,6 +8343,82 @@
         },
         "description": "Teslim listesi (spec 0013 gereksinim 4): ödevin ders, başlık ve teslim günü, veren öğretmen, isteyen değiştirebilir mi\n(`CanEdit` — yalnızca veren) ve sınıfta süren öğrencileri Türkçe ad sırasıyla durumlarıyla."
       },
+      "AttendanceCard": {
+        "required": [
+          "today",
+          "isSchoolDay",
+          "classroomCount",
+          "takenCount",
+          "notTakenCount",
+          "notTaken",
+          "absentCount",
+          "lateCount",
+          "absentStudents"
+        ],
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "isSchoolDay": {
+            "type": "boolean"
+          },
+          "classroomCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "takenCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notTakenCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notTaken": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayClassroomRow"
+            }
+          },
+          "absentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lateCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "absentStudents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbsentStudentRow"
+            }
+          }
+        },
+        "description": "Devamsızlık kartı (spec 0017 gereksinim 3, C-3): bugün (Türkiye günü), okul günü mü, sayılan sınıf (güncel dönemde etkin ve öğrencisi\nolan), yoklaması alınan ve alınmayan sayısı, alınmayanların listesi (şube, sınıf, atanmış öğretmen), yok ve geç öğrenci sayısı, yok\nöğrencilerin listesi (ad-soyad, şube, sınıf)."
+      },
       "AttendanceEntryInput": {
         "required": [
           "studentId",
@@ -7674,6 +8438,131 @@
           }
         },
         "description": "Kaydedilen yoklamada bir öğrencinin durumu: `Present`, `Absent` ya da `Late`."
+      },
+      "AttendanceReportPage": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceReportRow"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AttendanceReportTotals"
+          }
+        },
+        "description": "Devamsızlık raporunun bir sayfası: satırlar, sayfa, sayfa boyu (50), toplam satır ve bütün sonucun toplamları."
+      },
+      "AttendanceReportRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "schoolNumber",
+          "branchName",
+          "classroomName",
+          "absentDays",
+          "lateDays"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "schoolNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "absentDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lateDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Devamsızlık raporu satırı (spec 0017 gereksinim 7): öğrenci, okul no, bugünkü şube ve sınıfı, aralıktaki yok ve geç gün sayısı (TC, iletişim, sağlık yok)."
+      },
+      "AttendanceReportTotals": {
+        "required": [
+          "absentDays",
+          "lateDays"
+        ],
+        "type": "object",
+        "properties": {
+          "absentDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lateDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Devamsızlık raporunun bütün sonuç üzerinden toplamları: yok ve geç gün sayıları."
       },
       "AttendanceSaveResult": {
         "required": [
@@ -7880,6 +8769,133 @@
           }
         },
         "description": "Müsaitlik açmanın sonucu (spec 0016): açılan görüşme saati sayısı (\"6 görüşme saati açıldı\")."
+      },
+      "BalanceReportRow": {
+        "required": [
+          "studentId",
+          "fullName",
+          "branchName",
+          "classroomName",
+          "planNames",
+          "net",
+          "paid",
+          "remaining",
+          "overdue",
+          "oldestOverdueDue"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "planNames": {
+            "type": "string"
+          },
+          "net": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remaining": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "overdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "oldestOverdueDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Borç/gecikme raporu satırı (spec 0017 gereksinim 9): öğrenci, şube, sınıf, geçerli plan adları, net, ödenen, kalan, geciken ve en eski geciken vade (0015 carisiyle aynı hesap)."
+      },
+      "BalancesReportPage": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount",
+          "totals",
+          "today"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BalanceReportRow"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AccountTotals"
+          },
+          "today": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "description": "Borç/gecikme raporunun bir sayfası: satırlar, sayfa, sayfa boyu (50), toplam satır, bütün sonucun cari toplamları ve raporun günü (Türkiye)."
       },
       "BillingSaved": {
         "required": [
@@ -8848,6 +9864,47 @@
           }
         },
         "description": "Panelden okul ekle: okul adı, ilk şube adı, kurucu ad-soyad ve e-posta."
+      },
+      "DayClassroomRow": {
+        "required": [
+          "classroomId",
+          "branchName",
+          "classroomName",
+          "teacherNames",
+          "studentCount",
+          "taken"
+        ],
+        "type": "object",
+        "properties": {
+          "classroomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "teacherNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "taken": {
+            "type": "boolean"
+          }
+        },
+        "description": "Bugünkü yoklama özetinde bir sınıf (spec 0017 devamsızlık kartı): şube, sınıf, atanmış öğretmen adları, öğrenci sayısı ve yoklaması alındı mı."
       },
       "DiscountRequest": {
         "required": [
@@ -10138,6 +11195,95 @@
         },
         "description": "Velinin seçebileceği boş görüşme saati (spec 0016 gereksinim 3): dilim, başlangıç ve bitiş (UTC)."
       },
+      "OverdueCard": {
+        "required": [
+          "today",
+          "studentCount",
+          "overdueAmount",
+          "top"
+        ],
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "studentCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "overdueAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "top": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OverdueStudent"
+            }
+          }
+        },
+        "description": "Geciken ödemeler kartı (spec 0017 gereksinim 4): bugün, gecikmesi olan öğrenci sayısı, toplam geciken tutar ve en eski geciken vadeden başlayarak ilk 10 öğrenci."
+      },
+      "OverdueStudent": {
+        "required": [
+          "studentId",
+          "fullName",
+          "branchName",
+          "classroomName",
+          "overdueAmount",
+          "oldestDue",
+          "daysOverdue"
+        ],
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "classroomName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "overdueAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "oldestDue": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysOverdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Geciken ödemeler kartında bir öğrenci (spec 0017 gereksinim 4): ad-soyad, şube, sınıf, geciken tutar, en eski geciken vade ve gecikme gün sayısı (bugün − vade)."
+      },
       "PanelSchoolResult": {
         "required": [
           "tenantId",
@@ -10162,6 +11308,36 @@
         },
         "description": "Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok."
       },
+      "PaymentMethodTotal": {
+        "required": [
+          "method",
+          "amount",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Bir ödeme yönteminin geçerli tahsilat toplamı ve sayısı (iptaller dışarıda)."
+      },
       "PaymentRecorded": {
         "required": [
           "id",
@@ -10183,6 +11359,62 @@
           }
         },
         "description": "Kaydedilen tahsilat (spec 0015 gereksinim 5): kimlik ve okulun sıradaki makbuz numarası."
+      },
+      "PaymentReportRow": {
+        "required": [
+          "paymentId",
+          "date",
+          "receiptNo",
+          "studentName",
+          "branchName",
+          "amount",
+          "method",
+          "cancelled",
+          "recordedByName"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "receiptNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "method": {
+            "type": "string"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "recordedByName": {
+            "type": "string"
+          }
+        },
+        "description": "Tahsilat raporu satırı (spec 0017 gereksinim 8): tarih, makbuz no, öğrenci, şube, tutar, yöntem, iptal mi ve kaydeden (not ve iptal gerekçesi yok)."
       },
       "PaymentRequest": {
         "required": [
@@ -10308,6 +11540,94 @@
           }
         },
         "description": "Personelin gördüğü tahsilat satırı (spec 0015): plan, makbuz no, tarih, tutar, yöntem, not, kaydeden; iptal edildiyse anı ve gerekçesi."
+      },
+      "PaymentsReportPage": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentReportRow"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/PaymentsReportTotals"
+          }
+        },
+        "description": "Tahsilat raporunun bir sayfası: satırlar, sayfa, sayfa boyu (50), toplam satır ve bütün sonucun toplamları."
+      },
+      "PaymentsReportTotals": {
+        "required": [
+          "validAmount",
+          "validCount",
+          "cancelledCount",
+          "byMethod"
+        ],
+        "type": "object",
+        "properties": {
+          "validAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "validCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "cancelledCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "byMethod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethodTotal"
+            }
+          }
+        },
+        "description": "Tahsilat raporunun bütün sonuç üzerinden toplamları: geçerli tahsilat tutarı ve sayısı, iptal sayısı, yönteme göre toplamlar (iptaller toplama girmez)."
       },
       "PickupPersonInput": {
         "required": [
@@ -11377,6 +12697,10 @@
         },
         "description": "Konuşma başlatma (spec 0011): öğrenci ve karşı taraf (veli için öğretmen, öğretmen için veli)."
       },
+      "Stream": {
+        "type": "string",
+        "format": "binary"
+      },
       "StudentAccount": {
         "required": [
           "studentId",
@@ -12320,6 +13644,92 @@
         },
         "description": "Kurulum bilgisi: elle yazılabilir anahtar ve kare kodun adresi (yalnızca kurulum ekranında, bir kez)."
       },
+      "UnreadAnnouncementRow": {
+        "required": [
+          "id",
+          "title",
+          "publishedAt",
+          "authorName",
+          "scope",
+          "recipientCount",
+          "readCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "recipientCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "En az bir alıcı velinin okumadığı duyuru (spec 0017 kartı): başlık, yayın anı, yayınlayan, kapsam ve \"X / Y okudu\" sayıları (metin yok)."
+      },
+      "UnreadAnnouncementsCard": {
+        "required": [
+          "since",
+          "announcementCount",
+          "unreadGuardianCount",
+          "top"
+        ],
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "format": "date"
+          },
+          "announcementCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unreadGuardianCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "top": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnreadAnnouncementRow"
+            }
+          }
+        },
+        "description": "Okunmayan duyurular kartı (spec 0017 gereksinim 5): pencerenin ilk günü (bugün dahil son 7 gün, Türkiye), okumayanı olan duyuru sayısı,\nbu duyurulardan en az birini okumamış veli sayısı ve en çok okunmayandan ilk 10 duyuru (\"X / Y okudu\")."
+      },
       "UnreadGuardianRow": {
         "required": [
           "guardianName",
@@ -12687,6 +14097,9 @@
     },
     {
       "name": "Conversations"
+    },
+    {
+      "name": "Dashboard"
     },
     {
       "name": "Me"

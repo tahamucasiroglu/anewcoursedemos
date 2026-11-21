@@ -10,17 +10,19 @@ type View = { kind: "list" } | { kind: "new" } | { kind: "detail"; id: string };
 interface Props {
   me: Me;
   client: AuthSession["client"];
+  announcementId?: string;
 }
 
 /**
  * İletişim sayfası (spec 0011, "#/iletisim", yalnızca kurucu ve öğretmen; değilse "Bu sayfaya erişiminiz yok." ve istek
  * gitmez): duyuru listesi (kurucuda okulun bütün duyuruları, öğretmende kendi yayınladıkları) → "Yeni duyuru" formu →
- * yayınlanınca ayrıntı (okundu X / Y, okumayanlar, onay sonuçları). Liste dönüşte yeniden okunur.
+ * yayınlanınca ayrıntı (okundu X / Y, okumayanlar, onay sonuçları). Liste dönüşte yeniden okunur. Spec 0017: "#/iletisim/duyuru/&lt;id&gt;"
+ * (yönetici panelinin okunmayan duyurular kartı) doğrudan ayrıntıyı açar.
  */
-export function CommunicationPage({ me, client }: Props) {
+export function CommunicationPage({ me, client, announcementId }: Props) {
   const isFounder = me.roles.includes("Founder");
   const allowed = isFounder || me.roles.includes("Teacher");
-  const [view, setView] = useState<View>({ kind: "list" });
+  const [view, setView] = useState<View>(announcementId ? { kind: "detail", id: announcementId } : { kind: "list" });
 
   return (
     <section className="card admin" aria-labelledby="communication-title">

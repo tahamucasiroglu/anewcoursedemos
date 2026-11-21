@@ -13,7 +13,7 @@ interface Props {
  * yöneticisinde (spec 0007). "Okul takvimi" seçili okulu olan herkese (spec 0008). "Öğrenciler" yalnızca kurucuya (spec 0009). "Yoklama al" yalnızca
  * öğretmene, okunmamış sayılı "Bildirimler (n)" yalnızca veliye (spec 0010). "İletişim" yalnızca kurucu ve öğretmene (spec 0011).
  * "Haftalık özet" yalnızca sınıf ataması olan öğretmene (spec 0014, `/api/me` → `teachesClassroom`). "Tahsilat" yalnızca kurucu ve
- * muhasebeye (spec 0015).
+ * muhasebeye (spec 0015). "Yönetici paneli" yalnızca kurucuya (spec 0017).
  */
 export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
   return (
@@ -76,6 +76,11 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
         {(me.roles.includes("Founder") || me.roles.includes("Accounting")) && (
           <a className="button-link" href="#/tahsilat">
             {t("billing.link")}
+          </a>
+        )}
+        {me.roles.includes("Founder") && (
+          <a className="button-link" href="#/panel">
+            {t("dashboard.link")}
           </a>
         )}
         {me.roles.includes("Founder") && (

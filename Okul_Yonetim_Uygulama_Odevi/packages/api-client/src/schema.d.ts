@@ -5768,6 +5768,575 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/summary/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    branchId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AttendanceCard"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/summary/overdue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    branchId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OverdueCard"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/summary/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    branchId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UnreadAnnouncementsCard"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/reports/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                    branchId?: string;
+                    classroomId?: string;
+                    minAbsent?: number | string;
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AttendanceReportPage"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/reports/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                    branchId?: string;
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PaymentsReportPage"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/reports/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    branchId?: string;
+                    overdueOnly?: boolean;
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BalancesReportPage"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/reports/attendance/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                    branchId?: string;
+                    classroomId?: string;
+                    minAbsent?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv; charset=utf-8": components["schemas"]["Stream"];
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/reports/payments/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                    branchId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv; charset=utf-8": components["schemas"]["Stream"];
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/reports/balances/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    branchId?: string;
+                    overdueOnly?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv; charset=utf-8": components["schemas"]["Stream"];
+                        "application/json": unknown;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -6918,6 +7487,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Bugün "Yok" kaydedilen öğrenci (spec 0017 devamsızlık kartı): ad-soyad, yoklamanın alındığı şube ve sınıf (sağlık, veli, iletişim yok). */
+        AbsentStudentRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            branchName: string;
+            classroomName: string;
+        };
         /** @description Cari toplamları (spec 0015 gereksinim 8): borç (geçerli planların neti), geçerli tahsilat toplamı, kalan ve bugün geciken tutar. */
         AccountTotals: {
             /** Format: double */
@@ -7086,11 +7663,64 @@ export interface components {
             canEdit: boolean;
             students: components["schemas"]["SubmissionStudentRow"][];
         };
+        /**
+         * @description Devamsızlık kartı (spec 0017 gereksinim 3, C-3): bugün (Türkiye günü), okul günü mü, sayılan sınıf (güncel dönemde etkin ve öğrencisi
+         *     olan), yoklaması alınan ve alınmayan sayısı, alınmayanların listesi (şube, sınıf, atanmış öğretmen), yok ve geç öğrenci sayısı, yok
+         *     öğrencilerin listesi (ad-soyad, şube, sınıf).
+         */
+        AttendanceCard: {
+            /** Format: date */
+            today: string;
+            isSchoolDay: boolean;
+            /** Format: int32 */
+            classroomCount: number | string;
+            /** Format: int32 */
+            takenCount: number | string;
+            /** Format: int32 */
+            notTakenCount: number | string;
+            notTaken: components["schemas"]["DayClassroomRow"][];
+            /** Format: int32 */
+            absentCount: number | string;
+            /** Format: int32 */
+            lateCount: number | string;
+            absentStudents: components["schemas"]["AbsentStudentRow"][];
+        };
         /** @description Kaydedilen yoklamada bir öğrencinin durumu: `Present`, `Absent` ya da `Late`. */
         AttendanceEntryInput: {
             /** Format: uuid */
             studentId: string;
             status: null | string;
+        };
+        /** @description Devamsızlık raporunun bir sayfası: satırlar, sayfa, sayfa boyu (50), toplam satır ve bütün sonucun toplamları. */
+        AttendanceReportPage: {
+            items: components["schemas"]["AttendanceReportRow"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            totals: components["schemas"]["AttendanceReportTotals"];
+        };
+        /** @description Devamsızlık raporu satırı (spec 0017 gereksinim 7): öğrenci, okul no, bugünkü şube ve sınıfı, aralıktaki yok ve geç gün sayısı (TC, iletişim, sağlık yok). */
+        AttendanceReportRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            schoolNumber: null | string;
+            branchName: string;
+            classroomName: null | string;
+            /** Format: int32 */
+            absentDays: number | string;
+            /** Format: int32 */
+            lateDays: number | string;
+        };
+        /** @description Devamsızlık raporunun bütün sonuç üzerinden toplamları: yok ve geç gün sayıları. */
+        AttendanceReportTotals: {
+            /** Format: int32 */
+            absentDays: number | string;
+            /** Format: int32 */
+            lateDays: number | string;
         };
         /**
          * @description Kaydetme sonucu (spec 0010 gereksinim 4): var/yok/geç sayıları, bu kayıtla bildirim giden veli sayısı, velisi kayıtlı
@@ -7158,6 +7788,38 @@ export interface components {
         AvailabilityOpened: {
             /** Format: int32 */
             slotCount: number | string;
+        };
+        /** @description Borç/gecikme raporu satırı (spec 0017 gereksinim 9): öğrenci, şube, sınıf, geçerli plan adları, net, ödenen, kalan, geciken ve en eski geciken vade (0015 carisiyle aynı hesap). */
+        BalanceReportRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+            planNames: string;
+            /** Format: double */
+            net: number | string;
+            /** Format: double */
+            paid: number | string;
+            /** Format: double */
+            remaining: number | string;
+            /** Format: double */
+            overdue: number | string;
+            /** Format: date */
+            oldestOverdueDue: null | string;
+        };
+        /** @description Borç/gecikme raporunun bir sayfası: satırlar, sayfa, sayfa boyu (50), toplam satır, bütün sonucun cari toplamları ve raporun günü (Türkiye). */
+        BalancesReportPage: {
+            items: components["schemas"]["BalanceReportRow"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            totals: components["schemas"]["AccountTotals"];
+            /** Format: date */
+            today: string;
         };
         /** @description Tahsilat yazma işleminin sonucu (spec 0015): işlem gören kaydın kimliği (plan açma/iptal, tahsilat iptali). */
         BillingSaved: {
@@ -7444,6 +8106,17 @@ export interface components {
             branchName: null | string;
             founderName: null | string;
             founderEmail: null | string;
+        };
+        /** @description Bugünkü yoklama özetinde bir sınıf (spec 0017 devamsızlık kartı): şube, sınıf, atanmış öğretmen adları, öğrenci sayısı ve yoklaması alındı mı. */
+        DayClassroomRow: {
+            /** Format: uuid */
+            classroomId: string;
+            branchName: string;
+            classroomName: string;
+            teacherNames: string[];
+            /** Format: int32 */
+            studentCount: number | string;
+            taken: boolean;
         };
         /** @description İndirim/burs ekleme/düzenleme (spec 0015): ad ve yüzde (1–100 tam sayı; JSON sayısı ya da metin). */
         DiscountRequest: {
@@ -7843,6 +8516,30 @@ export interface components {
             /** Format: date-time */
             endsAt: string;
         };
+        /** @description Geciken ödemeler kartı (spec 0017 gereksinim 4): bugün, gecikmesi olan öğrenci sayısı, toplam geciken tutar ve en eski geciken vadeden başlayarak ilk 10 öğrenci. */
+        OverdueCard: {
+            /** Format: date */
+            today: string;
+            /** Format: int32 */
+            studentCount: number | string;
+            /** Format: double */
+            overdueAmount: number | string;
+            top: components["schemas"]["OverdueStudent"][];
+        };
+        /** @description Geciken ödemeler kartında bir öğrenci (spec 0017 gereksinim 4): ad-soyad, şube, sınıf, geciken tutar, en eski geciken vade ve gecikme gün sayısı (bugün − vade). */
+        OverdueStudent: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+            /** Format: double */
+            overdueAmount: number | string;
+            /** Format: date */
+            oldestDue: string;
+            /** Format: int32 */
+            daysOverdue: number | string;
+        };
         /** @description Okul açma sonucu: yeni kurucuya geçici şifre bir kez; var olan kişide şifre yok. */
         PanelSchoolResult: {
             /** Format: uuid */
@@ -7850,12 +8547,36 @@ export interface components {
             existingAccount: boolean;
             temporaryPassword: null | string;
         };
+        /** @description Bir ödeme yönteminin geçerli tahsilat toplamı ve sayısı (iptaller dışarıda). */
+        PaymentMethodTotal: {
+            method: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: int32 */
+            count: number | string;
+        };
         /** @description Kaydedilen tahsilat (spec 0015 gereksinim 5): kimlik ve okulun sıradaki makbuz numarası. */
         PaymentRecorded: {
             /** Format: uuid */
             id: string;
             /** Format: int64 */
             receiptNo: number | string;
+        };
+        /** @description Tahsilat raporu satırı (spec 0017 gereksinim 8): tarih, makbuz no, öğrenci, şube, tutar, yöntem, iptal mi ve kaydeden (not ve iptal gerekçesi yok). */
+        PaymentReportRow: {
+            /** Format: uuid */
+            paymentId: string;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            receiptNo: number | string;
+            studentName: string;
+            branchName: string;
+            /** Format: double */
+            amount: number | string;
+            method: string;
+            cancelled: boolean;
+            recordedByName: string;
         };
         /** @description Tahsilat kaydı (spec 0015): plan, tutar (JSON sayısı ya da metin), tarih (`yyyy-MM-dd`), yöntem (`Cash`/`BankTransfer`/`CardPos`) ve isteğe bağlı not. */
         PaymentRequest: {
@@ -7887,6 +8608,27 @@ export interface components {
             /** Format: date-time */
             cancelledAt: null | string;
             cancelReason: null | string;
+        };
+        /** @description Tahsilat raporunun bir sayfası: satırlar, sayfa, sayfa boyu (50), toplam satır ve bütün sonucun toplamları. */
+        PaymentsReportPage: {
+            items: components["schemas"]["PaymentReportRow"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            totals: components["schemas"]["PaymentsReportTotals"];
+        };
+        /** @description Tahsilat raporunun bütün sonuç üzerinden toplamları: geçerli tahsilat tutarı ve sayısı, iptal sayısı, yönteme göre toplamlar (iptaller toplama girmez). */
+        PaymentsReportTotals: {
+            /** Format: double */
+            validAmount: number | string;
+            /** Format: int32 */
+            validCount: number | string;
+            /** Format: int32 */
+            cancelledCount: number | string;
+            byMethod: components["schemas"]["PaymentMethodTotal"][];
         };
         /** @description Teslim alabilecek kişi girişi: ad-soyad (≤ 100), yakınlık (≤ 50) ve telefon (spec 0005 kuralı) — üçü zorunlu. */
         PickupPersonInput: {
@@ -8187,6 +8929,8 @@ export interface components {
             /** Format: uuid */
             counterpartUserId: null | string;
         };
+        /** Format: binary */
+        Stream: string;
         /** @description Öğrencinin carisi (spec 0015 gereksinim 8): öğrenci etiketi, toplamlar, planlar (iptal dahil), tahsilatlar (iptal dahil) ve tarih sıralı hareket dökümü. */
         StudentAccount: {
             /** Format: uuid */
@@ -8466,6 +9210,33 @@ export interface components {
         TwoFactorSetupResult: {
             secret: string;
             otpAuthUri: string;
+        };
+        /** @description En az bir alıcı velinin okumadığı duyuru (spec 0017 kartı): başlık, yayın anı, yayınlayan, kapsam ve "X / Y okudu" sayıları (metin yok). */
+        UnreadAnnouncementRow: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            publishedAt: string;
+            authorName: string;
+            scope: string;
+            /** Format: int32 */
+            recipientCount: number | string;
+            /** Format: int32 */
+            readCount: number | string;
+        };
+        /**
+         * @description Okunmayan duyurular kartı (spec 0017 gereksinim 5): pencerenin ilk günü (bugün dahil son 7 gün, Türkiye), okumayanı olan duyuru sayısı,
+         *     bu duyurulardan en az birini okumamış veli sayısı ve en çok okunmayandan ilk 10 duyuru ("X / Y okudu").
+         */
+        UnreadAnnouncementsCard: {
+            /** Format: date */
+            since: string;
+            /** Format: int32 */
+            announcementCount: number | string;
+            /** Format: int32 */
+            unreadGuardianCount: number | string;
+            top: components["schemas"]["UnreadAnnouncementRow"][];
         };
         /** @description Duyuruyu henüz açmamış veli: ad-soyad ve duyurunun kapsadığı çocuklarının adları. */
         UnreadGuardianRow: {
