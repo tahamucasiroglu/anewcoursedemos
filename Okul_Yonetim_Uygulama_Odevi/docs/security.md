@@ -147,6 +147,14 @@
     gönderilemez."). AI yalnızca `AiDraft` üretir, veliye hiçbir şey göndermez (Ai → Communication yazma bağımlılığı yok —
     mimari test). Mesaj yalnızca öğretmenin "Gönder"iyle 0011'in mesaj yolundan gider; taslak yalnızca oluşturan öğretmen
     tarafından ve oluşturulduğu konuşmada, bir kez kullanılır (aynı taslakla eşzamanlı gönderim taslak sırasıyla tekilleşir).
+15. **Ödev ve not (spec 0013):** öğretmen–sınıf ilişkisi her istekte veritabanından, yoklamayla aynı kaynaktan
+    (`TeacherClassroomAccess`): Öğretmen rolü yoksa 403; atanmadığı, başka şubenin/okulun ya da pasif sınıf ve o sınıfların ödev ve
+    değerlendirmeleri 404; teslim durumunu ve puanı yalnızca kaydı oluşturan öğretmen değiştirir (değilse 403). Veli yalnızca bağlı
+    olduğu çocuğun özetini görür (bağ yoksa 404, veli rolü yoksa 403). Öğrenci bazlı okuma sorgusunun uç noktası yoktur ve erişim
+    denetlemez — çağıran denetler. Öğrenci adı, ödev başlığı/açıklaması, ders adı ve **puan loglanmaz ve audit'e yazılmaz**: komutlar
+    `ILoggableRequest` değildir (T9), handler logları yalnızca kimlik ve sayı; ödev verme, teslim kaydı, değerlendirme açma ve puan
+    kaydı audit'te (kim, hedef kayıt, ayrıntıda yalnızca sınıf + öğrenci/değişen sayısı, IP). Yeni ödev bildirimi yalnızca ders,
+    başlık ve teslim tarihini taşır (açıklama ve öğrenci adı yok); bildirim log'unda yalnızca tür ve kimlik.
 
 ## KVKK
 1. Veli ilk girişte aydınlatma metnini görür, açık rıza verir; rıza metni sürümü ve zamanı kaydedilir.

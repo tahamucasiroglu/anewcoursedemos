@@ -30,7 +30,7 @@ daha küçük spec'lere bölünebilir; "sonra" diye işaretlenenler aynı modül
 | 5 | **Veli iletişimi** (spec 0011) | Duyuru (okul/şube/sınıf/öğrenci) + okundu bilgisi; öğretmen-veli mesajı, mesai dışı sessiz mod; onay formları (gezi izni vb.); bildirim kapısı (gerçek push B-6) | | ✅ spec 0011: VERIFY 13/13 (2 düzeltme turu, 3 inceleme); ship onayı bekliyor. Pi adımları ship'te kullanıcıda |
 | 5b | **Veli iletişimi: fotoğraf ve dosya** | Duyuruya ek, mesajda fotoğraf; `IFileStorage` portu, kısa ömürlü imzalı bağlantı, öğrenci bazlı fotoğraf rızası (KVKK) | 0011'den ayrıldı (C-1) | ⬜ |
 | 6 | **AI: sesli nottan veli mesajı** (spec 0012) | Öğretmenin 20 sn'lik sesli notunu kibar bir veli mesajına çevirir; öğretmen onaylamadan gönderilmez | Kapsama göre "satış demosunun yıldızı"; mesajlaşmaya bağlı | 🔄 spec 0012: BUILD bitti (yerel Ollama + ses servisi, AI taslağı, mobil Sesli not; Pi'de varsayılan kapalı, isteğe bağlı LAN demo); review bekliyor |
-| 7 | **Ödev ve not takibi** | Ödev verme, teslim durumu, yazılı/sözlü not; velide sade özet | | ⬜ |
+| 7 | **Ödev ve not takibi** (spec 0013) | Ödev verme, teslim durumu, yazılı/sözlü not; velide sade özet | | 🔄 spec 0013: BUILD bitti (öğretmen mobilde ödev/teslim/not, velide çocuk özeti, yeni ödev bildirimi, 0014 için öğrenci bazlı okuma); review bekliyor |
 | 8 | **AI: haftalık gelişim özeti** | Yoklama, ödev, not ve öğretmen notlarından çocuğa özel haftalık veli özeti | Önce bu verilerin olması gerekir | ⬜ |
 | 9 | **Tahsilat ve ön muhasebe** | Yıllık ücret, taksit planı, indirim/burs, gecikme hatırlatması, makbuz, cari takibi. Online ödeme sağlayıcısı sonra (backlog B-1) | | ⬜ |
 | 10 | **Randevu** | Öğretmen müsaitlik takvimi, veliden randevu talebi | | ⬜ |

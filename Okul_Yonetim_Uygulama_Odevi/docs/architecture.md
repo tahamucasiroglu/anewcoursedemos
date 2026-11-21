@@ -40,7 +40,7 @@ Modüller `Application/Features/<Modül>` altında (Commands, Queries, Rules, Dt
 | Students | Öğrenci kartı, veli bağı (kardeşlik bağdan çıkar), sağlık notu/alerji (şifreli), teslim alabilecek kişiler, velinin "Çocuklarım" görünümü (spec 0009); sonra nakil, Excel/e-Okul içe aktarma | Student, StudentGuardian, PickupPerson, Transfer |
 | Attendance | Günlük yoklama (spec 0010): öğretmenin "Sınıflarım"ı, bugünkü liste, Var/Yok/Geç kaydı ve düzeltmesi (yalnızca bugün, Türkiye günü); devamsızlık değişikliklerini Communication'a verir | AttendanceSheet, AttendanceEntry |
 | Communication | Duyuru, birebir mesaj, onay formu, dosya/fotoğraf paylaşımı, okundu bilgisi, sessiz mod; **veliye giden her şeyin tek çıkışı** (bildirim kapısı); spec 0010: veli devamsızlık bildirimi (uygulama içi + e-posta kuyruğu) ve velinin Bildirimler listesi; spec 0011: duyuru + okundu + onay formu, öğretmen–veli konuşması, mesai saatleri | Announcement, AnnouncementRecipient, AnnouncementStudent, ConsentResponse, Conversation, ConversationMessage, QuietHours, GuardianNotice |
-| Academics | Ödev, teslim durumu, not | Assignment, Grade |
+| Academics | Ödev, teslim durumu, yazılı/sözlü not (spec 0013): öğretmenin ödev verme, teslim işaretleme, değerlendirme açma ve puan girişi; velinin çocuk özeti; öğrenci bazlı okuma sorgusu (spec 0014 haftalık özetin kaynağı) | Assignment, AssignmentSubmission, Assessment, Grade |
 | Billing | Ücret tarifesi, taksit planı, indirim/burs, tahsilat, cari, makbuz, gecikme hatırlatması | FeeSchedule, InstallmentPlan, Payment, Ledger, Receipt |
 | Appointments | Öğretmen müsaitliği, veli randevu talebi | Availability, Appointment |
 | Dashboard | Yönetici günlük özeti, temel raporlar, Excel dışa aktarma (yalnızca okur) | — |
@@ -132,6 +132,20 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   Gönderim 0011'in `POST api/conversations/{id}/messages` ucundan `aiDraftId` ile: Communication, Ai'ın onay kapısını
   (`GetPendingAiDraftQuery` → mesaj → `MarkAiDraftApprovedCommand`) taslak sırası (`ai-draft:<id>`) içinde, mesajla aynı
   kayıtta çağırır; Ai Communication'a yazmaz (yasak bağımlılık 6). "Vazgeç": `DELETE api/ai/drafts/{id}` taslağı siler.
+- Ödev ve not (spec 0013): öğretmen uçları `api/academics` (`classrooms/{id}/assignments` GET/POST, `assignments/{id}/submissions`
+  GET/PUT, `classrooms/{id}/assessments` GET/POST, `assessments/{id}/grades` GET/PUT); yetki her istekte `AcademicsGuard`'da —
+  öğretmen–sınıf kuralı yoklamayla **tek kaynaktan**: `Organization/TeacherClassroomAccess` (Öğretmen rolü yoksa 403; sınıf
+  görünmüyor/pasif/atanmamış/şubesinde artık öğretmen değil 404; `AttendanceGuard` da bunu kullanır). Teslim durumunu ve puanı
+  yalnızca kaydı oluşturan öğretmen değiştirir (403). Ödev ve değerlendirme kurum + şube filtreli (yoklama gibi), teslim ve puan
+  satırı kurum filtreli; filtre delme yok. Ödevin/değerlendirmenin öğrencileri oluşturulduğu andaki sınıf listesidir
+  (`ListClassroomRosterQuery`); listeler yalnızca sınıfta süren öğrencileri gösterir ve sayar, ayrılanın satırı kalır. Kayıtlar
+  ödev/değerlendirme başına sıradadır (`assignment:<id>`, `assessment:<id>`). Değerlendirme günü sınıfın dönemi içinde
+  (`GetTermByIdQuery`). Yeni ödev bildirimi: işlem içinde Communication'ın `NotifyStudentGuardiansCommand`'ı (kayda bağlı "Okul
+  bildirimi" — `GuardianNotice` türü `Assignment`, kaynak kayıt + hazır metin; yoklamanın veli + öğrenci + gün tekilliği yalnızca
+  kaynaksız satırlar için), commit sonrası `DeliverNotificationsCommand`. Velinin özeti `api/my/children/{studentId}/academics`
+  (veli bağı "Çocuklarım" sorgusundan; yoksa 404). **Öğrenci bazlı okuma** `GetStudentAcademicRecordQuery(öğrenci, başlangıç, bitiş)`
+  → ödevler (ders, başlık, teslim, durum) ve notlar (ders, tür, başlık, gün, puan): uç noktası yoktur, **çağıranın erişimini
+  denetlemez** (yalnızca kurum + şube filtresi) — erişim denetimi çağırandadır (veli özeti: bağ; spec 0014: kendi kuralı).
 - Platform paneli (spec 0007): `api/platform/schools` uçları `PlatformAdmin` politikasıyla korunur — yetki her istekte
   veritabanından ve oturum iki adımlı kodla açılmış olmalı. Platform yöneticisinin şifreli girişi oturum değil 5 dk'lık
   bekleme döner; oturum `api/auth/two-factor/*` uçlarında kodla açılır. Yetki yalnızca komutla verilir (`grant-platform-admin`).

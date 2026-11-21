@@ -50,8 +50,11 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 | Onay formu (`ConsentResponse`) | Gezi izni, etkinlik katılımı gibi veli onayı: duyurunun "onay iste" hâli — tek soru, son gün (spec 0011) | Cevap **öğrenci başına** (son cevap geçerli, kim/ne zaman kayıtlı); son gün Türkiye saatiyle 23:59'a kadar. KVKK rızasından (`ConsentRecord`) farklı |
 | Mesai saatleri (`QuietHours`) | Öğretmenin tek mesai aralığı (Türkiye saati, 15 dk adım) ve iş günleri (spec 0011) | Tanımsızsa sessiz mod kapalı. Mesai dışında veli mesajı iletilir, öğretmene bildirim gitmez; birikmiş bildirim de sonra gönderilmez (BR-8) |
 | Bildirim kapısı | Veliye (ve mesai içinde öğretmene) giden her bildirimin tek çıkışı: Communication'ın `GuardianNotifier`'ı (spec 0011) | Kayıttan sonra çalışır; gönderici hatası işlemi bozmaz. MVP'de gerçek push yok (B-6) |
-| Okul bildirimi | Diğer modüllerin kapıdan verdiği öğrenciye özel bildirim (bugün: yoklamanın `GuardianNotice`'i); velinin duyuru akışında "Okul bildirimi" olarak görünür | Yayınlayan "okul"; yalnızca o öğrencinin bağlı velilerine görünür |
-| Ödev / Not (`Assignment` / `Grade`) | Ödev, teslim durumu; yazılı/sözlü not | — |
+| Okul bildirimi | Diğer modüllerin kapıdan verdiği öğrenciye özel bildirim (yoklamanın `GuardianNotice`'i; spec 0013: yeni ödev — kayda bağlı, hazır metinli); velinin duyuru akışında "Okul bildirimi" olarak görünür | Yayınlayan "okul"; yalnızca o öğrencinin bağlı velilerine görünür |
+| Ödev (`Assignment`) | Öğretmenin atandığı sınıfın tamamına verdiği iş: ders adı (serbest), başlık, isteğe bağlı açıklama, teslim tarihi (spec 0013) | Değiştirilmez, silinmez (yanlışsa yeni ödev); öğrencileri veriliş anındaki sınıf öğrencileridir. Veliye "Okul bildirimi" gider (ders, başlık, teslim) |
+| Teslim durumu (`AssignmentSubmission`) | Ödevde öğrenci başına İşaretlenmedi / Teslim etti / Teslim etmedi (spec 0013) | Öğrenci uygulaması yok: öğretmen işaretler; teslim tarihi geçince kendiliğinden "etmedi" olmaz |
+| Değerlendirme (`Assessment`) | Sınıf için açılan yazılı ya da sözlü not: ders, tür, başlık, gün (sınıfın dönemi içinde, bugünden sonra değil; spec 0013) | Ortalama, ağırlık, karne, harf notu yok; e-Okul resmî kayıt olarak kalır |
+| Puan (`Grade`) | Değerlendirmede öğrencinin 0–100 tam sayı puanı ya da boş ("girilmedi") (spec 0013) | Düzeltilir ve silinir; log ve audit'e değeri yazılmaz |
 | Ücret tarifesi / Taksit planı (`FeeSchedule` / `InstallmentPlan`) | Yıllık ücret ve taksitlere bölünmesi | İndirim ve burs tanımları dahil |
 | Tahsilat (`Payment`) | Alınan ödeme | MVP'de manuel kayıt (sağlayıcı yok) |
 | Cari (`Ledger`) | Velinin borç/alacak hesabı | — |
@@ -77,6 +80,7 @@ Faz 2: Öğrenci (mobil), Rehber öğretmen (web).
 - **BR-14 (spec 0009):** Veli yalnızca kendisine bağlı ve "ayrıldı" olmayan öğrencileri görür; aynı şubedeki başka öğrenci ona "bulunamadı"dır (veli rolü şube düzeyinde olsa da). Öğrencinin şubesi kayıttan sonra değişmez (nakil ayrı spec); okul numarası okulda harf farkı gözetmeden tekildir (ayrılan öğrenci numarasını tutar); bir öğrencinin en fazla 4 velisi, 10 teslim alabilecek kişisi olur; öğrenci silinmez.
 - **BR-9:** Bir öğrenci bir dönemde tek bir şubede ve tek bir sınıfta kayıtlıdır; şube değişikliği nakil kaydıdır, geçmiş korunur.
 - **BR-15 (spec 0011):** Duyurunun alıcıları yayın anında kapsamdaki öğrencilerin okulda etkin velileridir (sonradan sınıfa giren öğrencinin velisi o duyuruyu görmez); okundu veli başına sayılır. Onay formu cevabı öğrenci başınadır: öğrencinin herhangi bir velisi verir, son güne kadar değiştirir, son cevap geçerlidir. Alıcılar yayın anında sabitlenir: bağı sonradan kaldırılan veli, daha önce aldığı öğrenci kapsamlı duyurunun metnini görmeye devam eder ama o öğrenci için onay cevabı veremez (cevap için güncel bağ gerekir).
+- **BR-16 (spec 0013):** Ödevin ve değerlendirmenin öğrencileri veriliş/açılış anındaki sınıf öğrencileridir (sonradan gelen öğrenci o kayıtlarda yoktur; sınıftan ayrılanın kaydı silinmez, velinin özetinde kalır). Teslim durumunu ve puanı yalnızca kaydı oluşturan öğretmen, o sınıfa hâlâ atanmışken değiştirir; sınıfın diğer öğretmenleri yalnızca görür. Ödev değiştirilmez ve silinmez; puan 0–100 tam sayı ya da boştur.
 
 ## Key domain invariants
 - Bir kurumun verisi başka bir kuruma **asla** görünmez (BR-4).
