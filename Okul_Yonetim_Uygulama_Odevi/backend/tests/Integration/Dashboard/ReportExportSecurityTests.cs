@@ -110,11 +110,13 @@ public sealed class ReportExportSecurityTests
         (await ExportAuditAsync(factory, w.TenantId)).Count.ShouldBe(1, "reddedilen dışa aktarma audit'e yazılmaz");
 
         (await ExportAsync(client, w.Founder, "balances", $"branchId={w.BranchId}")).Status.ShouldBe(HttpStatusCode.OK);
-        (await ExportAuditAsync(factory, w.TenantId)).Last().Detail.ShouldBe($"report=Balances;branch={w.BranchId};overdueOnly=false;rows=1");
+        (await ExportAuditAsync(factory, w.TenantId)).Select(a => a.Detail).ShouldContain($"report=Balances;branch={w.BranchId};overdueOnly=false;rows=1");
         (await StatusAsync(client, HttpMethod.Get, "/api/dashboard/reports/attendance?startDate=2026-11-01&endDate=2026-11-20&minAbsent=3", w.Founder)).ShouldBe(HttpStatusCode.OK);
         ExportResponse withFilters = await ExportAsync(client, w.Founder, "attendance", $"startDate=2026-11-01&endDate=2026-11-20&classroomId={w.School.Class.ClassroomId}&minAbsent=3");
         withFilters.Status.ShouldBe(HttpStatusCode.OK);
-        (await ExportAuditAsync(factory, w.TenantId)).Last().Detail.ShouldBe($"report=Attendance;range=2026-11-01..2026-11-20;classroom={w.School.Class.ClassroomId};minAbsent=3;rows=0");
+        List<AuditEntry> all = await ExportAuditAsync(factory, w.TenantId);
+        all.Count.ShouldBe(3, "kabul edilen üç dışa aktarma; reddedilen yok");
+        all.Select(a => a.Detail).ShouldContain($"report=Attendance;range=2026-11-01..2026-11-20;classroom={w.School.Class.ClassroomId};minAbsent=3;rows=0");
     }
 
     /// <summary>Tahsilatı doğrudan veritabanına yazar (10.000 satırı API'den girmek dakikalar sürer); makbuz no tekil dizini gereği sıralı.</summary>
