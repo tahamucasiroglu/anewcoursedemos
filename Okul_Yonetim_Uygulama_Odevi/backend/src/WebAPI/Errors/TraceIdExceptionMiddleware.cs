@@ -1,11 +1,13 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.Types;
+using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Extensions;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Handlers;
 using NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.Middleware;
 using NArchitecture.Core.Localization.Abstraction;
 using OkulYonetim.Application.Ports;
 using NArchitectureLogger = NArchitecture.Core.CrossCuttingConcerns.Logging.Abstraction.ILogger;
+using NArchitectureValidationProblemDetails = NArchitecture.Core.CrossCuttingConcerns.Exception.WebApi.HttpProblemDetails.ValidationProblemDetails;
 
 namespace OkulYonetim.WebAPI.Errors;
 
@@ -13,7 +15,8 @@ namespace OkulYonetim.WebAPI.Errors;
 /// nArchitecture hata middleware'inin bu projeye uyarlanmış hali: her hata izleme numarasıyla bir kez loglanır
 /// (beklenmeyen hata Error, iş hataları Warning). İş hatalarının yanıtı nArchitecture'daki gibidir; beklenmeyen
 /// hatada yanıt yalnızca genel Türkçe mesaj ve izleme numarası taşır (ayrıntı sızdırılmaz). İş hatası yanıtı her istek için
-/// ayrı <c>HttpExceptionHandler</c> ile yazılır (temel sınıfın paylaşılan işleyicisi eşzamanlı hatalarda yanıtları karıştırır). İstemci isteği iptal ettiyse
+/// ayrı <c>HttpExceptionHandler</c> ile yazılır (temel sınıfın paylaşılan işleyicisi eşzamanlı hatalarda yanıtları karıştırır). Doğrulama
+/// hatasında gövde nArchitecture biçimindedir, yalnızca <c>detail</c> sabit İngilizce metin yerine ilk Türkçe alan mesajıdır (T20). İstemci isteği iptal ettiyse
 /// (sayfa kapandı) bu hata sayılmaz: Information olarak loglanır, yanıt yazılmaz.
 /// </summary>
 public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
@@ -75,7 +78,32 @@ public sealed class TraceIdExceptionMiddleware : ExceptionMiddleware
 
         // İşleyici gövdeyi düz metin olarak yazar; içerik türünü temel sınıf ayarlıyordu (application/json) — aynısı.
         response.ContentType = MediaTypeNames.Application.Json;
+        if (error is ValidationException validation)
+        {
+            return WriteValidationAsync(response, validation);
+        }
+
         return (Task)new HttpExceptionHandler { Response = response }.HandleException((dynamic)error);
+    }
+
+    /// <summary>
+    /// Doğrulama hatası (T20): nArchitecture <c>detail</c>'e sabit İngilizce metin yazar, Türkçe alan mesajları <c>Errors</c>
+    /// dizisindedir. Gövde aynı biçimde kalır (alan listesi dokunulmaz), yalnızca <c>detail</c> ilk Türkçe alan mesajı olur —
+    /// <c>detail</c>'i okuyan her istemci kullanıcıya Türkçe mesajı gösterir.
+    /// </summary>
+    private static Task WriteValidationAsync(HttpResponse response, ValidationException validation)
+    {
+        NArchitectureValidationProblemDetails problem = new(validation.Errors);
+        string? first = validation.Errors?
+            .SelectMany(e => e.Errors ?? [])
+            .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m));
+        if (first is not null)
+        {
+            problem.Detail = first;
+        }
+
+        response.StatusCode = StatusCodes.Status400BadRequest;
+        return response.WriteAsync(problem.ToJson());
     }
 
     private static async Task WriteForbiddenAsync(HttpResponse response, string message)

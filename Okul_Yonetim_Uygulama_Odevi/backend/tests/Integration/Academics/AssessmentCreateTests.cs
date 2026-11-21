@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Mime;
 using System.Text.Json;
 using OkulYonetim.Tests.Integration.Communication;
 using OkulYonetim.Tests.Integration.Infrastructure;
@@ -7,6 +8,7 @@ using static OkulYonetim.Tests.Integration.Academics.AcademicsTestData;
 using static OkulYonetim.Tests.Integration.Administration.AdminTestData;
 using static OkulYonetim.Tests.Integration.Attendance.AttendanceTestData;
 using static OkulYonetim.Tests.Integration.Communication.CommunicationTestData;
+using static OkulYonetim.Tests.Integration.Identity.IdentityTestData;
 
 namespace OkulYonetim.Tests.Integration.Academics;
 
@@ -70,5 +72,33 @@ public sealed class AssessmentCreateTests
         status.ShouldBe(HttpStatusCode.BadRequest);
         Messages(problem).ShouldContain(message);
         (await AssessmentCountAsync(factory, w.Class.ClassroomId)).ShouldBe(0);
+    }
+
+    /// <summary>
+    /// Review round 1, R1-1 (T20): istemcinin aldığı gerçek doğrulama gövdesi. nArchitecture <c>detail</c>'e sabit İngilizce
+    /// "One or more validation errors occurred." yazar ve Türkçe alan mesajlarını <c>Errors</c> dizisine (<c>Property</c> +
+    /// <c>Errors</c>) koyar; hata ara katmanı <c>detail</c>'e ilk Türkçe alan mesajını yazar, dizi olduğu gibi kalır. Mobil ve web
+    /// <c>detail</c>'i gösterdiği için dönem dışı tarih hatası artık Türkçe görünür.
+    /// </summary>
+    [Fact]
+    public async Task Create_DateOutsideTerm_RealBodyCarriesTurkishDetailAndFieldList()
+    {
+        using OkulApiFactory factory = Factory(this.database);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+
+        using HttpResponseMessage response = await SendAuthorizedAsync(
+            client, HttpMethod.Post, $"/api/academics/classrooms/{w.Class.ClassroomId}/assessments", w.Class.Teacher, Exam(date: "2026-08-31"));
+        string raw = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType.ShouldNotBeNull().MediaType.ShouldBe(MediaTypeNames.Application.Json);
+        JsonElement body = JsonDocument.Parse(raw).RootElement;
+        body.GetProperty("detail").GetString().ShouldBe("Tarih sınıfın dönemi içinde olmalı", raw);
+        JsonElement errors = body.GetProperty("Errors");
+        errors.GetArrayLength().ShouldBe(1, raw);
+        JsonElement field = errors[0];
+        field.GetProperty("Property").GetString().ShouldBe("Date");
+        field.GetProperty("Errors")[0].GetString().ShouldBe("Tarih sınıfın dönemi içinde olmalı");
     }
 }
