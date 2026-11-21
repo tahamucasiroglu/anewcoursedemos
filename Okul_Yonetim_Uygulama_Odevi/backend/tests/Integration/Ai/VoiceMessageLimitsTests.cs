@@ -11,7 +11,7 @@ namespace OkulYonetim.Tests.Integration.Ai;
 /// <summary>
 /// Spec 0012 AC-5: boş/eksik dosya, desteklenmeyen tür ve 2 MB üstü dosya alan hatası verir (tam 2 MB kabul); 60 saniyeden
 /// uzun not "Sesli not en fazla 60 saniye olabilir." ile reddedilir (60,0 sn kabul); döküm boşsa "Ses anlaşılamadı, lütfen
-/// tekrar deneyin."; hiçbirinde taslak oluşmaz ve metin servisi çağrılmaz.
+/// tekrar deneyin." (servis 60 sn üstü sesi dökmeden boş metinle döndürse de mesaj 60 sn'dir); hiçbirinde taslak oluşmaz ve metin servisi çağrılmaz.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class VoiceMessageLimitsTests
@@ -82,6 +82,24 @@ public sealed class VoiceMessageLimitsTests
             (await DraftsAsync(factory, w.Class.School.TenantId)).ShouldHaveSingleItem();
             return;
         }
+
+        status.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(body).ShouldBe("Sesli not en fazla 60 saniye olabilir.");
+        text.Requests.ShouldBeEmpty();
+        (await DraftsAsync(factory, w.Class.School.TenantId)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Duration_Over60Seconds_EmptyTranscriptFromService_TooLongMessage()
+    {
+        // Review round 1 (L-1): ses servisi 60 sn üstü sesi dökmez, boş metin + süre döner — mesaj "anlaşılamadı" değil, 60 sn.
+        FakeAiTextGenerator text = new();
+        using OkulApiFactory factory = Factory(this.database, new FakeSpeechToText { Text = string.Empty, DurationSeconds = 75.31 }, text);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid conversation = await StartedAsync(client, w.Class.Teacher, w.Ali, w.AliMother.UserId);
+
+        var (status, body, _) = await VoiceNoteAsync(client, w.Class.Teacher, conversation);
 
         status.ShouldBe(HttpStatusCode.BadRequest);
         Detail(body).ShouldBe("Sesli not en fazla 60 saniye olabilir.");

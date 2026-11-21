@@ -21,7 +21,8 @@ powershell -ExecutionPolicy Bypass -File tools/ai/start-stt.ps1 -Device cuda   #
 Ön planda çalışır, Ctrl+C ile durur. Model açılışta bir kez yüklenir (~7 sn). Uçlar: `GET /health` (model yüklü mü,
 cihaz), `POST /transcribe` (ham ses gövdesi, `Content-Type: audio/...` → `{"text","duration","language","elapsedMs"}`).
 Ses yalnızca bellekte işlenir, diske yazılmaz; döküm loglanmaz (yalnızca bayt, süre, karakter sayısı, ölçülen süre).
-Aynı anda tek döküm (iş kilidi). Windows hizmeti olarak otomatik başlatma yok (spec kapsam dışı).
+Süre dökümden **önce** ölçülür: 60 sn'yi (`STT_MAX_SECONDS`) aşan ses dökülmez, boş metin ve ölçülen süreyle hemen döner
+(`"skipped":"too-long"`; API "Sesli not en fazla 60 saniye olabilir." der). Aynı anda tek döküm (iş kilidi). Windows hizmeti olarak otomatik başlatma yok (spec kapsam dışı).
 
 **Neden varsayılan CPU?** 6 GB kartta masaüstü uygulamaları ~2 GB, Ollama `gemma3:4b` ~2,9 GB tutuyor; Whisper da GPU'da
 kalınca bellek taşıyor ve Ollama'nın yanıtı 2 sn'den 60–90 sn'ye çıkıyor (plan 0012 Build evidence). CPU'da `medium`

@@ -6,7 +6,7 @@ namespace OkulYonetim.Infrastructure.Ai;
 /// <summary>
 /// Yerel yapay zekâ ayarları ("Ai" bölümü; spec 0012 C-1, C-2): metin servisi (Ollama — <c>Ai:TextGenerator:BaseUrl</c>,
 /// <c>Model</c>, <c>TimeoutSeconds</c>, varsayılan 90 sn), ses servisi (<c>Ai:SpeechToText:BaseUrl</c>, <c>TimeoutSeconds</c>,
-/// varsayılan 60 sn) ve iş sırasında en fazla bekleme (<c>QueueTimeoutSeconds</c>, 30 sn). Varsayılan (Pi/üretim) adresler boştur.
+/// varsayılan 120 sn — servis 60 sn üstü sesi dökmeden döner, 60 sn'lik sesin CPU'da dökümüne pay) ve iş sırasında en fazla bekleme (<c>QueueTimeoutSeconds</c>, 30 sn). Varsayılan (Pi/üretim) adresler boştur.
 /// <see cref="IsLocalAddress"/>: model çağrıları yalnızca yerel adreslere gider — <c>localhost</c>, geri döngü ya da özel ağ
 /// (10/8, 172.16/12, 192.168/16) IPv4 adresi; başka bir adres yazılmışsa özellik kapalı sayılır (öğrenci verisi dışarı çıkmaz).
 /// </summary>
@@ -16,7 +16,7 @@ public sealed class AiOptions
 
     public AiEndpointOptions TextGenerator { get; set; } = new() { TimeoutSeconds = 90 };
 
-    public AiEndpointOptions SpeechToText { get; set; } = new() { TimeoutSeconds = 60 };
+    public AiEndpointOptions SpeechToText { get; set; } = new() { TimeoutSeconds = 120 };
 
     public int QueueTimeoutSeconds { get; set; } = 30;
 

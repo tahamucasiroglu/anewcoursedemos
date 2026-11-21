@@ -8,8 +8,11 @@ Uçlar:
   GET  /health      -> {"status":"ok","model":"medium","device":"cuda","computeType":"float16","loaded":true}
   POST /transcribe  -> ham ses gövdesi (Content-Type: audio/...) -> {"text":"...","duration":21.4,"language":"tr","elapsedMs":3100}
 
+Süre dökümden ÖNCE ölçülür (ses 16 kHz'e çözülüp örnek sayısından): STT_MAX_SECONDS'u aşan ses dökülmez, metin boş ve
+ölçülen süreyle hemen döner ("skipped":"too-long") — API "en fazla 60 saniye" der; CPU'da uzun döküm sırayı kilitlemez.
+
 Ortam değişkenleri: STT_HOST (127.0.0.1), STT_PORT (8765), STT_MODEL (medium), STT_DEVICE (auto|cuda|cpu),
-STT_MAX_BYTES (3145728).
+STT_MAX_BYTES (3145728), STT_MAX_SECONDS (60).
 """
 
 import io
@@ -27,6 +30,8 @@ PORT = int(os.environ.get("STT_PORT", "8765"))
 MODEL_NAME = os.environ.get("STT_MODEL", "medium")
 DEVICE = os.environ.get("STT_DEVICE", "auto")
 MAX_BYTES = int(os.environ.get("STT_MAX_BYTES", str(3 * 1024 * 1024)))
+MAX_SECONDS = float(os.environ.get("STT_MAX_SECONDS", "60"))
+SAMPLE_RATE = 16000
 
 
 if hasattr(sys.stderr, "reconfigure"):
@@ -123,11 +128,25 @@ class Handler(BaseHTTPRequestHandler):
         audio = io.BytesIO(self.rfile.read(length))
         started = time.monotonic()
         try:
-            with WORK:
-                segments, info = MODEL.transcribe(audio, language="tr", vad_filter=True, beam_size=5)
-                text = " ".join(segment.text.strip() for segment in segments).strip()
+            from faster_whisper import decode_audio
+
+            samples = decode_audio(audio, sampling_rate=SAMPLE_RATE)
         except Exception as error:  # noqa: BLE001 — çözülemeyen ses 400; ayrıntı (içerik) loglanmaz
             log(f"çözülemedi: {type(error).__name__}")
+            self.send_json(400, {"error": "ses çözülemedi"})
+            return
+        duration = len(samples) / SAMPLE_RATE
+        if duration > MAX_SECONDS:
+            elapsed = int((time.monotonic() - started) * 1000)
+            log(f"dökülmedi (uzun): {length} bayt, {duration:.1f} sn ses, {elapsed} ms")
+            self.send_json(200, {"text": "", "duration": round(duration, 2), "language": "tr", "elapsedMs": elapsed, "skipped": "too-long"})
+            return
+        try:
+            with WORK:
+                segments, info = MODEL.transcribe(samples, language="tr", vad_filter=True, beam_size=5)
+                text = " ".join(segment.text.strip() for segment in segments).strip()
+        except Exception as error:  # noqa: BLE001 — dökülemeyen ses 400; ayrıntı (içerik) loglanmaz
+            log(f"dökülemedi: {type(error).__name__}")
             self.send_json(400, {"error": "ses çözülemedi"})
             return
         elapsed = int((time.monotonic() - started) * 1000)

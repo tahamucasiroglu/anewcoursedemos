@@ -124,7 +124,8 @@ modüllerin ekranlarında kullandığı ortak katmandır.
   `Unavailable*` uygulaması (Pi varsayılanı: özellik "Yapay zekâ şu an kullanılamıyor", mesajlaşma çalışır). `AiWorkGate`
   tek ekran kartı için aynı anda tek model çağrısı çalıştırır; sırada 30 sn'den uzun bekleyen "kullanılamıyor" alır.
   Etkileşimli AI çağrısında **yeniden deneme yoktur** (aşağıdaki port kuralının istisnası — kullanıcı bekler): tek deneme,
-  ses 60 sn / metin 90 sn zaman aşımı, hata hemen "kullanılamıyor" + Warning log. Akış: mobil konuşma ekranı →
+  ses 120 sn / metin 90 sn zaman aşımı (ses servisi süreyi dökümden önce ölçer, 60 sn üstünü dökmeden boş metin + süreyle
+  döner), hata hemen "kullanılamıyor" + Warning log. Akış: mobil konuşma ekranı →
   `POST api/ai/voice-message-drafts` (multipart, ≤ 2 MB, istek ~2,1 MB) → Communication'ın `GetTeacherConversationContextQuery`'si
   (taraf/öğretmen/ilişki) → ses servisi → (≤ 60 sn, boş değil) → metin servisi (yalnızca sabit talimat
   `Features/Ai/Prompts/voice-message.tr.txt` + döküm) → 1000'e kısaltılmış taslak `AiDraft` (bekliyor, kaynak = döküm).

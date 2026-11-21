@@ -26,6 +26,16 @@ public sealed class AiSettingsTests
         ai.GetProperty("SpeechToText").GetProperty("BaseUrl").GetString().ShouldBeNullOrEmpty();
     }
 
+    [Theory]
+    [InlineData("appsettings.json")]
+    [InlineData("appsettings.Example.json")]
+    public void SpeechToTextTimeout_120Seconds_InCodeAndSettings(string file)
+    {
+        // Review round 1 (L-1): 60 sn'lik sesin CPU'da dökümü 60 sn'ye yaklaşabilir; zaman aşımı sınırla aynı olmamalı.
+        new AiOptions().SpeechToText.TimeoutSeconds.ShouldBe(120);
+        Ai(file).GetProperty("SpeechToText").GetProperty("TimeoutSeconds").GetInt32().ShouldBe(120);
+    }
+
     [Fact]
     public void DevelopmentSettings_OnlyLoopbackAddresses()
     {

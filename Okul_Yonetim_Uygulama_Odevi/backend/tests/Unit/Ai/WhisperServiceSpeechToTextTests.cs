@@ -40,6 +40,19 @@ public sealed class WhisperServiceSpeechToTextTests
         result.DurationSeconds.ShouldBe(3.0);
     }
 
+    [Fact]
+    public async Task TranscribeAsync_TooLongSkippedByService_EmptyTextWithMeasuredDuration()
+    {
+        // Review round 1 (L-1): servis 60 sn üstü sesi dökmeden, ölçtüğü süreyle döner; karar (60 sn mesajı) çağıranda.
+        using MemoryStream audio = new(Audio);
+        FakeHttpHandler handler = FakeHttpHandler.Json("""{"text":"","duration":75.31,"language":"tr","elapsedMs":40,"skipped":"too-long"}""");
+
+        SpeechToTextResult result = await Speech(handler).TranscribeAsync(audio, "audio/m4a", TestContext.Current.CancellationToken);
+
+        result.Text.ShouldBeEmpty();
+        result.DurationSeconds.ShouldBe(75.31);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.ServiceUnavailable, """{"error":"model yükleniyor"}""", "http-503")]
     [InlineData(HttpStatusCode.BadRequest, """{"error":"ses çözülemedi"}""", "http-400")]
