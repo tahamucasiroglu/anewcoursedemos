@@ -1,6 +1,6 @@
 # Spec 0016 — Randevu: öğretmen müsaitliği ve veli talebi
 
-- Status: Approved
+- Status: In progress
 - Mode: lite
 - Plan: `specs/plans/0016-plan.md`
 - Self-critique: done
