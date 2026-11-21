@@ -112,4 +112,57 @@ public sealed class ConversationAuthorizationTests
 
         (await StartAsync(client, w.AliMother.Token, w.Ali, w.Class.TeacherId)).Status.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    // VERIFY V-2: ilişki öğretmen sınıftan alınmadan da biter — öğretmenin o şubedeki Öğretmen rolü alınınca (sınıf ataması
+    // durur) ne veli ne öğretmen yeni mesaj gönderebilir; eski mesajlar iki tarafa da okunur.
+    [Fact]
+    public async Task RelationEnded_TeacherRoleRemovedInBranch_NeitherSideCanSend()
+    {
+        using OkulApiFactory factory = Factory(this.database);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid id = await StartedAsync(client, w.AliMother.Token, w.Ali, w.Class.TeacherId);
+        (await SendAsync(client, w.AliMother.Token, id, "Ödev ne?")).Status.ShouldBe(HttpStatusCode.OK);
+
+        var (roleStatus, _, roleRaw) = await CallAsync(client, HttpMethod.Put, $"/api/admin/members/{w.Class.TeacherId}/roles", w.Class.Founder,
+            new { roles = new object[] { new { role = "Accounting", branchIds = new[] { w.Class.School.BranchId } } } });
+        roleStatus.ShouldBe(HttpStatusCode.OK, roleRaw);
+
+        foreach (string party in new[] { w.AliMother.Token, w.Class.Teacher })
+        {
+            var (status, thread, _) = await MessagesAsync(client, party, id);
+            status.ShouldBe(HttpStatusCode.OK);
+            thread.GetProperty("canSend").GetBoolean().ShouldBeFalse();
+            thread.GetProperty("messages").EnumerateArray().ShouldHaveSingleItem().GetProperty("body").GetString().ShouldBe("Ödev ne?");
+            var (sendStatus, problem, _) = await SendAsync(client, party, id, "Yeni mesaj");
+            sendStatus.ShouldBe(HttpStatusCode.BadRequest);
+            Detail(problem).ShouldBe("Bu konuşmaya artık mesaj gönderilemez.");
+        }
+
+        (await MessagesAsync(client, w.AliMother.Token, id)).Body.GetProperty("messages").GetArrayLength().ShouldBe(1);
+    }
+
+    // VERIFY V-2: öğretmen okulda pasifleştirilince veli eski konuşmayı okur ama yeni mesaj gönderemez, yeni konuşma açamaz.
+    [Fact]
+    public async Task RelationEnded_TeacherDeactivated_GuardianCannotSend()
+    {
+        using OkulApiFactory factory = Factory(this.database);
+        using HttpClient client = factory.CreateClient();
+        CommunicationWorld w = await WorldAsync(factory, client);
+        Guid id = await StartedAsync(client, w.AliMother.Token, w.Ali, w.Class.TeacherId);
+        (await SendAsync(client, w.Class.Teacher, id, "Ali bugün çok iyiydi")).Status.ShouldBe(HttpStatusCode.OK);
+
+        var (deactivated, _, raw) = await CallAsync(client, HttpMethod.Post, $"/api/admin/members/{w.Class.TeacherId}/deactivate", w.Class.Founder);
+        deactivated.ShouldBe(HttpStatusCode.OK, raw);
+
+        var (status, thread, _) = await MessagesAsync(client, w.AliMother.Token, id);
+        status.ShouldBe(HttpStatusCode.OK);
+        thread.GetProperty("canSend").GetBoolean().ShouldBeFalse();
+        thread.GetProperty("messages").EnumerateArray().ShouldHaveSingleItem().GetProperty("body").GetString().ShouldBe("Ali bugün çok iyiydi");
+        var (sendStatus, problem, _) = await SendAsync(client, w.AliMother.Token, id, "Teşekkürler");
+        sendStatus.ShouldBe(HttpStatusCode.BadRequest);
+        Detail(problem).ShouldBe("Bu konuşmaya artık mesaj gönderilemez.");
+        (await StartAsync(client, w.AliMother.Token, w.Ali, w.Class.TeacherId)).Status.ShouldBe(HttpStatusCode.NotFound);
+        (await MessagesAsync(client, w.AliMother.Token, id)).Body.GetProperty("messages").GetArrayLength().ShouldBe(1);
+    }
 }
