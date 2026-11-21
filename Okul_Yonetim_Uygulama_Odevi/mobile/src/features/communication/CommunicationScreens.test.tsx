@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react-native";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { THEME_STORAGE_KEY, themeColors } from "@okul/theme";
 import { StyleSheet } from "react-native";
@@ -72,6 +72,24 @@ async function signIn() {
   await screen.findByTestId("welcome");
 }
 
+// Soğuk başlangıç ısınması (0013 VERIFY V-1): dosyadaki ilk çizim, react-native'in tembel yüklenen modüllerini (FlatList,
+// ScrollView, TextInput…) ve uygulama ekranlarını o an dönüştürüp yükler. Ölçüm: ilk test önbellek sıcakken ~0,3 sn, Jest
+// önbelleği soğukken ~2,1 sn, sonraki testler ~0,01–0,08 sn; tam kontrolün paralel yükünde bu bedel ilk testin 15 sn sınırını
+// aştı. Bedel burada, doğrulama içermeyen tek bir giriş → akış turunda ödenir; testler sıcak başlar ve varsayılan sürede kalır.
+// Kancanın süresi bu yüzden geniş: yalnızca yükleme süresini sınırlar, hiçbir doğrulamayı gevşetmez.
+beforeAll(async () => {
+  reset();
+  await AsyncStorage.clear();
+  fakeApi(
+    { "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }) },
+    { unreadAnnouncements: 2 },
+  );
+  await signIn();
+  await fireEvent.press(screen.getByRole("button", { name: "Duyurular, 2 okunmamış duyuru" }));
+  await screen.findAllByTestId("feed-row");
+  await cleanup();
+}, 60_000);
+
 beforeEach(async () => {
   reset();
   await AsyncStorage.clear();
@@ -90,9 +108,8 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
     expect(StyleSheet.flatten(screen.getByTestId("screen").props.style).backgroundColor).toBe(themeColors[mode].background);
   });
 
-  // Dosyanın ilk testi uygulamanın ilk çizimini (modül yükleme, ilk render) taşır: tek başına ~1 sn, tam kontrol yükünde
-  // varsayılan 5 sn aşıldı (0011 VERIFY V-1). Akış ve ayrıntı/onay iki teste bölündü; bu teste özel süre sınırı 15 sn,
-  // doğrulamalar aynı.
+  // Akış ve ayrıntı/onay iki teste bölündü (0011 VERIFY V-1). İlk çizimin soğuk başlangıç bedeli dosya başındaki ısınma
+  // kancasında ödenir (0013 VERIFY V-1); bu test artık sıcak başlar, özel süre sınırı gerekmez.
   it("veli: 'Duyurular (2)' → akış (yeni işareti, okul bildirimi, kayan liste)", async () => {
     fakeApi(
       { "GET /api/announcements/feed": () => json(200, { items: [announcement, schoolNotice], page: 1, hasMore: false, unreadCount: 1 }) },
@@ -113,7 +130,7 @@ describe.each(["light", "dark"] as const)("Duyurular ve mesajlar — %s tema", (
     expect(rows[0].props.accessibilityLabel).toBe("okunmadı, Onay formu, Müze gezisi, Elif Öğretmen · Can Ak · 20.11.2026");
     expect(screen.getByLabelText("okunmadı")).toHaveTextContent("Yeni");
     expect(rows[1].props.accessibilityLabel).toContain("Okul bildirimi");
-  }, 15_000);
+  });
 
   it("veli: akıştan ayrıntı → onay (cevap, kim ve ne zaman verdi)", async () => {
     fakeApi(
