@@ -1,8 +1,11 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
+using Npgsql;
+using OkulYonetim.Domain.Identity;
 using OkulYonetim.Tests.Integration.Infrastructure;
 using Shouldly;
 using static OkulYonetim.Tests.Integration.Identity.IdentityTestData;
@@ -122,6 +125,7 @@ public sealed class LoginLockoutTests
         });
         using HttpClient client = factory.CreateClient();
         SchoolSeed school = await CreateSchoolAsync(factory);
+        hasher.QueuedAttempts = () => this.QueuedLogins(school.FounderEmail);
         hasher.Gate = true;
 
         Task<HttpResponseMessage> correct = PostLoginAsync(client, school.FounderEmail, Password);
@@ -146,6 +150,23 @@ public sealed class LoginLockoutTests
                 response.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    /// Bu e-postanın giriş sırasında (<c>login:&lt;e-posta&gt;</c> danışma kilidi) bekleyen istek sayısı: PostgreSQL tek bigint
+    /// anahtarlı danışma kilidini <c>classid</c> (üst 32 bit) + <c>objid</c> (alt 32 bit) olarak gösterir.
+    /// </summary>
+    private int QueuedLogins(string email)
+    {
+        using NpgsqlConnection connection = new(this.database.ConnectionString);
+        connection.Open();
+        using NpgsqlCommand command = new(
+            "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND NOT granted AND objsubid = 1 " +
+            "AND database = (SELECT oid FROM pg_database WHERE datname = current_database()) " +
+            "AND ((classid::bigint << 32) | objid::bigint) = hashtextextended(@key, 0)",
+            connection);
+        command.Parameters.AddWithValue("key", "login:" + EmailAddress.Normalize(email));
+        return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
     }
 
     private static async Task<string?> DetailAsync(HttpClient client, string email, string password)
