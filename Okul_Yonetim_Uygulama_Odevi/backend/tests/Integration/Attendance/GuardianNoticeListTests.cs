@@ -176,4 +176,25 @@ public sealed class GuardianNoticeListTests
         (await UnreadAsync(client, father)).ShouldBe(1, "aynı çocuğun babasının bildirimi annenin isteğiyle okunmaz");
         (await UnreadAsync(client, otherGuardian)).ShouldBe(1, "başka velinin bildirimi okunmaz");
     }
+
+    [Fact]
+    public async Task List_ChildWithTwoGuardians_EachSeesOnlyOwnNotice()
+    {
+        using OkulApiFactory factory = Factory(this.database, new CapturingOutbox());
+        using HttpClient client = factory.CreateClient();
+        AttendanceClass c = await ClassAsync(factory, client);
+        Guid ali = await StudentAsync(client, c, "Ali Yılmaz");
+        (string mother, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali);
+        (string father, _, _, _) = await NewGuardianAsync(client, c.Founder, c.School.TenantId, ali, "Father");
+        await SavedAsync(client, c.Teacher, c.ClassroomId, [(ali, "Absent")]);
+        (await NoticeCountAsync(factory, ali)).ShouldBe(2, "her veliye bir bildirim");
+
+        JsonElement mothers = (await NoticesAsync(client, mother)).Body;
+        JsonElement fathers = (await NoticesAsync(client, father)).Body;
+
+        Guid motherNotice = mothers.EnumerateArray().ShouldHaveSingleItem("annenin listesinde babanın bildirimi yok (0010 VERIFY V-1)").GetProperty("id").GetGuid();
+        Guid fatherNotice = fathers.EnumerateArray().ShouldHaveSingleItem("babanın listesinde annenin bildirimi yok").GetProperty("id").GetGuid();
+        motherNotice.ShouldNotBe(fatherNotice);
+        (await UnreadAsync(client, mother)).ShouldBe(1);
+    }
 }
