@@ -3782,6 +3782,1064 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/billing/tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeScheduleRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FeeScheduleRequest"];
+                    "text/json": components["schemas"]["FeeScheduleRequest"];
+                    "application/*+json": components["schemas"]["FeeScheduleRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeScheduleRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/tariffs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FeeScheduleRequest"];
+                    "text/json": components["schemas"]["FeeScheduleRequest"];
+                    "application/*+json": components["schemas"]["FeeScheduleRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeScheduleRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/tariffs/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeScheduleRow"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/tariffs/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeScheduleRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/discounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DiscountRow"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DiscountRequest"];
+                    "text/json": components["schemas"]["DiscountRequest"];
+                    "application/*+json": components["schemas"]["DiscountRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DiscountRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/discounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DiscountRequest"];
+                    "text/json": components["schemas"]["DiscountRequest"];
+                    "application/*+json": components["schemas"]["DiscountRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DiscountRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/discounts/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DiscountRow"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/discounts/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DiscountRow"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    branchId?: string;
+                    overdueOnly?: boolean;
+                    search?: string;
+                    page?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentAccountPage"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/students/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentAccount"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/plans/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InstallmentPlanRequest"];
+                    "text/json": components["schemas"]["InstallmentPlanRequest"];
+                    "application/*+json": components["schemas"]["InstallmentPlanRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanPreview"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InstallmentPlanRequest"];
+                    "text/json": components["schemas"]["InstallmentPlanRequest"];
+                    "application/*+json": components["schemas"]["InstallmentPlanRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BillingSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/plans/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BillingSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PaymentRequest"];
+                    "text/json": components["schemas"]["PaymentRequest"];
+                    "application/*+json": components["schemas"]["PaymentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PaymentRecorded"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/payments/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CancelPaymentRequest"];
+                    "text/json": components["schemas"]["CancelPaymentRequest"];
+                    "application/*+json": components["schemas"]["CancelPaymentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BillingSaved"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/payments/{id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Receipt"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/branches": {
         parameters: {
             query?: never;
@@ -4338,6 +5396,105 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ChildCard"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/my/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MyPayments"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/my/payments/{studentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChildAccount"];
                     };
                 };
                 /** @description Forbidden */
@@ -5230,6 +6387,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Cari toplamları (spec 0015 gereksinim 8): borç (geçerli planların neti), geçerli tahsilat toplamı, kalan ve bugün geciken tutar. */
+        AccountTotals: {
+            /** Format: double */
+            net: number | string;
+            /** Format: double */
+            paid: number | string;
+            /** Format: double */
+            remaining: number | string;
+            /** Format: double */
+            overdue: number | string;
+        };
         /** @description Kişi ekleme isteği: ad-soyad, e-posta, isteğe bağlı telefon ve roller (rol + şubeler). */
         AddMemberRequest: {
             fullName: string;
@@ -5441,6 +6609,11 @@ export interface components {
             /** @default false */
             twoFactorSetupRequired: boolean;
         };
+        /** @description Tahsilat yazma işleminin sonucu (spec 0015): işlem gören kaydın kimliği (plan açma/iptal, tahsilat iptali). */
+        BillingSaved: {
+            /** Format: uuid */
+            id: string;
+        };
         /** @description Yönetim ekranındaki şube: ad, adres, telefon ve durum (pasif şubeler de listelenir). */
         BranchAdminView: {
             /** Format: uuid */
@@ -5487,6 +6660,10 @@ export interface components {
             /** Format: date */
             endDate: string;
         };
+        /** @description Tahsilat iptali (spec 0015): gerekçe (zorunlu, en fazla 200 karakter). */
+        CancelPaymentRequest: {
+            reason: null | string;
+        };
         /** @description Şifre değiştirme isteği. */
         ChangePasswordRequest: {
             currentPassword: null | string;
@@ -5507,6 +6684,16 @@ export interface components {
             recent: components["schemas"]["StudentAssignmentRecord"][];
             grades: components["schemas"]["StudentGradeRecord"][];
         };
+        /** @description Velinin gördüğü çocuk carisi (spec 0015): ad, şube, sınıf, toplamlar ve geçerli planlar (yoksa boş — "Henüz ödeme planı yok"). */
+        ChildAccount: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+            totals: components["schemas"]["AccountTotals"];
+            plans: components["schemas"]["ChildPlan"][];
+        };
         /**
          * @description Velinin gördüğü salt okunur öğrenci kartı (spec 0009 C-7): ad-soyad, doğum tarihi, okul numarası, şube, sınıf, sağlık
          *     bölümü ve teslim alabilecek kişiler. Diğer velilerin bilgisi ve kardeş kartları bilinçli olarak yoktur.
@@ -5522,6 +6709,26 @@ export interface components {
             classroomName: null | string;
             health: components["schemas"]["StudentHealthView"];
             pickupPersons: components["schemas"]["PickupPersonView"][];
+        };
+        /** @description Velinin gördüğü tahsilat (spec 0015): tarih, tutar, yöntem, makbuz no ve iptal durumu (not, gerekçe ve kaydeden yok). */
+        ChildPayment: {
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            amount: number | string;
+            method: string;
+            /** Format: int64 */
+            receiptNo: number | string;
+            cancelled: boolean;
+        };
+        /** @description Velinin gördüğü plan (spec 0015): plan adı, toplamlar, taksitler (vade, tutar, durum) ve tahsilatlar. */
+        ChildPlan: {
+            /** Format: uuid */
+            id: string;
+            feeName: string;
+            totals: components["schemas"]["AccountTotals"];
+            installments: components["schemas"]["InstallmentView"][];
+            payments: components["schemas"]["ChildPayment"][];
         };
         /** @description Velinin "Çocuklarım" listesindeki satır (spec 0009 gereksinim 11): ad-soyad, şube ve sınıf. */
         ChildRow: {
@@ -5678,6 +6885,20 @@ export interface components {
             founderName: null | string;
             founderEmail: null | string;
         };
+        /** @description İndirim/burs ekleme/düzenleme (spec 0015): ad ve yüzde (1–100 tam sayı; JSON sayısı ya da metin). */
+        DiscountRequest: {
+            name: null | string;
+            percent: null | components["schemas"]["JsonElement"];
+        };
+        /** @description İndirim/burs satırı (spec 0015 gereksinim 2): kimlik, ad, yüzde ve etkin mi. */
+        DiscountRow: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int32 */
+            percent: number | string;
+            isActive: boolean;
+        };
         /** @description Akıştaki satır: tür (`Announcement`, `SchoolNotice` — diğer modüllerin "Okul bildirimi" — ya da spec 0014 `WeeklySummary` — haftalık gelişim özeti, ayrıntısı `api/notices/{id}`), başlık (okul bildiriminde bildirim metni, haftalık özette "Haftalık gelişim özeti — 16–22 Kasım"), yayınlayan (okul bildiriminde boş = okul), ilgili çocuklar (sınıf/öğrenci kapsamı ve okul bildirimi), zaman, okundu mu ve onay formu mu. */
         FeedItem: {
             kind: string;
@@ -5699,6 +6920,20 @@ export interface components {
             hasMore: boolean;
             /** Format: int32 */
             unreadCount: number | string;
+        };
+        /** @description Tarife ekleme/düzenleme (spec 0015): ad ve tutar (JSON sayısı ya da metin, nokta ondalık — "85000.50"). */
+        FeeScheduleRequest: {
+            name: null | string;
+            amount: null | components["schemas"]["JsonElement"];
+        };
+        /** @description Tarife satırı (spec 0015 gereksinim 1): kimlik, ad, tutar ve etkin mi. */
+        FeeScheduleRow: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: double */
+            amount: number | string;
+            isActive: boolean;
         };
         /** @description Şifremi unuttum isteği. */
         ForgotPasswordRequest: {
@@ -5756,7 +6991,58 @@ export interface components {
         };
         /** Format: binary */
         IFormFile: string;
+        /** @description Taksit bölmesinin bir satırı (spec 0015 gereksinim 3): sıra (1'den), vade günü ve tutar. */
+        InstallmentLine: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number | string;
+        };
+        /** @description Taksit planı önizleme/açma (spec 0015): öğrenci, tarife, isteğe bağlı indirim, taksit sayısı (1–12) ve ilk vade (`yyyy-MM-dd`). */
+        InstallmentPlanRequest: {
+            /** Format: uuid */
+            studentId: string;
+            /** Format: uuid */
+            feeScheduleId: string;
+            /** Format: uuid */
+            discountId: null | string;
+            /** Format: int32 */
+            installmentCount: null | number | string;
+            /** Format: date */
+            firstDueDate: null | string;
+        };
+        /** @description Taksit satırı (spec 0015): sıra, vade, tutar, ödenen, kalan ve bugünkü durum (`Paid`/`PartiallyPaid`/`Pending`/`Overdue`). */
+        InstallmentView: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            paid: number | string;
+            /** Format: double */
+            remaining: number | string;
+            state: string;
+        };
         JsonElement: unknown;
+        /** @description Cari hareketi (spec 0015 gereksinim 8, tarih sıralı döküm): tür (`Plan` borç / `Payment` geçerli tahsilat), plan adı, makbuz no, borç, alacak ve yürüyen bakiye. */
+        LedgerMovement: {
+            /** Format: date */
+            date: string;
+            kind: string;
+            planName: string;
+            /** Format: int64 */
+            receiptNo: null | number | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            balance: number | string;
+        };
         /** @description Veli ekleme isteği: ad-soyad, e-posta, isteğe bağlı telefon ve yakınlık (`Mother` / `Father` / `Other`). */
         LinkGuardianRequest: {
             fullName: string;
@@ -5912,6 +7198,12 @@ export interface components {
             branchName: string;
             takenToday: boolean;
         };
+        /** @description Velinin ödeme görünümü (spec 0015 gereksinim 10): çocukların toplam kalanı ve çocuk başına cari. */
+        MyPayments: {
+            /** Format: double */
+            totalRemaining: number | string;
+            children: components["schemas"]["ChildAccount"][];
+        };
         /** @description Kişinin kendi profili (Hesabım): ad-soyad, e-posta (salt okunur), telefon. */
         MyProfile: {
             fullName: string;
@@ -5946,6 +7238,44 @@ export interface components {
             existingAccount: boolean;
             temporaryPassword: null | string;
         };
+        /** @description Kaydedilen tahsilat (spec 0015 gereksinim 5): kimlik ve okulun sıradaki makbuz numarası. */
+        PaymentRecorded: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            receiptNo: number | string;
+        };
+        /** @description Tahsilat kaydı (spec 0015): plan, tutar (JSON sayısı ya da metin), tarih (`yyyy-MM-dd`), yöntem (`Cash`/`BankTransfer`/`CardPos`) ve isteğe bağlı not. */
+        PaymentRequest: {
+            /** Format: uuid */
+            planId: string;
+            amount: null | components["schemas"]["JsonElement"];
+            /** Format: date */
+            date: null | string;
+            method: null | string;
+            note: null | string;
+        };
+        /** @description Personelin gördüğü tahsilat satırı (spec 0015): plan, makbuz no, tarih, tutar, yöntem, not, kaydeden; iptal edildiyse anı ve gerekçesi. */
+        PaymentRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            planId: string;
+            planName: string;
+            /** Format: int64 */
+            receiptNo: number | string;
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            amount: number | string;
+            method: string;
+            note: null | string;
+            recordedByName: string;
+            cancelled: boolean;
+            /** Format: date-time */
+            cancelledAt: null | string;
+            cancelReason: null | string;
+        };
         /** @description Teslim alabilecek kişi girişi: ad-soyad (≤ 100), yakınlık (≤ 50) ve telefon (spec 0005 kuralı) — üçü zorunlu. */
         PickupPersonInput: {
             fullName: string;
@@ -5961,6 +7291,45 @@ export interface components {
             fullName: string;
             relationship: string;
             phone: string;
+        };
+        /** @description Plan formunun önizlemesi (spec 0015 UX: kaydetmeden önce taksit önizlemesi): tarife adı/tutarı, indirim adı/yüzdesi/tutarı, net ve taksitler (sıra, vade, tutar). */
+        PlanPreview: {
+            feeName: string;
+            /** Format: double */
+            feeAmount: number | string;
+            discountName: null | string;
+            /** Format: int32 */
+            discountPercent: null | number | string;
+            /** Format: double */
+            discountAmount: number | string;
+            /** Format: double */
+            net: number | string;
+            installments: components["schemas"]["InstallmentLine"][];
+        };
+        /**
+         * @description Öğrenci carisindeki plan (spec 0015): açılıştaki tarife adı/tutarı, indirim adı/yüzdesi/tutarı, taksit sayısı, durum
+         *     (`Active`/`Cancelled`), açılış ve iptal anı, plan toplamları ve taksitler. İptal plan toplamları cariye girmez.
+         */
+        PlanView: {
+            /** Format: uuid */
+            id: string;
+            feeName: string;
+            /** Format: double */
+            feeAmount: number | string;
+            discountName: null | string;
+            /** Format: int32 */
+            discountPercent: null | number | string;
+            /** Format: double */
+            discountAmount: number | string;
+            /** Format: int32 */
+            installmentCount: number | string;
+            status: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            cancelledAt: null | string;
+            totals: components["schemas"]["AccountTotals"];
+            installments: components["schemas"]["InstallmentView"][];
         };
         ProblemDetails: {
             type?: null | string;
@@ -6001,6 +7370,43 @@ export interface components {
             start: null | string;
             end: null | string;
             days: string[];
+        };
+        /**
+         * @description Makbuz (spec 0015 gereksinim 7): okul ve şube adı, makbuz no, tarih, öğrenci ad-soyad, plan adı (tarife adı), tutar, yöntem,
+         *     dağıldığı taksitler, kaydeden kişinin adı ve kayıt anı; iptal edildiyse iptal anı ve gerekçesi. TC kimlik no, IBAN ve sağlık
+         *     bilgisi taşımaz. "Bu belge fatura yerine geçmez." metni istemcide (yerelleştirme dosyası).
+         */
+        Receipt: {
+            /** Format: uuid */
+            paymentId: string;
+            /** Format: int64 */
+            receiptNo: number | string;
+            schoolName: string;
+            branchName: string;
+            /** Format: date */
+            date: string;
+            studentName: string;
+            planName: string;
+            /** Format: double */
+            amount: number | string;
+            method: string;
+            allocations: components["schemas"]["ReceiptAllocation"][];
+            recordedByName: string;
+            /** Format: date-time */
+            recordedAt: string;
+            cancelled: boolean;
+            /** Format: date-time */
+            cancelledAt: null | string;
+            cancelReason: null | string;
+        };
+        /** @description Makbuzdaki dağılım satırı (spec 0015 gereksinim 7): taksit sırası, vadesi ve bu tahsilattan düşen tutar. */
+        ReceiptAllocation: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            amount: number | string;
         };
         /** @description Oturum yenileme isteği: mobil anahtarı gövdede gönderir; boşsa (web) çerezdeki anahtar kullanılır. */
         RefreshRequest: {
@@ -6144,6 +7550,41 @@ export interface components {
             studentId: null | string;
             /** Format: uuid */
             counterpartUserId: null | string;
+        };
+        /** @description Öğrencinin carisi (spec 0015 gereksinim 8): öğrenci etiketi, toplamlar, planlar (iptal dahil), tahsilatlar (iptal dahil) ve tarih sıralı hareket dökümü. */
+        StudentAccount: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+            isActive: boolean;
+            totals: components["schemas"]["AccountTotals"];
+            plans: components["schemas"]["PlanView"][];
+            payments: components["schemas"]["PaymentRow"][];
+            movements: components["schemas"]["LedgerMovement"][];
+        };
+        /** @description Cari listesinin sayfası (spec 0015): 25 satır, toplam satır sayısı, süzülmüş bütün satırların toplamları ve süzgeç için kişinin tahsilat şubeleri. */
+        StudentAccountPage: {
+            items: components["schemas"]["StudentAccountRow"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            totals: components["schemas"]["AccountTotals"];
+            branches: components["schemas"]["BranchSummary"][];
+        };
+        /** @description Personelin cari listesindeki satır (spec 0015 gereksinim 8): öğrenci, şube, sınıf, etkin mi ve toplamlar. */
+        StudentAccountRow: {
+            /** Format: uuid */
+            studentId: string;
+            fullName: string;
+            branchName: string;
+            classroomName: null | string;
+            isActive: boolean;
+            totals: components["schemas"]["AccountTotals"];
         };
         /** @description Öğrencinin bir ödevi (spec 0013 gereksinim 8): ders, başlık, teslim günü ve öğrencinin durumu (`Unmarked`, `Submitted`, `NotSubmitted`). */
         StudentAssignmentRecord: {

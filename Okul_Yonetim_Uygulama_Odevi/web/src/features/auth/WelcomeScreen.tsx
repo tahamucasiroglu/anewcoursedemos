@@ -12,7 +12,8 @@ interface Props {
  * "Okul değiştir" yalnızca birden çok okul varsa görünür; "Çıkış" oturumu kapatır. "Platform paneli" yalnızca platform
  * yöneticisinde (spec 0007). "Okul takvimi" seçili okulu olan herkese (spec 0008). "Öğrenciler" yalnızca kurucuya (spec 0009). "Yoklama al" yalnızca
  * öğretmene, okunmamış sayılı "Bildirimler (n)" yalnızca veliye (spec 0010). "İletişim" yalnızca kurucu ve öğretmene (spec 0011).
- * "Haftalık özet" yalnızca sınıf ataması olan öğretmene (spec 0014, `/api/me` → `teachesClassroom`).
+ * "Haftalık özet" yalnızca sınıf ataması olan öğretmene (spec 0014, `/api/me` → `teachesClassroom`). "Tahsilat" yalnızca kurucu ve
+ * muhasebeye (spec 0015).
  */
 export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
   return (
@@ -70,6 +71,11 @@ export function WelcomeScreen({ me, onSwitchSchool, onLogout }: Props) {
         {me.isPlatformAdmin && (
           <a className="button-link" href="#/platform">
             {t("platform.link")}
+          </a>
+        )}
+        {(me.roles.includes("Founder") || me.roles.includes("Accounting")) && (
+          <a className="button-link" href="#/tahsilat">
+            {t("billing.link")}
           </a>
         )}
         {me.roles.includes("Founder") && (

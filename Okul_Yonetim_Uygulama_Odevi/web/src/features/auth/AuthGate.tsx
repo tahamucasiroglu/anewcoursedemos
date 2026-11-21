@@ -2,6 +2,8 @@ import { t } from "../../i18n/t";
 import { AccountPage } from "../account/AccountPage";
 import { AttendancePage } from "../attendance/AttendancePage";
 import { AdminPage } from "../admin/AdminPage";
+import { BillingPage } from "../billing/BillingPage";
+import { ReceiptPage } from "../billing/ReceiptPage";
 import { CalendarPage } from "../calendar/CalendarPage";
 import { CommunicationPage } from "../communication/CommunicationPage";
 import { NoticesPage } from "../notices/NoticesPage";
@@ -25,7 +27,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
  * (spec 0006); platform yöneticisinde iki adımlı kod/kurulum adımı ve "#/platform" paneli (spec 0007); "#/takvim" okul
  * takvimi (spec 0008, her rol); "#/ogrenciler" öğrenci yönetimi (spec 0009, yalnızca kurucu); "#/yoklama" yoklama (öğretmen) ve
  * "#/bildirimler" veli bildirimleri (spec 0010; okununca kişi bilgisi — okunmamış sayısı — yenilenir); "#/iletisim" duyurular
- * (spec 0011, kurucu ve öğretmen); "#/haftalik-ozet" haftalık gelişim özeti (spec 0014, sınıf öğretmeni). Kısa geçiş
+ * (spec 0011, kurucu ve öğretmen); "#/haftalik-ozet" haftalık gelişim özeti (spec 0014, sınıf öğretmeni); "#/tahsilat" tahsilat ve öğrenci carisi, "#/makbuz/&lt;id&gt;" yazdırılabilir makbuz (spec 0015, kurucu ve muhasebe). Kısa geçiş
  * yazıları canlı bölge değildir (sayfadaki tek durum duyurusu sistem durumu kartıdır); hatalar role=alert ile duyurulur.
  */
 export function AuthGate() {
@@ -88,6 +90,14 @@ export function AuthGate() {
 
       if (path === "/haftalik-ozet") {
         return <WeeklySummaryPage me={state.me} client={session.client} />;
+      }
+
+      if (path === "/tahsilat" || path.startsWith("/tahsilat/")) {
+        return <BillingPage me={state.me} client={session.client} route={route} />;
+      }
+
+      if (path.startsWith("/makbuz/")) {
+        return <ReceiptPage key={path} me={state.me} client={session.client} paymentId={path.slice("/makbuz/".length)} />;
       }
 
       if (path === "/ogrenciler") {

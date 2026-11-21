@@ -578,3 +578,82 @@ a {
 .weekly-final {
   white-space: pre-wrap;
 }
+
+/* Tahsilat (spec 0015): tablolar dar ekranda kendi içinde kayar (320 px'te sayfa yatay kaymaz); tutarlar sağa yaslı; geciken taksit
+   metinle ("Gecikti") yazılır, renk yalnızca ek vurgu. */
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table caption {
+  text-align: start;
+  font-weight: 600;
+  padding-bottom: 0.25rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.375rem 0.5rem;
+  text-align: start;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.data-table .num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tfoot th,
+.data-table tfoot td {
+  font-weight: 600;
+}
+
+.state-overdue {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.plan-block,
+.plan-preview {
+  margin-block: 0.75rem;
+}
+
+.plan-block h4,
+.plan-preview h4 {
+  margin: 0 0 0.25rem;
+}
+
+.receipt-cancelled {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.receipt-note {
+  font-weight: 600;
+}
+
+/* Makbuz yazdırma görünümü (spec 0015 AC-8): başlık satırı, tema seçici, sistem durumu, menü ve düğmeler basılmaz. */
+@media print {
+  .app-header,
+  .status,
+  .no-print {
+    display: none !important;
+  }
+
+  .card {
+    border: 0;
+    box-shadow: none;
+  }
+}
